@@ -4,52 +4,44 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date in Amazon Quick (work machine), from the 2026-11-12 late night home session
-Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE.md "Git and GitHub").
-1. Before leaving home: `git push origin feature/pause-menu-rework`.
-2. At work, `git status` must be clean. If it is not, commit what is there first (never edit on a dirty tree).
-3. `git fetch origin`, then `git checkout feature/pause-menu-rework`, then `git pull --ff-only`. If it refuses, the two
-   machines diverged: stop and tell the agent, do not merge or force.
-4. Check: `git log --oneline -1` shows "Session end: #92 and #103 closed, STATE, TODO, DEVLOG".
-   `git log --oneline feature/pause-menu-rework..origin/main` should print nothing (main has not moved).
-5. `node tools/check.js`: expect "check: FAILED (2 harness)", only gym-harness and leader-stats-harness (red until #30).
-   Any other failure is new: tell the agent.
-6. Tell the Quick agent "catch me up". It has no gh, so the open items below are its source.
-7. Before leaving work: commit and `git push origin feature/pause-menu-rework`, so home starts from the same tree.
+## Getting up to date at home (Claude Code), from the 2026-11-13 morning Quick session
+Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
+1. Before leaving work: commit the wrap-up, push, and (if done) merge into feature/gym-leader-ai and push that.
+2. At home, `git status` must be clean. If it is not, commit what is there first (never edit on a dirty tree).
+3. `git fetch origin`, then `git checkout feature/gym-leader-ai` (or feature/pause-menu-rework if the merge waits),
+   then `git pull --ff-only`. If it refuses, the two machines diverged: stop and tell the assistant.
+4. Check: `git log --oneline -3` shows the wrap-up commit (and the merge, if done).
+5. `node tools/check.js`: expect only gym-harness and leader-stats-harness red (until #30). Anything else is new.
+6. Say "catch me up".
+7. Before leaving home: commit and push, so work starts from the same tree.
 
-## Next (from the 2026-11-12 late night home session that closed #83, #92, #103)
-1. #104 EV screen redesign (PAUSE-MENU section 7), the last child of #82. Then close #82 and merge back into
-   feature/gym-leader-ai.
-2. Owner decisions that block or shape work: #97 (permanent upgrade rework, blocks #95), #86 (gym leaders round down?),
-   #99 (menu font), #93 (tooltip scope).
-3. Triage: needs-triage on #93 #75 #97 #99 #100 #101 #102 (#101 has no type or area label); #72, #79 (deferred) and #74
-   sit in Triage; #86 is `ready` but its card is in Triage; #29 has a stale `blocked` label (blocker #27 closed).
-4. Acquisition rework (Quick, 2026-11-12): gacha out; rescue catch (UberElite + Pokeball Belt), Lost Pokemon recruits,
-   candy evolution with mainline requirements, legendaries by loop. Decision
-   2026-11-12-acquisition-no-gacha-catch-candy-legendaries, map Acquisition v1 (rounds 1 to 16). Design only.
-   To file: one parent issue, then slices. Children it spawns: the 8-move import (T3b), 15 new evolution items +
-   Link Cable (Shop), Accelgor route (no Shelmet sprites).
-5. New issue to file: region type maps, PARKED. 8 type maps + 1 Stage 3 map per region (decision
-   2026-11-12-region-type-maps-fill-rules, map Region Type Maps - Biomes v2). Design only; D4 to D16 open.
-   Related finding: Kanto T6 rolls no hordes (hordeTypes empty, events.js swaps in gold); Kanto T6 has 7 wild species.
-   Tool gap: tools/make_seo_pages.py is missing, so the publish command's last step fails.
-6. Leader AI when ready: #53, then #39; planner gaps #57, #58; #30 before gym-leader-ai merges to main.
-7. Chore for Jess: delete merged branches (chore/docs-cleanup, feature/entity-model, feature/gym-upgrade-authoring,
-   feature/item-rework-v2, feature/leader-roster-ui, feature/pokeboxes, fix/onboarding-flow, fix/playtest-round-1, fix/ui-upgrade).
-8. Chore (found in the 91-3 STALE scan): debug-movechecker-mutate.js has about 8 debug.js patterns written before a
-   Prettier pass, so they no longer match. Re-point them to the current debug.js lines and re-run (overlaps #56).
-9. Deferred hook (#91-2 C, map 91-2C): when the real loop counter lands (#24), Region Best's "gyms" must become gyms
-   cleared on the final loop, not G.Gym.splits.length.
-10. Possible issue: PausePokemon and PauseInventory are not in main.js NEED (ready-guarded instead); PauseRunInfo is.
-    Decide whether to add the two.
-11. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op. Add an SV_PANEL entry
-    when co-op work starts.
-12. #100 (FPS counter freezes behind the pause menu). Also possible: lighter HUD paint, only if a new profile shows it.
-13. Possible issue: smoke-pause-menu "Cards Taken keeps its 400 px box" measures 401 (since #83). Ask Jess whether to file.
+## Next (from the 2026-11-13 morning Quick session that closed #104 and #82)
+1. Merge feature/pause-menu-rework into feature/gym-leader-ai, then delete the old branch. The last #82 loose end
+   (PausePokemon and PauseInventory in main.js NEED) was built 2026-11-13.
+2. Board fixes drafted 2026-11-13: comment on #99 with the font rule, close #106 as a duplicate of #99, comment on
+   #102 (the old team sheet is co-op only now).
+3. Acquisition rework (decision 2026-11-12-acquisition-no-gacha-catch-candy-legendaries, map Acquisition v1): file
+   one parent issue, then slices. Children: the 8-move import (T3b), 15 evolution items + Link Cable, Accelgor route.
+4. Triage: needs-triage on #75 #93 #97 #99 #100 #101 #102 #105 #106 (#101 has no type or area label); #72, #74,
+   #79 sit in Triage; #86 is `ready` but carded in Triage; #29 has a stale `blocked` label (blocker #27 closed).
+5. Owner decisions that block or shape work: #97 (blocks #95), #86 (gym leaders round down?), #99 (menu buttons'
+   font), #93 (tooltip scope), #60 (Bait).
+6. New issue to file: region type maps, PARKED (decision 2026-11-12-region-type-maps-fill-rules). Also: Kanto T6
+   rolls no hordes; tools/make_seo_pages.py is missing, so the publish command's last step fails.
+7. Possible issue: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83 (likely the smoke's
+   1028 scale math, not the layout). Ask Jess whether to file.
+8. Leader AI when ready: #53, then #39; planner gaps #57, #58; #30 before gym-leader-ai merges to main.
+9. Chore for Jess: delete merged branches (chore/docs-cleanup, feature/entity-model, feature/gym-upgrade-authoring,
+   feature/item-rework-v2, feature/leader-roster-ui, feature/pokeboxes, fix/onboarding-flow, fix/playtest-round-1,
+   fix/ui-upgrade, and feature/pause-menu-rework once merged).
+10. Chore: debug-movechecker-mutate has about 8 stale debug.js patterns from a Prettier pass (overlaps #56).
+11. Deferred hook (#91-2 C): when the real loop counter lands (#24), Region Best's "gyms" must become gyms cleared on
+    the final loop, not G.Gym.splits.length.
+12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op.
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30.
 
-## Open issues by area (numbers only, titles via gh, checked 2026-11-12 night)
-- UI and HUD: #25 #61 #74 #75 #82 (#104) #93 #95 #99 #100 #102 #72 #79 (deferred)
+## Open issues by area (numbers only, titles on GitHub, checked 2026-11-13, Quick)
+- UI and HUD: #25 #61 #74 #75 #93 #95 #99 #100 #102 #105 #106 #72 #79 (deferred)
 - Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #53 #57 #58 #60
 - Moves: #11 #13 #14 #38 #44
 - Engine: #8 #10 #12 #46 #48 #56 #86 #97 #101 (day/night, parked)

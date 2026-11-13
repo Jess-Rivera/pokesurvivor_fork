@@ -198,6 +198,8 @@ const value = (shown, title, label) => (row(shown, title, label) || {}).value;
   ok(at('pause-pokemon.js') > 0 && at('pause-run-info.js') > at('pause-pokemon.js') && at('pause-menu.js') > at('pause-run-info.js'),
     'dev.html loads pause-run-info.js after pause-pokemon.js and before pause-menu.js');
   ok(/'PauseMenu',\s*'PauseRunInfo',/.test(read('js/main.js')), 'the NEED array lists PauseRunInfo');
+  ok(/'PauseInventory',\s*'PausePokemon',\s*'PauseMenu',/.test(read('js/main.js')),
+    'the NEED array lists PauseInventory and PausePokemon before PauseMenu (#82 loose end)');
   const debug = read('js/core/debug.js');
   ok(/\n    runinfo,\n    regionbest,\n    recordcheck,\n/.test(debug), 'G.Debug has runinfo, regionbest and recordcheck (T2)');
   ok(debug.includes('G.Game.regionRecord({ write: writing })'), 'recordcheck runs the one end-of-run compare, written only on write');

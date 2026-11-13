@@ -51,6 +51,8 @@ const M = [
   ['the scroll thumb cannot be dragged', 'overlay', [['                onPointerMove=${dragThumb}\n', '']]],
   ['the script tag is missing', 'dev', [['    <script defer src="js/ui/pause-run-info.js"></script>\n', '']]],
   ['the NEED array misses PauseRunInfo', 'main', [["    'PauseRunInfo',\n", '']]],
+  ['the NEED array misses PausePokemon', 'main', [["    'PausePokemon',\n", '']]],
+  ['the NEED array misses PauseInventory', 'main', [["    'PauseInventory',\n", '']]],
 ];
 
 require('../../tools/mutate-runner.js')({

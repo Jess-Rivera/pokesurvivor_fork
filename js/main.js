@@ -82,6 +82,8 @@
     'HudPlayerPanel',
     'HudRosterPanel',
     'HudRunItemsPanel',
+    'PauseInventory',
+    'PausePokemon',
     'PauseMenu',
     'PauseRunInfo',
     'EndRun',

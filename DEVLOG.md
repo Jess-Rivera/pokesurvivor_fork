@@ -257,3 +257,18 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Tests: smoke-pause-menu End Run and Run Review sections, pokebox-evs harness 63/63, mutate 31/31. Its Cards Taken
   400 px check reads 401 since #83 (not ours).
 - Stopped at: #104 EV screen next, the last child of #82.
+
+## 2026-11-13 morning (Quick, work), #104 EV screen; #82 closed
+- Quick agent aligned to CLAUDE.md (git allowlist, a full commit message every slice); its catch-up, wrap-up and
+  board-sync workflows updated to match. No repo change for that.
+- Built #104 (js/ui/ev-screen.js): six rows, current EVs white and adds yellow, click 1 / Shift 10 / hold; Learn
+  saves then a 2 s toast; Go Home asks. Old scr-evs retired. 104b: fitToStage and createButtonRow in the HUD kit,
+  cappedEvs and setEvs in copies.js. 104c: the shared toast restyled (charcoal, teal rim, Michroma), centred pop-in.
+- Decided: decision files for the 104 giving rules and the 104c toast look; font rule in HUD-STYLE; toast 1 s was
+  too fast, 3 s too long, 2 s it is. Doc tidy: PAUSE-MENU open questions, HUD-STYLE pause colours Approved.
+- Tests: pokebox-evs harness 72/72 and 32 mutants caught in Quick's sandbox; Jess ran check.js, the mutate runner
+  and the smoke, then committed and pushed (results not logged here). Broke: the smoke's third run reused last
+  run's 252 EVs (fixed); the toast's pop animation dropped its centring (old bug, fixed).
+- Closed #104 and #82; filed #105 (G.UI.ask restyle) and #106 (menu font, a duplicate of #99).
+- Built (approved): PausePokemon and PauseInventory in main.js NEED, with a run-info harness check and 2 mutants.
+- Stopped at: the merge into feature/gym-leader-ai.
