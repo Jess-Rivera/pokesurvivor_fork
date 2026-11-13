@@ -1,0 +1,181 @@
+53 - INTELLIGENCE AND MISJUDGE BUILD PLAN  (Quick, 2026-11-13, branch feature/gym-leader-ai)
+Issue #53 (#49 slice 4). Decision: 2026-11-13-53-leader-intelligence-one-score-with-overrides.
+Spec: docs/LEADER-AI.md "The Decider (#49)" (MISJUDGMENT, INTELLIGENCE AND STYLE) and "Authoring a leader".
+Curves: docs/ASCII Concept Maps/53 - How Intelligence Drives the Four Settings.txt.
+Status: [Proposed], NOT yet approved. Plan only, no code. (Rewritten after C1, Q2 and A1; D1 and D2 chosen.)
+
+FOR A FRESH CHAT (Jess, 2026-11-13: build this in a new chat)
+  decided   method C (intelligence + overrides), five settings, two-line curves, no perfect top, reflex floor 0.1 s,
+            fractional dodgeRead by counter, aimError planning-only, misjudge proportional (D1), growth 0..0.2 (D2),
+            sharpness duel on Brock's loop 1 team (D3), misjudge 0.1 at the default (R1)
+  open      R2 aimError 10 px at the default (today 0); Jess wanted to change something before approving (not said yet)
+  first     ask Jess what to change, confirm R2, get the plan approved; then build (CLAUDE.md edit workflow)
+  record    decision 2026-11-13-53-leader-intelligence-one-score-with-overrides; LEADER-AI "The Decider (#49)"
+
+=====================================================================================
+SLICE OPENING (branch rule: agreed before any build)
+=====================================================================================
+
+  GOAL    one `intelligence` per leader (base + per-loop growth) sets misjudge, reflex, dodgeRead,
+          memoryUse and aimError through fixed two-line curves, unless the leader authors one
+          directly; misjudge noise runs in the planner; dodgeRead may be fractional.
+  DONE    every new harness check passes; the sharpness duel passes; the mutants are all caught;
+          Jess's feel test: Misty and Brock play as before, with the odd misjudged plan.
+  TEST    leader-ai-harness.js new section (below), written first.
+
+=====================================================================================
+HOW A SETTING IS RESOLVED (each fight, for the leader's gym and loop)
+=====================================================================================
+
+  gyms.js ai                          G.LeaderAI.settings(gym)
+  ----------                          ------------------------
+  intelligence: 0.5                   intelligenceForLoop = base + growth x (loop - 1), held inside 0..1
+    or { base: 0.5, growth: 0.1 }        |
+                                         v
+  one of the five authored        --yes--> the authored value (number, or keyed by loop as today)
+  directly?                       --no---> settingFromIntelligence(settingName, intelligenceForLoop)
+                                         |
+  every other setting (aggression,       v
+  range, risk ...)  -------------->  unchanged: authored, else G.LeaderAI.BASE
+
+  CURVES: two straight lines per setting, meeting at the default (0.5). TUNE.
+     intelligence    0 (atZero)   0.5 (atDefault)   1 (atOne)    never reaches
+     misjudge        0.30         0.10              0.04         0
+     reflex          0.30 s       0.15 s            0.12 s       0.10 s (REFLEX_FLOOR_SECONDS)
+     dodgeRead       2            6                 8            9 or 10 of 10
+     memoryUse       0.15         0.50              0.70         an exact read
+     aimError        40 px        10 px             4 px         0
+  between two points: a straight line (0.25 sits half way between atZero and atDefault).
+
+  FRACTIONAL DODGE READS (Q2): the bag still holds whole reads per 10 threats.
+     dodgeRead 6.4 = 6 per bag, plus readCarry += 0.4 at each new bag; at 1 or more that bag reads 7
+     and readCarry drops by 1.   bags 1..10:  6 6 7 6 7 6 6 7 6 7  = exactly 64 reads per 100 threats.
+     A counter, not dice (spec DETERMINISTIC RATES). readCarry starts at 0 each fight.
+
+=====================================================================================
+MISJUDGE IN THE PLANNER (every think tick)
+=====================================================================================
+
+  tree walk (every plan of <= 4 actions)
+     each plan path met   --> one seeded noiseDraw in [-1, 1], reused for every goal that plan is scored for
+     its cost             --> misreadCost = cost x (1 + misjudge x noiseDraw)            <- D1
+     per goal: best plan by (value - misreadCost)  --> the ranking  --> pick (randomness as today)
+
+  so it can pick the wrong plan for a goal AND the wrong goal: "thinks a bad plan is good".
+  own seeded source per fight (misjudgeSource), separate from the dodge bag, the prediction bag and
+  randomness; the harness fixes it through G.LeaderAI.seed, as the others.
+  overlay (G.Debug.hitbox): a new line with chosenPlanNoise (spec OVERLAY).
+
+=====================================================================================
+NAMES (CLAUDE.md "Coding conventions": each says what it is on its own; no one-letter names)
+=====================================================================================
+
+  authored in gyms.js ai     intelligence (a number, or { base, growth })
+  resolved per fight         intelligenceForLoop          the held 0..1 value for this gym's loop
+  curve table                INTELLIGENCE_CURVES          { misjudge: { atZero, atDefault, atOne }, ... }
+  fairness floor             REFLEX_FLOOR_SECONDS         0.1
+  growth limit               INTELLIGENCE_GROWTH_MAX      0.2 per loop (D2)
+  per setting                settingFromIntelligence(settingName, intelligenceForLoop)
+  fractional reads           readCarry                    on the dodge read bag
+  the 3-override check       intelligenceOverrideWarning(gym)
+  noise source (per fight)   misjudgeSource
+  noise per plan             noiseDraw                    one draw in -1..1 per plan path per think tick
+  noisy cost                 misreadCost                  what the planner ranks by
+  overlay value              chosenPlanNoise
+  harness duel helper        sharpnessDuel({ loop, intelligenceGrowth, duelSeed })
+
+=====================================================================================
+FILES AND WHAT CHANGES
+=====================================================================================
+
+  js/entities/leader-ai.js
+     BASE        gains intelligence 0.5; misjudge enters the list; the other four keep their
+                 BASE values as the curves' atDefault (aimError's BASE becomes 10, see R2)
+     new table   INTELLIGENCE_CURVES and REFLEX_FLOOR_SECONDS, next to BASE
+     settings()  (~line 905) resolves intelligenceForLoop, then each of the five: authored wins,
+                 else settingFromIntelligence
+     Bag         (~line 986) takes a fractional reads count; whole reads per bag, readCarry between bags
+     per fight   misjudgeSource, beside the dodge bag and randomness sources (~line 67 and 84)
+     overlay     (~line 767) adds the chosenPlanNoise line
+  js/systems/leader-planner.js
+     search()    (~line 571) one noiseDraw per plan path, misreadCost used in its score (D1)
+     choose()    (~line 633) returns chosenPlanNoise for the overlay; otherwise unchanged
+  js/data/gyms.js
+     AI_KEYS     + intelligence, + misjudge
+     validate()  intelligence: a number 0..1, or { base 0..1, growth 0..INTELLIGENCE_GROWTH_MAX } (D2),
+                 no other keys; misjudge 0..1; a reflex override at least REFLEX_FLOOR_SECONDS;
+                 dodgeRead 0..10, fractions allowed
+     new warn    3 or more of the five authored directly -> intelligenceOverrideWarning, a dev warning at
+                 fight start (same pattern as teamItemWarn in gym-arena.js), never a block
+     Brock, Misty  no change (both run the default intelligence until #39)
+  js/data/changelog.js   chg: gym leaders now sometimes misjudge a plan (free edit, parse-checked)
+  docs   BALANCE.md "Leader AI": the curves; LEADER-AI: the "Code differs until #53" notes removed.
+         Already updated today: the rule, the decision file, DECISIONS.md, the curves map.
+  Save data: none (settings are per fight). No new script, so dev.html and NEED do not change.
+  Every new line within 120 columns (the mutation patterns match line text).
+
+=====================================================================================
+RULE CHANGES (listed so they are not buried)
+=====================================================================================
+
+  R1  misjudge 0.10 at the default (approved): Misty and Brock start misjudging a plan now and then.
+  R2  aimError 10 px at the default (today 0): their planner rates its own hits slightly lower
+      (a 29% shot reads 26%), so a touch more cautious. Needed so the top (4 px) is sharper than the
+      default and still not perfect. Confirm with the plan.
+  Reflex, dodgeRead and memoryUse at the default are unchanged.
+
+=====================================================================================
+DECISIONS (D1 and D2 settled by Jess, 2026-11-13)
+=====================================================================================
+
+  D1  how the noise misreads a cost
+      (a) x (1 + misjudge x noiseDraw): misjudge 0.1 = each plan's cost misread by up to 10%  CHOSEN
+          - a plan that trades about even (cost near 0) is barely misread
+      (b) + misjudge x 0.1 x noiseDraw, in the HP currency: 0.1 = up to +-0.01 of a max HP per plan
+          - misreads every plan the same; the 0.1 scale is one more TUNE number
+  D2  growth range: 0 to 0.2 per loop (5 steps reach +1 at most; no negative growth)     CHOSEN
+      or allow negative growth (a leader who gets worse each loop)
+
+=====================================================================================
+TESTS (no new test files)
+=====================================================================================
+
+  docs/proposals/leader-ai-harness.js  (owns the AI settings, the gyms.js ai checks, the seeded duels)
+     NEW section, numbers hand-derived from the curves above:
+       - each curve at 0, 0.25, 0.5, 0.75, 1:
+           misjudge  0.30 0.20 0.10 0.07 0.04      reflex    0.300 0.225 0.150 0.135 0.120
+           dodgeRead 2 4 6 7 8                     memoryUse 0.150 0.325 0.500 0.600 0.700
+           aimError  40 25 10 7 4
+       - loops 1..6 with base 0.5 growth 0.1 = 0.5..1.0; base 0.9 growth 0.1 holds at 1.0
+       - an authored reflex 0.13 stays 0.13 at every loop while the other four follow the curve
+       - the default leader: misjudge 0.10, aimError 10, today's reflex, dodgeRead, memoryUse
+       - fractional reads: dodgeRead 6.4 gives bags 6 6 7 6 7 6 6 7 6 7 and exactly 64 reads per 100
+         threats; a whole dodgeRead (6) gives today's bag sequence unchanged
+       - validator rejects intelligence 1.5, growth 0.3 (D2), an unknown key in it, misjudge 2, reflex 0.05;
+         accepts the shapes above; 3 overrides give the warning, 2 do not
+       - noise: one seed, one trace; another seed, another trace; one draw per plan per tick (the same plan
+         scored for two goals carries one noise); every noise within +-misjudge; the dodge bag, prediction
+         bag and randomness sequences unchanged by it; misjudge 0 and aimError 0 reproduce today's 15j trace
+       - SHARPNESS DUEL (D3): Brock with intelligenceGrowth 0.1 on his loop 1 team, vs your Charmander
+         casting Fire Blast and Ember (the learning duel's setup), 5 seeds: loop 6 Brock's HP trade (dealt
+         minus taken, in max-HP fractions) beats loop 1 Brock's. Only the loop the settings read changes.
+     EXISTING duels (15j, 16e Bait, counter-play, learning, determinism): pinned to an authored misjudge 0
+       and aimError 0, so they keep testing what they test (R1 and R2 would otherwise move their traces).
+  docs/proposals/leader-ai-mutate.js  (existing)  + about 16 mutants, each must fail the harness:
+       intelligence ignored; growth ignored; growth already at loop 1; the 0..1 hold removed; an override
+       loses to the curve; one straight line instead of two (atDefault skipped); a curve's atOne set to
+       perfect; the reflex floor removed; aimError left off the curves; fractional reads rounded;
+       readCarry never reset at fight start; noise off; noise per goal instead of per plan; noise from
+       Math.random; noise sharing randomness's source; noise only on the chosen plan; the validator
+       accepting intelligence 1.5; the 3-override warning gone
+  tools/check.js: no change. Intent scenarios: none (no moves). Debug sets: none.
+
+  FEEL TEST (dev.html?dev, Misty and Brock fights, G.Debug.hitbox() on):
+       they play as before, now and then choosing an odd plan; the overlay's noise line moves each tick.
+
+  RISKS
+     - gym-harness and leader-stats-harness stay red until #30 (expected).
+     - the sharpness duel can fail honestly (more intelligence not winning): reported as a tuning finding
+       for #39, not hidden by changing the test.
+     - Quick cannot run node: the harness and mutants run on Jess's machine. Jess's Git Bash cannot
+       redirect node output, so results come back as pasted summary lines or MUTATE_JSON files.

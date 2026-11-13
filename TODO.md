@@ -16,7 +16,8 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
 7. Before leaving home: commit and push, so work starts from the same tree.
 
 ## Next (from the 2026-11-13 morning Quick session that closed #104 and #82)
-1. Delete feature/pause-menu-rework (merged into feature/gym-leader-ai 2026-11-13, 78d69120).
+1. #53 leader intelligence: designed, not approved (STATE START HERE 1; map "53 - Intelligence and Misjudge Build
+   Plan"). Also: delete feature/pause-menu-rework (merged 2026-11-13, 78d69120).
 2. Board fixes drafted 2026-11-13: comment on #99 with the font rule, close #106 as a duplicate of #99, comment on
    #102 (the old team sheet is co-op only now).
 3. Acquisition rework (decision 2026-11-12-acquisition-no-gacha-catch-candy-legendaries, map Acquisition v1): file
@@ -29,7 +30,7 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
    rolls no hordes; tools/make_seo_pages.py is missing, so the publish command's last step fails.
 7. Possible issue: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83 (likely the smoke's
    1028 scale math, not the layout). Ask Jess whether to file.
-8. Leader AI when ready: #53, then #39; planner gaps #57, #58; #30 before gym-leader-ai merges to main.
+8. Leader AI after #53: #39, then #30 before gym-leader-ai merges to main; planner gaps #57, #58 any time.
 9. Chore for Jess: delete merged branches (chore/docs-cleanup, feature/entity-model, feature/gym-upgrade-authoring,
    feature/item-rework-v2, feature/leader-roster-ui, feature/pokeboxes, fix/onboarding-flow, fix/playtest-round-1,
    fix/ui-upgrade, and feature/pause-menu-rework once merged).

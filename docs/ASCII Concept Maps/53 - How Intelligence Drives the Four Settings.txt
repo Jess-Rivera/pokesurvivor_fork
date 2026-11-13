@@ -1,0 +1,114 @@
+53 - HOW INTELLIGENCE DRIVES THE FIVE SETTINGS  (Quick, 2026-11-13, branch feature/gym-leader-ai)
+Discussion map for #53. Decision: 2026-11-13-53-leader-intelligence-one-score-with-overrides.
+Jess, 2026-11-13: linear curves; five settings (misjudge, reflex, dodgeRead, memoryUse + aimError); a wider range;
+NO perfect thinking at the top, every setting keeps some error at intelligence 1.
+Curve numbers below are [Proposed] (TUNE), not settled.
+
+=====================================================================================
+1. THE PIPE: ONE NUMBER IN, FIVE SETTINGS OUT (each fight, at fight start)
+=====================================================================================
+
+  gyms.js  ai.intelligence  { base, growth }   or a plain number
+                |
+                v
+  intelligenceForLoop = base + growth x (loop - 1)    held inside 0..1
+                |
+     +-----------+------------+-------------+--------------+--------------+
+     v           v            v             v              v
+  misjudge    reflex       dodgeRead     memoryUse      aimError
+  (plans)     (reacting)   (noticing)    (learning you) (rating its own shots)
+     |           |            |             |              |
+  authored directly? -> that value wins; its curve and growth are skipped (per setting)
+
+=====================================================================================
+2. THE CURVES: two straight lines that meet at the default (intelligence 0.5)
+=====================================================================================
+
+  Why two lines: one straight line through today's value at 0.5 cannot be wide at the dumb end AND
+  short of perfect at the top (it would run past perfect). So each setting has three points: the dumb
+  end (0), today's value (0.5, so Misty and Brock keep what was feel-tested), and the top (1), with a
+  straight line between each pair.
+
+  intelligence   0.00      0.25      0.50       0.75      1.00      never reaches
+  -------------  --------  --------  ---------  --------  --------  ------------------------------
+  misjudge       0.30      0.20      0.10       0.07      0.04      0 (always misreads a little)
+  reflex         0.300 s   0.225 s   0.150 s    0.135 s   0.120 s   0.10 s (the hard floor)
+  dodgeRead      2         4         6          7         8         9 or 10 of every 10
+  memoryUse      0.15      0.33      0.50       0.60      0.70      an exact cooldown read
+  aimError       40 px     25 px     10 px      7 px      4 px      0 (a perfect read of its odds)
+                                     ^
+                    the default leader: today's reflex, dodgeRead, memoryUse.
+                    Rule changes at the default: misjudge 0 -> 0.1 (approved), aimError 0 -> 10 px (new).
+
+  fairness ceilings stay outside intelligence's reach:
+     predictCap (acts on a pattern at most 7 in 10)   cooldown window floor 0.2 s   tells   stall guards
+
+=====================================================================================
+3. WHAT EACH ONE DOES IN A FIGHT
+=====================================================================================
+
+  MISJUDGE  how badly it reads what a plan will cost
+  -----------------------------------------------------------------------------------
+    each plan, each think tick:  misreadCost = cost x (1 + misjudge x noiseDraw),  noiseDraw seeded in -1..1
+    two plans for one goal, true costs 0.050 and 0.054:
+       misjudge 0.30   seen as 0.035..0.065 and 0.038..0.070   picks the worse one often, even the wrong goal
+       misjudge 0.10   seen as 0.045..0.055 and 0.049..0.059   picks the worse one now and then
+       misjudge 0.04   seen as 0.048..0.052 and 0.052..0.056   almost always right, still not certain
+
+  REFLEX  delay from noticing your shot to answering it (a threat lands within 0.6 s)
+  -----------------------------------------------------------------------------------
+       0.6 s ---------------------------------------------------> impact
+       |-- reflex --|-- time left to get out of the way -------|
+         0.30 s       0.30 s       intelligence 0    (a Rock Throw-speed shot covers 113 px meanwhile)
+         0.15 s       0.45 s       intelligence 0.5  (57 px, today)
+         0.12 s       0.48 s       intelligence 1    (45 px)
+
+  DODGE READ  how many of every 10 threats it notices at all (shuffle bag, seeded)
+  -----------------------------------------------------------------------------------
+       intelligence 0     [x x . . . . . . . .]  2 of 10
+       intelligence 0.5   [x x x x x x . . . .]  6 of 10   (today)
+       intelligence 1     [x x x x x x x x . .]  8 of 10   always misses some
+    an unread threat is never dodged, however good the reflex.
+
+  MEMORY USE  how fast it learns your cooldowns
+  -----------------------------------------------------------------------------------
+    its guess at a move's cooldown starts at 0.2 .. 2.0 s; you recast after 1.2 s (a clean gap):
+       memoryUse 0.15   0.35 .. 1.88 s    still mostly guessing
+       memoryUse 0.50   0.70 .. 1.60 s    today
+       memoryUse 0.70   0.90 .. 1.44 s    knows your timing after a few casts, never exactly
+    your counter: cycle slots, swap. (memory across fights, learnRate, is separate)
+
+  AIM ERROR  how well it rates its OWN chance to hit you (planning only)
+  -----------------------------------------------------------------------------------
+    the planner's hit chance = half width / (half width + your escape + aimError)
+    example, a shot with half width 25 px that you can sidestep by 60 px:
+       aimError  0 px   rates it 29%   (today)
+       aimError  4 px   28%            (intelligence 1)
+       aimError 10 px   26%            (default)
+       aimError 40 px   20%            (intelligence 0: thinks its shots miss, plays timid)
+    It does NOT move where its shots go: your moves auto-target, and a leader casts through your
+    cast path, so there is no aim to throw off.
+
+=====================================================================================
+4. HOW IT GROWS (growth 0.1, base 0.5: D3's test Brock)
+=====================================================================================
+
+     loop        1      2      3      4      5      6
+     intel       0.5    0.6    0.7    0.8    0.9    1.0
+     misjudge    0.100  0.088  0.076  0.064  0.052  0.040
+     reflex      .150   .144   .138   .132   .126   .120
+     dodgeRead   6      6.4    6.8    7.2    7.6    8        (Q2: whole or fractional, below)
+     memoryUse   0.50   0.54   0.58   0.62   0.66   0.70
+     aimError    10     8.8    7.6    6.4    5.2    4.0
+
+  a dull early leader, intelligence 0.2:  misjudge 0.22  reflex 0.24 s  dodgeRead 3.6  memoryUse 0.29  aimError 28 px
+  leaders compare on intelligence:   Brock loop 6 (1.0)  vs  Lance loop 1 (say 0.7): Brock out-thinks him.
+
+=====================================================================================
+5. SETTLED (Jess, 2026-11-13)
+=====================================================================================
+
+  C1  curve shape      two straight lines meeting at the default (today's values kept at 0.5)
+  Q2  dodgeRead        fractional, kept exact by a counter across bags (every loop's growth counts)
+  A1  aimError         planning-only, as today (skipped in the card; today's behavior kept)
+  still to confirm     aimError 10 px at the default (with the #53 build plan's approval)

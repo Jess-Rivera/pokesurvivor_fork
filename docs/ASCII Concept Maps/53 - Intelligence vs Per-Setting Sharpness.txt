@@ -1,0 +1,81 @@
+53 - INTELLIGENCE vs PER-SETTING SHARPNESS  (Quick, 2026-11-13, branch feature/gym-leader-ai)
+Question (Jess): fold misjudge and the per-loop sharpness growth into one "intelligence" score?
+Status: comparison only, nothing decided. Spec today: decision 2026-11-09-49-leader-sharpness-base-plus-loop-growth.
+
+=====================================================================================
+THE THREE METHODS
+=====================================================================================
+
+  A  PER-SETTING (today's spec)        B  INTELLIGENCE ONLY              C  INTELLIGENCE + OVERRIDES
+  ---------------------------          --------------------              -------------------------
+  each sharpness setting:              one number per leader:            B, plus a leader may set any
+    misjudge   base + growth             intelligence = base + growth      of the four directly; that
+    reflex     base + growth                    |                          setting then leaves the
+    dodgeRead  base + growth            curves in code turn it into        intelligence curve
+    memoryUse  base + growth            misjudge, reflex, dodgeRead,
+                                        memoryUse
+
+  numbers per leader:   8              2                                 2 (+ the rare override)
+  for 12 leaders:       96             24                                24 + a handful
+
+=====================================================================================
+PROS AND CONS
+=====================================================================================
+
+  A  PER-SETTING
+     +  the most control: a leader can be sharp one way and dull another
+     +  already decided (2026-11-09); no curves to design
+     +  what you set is exactly what runs (no mapping in between)
+     -  96 numbers to tune by feel across 12 leaders x 6 loops
+     -  no single number says "how hard is this leader": comparing Brock loop 6 to Lance loop 1 means
+        reading four settings each
+     -  easy to author an incoherent leader (instant reflexes, terrible plans) without meaning to
+     -  retuning a loop's difficulty touches four numbers per leader
+
+  B  INTELLIGENCE ONLY
+     +  2 numbers a leader; one blunt dial, the genre's proven pattern (Brotato Danger, Halls Agony)
+     +  difficulty reads at a glance and compares across leaders and loops
+     +  leaders stay coherent: every sharpness setting rises together
+     +  the harness tests one curve family instead of 96 values
+     -  every leader is smart in the same SHAPE; style settings (aggression, range, risk) still differ
+     -  can't say "Misty reads you fast but plans no better" (the #39 brief asks for exactly that)
+     -  the curves become load-bearing: one bad curve skews all 12 leaders at once
+     -  new work: 4 curves to design and tune (TUNE in code)
+     -  "this leader feels off" no longer points straight at one setting
+
+  C  INTELLIGENCE + OVERRIDES
+     +  B's simplicity by default; 2 numbers for most leaders
+     +  the escape hatch for real exceptions (Misty's reflex, a Koga that misjudges on purpose)
+     +  overrides reuse today's authoring (a number, or keyed by loop), so no new shape for them
+     +  intelligence still compares leaders; an override is visible in the leader's data
+     -  two ways to set one thing: needs a clear rule (an override wins and drops that setting's growth)
+     -  override creep: a leader overriding all four is just A again, harder to read
+     -  the validator and the overlay must say where each value came from
+     -  same curve work as B
+
+=====================================================================================
+SIDE BY SIDE
+=====================================================================================
+
+                          A per-setting   B intelligence   C intel + overrides
+  tuning load             high (96)       low (24)         low (24 + few)
+  expressiveness          full            low              full where needed
+  difficulty at a glance  no              yes              yes
+  coherent leaders        by care         built in         built in, opt-out visible
+  new code                none            4 curves         4 curves + precedence rule
+  fits #39 brief          yes             partly           yes
+  risk                    tuning sprawl   curve skews all  override creep
+
+=====================================================================================
+VERDICT: C is the stronger option
+=====================================================================================
+
+  - 12 leaders x 6 loops tuned by feel: the dial has to be one number, or tuning sprawls (A's weakness).
+  - #39 already asks for a leader that is sharp one way ("Misty reads you fast"): B can't say it, C can.
+  - the override costs little: it reuses the per-loop authoring that exists today.
+  - guard against creep: the validator warns when a leader overrides 3 or more of the four
+    (then it should ask whether intelligence is the right base for that leader).
+
+  OPEN WITH IT (decisions for Jess)
+     misjudge at default intelligence: 0 (Misty and Brock play as today until #39) | a little (about 0.1)
+     D3 the sharpness duel: test growth on Brock's loop 1 team | wait for #39's values

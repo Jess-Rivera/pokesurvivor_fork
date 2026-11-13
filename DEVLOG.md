@@ -274,3 +274,13 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Merged feature/pause-menu-rework into feature/gym-leader-ai (78d69120) and pushed; a Windows index.lock rename
   failure on the first try cleared on retry.
 - Stopped at: on feature/gym-leader-ai; next is the board fixes, then the acquisition parent issue.
+
+## 2026-11-13 afternoon (Quick, work), #56 closed; #53 designed (leader intelligence)
+- #56: a scan of all 37 mutate scripts found 64 STALE (not 42); 63 retargeted (55 reformats, 8 re-aimed), 1 removed
+  (shop-screens level-up bans). Closed on the scan; the scripts were not re-run (Git Bash cannot redirect node).
+- Board fixes drafted (#99, #106, #102, #29, #86, #101, #74). Leader AI refresher: docs/gym-leader-ai-map.html and a text map.
+- #53 decided (decision file 2026-11-13-53): one intelligence per leader drives misjudge, reflex, dodgeRead, memoryUse and
+  aimError; two-line curves meeting at the default, nothing perfect at the top; fractional dodge reads; overrides;
+  misjudge proportional; growth 0..0.2. LEADER-AI updated. Rule change: misjudge 0.1 at the default.
+- Nothing in js/ touched this afternoon; check.js not run.
+- Stopped at: #53 plan not approved; Jess wants a change (unnamed) and R2 (aimError 10 px) confirmed. New chat builds it.
