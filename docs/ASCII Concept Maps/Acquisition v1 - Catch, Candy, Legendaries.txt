@@ -1,5 +1,8 @@
 ACQUISITION v1: CATCH, CANDY, LEGENDARIES (2026-11-12, design only, no code)
 ============================================================================
+HISTORY (2026-11-13): superseded by "Acquisition v2 - Spec.txt", which holds the final rules only.
+This file keeps the 35 rounds of reasoning; several rulings below were overturned later in it.
+
 Direction (Jess, 2026-11-12): remove the gacha. A gacha pull can hand out an end-game mon
 (Mewtwo) on luck, which undercuts Pokemon investment and makes starters useless.
 Replace it with 3 tiers. Region type maps (Biomes v2) are parked; they feed tier 1 later.
@@ -1238,3 +1241,202 @@ RESOLVED, ROUND 28 (Jess, 2026-11-13)
     A13b how a rescue picks within the pool: uniform | weighted by star | other
     X UberElite time limit, N2 flee values, E-cap 90%, EV4, A14 shinies, A15 no-route species,
     L3, hover filter, B5 prices, ball tiers, LC3, LC4, EI2
+
+RESOLVED, ROUND 29 (Jess, 2026-11-13)
+-------------------------------------
+  NS1  NOTHING carries over to the new save (no settings, no Pokedex seen list).
+  NS2  the old save is KEPT in the browser as a backup, and a notice tells the player (Pokebox precedent).
+  NS4  detection by a SAVE VERSION BUMP: an older save is replaced automatically on load.
+
+  THE PATTERN ALREADY EXISTS (js/core/db.js, read 2026-11-13)
+    VERSION = 3 today; K_PREBOX = 'ps.backup.prebox.' holds the pre-Pokebox backup;
+    load(): no save -> newSave; old shape -> backup it (once), resetNotice = true, write a fresh save.
+    So the acquisition reset is the same shape: a second backup key, a version bump, the same notice.
+
+  NEW SAVE FLOW
+    load ── no save ─────────────────────────────> new save
+         ── save older than the acquisition version ──> copy to a backup key (once)
+                                                        notice on the menu
+                                                        new save
+         ── current save ─────────────────────────> load as normal
+
+  FLAG (rule detail, needs approval when built): NS1 "nothing" means settings reset too (volume,
+  graphics, the Vignette setting, keybinds). Check where settings live: if they sit outside the save
+  key (their own localStorage key), they survive the reset untouched unless the plan wipes them on purpose.
+
+  STILL OPEN
+    NS3  what a new save starts with: one starter pick | other (START_COINS = 500 today)
+    A13b how a rescue picks within its pool: uniform | weighted by star
+    X UberElite time limit, N2, E-cap, EV4, A14, A15, L3, hover filter, B5, ball tiers, LC3, LC4, EI2
+
+RESOLVED, ROUND 30 (Jess, 2026-11-13)
+-------------------------------------
+  A13b a rescue picks its species WEIGHTED BY STAR (1 star most common). Weights still to set (W1).
+  X    UberElite time limit: set in playtest; starting value 60 s.
+  NS3  a new save: the player picks a REGION and gets ALL 3 of its starters (grass, fire, water),
+       plus some coins (amount set in the economy balance pass).
+       Builds on the pending region-based starter pick (3x3 picker, one starter each), now one
+       region pick = three starters.
+
+  W1 CANDIDATES: share of rescues by star, per region (1 / 2 / 3 / 4 star, %)
+               uniform           4 / 3 / 2 / 1       8 / 4 / 2 / 1
+    Kanto    51 37  6  6       61 33  4  2         71 26  2  1
+    Johto    50 25 21  4       62 23 13  1         73 18  8  1
+    Hoenn    59 22 19  0       69 20 11  0         79 15  6  0
+    Sinnoh   53 37 11  0       62 32  6  0         71 25  4  0
+    Unova    58 24 16  2       69 21 10  0         78 16  5  0
+    Kalos    45 39 10  6       56 36  6  2         67 29  4  1
+    Alola    30 19 28 23       47 22 22  9         61 19 14  6
+    Galar    68  0 18 15       84  0 11  5         92  0  6  2
+    Paldea   57  7  7 29       78  7  5 10         86  5  3  5
+    (4 / 2 / 1 mirrors Halls of Torment's item weights; the middle column is the gentle option)
+
+  NEW SAVE START, WHOLE
+    new save ── pick a region ──> its 3 starters join the box ── + coins (economy pass) ──> first run
+    the starters' region does not lock the run region (region unlock rule still open)
+
+  DATA NOTES
+    starter flag in pokedex.js: 29 species = 3 per region, but KANTO has 5 (Bulbasaur, Charmander,
+    Squirtle + Psyduck, Slowpoke, flagged "starter = test"). NS3 means the 3 grass / fire / water ones.
+    The 3 starters are Stage 1s, so they sit outside the rescue pool's job but still appear in it
+    (Bulbasaur etc. are own-gen Stage 1s): a rescue can offer a starter the player already owns.
+
+  STILL OPEN
+    W1   star weights (table above)
+    NS3b which region list the starter pick offers: all 9 | only open regions (REGIONS_OPEN = [1] today)
+    NS3c starters in the rescue pool: keep (a second copy) | remove the 27 starters from rescues
+    N2 flee values, E-cap, EV4, A14 shinies, A15 no-route species, L3, hover filter, B5, ball tiers,
+    LC3, LC4, EI2
+
+RESOLVED, ROUND 31 (Jess, 2026-11-13)
+-------------------------------------
+  W1   rescue star weights 8 / 4 / 2 / 1 (1 star / 2 / 3 / 4).
+  NS3b the new-save starter pick offers ALL 9 regions' trios.
+  NS3c starters STAY in the rescue pool (a rescue can give a second copy, new IVs and nature).
+
+  WHAT 8 / 4 / 2 / 1 MEANS PER RUN (30 min run = about 4.74 rescues, cadence 4% +4%)
+    region   4 star per rescue   runs that see a 4 star   a starter per rescue
+    Kanto          1.1%                  5%                      7%
+    Johto          0.8%                  4%                      9%
+    Hoenn          0                     0                       6%
+    Sinnoh         0                     0                      11%
+    Unova          0.3%                  1%                      7%
+    Kalos          1.2%                  6%                     14%
+    Alola          5.9%                 25%                      7%
+    Galar          2.5%                 11%                     12%
+    Paldea         5.4%                 23%                     11%
+    -> In Kanto about 1 run in 20 even OFFERS a 4 star (Snorlax, Lapras, Aerodactyl, Scyther),
+       and the catch then lands about 39% of the time with Poke Balls: roughly 1 run in 50.
+       Hoenn and Sinnoh rescues never offer one. Lost Pokemon (any region, 3 star max) does not
+       cover 4 stars either. The 4 star Stage 1s are mostly a late-region goal.
+
+  NS3b NOTE: the starter pick offers all 9 trios while runs are Kanto only (REGIONS_OPEN = [1]).
+    So a new player can start with Paldea's starters and run them in Kanto. Fine with no region lock,
+    but it means the starter pick is not tied to the region unlock rule (still open in STATE).
+
+  STILL OPEN (acquisition)
+    A14 shinies      A15 species with no route (4 Paradoxes, mythicals)    ball tiers (Great / Ultra)
+    N2 flee values 5 / 3 / 1    E-cap 90%    EV4 cap on rescues per run
+    L3 Lost nature on the toast    hover filter    B5 prices    LC3, LC4, EI2
+
+RESOLVED, ROUND 32 (Jess, 2026-11-13)
+-------------------------------------
+  HOVER  the hover filter is DROPPED from the Lost Pokemon pool. Floating species can be Lost Pokemon.
+         Lost pool: 267 -> 309 species (Stage 1, has an evolution, rarity 1 to 3, babies count, any region).
+         Back in: Zubat, Abra, Magnemite, Gastly, Koffing, Horsea, Swablu, Beldum, Drifloon, Woobat,
+         Yamask, Phantump, Dreepy and 29 more (42 total).
+  EV4    NO CAP on rescues per run. The belt and the Flee meter limit catches; fights are unlimited.
+         Simulated (4% +4%/min): 30 min avg 4.7 (max 10) | 45 min 7.2 | 60 min 9.8 (max 17)
+  L3     the Lost Pokemon's NATURE SHOWS on its toast, like rescues ("A Timid Eevee is lost!").
+         Nature has no flee role here; it tells you what joins.
+
+  HOVER, WHAT THE CODE DOES TODAY (js/systems/events.js, read 2026-11-13)
+    spawnLost filters with !G.Sprites.hovers(p.dex). The code gives no reason for it.
+    While escorted, the Lost Pokemon moves with G.World.collide(L): GROUND collision, so a floating
+    species would be stopped by rocks and water like a walker (a Gastly blocked by a rock).
+    sprites-meta.js hv = the species floats in its sprite and passes over rocks and water.
+    -> REMOVING THE FILTER IS A CODE CHANGE (propose and approve). The build plan decides:
+       H1 floaters escort with ground collision (simplest, looks odd) | with hover movement (over
+          rocks and water, like hover enemies)
+       H2 spawn and mark points: the same free-ground check for both | floaters may use water spots
+
+  STILL OPEN (acquisition)
+    design   A14 shinies   A15 species with no route   ball tiers (Great / Ultra unlock)
+    tuning   N2 flee values 5 / 3 / 1   E-cap 90% ceiling   UberElite 60 s (playtest)
+    economy  B5 ball and belt prices   LC3 Shop tab   LC4 Shop prices   EI2 Metal Coat, Razor Claw
+
+RESOLVED, ROUND 33 (Jess, 2026-11-13)
+-------------------------------------
+  A15  LEFT OUT for now: the 4 Paradoxes (Iron Leaves, Iron Valiant, Roaring Moon, Walking Wake;
+       BST 590, rarity 5, above the 4 star band) and the 21 mythicals have no acquisition route.
+       Arceus stays the endgame superboss (GDD 12), never catchable.
+  BALLS once Great or Ultra is unlocked, the belt is MIXED: restock any mix of tiers, and pick which
+       ball to throw on each throw (Poke 1x, Great 1.5x, Ultra 2x on the E3 catch odds).
+  A14  skipped again, still open.
+
+  CATCH PHASE, WHOLE
+    UberElite down in time ──> catch phase
+       pick a ball from the belt (Poke / Great / Ultra, whatever is stocked)
+       throw ── P = min(90%, base x ball x (1 + time left)) ── caught ──> new copy
+                                                               └ miss ──> Flee meter +1 (nature sets the cap)
+       belt empty or Flee full ──> it runs off
+
+  RULE DETAILS THE MIXED BELT NEEDS (each changes behavior; not built)
+    MB1 belt size counts ALL balls together (6 slots, any mix) | per tier (6 Poke + N Great ...)
+    MB2 how a ball is picked mid-catch: a key / wheel per tier | click the ball in a belt strip
+    MB3 default ball: the best stocked | the last one used | always Poke
+    MB4 the game is paused during the catch phase | the horde keeps coming (picking costs time)
+    MB5 how Great / Ultra UNLOCK (still open from B4): Shop purchase | gym badges | region
+
+  STILL OPEN (acquisition)
+    A14 shinies     MB1 to MB5
+    tuning   N2 flee values 5 / 3 / 1   E-cap 90% ceiling   UberElite 60 s (playtest)
+    economy  B5 ball and belt prices   LC3 Shop tab   LC4 Shop prices   EI2 Metal Coat, Razor Claw
+
+RESOLVED, ROUND 34 (Jess, 2026-11-13)
+-------------------------------------
+  MB1  belt size is ONE SHARED COUNT: 6 slots at the start, any mix of Poke / Great / Ultra.
+       A belt size upgrade adds slots, not a tier.
+  MB4  the GAME PAUSES during the catch phase (no horde, no damage, the run clock stops).
+  MB5  Great and Ultra UNLOCK BY A ONE-TIME SHOP PURCHASE each, then restock like Poke Balls.
+
+  CATCH PHASE, FINAL SHAPE
+    UberElite down in time ── time left is LOCKED IN here (the catch odds use it)
+         │
+         ▼  game pauses
+    belt strip: [P][P][P][G][G][U]   pick a ball ── throw ── caught ──> new copy, game resumes
+                                                     └ miss ──> Flee +1 ── full ──> it runs off, game resumes
+         belt empty ──> it runs off, game resumes
+
+  WHAT THE PAUSE MEANS ELSEWHERE (flagged, rule details for the build)
+    P1 the rescue roll (4% +4% per minute) uses run time, so it pauses too: no rescue can fire mid-catch.
+    P2 timed effects (statuses, item timers, weather) freeze with the run clock, same as the pause menu.
+    P3 co-op is deferred; a shared pause there is a later question (deferred hook).
+
+  BELT ECONOMY, WHOLE
+    Shop  ── unlock Great (once) ── unlock Ultra (once) ── belt size + (repeatable)
+          ── restock between runs: any mix up to belt size, coins per ball by tier
+    prices: B5, set in the economy pass
+
+  STILL OPEN (acquisition)
+    MB2 how a ball is picked mid-catch (key per tier | click the belt strip)   MB3 default ball
+    A14 shinies
+    tuning   N2 flee values 5 / 3 / 1   E-cap 90% ceiling   UberElite 60 s (playtest)
+    economy  B5 prices   LC3 Shop tab   LC4 Shop prices   EI2 Metal Coat, Razor Claw
+
+RESOLVED, ROUND 35 (Jess, 2026-11-13)
+-------------------------------------
+  MB2  pick a ball by CLICKING the belt strip OR a NUMBER KEY per tier (both).
+  MB3  the catch phase opens with the BEST ball you have selected (Ultra > Great > Poke).
+       Watch: with "best by default", an Ultra goes on a 1 star mon unless you switch.
+  A14  shinies PARKED, to be decided with the GDD 12 endgame shiny tiers.
+
+  ACQUISITION DESIGN STATUS: every design question is decided or parked.
+  What is left is numbers, set in later passes:
+    tuning (playtest)   N2 flee values 5 / 3 / 1   E-cap 90% ceiling   UberElite time limit (60 s start)
+                        R4 Alcremie circling time
+    economy pass        B5 ball, belt and unlock prices   LC4 Link Cable + evolution item prices
+                        new-save starting coins (NS3)
+    build plan details  LC3 which Shop tab   EI2 Metal Coat / Razor Claw current sources
+                        H1, H2 floater escort   P1 to P3 pause side effects   NS1 settings reset
+  Parked: A14 shinies, Exp Candy drops (CD1 to CD4), region type maps (Biomes v2), day/night (#101).

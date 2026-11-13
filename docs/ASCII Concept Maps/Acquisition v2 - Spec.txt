@@ -1,0 +1,279 @@
+ACQUISITION v2: SPEC (final rules only, 2026-11-13)
+=====================================================
+Canonical spec for how a Pokemon is obtained, and how it evolves past Stage 1.
+History and the reasoning behind each rule: "Acquisition v1 - Catch, Candy, Legendaries.txt" (rounds 1 to 35).
+Decision: docs/decisions/2026-11-12-acquisition-no-gacha-catch-candy-legendaries.md
+Tags: every rule is [Approved], not built (code differs, see TODO), unless marked [Open] or [Parked].
+Data facts are from pokedex.js, enemy-classes.js, sprites-meta.js and the pokeapi csvs, read 2026-11-12/13.
+
+0. DIRECTION
+------------
+  The gacha is removed. Luck must not hand out an end-game Pokemon and make starters useless; the game
+  is a horde ARPG with Pokemon investment and meta progression. Getting a Pokemon is earned in runs,
+  and getting a stronger one is earned by evolving it.
+
+1. THE ROUTES
+-------------
+  route          what it gives                          how
+  starter pick   a region's 3 starters                  once, on a new save (section 9)
+  rescue         a Stage 1 of the run's region          UberElite fight, then a catch (sections 2 to 4)
+  Lost Pokemon   a Stage 1 of any region, with an evo   escort it, then a recruit chance (section 5)
+  evolution      everything past Stage 1                candy + the species' requirements (section 6)
+  legendary      a region's legendary                   Loop 6 + Legendary Boss (GDD 12, unchanged)
+
+  Stage 1 = a species with no pre-evolution in pokeapi (evolves_from empty). BABIES COUNT: Pichu,
+  Cleffa, Munchlax, Riolu are Stage 1; Pikachu, Clefairy, Snorlax, Lucario come only by evolving.
+  Exception list (counts as Stage 1 because its pre-evolution is not in the game): Gholdengo.
+  Drop Gholdengo from the list if Gimmighoul ever gets SpriteCollab sprites (then: Gimmighoul +
+  candy + Gimmighoul Coins from the treasure imp -> Gholdengo).
+
+  NO ROUTE (left out for now): the 4 Paradoxes (Iron Leaves, Iron Valiant, Roaring Moon, Walking Wake;
+  BST 590, rarity 5), the 21 mythicals (Arceus stays the endgame superboss, never catchable),
+  Perrserker and Clodsire (need regional forms), and every species with no sprites (Shelmet, Gimmighoul).
+
+2. RESCUE EVENT (in run)
+------------------------
+  CADENCE
+    every minute of run time the game rolls for a rescue: 4% base, +4% after each failed roll,
+    back to 4% after a rescue fires. About 1.4 / 3.1 / 4.7 / 9.8 rescues at 10 / 20 / 30 / 60 min;
+    7.7% of runs see none in the first 10 min; a rescue is certain by roll 25.
+    The roll keeps going during everything (gyms, elites, other events). No cap per run.
+    It runs on the run clock, so it stops while the run clock stops (pause menu, catch phase).
+    It also fires when the belt is empty.
+
+  THE EVENT
+    toast + arrow (like shops and gyms), naming the nature:  "A Timid Dratini needs help!"
+    stays up 60 s; not reached in time = gone ("miss it, it's gone")
+    at the spot: an UBERELITE guards it (above an elite, near a strong gym leader Pokemon)
+      time limit X to defeat it: [Open] set in playtest, start at 60 s
+      defeated in time ......... catch phase (section 3), and its time left is locked in
+      too slow ................. the rescue mon runs off, no catch
+      belt empty when it falls . the UberElite's drops only, no catch
+
+  WHICH SPECIES
+    pool = Stage 1s of the run region's OWN GEN only (Kanto = Gen 1, Johto = Gen 2 ...), wild
+           (rarity 1 to 4), not legendary or mythical, has sprites, + the exception list.
+           Starters stay in the pool (a rescue can give a second copy).
+           Never-evolving strong Stage 1s are in (Snorlax, Lapras, Aerodactyl, the Ultra Beasts);
+           the catch equation (section 3) is their gate.
+    pick   weighted by star: 1 star x8, 2 star x4, 3 star x2, 4 star x1.
+    the nature is rolled when the rescue is created, shown on the toast, and kept by the caught copy.
+
+    region   pool   1 star 2 star 3 star 4 star   share of rescues (1/2/3/4 star %)
+    Kanto     63      32     23      4      4      71 26  2  1
+    Johto     48      24     12     10      2      73 18  8  1
+    Hoenn     63      37     14     12      0      79 15  6  0
+    Sinnoh    38      20     14      4      0      71 25  4  0
+    Unova     62      36     15     10      1      78 16  5  0
+    Kalos     31      14     12      3      2      67 29  4  1
+    Alola     43      13      8     12     10      61 19 14  6
+    Galar     34      23      0      6      5      92  0  6  2
+    Paldea    42      24      3      3     12      86  5  3  5   (+ Gholdengo)
+
+3. CATCH PHASE
+--------------
+    UberElite down in time ── time left locked in: t = time left / X (0 to 1)
+         │
+         ▼  the GAME PAUSES (no horde, no damage; run clock, rescue roll and timed effects stop)
+    belt strip: [P][P][P][G][G][U]
+         pick a ball: click it in the strip, or press its number key (1 Poke, 2 Great, 3 Ultra)
+         the BEST stocked ball starts selected (Ultra > Great > Poke)
+         throw ── caught ──> new unique copy in the Pokebox, game resumes
+                └ miss ───> Flee meter +1 ── full ──> it runs off, game resumes
+         belt empty ──> it runs off, game resumes
+
+  CATCH ODDS (E3, the stepped ladder)
+    P = min(90%, base x ball x (1 + t))         ball: Poke 1 | Great 1.5 | Ultra 2
+    base slides linearly by BST inside each star band, with a drop between bands
+    (for Stage 1s the stars are exact BST bands):
+      star   BST band    base at band bottom -> top
+       1     175-319         80% -> 60%
+       2     320-405         55% -> 40%
+       3     410-490         35% -> 22%
+       4     495-570         18% ->  6%
+    [Open] the 90% ceiling (playtest)
+
+  FLEE METER (by the rescue mon's nature)
+    bucket    misses allowed   natures
+    easy           5           Bold, Calm, Lax, Relaxed, Docile, Gentle, Mild, Quiet
+    default        3           Hardy, Lonely, Brave, Adamant, Impish, Serious, Modest, Bashful,
+                               Sassy, Quirky
+    hard           1           Timid, Careful, Hasty, Jolly, Naive, Rash, Naughty
+    The hard bucket holds 4 of the 5 +Speed natures on purpose: a nature moves movement speed
+    (G.Stats.speedToPx takes it), a big early edge in a hordelike, so they are the prize catches.
+    [Open] bucket values 5 / 3 / 1 (playtest)
+
+  WHAT IT ADDS UP TO (6-ball belt, 50% time left, random nature)
+    1 star ~97% | 2 star ~92% (Poke) | 3 star ~72% (Poke), ~94% (Ultra) | 4 star ~39% (Poke), ~61% (Ultra)
+    For 1 and 2 star mons the UberElite fight is the real gate; ball quality matters from 3 star up.
+
+  CATCHES ARE HELD UNTIL THE RUN ENDS (Jess, 2026-11-13; replaces "temp slot only when the box is full")
+    Every catch (rescue) and recruit (Lost Pokemon) of a run is HELD, not placed in the Pokebox mid-run.
+    No limit on how many are held. When the run ends:
+      run ends by:                         held Pokemon
+      FALL (the team faints) ............. KEPT
+      CRASH (crash save) ................. KEPT
+      QUIT (End Run, sign out) ........... ALL LOST (as a quit loses EVs)
+    Kept ones go to the Pokebox at the main menu:
+      room for all ──> placed, a short "joined your Pokebox" notice
+      not enough room ──> ONE LIST of the held Pokemon: keep (needs a free place) or sell;
+                          whatever is not placed is SOLD at the copy's sell price
+    Shedinja is not a catch: it is made in the Team Menu, and a full box blocks that evolution (section 6).
+    The run's crash save stores the held Pokemon (a new crash-save field, defaults empty).
+
+    [Open] rule details to approve when built:
+      FB4 other run endings: Return Home and Next Region after a loop (BOSS-REWORK 4a), a Legendary
+          Boss win or loss: KEPT (the run ended normally) | other
+      FB5 End Run is a quit, so ending a run by choice loses every catch of that run (the #103 End Run
+          screen already gives no EVs on a quit). Accept | End Run keeps catches, only sign-out loses them
+      FB6 show the held Pokemon during the run (pause menu Run Info, or a counter on the HUD) | hidden
+
+4. BELT AND BALLS
+-----------------
+  belt     ONE SHARED COUNT of balls, any mix of tiers. A new account starts with 6.
+  balls    used up per throw; restocked between runs with coins, any mix up to belt size.
+  tiers    Poke (from the start) | Great 1.5x | Ultra 2x. Great and Ultra each unlock with a one-time
+           Shop purchase, then restock like Poke Balls.
+  meta     the progression dials are belt size (adds slots) and ball quality (the unlocks).
+  [Open]   prices: balls by tier, belt size steps, the two unlocks (economy pass)
+
+5. LOST POKEMON (in run, existing event)
+----------------------------------------
+  The existing events.js event (picked with horde / gold every 240 to 300 s, never twice in a row;
+  120 s to deliver) becomes the second recruit route.
+  pool     Stage 1s THAT HAVE AN EVOLUTION, rarity 1 to 3, not legendary, from ANY region (not the run's
+           region, on purpose), floating species included (the hover filter is dropped): 309 species.
+  toast    names the nature: "A Timid Eevee is lost!" (the nature has no flee role here)
+  delivery heal 50% HP + coins (the old ticket prize becomes coins) + a recruit chance by star:
+           1 star 20% | 2 star 12% | 3 star 6%. A recruit is a new unique copy with the shown nature.
+  [Open]   build detail: floaters escort with ground collision or hover movement; spawn and mark points
+           for floaters (H1, H2 in v1).
+
+6. EVOLUTION (the only way past Stage 1)
+----------------------------------------
+  CANDY
+    Exp Candy is an EVOLUTION METER ONLY: no stats, every run still starts at level 1. Permanent
+    power comes from the evolved form's base stats.
+    sizes   XS 100 | S 800 | M 3,000 | L 10,000 | XL 30,000 XP
+    cost    the mainline XP curve: the species' growth rate, to its evolution level.
+            Abra > Kadabra 2,535 | Bulbasaur > Venusaur 27,021 | Charmander > Charizard 40,007 |
+            median line 33,084 | Dratini > Dragonite 207,968 | Deino > Hydreigon 327,680
+    source  gym leaders drop it.
+    [Parked] drop table, loop scaling, other sources, overflow past the last evolution (CD1 to CD4)
+
+  WHERE AND HOW
+    Evolving happens in the TEAM MENU, when the copy's candy level is reached and every requirement is met.
+    In-run requirements are TRUE / FALSE FLAGS saved on the copy, set during a run. Back at the main menu
+    a popup says the mon is ready ("Runerigus is ready to evolve!").
+    Evolutions added in a later gen are always allowed, in any region (Golbat > Crobat in Kanto).
+    Gym rosters are unaffected: they keep ignoring evolution requirements (line-completion rule unchanged).
+
+  REQUIREMENTS (each on top of candy; mainline requirement, adapted)
+    requirement            n     rule in this game
+    plain level          297     candy only
+    stone                 50     classic stones DROP FROM GYMS
+    trade                 26     a LINK CABLE (one-time use, Shop) or a real trade once multiplayer
+                                 exists (deferred)
+      trade + held item   17     Link Cable AND the held item (Shop), e.g. Onix > Steelix = Cable + Metal Coat
+    friendship            18     N minutes on the TEAM in one run (being on the team is enough);
+                                 [Open] N per species (pokeapi base_happiness is one possible dial)
+    time of day           18     flag: it was the ACTIVE Pokemon while it was day (or night); needs the
+                                 day / night cycle (#101, parked, run time, random start point)
+    knows a move          14     flag: the move was in that copy's RUN MOVESET
+                                 8 moves are not in the game yet and get imported: Mimic, Double Hit,
+                                 Rollout, Taunt, Barb Barrage, Twin Beam, Hyper Drill, Dragon Cheer
+    gender, nature,               the copy's own data (copies.js already rolls gender)
+    Atk vs Def
+    hold item + level      3     the item (Shop): Oval Stone, Razor Claw, Razor Fang
+    party member           2     flag: ran with a Remoraid (Mantine) / a Dark type (Pangoro)
+    random at evolve       4     rolled when it evolves (Wurmple > Silcoon / Cascoon ...)
+    in-run feats           6     flag (#91-1 run counters): take damage, recoil, use a move N times,
+                                 walk N steps, level up in battle
+    newer use-items        6     SHOP: Black Augurite, Tart / Sweet / Syrupy Apple,
+                                 Auspicious / Malicious Armor
+
+  BRANCHING (19 split points)
+    The requirements decide the branch; using an item counts as choosing that branch.
+    When two or more branches qualify at once (Eevee, Yamask), the player picks among them.
+
+  ONE-OFFS
+    Shedinja   evolving Nincada makes Ninjask AND a Shedinja copy. The Shedinja uses up a Poke Ball from
+               stock and copies Nincada's IVs, nature and EVs. A full Pokebox or no ball in stock BLOCKS
+               the evolution until fixed.
+    Kingambit  flag: one Bisharp elite is defeated while Bisharp is on the team. In an Unova-or-later
+               run with Bisharp on the team, the run's FIRST elite is a guaranteed Bisharp, using
+               Bisharp's own band (T4). Kanto to Sinnoh runs never field it.
+    Alcremie   Milcery + Strawberry Sweet (Shop) + flag: the active mon circles for N s. [Open] N (playtest)
+    Accelgor   Karrablast + Link Cable + Shed Shell (Shop). Karrablast + Link Cable alone = Escavalier.
+    Gholdengo  a catchable Stage 1 (section 1 exception list).
+
+7. WONDER GUARD (Shedinja, new combat rule)
+--------------------------------------------
+  Shedinja has a FIXED 1 HP (a per-species exception in the G.Stats HP formula).
+    typed hit, super-effective ........... lands (1 HP = faint)
+    typed hit, not super-effective ....... 0 damage, its side effects still roll
+    untyped hit .......................... 0 damage, side effects still roll
+    type-immune hit (Normal, Fighting) ... 0 damage, NO side effects (slice 4 immunity rule, unchanged)
+    status move .......................... lands
+    burn, poison, confusion, weather,
+    recoil, hazards, traps, other DoT .... goes through
+    gym leaders .......................... same rule (Lt. Surge and Erika have no move that can hit it;
+                                           accepted)
+  order: type chart first (x0 ends the hit), then Wonder Guard (damage to 0, side effects on).
+  HP upgrades on Shedinja (HP cards, HP IVs and EVs, heals) show GREYED OUT, "no effect".
+  A revive brings it back at 1 HP. The game's sandstorm and snow damage hit Bug / Ghost, so weather
+  faints it (mainline-accurate). Side effects rolling on blocked hits departs from mainline (Jess).
+
+8. GACHA REMOVAL
+----------------
+  Removed entirely: banners, pulls, pity, the Shop's Pokemon tab content (gacha.js, gacha-ui.js).
+  Tickets (x1 shown as "Pokeball", x10 as "Master Ball") are retired. Everything that paid tickets
+  pays COINS instead: wild kills (pickup.js TICKET_RATE), locked chests, the Lost Pokemon prize,
+  the Gholdengo treasure imp, daily and weekly missions, achievements. Ticket counts leave the HUD,
+  icons and summary.
+  The rarity field (1 to 5) stays: it is the star tier, the spawn rule (< 5) and the sell price.
+  [Parked] shinies: the gacha was the main source; decided with the GDD 12 endgame shiny tiers.
+
+9. NEW SAVE
+-----------
+  The rework ships with a NEW SAVE, no migration: a one-off owner exception to CLAUDE.md "Save-data
+  migration safety" (precedent: docs/decisions/2026-11-03-pokebox-is-a-clean-save-checkpoint.md).
+    load ── no save ─────────────────────────────> new save
+         ── save older than the acquisition version ──> copied to a backup key (once)
+                                                        a notice on the menu
+                                                        new save
+         ── current save ─────────────────────────> loads as normal
+  Detection is a save version bump (js/core/db.js has VERSION and the K_PREBOX backup pattern).
+  Nothing carries over (no copies, tickets, coins, Pokedex seen list or settings).
+  A new save: pick a REGION (all 9 offered, not tied to which regions are open), get its 3 starters
+  (grass, fire, water), plus a coin amount set in the economy pass.
+  Note: Kanto has 5 species flagged starter (Psyduck and Slowpoke are test flags); the trio is the
+  grass / fire / water three.
+
+10. SHOP, ACQUISITION STOCK
+---------------------------
+  balls        restock Poke / Great / Ultra; unlock Great; unlock Ultra; belt size +
+  evolution    Link Cable | 17 trade held items | Shed Shell | the 6 newer use-items
+               (Metal Coat and Razor Claw already exist as items; the other 22 are new)
+  not sold     classic evolution stones (gym drops)
+  [Open]       which tab (the freed Pokemon tab is a candidate); every price (economy pass);
+               where Metal Coat and Razor Claw come from today and whether that source stays
+
+11. OPEN, BY PASS
+-----------------
+  playtest       UberElite time limit (60 s start) | 90% catch ceiling | flee values 5 / 3 / 1 |
+                 Alcremie's circling time | friendship minutes per species
+  economy pass   ball, belt and unlock prices | Link Cable and evolution item prices | new-save coins
+  held catches   FB4 other run endings | FB5 End Run loses catches | FB6 show them in the run
+  build plans    Shop tab | Metal Coat / Razor Claw sources | floater escort (H1, H2) |
+                 pause side effects in co-op (deferred) | whether settings live in the save key
+  parked         shinies | Exp Candy drops | region type maps (Biomes v2) | day / night (#101)
+
+12. BUILD WORK THIS SPAWNS (each its own prose plan with a named tests section, propose and approve)
+----------------------------------------------------------------------------------------------------
+  gacha and ticket removal + coin payouts          new save version, backup and notice (db.js)
+  rescue event + UberElite + catch phase + belt    Lost Pokemon pool, nature toast, recruit odds
+  ball unlocks, restock and belt size in the Shop  starter pick on a new save
+  candy + Team Menu evolve + in-run flags + popup  the 22 new items + Link Cable
+  the 8-move import (described.json, learnsets)    Wonder Guard + Shedinja's fixed 1 HP
+  the guaranteed Bisharp elite (elites.js)         day / night cycle (#101) for the 18 time-of-day lines

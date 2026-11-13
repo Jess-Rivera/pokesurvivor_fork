@@ -73,6 +73,26 @@ Direction: the gacha goes. Luck should not hand out an end-game mon and make sta
 - A13 (2026-11-13): a rescue offers only the region's own gen (Kanto = Gen 1, Johto = Gen 2 ...).
 - A1 (2026-11-13): the gacha is removed entirely (banners, pulls, pity).
 - New save (2026-11-13): the acquisition rework ships with a new save, no migration (settles A3 and C2). A one-off owner exception to CLAUDE.md "Save-data migration safety", like docs/decisions/2026-11-03-pokebox-is-a-clean-save-checkpoint.md.
-Still open: NS1 to NS4 (what carries over, the old save, the new save's start, how a new save is detected), A13b (how a rescue picks within the pool), the UberElite time limit, N2 (flee values), the odds ceiling, EV4, A14 (shinies), A15 (species with no route), L3, the hover filter, B5, ball tier unlocks, LC3, LC4, EI2, T5b values, the day/night design. Not built. The region type maps are parked and feed tier 1 later.
+- NS1, NS2, NS4 (2026-11-13): nothing carries over; the old save is kept in the browser as a backup with a notice; a save version bump detects it (same pattern as the Pokebox reset in js/core/db.js).
+- A13b (2026-11-13): a rescue picks its species weighted by star (1 star most common); weights to set.
+- UberElite time limit (2026-11-13): set in playtest, starting at 60 s.
+- NS3 (2026-11-13): a new save picks a region and gets all 3 of its starters, plus coins set in the economy pass.
+- W1 (2026-11-13): rescue star weights 8 / 4 / 2 / 1 (a Kanto run offers a 4 star about 1 time in 20).
+- NS3b (2026-11-13): the starter pick offers all 9 regions' trios.
+- NS3c (2026-11-13): starters stay in the rescue pool.
+- Hover filter (2026-11-13): dropped; floating species can be Lost Pokemon (pool 267 to 309). A code change: how floaters escort is set in the build plan.
+- EV4 (2026-11-13): no cap on rescues per run.
+- L3 (2026-11-13): the Lost Pokemon's nature shows on its toast.
+- A15 (2026-11-13): the 4 Paradoxes and the 21 mythicals are left out (no acquisition route for now).
+- Ball tiers (2026-11-13): once Great or Ultra unlocks, the belt is mixed; the player picks which ball to throw each time.
+- MB1 (2026-11-13): belt size is one shared count (6 slots to start, any mix of tiers).
+- MB4 (2026-11-13): the game pauses during the catch phase; the run clock, the rescue roll and timed effects stop with it.
+- MB5 (2026-11-13): Great and Ultra each unlock by a one-time Shop purchase, then restock like Poke Balls.
+- MB2 (2026-11-13): a ball is picked by clicking the belt strip or by a number key per tier.
+- MB3 (2026-11-13): the catch opens with the best stocked ball selected.
+- A14 shinies PARKED (2026-11-13), to be decided with the GDD 12 endgame shiny tiers.
+- Full Pokebox (2026-11-13): a catch or recruit with no free place waits in a temporary slot for the rest of the run; at the main menu a prompt asks to make space, and anything not placed is sold.
+- Held catches (2026-11-13, replaces the full-box-only temp slot): every catch and recruit of a run is held until the run ends. A fall or a crash keeps them; a quit (End Run, sign out) loses them all. At the main menu they join the Pokebox; if there is not room, one list asks keep or sell, and the rest are sold. Open: other run endings (FB4), End Run counting as a quit (FB5), showing held catches mid-run (FB6).
+Design is complete. Still open are numbers only: flee values, the odds ceiling, the UberElite time limit, Alcremie's time (playtest); ball, belt, unlock, Link Cable and item prices, starting coins (economy pass); plus build-plan details (Shop tab, Metal Coat and Razor Claw sources, floater escort, pause side effects, settings reset). Not built. Parked: shinies, Exp Candy drops, region type maps, day/night (#101).
 
-Canonical: docs/ASCII Concept Maps/Acquisition v1 - Catch, Candy, Legendaries.txt
+Canonical: docs/ASCII Concept Maps/Acquisition v2 - Spec.txt (history: Acquisition v1 - Catch, Candy, Legendaries.txt)
