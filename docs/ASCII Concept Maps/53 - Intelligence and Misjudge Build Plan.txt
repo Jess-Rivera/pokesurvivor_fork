@@ -2,7 +2,8 @@
 Issue #53 (#49 slice 4). Decision: 2026-11-13-53-leader-intelligence-one-score-with-overrides.
 Spec: docs/LEADER-AI.md "The Decider (#49)" (MISJUDGMENT, INTELLIGENCE AND STYLE) and "Authoring a leader".
 Curves: docs/ASCII Concept Maps/53 - How Intelligence Drives the Four Settings.txt.
-Status: APPROVED 2026-11-13 (Jess), to build in a fresh chat. Every decision below is settled.
+Status: BUILT 2026-11-13 (Quick), with the plan check's A1 to A3, T1 and T2 (map "53 - Plan Check"). Awaiting check.js and
+the mutants on Jess's machine, then his feel test.
 
 FOR A FRESH CHAT (Jess, 2026-11-13: build this in a new chat)
   decided   method C (intelligence + overrides), five settings, two-line curves, no perfect top, reflex floor 0.1 s,

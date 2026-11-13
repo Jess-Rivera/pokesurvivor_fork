@@ -136,6 +136,9 @@ function infoOf(name, level) {
     e = K[idx];
   return { idx, id: e.id, leader: e.leader, badge: e.badge, arena: e.arena, boost: e.boost || null, dex: e.signatures[0].line[0].dex, level, openedAt: 0 };
 }
+// #53: the sections written before #53 keep testing what they test, so open() pins its two default rule changes off (misjudge 0,
+// aimError 0: R1 and R2 would move their traces). Section 17 and the sharpness duel turn this off where they need the defaults.
+let pinOldDefaults = true;
 /** A fresh run state and a fixed seed, then the named gym's gate at loop `loop`, entered. You stand `dist` px south of the arena. */
 function open(name, loop, dist = 5000, level = 12) {
   seed = 4242;
@@ -157,6 +160,8 @@ function open(name, loop, dist = 5000, level = 12) {
   const a = G.GymArena.arena;
   human.x = a.x;
   human.y = a.y + dist;
+  const ai = G.GymArena.leaderAI;
+  if (pinOldDefaults && ai && ai.set) Object.assign(ai.set, { misjudge: 0, aimError: 0 });
   return a;
 }
 let frameNo = 0;
@@ -2442,13 +2447,24 @@ if (G.LeaderPlanner) {
       };
       // the harness never steps the move sim (section 9), so no shape resolves a hit: a hit of his is a damaging cast that starts
       // with you inside its reach. You stand still, so the planner's own hit chance for it is 1 (LEADER-AI COST)
+      // #53 sharpness duel: a hit's size in max-HP fractions, as the leader's last snapshot reads it. 'his': his move on you;
+      // 'yours': your move on his mon on the field (Belief's guess while the move is not revealed)
+      const hitOf = (ai, moveId, side) => {
+        const w = ai && ai.world;
+        if (!w) return 0;
+        const list = side === 'his' ? w.slots.flatMap((s) => s.moves) : w.you.threats || [],
+          v = list.find((m) => m.id === moveId) || (side === 'yours' ? list.find((m) => m.id == null) : null);
+        return v ? v.hitFraction : 0;
+      };
       let counting = null;
       G.SimBus.on('move:cast', (ev) => {
         if (!counting || ev.ownerId == null) return;
         const e = counting.team.find((m) => m.id === ev.ownerId),
           d = G.MoveDefs[ev.moveId];
         if (!e || !d || !(d.basePower > 0)) return;
-        if (G.U.dist(e.x, e.y, human.x, human.y) <= reachOf(d) + (human.r || 0)) counting.n++;
+        if (G.U.dist(e.x, e.y, human.x, human.y) > reachOf(d) + (human.r || 0)) return;
+        counting.n++;
+        counting.dealt += hitOf(G.GymArena.leaderAI, ev.moveId, 'his');
       });
       const duel = ({ main = 'ember', alt = 'tackle', cycle = false, secs = 30, duelSeed = 7, trace = null } = {}) => {
         const seed0 = AI.seed;
@@ -2457,7 +2473,7 @@ if (G.LeaderPlanner) {
         const a = open('Brock', 1, 200);
         youActive = 1;
         Object.assign(human, { hp: 100, maxHp: 100 });
-        counting = { team: a.team.members, n: 0 };
+        counting = { team: a.team.members, n: 0, dealt: 0 };
         const ai = G.GymArena.leaderAI,
           done = [];
         const step0 = ai.stepState.bind(ai);
@@ -2476,7 +2492,8 @@ if (G.LeaderPlanner) {
           mainShots = 0,
           mainThrough = 0,
           hits = 0,
-          punish = 0;
+          punish = 0,
+          taken = 0;
         const spend = (i) => {
           const L = G.MoveSim.list();
           if (L.indexOf(flying[i].s) >= 0) L.splice(L.indexOf(flying[i].s), 1);
@@ -2515,6 +2532,7 @@ if (G.LeaderPlanner) {
             const sh = flying[i],
               on = a.team.active;
             if (on && !on.dead && G.U.dist(sh.s.x, sh.s.y, on.x, on.y) <= sh.s.shape.r + (on.r || 0)) {
+              taken += hitOf(ai, sh.s.cast.moveId, 'yours');
               if (sh.main) {
                 mainShots++;
                 mainThrough++;
@@ -2540,10 +2558,11 @@ if (G.LeaderPlanner) {
         }
         AI.seed = seed0;
         youActive = 0;
+        const dealt = counting.dealt;
         counting = null;
         Object.assign(human, { hp: 1e6, maxHp: 1e6 });
         const avoided = mainShots ? (mainShots - mainThrough) / mainShots : 0;
-        return { ai, done, mainCasts, mainShots, mainThrough, avoided, hits, punish, rate: mainCasts ? punish / mainCasts : 0 };
+        return { ai, done, mainCasts, mainShots, mainThrough, avoided, hits, punish, rate: mainCasts ? punish / mainCasts : 0, trade: dealt - taken };
       };
       // Bait emerges: a bait plan whose draw (or wait for your Ember), dodge and use steps all completed, in order, and hits during
       // Ember's cooldown
@@ -2594,6 +2613,28 @@ if (G.LeaderPlanner) {
       const f1 = sum(firsts),
         f3 = sum(thirds);
       ok(f1.shots > 0 && f3.shots > 0 && f3.avoided > f1.avoided, '16e: learning: fight 3 avoids more of your Fire Blasts than fight 1: ' + pct(f3.avoided) + ' of ' + f3.shots + ' vs ' + pct(f1.avoided) + ' of ' + f1.shots);
+      // #53 SHARPNESS DUEL (D3, written at #53's start): Brock's loop 1 team with a test growth of 0.1, against your Fire Blast and
+      // Ember cycle, the same 5 seeds. Only the loop his settings read changes: loop 6 holds intelligence 1.0 (0.5 + 0.1 x 5), loop 1
+      // the default 0.5. His HP trade (his hits' size on you minus your hits' size on him, max-HP fractions) must be better at loop
+      // 6. A fail is a tuning finding for #39, never fixed by changing this test.
+      const sharpnessDuel = ({ loop, intelligenceGrowth, duelSeed }) => {
+        const settings0 = AI.settings,
+          pin0 = pinOldDefaults,
+          growth = { intelligence: { base: AI.BASE.intelligence, growth: intelligenceGrowth } };
+        AI.settings = (g) => settings0(Object.assign({}, g, { loop, ai: Object.assign({}, g && g.ai, growth) }));
+        pinOldDefaults = false;
+        try {
+          return duel({ main: 'fire-blast', alt: 'ember', cycle: true, secs: 40, duelSeed });
+        } finally {
+          AI.settings = settings0;
+          pinOldDefaults = pin0;
+        }
+      };
+      const sharp = SEEDS.map((duelSeed) => sharpnessDuel({ loop: 6, intelligenceGrowth: 0.1, duelSeed })),
+        dull = SEEDS.map((duelSeed) => sharpnessDuel({ loop: 1, intelligenceGrowth: 0.1, duelSeed })),
+        tradeOf = (runs) => runs.reduce((t, r) => t + r.trade, 0);
+      ok(near(sharp[0].ai.set.intelligence, 1) && near(dull[0].ai.set.intelligence, 0.5) && near(sharp[0].ai.set.reflex, 0.12), '16e (#53): the sharpness duel reads loop 6 at intelligence 1.0 and loop 1 at 0.5, on the same loop 1 team');
+      ok(tradeOf(sharp) > tradeOf(dull), '16e (#53, D3): sharpness duel: loop 6 Brock trades better than loop 1 Brock over 5 seeds: ' + tradeOf(sharp).toFixed(3) + ' vs ' + tradeOf(dull).toFixed(3));
       // determinism: one seed, one trace
       const t1 = [],
         t2 = [];
@@ -2602,6 +2643,204 @@ if (G.LeaderPlanner) {
       ok(JSON.stringify(t1) === JSON.stringify(t2), '16e: one seed, one trace (' + t1.length + ' samples)');
       ok(!/gapClose|decide|triggers|swapMargin/.test(Object.getOwnPropertyNames(AI.prototype).filter((k) => ['gapClose', 'decide', 'triggers', 'swapMargin'].includes(k)).join()), '16e: the old swap choice and the gap-closing dodge are gone');
       ok(['stay', 'margin', 'ccLeft', 'ccScore', 'lowHp', 'lowTo', 'lowScore', 'matchupX', 'matchupHp', 'gapClose'].every((k) => !(k in AI.BASE)) && AI.BASE.swapWill === 1, '16e: their settings are gone; swapWill 1 is the baseline');
+    }
+  }
+  // ---------------- 17. #53 (#49 slice 4): intelligence, its curves and misjudge (docs/LEADER-AI.md "The Decider (#49)") ----------------
+  // Written at the slice's start (issue #53). Expected numbers are hand-derived from decision
+  // 2026-11-13-53-leader-intelligence-one-score-with-overrides and the map "53 - Intelligence and Misjudge Build Plan", never from
+  // code output: two straight lines per setting, meeting at intelligence 0.5. At 0 / 0.25 / 0.5 / 0.75 / 1: misjudge 0.30 0.20
+  // 0.10 0.07 0.04; reflex 0.300 0.225 0.150 0.135 0.120; dodgeRead 2 4 6 7 8; memoryUse 0.150 0.325 0.500 0.600 0.700; aimError
+  // 40 25 10 7 4. The sharpness duel (D3) sits in 16e, since it reuses that duel.
+  {
+    const built53 = typeof AI.settingFromIntelligence === 'function' && !!AI.INTELLIGENCE_CURVES;
+    ok(built53, '17: #53 is built: G.LeaderAI.settingFromIntelligence and INTELLIGENCE_CURVES defined');
+    if (built53) {
+      const FIVE = ['misjudge', 'reflex', 'dodgeRead', 'memoryUse', 'aimError'],
+        AT = [0, 0.25, 0.5, 0.75, 1],
+        WANT = {
+          misjudge: [0.3, 0.2, 0.1, 0.07, 0.04],
+          reflex: [0.3, 0.225, 0.15, 0.135, 0.12],
+          dodgeRead: [2, 4, 6, 7, 8],
+          memoryUse: [0.15, 0.325, 0.5, 0.6, 0.7],
+          aimError: [40, 25, 10, 7, 4],
+        },
+        gymWith = (ai, loop) => ({ leader: 'Test', loop, ai });
+      // 17a. the curves, their limits and the default
+      const offCurve = [];
+      for (const k of FIVE)
+        AT.forEach((x, i) => {
+          const v = AI.settingFromIntelligence(k, x);
+          if (!near(v, WANT[k][i])) offCurve.push(k + ' at ' + x + ' = ' + v);
+        });
+      ok(!offCurve.length, '17a: each curve at 0, 0.25, 0.5, 0.75 and 1' + (offCurve.length ? ': ' + offCurve.join(', ') : ''));
+      ok(Object.keys(AI.INTELLIGENCE_CURVES).sort().join() === FIVE.slice().sort().join(), '17a: the curves drive exactly the five settings: ' + Object.keys(AI.INTELLIGENCE_CURVES).join(', '));
+      ok(AI.BASE.intelligence === 0.5 && near(AI.REFLEX_FLOOR_SECONDS, 0.1) && near(AI.INTELLIGENCE_GROWTH_MAX, 0.2) && AI.OVERRIDE_WARN_AT === 3, '17a: default intelligence 0.5, reflex floor 0.1 s, growth limit 0.2 per loop, a warning at 3 overrides');
+      // 17b. intelligence for a loop: base + growth x (loop - 1), held inside 0 to 1
+      const loops = [1, 2, 3, 4, 5, 6].map((loop) => AI.settings(gymWith({ intelligence: { base: 0.5, growth: 0.1 } }, loop)).intelligence);
+      ok(loops.every((v, i) => near(v, 0.5 + 0.1 * i)), '17b: base 0.5, growth 0.1, loops 1 to 6: ' + loops.join(' '));
+      const held = AI.settings(gymWith({ intelligence: { base: 0.9, growth: 0.1 } }, 6));
+      ok(near(held.intelligence, 1) && near(held.reflex, 0.12), '17b: base 0.9, growth 0.1 holds at 1.0: ' + held.intelligence);
+      const top = AI.settings(gymWith({ intelligence: { base: 0.5, growth: 0.1 } }, 6)),
+        topOff = FIVE.filter((k) => !near(top[k], WANT[k][4]));
+      ok(!topOff.length, "17b: loop 6 at 1.0 reads every curve's top" + (topOff.length ? ': ' + topOff.join(', ') : ''));
+      ok(near(AI.settings(gymWith({ intelligence: 0.25 }, 4)).reflex, 0.225), '17b: a plain number is a base with no growth');
+      // 17c. an override leaves the curve and its growth; the other four follow the curve
+      const over = [1, 3, 6].map((loop) => AI.settings(gymWith({ intelligence: { base: 0.5, growth: 0.1 }, reflex: 0.13 }, loop)));
+      ok(over.every((s) => s.reflex === 0.13), '17c: an authored reflex 0.13 stays 0.13 at loops 1, 3 and 6');
+      ok(near(over[0].misjudge, 0.1) && near(over[2].misjudge, 0.04) && near(over[2].dodgeRead, 8) && near(over[2].memoryUse, 0.7) && near(over[2].aimError, 4), '17c: while the other four follow the curve');
+      ok(AI.settings(gymWith({ reflex: { 1: 0.2, 3: 0.14 } }, 4)).reflex === 0.14, '17c: an override keyed by loop takes its last earlier loop');
+      // 17d. the default leader, Misty and Brock (none authors intelligence): R1 and R2, the other three unchanged
+      const defaults = [
+        ['the default leader', AI.settings({ loop: 1 })],
+        ['Misty loop 2', AI.settings(Object.assign({}, K[gymIdx('Misty')], { loop: 2 }))],
+        ['Brock loop 1', AI.settings(Object.assign({}, K[gymIdx('Brock')], { loop: 1 }))],
+      ];
+      for (const [who, s] of defaults)
+        ok(near(s.misjudge, 0.1) && s.aimError === 10 && s.reflex === 0.15 && s.dodgeRead === 6 && s.memoryUse === 0.5, '17d: ' + who + ': misjudge 0.10, aimError 10, reflex 0.15, dodgeRead 6, memoryUse 0.5: ' + FIVE.map((k) => s[k]).join(' '));
+      // 17e. fractional dodge reads: whole reads per bag, readCarry adds the fraction at each new bag (a counter, not dice)
+      const perBag = (reads, seed, bags) => {
+        const b = new AI.Bag(reads, seed),
+          out = [];
+        for (let k = 0; k < bags; k++) {
+          let n = 0;
+          for (let i = 0; i < AI.BAG; i++) n += b.next() ? 1 : 0;
+          out.push(n);
+        }
+        return out;
+      };
+      const frac = perBag(6.4, 3, 10);
+      ok(frac.join(' ') === '6 6 7 6 7 6 6 7 6 7', '17e: dodgeRead 6.4, bags 1 to 10: ' + frac.join(' '));
+      ok(frac.reduce((t, n) => t + n, 0) === 64, '17e: exactly 64 reads per 100 threats');
+      // a whole count shuffles as the Bag did before #53: the same seeded order (that shuffle, copied here as the reference)
+      const oldOrder = (reads, seed, count) => {
+        let s = seed >>> 0;
+        const rng = () => {
+          let z = (s = (s + 0x6d2b79f5) >>> 0);
+          z = Math.imul(z ^ (z >>> 15), z | 1);
+          z ^= z + Math.imul(z ^ (z >>> 7), z | 61);
+          return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+        };
+        const out = [];
+        while (out.length < count) {
+          const a = [];
+          for (let i = 0; i < AI.BAG; i++) a.push(i < reads);
+          for (let i = AI.BAG - 1; i > 0; i--) {
+            const j = Math.floor(rng() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+          }
+          out.push(...a);
+        }
+        return out.slice(0, count).join();
+      };
+      const newOrder = (reads, seed, count) => {
+        const b = new AI.Bag(reads, seed);
+        return Array.from({ length: count }, () => b.next()).join();
+      };
+      ok([1, 2, 3, 4, 5].every((sd) => newOrder(6, sd, 30) === oldOrder(6, sd, 30) && newOrder(7, sd, 30) === oldOrder(7, sd, 30)), '17e: a whole dodgeRead 6 (and predictCap 7) gives the same sequence as before #53, for 5 seeds');
+      // 17f. the validator (D2, T1, T2): refused, then accepted
+      const misty = K[gymIdx('Misty')],
+        errs = (ai) => G.Gyms.validate(Object.assign({}, misty, { ai })),
+        n0 = errs(undefined).length,
+        refused = (ai, re) => errs(ai).some((s) => re.test(s));
+      ok(refused({ intelligence: 1.5 }, /ai intelligence/), '17f: intelligence 1.5 is refused');
+      ok(refused({ intelligence: { base: 0.5, growth: 0.3 } }, /ai intelligence/), '17f: growth 0.3 is refused (D2: 0 to 0.2 per loop)');
+      ok(refused({ intelligence: { base: 0.5, growth: -0.1 } }, /ai intelligence/), '17f: negative growth is refused (D2)');
+      ok(refused({ intelligence: { base: 1.2 } }, /ai intelligence/) && refused({ intelligence: { base: 0.5, speed: 1 } }, /ai intelligence/), '17f: a base above 1, or an unknown key in it, is refused');
+      ok(refused({ misjudge: 2 }, /ai misjudge is from 0 to 1/), '17f: misjudge 2 is refused');
+      ok(refused({ reflex: 0.05 }, /ai reflex is at least 0\.1/) && refused({ reflex: { 1: 0.2, 3: 0.05 } }, /ai reflex is at least/), '17f: a reflex under the 0.1 s floor is refused, keyed by loop too');
+      ok(refused({ dodgeRead: 11 }, /ai dodgeRead is from 0 to 10/), '17f: dodgeRead 11 is refused');
+      ok(refused({ triggers: [{ on: 'start', set: { intelligence: 0.9 } }] }, /set intelligence does nothing/), '17f: T1: a trigger may not set intelligence (it resolves once, at fight start)');
+      ok(refused({ triggers: [{ on: 'start', set: { reflex: 0.05 } }] }, /set reflex is at least/), '17f: T2: a trigger may not set reflex under the floor');
+      const fine = [
+          { intelligence: 0.7 },
+          { intelligence: { base: 0.4, growth: 0.2 } },
+          { intelligence: { growth: 0.1 } },
+          { misjudge: 0.2, reflex: 0.1, dodgeRead: 6.4 },
+          { triggers: [{ on: 'start', set: { reflex: 0.2, misjudge: 0.3 } }] },
+        ],
+        notFine = fine.filter((ai) => errs(ai).length !== n0);
+      ok(!notFine.length, '17f: and accepts the shapes above' + (notFine.length ? ': refused ' + JSON.stringify(notFine) : ''));
+      // 17g. the override warning (a dev warning at fight start, never a block)
+      const warnOf = (ai) => AI.intelligenceOverrideWarning(gymWith(ai, 1)),
+        three = warnOf({ reflex: 0.2, dodgeRead: 7, memoryUse: 0.6 });
+      ok(typeof three === 'string', '17g: 3 of the five authored directly: a warning: ' + three);
+      ok(warnOf({ reflex: 0.2, dodgeRead: 7, aggression: 0.9, range: 200 }) === null && warnOf(undefined) === null, '17g: 2 of them (plus style settings), or none: no warning');
+      const arenaCode = fs.readFileSync(process.env.LA_ARENA || path.join(R, 'js/systems/gym-arena.js'), 'utf8');
+      ok(/intelligenceOverrideWarning\(first\.gym\)/.test(arenaCode), '17g: the arena raises it at fight start, beside teamItemWarn');
+      // 17h. A1: Belief's snapshot carries misjudge, and the overlay shows the chosen plan's noise
+      pinOldDefaults = false;
+      open('Misty', 2, 40);
+      const mistyAI = G.GymArena.leaderAI;
+      run(1);
+      pinOldDefaults = true;
+      ok(!!mistyAI.world && near(mistyAI.world.misjudge, 0.1), "17h: Belief's snapshot carries misjudge 0.1: " + (mistyAI.world && mistyAI.world.misjudge));
+      ok(mistyAI.overlayLines().some((l) => /^ {2}noise -?\d\.\d\d \(misjudge 0\.10\)$/.test(l)), "17h: the overlay shows the chosen plan's noise: " + mistyAI.overlayLines().join(' / '));
+      // 17i. the noise in the planner, on section 15's hand-made worlds. One draw per plan path per tick: the draw count equals the
+      // plan count, so a plan scored for two goals carries one noise (a draw per goal would read more)
+      const counted = (seed) => {
+        const source = P.seeded(seed);
+        let reads = 0;
+        const draw = () => {
+          reads++;
+          return source();
+        };
+        draw.reads = () => reads;
+        return draw;
+      };
+      const quiet = counted(9),
+        quietZero = counted(9);
+      P.choose(world(), null, null, quiet);
+      P.choose(world({ top: { misjudge: 0 } }), null, null, quietZero);
+      ok(quiet.reads() === 0 && quietZero.reads() === 0, '17i: with misjudge absent or 0 the noise source is never read');
+      const source = counted(9),
+        noisy = P.choose(world({ top: { misjudge: 0.1 } }), null, null, source);
+      ok(source.reads() === noisy.nodes, '17i: one draw per plan path per tick: ' + source.reads() + ' draws for ' + noisy.nodes + ' plans');
+      ok(noisy.ranking.every((c) => Math.abs(c.noise) <= 1 && Math.abs(c.misreadCost - c.cost) <= 0.1 * Math.abs(c.cost) + 1e-12), '17i: every misread cost is within misjudge (0.1) of its cost');
+      ok(noisy.ranking.some((c) => c.misreadCost !== c.cost) && noisy.ranking.every((c) => near(c.score, c.value - c.misreadCost)), '17i: the ranking reads the misread cost, and the true cost is kept');
+      const replay = (seed) => JSON.stringify(P.choose(world({ top: { misjudge: 0.1 } }), null, null, P.seeded(seed)).ranking.map((c) => [c.goal, c.misreadCost]));
+      ok(replay(1) === replay(1) && replay(1) !== replay(2), '17i: one seed, one misread; another seed, another');
+      ok(noisy.chosenPlanNoise === (noisy.pick ? noisy.pick.noise : 0), "17i: choose returns the pick's noise for the overlay");
+      // 17j. its own source: randomness's draws and the dodge bag are untouched by 2 s of misjudged plans; pinned at misjudge 0, a
+      // fight never reads it (so 15j and 16e replay as before)
+      const seed0 = AI.seed;
+      AI.seed = 7;
+      pinOldDefaults = false;
+      open('Brock', 1, 160);
+      const brock7 = G.GymArena.leaderAI;
+      run(2);
+      pinOldDefaults = true;
+      ok(brock7.misjudgeSource !== brock7.draw && brock7.draw() === P.seeded((7 ^ 0x2545f491) >>> 0)() && brock7.bag.s === 7, "17j: misjudge has its own source: randomness's next draw is still its first, the dodge bag unread");
+      ok(!!brock7.choice && brock7.choice.ranking.some((c) => c.misreadCost !== c.cost), '17j: at misjudge 0.1 its plans are misread in a fight');
+      open('Brock', 1, 160);
+      const pinned7 = G.GymArena.leaderAI,
+        source7 = pinned7.misjudgeSource;
+      let pinnedReads = 0;
+      pinned7.misjudgeSource = () => {
+        pinnedReads++;
+        return source7();
+      };
+      run(2);
+      AI.seed = seed0;
+      ok(pinnedReads === 0, '17j: at misjudge 0 a fight never reads the noise source: ' + pinnedReads + ' reads');
+      // 17k. a real fight with misjudge on: one seed, one trace; another seed, another trace
+      const noiseTrace = (duelSeed) => {
+        const s0 = AI.seed;
+        AI.seed = duelSeed;
+        pinOldDefaults = false;
+        open('Brock', 1, 160);
+        const ai = G.GymArena.leaderAI,
+          out = [];
+        for (let f = 0; f < 10 * 60; f++) {
+          if (f % 90 === 0) G.SimBus.emit('move:cast', { moveId: 'vine-whip', ownerId: null, ownerUid: you[0].copyUid, ownerSlot: you[0].teamSlot, rival: false, x: human.x, y: human.y, aim: 0, enemy: false });
+          frame();
+          if (f % 15 === 0) out.push([ai.plan ? ai.plan.goal : null, ai.choice ? +ai.choice.chosenPlanNoise.toFixed(6) : null]);
+        }
+        pinOldDefaults = true;
+        AI.seed = s0;
+        return JSON.stringify(out);
+      };
+      ok(noiseTrace(7) === noiseTrace(7), '17k: misjudge on: one seed, one trace');
+      ok(noiseTrace(7) !== noiseTrace(8), '17k: and another seed gives another trace');
     }
   }
 }

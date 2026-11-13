@@ -188,6 +188,9 @@ G.GymArena = (() => {
       // slice 7b (Q2): Brass Knuckles or Sharp Scissors on fewer than 3 mons do nothing; a dev warning, never a block
       const warn = G.Gyms.teamItemWarn(first.gym.leader, first.gym.runItems, n);
       if (warn) console.warn('[Gym] ' + warn);
+      // #53: a leader that authors 3 or more of the five intelligence settings directly; a dev warning, never a block
+      const overrideWarn = G.LeaderAI.intelligenceOverrideWarning(first.gym);
+      if (overrideWarn) console.warn('[Gym] ' + overrideWarn);
     } else e = G.Boss.make(first, x, y); // the old body: one mon, as before (slice 12 moves it)
     e.flying = false; // collides with walls like you, so your shots can reach it
     G.EnemyMgr.add(e);

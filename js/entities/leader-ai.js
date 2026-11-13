@@ -84,6 +84,10 @@ G.LeaderAI = class LeaderAI {
     this.draw = G.LeaderPlanner.seeded(
       LeaderAI.seed != null ? (LeaderAI.seed ^ 0x2545f491) >>> 0 : (Date.now() ^ 0x2545f491) >>> 0
     );
+    // #53: misjudge's own seeded source, separate from the dodge bag, the prediction bag and `randomness`
+    this.misjudgeSource = G.LeaderPlanner.seeded(
+      LeaderAI.seed != null ? (LeaderAI.seed ^ 0x85ebca6b) >>> 0 : (Date.now() ^ 0x85ebca6b) >>> 0
+    );
     this.swingRef = this.conf; // confidence at the last swing line
     this.swingAt = -Infinity;
     this.lineSet = auth.lines || {};
@@ -255,7 +259,8 @@ G.LeaderAI = class LeaderAI {
       choice = G.LeaderPlanner.choose(
         world,
         running ? { goal: was.goal, step: running, invested: this.clock - this.goalSince } : null,
-        this.draw
+        this.draw,
+        this.misjudgeSource
       );
     this.world = world;
     this.choice = choice;
@@ -764,7 +769,8 @@ G.LeaderAI = class LeaderAI {
     );
   }
   /** The ?dev overlay's plan lines (LEADER-AI OVERLAY): the plan's steps, each with its cost for the goal (the running one marked),
-   *  then the top three alternatives, each goal with its value and cost. */
+   *  then the chosen plan's misjudge noise (#53), then the top three alternatives, each goal with its value and
+   *  cost. */
   overlayLines() {
     const p = this.plan,
       out = [];
@@ -781,6 +787,9 @@ G.LeaderAI = class LeaderAI {
           G.LeaderPlanner.costOf(this.world, p.goal, [s]).toFixed(3)
       )
     );
+    // #53: the chosen plan's noise (a draw in -1 to 1) and the misjudge that scales it
+    const noise = this.choice ? this.choice.chosenPlanNoise : 0;
+    out.push('  noise ' + noise.toFixed(2) + ' (misjudge ' + this.set.misjudge.toFixed(2) + ')');
     const alts = ((this.choice && this.choice.ranking) || []).filter((c) => c.goal !== p.goal).slice(0, 3);
     for (const c of alts)
       out.push(
@@ -901,17 +910,47 @@ G.LeaderAI = class LeaderAI {
   static typesOf(m) {
     return (m.mon && m.mon.types) || (G.DEX_BY[m.dex] && G.DEX_BY[m.dex].types) || [];
   }
-  /** The settings for gym `gym`: each authored one (a number, or keyed by loop as the build keys are), else the baseline. */
+  /** The settings for gym `gym`: each authored one (a number, or keyed by loop as the build keys are), else the
+   *  baseline. #53: the five INTELLIGENCE_CURVES settings it does not author come from its intelligence for
+   *  this loop. */
   static settings(gym) {
     const a = (gym && gym.ai) || {},
       loop = (gym && gym.loop) || 1,
       out = {};
     for (const k of Object.keys(LeaderAI.BASE)) {
+      if (k === 'intelligence') continue; // a base and a growth, not keyed by loop: resolved below
       const v = a[k],
         at = v != null && typeof v === 'object' ? G.Gyms.perLoop(v, loop) : v;
       out[k] = at != null ? at : LeaderAI.BASE[k];
     }
+    out.intelligence = LeaderAI.intelligenceForLoop(a.intelligence, loop);
+    for (const k of Object.keys(LeaderAI.INTELLIGENCE_CURVES))
+      if (a[k] == null) out[k] = LeaderAI.settingFromIntelligence(k, out.intelligence);
     return out;
+  }
+  /** #53: the authored intelligence (a number, or { base, growth }) at loop `loop`: base + growth x (loop - 1), held
+   *  in 0 to 1. */
+  static intelligenceForLoop(authored, loop) {
+    const shape = typeof authored === 'number' ? { base: authored } : authored || {},
+      base = shape.base != null ? shape.base : LeaderAI.BASE.intelligence,
+      growth = shape.growth || 0;
+    return G.U.clamp(base + growth * (loop - 1), 0, 1);
+  }
+  /** #53: one setting from intelligence, on its two straight lines that meet at the default intelligence. */
+  static settingFromIntelligence(settingName, intelligenceForLoop) {
+    const curve = LeaderAI.INTELLIGENCE_CURVES[settingName],
+      half = LeaderAI.BASE.intelligence;
+    return intelligenceForLoop < half
+      ? G.U.lerp(curve.atDefault, curve.atZero, (half - intelligenceForLoop) / half)
+      : G.U.lerp(curve.atDefault, curve.atOne, (intelligenceForLoop - half) / (1 - half));
+  }
+  /** #53: a dev warning when gym `gym` authors OVERRIDE_WARN_AT or more of the five curve settings directly, else
+   *  null. Pure. */
+  static intelligenceOverrideWarning(gym) {
+    const a = (gym && gym.ai) || {},
+      authored = Object.keys(LeaderAI.INTELLIGENCE_CURVES).filter((k) => a[k] != null);
+    if (authored.length < LeaderAI.OVERRIDE_WARN_AT) return null;
+    return gym.leader + ' authors ' + authored.join(', ') + ' directly: most of its intelligence is overridden';
   }
 };
 G.LeaderAI.NONE = Object.freeze([]);
@@ -951,11 +990,32 @@ G.LeaderAI.BASE = Object.freeze({
   // 2026-11-09-51-opening-stance-traces-and-set-trigger); aimError (px) in the hit chance; risk x the damage-taken weight;
   // stubbornness x the commitment bonus
   range: 220,
-  aimError: 0,
+  aimError: 10,
   risk: 1,
   stubbornness: 1,
+  // #53 (#49 slice 4, decision 2026-11-13-53-leader-intelligence-one-score-with-overrides): intelligence 0 to 1
+  // drives misjudge, reflex, dodgeRead, memoryUse and aimError through INTELLIGENCE_CURVES, and at the default it reads
+  // the values here. misjudge: each plan's cost is read as cost x (1 + misjudge x a seeded draw in -1 to 1); 0.1 (R1).
+  // aimError 10 px (R2, was 0)
+  intelligence: 0.5,
+  misjudge: 0.1,
 });
 G.LeaderAI.BAG = 10;
+/** #53 (TUNE, BALANCE.md "Leader AI"): each setting intelligence drives, as two straight lines that meet at the
+ *  default intelligence (BASE.intelligence), where it reads its BASE value. The top stops short of perfect: every
+ *  setting keeps some error at 1. REFLEX_FLOOR_SECONDS: no authored reflex goes under it (gyms.js validate; the
+ *  curve's top is 0.12 s). INTELLIGENCE_GROWTH_MAX: the most intelligence gained per loop (D2). OVERRIDE_WARN_AT: this
+ *  many of the five authored directly gets a dev warning. */
+G.LeaderAI.INTELLIGENCE_CURVES = Object.freeze({
+  misjudge: Object.freeze({ atZero: 0.3, atDefault: G.LeaderAI.BASE.misjudge, atOne: 0.04 }),
+  reflex: Object.freeze({ atZero: 0.3, atDefault: G.LeaderAI.BASE.reflex, atOne: 0.12 }),
+  dodgeRead: Object.freeze({ atZero: 2, atDefault: G.LeaderAI.BASE.dodgeRead, atOne: 8 }),
+  memoryUse: Object.freeze({ atZero: 0.15, atDefault: G.LeaderAI.BASE.memoryUse, atOne: 0.7 }),
+  aimError: Object.freeze({ atZero: 40, atDefault: G.LeaderAI.BASE.aimError, atOne: 4 }),
+});
+G.LeaderAI.REFLEX_FLOOR_SECONDS = 0.1;
+G.LeaderAI.INTELLIGENCE_GROWTH_MAX = 0.2;
+G.LeaderAI.OVERRIDE_WARN_AT = 3;
 /** Slice 3 (all TUNE, BALANCE.md "Leader AI"). CONF: each hit landed or taken, each faint (yours up, its own down), the drift per
  *  second while the long window's trade is `trade` or more, `pull` (aggr per unit of confidence off 0.5), the swing that says a line
  *  and the cooldown between those lines. (#51: PACE and HOLD went with pacing; #52: marginK with the swap margin.) */
@@ -981,10 +1041,15 @@ G.LeaderAI.capSeed = () =>
   G.LeaderAI.seed != null ? (G.LeaderAI.seed ^ 0x9e3779b9) >>> 0 : (Date.now() ^ 0x5bd1e995) >>> 0;
 
 /** LEADER-AI DODGE READ BAG: each block of BAG threats holds exactly `reads` reads, in an order shuffled from its own seeded source
- *  (mulberry32, separate from the game's Math.random and from `randomness`), so the rate is exact per block and replayable. */
+ *  (mulberry32, separate from the game's Math.random and from `randomness`), so the rate is exact per block and replayable.
+ *  #53: a fractional `reads` (6.4) holds its whole part per block, and `readCarry` adds the fraction at each new
+ *  block; a block reads one more each time it reaches 1 (6.4: 64 reads in every 100 threats). A counter, not dice. */
 G.LeaderAI.Bag = class Bag {
   constructor(reads, seed) {
-    this.reads = Math.max(0, Math.min(G.LeaderAI.BAG, Math.round(reads)));
+    const held = Math.max(0, Math.min(G.LeaderAI.BAG, reads));
+    this.reads = Math.floor(held + G.LeaderAI.EPS);
+    this.fractionalReads = Math.max(0, held - this.reads);
+    this.readCarry = 0;
     this.s = seed >>> 0;
     this.left = [];
     this.blocks = 0;
@@ -1003,7 +1068,13 @@ G.LeaderAI.Bag = class Bag {
   fill() {
     const n = G.LeaderAI.BAG,
       a = [];
-    for (let i = 0; i < n; i++) a.push(i < this.reads);
+    let reads = this.reads;
+    this.readCarry += this.fractionalReads;
+    if (this.readCarry >= 1 - G.LeaderAI.EPS) {
+      reads++;
+      this.readCarry -= 1;
+    }
+    for (let i = 0; i < n; i++) a.push(i < reads);
     for (let i = n - 1; i > 0; i--) {
       const j = Math.floor(this.rng() * (i + 1));
       [a[i], a[j]] = [a[j], a[i]];

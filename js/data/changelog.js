@@ -20,6 +20,10 @@ G.CHANGELOG = [
         "Messages that pop up at the bottom of the screen use the main menu's look now: a dark panel with the teal edge of the menu's top and bottom bars, red for bad news. After Learn, the EV screen says Lessons Learned, Returning Home for a moment before taking you back.",
         "Messages that pop up at the bottom of the screen use the main menu's look now: a dark panel with the teal edge of the menu's top and bottom bars, red for bad news. After Learn, the EV screen says Lessons Learned, Returning Home for a moment before taking you back.",
       ],
+      [
+        'Misty and Brock sometimes misjudge a plan now, and are a little less sure their own shots will land, so they play a touch more carefully.',
+        'Misty and Brock sometimes misjudge a plan now, and are a little less sure their own shots will land, so they play a touch more carefully.',
+      ],
     ],
     fix: [
       [

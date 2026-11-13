@@ -78,7 +78,7 @@ const M = [
   ['a dodge inside a commitment', AI, 'if (this.busy(e)) return; // held', 'if (false) return; // held'],
   ['a dodge with no charge to spare', AI, 'if (ready <= S.dodgeReserve) {', 'if (ready <= 0 && false) {'],
   ['dodgeReserve is ignored', AI, 'if (ready <= S.dodgeReserve) {', 'if (ready <= 0) {'],
-  ['the bag rolls dice', AI, 'for (let i = 0; i < n; i++) a.push(i < this.reads);', 'for (let i = 0; i < n; i++) a.push(this.rng() < this.reads / n);'],
+  ['the bag rolls dice', AI, 'for (let i = 0; i < n; i++) a.push(i < reads);', 'for (let i = 0; i < n; i++) a.push(this.rng() < reads / n);'], // #53 retarget
   ['the floor is ignored', AI, 'left = Math.abs(l - r) < LeaderAI.UNSTICK.tie ? off >= 0 : l > r;', 'left = off >= 0;'],
   ['it dodges toward the path', AI, '? off >= 0 : l > r;', '? off < 0 : l > r;'],
   ['a still shape: dodged sideways', AI, 'if (!th.vx && !th.vy) return this.lean(e, G.U.norm(e.x - th.x, e.y - th.y));', ''],
@@ -180,7 +180,30 @@ const M = [
   ['no exploit trigger', AI, "(ev.k === 'exploit' && d.on === 'exploit')", 'false'],
   // the authoring and the validator
   ["Misty's learnRate is the baseline", GY, '        learnRate: 2,\n', ''],
-  ['the predictCap check is off', GY, 'if (caps.some((x) => typeof x === \'number\' && x > 10))', 'if (false)'],
+  ['the predictCap check is off', GY, "if (vals.some((x) => typeof x === 'number' && x > 10)) bad.push(", 'if (false) bad.push('], // #53 retarget
+  // #53 (#49 slice 4): intelligence, its curves, fractional reads and misjudge
+  ['intelligence is ignored', AI, 'out.intelligence = LeaderAI.intelligenceForLoop(a.intelligence, loop);', 'out.intelligence = LeaderAI.BASE.intelligence;'],
+  ['growth is ignored', AI, 'growth = shape.growth || 0;', 'growth = 0;'],
+  ['growth already counts at loop 1', AI, 'return G.U.clamp(base + growth * (loop - 1), 0, 1);', 'return G.U.clamp(base + growth * loop, 0, 1);'],
+  ['intelligence is not held in 0 to 1', AI, 'return G.U.clamp(base + growth * (loop - 1), 0, 1);', 'return base + growth * (loop - 1);'],
+  ['an override loses to the curve', AI, 'if (a[k] == null) out[k] = LeaderAI.settingFromIntelligence(k, out.intelligence);', 'out[k] = LeaderAI.settingFromIntelligence(k, out.intelligence);'],
+  ['one straight line (the default skipped)', AI, '    return intelligenceForLoop < half\n      ? G.U.lerp(curve.atDefault, curve.atZero, (half - intelligenceForLoop) / half)\n      : G.U.lerp(curve.atDefault, curve.atOne, (intelligenceForLoop - half) / (1 - half));', '    return G.U.lerp(curve.atZero, curve.atOne, intelligenceForLoop);'],
+  ['a curve reaches perfect at the top', AI, 'misjudge: Object.freeze({ atZero: 0.3, atDefault: G.LeaderAI.BASE.misjudge, atOne: 0.04 }),', 'misjudge: Object.freeze({ atZero: 0.3, atDefault: G.LeaderAI.BASE.misjudge, atOne: 0 }),'],
+  ['aimError is left off the curves', AI, '  aimError: Object.freeze({ atZero: 40, atDefault: G.LeaderAI.BASE.aimError, atOne: 4 }),\n', ''],
+  ['the fraction of a read is dropped', AI, 'this.fractionalReads = Math.max(0, held - this.reads);', 'this.fractionalReads = 0;'],
+  ['readCarry is not reset at fight start', AI, 'this.readCarry = 0;', 'this.readCarry = 0.9;'],
+  ["misjudge shares randomness's source", AI, 'this.misjudgeSource = G.LeaderPlanner.seeded(', 'this.misjudgeSource = this.draw || G.LeaderPlanner.seeded('],
+  ['the override warning is off', AI, 'if (authored.length < LeaderAI.OVERRIDE_WARN_AT) return null;', 'return null;'],
+  ['no misjudge noise', PL, 'const noiseDraw = misjudge > 0 ? misjudgeSource() * 2 - 1 : 0;', 'const noiseDraw = 0;'],
+  ['the noise comes from Math.random', PL, 'const noiseDraw = misjudge > 0 ? misjudgeSource() * 2 - 1 : 0;', 'const noiseDraw = misjudge > 0 ? Math.random() * 2 - 1 : 0;'],
+  ['the noise is drawn per goal, not per plan', PL, 'costOf(world, goal, steps), false, noiseDraw);', 'costOf(world, goal, steps), false, misjudge > 0 ? misjudgeSource() * 2 - 1 : 0);'],
+  ['the ranking reads the true cost', PL, 'score = value - misreadCost,', 'score = value - cost,'],
+  ['the snapshot drops misjudge', BE, '        misjudge: settings.misjudge,\n', ''],
+  ['the validator accepts intelligence 1.5', GY, "unit = (x) => typeof x === 'number' && x >= 0 && x <= 1,", "unit = (x) => typeof x === 'number' && x >= 0,"],
+  ['the reflex floor is off', GY, "if (valuesOf(g.ai.reflex).some((x) => typeof x === 'number' && x < floor))", 'if (false)'],
+  ['dodgeRead is not checked to 10', GY, "for (const k of ['predictCap', 'dodgeRead']) {", "for (const k of ['predictCap']) {"],
+  ['a trigger may set intelligence (T1)', GY, "if (k === 'intelligence') bad.push(", 'if (false) bad.push('],
+  ['a trigger may set reflex under the floor (T2)', GY, "else if (k === 'reflex' && t.set[k] < floor)", 'else if (false)'],
 ];
 
 require('../../tools/mutate-runner.js')({

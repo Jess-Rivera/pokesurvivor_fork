@@ -302,6 +302,7 @@ G.LeaderBelief = (() => {
         distance: Math.hypot(guess.x - e.x, guess.y - e.y),
         preferredRange: settings.range,
         aimError: settings.aimError,
+        misjudge: settings.misjudge,
         risk: settings.risk,
         stubbornness: settings.stubbornness,
         randomness: settings.randomness,

@@ -15,7 +15,9 @@
  *   CHOICE   score = goal value - plan cost, both in HP fractions (a fraction of its own max HP counts one to one with a fraction of
  *            yours, decision 2026-11-09-51-opening-stance-traces-and-set-trigger and the #51 plan); with no plan reaching a goal,
  *            its best plan counts at value x the fraction of the gap it closes. The running plan adds its commitment bonus;
- *            `randomness` draws from the ranking with its own seeded source.
+ *            `randomness` draws from the ranking with its own seeded source. #53: `misjudge` reads each plan's cost
+ *            as cost x (1 + misjudge x a seeded draw in -1 to 1) before the ranking, one draw per plan per think tick
+ *            (MISJUDGMENT).
  * All numbers are TUNE (BALANCE.md "Leader AI").
  */
 G.LeaderPlanner = (() => {
@@ -567,15 +569,21 @@ G.LeaderPlanner = (() => {
     return best;
   }
 
-  /** Every plan of at most maxSteps actions from now, each goal's best: { goal: { steps, value, cost, score, partial } }. */
-  function search(world) {
+  /** Every plan of at most maxSteps actions from now, each goal's best: { goal: { steps, value, cost, score, partial } }.
+   *  #53: with `misjudgeSource` (a seeded 0 to 1 source) and world.misjudge above 0, each plan path draws one noise in
+   *  -1 to 1 and is ranked by value - misreadCost; `cost` stays the true cost (the overlay and the harness), `noise` is
+   *  the draw. */
+  function search(world, misjudgeSource = null) {
     const best = {},
       partial = {},
-      consider = (goal, steps, value, cost, isPartial) => {
-        const score = value - cost,
+      misjudge = misjudgeSource ? world.misjudge || 0 : 0,
+      consider = (goal, steps, value, cost, isPartial, noiseDraw) => {
+        const misreadCost = cost * (1 + misjudge * noiseDraw),
+          score = value - misreadCost,
           into = isPartial ? partial : best,
           had = into[goal];
-        if (!had || score > had.score + EPS) into[goal] = { goal, steps, value, cost, score, partial: isPartial };
+        if (!had || score > had.score + EPS)
+          into[goal] = { goal, steps, value, cost, misreadCost, noise: noiseDraw, score, partial: isPartial };
       };
     let nodes = 0;
     const utilities = GOALS.map((goal) => utility(goal, world)),
@@ -586,18 +594,27 @@ G.LeaderPlanner = (() => {
       let now = done;
       if (steps.length) {
         nodes++;
+        // #53: one draw per plan path, shared by every goal it is scored for
+        const noiseDraw = misjudge > 0 ? misjudgeSource() * 2 - 1 : 0;
         for (let g = 0; g < GOALS.length; g++) {
           const goal = GOALS[g];
           if (done.has(goal)) continue;
           const full = reachedValue(world, goal, steps, state);
           if (full != null) {
-            consider(goal, steps, full * utilities[g], costOf(world, goal, steps), false);
+            consider(goal, steps, full * utilities[g], costOf(world, goal, steps), false, noiseDraw);
             if (now === done) now = new Set(done);
             now.add(goal);
           } else if (!best[goal]) {
             const part = partialValue(world, goal, steps, state, gaps0[g]);
             if (part != null)
-              consider(goal, steps, part * utilities[g], costOf(world, goal, steps, goal !== 'finish'), true);
+              consider(
+                goal,
+                steps,
+                part * utilities[g],
+                costOf(world, goal, steps, goal !== 'finish'),
+                true,
+                noiseDraw
+              );
           }
         }
       }
@@ -629,9 +646,10 @@ G.LeaderPlanner = (() => {
 
   /** The choice: every goal's best plan ranked by score (fixed tie-break: GOALS order); the running plan's goal gets the commitment
    *  bonus (seconds invested x commitPerSecond x stubbornness, scaled as confidence scales that goal) when its plan still starts with
-   *  the running action. `running` { goal, step, invested }; `draw` a seeded 0 to 1 source, read only while randomness > 0. */
-  function choose(world, running = null, draw = null) {
-    const found = search(world),
+   *  the running action. `running` { goal, step, invested }; `draw` a seeded 0 to 1 source, read only while randomness > 0.
+   *  #53: `misjudgeSource` feeds search's misjudge noise; chosenPlanNoise is the pick's draw (the overlay). */
+  function choose(world, running = null, draw = null, misjudgeSource = null) {
+    const found = search(world, misjudgeSource),
       ranking = [];
     for (const goal of GOALS) {
       const c = found[goal];
@@ -645,7 +663,8 @@ G.LeaderPlanner = (() => {
     let pick = 0;
     if (world.randomness > 0 && draw && ranking.length > 1 && draw() < world.randomness)
       pick = 1 + Math.floor(draw() * (ranking.length - 1));
-    return { pick: ranking[pick] || null, ranking, nodes: found.nodes };
+    const chosen = ranking[pick] || null;
+    return { pick: chosen, ranking, nodes: found.nodes, chosenPlanNoise: chosen ? chosen.noise : 0 };
   }
 
   /** A small seeded source (mulberry32) for `randomness`, separate from the dodge and prediction bags. */

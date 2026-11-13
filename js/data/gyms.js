@@ -71,8 +71,12 @@ G.Gyms = (() => {
     'aimError',
     'risk',
     'stubbornness',
+    // #53 (#49 slice 4): misjudge, 0 to 1 (noise on each plan's cost). `intelligence` has its own shape (a number,
+    // or { base, growth }) and its own check in validate(), so it is not a key here
+    'misjudge',
   ];
-  const AI_UNIT = ['aggression', 'confStart', 'confMin', 'confMax', 'randomness']; // 0 to 1
+  const AI_UNIT = ['aggression', 'confStart', 'confMin', 'confMax', 'randomness', 'misjudge']; // 0 to 1
+  const AI_OWN_SHAPE = ['intelligence', 'triggers', 'lines']; // ai keys with their own shape and their own check
   // slice 3: ai.triggers (LEADER-AI TRIGGERS) and ai.lines (up and down, on a big confidence swing). A trigger is { on, ... }:
   // 'start'; 'hp' with `below` (its own HP fraction); 'faint' with `side` ('yours' or 'own'); 'sendIn' (you send in a mon); 'time'
   // with `at` seconds; slice 4: 'exploit' (it starts acting on a pattern it believes: your usual lead). Then any of: line, set
@@ -988,10 +992,11 @@ G.Gyms = (() => {
     const loopKey = (k) => Number.isInteger(Number(k)) && Number(k) >= 1 && Number(k) <= LOOPS;
     if (g.ai != null) {
       const L = g.leader || '?',
-        num = (v) => typeof v === 'number' && v >= 0;
+        num = (v) => typeof v === 'number' && v >= 0,
+        // a setting's values: one number, or each loop's
+        valuesOf = (v) => (v == null ? [] : typeof v === 'object' ? Object.values(v) : [v]);
       if (!g.playerEntity) bad.push(L + ': ai needs playerEntity (the wild body has no AI player)');
-      for (const k of unknownKeys(g.ai, AI_KEYS.concat(['triggers', 'lines'])))
-        bad.push(L + ': unknown ai setting ' + k);
+      for (const k of unknownKeys(g.ai, AI_KEYS.concat(AI_OWN_SHAPE))) bad.push(L + ': unknown ai setting ' + k);
       for (const k of AI_KEYS) {
         const v = g.ai[k];
         if (v == null || num(v)) continue;
@@ -999,14 +1004,32 @@ G.Gyms = (() => {
           bad.push(L + ': ai ' + k + ' is a number from 0, or keyed by loop');
       }
       for (const k of AI_UNIT) {
-        const v = g.ai[k],
-          vals = v == null ? [] : typeof v === 'object' ? Object.values(v) : [v];
+        const vals = valuesOf(g.ai[k]);
         if (vals.some((x) => typeof x === 'number' && x > 1)) bad.push(L + ': ai ' + k + ' is from 0 to 1');
       }
-      const cap = g.ai.predictCap,
-        caps = cap == null ? [] : typeof cap === 'object' ? Object.values(cap) : [cap];
-      if (caps.some((x) => typeof x === 'number' && x > 10))
-        bad.push(L + ': ai predictCap is from 0 to 10 (acts per 10)');
+      // per 10: predictCap acts per 10 chances, dodgeRead reads per 10 threats (#53: the bag meets a fraction exactly)
+      for (const k of ['predictCap', 'dodgeRead']) {
+        const vals = valuesOf(g.ai[k]);
+        if (vals.some((x) => typeof x === 'number' && x > 10)) bad.push(L + ': ai ' + k + ' is from 0 to 10 (per 10)');
+      }
+      // #53: intelligence is a number from 0 to 1, or { base 0 to 1, growth from 0 to the growth limit (D2) }, and
+      // an authored reflex keeps the fairness floor. Both limits live in G.LeaderAI, read when it is loaded (every
+      // harness that authors ai loads it)
+      const LA = G.LeaderAI,
+        growthMax = LA ? LA.INTELLIGENCE_GROWTH_MAX : Infinity,
+        floor = LA ? LA.REFLEX_FLOOR_SECONDS : 0,
+        unit = (x) => typeof x === 'number' && x >= 0 && x <= 1,
+        intel = g.ai.intelligence;
+      if (intel != null && !unit(intel)) {
+        const isObject = !!intel && typeof intel === 'object' && !Array.isArray(intel),
+          shaped = isObject && !unknownKeys(intel, ['base', 'growth']).length,
+          baseOk = !shaped || intel.base == null || unit(intel.base),
+          growthOk = !shaped || intel.growth == null || (num(intel.growth) && intel.growth <= growthMax);
+        if (!shaped || !baseOk || !growthOk)
+          bad.push(L + ': ai intelligence is from 0 to 1, or { base 0 to 1, growth 0 to ' + growthMax + ' }');
+      }
+      if (valuesOf(g.ai.reflex).some((x) => typeof x === 'number' && x < floor))
+        bad.push(L + ': ai reflex is at least ' + floor + ' s (the fairness floor)');
       const str = (s) => typeof s === 'string' && s.length > 0;
       const tr = g.ai.triggers;
       if (tr != null && !Array.isArray(tr)) bad.push(L + ': ai triggers is a list');
@@ -1025,10 +1048,14 @@ G.Gyms = (() => {
         for (const k of ['slot', 'swap'])
           if (t[k] != null)
             bad.push(T + ': ' + k + ' is gone (#51: a trigger forces no slot or swap; the planner decides)');
+        // #53: intelligence resolves once, at fight start (T1); a set reflex keeps the fairness floor (T2)
         if (t.set != null)
-          for (const k of Object.keys(t.set))
-            if (!AI_KEYS.includes(k) || !num(t.set[k]))
+          for (const k of Object.keys(t.set)) {
+            if (k === 'intelligence') bad.push(T + ': set intelligence does nothing (it resolves at fight start)');
+            else if (!AI_KEYS.includes(k) || !num(t.set[k]))
               bad.push(T + ': set ' + k + ' is a known setting with a number from 0');
+            else if (k === 'reflex' && t.set[k] < floor) bad.push(T + ': set reflex is at least ' + floor + ' s');
+          }
         if (t.for != null && !(typeof t.for === 'number' && t.for > 0)) bad.push(T + ': for is seconds above 0');
         if (t.line == null && t.set == null) bad.push(T + ' does nothing');
       });

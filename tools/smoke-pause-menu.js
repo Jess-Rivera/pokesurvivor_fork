@@ -1509,12 +1509,17 @@ async function main() {
   const learnToast = await toastNow();
   evState = await evNow();
   ok(
-    learnToast && learnToast.shown && learnToast.text === 'Lessons Learned, Returning Home' && /HudModule|Michroma/.test(learnToast.font),
+    learnToast &&
+      learnToast.shown &&
+      learnToast.text === 'Lessons Learned, Returning Home' &&
+      /HudModule|Michroma/.test(learnToast.font),
     'Learn: the toast says Lessons Learned, Returning Home in Michroma (' + (learnToast && learnToast.text) + ')'
   );
   ok(
     learnToast && learnToast.body === 'rgb(24, 24, 24)' && learnToast.rim === 'rgb(41, 206, 255)',
-    "the shared toast: the main menu bars' charcoal and teal rim (" + (learnToast && learnToast.body + ', ' + learnToast.rim) + ')'
+    "the shared toast: the main menu bars' charcoal and teal rim (" +
+      (learnToast && learnToast.body + ', ' + learnToast.rim) +
+      ')'
   );
   ok(evState.open && !evState.ask, 'Learn: the EV screen stays up during the toast');
   let evsAfter = await evSaved(teamUids);
@@ -1522,17 +1527,20 @@ async function main() {
     evsAfter[0] === '252 3 0 0 0 0' && evsAfter[1] === '2 252 0 0 0 0' && evsAfter[3] === '252 252 0 0 0 6',
     'Learn saved exactly the adds, before the toast ends (' + JSON.stringify(evsAfter) + ')'
   );
-  const deaf = await page.evaluate(async (plusSelector) => {
-    const plus = document.querySelector(plusSelector);
-    plus.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }));
-    document.querySelector('.ev-screen .pm-button[data-action="gohome"]').click();
-    await new Promise((resolve) => setTimeout(resolve, 60));
-    return {
-      plusEnabled: !plus.disabled,
-      added: plus.parentElement.querySelector('.ev-add').textContent.trim(),
-      ask: G.UI.isOpen('scr-ask'),
-    };
-  }, evStep(3, 0, 1));
+  const deaf = await page.evaluate(
+    async (plusSelector) => {
+      const plus = document.querySelector(plusSelector);
+      plus.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }));
+      document.querySelector('.ev-screen .pm-button[data-action="gohome"]').click();
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      return {
+        plusEnabled: !plus.disabled,
+        added: plus.parentElement.querySelector('.ev-add').textContent.trim(),
+        ask: G.UI.isOpen('scr-ask'),
+      };
+    },
+    evStep(3, 0, 1)
+  );
   ok(
     deaf.plusEnabled && deaf.added === '' && !deaf.ask,
     'during the toast a + press and a Go Home click do nothing (' + JSON.stringify(deaf) + ')'
@@ -1548,7 +1556,10 @@ async function main() {
     G.UI.toast('Smoke check', 400, 'bad');
     return getComputedStyle(document.querySelector('.toast')).borderTopColor;
   });
-  ok(badToast === 'rgb(200, 20, 28)', "the shared toast's bad tone keeps the shape with the red rim (" + badToast + ')');
+  ok(
+    badToast === 'rgb(200, 20, 28)',
+    "the shared toast's bad tone keeps the shape with the red rim (" + badToast + ')'
+  );
   await sleep(450);
   const toastDrift = await page.evaluate(async () => {
     G.UI.toast('Smoke check, a longer line so the toast is wide', 600);

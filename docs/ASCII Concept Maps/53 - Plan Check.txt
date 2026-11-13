@@ -1,0 +1,98 @@
+53 - PLAN CHECK  (coding-principles, Quick, 2026-11-13, branch feature/gym-leader-ai)
+Plan checked: 53 - Intelligence and Misjudge Build Plan.txt (approved). Rulebook: .claude/skills/coding-principles.
+Result: sound. Three additions to its scope and two trigger rules to settle, then build.
+
+=====================================================================================
+REUSES, PER PART
+=====================================================================================
+
+  part                     reuses                                         new (and why nothing existing fits)
+  -----------------------  ---------------------------------------------  ------------------------------------
+  intelligenceForLoop      G.U.clamp (the 0..1 hold)                      nothing
+  settingFromIntelligence  G.U.lerp (each straight line)                  the function (no curve helper exists)
+  INTELLIGENCE_CURVES      BASE's frozen-table pattern; its keys ARE      the table, REFLEX_FLOOR_SECONDS,
+                           the list of five                               INTELLIGENCE_GROWTH_MAX
+  overrides                settings()'s authored-wins path, perLoop       nothing
+  fractional reads         G.LeaderAI.Bag (same shuffle, same draws),     readCarry
+                           G.LeaderAI.EPS
+  misjudgeSource           G.LeaderPlanner.seeded, own seed mix (as draw) nothing
+  noise in the planner     search()'s walk and consider()                 noiseDraw, misreadCost
+  overlay line             overlayLines()                                 chosenPlanNoise
+  validator                AI_KEYS loop; AI_UNIT (misjudge joins); the    the intelligence shape check, the
+                           predictCap 0..10 check (dodgeRead joins)       reflex floor
+  override warning         teamItemWarn's pattern (pure, text or null,    intelligenceOverrideWarning
+                           console.warn at fight start)
+
+=====================================================================================
+ADDITIONS TO SCOPE (the plan's file list missed these)
+=====================================================================================
+
+  A1  js/systems/leader-belief.js  the snapshot carries misjudge, beside aimError (1 line). The planner reads only
+      the snapshot, so without it the noise has no value to read.
+  A2  js/systems/gym-arena.js      the override warning is called beside teamItemWarn (2 lines). The plan named the
+      pattern, not the file.
+  A3  the override warning lives on G.LeaderAI beside settings(), not in gyms.js: it counts the curve table's keys,
+      so the list of five has one home (DRY). The validator reads the floor and the growth limit from G.LeaderAI at
+      call time (only the harness calls it, after every script loads), with the guard gyms.js uses for G.Items.
+
+=====================================================================================
+DECISIONS (validator rules, so standalone)
+=====================================================================================
+
+  T1  A trigger's set may name intelligence, and would do nothing (the five resolve once, at fight start).
+      (a) the validator refuses intelligence in a trigger set                     RECOMMENDED (no silent no-op)
+      (b) allow it and re-resolve the five when the trigger fires                 more code, nothing asks for it
+  T2  A trigger's set skips per-key limits, so reflex 0.05 there gets under the new floor.
+      (a) trigger sets keep reflex at or above REFLEX_FLOOR_SECONDS               RECOMMENDED (a fairness limit)
+      (b) leave trigger sets unchecked until the follow-up below
+  Neither touches existing data: the only trigger set in gyms.js sets aggression.
+
+=====================================================================================
+CHECKS THAT HOLD
+=====================================================================================
+
+  YAGNI    not built: loop-keyed intelligence, negative growth, a runtime reflex clamp (the floor is a validator
+           rule; no curve gets under 0.12 s), aim scatter, per-goal noise, Brock and Misty data, save fields,
+           new scripts (dev.html and NEED unchanged).
+  KISS     noise is drawn only when misjudge > 0 and a source is passed, so hand-made harness worlds (no misjudge)
+           and misjudge 0 skip it. readCarry compares with EPS, so 0.6 + 0.4 counts as 1.
+  SoC      the planner stays pure: the noise source comes in as an argument like draw, never in the snapshot
+           (a snapshot is plain data). Curves and overrides stay in settings(); the Bag only counts.
+  Demeter  the planner reads world.misjudge, never the leader's settings.
+  cost     a plan's cost stays the true cost (overlay, harness 15a to 15i); only the ranking uses misreadCost.
+  shape    intelligence skips the generic loops in settings() and the validator: { base, growth } is not
+           loop-keyed, and perLoop would silently read it as nothing.
+  Bag      predictCap's bag shares the class; it stays whole, so its readCarry stays 0 and nothing changes.
+
+=====================================================================================
+SIZE
+=====================================================================================
+
+  js/entities/leader-ai.js      1014 -> about 1075   (already over 1000; under the 100-line flag)
+  js/systems/leader-planner.js   682 -> about 700
+  js/data/gyms.js               1187 -> about 1205   (validator)
+  js/systems/leader-belief.js    +1                  js/systems/gym-arena.js  +2
+
+=====================================================================================
+TOUCHED-CODE CLEANUPS
+=====================================================================================
+
+  Bag: Math.round(reads) becomes a whole part plus readCarry (the change itself, listed so it is no surprise).
+  dodgeRead joins the predictCap 0..10 check (one list of two names, not a second copy of the check).
+
+=====================================================================================
+TESTS (additions to the plan's tests section, same two files)
+=====================================================================================
+
+  leader-ai-harness.js  + the snapshot carries misjudge
+                        + the override warning counts the curve table's keys (3 warn, 2 do not, as planned)
+                        + T1 and T2 refusals, if chosen
+  leader-ai-mutate.js   + 3 mutants: the snapshot drops misjudge; a trigger set accepts intelligence (T1);
+                        the trigger reflex floor is off (T2). About 19 in all.
+
+=====================================================================================
+FOLLOW-UP (out of scope, issue draft)
+=====================================================================================
+
+  Trigger set values skip every per-key limit (aggression 1.5 or predictCap 12 pass), and a trigger that sets
+  dodgeRead or predictCap does nothing, since both bags are built at fight start. Pre-existing, not #53's.
