@@ -16,7 +16,7 @@ const M = [
   ['every struck enemy starts a chain', 'sim', [['chain(inst, struck.includes(inst.cast.target) ? inst.cast.target : struck[0]);', 'struck.forEach(e => chain(inst, e));']]],
   ['chain starts from the first struck, not the target', 'sim', [['struck.includes(inst.cast.target) ? inst.cast.target : struck[0]', 'struck[struck.length - 1]']]],
   // specials
-  ['Hex doubles final damage', 'fx', [[' * (sb && G.Status.majorKind(e) ? sb.multiplier : 1), type', ', type'], ['(crit ? CRIT_MUL : 1));     // D11', '(crit ? CRIT_MUL : 1) * (sb && G.Status.majorKind(e) ? sb.multiplier : 1));']]],
+  ['Hex doubles final damage', 'fx', [['* (sb && G.Status.majorKind(e) ? sb.multiplier : 1),\n      type', ',\n      type'], ['(b.crit ? b.critMul : 1)); // D11', '(b.crit ? b.critMul : 1) * (specialOf(def, \'statusBonus\') && G.Status.majorKind(e) ? specialOf(def, \'statusBonus\').multiplier : 1)); // D11']]],
   ['Hex counts confusion', 'fx', [['sb && G.Status.majorKind(e) ?', 'sb && (G.Status.majorKind(e) || e.stCnf) ?']]],
   ['flat damage takes a multiplier', 'fx', [['const dmg = Math.max(1, amount * hopMul(def, hop));', 'const dmg = Math.max(1, amount * hopMul(def, hop) * G.Weather.mult(def.type));']]],
   ['levelDamage uses a fixed number', 'fx', [['inst.cast.owner.level || 1', '30']]],
@@ -32,13 +32,13 @@ const M = [
   ['two shields at once', 'fx', [["if (fx.t === 'shield' && o.shield) return false;", '']]],
   ['shield survives a swap', 'fx', [['if (o) o.shield = null;', '']]],
   // heal over time, stat buffs
-  ['Aqua Ring stacks', 'fx', [['if (old) { old.left = left; old.frac = fx.amount.fraction; old.per = fx.per || 1; return; }', '']]],     // retargeted slice 5b (the refresh line also carries a card restart's new amount)
+  ['Aqua Ring stacks', 'fx', [['if (old) {\n      old.left = left;\n      old.frac = fx.amount.fraction;\n      old.per = fx.per || 1;\n      return;\n    }', '']]],     // retargeted slice 5b (the refresh line also carries a card restart's new amount)
   ['Aqua Ring heal outlives its aura', 'sim', [['if (!keepHeal) for (const i of list) G.MoveEffects.endHeal(i.cast.owner, G.MoveEffects.srcOf(i.spec, i.cast.owner));', '']]],     // slice 5a, retargeted 5b (keepHeal guard)
-  ['heal over time survives a swap', 'fx', [['hots = o ? hots.filter(h => h.o !== o) : [];', 'hots = o ? hots : [];']]],
+  ['heal over time survives a swap', 'fx', [['hots = o ? hots.filter((h) => h.o !== o) : [];', 'hots = o ? hots : [];']]],
   ['per-move instead of per-Pokemon stack tag', 'fx', [["return def.id + '@' + tags.get(o);", 'return def.id;']]],
   // commitment (handoff test 16)
   ['freeze runs the timer anyway', 'sim', [['const frozen = (o, id) => cms.some(', 'const frozen = (o, id) => false && cms.some(']]],
-  ['freeze arms the timer at the cast', 'sim', [['if (m.part === \'cooldown\' && (!m.ids || m.ids.has(m.def.id))) m.slot.t = Math.max(0.05, m.def.cd * (m.o.cdMul || 1));', ''],
+  ['freeze arms the timer at the cast', 'sim', [['if (m.part === \'cooldown\' && (!m.ids || m.ids.has(m.def.id)))\n      m.slot.t = Math.max(0.05, m.def.cd * (m.o.cdMul || 1));', ''],
     ["m.part === 'cooldown' && (!m.ids || m.ids.has(id)));", "m.part === 'cooldown' && (!m.ids || m.ids.has(id)) && id !== m.def.id);"]]],
   ['id = all freezes only the owner slot', 'sim', [["m.part === 'cooldown' && (!m.ids || m.ids.has(id)));", "m.part === 'cooldown' && (m.ids ? m.ids.has(id) : id === m.def.id));"]]],
   ['released timer ignores cdMul', 'sim', [['m.slot.t = Math.max(0.05, m.def.cd * (m.o.cdMul || 1));', 'm.slot.t = Math.max(0.05, m.def.cd);']]],

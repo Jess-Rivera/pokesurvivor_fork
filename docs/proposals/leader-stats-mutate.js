@@ -43,7 +43,7 @@ const M = [
   ['the status cut defaults to half', LD, '    return v != null ? v : 1;', '    return v != null ? v : 0.5;'],
   ['the hard CC gap defaults to 5 s', LD, '    return v != null ? v : G.Status.GRACE;', '    return v != null ? v : 5;'],
   ['hit i-frames default to none', LD, '    return v != null ? v : super.hitIframes;', '    return v != null ? v : 0;'],
-  ['auto shake is off by default', LD, "if (this.rule('autoShake') !== false)", "if (this.rule('autoShake') === true)"],
+  ['auto shake is off by default', LD, "return this.rule('autoShake') !== false;", "return this.rule('autoShake') === true;"],
   ['status ignores the authored cut', ST, "if (h.statusCut != null && (kind === 'freeze' || kind === 'sleep')) return base * h.statusCut;", ''],
   ['status ignores the authored gap', ST, 'h.ccWindow != null ? h.ccWindow : GRACE', 'GRACE'],
   ['restriction values are not checked', GY, "rules.statusCut != null &&\n        !(typeof rules.statusCut === 'number'", "false &&\n        !(typeof rules.statusCut === 'number'"],

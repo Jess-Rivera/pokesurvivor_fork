@@ -27,7 +27,7 @@ const M = [
   ['links are kept per member', P, 'return this.team ? this.team.bonds : this._bonds || 0;', 'return this._bonds || 0;'],
   // the rest of the module
   ['the lock is 4 s', T, 'const SWAP_LOCK = 5,', 'const SWAP_LOCK = 4,'],
-  ['the i-frames are 1 s', T, 'SWAP_IFRAME = 0.5;', 'SWAP_IFRAME = 1;'],
+  ['the i-frames are 1 s', T, 'SWAP_IFRAME = 0.5', 'SWAP_IFRAME = 1'],
   ['a manual swap does not lock', T, 'const next = this.takeField(i);\n      this.lock = SWAP_LOCK;', 'const next = this.takeField(i);'],
   ['longer i-frames are cut', T, 'Math.max(next.invuln || 0, SWAP_IFRAME)', 'SWAP_IFRAME'],
   ['the lock goes negative', T, 'Math.max(0, this.lock - dt)', 'this.lock - dt'],

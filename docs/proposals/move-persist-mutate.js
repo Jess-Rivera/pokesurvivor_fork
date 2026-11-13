@@ -14,17 +14,17 @@ const M = [
   ['never recreated after a swap back', 'sim', [['else if (!mine.length) spawnPersistent(o, slot, def, now);', 'else if (!mine.length && !slot.spawnedOnce) { slot.spawnedOnce = true; spawnPersistent(o, slot, def, now); }']]],
   ['a removed slot leaves its group alive', 'sim', [["if (orphans.length) endGroup(orphans, o.dead ? 'ownerDeath' : 'notActive');", 'if (orphans.length) {}']]],
   ['a faint leaves the group alive', 'sim', [["if (o.dead) endGroup(mine, 'ownerDeath');", 'if (o.dead) {}']]],
-  ['reuses old hit records after a swap back', 'sim', [['hits: new Map(), done', 'hits: cast.persist ? (cast.slot.rec = cast.slot.rec || new Map()) : new Map(), done']]],
-  ['persistent move arms a cooldown', 'sim', [['const self = G.MoveEffects.applyCast(def, cast, rng), roots = []', 'slot.t = 1; const self = G.MoveEffects.applyCast(def, cast, rng), roots = []']]],
+  ['reuses old hit records after a swap back', 'sim', [['hits: new Map(),\n      done', 'hits: cast.persist ? (cast.slot.rec = cast.slot.rec || new Map()) : new Map(),\n      done']]],
+  ['persistent move arms a cooldown', 'sim', [['const self = G.MoveEffects.applyCast(def, cast, rng),\n      roots = []', 'slot.t = 1; const self = G.MoveEffects.applyCast(def, cast, rng),\n      roots = []']]],
   ['orbit hitbox squashed in the sim', 'sim', [['inst.y = o.y + Math.sin(a) * r;', 'inst.y = o.y + Math.sin(a) * r * 0.7;']]],
   ['orbit ignores the lens', 'sim', [['r = d.orbitRadius * lensOf(o);', 'r = d.orbitRadius;']]],
-  ['orbit does not follow the caster', 'sim', [['inst.x = o.x + Math.cos(a) * r; inst.y = o.y + Math.sin(a) * r;', 'inst.x = inst.cast.x + Math.cos(a) * r; inst.y = inst.cast.y + Math.sin(a) * r;']]],
+  ['orbit does not follow the caster', 'sim', [['inst.x = o.x + Math.cos(a) * r;\n      inst.y = o.y + Math.sin(a) * r;', 'inst.x = inst.cast.x + Math.cos(a) * r; inst.y = inst.cast.y + Math.sin(a) * r;']]],
   ['orbit tests only the current point (no sweep)', 'sim', [['MOTION[inst.spec.delivery.motion](inst, dt);', "MOTION[inst.spec.delivery.motion](inst, dt); if (inst.spec.delivery.motion === 'orbits') { inst.prevX = inst.x; inst.prevY = inst.y; }"]]],
-  ['orbit not started on the ring', 'sim', [["if (d.motion === 'orbits') { MOTION.orbits(inst); inst.prevX = inst.x; inst.prevY = inst.y; }", '']]],
-  ['persistent shapes ignore their radius (lens 2)', 'sim', [['lens: lensOf(inst.cast.owner) }) : null;', 'lens: inst.spec.persistent ? 2 : lensOf(inst.cast.owner) }) : null;']]],     // retargeted 2026-10-31 (4d made the shape conditional)
+  ['orbit not started on the ring', 'sim', [["if (d.motion === 'orbits') {\n      MOTION.orbits(inst);\n      inst.prevX = inst.x;\n      inst.prevY = inst.y;\n    }", '']]],
+  ['persistent shapes ignore their radius (lens 2)', 'sim', [['lens: lensOf(inst.cast.owner),\n            }\n          )\n        : null;', 'lens: inst.spec.persistent ? 2 : lensOf(inst.cast.owner),\n            }\n          )\n        : null;']]],     // retargeted 2026-10-31 (4d made the shape conditional)
   ['Leaf Storm self drop on the base Gate', 'fx', [['else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);', 'else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(false, gm), dur);']]],     // slice 5a (SS12); was 'stacks per hit' on the retired maxStacks
   ['Night Shade takes a multiplier', 'fx', [['flat(inst, e, inst.cast.owner.level || 1, hop, hit)', 'flat(inst, e, (inst.cast.owner.level || 1) * 1.5, hop, hit)']]],
-  ['a teleport sweeps the whole jump', 'sim', [['> TELEPORT * TELEPORT) { inst.prevX = inst.x; inst.prevY = inst.y; }', '> TELEPORT * TELEPORT && false) { }']]],
+  ['a teleport sweeps the whole jump', 'sim', [['> TELEPORT * TELEPORT) {\n          inst.prevX = inst.x;\n          inst.prevY = inst.y;\n        }', '> TELEPORT * TELEPORT && false) { }']]],
   ['freeze removed', 'res', [['G.MoveDefs = freeze(resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers));', 'G.MoveDefs = resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers);']]],
 ];
 

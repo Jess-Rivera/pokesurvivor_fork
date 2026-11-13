@@ -8,7 +8,7 @@ const SRC = { enemy: ['js/entities/enemy.js', 'BOSSSPLIT_ENEMY'], brain: ['js/en
 const M = [
   ['update stops delegating to the brain', 'enemy', [['[vx, vy, animBase] = this.brain.step(dt, pl, dist, dx, dy, spd);', 'void 0;']]],
   ['applyFlinch skips the brain', 'enemy', [['if (this.brain) this.brain.flinch();', '']]],
-  ['the arena spawns a plain enemy', 'arena', [['G.Boss.make(G.Gym.makeDef(g), arena.x, arena.y - ts * 3.5)', 'new G.Enemy(G.Gym.makeDef(g), arena.x, arena.y - ts * 3.5, { hp: 1, spd: 1, dmg: 1 }, true)']]],
+  ['the arena spawns a plain enemy', 'arena', [['} else e = G.Boss.make(first, x, y);', '} else e = new G.Enemy(first, x, y, { hp: 1, spd: 1, dmg: 1 }, true);']]],
   ['G.Boss.make forgets the brain', 'brain', [['if (e.gym) e.brain = new GymBrain(e);', '']]],
   ['a gym method copied back onto the body', 'enemy', [['cy() {\n      return this.y;\n    }', 'cy() {\n      return this.y;\n    }\n    gymPick(dist) { return null; }']]],
   ['touch stops writing the contact type', 'brain', [["e.atkCat = d.category === 'special' ? 'special' : 'physical';\n      e.atkType = d.type;", "e.atkCat = d.category === 'special' ? 'special' : 'physical';"]]],

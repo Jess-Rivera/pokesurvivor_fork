@@ -18,7 +18,7 @@ const M = [
   ['a refused or cancelled pick still charges', 'shops', [['const c = check(shop, f, id);\n    if (!c.ok) return false;', 'const c = check(shop, f, id);\n    if (c.ok) G.Silver.spend(c.cost);\n    if (!c.ok) return false;']]],
   // ---- stock ----
   ['known moves are offered', 'shops', [['G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id))', 'G.Moves.poolFor(f.mon)'], ['return ids.filter((id) => !f.hasMove(id));', 'return ids;']]],
-  ['the stock rerolls on reopen', 'shops', [['if (!ids) shop.stock.set(f,', 'shop.stock.set(f,']]],
+  ['the stock rerolls on reopen', 'shops', [['if (!ids)\n      shop.stock.set(\n        f,', 'shop.stock.set(\n        f,']]],
   // ---- the rules ----
   ['a purchase switches the active slot', 'shops', [['} else if (!f.addMove(id, true)) return false;', '} else if (!f.addMove(id)) return false;']]],
   ['the 2-buff limit is gone', 'shops', [['capped = isBuff(id) && f.moves.filter((m) => isBuff(m.id)).length >= 2;', 'capped = false;']]],
@@ -47,7 +47,8 @@ const M = [
   ['the count is per member', 'shops', [['    if (!(shop.rerolls > 0)) return false;\n', "    const rk = f ? 'rr' + f.dex : 'rerolls';\n    if (shop[rk] == null) shop[rk] = shop.rerolls;\n    if (!(shop[rk] > 0)) return false;\n"], ['    shop.rerolls--;\n', '    shop[rk]--;\n']]],
   ['a reroll costs Silver', 'shops', [['    shop.rerolls--;\n', '    shop.rerolls--;\n    G.Silver.spend(1);\n']]],
   ['rerolls work under the dialog', 'shopui', [['function rerollNow() {\n    if (busy() || cur.forget) return;', 'function rerollNow() {\n    if (cur.forget) return;']]],
-  ['bans still filter the level-up pool', 'levelup', [['(id) => !pl.hasMove(id) && !(buffs >= 2', '(id) => !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2']]],
+  // 'bans still filter the level-up pool' removed (#56, Jess 2026-11-13): level-up offers no moves since the New Move cards
+  // retired, so there is no filter to break. The harness still checks levelup.js never reads bans.
   ['bans still filter Starting Moves', 'game', [['    f.addMove(G.startMoveOf(mon.dex));\n', '    f.addMove(G.startMoveOf(mon.dex));\n    f.banned = new Set((save.pban && save.pban[mon.dex]) || []);\n']]],
 ];
 

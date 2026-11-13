@@ -139,7 +139,7 @@ const M = [
   ['a dodge without its draw', PL, "next.drawn = action.verb === 'draw' || (action.verb === 'wait' && action.yourMove != null) ? action.threat : null;", 'next.drawn = state.drawn != null ? state.drawn : action.threat;'],
   ['a dodge ignores reflex', PL, 'if (distance / threat.travelSpeed < (world.reflex || 0) - EPS) return 0;', ''],
   ['the swap gate ignores minField', AI, "if (this.swapGate() && !(this.expectYou && this.swapGate() === 'minField')) return false;", "if (this.swapGate() === 'swapLimit') return false;"],
-  ['the reflex keep check is off', AI, 'if (k.hit < k.keep - LeaderAI.EPS) {', 'if (false) {'],
+  ['the reflex keep check is off', AI, 'if (k.hit < keep - LeaderAI.EPS) {', 'if (false) {'],
   // #59: a reflex dodge weighs the plan it would break (decision 2026-11-09-59-reflex-weighs-the-plan-bait-parked)
   ['a reflex spends the plan\'s charge', AI, 'keptBack = S.dodgeReserve + (planWorth > 0 ? 1 : 0);', 'keptBack = S.dodgeReserve;'],
   ['the plan is worth nothing', AI, 'return ahead ? Math.max(0, (plan.value || 0) - (plan.cost || 0)) : 0;', 'return 0;'],
