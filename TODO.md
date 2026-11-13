@@ -8,16 +8,15 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
 1. Before leaving work: commit the wrap-up, push, and (if done) merge into feature/gym-leader-ai and push that.
 2. At home, `git status` must be clean. If it is not, commit what is there first (never edit on a dirty tree).
-3. `git fetch origin`, then `git checkout feature/gym-leader-ai` (or feature/pause-menu-rework if the merge waits),
+3. `git fetch origin`, then `git checkout feature/gym-leader-ai` (the pause menu work is merged into it),
    then `git pull --ff-only`. If it refuses, the two machines diverged: stop and tell the assistant.
-4. Check: `git log --oneline -3` shows the wrap-up commit (and the merge, if done).
+4. Check: `git log --oneline -3` shows this handoff commit, then the merge (78d69120).
 5. `node tools/check.js`: expect only gym-harness and leader-stats-harness red (until #30). Anything else is new.
 6. Say "catch me up".
 7. Before leaving home: commit and push, so work starts from the same tree.
 
 ## Next (from the 2026-11-13 morning Quick session that closed #104 and #82)
-1. Merge feature/pause-menu-rework into feature/gym-leader-ai, then delete the old branch. The last #82 loose end
-   (PausePokemon and PauseInventory in main.js NEED) was built 2026-11-13.
+1. Delete feature/pause-menu-rework (merged into feature/gym-leader-ai 2026-11-13, 78d69120).
 2. Board fixes drafted 2026-11-13: comment on #99 with the font rule, close #106 as a duplicate of #99, comment on
    #102 (the old team sheet is co-op only now).
 3. Acquisition rework (decision 2026-11-12-acquisition-no-gacha-catch-candy-legendaries, map Acquisition v1): file

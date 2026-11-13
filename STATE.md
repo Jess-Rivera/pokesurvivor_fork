@@ -1,12 +1,11 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-13 morning, Quick (work). Branch: feature/pause-menu-rework, merging back into
-feature/gym-leader-ai (rules: docs/branch-rules/feature-gym-leader-ai.md).
+Last updated: 2026-11-13 morning, Quick (work). Branch: feature/gym-leader-ai (rules:
+docs/branch-rules/feature-gym-leader-ai.md). feature/pause-menu-rework merged into it 2026-11-13 (78d69120).
 
 ## START HERE (next session, either tool)
-1. If not done: merge feature/pause-menu-rework into feature/gym-leader-ai. #82 and #104 are closed; the NEED
-   fix for PausePokemon and PauseInventory is built (map "82 - Pause Panels in NEED Plan").
+1. #82 is done and merged (#104 closed, the NEED fix built). Delete feature/pause-menu-rework if not done.
 2. Apply the drafted board fixes: comment on #99, close #106 as its duplicate, comment on #102.
 3. File the acquisition parent issue, then its slices (TODO Next 3). Design only.
 4. Triage (TODO Next 4).

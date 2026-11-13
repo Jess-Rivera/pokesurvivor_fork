@@ -271,4 +271,6 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
   run's 252 EVs (fixed); the toast's pop animation dropped its centring (old bug, fixed).
 - Closed #104 and #82; filed #105 (G.UI.ask restyle) and #106 (menu font, a duplicate of #99).
 - Built (approved): PausePokemon and PauseInventory in main.js NEED, with a run-info harness check and 2 mutants.
-- Stopped at: the merge into feature/gym-leader-ai.
+- Merged feature/pause-menu-rework into feature/gym-leader-ai (78d69120) and pushed; a Windows index.lock rename
+  failure on the first try cleared on retry.
+- Stopped at: on feature/gym-leader-ai; next is the board fixes, then the acquisition parent issue.
