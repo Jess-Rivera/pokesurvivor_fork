@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<body>
+<header class="top">
+  <h1>Gym Leader AI <span class="branch">feature/gym-leader-ai</span></h1>
+  <p class="lede">A gym leader is a Player entity driven by an AI through your own controls. Click any box for details.</p>
+</header>
+<style>
+  /* Standalone copy (opened from file://): the in-app theme tokens are not injected here, so they are set below.
+     Snapshot of the 2026-11-13 refresher; LEADER-AI.md wins wherever this differs. */
+  :root {
+    --color-bg: #faf9fc;
+    --color-bg-secondary: #ffffff;
+    --color-bg-tertiary: #f9fafb;
+    --color-border: rgba(0, 0, 0, 0.12);
+    --color-border-light: rgba(0, 0, 0, 0.06);
+    --color-border-strong: #d1d5db;
+    --color-info: #3b82f6;
+    --color-info-bg: rgba(59, 130, 246, 0.1);
+    --color-info-border: rgba(59, 130, 246, 0.3);
+    --color-info-text: #1e40af;
+    --color-primary: #9333ea;
+    --color-primary-bg: #f3e8ff;
+    --color-primary-border: rgba(66, 0, 219, 0.3);
+    --color-primary-light: #a855f7;
+    --color-primary-subtle: rgba(66, 0, 219, 0.12);
+    --color-success: #22c55e;
+    --color-success-bg: rgba(34, 197, 94, 0.1);
+    --color-success-border: rgba(34, 197, 94, 0.3);
+    --color-success-dark: #16a34a;
+    --color-surface: #f9fafb;
+    --color-surface-active: #e5e7eb;
+    --color-surface-hover: #f3f4f6;
+    --color-text: #1a1a1a;
+    --color-text-muted: #9ca3af;
+    --color-text-on-primary: #ffffff;
+    --color-text-secondary: #5e5e5e;
+    --color-warning-bg: rgba(245, 158, 11, 0.1);
+    --color-warning-border: rgba(245, 158, 11, 0.3);
+    --color-warning-text: #92400e;
+    --font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    --font-sans: 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --radius-md: 10px;
+    --radius-pill: 17px;
+    --radius-sm: 6px;
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 20px 24px 28px; background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); font-size: 14px; line-height: 1.45; }
+  h1 { font-size: 22px; margin: 0 0 4px; font-weight: 650; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .branch { font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--color-text-secondary); background: var(--color-surface); border: 1px solid var(--color-border-light); border-radius: var(--radius-pill); padding: 2px 10px; }
+  .lede { margin: 0 0 16px; color: var(--color-text-secondary); }
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .tile { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md); padding: 12px 14px; }
+  .tile .v { font-family: var(--font-mono); font-size: 24px; font-weight: 650; }
+  .tile .l { font-size: 12px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .tile .s { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tab { border: 1px solid var(--color-border); background: var(--color-bg-secondary); color: var(--color-text-secondary); border-radius: var(--radius-pill); padding: 6px 14px; font: inherit; font-size: 13px; cursor: pointer; transition: all 0.15s ease; }
+  .tab:hover { background: var(--color-surface-hover); }
+  .tab.on { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-text-on-primary); }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 14px; align-items: start; }
+  .stage { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md); padding: 14px; min-height: 560px; overflow-x: auto; }
+  .panel { position: sticky; top: 12px; background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md); padding: 16px; min-height: 200px; }
+  .panel h2 { font-size: 16px; margin: 0 0 6px; }
+  .panel .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .panel ul { margin: 0; padding-left: 18px; }
+  .panel li { margin: 0 0 6px; color: var(--color-text); }
+  .panel .hint { color: var(--color-text-muted); font-size: 13px; }
+  .chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-pill); border: 1px solid var(--color-border-light); background: var(--color-surface); color: var(--color-text-secondary); font-family: var(--font-mono); }
+  .st-built { background: var(--color-success-bg); border-color: var(--color-success-border); color: var(--color-success-dark); }
+  .st-next { background: var(--color-primary-bg); border-color: var(--color-primary-border); color: var(--color-primary); }
+  .st-later { background: var(--color-info-bg); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .st-parked { background: var(--color-warning-bg); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .st-data { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-secondary); }
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; font-size: 12px; color: var(--color-text-secondary); align-items: center; }
+
+  /* flow map */
+  .map { position: relative; width: 100%; min-width: 760px; height: 560px; }
+  .map svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .lane { position: absolute; border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-bg-tertiary); }
+  .lane span { position: absolute; top: -10px; left: 12px; background: var(--color-bg-secondary); padding: 0 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted); }
+  .node { position: absolute; transform: translate(-50%, -50%); width: 14%; min-width: 104px; padding: 7px 9px; border-radius: var(--radius-sm); border: 1.5px solid var(--color-border); background: var(--color-bg-secondary); cursor: pointer; text-align: left; font: inherit; color: var(--color-text); transition: all 0.15s ease; box-shadow: var(--shadow-sm); }
+  .node:hover { box-shadow: var(--shadow-md); }
+  .node .t { font-size: 13px; font-weight: 650; display: block; }
+  .node .f { font-size: 11px; color: var(--color-text-secondary); font-family: var(--font-mono); display: block; margin-top: 2px; }
+  .node.built { border-color: var(--color-success); }
+  .node.next { border-color: var(--color-primary); background: var(--color-primary-bg); }
+  .node.later { border-color: var(--color-info); border-style: dashed; }
+  .node.data { border-color: var(--color-border-strong); background: var(--color-surface); }
+  .node.sel { outline: 3px solid var(--color-primary-subtle); }
+  .map.focus .node:not(.hl) { opacity: 0.35; }
+  .edge { stroke: var(--color-border-strong); stroke-width: 1.6; fill: none; }
+  .edge.dash { stroke-dasharray: 5 4; }
+  .edge.hl { stroke: var(--color-primary); stroke-width: 2.4; }
+  .map.focus .edge:not(.hl) { opacity: 0.25; }
+  .elabel { font-size: 10.5px; fill: var(--color-text-muted); font-family: var(--font-sans); }
+  .elabel.hl { fill: var(--color-primary); font-weight: 600; }
+
+  /* goals and actions */
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .sec-h { font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin: 0 0 8px; }
+  .cards { display: grid; gap: 8px; }
+  .card { border: 1px solid var(--color-border-light); border-radius: var(--radius-sm); padding: 9px 11px; background: var(--color-bg-secondary); cursor: pointer; text-align: left; font: inherit; color: var(--color-text); transition: all 0.15s ease; }
+  .card:hover { background: var(--color-surface-hover); }
+  .card.sel { border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-primary-subtle); }
+  .card .row { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .card .n { font-weight: 650; }
+  .card .d { font-size: 12.5px; color: var(--color-text-secondary); margin-top: 2px; }
+  .bars { display: grid; grid-template-columns: 52px 1fr; gap: 3px 8px; margin-top: 7px; align-items: center; font-size: 11px; color: var(--color-text-muted); }
+  .bar { height: 6px; border-radius: 3px; background: var(--color-surface-active); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--color-primary-light); border-radius: 3px; }
+  .bar.ign i { background: transparent; }
+  .curr { margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--color-info-bg); border: 1px solid var(--color-info-border); color: var(--color-info-text); font-size: 13px; }
+
+  /* settings */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--color-text-muted); font-weight: 600; padding: 7px 10px; border-bottom: 1px solid var(--color-border); font-size: 12px; }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+  td.m { font-family: var(--font-mono); }
+  tr.click { cursor: pointer; }
+  tr.click:hover td { background: var(--color-surface-hover); }
+  tr.sel td { background: var(--color-primary-bg); }
+  .grp td { font-size: 11px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-muted); background: var(--color-bg-tertiary); }
+  .fair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+
+  /* roadmap */
+  .filters { display: flex; gap: 6px; margin-bottom: 12px; }
+  .road { display: grid; gap: 18px; }
+  .chain { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+  .step { flex: 1 1 150px; min-width: 150px; }
+  .arrow { align-self: center; color: var(--color-text-muted); padding: 0 6px; font-size: 18px; }
+  .day { display: grid; grid-template-columns: 70px 1fr; gap: 10px; align-items: start; }
+  .day .date { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-muted); padding-top: 9px; }
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pills .card { flex: 0 1 auto; padding: 7px 10px; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .panel { position: static; }
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .twocol, .fair { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .fade { animation: fade 0.35s ease-out both; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+
+<section class="tiles">
+  <div class="tile"><div class="l">On the new AI</div><div class="v">2</div><div class="s">Misty and Brock</div></div>
+  <div class="tile"><div class="l">Slices shipped</div><div class="v">16</div><div class="s">Nov 8 to Nov 9, all feel-tested</div></div>
+  <div class="tile"><div class="l">Left before main</div><div class="v">3</div><div class="s">#53, then #39, then #30</div></div>
+  <div class="tile"><div class="l">Still on the old brain</div><div class="v">6</div><div class="s">gyms 3 to 8 (GymBrain)</div></div>
+</section>
+
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-tab="flow">How a leader plays</button>
+  <button class="tab" data-tab="goals">Goals and actions</button>
+  <button class="tab" data-tab="settings">Settings and fairness</button>
+  <button class="tab" data-tab="road">Road to main</button>
+</nav>
+
+<div class="layout">
+  <main class="stage">
+    <section id="v-flow">
+      <div class="legend">
+        <span class="chip st-built">built</span><span class="chip st-next">next (#53)</span><span class="chip st-later">later (#39)</span><span class="chip st-data">data / input</span>
+        <span>Click a box to light up what it talks to.</span>
+      </div>
+      <div class="map" id="map">
+        <div class="lane" style="left:15%; top:3%; width:66%; height:58%;"><span>The Decider: G.LeaderAI (#49)</span></div>
+        <div class="lane" style="left:46%; top:68%; width:51%; height:27%;"><span>Your frame order (same as yours)</span></div>
+        <svg id="edges"></svg>
+      </div>
+    </section>
+
+    <section id="v-goals" class="hidden">
+      <div class="twocol">
+        <div>
+          <p class="sec-h">9 goals (fixed in code, leaders only weight them)</p>
+          <div class="cards" id="goals"></div>
+        </div>
+        <div>
+          <p class="sec-h">10 actions (verbs filled per slot, mon or range)</p>
+          <div class="cards" id="actions"></div>
+          <div class="curr"><b>How it picks:</b> every think tick (0.25 s) it plans for all 9 goals, up to 4 actions each, and takes the best goal value minus plan cost. One currency: HP traded, as a fraction of the other side's max HP.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="v-settings" class="hidden">
+      <p class="sec-h">G.LeaderAI.BASE, the default leader (authored per gym as <code>ai</code> in js/data/gyms.js)</p>
+      <table>
+        <thead><tr><th>Setting</th><th>Base</th><th>Brock</th><th>Misty</th><th>What it does</th></tr></thead>
+        <tbody id="setrows"></tbody>
+      </table>
+      <p class="sec-h" style="margin-top:18px;">Fairness: smart, not oppressive</p>
+      <div class="fair" id="fair"></div>
+    </section>
+
+    <section id="v-road" class="hidden">
+      <div class="filters" id="filters">
+        <button class="tab on" data-f="all">All</button>
+        <button class="tab" data-f="left">Left</button>
+        <button class="tab" data-f="shipped">Shipped</button>
+      </div>
+      <div class="road">
+        <div data-group="left">
+          <p class="sec-h">The merge chain</p>
+          <div class="chain" id="chain"></div>
+        </div>
+        <div data-group="left">
+          <p class="sec-h">Any time (not blocking) and parked</p>
+          <div class="pills" id="side"></div>
+        </div>
+        <div data-group="shipped">
+          <p class="sec-h">Shipped</p>
+          <div class="cards" id="shipped"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="panel" id="panel">
+    <h2>Pick anything</h2>
+    <p class="hint">Click a box, card, row or issue to see what it is, where it lives and its status.</p>
+  </aside>
+</div>
+
+<script>
+const STATUS = { built: ['built', 'st-built'], next: ['next', 'st-next'], later: ['later', 'st-later'], parked: ['parked', 'st-parked'], data: ['data', 'st-data'], open: ['open spec question', 'st-parked'] };
+
+const NODES = [
+  { id: 'screen', t: 'The screen', f: 'what a human sees', st: 'data', x: 7, y: 16,
+    b: ['Positions, shots and hazards in flight, attack tells, HP bars, types, statuses, stage markers, both rosters.',
+        'A move once it has been cast on screen.',
+        'Never: live cooldown timers, cards, IVs, EVs, nature, exact stats, RNG, your next input.'] },
+  { id: 'info', t: 'Perception', f: 'G.LeaderInfo', st: 'built', iss: '#22 #31 #32', file: 'js/systems/leader-info.js', x: 23, y: 16,
+    b: ['The only door from the screen into the AI. Nothing reaches the AI around it.',
+        'Reveals: a move the first time it is cast; a bond when two moves of one mon cast with no slot switch seen.',
+        'Held-item reveals are split out to #36.',
+        'Threats view, fight events, rolling windows (2 s short, 10 s long).'] },
+  { id: 'memory', t: 'Run memory', f: 'G.LeaderMemory', st: 'built', iss: '#33', file: 'js/systems/leader-memory.js', x: 23, y: 46,
+    b: ['Created at startRun, dropped at endRun, never written to the save.',
+        'One record per leader (gym id). Per mon of yours: revealed moves, bonds, item, swap reason tags. Team: your usual lead.',
+        'Stores observations only; what a leader believes is derived from them with its settings each fight.',
+        'Stale reveals count until the move is seen missing, or for that mon\u2019s first 10 s on the field.',
+        'First exploit: your usual lead, after learnRate sightings, capped by predictCap.'] },
+  { id: 'belief', t: 'Belief', f: 'G.LeaderBelief', st: 'built', iss: '#50', file: 'js/systems/leader-belief.js', x: 39, y: 16,
+    b: ['Derives only, per fight. The Decider\u2019s only door.',
+        'Cooldown windows: a reveal starts a window around the move\u2019s base cooldown; each clean gap narrows it by memoryUse. Never certain (min width 0.2 s).',
+        'Readiness, the matchup, danger (your likely next hit), opportunity (its best hit), your extrapolated position plus aimError.',
+        'Open question: bench cooldowns mirror the live rule until your bench-recharge call.'] },
+  { id: 'reflex', t: 'Reflex layer', f: 'dodge read bag', st: 'built', iss: '#31 #59', file: 'js/entities/leader-ai.js', x: 39, y: 46,
+    b: ['Threats are noticed on any frame and answered exactly reflex later (0.15 s).',
+        'Dodge read bag: each block of 10 threats holds exactly dodgeRead reads (6), in a seeded shuffle.',
+        'A reflex dodge weighs the plan it would break (#59); dodgeReserve keeps charges back.',
+        'After a dodge the plan resumes if it still holds, else it replans at once.'] },
+  { id: 'planner', t: 'Goals + planner', f: 'G.LeaderPlanner', st: 'built', iss: '#51 #52', file: 'js/systems/leader-planner.js', x: 55, y: 16,
+    b: ['Every think tick (0.25 s): plans for all 9 goals, up to 4 actions each (a whole tree walk, since costs can go negative).',
+        'Ranks each goal and plan by value minus cost; the running plan gets a commitment bonus (stubbornness).',
+        'randomness draws from the ranking with its own seeded source.',
+        'Known gaps: #57 (circling lowers your hit chance), #58 (your shots along the action\u2019s path).',
+        'See the Goals and actions tab.'] },
+  { id: 'sharp', t: 'Misjudge + sharpness', f: 'issue #53', st: 'next', iss: '#53', x: 55, y: 46,
+    b: ['misjudge: seeded noise on each candidate plan\u2019s cost, drawn once per plan per think tick. The leader thinks a bad plan is good.',
+        'Sharpness: a per-leader base plus a per-loop growth, held inside each setting\u2019s valid range, so loop 6 Brock out-thinks loop 1 Brock.',
+        'Waiting on your three rulings (D1 which settings grow, D2 authoring shape, D3 the sharpness duel).',
+        'Real values get authored in #39.'] },
+  { id: 'executor', t: 'Executor', f: 'G.LeaderAI', st: 'built', iss: '#51', file: 'js/entities/leader-ai.js', x: 71, y: 16,
+    b: ['Runs the chosen plan\u2019s action, answering the Controller every frame with that action\u2019s steering.',
+        'An action ends on its effect, or at 1.5x its estimate.',
+        'Also the AI\u2019s own picks: which slot to press, the heal choice (being unhurt lowers a self heal), the edge unstick.',
+        'Dev: G.Debug.hitbox() shows the goal, the plan\u2019s steps and costs, the top 3 alternatives, your cooldown windows.'] },
+  { id: 'gymsdata', t: 'Leader data', f: 'gyms.js ai', st: 'data', file: 'js/data/gyms.js', x: 7, y: 46,
+    b: ['Every leader is data, never code per leader.',
+        'Brock: aggression 0.35, triggers (fight start, half HP gets serious, exploit), lines.',
+        'Misty: aggression 0.68, learnRate 2, triggers, lines.',
+        'Any setting can already be keyed per loop ({ 1: x, 4: y }).',
+        'validate() rejects unknown settings and out-of-range values.'] },
+  { id: 'persona', t: 'Personalities', f: 'issue #39', st: 'later', iss: '#39', x: 7, y: 80,
+    b: ['Goal weights, tag multipliers and overrides, signature actions, range, swapWill, risk, and the sharpness base and growth.',
+        'Brock a wall: patient, mid range, buffs early, rarely swaps, a little slow to react.',
+        'Misty tempo: kites with Water Pulse, pushes when ahead, swaps for matchups, reads you fast.',
+        'Done when the two read as distinct in your feel test.'] },
+  { id: 'controller', t: 'Controller', f: 'your 7 calls', st: 'built', iss: '#22 #40', x: 55, y: 81,
+    b: ['The same calls your keyboard answers: axis, dodge, shake, swapSlot, swapDir, slots, cycles.',
+        'Carries answers to the Body as requests. Decides and filters nothing.',
+        'Shake: a leader has your autoShake accessibility setting on.'] },
+  { id: 'body', t: 'Body', f: 'G.GymLeader', st: 'built', iss: '#41 #43', file: 'js/entities/gym-leader.js', x: 71, y: 81,
+    b: ['Holds the state: HP, stats, statuses, stages, slots, dodges, locks.',
+        'Accepts or refuses each request. acceptsAttack = your acceptsCast + a flinch hold + the authored firstWait.',
+        'A refused request passes nothing on, so the SimPass never learns why.',
+        'Your rules: the 0.4 s slot hold, swap and trap locks, send-in i-frames, two dodge charges.'] },
+  { id: 'simpass', t: 'SimPass', f: 'GymLeader.SimPass', st: 'built', iss: '#40 #41', file: 'js/entities/gym-leader.js', x: 88, y: 81,
+    b: ['Resolves what the Body accepted, plus timers, damage and heal over time, commitments, other entities\u2019 hits.',
+        'The tell is an authored difference: aim locked at the start, release whether or not you are still there.',
+        'A stun mid wind-up cancels it; timers keep running while stunned.',
+        'Frame order checked step by step in player-move-trace-harness.js.'] },
+  { id: 'gate', t: 'Your cast gate', f: 'MoveSim.gateOpen', st: 'built', iss: '#47', x: 88, y: 46,
+    b: ['Before a wind-up starts, the leader asks the same gate your cast runs: targeting, cost and dash rules.',
+        'A refusal waits your 0.05 s retry.',
+        'So a shot starts inside its range and a nova anywhere.'] },
+];
+const EDGES = [
+  ['screen', 'info', 'sees'], ['info', 'memory', 'observations'], ['info', 'belief', ''], ['memory', 'belief', 'past fights'],
+  ['info', 'reflex', 'threats'], ['belief', 'planner', ''], ['sharp', 'planner', 'noise + growth', 'dash'],
+  ['planner', 'executor', 'best plan'], ['reflex', 'executor', 'interrupts'], ['gymsdata', 'planner', 'settings', 'dash'],
+  ['persona', 'gymsdata', 'authors', 'dash'], ['executor', 'controller', 'commands'], ['controller', 'body', 'requests'],
+  ['body', 'simpass', 'accepted'], ['simpass', 'gate', 'asks first'],
+];
+
+const GOALS = [
+  ['Endurance', 'land a hit', [4, 3, 1], 'Patient: takes damage seriously, barely minds time.'],
+  ['Maintain', 'land a hit from its preferred range', [3, 3, 3], 'Neutral throughout. The range setting is its distance.'],
+  ['Pressure', 'land a hit', [2, 4, 4], 'Rushes: shrugs off damage taken, wants damage dealt fast.'],
+  ['Setback', 'land a status, or lower one of your stages', [3, 3, 3], 'Neutral throughout.'],
+  ['Kite', 'land a hit from outside your reach', [5, 3, 2], 'Very careful about damage taken.'],
+  ['Buff', 'gain at least +1 stage', [4, 0, 2], 'Worth the extra damage the stage should deal over the 10 s window. Damage dealt ignored.'],
+  ['Bait', 'land a hit while your best move cools down', [5, 4, 2], 'PARKED on #60: most cooldowns sit in 0 to 2.5 s, so a planned dodge never pays off.', 'parked'],
+  ['Finish', 'your active mon faints', [1, 4, 3], 'Worth your mon\u2019s current HP fraction plus a KO bonus (about 0.3).'],
+  ['Conserve', 'recover a heal, cooldown or dodge charge', [6, 0, 2], 'Worth only what it recovers, so it scores nothing when nothing is spent.'],
+];
+const ACTIONS = [
+  ['Close to reach (slot X)', 'approach', 'Get within slot X\u2019s reach.'],
+  ['Hold at range (R)', 'position', 'Circle you at distance R. (#57: circling should lower your hit chance; not modelled yet.)'],
+  ['Back off', 'retreat', 'Get outside your best revealed reach.'],
+  ['Dash in (slot X)', 'dash', 'A dodge toward you. Needs a charge beyond the reserve; the extra charge kept back is a cost.'],
+  ['Wait for a window', 'wait', 'Until a named event: its slot ready, or your window opens.'],
+  ['Draw your shot (M)', 'approach', 'Step into your move M\u2019s reach as its window opens, so M fires.'],
+  ['Dodge your shot (M)', 'dodge', 'Planned, but fires on the reflex clock when the shot is noticed, through the dodge read bag.'],
+  ['Use slot X', 'from move data', 'Activate X and stay in reach until it fires. Attack, status, buff or heal, per the move.'],
+  ['Swap to mon Y', 'swap', 'The plan\u2019s later steps read the incoming mon. swapWill is its cost term; follows your swap rules.'],
+  ['Recover', 'wait', 'A spent cooldown or charge comes back.'],
+];
+const LEVEL = ['ignored', 'lowest', 'very low', 'low', 'neutral', 'high', 'very high', 'highest'];
+
+const SETTINGS = [
+  ['Reaction'],
+  ['think', '0.25 s', '', '', 'How often it re-plans (the think tick).', 'grows?'],
+  ['reflex', '0.15 s', '', '', 'Delay before it answers anything it sees.', 'proposed #53'],
+  ['threatWindow', '0.6 s', '', '', 'A shot reaching it within this counts as a threat.'],
+  ['aimError', '0 px', '', '', 'Error on its read of where you will be.'],
+  ['Dodge'],
+  ['dodgeRead', '6 of 10', '', '', 'Threats read per block of 10 (the shuffle bag).', 'proposed #53'],
+  ['dodgeReserve', '0', '', '', 'Dodge charges it keeps back for threats.'],
+  ['Swaps'],
+  ['minField', '8 s', '', '', 'Time on the field before a voluntary swap (stall guard).'],
+  ['swapLimit', 'none', '', '', 'Voluntary swaps per fight (absent: no cap, 0: never).'],
+  ['swapWill', '1', '', '', 'Multiplies the planner\u2019s swap cost.'],
+  ['Style'],
+  ['aggression', '0.5', '0.35', '0.68', 'Shifted by confidence into effective aggression; drives the dodge lean.'],
+  ['range', '220 px', '', '', 'Maintain\u2019s preferred distance.'],
+  ['risk', '1', '', '', 'Multiplies the damage-taken weight in every cost.'],
+  ['stubbornness', '1', '', '', 'Multiplies the running plan\u2019s commitment bonus.'],
+  ['lean', '45\u00b0', '', '', 'How far a dodge angles toward or away from you.'],
+  ['randomness', '0', '', '', 'Sometimes picks a worse goal on purpose (seeded).'],
+  ['Memory'],
+  ['memoryUse', '0.5', '', '', 'How fast cooldown windows close on each clean gap.', 'proposed #53'],
+  ['learnRate', '3', '', '2', 'Sightings before it believes a pattern (your usual lead).'],
+  ['predictCap', '7 of 10', '', '', 'How often it acts on a believed pattern.'],
+  ['Confidence'],
+  ['confStart / Swing / Min / Max', '0.5 / 1 / 0.2 / 0.9', '', '', 'One value per leader team, moved by hits, HP lead and faints.'],
+  ['Coming in #53'],
+  ['misjudge', 'not built', '', '', 'Seeded noise on each plan\u2019s cost. Approved to grow per loop.', '#53'],
+];
+const FAIR = [
+  ['Human limits', 'A reflex delay, the think tick, aim error, and a dodge only after the reflex delay and with a charge left.'],
+  ['Prediction cap', 'A believed pattern acts at most predictCap in 10 (about 70%), so you can bait it.'],
+  ['Stall guards', 'minField before a voluntary swap, swapLimit per fight.'],
+  ['Tells', 'On by default for every gym (the authored tells setting).'],
+  ['No rubber banding', 'Never changes stats, HP, damage, tempo or cooldowns. Confidence changes behavior only.'],
+  ['Deterministic', 'Rates are counters and bags; randomness is seeded per fight, and the harness fixes the seed.'],
+];
+
+const CHAIN = [
+  ['#53', 'Misjudge and sharpness plumbing', 'next', ['#49\u2019s slice 4. Adds misjudge noise and a per-loop growth for sharpness settings, held in range.', 'Waiting on D1 (which settings grow), D2 (authoring shape), D3 (the sharpness duel).', 'Test: the sharpness duel, loop 6 Brock beats loop 1 Brock.', 'Closing it closes #49 (the Decider).']],
+  ['#39', 'Personalities (slice 5b)', 'later', ['Authors each leader on the Decider: goal weights, tag multipliers, signature actions, range, swapWill, risk, sharpness base and growth.', 'Brock a wall, Misty tempo.', 'Done when they read as distinct in your feel test.']],
+  ['#30', 'Re-baseline the two red harnesses', 'later', ['gym-harness: "Misty loop 1 pool is 13 stacks". leader-stats-harness: "Misty: Zinc softens special hits only".', 'Classify each as a stale expectation or a real regression, then fix.', 'This is the merge gate: check.js must end with "check: all passed".']],
+  ['main', 'Merge feature/gym-leader-ai', 'later', ['After #30. Move any rule from the branch rules file that should outlive the branch, then mark that file history.']],
+];
+const SIDE = [
+  ['#57', 'Circling at range lowers your hit chance in its danger', 'later'],
+  ['#58', 'Your shots counted along the action\u2019s path', 'later'],
+  ['#46', 'Explicit sides; leaders off the enemy list', 'later'],
+  ['#48', 'Study: move your player rules out of game.js', 'later'],
+  ['#60', 'Bait parked: no window at 0 to 2.5 s cooldowns', 'parked'],
+  ['#36', 'Held-item reveals', 'parked'],
+  ['bench', 'Bench cooldowns (your bench-recharge call)', 'open'],
+];
+const SHIPPED = [
+  ['Nov 8', [['#22', 'Slice 1: controls layer + information model'], ['#31', 'Slice 2: swap and dodge decisions, dodge read bag'], ['#32', 'Slice 3: confidence, pacing, triggers and lines'], ['#33', 'Slice 4: run memory, first exploit (your usual lead)'], ['#34', 'Slice 5a: GymBrain out of Player-entity leaders'], ['#35', 'Leader roster UI (side branch, merged)']]],
+  ['Nov 9', [['#40', 'Leader frame takes your flow'], ['#41', 'Four roles split: Body, SimPass, Decider'], ['#42', 'Rulings (auto shake, firstWait)'], ['#43', 'Movement split, swap on your path'], ['#45', 'strongHost out'], ['#47', '47a: attacks wait on your cast gate']]],
+  ['Nov 9', [['#50', '#49 slice 1: Belief'], ['#51', '#49 slice 2: planner core, executor, overlay'], ['#52', '#49 slice 3: swap, dash in, draw, dodge'], ['#59', 'Reflex weighs the plan; Bait parked']]],
+];
+
+/* ---------- panel ---------- */
+const panel = document.getElementById('panel');
+function chip(text, cls) { return '<span class="chip ' + (cls || '') + '">' + text + '</span>'; }
+function show(title, st, metas, lines) {
+  const s = STATUS[st];
+  panel.innerHTML = '<h2>' + title + '</h2><div class="meta">' + (s ? chip(s[0], s[1]) : '') +
+    metas.filter(Boolean).map((m) => chip(m)).join('') + '</div><ul>' + lines.map((l) => '<li>' + l + '</li>').join('') + '</ul>';
+  panel.classList.remove('fade'); void panel.offsetWidth; panel.classList.add('fade');
+}
+function select(container, el) {
+  container.querySelectorAll('.sel').forEach((x) => x.classList.remove('sel'));
+  if (el) el.classList.add('sel');
+}
+
+/* ---------- flow map ---------- */
+const map = document.getElementById('map'), svg = document.getElementById('edges');
+const nodeEls = {};
+NODES.forEach((n) => {
+  const b = document.createElement('button');
+  b.className = 'node ' + n.st;
+  b.style.left = n.x + '%'; b.style.top = n.y + '%';
+  b.innerHTML = '<span class="t">' + n.t + '</span><span class="f">' + n.f + '</span>';
+  b.onclick = () => focusNode(n.id);
+  map.appendChild(b); nodeEls[n.id] = b;
+});
+function clip(cx, cy, w, h, tx, ty) {
+  const dx = tx - cx, dy = ty - cy;
+  if (!dx && !dy) return [cx, cy];
+  const sx = dx ? (w / 2) / Math.abs(dx) : Infinity, sy = dy ? (h / 2) / Math.abs(dy) : Infinity, s = Math.min(sx, sy);
+  return [cx + dx * s, cy + dy * s];
+}
+let focused = null;
+function drawEdges() {
+  const box = map.getBoundingClientRect();
+  const rect = (id) => { const r = nodeEls[id].getBoundingClientRect(); return { x: r.left - box.left + r.width / 2, y: r.top - box.top + r.height / 2, w: r.width + 8, h: r.height + 8 }; };
+  let html = '<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>';
+  EDGES.forEach(([a, b, label, style], i) => {
+    const A = rect(a), B = rect(b);
+    const p1 = clip(A.x, A.y, A.w, A.h, B.x, B.y), p2 = clip(B.x, B.y, B.w, B.h, A.x, A.y);
+    const hl = focused && (a === focused || b === focused) ? ' hl' : '';
+    html += '<line class="edge' + (style === 'dash' ? ' dash' : '') + hl + '" x1="' + p1[0] + '" y1="' + p1[1] + '" x2="' + p2[0] + '" y2="' + p2[1] + '" marker-end="url(#ar)"/>';
+    if (label) {
+      const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2 - 5;
+      html += '<text class="elabel' + hl + '" x="' + mx + '" y="' + my + '" text-anchor="middle">' + label + '</text>';
+    }
+  });
+  svg.innerHTML = html;
+}
+function focusNode(id) {
+  focused = focused === id ? null : id;
+  map.classList.toggle('focus', !!focused);
+  Object.entries(nodeEls).forEach(([k, el]) => {
+    const linked = focused && (k === focused || EDGES.some(([a, b]) => (a === focused && b === k) || (b === focused && a === k)));
+    el.classList.toggle('hl', !!linked);
+    el.classList.toggle('sel', k === focused);
+  });
+  drawEdges();
+  if (!focused) return;
+  const n = NODES.find((x) => x.id === id);
+  show(n.t, n.st, [n.f !== n.iss && n.f, n.iss, n.file], n.b);
+}
+drawEdges();
+addEventListener('resize', drawEdges);
+
+/* ---------- goals and actions ---------- */
+const gBox = document.getElementById('goals'), aBox = document.getElementById('actions');
+const scale = (lv) => Math.round((lv / 7) * 100);
+GOALS.forEach(([name, target, prof, note, st]) => {
+  const c = document.createElement('button');
+  c.className = 'card';
+  const bars = ['taken', 'dealt', 'time'].map((k, i) =>
+    '<span>' + k + '</span><div class="bar' + (prof[i] === 0 ? ' ign' : '') + '"><i style="width:' + scale(prof[i] + 1) + '%"></i></div>').join('');
+  c.innerHTML = '<div class="row"><span class="n">' + name + '</span>' + (st ? chip('parked', 'st-parked') : '') + '</div><div class="d">' + target + '</div><div class="bars">' + bars + '</div>';
+  c.onclick = () => {
+    select(document.getElementById('v-goals'), c);
+    show(name, st || 'built', ['goal'], ['Target: ' + target + '.',
+      'Cost profile: damage taken ' + LEVEL[prof[0] + 1] + ', damage dealt ' + LEVEL[prof[1] === 0 ? 0 : prof[1] + 1] + ', time ' + LEVEL[prof[2] + 1] + '.', note,
+      'Danger never sets a target; it only enters as cost.']);
+  };
+  gBox.appendChild(c);
+});
+ACTIONS.forEach(([name, tag, d]) => {
+  const c = document.createElement('button');
+  c.className = 'card';
+  c.innerHTML = '<div class="row"><span class="n">' + name + '</span>' + chip(tag) + '</div><div class="d">' + d + '</div>';
+  c.onclick = () => {
+    select(document.getElementById('v-goals'), c);
+    show(name, 'built', ['action', 'tag: ' + tag], [d, 'Every action has preconditions, expected effects, a cost, a computed duration, a tag and a steering routine that answers the Controller each frame.', 'The action\u2019s tag multiplier (or a per-action override) multiplies its whole cost; #39 authors those per leader.']);
+  };
+  aBox.appendChild(c);
+});
+
+/* ---------- settings ---------- */
+const sBody = document.getElementById('setrows');
+SETTINGS.forEach((r) => {
+  const tr = document.createElement('tr');
+  if (r.length === 1) { tr.className = 'grp'; tr.innerHTML = '<td colspan="5">' + r[0] + '</td>'; sBody.appendChild(tr); return; }
+  const [k, base, brock, misty, what, grow] = r;
+  tr.className = 'click';
+  tr.innerHTML = '<td class="m">' + k + (grow && grow !== 'grows?' ? ' ' + chip(grow, grow === '#53' ? 'st-next' : 'st-parked') : '') + '</td><td class="m">' + base + '</td><td class="m">' + (brock || '\u00b7') + '</td><td class="m">' + (misty || '\u00b7') + '</td><td>' + what + '</td>';
+  tr.onclick = () => {
+    select(sBody, tr);
+    const lines = [what, 'Baseline: ' + base + (brock ? '. Brock: ' + brock : '') + (misty ? '. Misty: ' + misty : '') + '.'];
+    if (grow === '#53') lines.push('Approved to take a per-leader base plus a per-loop growth (decision 2026-11-09-49-leader-sharpness-base-plus-loop-growth).');
+    else if (grow) lines.push('You marked this one "likely" to grow per loop too. That is D1 in #53.');
+    lines.push('A setting a leader does not author falls back to this baseline. Any setting can be keyed per loop.');
+    show(k, grow === '#53' ? 'next' : 'built', ['G.LeaderAI.BASE'], lines);
+  };
+  sBody.appendChild(tr);
+});
+const fBox = document.getElementById('fair');
+FAIR.forEach(([n, d]) => {
+  const c = document.createElement('button');
+  c.className = 'card';
+  c.innerHTML = '<div class="n">' + n + '</div><div class="d">' + d + '</div>';
+  c.onclick = () => { select(fBox, c); show(n, 'built', ['fairness'], [d, 'Fairness comes from human limits, not from easing off. Your feel test is the final judge.']); };
+  fBox.appendChild(c);
+});
+
+/* ---------- roadmap ---------- */
+const chainBox = document.getElementById('chain');
+CHAIN.forEach(([iss, title, st, lines], i) => {
+  if (i) { const a = document.createElement('span'); a.className = 'arrow'; a.textContent = '\u2192'; chainBox.appendChild(a); }
+  const c = document.createElement('button');
+  c.className = 'card step';
+  c.innerHTML = '<div class="row"><span class="n">' + iss + '</span>' + chip(STATUS[st][0], STATUS[st][1]) + '</div><div class="d">' + title + '</div>';
+  c.onclick = () => { select(document.getElementById('v-road'), c); show(iss + ' ' + title, st, [], lines); };
+  chainBox.appendChild(c);
+});
+const sideBox = document.getElementById('side');
+SIDE.forEach(([iss, title, st]) => {
+  const c = document.createElement('button');
+  c.className = 'card';
+  c.innerHTML = '<span class="n">' + iss + '</span> ' + chip(STATUS[st][0], STATUS[st][1]) + '<div class="d">' + title + '</div>';
+  c.onclick = () => {
+    select(document.getElementById('v-road'), c);
+    show(iss + ' ' + title, st, [], [st === 'parked' ? 'Parked: not needed before the merge.' : st === 'open' ? 'An open spec question in LEADER-AI "The Decider (#49)". Belief mirrors the live rule from one place until you rule.' : 'Ready any time; not needed before the merge.']);
+  };
+  sideBox.appendChild(c);
+});
+const shipBox = document.getElementById('shipped');
+SHIPPED.forEach(([date, items]) => {
+  const row = document.createElement('div'); row.className = 'day';
+  row.innerHTML = '<div class="date">' + date + '</div>';
+  const pills = document.createElement('div'); pills.className = 'pills';
+  items.forEach(([iss, title]) => {
+    const c = document.createElement('button');
+    c.className = 'card';
+    c.innerHTML = '<span class="n">' + iss + '</span> <span class="d" style="display:inline">' + title + '</span>';
+    c.onclick = () => { select(document.getElementById('v-road'), c); show(iss + ' ' + title, 'built', [date], ['Shipped and feel-tested.', 'Detail: docs/LEADER-AI.md "Build order" and the issue on GitHub.']); };
+    pills.appendChild(c);
+  });
+  row.appendChild(pills); shipBox.appendChild(row);
+});
+document.getElementById('filters').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#filters .tab').forEach((x) => x.classList.toggle('on', x === b));
+  document.querySelectorAll('#v-road [data-group]').forEach((g) => g.classList.toggle('hidden', b.dataset.f !== 'all' && g.dataset.group !== b.dataset.f));
+});
+
+/* ---------- tabs ---------- */
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#tabs .tab').forEach((x) => x.classList.toggle('on', x === b));
+  ['flow', 'goals', 'settings', 'road'].forEach((t) => document.getElementById('v-' + t).classList.toggle('hidden', t !== b.dataset.tab));
+  if (b.dataset.tab === 'flow') drawEdges();
+});
+focusNode('planner');
+</script>
+</body>
+</html>
