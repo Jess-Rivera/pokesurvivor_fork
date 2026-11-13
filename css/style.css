@@ -1317,10 +1317,22 @@ kbd {
     0 0 2px #101010,
     1px 1px 0 #101010,
     0 1px 2px #101010;
-  animation: pop 0.2s ease-out;
+  animation: toast-pop 0.2s ease-out;
 }
 .toast.bad {
   border-color: #c8141c;
+}
+/* the shared pop, but keeping the centring shift: pop's transform replaced translateX(-50%) while it ran, so the
+   toast showed right of centre for 0.2 s and then snapped (Jess, 2026-11-13) */
+@keyframes toast-pop {
+  from {
+    transform: translateX(-50%) scale(0.94);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%);
+    opacity: 1;
+  }
 }
 
 ::-webkit-scrollbar {

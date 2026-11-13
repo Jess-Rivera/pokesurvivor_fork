@@ -200,7 +200,7 @@ All three screens use the pause menu's pixel style on the 1920 x 1080 stage. Co-
   menu's look is a later issue (Jess, 2026-11-13). Learn has the green focus first; Move_Left and Move_Right move it,
   either Enter key presses, Esc does nothing (End Run's rule). The old allocation screen (scr-evs) is retired.
 - [Approved] Learn's goodbye (Jess, 2026-11-13, #104c): once the EVs are saved, the shared toast says "Lessons Learned,
-  Returning Home" for 1 s while the EV screen stays up and takes no input, then the main menu. Go Home has no toast.
+  Returning Home" for 2 s while the EV screen stays up and takes no input, then the main menu. Go Home has no toast.
 
 ## Scope notes
 - [Approved] Co-op pause keeps the old screen (multiplayer is deferred). Touch versions of the hover tooltips wait

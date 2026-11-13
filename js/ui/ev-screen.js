@@ -9,7 +9,7 @@
  *   +   greys out when the stat has nothing left, the cell is at 252 or the copy is at 510
  *   -   only takes back this screen's additions (lowering old EVs is the parked 5b berries)
  *   a click moves 1 EV, Shift-click 10, and holding repeats after 0.35 s, about 12 a second (Jess, 2026-11-13)
- * Learn saves what was given, shows the shared toast "Lessons Learned, Returning Home" for 1 s with the screen still up
+ * Learn saves what was given, shows the shared toast "Lessons Learned, Returning Home" for 2 s with the screen still up
  * and taking no input, then goes home (#104c); with EVs left over it asks first, and they are discarded. Go Home saves
  * nothing and always asks. Both asks are the shared G.UI.ask dialog: it covers this screen and keeps the Enter that
  * answers it from the game, so nothing here needs guarding. No way back to End Run or Run Review.
@@ -39,7 +39,7 @@ G.EvScreen = (() => {
   const SHIFT_STEP = 10,
     REPEAT_DELAY_MS = 350,
     REPEAT_EVERY_MS = 83; // about 12 a second
-  const LEARN_TOAST_MS = 1000; // Learn's toast, then home (Jess, 2026-11-13)
+  const LEARN_TOAST_MS = 2000; // Learn's toast, then home (Jess, 2026-11-13: 1 s too fast, 3 s too long)
 
   const columns = signal([]), // per team slot: null, or { uid, dex, shiny, before: six EVs, beforeTotal }
     bank = signal([0, 0, 0, 0, 0, 0]), // the run's whole EVs to give, per stat

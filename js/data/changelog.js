@@ -21,6 +21,12 @@ G.CHANGELOG = [
         "Messages that pop up at the bottom of the screen use the main menu's look now: a dark panel with the teal edge of the menu's top and bottom bars, red for bad news. After Learn, the EV screen says Lessons Learned, Returning Home for a moment before taking you back.",
       ],
     ],
+    fix: [
+      [
+        'Pop-up messages no longer slide in from the right and jump to the middle: they appear centred.',
+        'Pop-up messages no longer slide in from the right and jump to the middle: they appear centred.',
+      ],
+    ],
   },
   {
     d: '2026-11-12',

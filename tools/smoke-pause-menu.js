@@ -36,7 +36,8 @@
 //   saves exactly the adds; a third run's Go Home asks, Cancel stays, Yes saves nothing.
 //   #104b the shared stage fit: the pause menu, End Run and EV screen stages scale to the window and back.
 //   #104c Learn: the shared toast "Lessons Learned, Returning Home" (Michroma, the main menu bars' charcoal and teal
-//   rim) with the EVs already saved and the screen up but deaf, then home after about 1 s; the bad tone's red rim.
+//   rim) with the EVs already saved and the screen up but deaf, then home after about 2 s; the bad tone's red rim;
+//   the toast stays centred while it pops in (it used to show right of centre, then snap).
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -1488,7 +1489,7 @@ async function main() {
   ok(!evState.ask && evState.open && evCell(evState, 0, 0).add === '+2', 'Learn: Cancel stays, with what was given');
   await page.click('.ev-screen .pm-button[data-action="learn"]');
   await sleep(200);
-  // #104c: the shared toast (G.UI.toast), the screen up but taking no input, then home after about 1 s
+  // #104c: the shared toast (G.UI.toast), the screen up but taking no input, then home after about 2 s
   const toastNow = () =>
     page.evaluate(() => {
       const toast = document.querySelector('.toast');
@@ -1536,18 +1537,26 @@ async function main() {
     deaf.plusEnabled && deaf.added === '' && !deaf.ask,
     'during the toast a + press and a Go Home click do nothing (' + JSON.stringify(deaf) + ')'
   );
-  await page.waitForFunction(() => !G.EvScreen.isOpen(), null, { timeout: 4000 });
+  await page.waitForFunction(() => !G.EvScreen.isOpen(), null, { timeout: 5000 });
   const learnTook = Date.now() - learnedAt;
   evState = await evNow();
   ok(
-    evState.state === 'ui' && learnTook >= 900 && learnTook < 2000,
-    'Learn: home after about 1 s (' + learnTook + ' ms, state ' + evState.state + ')'
+    evState.state === 'ui' && learnTook >= 1900 && learnTook < 3500,
+    'Learn: home after about 2 s (' + learnTook + ' ms, state ' + evState.state + ')'
   );
   const badToast = await page.evaluate(() => {
     G.UI.toast('Smoke check', 400, 'bad');
     return getComputedStyle(document.querySelector('.toast')).borderTopColor;
   });
   ok(badToast === 'rgb(200, 20, 28)', "the shared toast's bad tone keeps the shape with the red rim (" + badToast + ')');
+  await sleep(450);
+  const toastDrift = await page.evaluate(async () => {
+    G.UI.toast('Smoke check, a longer line so the toast is wide', 600);
+    await new Promise((resolve) => setTimeout(resolve, 50)); // mid pop-in (0.2 s)
+    const box = document.querySelector('.toast').getBoundingClientRect();
+    return Math.round(box.left + box.width / 2 - innerWidth / 2);
+  });
+  ok(Math.abs(toastDrift) <= 2, 'the toast is centred while it pops in (' + toastDrift + ' px off)');
   await sleep(450);
 
   // a third run: Go Home saves nothing

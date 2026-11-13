@@ -57,7 +57,7 @@ const M = [
   ["Learn goes home at once (no wait)", "evscreen", [["    leaveTimer = setTimeout(leave, LEARN_TOAST_MS);", "    leave();"]]],
   ["Learn shows no toast", "evscreen", [["    G.UI.toast('Lessons Learned, Returning Home', LEARN_TOAST_MS);\n", ""]]],
   ["Learn saves after the wait", "evscreen", [["    G.Copies.applyEvPlan(G.DB.save, bank.value, planned());\n    G.DB.commit(true);\n    G.Audio.sfx('confirm');\n", "    G.Audio.sfx('confirm');\n    setTimeout(() => (G.Copies.applyEvPlan(G.DB.save, bank.value, planned()), G.DB.commit(true)), 1000);\n"]]],
-  ["the toast lasts 0 s", "evscreen", [["const LEARN_TOAST_MS = 1000;", "const LEARN_TOAST_MS = 0;"]]],
+  ["the toast lasts 0 s", "evscreen", [["const LEARN_TOAST_MS = 2000;", "const LEARN_TOAST_MS = 0;"]]],
   ["+ works during the toast", "evscreen", [["if (event.button !== 0 || leaving) return;", "if (event.button !== 0) return;"]]],
   ["the buttons work during the toast", "evscreen", [["isOpen: () => isOpen() && !leaving,", "isOpen: () => isOpen(),"]]],
 ];

@@ -6,7 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
-- [2026-11-13, #104c: Learn says "Lessons Learned, Returning Home" for 1 s; every toast takes the main menu bars' charcoal and teal look (Jess)](docs/decisions/2026-11-13-104c-learn-toast-and-shared-toast-look.md), built in #104
+- [2026-11-13, #104c: Learn says "Lessons Learned, Returning Home" for 2 s; every toast takes the main menu bars' charcoal and teal look (Jess)](docs/decisions/2026-11-13-104c-learn-toast-and-shared-toast-look.md), built in #104
 - [2026-11-13, #104 EV screen: click 1, Shift-click 10, hold to repeat; the old allocation screen retired; the shared dialog for now (Jess)](docs/decisions/2026-11-13-104-ev-screen-giving-and-old-screen-retired.md), built in #104
 - [2026-11-12, End of run: End Run screen, Run Review, EV screen redesign; quitting gives no EVs (Jess)](docs/decisions/2026-11-12-end-of-run-screens-and-no-evs-on-quit.md), to build in #92, #103, #104
 - [2026-11-12, Every hover tooltip is the topmost layer; the pause menu draws all of its tooltips in one shared layer (Jess)](docs/decisions/2026-11-12-every-tooltip-is-the-topmost-layer.md), built in the pause menu, the rest in an issue
