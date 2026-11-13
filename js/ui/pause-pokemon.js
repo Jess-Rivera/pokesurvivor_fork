@@ -29,7 +29,8 @@
  * the shown one's portrait gets a green stroke and a shimmer. The Pokemon on the field wears the selection cursor.
  *
  * The held item slot is the square only (name and effect in its tooltip); it and the team cards are places a held item
- * can be clicked or dragged to (js/ui/pause-inventory.js does the moves, #90).
+ * can be clicked or dragged to (js/ui/pause-inventory.js does the moves, #90). In the Run Review (#92, the end of run's
+ * read-only look back, setReadOnly) neither is a place: the tooltips stay, nothing moves.
  *
  * The game is paused while this shows, so it reads the team when the menu opens, when another Pokemon is picked and
  * after a held item moves, never per frame. It never writes game state (the moves are pause-inventory.js's).
@@ -129,7 +130,10 @@ G.PausePokemon = (() => {
 
   // ---------- state ----------
   const shownSlot = signal(0), // the team slot the detail panel shows
-    readCount = signal(0); // bumped on each read, so the panels redraw from the team as it is now
+    readCount = signal(0), // bumped on each read, so the panels redraw from the team as it is now
+    readOnly = signal(false); // #92 Run Review: the end of run's look back, where nothing accepts an item
+  /** Held items can be moved here: the pause menu, not the Run Review. */
+  const movesItems = () => !!inventory && !readOnly.value;
   const life = createLifeBar({ artPixel: 2, artWidth: signal(LIFE.artWidth), labelTop: LIFE.labelTop });
 
   const team = () => (G.Game && G.Game.roster) || [];
@@ -423,12 +427,7 @@ G.PausePokemon = (() => {
         ${bonded ? html`<div class="hud-text pm-bond-caption" style=${{ color: BOND_PINK }}>Cast together</div>` : null}
         ${group.map(
           (move) =>
-            html`<div
-              key=${move.id}
-              class="pm-move"
-              data-move=${move.id}
-              ...${moveTip(move)}
-            >
+            html`<div key=${move.id} class="pm-move" data-move=${move.id} ...${moveTip(move)}>
               <${IconCanvas} icon=${'move:' + move.id} size=${32} className="pm-move-icon" />
               <div class="pm-move-text">
                 <div class="pm-move-head">
@@ -531,7 +530,7 @@ G.PausePokemon = (() => {
       icon: held ? held.icon || member.item : null,
       tip: held && !carrying ? { name: held.name, desc: held.desc } : null,
       className: 'pm-held-slot' + (lifted ? ' is-lifted' : ''),
-      attrs: inventory ? inventory.placeAttributes(place) : null,
+      attrs: movesItems() ? inventory.placeAttributes(place) : null,
     };
   }
 
@@ -648,7 +647,7 @@ G.PausePokemon = (() => {
       faceClass=${shown ? 'pm-face-shown' : ''}
       style=${style}
       onClick=${() => select(slot)}
-      attrs=${inventory ? { 'data-drop': 'team:' + slot } : null}
+      attrs=${movesItems() ? { 'data-drop': 'team:' + slot } : null}
     >
       <span class="hud-text hud-roster-key">${G.Input.keyLabel('swap_' + (slot + 1)) || String(slot + 1)}</span>
       ${member === G.Game.player && !fainted ? html`<${Cursor} />` : null}
@@ -698,8 +697,13 @@ G.PausePokemon = (() => {
     readCount.value = readCount.value + 1;
   }
 
+  /** #92 Run Review: true while the panels are a read-only look back (no held item slot or team card takes an item). */
+  function setReadOnly(flag) {
+    readOnly.value = !!flag;
+  }
+
   const shown = () => shownSlot.value;
   const runStats = { runStatsNumbers, runStatsRows };
-  const panels = { ready: true, DetailPanel, TeamPanel, read, refresh, step, select, shownSlot: shown };
+  const panels = { ready: true, DetailPanel, TeamPanel, read, refresh, step, select, setReadOnly, shownSlot: shown };
   return Object.assign(panels, runStats);
 })();

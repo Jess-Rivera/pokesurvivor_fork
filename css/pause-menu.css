@@ -151,6 +151,13 @@ body.pm-open .hud-overlay {
 .pm-step2 .pm-buttons {
   pointer-events: auto;
 }
+/* #92 Run Review: one button, Back, on the ball's middle; the held item is not a place to move items from */
+.pm-review .pm-buttons {
+  justify-content: center;
+}
+.pm-review .pm-held-slot.is-filled {
+  cursor: default;
+}
 /* the button layer stops at the ball's inner edge: buttons sliding off vanish there (centre 255,255 in ball pixels) */
 .pm-buttons {
   height: 214px;

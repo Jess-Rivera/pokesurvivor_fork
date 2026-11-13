@@ -24,6 +24,9 @@
 //   Tooltips (Jess, 2026-11-12: every hover tooltip is the topmost layer): each is read from the stage's shared
 //   tooltip layer and must be the top element across its box: every hex corner, Statuses, Cards Taken's Gate and
 //   Bench Regeneration, the last move (over the team cards, 16 px clear of both side panels); leaving or scrolling hides.
+//   #92 Run Review: after End, the results screen's Team button reopens the menu read-only: one Back button, Run Info,
+//   detail and team panels, no Run Inventory, no drop places, a move tooltip on top, Move_Right steps; Esc, Enter and a
+//   click on Back each return to the results; the next run's pause menu is the full one again.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -291,7 +294,10 @@ async function main() {
   ok(await clockMoves(), 'the run clock runs again');
   ok(s.hudOpacity === 1 || (await sleep(300), (await look()).hudOpacity === 1), 'the run HUD is back');
   drawn = await countFor(300);
-  ok(drawn.world > 0 && drawn.hud > 0, 'after closing: the world draws and the HUD reads again (' + JSON.stringify(drawn) + ')');
+  ok(
+    drawn.world > 0 && drawn.hud > 0,
+    'after closing: the world draws and the HUD reads again (' + JSON.stringify(drawn) + ')'
+  );
   ok((await hudVisibility()) === 'visible', 'after closing: the run HUD is visible');
 
   await key('Escape', FULL_MS);
@@ -467,12 +473,25 @@ async function main() {
     await page.hover('.pm-hex-label[data-stat="' + text.stat + '"]');
     await sleep(60);
     const shown = await tipNow();
-    cornerTips.push({ stat: text.stat, line: shown ? shown.lines.join(' | ') : '', want: text.expectedTip, top: onTop(shown) });
+    cornerTips.push({
+      stat: text.stat,
+      line: shown ? shown.lines.join(' | ') : '',
+      want: text.expectedTip,
+      top: onTop(shown),
+    });
   }
-  ok(cornerTips.every((corner) => corner.line === corner.want), 'each corner hover reads ' + cornerTips[0].line);
+  ok(
+    cornerTips.every((corner) => corner.line === corner.want),
+    'each corner hover reads ' + cornerTips[0].line
+  );
   ok(
     cornerTips.every((corner) => corner.top),
-    'every corner tooltip is on top (' + cornerTips.filter((corner) => !corner.top).map((corner) => corner.stat).join(', ') + ')'
+    'every corner tooltip is on top (' +
+      cornerTips
+        .filter((corner) => !corner.top)
+        .map((corner) => corner.stat)
+        .join(', ') +
+      ')'
   );
   await page.mouse.move(5, 5);
   await sleep(60);
@@ -715,9 +734,18 @@ async function main() {
     "runinfo('full'): Biggest hit names its move (" + info.rows['Biggest hit'] + ')'
   );
   const kinds = ['Burn', 'Poison', 'Toxic', 'Paralysis', 'Sleep', 'Freeze', 'Confusion', 'Trap', 'Daze', 'Drowsy'];
-  ok(kinds.every((kind) => kind in info.rows), "runinfo('full'): every status kind shows");
-  ok(info.rows['Most faints'].startsWith(lead.name) && 'Time fainted' in info.rows, 'Most faints and Time fainted show');
-  ok(info.overflows && info.thumb && info.scrollTop === 0, 'the full panel overflows, shows its bar and opens at the top');
+  ok(
+    kinds.every((kind) => kind in info.rows),
+    "runinfo('full'): every status kind shows"
+  );
+  ok(
+    info.rows['Most faints'].startsWith(lead.name) && 'Time fainted' in info.rows,
+    'Most faints and Time fainted show'
+  );
+  ok(
+    info.overflows && info.thumb && info.scrollTop === 0,
+    'the full panel overflows, shows its bar and opens at the top'
+  );
   const headerAt = info.headerTop;
   await page.mouse.move(info.thumb.x, info.thumb.y);
   await page.mouse.down();
@@ -725,7 +753,10 @@ async function main() {
   await page.mouse.up();
   await sleep(100);
   info = await runInfo();
-  ok(info.scrollTop > 0 && info.headerTop === headerAt, 'dragging the bar scrolls the body (DD1); the header stays put');
+  ok(
+    info.scrollTop > 0 && info.headerTop === headerAt,
+    'dragging the bar scrolls the body (DD1); the header stays put'
+  );
   await reopen();
   info = await runInfo();
   ok(info.scrollTop === 0, 'it reopens at the top');
@@ -737,14 +768,20 @@ async function main() {
   await page.evaluate(() => G.Debug.runinfo('tie'));
   await reopen();
   info = await runInfo();
-  ok(info.rows['Most faints'].startsWith(lead.name), "runinfo('tie'): Most faints shows the lower slot (" + info.rows['Most faints'] + ')');
+  ok(
+    info.rows['Most faints'].startsWith(lead.name),
+    "runinfo('tie'): Most faints shows the lower slot (" + info.rows['Most faints'] + ')'
+  );
   // the seeded run has 3 gyms by 14:20 and is past 20:00; this record had its 4th gym at 16:40, so the gap is growing
   await page.evaluate(() => G.Debug.regionbest({ loop: 1, gyms: 4, time: 1500, splits: [250, 500, 800, 1000] }));
   await reopen();
   info = await runInfo();
   ok(info.rows.Best === 'Loop 1, Gym 4 cleared, lasted 25:00', 'regionbest({..}): Best reads ' + info.rows.Best);
   ok(info.rows.Next === 'Loop 1, Gym 4 (best got there at 16:40)', 'Next: ' + info.rows.Next);
-  ok(/^You're behind by /.test(info.rows.Pace) && info.tones.Pace.includes('is-behind'), 'Pace: behind, red (' + info.rows.Pace + ')');
+  ok(
+    /^You're behind by /.test(info.rows.Pace) && info.tones.Pace.includes('is-behind'),
+    'Pace: behind, red (' + info.rows.Pace + ')'
+  );
   for (const arg of ['clear', 'old']) {
     await page.evaluate((how) => G.Debug.regionbest(how), arg);
     await reopen();
@@ -763,7 +800,10 @@ async function main() {
   ok(wrote.written && wrote.best && wrote.best.gyms === 3, "recordcheck('write'): this run is the record now");
   await reopen();
   info = await runInfo();
-  ok(/^Loop 1, Gym 3 cleared, lasted /.test(info.rows.Best) && info.rows.Pace === 'New best pace', 'the written record shows');
+  ok(
+    /^Loop 1, Gym 3 cleared, lasted /.test(info.rows.Best) && info.rows.Pace === 'New best pace',
+    'the written record shows'
+  );
 
   // ---- #91-3: the Run Stats box on the detail panel, seeded through runinfo('full') ----
   const statsBox = () =>
@@ -772,7 +812,9 @@ async function main() {
         rows = {};
       const rowEls = [...box.querySelectorAll('.pm-stats-row')];
       for (const each of rowEls)
-        rows[each.querySelector('.pm-stats-label').textContent.trim()] = each.querySelector('.pm-stats-value').textContent.trim();
+        rows[each.querySelector('.pm-stats-label').textContent.trim()] = each
+          .querySelector('.pm-stats-value')
+          .textContent.trim();
       const slot = +document.querySelector('.pm-detail').dataset.slot;
       const scroller = box.querySelector('.hud-scroll-box');
       return {
@@ -782,7 +824,10 @@ async function main() {
         kills: G.RunStats.member(G.Game.runStats, slot).kills,
         overflow: rowEls.some((each) => each.scrollWidth > each.clientWidth + 1),
         scrolls: scroller.scrollHeight > scroller.clientHeight + 1,
-        height: Math.round(box.getBoundingClientRect().height / (document.querySelector('.pm-detail').getBoundingClientRect().height / 1028)),
+        height: Math.round(
+          box.getBoundingClientRect().height /
+            (document.querySelector('.pm-detail').getBoundingClientRect().height / 1028)
+        ),
       };
     });
   await page.evaluate(() => {
@@ -792,20 +837,25 @@ async function main() {
   });
   await reopen();
   let stats = await statsBox();
-  ok(stats.order === 'Kills|Field|Damage|Share|Best hit|Super eff.|Taken|Healed|Faints|Down|Statuses|DoT dmg',
-    'Run Stats box: twelve rows in the 91d order');
-  ok(stats.rows.Kills === String(stats.kills), 'Run Stats Kills is the shown Pokemon\'s (' + stats.rows.Kills + ')');
+  ok(
+    stats.order === 'Kills|Field|Damage|Share|Best hit|Super eff.|Taken|Healed|Faints|Down|Statuses|DoT dmg',
+    'Run Stats box: twelve rows in the 91d order'
+  );
+  ok(stats.rows.Kills === String(stats.kills), "Run Stats Kills is the shown Pokemon's (" + stats.rows.Kills + ')');
   ok(/^\d+(\.\d)?k$/.test(stats.rows.Damage), 'a five digit Damage reads compact (' + stats.rows.Damage + ')');
   ok(!stats.overflow, 'no Run Stats row overflows the 200 px column');
   ok(stats.scrolls && stats.height === 200, 'the box keeps its 200 px and scrolls its rows (Jess, 2026-11-12)');
   const firstShown = stats.slot;
   await key('ArrowRight', 100);
   stats = await statsBox();
-  ok(stats.slot !== firstShown && stats.rows.Kills === String(stats.kills), 'Move_Right: the box shows the next Pokemon\'s run');
+  ok(
+    stats.slot !== firstShown && stats.rows.Kills === String(stats.kills),
+    "Move_Right: the box shows the next Pokemon's run"
+  );
   await page.click('.pm-team-card >> nth=0');
   await sleep(100);
   stats = await statsBox();
-  ok(stats.rows.Kills === String(stats.kills), 'a team card click: the box shows that Pokemon\'s run');
+  ok(stats.rows.Kills === String(stats.kills), "a team card click: the box shows that Pokemon's run");
   await page.evaluate(() => {
     const row = [...document.querySelectorAll('.pm-stats-row')].find((each) => each.textContent.includes('Statuses'));
     row.scrollIntoView({ block: 'nearest' });
@@ -831,7 +881,11 @@ async function main() {
       }));
       const slot = +document.querySelector('.pm-detail').dataset.slot;
       const member = G.Game.roster.find((each) => each.teamSlot === slot);
-      const want = G.TeamCards.takenBy(member.teamCards, member.moves.map((move) => move.id), G.Game.roster.length);
+      const want = G.TeamCards.takenBy(
+        member.teamCards,
+        member.moves.map((move) => move.id),
+        G.Game.roster.length
+      );
       const scale = document.querySelector('.pm-detail').getBoundingClientRect().height / 1028;
       return {
         got: rows.map((row) => row.id + ' ' + row.label + ' ' + row.picks).join('|'),
@@ -849,42 +903,66 @@ async function main() {
   ok(taken.height === 400, 'Cards Taken keeps its 400 px box (' + taken.height + ')');
   ok(taken.rows > 0 || taken.empty, 'Cards Taken: rows, or "No cards yet." with none');
   await page.evaluate(() => {
-    for (const [id, picks] of [['damage', 2], ['cooldown', 2], ['ailment', 3], ['vitamins:atk', 2], ['gate', 2], ['regen', 1], ['chain', 1]])
+    for (const [id, picks] of [
+      ['damage', 2],
+      ['cooldown', 2],
+      ['ailment', 3],
+      ['vitamins:atk', 2],
+      ['gate', 2],
+      ['regen', 1],
+      ['chain', 1],
+    ])
       G.Debug.cards(id, picks);
   });
   await reopen();
   taken = await cardsBox();
-  ok(taken.rows > 0 && taken.got === taken.want, 'Cards Taken lists takenBy\'s rows (' + taken.got + ')');
-  ok(taken.got.includes('vitamins:atk Protein x2'), 'Cards Taken: Vitamins by the vitamin\'s name, with its pick count');
+  ok(taken.rows > 0 && taken.got === taken.want, "Cards Taken lists takenBy's rows (" + taken.got + ')');
+  ok(taken.got.includes('vitamins:atk Protein x2'), "Cards Taken: Vitamins by the vitamin's name, with its pick count");
   ok(!taken.overflow, 'no Cards Taken row overflows the column (long names wrap)');
-  ok(taken.changed.length > 0, 'the cards change at least one of the shown Pokemon\'s moves');
+  ok(taken.changed.length > 0, "the cards change at least one of the shown Pokemon's moves");
   if (taken.changed.length) {
     const target = taken.changed[0];
-    await page.evaluate((id) => document.querySelector('.pm-move[data-move="' + id + '"]').scrollIntoView({ block: 'nearest' }), target.id);
+    await page.evaluate(
+      (id) => document.querySelector('.pm-move[data-move="' + id + '"]').scrollIntoView({ block: 'nearest' }),
+      target.id
+    );
     await page.hover('.pm-move[data-move="' + target.id + '"]');
     await sleep(100);
     const moveTip = ((await tipNow()) || { lines: [] }).lines;
     const cardsLine = moveTip.find((line) => line.startsWith('Cards: ')) || '';
-    ok(target.texts.every((text) => cardsLine.includes(text)), 'the move tooltip\'s cards line shows every change (' + cardsLine + ')');
+    ok(
+      target.texts.every((text) => cardsLine.includes(text)),
+      "the move tooltip's cards line shows every change (" + cardsLine + ')'
+    );
   }
   for (const id of ['gate', 'regen']) {
     const has = await page.evaluate((card) => !!document.querySelector('.pm-card-row[data-card="' + card + '"]'), id);
     if (!has) continue; // gate only with a stat move, regen only with a team of 2 or more
-    await page.evaluate((card) => document.querySelector('.pm-card-row[data-card="' + card + '"]').scrollIntoView({ block: 'nearest' }), id);
+    await page.evaluate(
+      (card) => document.querySelector('.pm-card-row[data-card="' + card + '"]').scrollIntoView({ block: 'nearest' }),
+      id
+    );
     await page.hover('.pm-card-row[data-card="' + id + '"]');
     await sleep(100);
     const shownTip = await tipNow();
     const cardTip = await page.evaluate((card) => {
       const slot = +document.querySelector('.pm-detail').dataset.slot;
       const member = G.Game.roster.find((each) => each.teamSlot === slot);
-      const rows = G.TeamCards.takenBy(member.teamCards, member.moves.map((move) => move.id), G.Game.roster.length);
+      const rows = G.TeamCards.takenBy(
+        member.teamCards,
+        member.moves.map((move) => move.id),
+        G.Game.roster.length
+      );
       return { want: (rows.find((row) => row.id === card) || {}).tip };
     }, id);
     cardTip.shown = shownTip ? shownTip.lines.join(' | ') : '';
     ok(onTop(shownTip), 'the ' + id + ' tooltip in Cards Taken is on top');
     ok(
-      !!cardTip.want && cardTip.shown === cardTip.want &&
-        (id === 'gate' ? /^Stat stage Gate 6\.0 s to \d/.test(cardTip.shown) : /^Benched Pokemon regain /.test(cardTip.shown)),
+      !!cardTip.want &&
+        cardTip.shown === cardTip.want &&
+        (id === 'gate'
+          ? /^Stat stage Gate 6\.0 s to \d/.test(cardTip.shown)
+          : /^Benched Pokemon regain /.test(cardTip.shown)),
       'hovering ' + id + ' in Cards Taken shows its real number (' + cardTip.shown + ')'
     );
   }
@@ -907,13 +985,21 @@ async function main() {
   }));
   ok(
     !!lastMoveTip && lastMoveTip.name === panelEdges.lastName,
-    'the last move\'s tooltip shows (' + (lastMoveTip && lastMoveTip.name) + ')'
+    "the last move's tooltip shows (" + (lastMoveTip && lastMoveTip.name) + ')'
   );
-  ok(onTop(lastMoveTip), 'the last move\'s tooltip is on top, the team cards under it (' + (lastMoveTip && lastMoveTip.covered) + ' covered)');
   ok(
-    !!lastMoveTip && Math.abs(lastMoveTip.left - panelEdges.info - 16) <= 1 && Math.abs(panelEdges.detail - lastMoveTip.right - 16) <= 1,
+    onTop(lastMoveTip),
+    "the last move's tooltip is on top, the team cards under it (" + (lastMoveTip && lastMoveTip.covered) + ' covered)'
+  );
+  ok(
+    !!lastMoveTip &&
+      Math.abs(lastMoveTip.left - panelEdges.info - 16) <= 1 &&
+      Math.abs(panelEdges.detail - lastMoveTip.right - 16) <= 1,
     'the move tooltip sits 16 px clear of Run Info and of the detail panel (' +
-      (lastMoveTip && Math.round(lastMoveTip.left - panelEdges.info)) + ', ' + (lastMoveTip && Math.round(panelEdges.detail - lastMoveTip.right)) + ')'
+      (lastMoveTip && Math.round(lastMoveTip.left - panelEdges.info)) +
+      ', ' +
+      (lastMoveTip && Math.round(panelEdges.detail - lastMoveTip.right)) +
+      ')'
   );
   const scrolled = await page.evaluate(() => {
     const box = document.querySelector('.pm-move').closest('.hud-scroll-box');
@@ -1051,6 +1137,84 @@ async function main() {
     'End ends the run, the menu is gone (state ' + s.state + ')'
   );
   ok(!s.ask, 'no popup was used');
+
+  // ---- #92 Run Review: the end of run's Team button reopens the menu read-only (docs/PAUSE-MENU.md section 7) ----
+  await page.waitForFunction(() => G.UI.isOpen('scr-over'), null, { timeout: 5000 });
+  const openReview = async (label) => {
+    await page.click('#btn-team');
+    await page.waitForFunction(() => G.PauseMenu.isFullyOpen(), null, { timeout: 3000 });
+    await sleep(80);
+    const r = await look();
+    const extra = await page.evaluate(() => ({
+      reviewing: G.PauseMenu.isReviewing(),
+      over: G.UI.isOpen('scr-over'),
+      teamSheet: G.UI.isOpen('scr-team'),
+      inventory: !!document.querySelector('.pm-panel-inventory .pm-inventory'),
+      infoRows: document.querySelectorAll('.pm-panel-info .pm-info-row').length,
+      detail: !!document.querySelector('.pm-detail'),
+      teamCards: document.querySelectorAll('.pm-team-card').length,
+      drops: document.querySelectorAll('.pause-menu [data-drop]').length,
+    }));
+    ok(
+      r.open && extra.reviewing && !extra.over && !extra.teamSheet,
+      label + ': Run Review opens over the hidden results'
+    );
+    ok(
+      r.buttons.join('|') === 'Back' && r.focus === 'Back',
+      label + ': the ball holds one button, Back (' + r.buttons.join(', ') + ')'
+    );
+    return { r, extra };
+  };
+  let review = await openReview('Team button');
+  await shot('run-review.png');
+  ok(!review.extra.inventory, 'Run Review: no Run Inventory');
+  ok(review.extra.infoRows > 0, 'Run Review: Run Info shows the run (' + review.extra.infoRows + ' rows)');
+  ok(
+    review.extra.detail && review.extra.teamCards >= 2,
+    'Run Review: the detail and team panels (' + review.extra.teamCards + ' cards)'
+  );
+  ok(review.extra.drops === 0, 'Run Review: nothing accepts an item (' + review.extra.drops + ' places)');
+  await page.hover('.pm-move >> nth=0');
+  await sleep(100);
+  const reviewTip = await tipNow();
+  ok(onTop(reviewTip), 'Run Review: a move tooltip shows in the shared layer (' + (reviewTip && reviewTip.name) + ')');
+  await page.mouse.move(5, 5);
+  const shownBefore = await page.evaluate(() => G.PausePokemon.shownSlot());
+  await key('ArrowRight', 100);
+  ok(
+    (await page.evaluate(() => G.PausePokemon.shownSlot())) !== shownBefore,
+    'Run Review: Move_Right shows the next Pokemon'
+  );
+  const backTo = async (how) => {
+    await page.waitForFunction(() => !G.PauseMenu.isOpen(), null, { timeout: 3000 });
+    const after = await page.evaluate(() => ({ over: G.UI.isOpen('scr-over'), reviewing: G.PauseMenu.isReviewing() }));
+    ok(after.over && !after.reviewing, how + ' goes back to the results screen');
+  };
+  await key('Escape');
+  await backTo('Esc');
+  await openReview('again');
+  await key('Enter');
+  await backTo('Enter on Back');
+  await openReview('again');
+  await page.click('.pm-button[data-action="back"]');
+  await backTo('a click on Back');
+
+  // the next run's pause menu is the full one again
+  await page.evaluate(() => G.Game.startRun());
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
+  await key('Escape');
+  await page.waitForFunction(() => G.PauseMenu.isFullyOpen(), null, { timeout: 3000 });
+  await sleep(80);
+  s = await look();
+  const nextRun = await page.evaluate(() => ({
+    reviewing: G.PauseMenu.isReviewing(),
+    inventory: !!document.querySelector('.pm-panel-inventory .pm-inventory'),
+    drops: document.querySelectorAll('.pause-menu [data-drop]').length,
+  }));
+  ok(
+    !nextRun.reviewing && s.buttons.join('|') === 'Resume|End Run|Settings' && nextRun.inventory && nextRun.drops > 0,
+    "the next run's pause menu is the full one (" + s.buttons.join(', ') + ', ' + nextRun.drops + ' places)'
+  );
 
   await page.evaluate(() => clearInterval(window.__keep));
   ok(errs.length === 0, 'no page or console errors' + (errs.length ? ': ' + errs.slice(0, 5).join(' | ') : ''));

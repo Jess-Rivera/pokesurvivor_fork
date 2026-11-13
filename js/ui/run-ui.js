@@ -281,6 +281,12 @@ G.RunUI = (() => {
     const roster = r.roster || [];
     $('btn-team').classList.toggle('hidden', !roster.length);
     $('btn-team').onclick = () => {
+      // #92 Run Review: solo reopens the pause menu read-only; co-op keeps the old team sheet (deferred)
+      const solo = !G.Coop.active && G.PauseMenu.ready;
+      if (solo && G.PauseMenu.openReview(() => G.UI.show('scr-over'))) {
+        G.UI.hide('scr-over');
+        return;
+      }
       G.Sheet.render($('team-sheet'), roster, { sel: Math.max(0, roster.indexOf(G.Game.player)) });
       G.UI.show('scr-team');
     };

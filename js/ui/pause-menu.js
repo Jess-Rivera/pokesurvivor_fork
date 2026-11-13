@@ -27,6 +27,10 @@
  * Destroy and a grey No, while the pocket's filled slots pulse white. Destroy empties the pocket and resumes; No (or Esc,
  * or the pause key) brings the buttons back. G.Game asks blockResume() before every resume (Resume, Esc, P).
  *
+ * Run Review (#92, docs/PAUSE-MENU.md section 7): the end of run reopens this menu read-only (openReview): Run Info, the
+ * detail and team panels with all their tooltips, no Run Inventory, nothing accepts an item, and the ball holds one
+ * button, Back (Enter or Esc too), which closes the menu and returns to the end of run screen.
+ *
  * Layout: a 1920x1080 stage (the mockup's pixels), scaled down to fit smaller windows, never up.
  * The detail and team panels are js/ui/pause-pokemon.js (#89), the Run Inventory and the held item moves
  * js/ui/pause-inventory.js (#90); Run Info is an empty frame until #91.
@@ -69,7 +73,14 @@ G.PauseMenu = (() => {
     { id: 'settings', label: 'Settings' },
   ];
 
-  const focus = signal(0); // index into BUTTONS
+  // #92 Run Review (docs/PAUSE-MENU.md section 7): the end of run reopens this menu read-only, the ball holding one
+  // button that goes back to the end of run screen.
+  const REVIEW_BUTTONS = [{ id: 'back', label: 'Back' }];
+  const reviewing = signal(false);
+  let reviewBack = null; // what Back runs once the menu has closed
+  const buttonList = () => (reviewing.value ? REVIEW_BUTTONS : BUTTONS);
+
+  const focus = signal(0); // index into buttonList()
   const answerFocus = signal(1); // index into ANSWERS while asking (No first)
   const asking = signal(false);
   const pocketAsking = signal(false), // the Temporary Pocket prompt (#90)
@@ -208,7 +219,7 @@ G.PauseMenu = (() => {
   function Buttons() {
     const isAsking = asking.value || pocketAsking.value;
     return html`<div class="pm-buttons">
-      ${BUTTONS.map(
+      ${buttonList().map(
         (button, index) =>
           html`<${SlotButton}
             key=${button.id}
@@ -260,7 +271,7 @@ G.PauseMenu = (() => {
       </div>
       <div class="pm-panel pm-panel-team" data-panel="team">${pokemon ? html`<${pokemon.TeamPanel} />` : null}</div>
       <div class="pm-panel pm-panel-inventory" data-panel="inventory">
-        ${inventory ? html`<${inventory.InventoryPanel} />` : null}
+        ${inventory && !reviewing.value ? html`<${inventory.InventoryPanel} />` : null}
       </div>`;
   }
 
@@ -345,6 +356,7 @@ G.PauseMenu = (() => {
   }
   /** Gone at once, no animation, no callback (the run ended, or a new one starts). */
   function hideNow() {
+    endReview();
     hideTooltip();
     if (stepTimer) clearTimeout(stepTimer);
     stepTimer = null;
@@ -356,6 +368,38 @@ G.PauseMenu = (() => {
     root.classList.add('pm-hidden');
     document.body.classList.remove('pm-open');
   }
+
+  // ---------- #92 Run Review: the end of run's read-only look back ----------
+  /** Open the menu read-only over the ended run: Run Info, detail and team panels, no Run Inventory, one Back button.
+   *  onBack runs once the menu has closed. False when it cannot (the menu is already showing, or no Pokemon panels). */
+  function openReview(onBack) {
+    if (!pokemon || isOpen()) return false;
+    reviewing.value = true;
+    reviewBack = onBack || null;
+    root.classList.add('pm-review');
+    pokemon.setReadOnly(true);
+    open();
+    return true;
+  }
+  /** Back (the button, Enter or Esc): play the closing, then run onBack. */
+  function leaveReview() {
+    if (!reviewing.value || target !== STEPS) return;
+    G.Audio.sfx('back');
+    close(() => {
+      const back = reviewBack;
+      endReview();
+      if (back) back();
+    });
+  }
+  function endReview() {
+    if (!reviewing.value) return;
+    reviewing.value = false;
+    reviewBack = null;
+    focus.value = 0;
+    root.classList.remove('pm-review');
+    if (pokemon) pokemon.setReadOnly(false);
+  }
+  const isReviewing = () => reviewing.value;
 
   const isOpen = () => !root.classList.contains('pm-hidden');
   const isClosing = () => isOpen() && target === 0;
@@ -469,8 +513,9 @@ G.PauseMenu = (() => {
     if (target !== STEPS || asking.value || pocketAsking.value) return; // closing, or End Run or the pocket is asking
     focus.value = index;
     G.Audio.sfx('confirm');
-    const id = BUTTONS[index].id;
+    const id = buttonList()[index].id;
     if (id === 'endRun') startAsking();
+    else if (id === 'back') leaveReview();
     else if (actions[id]) actions[id]();
   }
   /** Keys while paused (G.Game): Up / Down move the focus, Enter presses, Move_Left / Move_Right show the previous and
@@ -499,8 +544,9 @@ G.PauseMenu = (() => {
     const side = (G.Input.action('move_right') ? 1 : 0) - (G.Input.action('move_left') ? 1 : 0);
     if (side && pokemon) pokemon.step(side); // the detail panel: previous and next Pokemon
     const move = (G.Input.action('move_down') ? 1 : 0) - (G.Input.action('move_up') ? 1 : 0);
-    if (move) {
-      focus.value = (focus.value + move + BUTTONS.length) % BUTTONS.length;
+    const count = buttonList().length;
+    if (move && count > 1) {
+      focus.value = (focus.value + move + count) % count;
       G.Audio.sfx('hover');
     }
     if (enterTapped()) press(focus.value);
@@ -527,6 +573,9 @@ G.PauseMenu = (() => {
     blockResume,
     keys,
     wire,
+    openReview,
+    leaveReview,
+    isReviewing,
     OPEN_MS,
     CLOSE_MS,
   };

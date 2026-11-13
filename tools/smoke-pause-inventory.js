@@ -327,10 +327,7 @@ async function main() {
   await page.hover('.pm-inv-pocket .hud-grid-slot.is-filled');
   await sleep(80);
   const tipOnTop = (await tipNow()) || { covered: -1, font: '' };
-  ok(
-    onTop(tipOnTop),
-    'the pocket tooltip is on top while the prompt asks (' + tipOnTop.covered + ' points covered)'
-  );
+  ok(onTop(tipOnTop), 'the pocket tooltip is on top while the prompt asks (' + tipOnTop.covered + ' points covered)');
   ok(/GameFont/.test(tipOnTop.font), 'tooltips use the game UI font (' + tipOnTop.font + ')');
   await page.mouse.move(5, 5);
 

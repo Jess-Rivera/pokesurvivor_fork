@@ -125,6 +125,11 @@ G.Game = (() => {
       }
       return;
     }
+    if (state === 'over') {
+      // #92: Esc or the pause key in the Run Review goes back to the end of run screen
+      if (G.PauseMenu.ready && G.PauseMenu.isReviewing()) G.PauseMenu.leaveReview();
+      return;
+    }
     if (state === 'playing') {
       state = 'paused';
       if (!G.Debug.quietPauseActive()) showSoloPause(); // ?dev quiet pause (#54): freeze the frame, no menu

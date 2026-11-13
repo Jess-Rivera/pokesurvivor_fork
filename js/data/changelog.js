@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['Vignette setting', 'Vignette setting'],
     new: [
       [
+        "Run Review: after a run, the Team button opens the pause menu one last time, read only: Run Info, every Pokemon's page and the team. Back (or Enter or Esc) returns to the results.",
+        "Run Review: after a run, the Team button opens the pause menu one last time, read only: Run Info, every Pokemon's page and the team. Back (or Enter or Esc) returns to the results.",
+      ],
+      [
         'New Graphics setting: Vignette (on or off). It darkens the screen edges in a run and on the menu. It now starts off, which keeps the edges clear and can raise the frame rate on slower machines. Fog still dims the edges either way.',
         'New Graphics setting: Vignette (on or off). It darkens the screen edges in a run and on the menu. It now starts off, which keeps the edges clear and can raise the frame rate on slower machines. Fog still dims the edges either way.',
       ],
@@ -27,8 +31,8 @@ G.CHANGELOG = [
         "New in the pause menu: each Pokemon's page has a Run Stats box with its kills, time on the field, damage and share of the team's, best hit, super effective share, damage taken and healed, faints, time fainted, statuses inflicted and burn or poison damage. Hover Statuses to see each kind.",
       ],
       [
-        "New in the pause menu: each Pokemon's page has a Cards Taken box listing the upgrade cards that work on that Pokemon and how many times you picked each. Hover a move to see exactly what your cards changed on it, for example \"cd 1.2 s to 0.92 s\", with (max) where a card has hit its limit. Hover Stat Climb Speed, Stat Change Duration or Bench Regeneration to see their real numbers.",
-        "New in the pause menu: each Pokemon's page has a Cards Taken box listing the upgrade cards that work on that Pokemon and how many times you picked each. Hover a move to see exactly what your cards changed on it, for example \"cd 1.2 s to 0.92 s\", with (max) where a card has hit its limit. Hover Stat Climb Speed, Stat Change Duration or Bench Regeneration to see their real numbers.",
+        'New in the pause menu: each Pokemon\'s page has a Cards Taken box listing the upgrade cards that work on that Pokemon and how many times you picked each. Hover a move to see exactly what your cards changed on it, for example "cd 1.2 s to 0.92 s", with (max) where a card has hit its limit. Hover Stat Climb Speed, Stat Change Duration or Bench Regeneration to see their real numbers.',
+        'New in the pause menu: each Pokemon\'s page has a Cards Taken box listing the upgrade cards that work on that Pokemon and how many times you picked each. Hover a move to see exactly what your cards changed on it, for example "cd 1.2 s to 0.92 s", with (max) where a card has hit its limit. Hover Stat Climb Speed, Stat Change Duration or Bench Regeneration to see their real numbers.',
       ],
     ],
     chg: [

@@ -255,11 +255,7 @@ G.HudOverlay = (() => {
       shift = 'translate(-100%, 0)';
     } else {
       const edge =
-        align === 'start'
-          ? anchorBox.left
-          : align === 'end'
-            ? anchorBox.right
-            : (anchorBox.left + anchorBox.right) / 2;
+        align === 'start' ? anchorBox.left : align === 'end' ? anchorBox.right : (anchorBox.left + anchorBox.right) / 2;
       x = toStageX(edge);
       y = side === 'below' ? toStageY(anchorBox.bottom) + gap : toStageY(anchorBox.top) - gap;
       const shiftX = align === 'start' ? '0' : align === 'end' ? '-100%' : '-50%';
