@@ -248,3 +248,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Looked at moving the team slots above the ball (under the inventory) to free a tooltip zone below it: fits with
   about 16 px spare, Jess dropped it. No code touched.
 - Stopped at: #92 next; acquisition parent issue still to file.
+
+## 2026-11-12 late night (Claude Code, home), end of run: #92 Run Review, #103 End Run, no EVs on quit
+- Decided from the End Run mocks: End Run screen, Run Review (pause menu read-only), EV screen redesign (#104), a quit
+  gives no EVs (crash keeps them), balls earned show nowhere. Decision file and PAUSE-MENU section 7; #103, #104 filed.
+- Built #92 (openReview, read-only panels) and #103 (js/ui/end-run.js, SlotButton moved into the HUD kit,
+  quitRun(keepsEvs)). Both feel-tested and closed. Fixed on the way: the old Quit button passed its click as keepsEvs.
+- Tests: smoke-pause-menu End Run and Run Review sections, pokebox-evs harness 63/63, mutate 31/31. Its Cards Taken
+  400 px check reads 401 since #83 (not ours).
+- Stopped at: #104 EV screen next, the last child of #82.

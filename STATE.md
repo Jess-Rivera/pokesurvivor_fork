@@ -1,26 +1,25 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-12 night, Claude Code (home). Branch: feature/pause-menu-rework (off feature/gym-leader-ai).
+Last updated: 2026-11-12 late night, Claude Code (home). Branch: feature/pause-menu-rework (off feature/gym-leader-ai).
 
 ## START HERE (next session, either tool)
-1. End of run, three children of #82 (spec PAUSE-MENU section 7, decided 2026-11-12): #92 Run Review (plan
-   given, awaiting go), then #103 End Run screen (+ no EVs on quit), then #104 EV screen. When all close, close #82 and
-   merge back into feature/gym-leader-ai.
+1. #104 EV screen redesign (spec PAUSE-MENU section 7, mock assets/excalidraw/End Run EV.png): the last child of #82.
+   Give the prose plan first. When it closes, close #82 and merge back into feature/gym-leader-ai.
 2. File the acquisition parent issue (TODO "Next" item 4), then its slice order. Design only so far.
 3. Triage: 7 needs-triage (#93 #75 #97 #99 #100 #101 #102), #29's stale `blocked`, #86 `ready` but carded in Triage.
 
 ## Where we are
-- #83 CLOSED (Cards Taken counts, move tooltip "Cards:" line, shared pause menu tooltip layer); checks green in
-  Quick, feel test passed. #91 closed earlier today. #82 has only #92 left.
-- Every pause menu tooltip draws in one shared layer (kit TooltipLayer, the stage's last child, z-index 100; use
-  tooltipHandlers / showTooltip). Detail panel tooltip 558 px, 16 px clear of both side panels. Outside: #102.
-- Looked at and dropped (Jess, 2026-11-12): moving the team slots above the ball to free a bottom tooltip zone. It fits
-  with about 16 px to spare (cards y 25 to 161, grids about 169 to 269, ball ring top 277), not pursued.
-- Acquisition rework decided in direction (map Acquisition v1): gacha out, rescue catch, Lost Pokemon recruits,
-  candy evolution. Region type maps parked (Biomes v2). Day/night parked as #101.
+- Closed today: #83 (Cards Taken), #92 (Run Review), #103 (End Run screen, no EVs on quit). All feel-tested.
+- End of run (solo): js/ui/end-run.js shows "EXPEDITION OVER" with Run Review and Learn from the Loss / Return Home.
+  Run Review = the pause menu read-only (openReview), Back returns to End Run. Learn opens the OLD EV screen
+  (run-ui.js showEvs, scr-evs) until #104. Co-op keeps the old results card and team sheet.
+- EVs: a quit (End Run, sign out) gives none; a fall and the crash save keep them (quitRun(keepsEvs), endRun).
+- The menu button is the HUD kit's SlotButton (shared by the pause menu and End Run).
+- Debug: G.Debug.evbank(hp, atk, def, spa, spd, spe) seeds this run's EVs (save order, not hex order).
 
 ## Watch
+- smoke-pause-menu "Cards Taken keeps its 400 px box" measures 401 (since #83, fails on the committed code too).
 - Quick has no node or browser: harness runs are sandbox bundles; check.js on the machine is truth.
 - Quick writing to the device: a bare open().write in Python can silently not land. Use `with open`, read it back.
 - Keep new code within 120 columns, or mutate patterns go STALE.
