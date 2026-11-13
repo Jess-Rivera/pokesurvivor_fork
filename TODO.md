@@ -16,7 +16,7 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
 7. Before leaving home: commit and push, so work starts from the same tree.
 
 ## Next (from the 2026-11-13 morning Quick session that closed #104 and #82)
-1. #53 leader intelligence: designed, not approved (STATE START HERE 1; map "53 - Intelligence and Misjudge Build
+1. #53 leader intelligence: approved, ready to build (STATE START HERE 1; map "53 - Intelligence and Misjudge Build
    Plan"). Also: delete feature/pause-menu-rework (merged 2026-11-13, 78d69120).
 2. Board fixes drafted 2026-11-13: comment on #99 with the font rule, close #106 as a duplicate of #99, comment on
    #102 (the old team sheet is co-op only now).

@@ -111,4 +111,4 @@ Curve numbers below are [Proposed] (TUNE), not settled.
   C1  curve shape      two straight lines meeting at the default (today's values kept at 0.5)
   Q2  dodgeRead        fractional, kept exact by a counter across bags (every loop's growth counts)
   A1  aimError         planning-only, as today (skipped in the card; today's behavior kept)
-  still to confirm     aimError 10 px at the default (with the #53 build plan's approval)
+  R2  aimError default 10 px, approved with the #53 build plan

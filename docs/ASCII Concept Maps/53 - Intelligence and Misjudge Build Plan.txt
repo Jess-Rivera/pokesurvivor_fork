@@ -2,14 +2,15 @@
 Issue #53 (#49 slice 4). Decision: 2026-11-13-53-leader-intelligence-one-score-with-overrides.
 Spec: docs/LEADER-AI.md "The Decider (#49)" (MISJUDGMENT, INTELLIGENCE AND STYLE) and "Authoring a leader".
 Curves: docs/ASCII Concept Maps/53 - How Intelligence Drives the Four Settings.txt.
-Status: [Proposed], NOT yet approved. Plan only, no code. (Rewritten after C1, Q2 and A1; D1 and D2 chosen.)
+Status: APPROVED 2026-11-13 (Jess), to build in a fresh chat. Every decision below is settled.
 
 FOR A FRESH CHAT (Jess, 2026-11-13: build this in a new chat)
   decided   method C (intelligence + overrides), five settings, two-line curves, no perfect top, reflex floor 0.1 s,
             fractional dodgeRead by counter, aimError planning-only, misjudge proportional (D1), growth 0..0.2 (D2),
             sharpness duel on Brock's loop 1 team (D3), misjudge 0.1 at the default (R1)
-  open      R2 aimError 10 px at the default (today 0); Jess wanted to change something before approving (not said yet)
-  first     ask Jess what to change, confirm R2, get the plan approved; then build (CLAUDE.md edit workflow)
+            R2 aimError 10 px at the default (approved last)
+  open      nothing
+  first     build it (CLAUDE.md edit workflow: write the harness section first, then the code)
   record    decision 2026-11-13-53-leader-intelligence-one-score-with-overrides; LEADER-AI "The Decider (#49)"
 
 =====================================================================================
@@ -121,7 +122,7 @@ RULE CHANGES (listed so they are not buried)
   R1  misjudge 0.10 at the default (approved): Misty and Brock start misjudging a plan now and then.
   R2  aimError 10 px at the default (today 0): their planner rates its own hits slightly lower
       (a 29% shot reads 26%), so a touch more cautious. Needed so the top (4 px) is sharper than the
-      default and still not perfect. Confirm with the plan.
+      default and still not perfect. APPROVED (Jess, 2026-11-13).
   Reflex, dodgeRead and memoryUse at the default are unchanged.
 
 =====================================================================================

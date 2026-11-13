@@ -8,7 +8,7 @@ Replaces the per-setting shape of decision 2026-11-09-49-leader-sharpness-base-p
   multipliers, signature actions, `range`, `swapWill`, `risk`, `aggression`).
 - Curves: each is two straight lines meeting at the default (0.5): the default keeps today's reflex, dodgeRead and memoryUse, the dull
   end is wide, and the top stops short of perfect (no perfect thinking at loop 6: every setting keeps some error at 1). `reflex` never
-  goes below 0.1 s. Values are TUNE, [Proposed] in the #53 build plan.
+  goes below 0.1 s. Values are TUNE, approved with the #53 build plan (same day).
 - `dodgeRead` may be fractional (6.4 reads per 10), met exactly by a counter across bags, so every loop's growth counts.
 - `aimError` stays planning-only (the planner's read of its own hit chance), never a scatter on its casts.
 - `misjudge` (D1): one seeded draw per plan per think tick from its own source; the plan's cost is read as cost x (1 + misjudge x a
@@ -16,7 +16,7 @@ Replaces the per-setting shape of decision 2026-11-09-49-leader-sharpness-base-p
 - Overrides: a leader may author any of the five directly (a number, or keyed by loop); that setting leaves the curve and its growth.
   3 or more overrides on one leader give a dev warning.
 - Rule changes at the default: misjudge 0 -> about 0.1 (approved, so Misty and Brock misjudge a little before #39); aimError 0 -> 10 px
-  [Proposed], to confirm with the #53 plan.
+  (approved same day, so the top's 4 px is sharper than the default and still not perfect).
 - Sharpness duel (D3): the harness gives Brock a test growth on his loop 1 team, so it measures intelligence alone.
 Chosen over intelligence with no overrides (cannot say "Misty reads you fast but plans no better", which #39 asks for) and over the
 per-setting shape (too many numbers to tune by feel, no single difficulty number). Maps: docs/ASCII Concept Maps/53 - Intelligence vs
