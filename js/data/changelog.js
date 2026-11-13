@@ -11,8 +11,8 @@ G.CHANGELOG = [
     title: ['Vignette setting', 'Vignette setting'],
     new: [
       [
-        "Run Review: after a run, the Team button opens the pause menu one last time, read only: Run Info, every Pokemon's page and the team. Back (or Enter or Esc) returns to the results.",
-        "Run Review: after a run, the Team button opens the pause menu one last time, read only: Run Info, every Pokemon's page and the team. Back (or Enter or Esc) returns to the results.",
+        "New End Run screen: EXPEDITION OVER with Run Review and Learn from the Loss (or Return Home when there are no EVs to give). Run Review opens the pause menu one last time, read only: Run Info, every Pokemon's page and the team.",
+        "New End Run screen: EXPEDITION OVER with Run Review and Learn from the Loss (or Return Home when there are no EVs to give). Run Review opens the pause menu one last time, read only: Run Info, every Pokemon's page and the team.",
       ],
       [
         'New Graphics setting: Vignette (on or off). It darkens the screen edges in a run and on the menu. It now starts off, which keeps the edges clear and can raise the frame rate on slower machines. Fog still dims the edges either way.',
@@ -36,6 +36,10 @@ G.CHANGELOG = [
       ],
     ],
     chg: [
+      [
+        'Quitting a run (End Run in the pause menu) no longer gives EVs. Only a run that ends with your team down lets you Learn from the Loss.',
+        'Quitting a run (End Run in the pause menu) no longer gives EVs. Only a run that ends with your team down lets you Learn from the Loss.',
+      ],
       ['The vignette is cheaper to draw when it is on.', 'The vignette is cheaper to draw when it is on.'],
       ["The pause menu's scroll bars can now be dragged.", "The pause menu's scroll bars can now be dragged."],
       [

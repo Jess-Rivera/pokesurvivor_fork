@@ -121,6 +121,48 @@ G.HudOverlay = (() => {
     return [[left + 4, right - 3 - (left + 4), inner || bodyFill], ...ends];
   }
 
+  // ---------- the menu button: the move slot shape at 1.5x (pause menu #88, End Run #103) ----------
+  const SLOT_BUTTON = { artWidth: 105, artRows: 22, artPixel: 3 }; // 315 x 66 px (Jess, 2026-11-11)
+  // Rim ramps (HUD-STYLE "Pause menu"): white at rest, green on focus.
+  const REST_RIM = { light: '#ffffff', base: PALETTE.paper, dark: PALETTE.paperEdge },
+    FOCUS_RIM = { light: '#9be895', base: '#38d030', dark: '#1d6c19' };
+  // Menu buttons never take the page's keyboard focus (#89, the Enter bug from #88): a focused page button turns Enter
+  // into a click on itself, so after one click Enter pressed that button instead of the green one.
+  const keepPageFocus = (event) => event.preventDefault();
+  /** One menu button in the move slot shape: rim colours (at rest and focused), focused body, art width, label. */
+  function SlotButton({
+    id,
+    label,
+    rim = REST_RIM,
+    focusRim,
+    focusBody,
+    artWidth = SLOT_BUTTON.artWidth,
+    focused,
+    onEnter,
+    onPress,
+  }) {
+    const rimNow = focused ? focusRim || FOCUS_RIM : rim,
+      bodyNow = focused && focusBody ? focusBody : PALETTE.body;
+    return html`<button
+      type="button"
+      class=${'pm-button' + (focused ? ' focused' : '')}
+      style=${{ width: artWidth * SLOT_BUTTON.artPixel + 'px' }}
+      data-action=${id}
+      tabindex="-1"
+      onMouseDown=${keepPageFocus}
+      onMouseEnter=${onEnter}
+      onClick=${onPress}
+    >
+      <${PixelShape}
+        artWidth=${artWidth}
+        artRows=${SLOT_BUTTON.artRows}
+        artPixel=${SLOT_BUTTON.artPixel}
+        paintRow=${(row) => moveSlotRow(row, artWidth, SLOT_BUTTON.artRows, rimNow, bodyNow)}
+      />
+      <span class="hud-text hud-text-30">${label}</span>
+    </button>`;
+  }
+
   // ---------- the B2 bag button (b2-lower Y4 to AB5): a square with chamfered corners, a rim and the checker body ----------
   function bagButtonRow(row, artSize, rimColour) {
     const chamfer = row < 2 ? 2 - row : row > artSize - 3 ? row - (artSize - 3) : 0,
@@ -1114,6 +1156,10 @@ G.HudOverlay = (() => {
     PixelShape,
     bagButtonRow,
     moveSlotRow,
+    SLOT_BUTTON,
+    REST_RIM,
+    FOCUS_RIM,
+    SlotButton,
     IconCanvas,
     ItemSquare,
     ItemGrid,

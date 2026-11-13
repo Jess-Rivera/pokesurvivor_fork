@@ -39,6 +39,7 @@ G.PauseMenu = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
   const { html, signal, preact, PALETTE, PixelShape, moveSlotRow, TooltipLayer, hideTooltip } = overlay.kit;
+  const { SlotButton, SLOT_BUTTON, REST_RIM } = overlay.kit; // the shared menu button (also the End Run screen's)
 
   // Step lengths in ms: dim and closed ball in, then ball opens with the panels sliding in. Open is about 0.23 s (Jess,
   // 2026-11-11, third feel test: halfway between the 0.31 s open and the close) and close about 0.16 s. Each matches a
@@ -46,13 +47,12 @@ G.PauseMenu = (() => {
   const OPEN_MS = [55, 175],
     CLOSE_MS = [38, 118],
     STEPS = OPEN_MS.length;
-  const BUTTON_ART_WIDTH = 105, // the run screen's move slot shape (105 x 22 art pixels)
-    BUTTON_ART_ROWS = 22,
-    BUTTON_ART_PIXEL = 3; // 315 x 66 px, 1.5x the run screen's slots (Jess, 2026-11-11)
-  // Rim ramps (HUD-STYLE "Pause menu"): white at rest, green on focus.
-  const REST_RIM = { light: '#ffffff', base: PALETTE.paper, dark: PALETTE.paperEdge },
-    FOCUS_RIM = { light: '#9be895', base: '#38d030', dark: '#1d6c19' },
-    END_RIM = { light: '#ff8a90', base: '#e8202a', dark: '#7c1016' }; // the End answer's red
+  // The buttons are the kit's SlotButton: the run screen's move slot shape at 1.5x (315 x 66 px, Jess 2026-11-11),
+  // white rim at rest, green on focus (REST_RIM, FOCUS_RIM).
+  const BUTTON_ART_WIDTH = SLOT_BUTTON.artWidth,
+    BUTTON_ART_ROWS = SLOT_BUTTON.artRows,
+    BUTTON_ART_PIXEL = SLOT_BUTTON.artPixel;
+  const END_RIM = { light: '#ff8a90', base: '#e8202a', dark: '#7c1016' }; // the End answer's red
   const ANSWER_ART_WIDTH = 56; // End and No: 168 x 66 px each, side by side in Settings' row inside the ball
   const ANSWERS = [
     // Focused, each answer keeps its rim and its body turns the rim's dark shade (Jess, 2026-11-11)
@@ -153,34 +153,8 @@ G.PauseMenu = (() => {
     );
   }
 
-  // The menu's buttons never take the page's keyboard focus (#89, the Enter bug from #88): a focused page button turns
-  // Enter into a click on itself, so after one click Enter pressed that button instead of the green one.
-  const keepPageFocus = (event) => event.preventDefault();
   /** Either Enter key (the main one or the number pad's) on this frame. */
   const enterTapped = () => G.Input.tap('enter') || G.Input.tap('numpadenter');
-
-  /** One button in the move slot shape: rim colours (at rest and focused), focused body, art width, label. */
-  function SlotButton({ id, label, rim, focusRim, focusBody, artWidth, focused, onEnter, onPress }) {
-    const rimNow = focused ? focusRim || FOCUS_RIM : rim,
-      bodyNow = focused && focusBody ? focusBody : PALETTE.body;
-    return html`<button
-      type="button"
-      class=${'pm-button' + (focused ? ' focused' : '')}
-      data-action=${id}
-      tabindex="-1"
-      onMouseDown=${keepPageFocus}
-      onMouseEnter=${onEnter}
-      onClick=${onPress}
-    >
-      <${PixelShape}
-        artWidth=${artWidth}
-        artRows=${BUTTON_ART_ROWS}
-        artPixel=${BUTTON_ART_PIXEL}
-        paintRow=${(row) => moveSlotRow(row, artWidth, BUTTON_ART_ROWS, rimNow, bodyNow)}
-      />
-      <span class="hud-text hud-text-30">${label}</span>
-    </button>`;
-  }
 
   function PocketAsk() {
     const isAsking = pocketAsking.value;

@@ -54,10 +54,13 @@ G.Game = (() => {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) autoPause();
     });
-    G.RunUI.wirePause(() => {
-      state = 'playing';
-      G.UI.hideAll();
-    }, quitRun);
+    G.RunUI.wirePause(
+      () => {
+        state = 'playing';
+        G.UI.hideAll();
+      },
+      () => quitRun() // a click passes its event, which must not read as keepsEvs
+    );
     if (G.PauseMenu.ready)
       G.PauseMenu.wire({ resume: togglePause, endRun: endRunFromPause, settings: () => G.SettingsUI.open('sound') });
     Backdrop.init();
@@ -159,6 +162,7 @@ G.Game = (() => {
   /** @param coop  { seed, host, members } for a group game */
   function startRun(coop = null) {
     if (G.PauseMenu.ready) G.PauseMenu.hideNow();
+    if (G.EndRun.ready) G.EndRun.hide();
     G.Log.clear();
     G.Log.t = 0;
     holdBy = [];
@@ -237,9 +241,11 @@ G.Game = (() => {
     state = 'playing';
   }
 
-  function quitRun() {
+  /** Ends the run without a fall. keepsEvs: a quit by choice (End Run, signing out) gives no EVs (#103, Jess
+   *  2026-11-12); the crash save keeps them, since the player did not choose it. */
+  function quitRun(keepsEvs = false) {
     if (G.Coop.active) G.Coop.leave();
-    endRun(false);
+    endRun(false, keepsEvs);
   }
 
   /** Build one team member (a Player) with its moves and binds applied. uid: the team slot's copy, whose IVs and
@@ -579,7 +585,8 @@ G.Game = (() => {
     return { entry, best, better: verdict.better, reason: verdict.reason, written };
   }
 
-  function endRun(dead = true) {
+  /** dead: the team fell. keepsEvs: the run's EVs go to the end of run (every fall and a crash; never a quit, #103). */
+  function endRun(dead = true, keepsEvs = dead) {
     if (state === 'over' || !pl) return;
     const coop = !!pl.uid; // only group games give it a uid
     const wasHost = !!pl.coopHost;
@@ -635,7 +642,7 @@ G.Game = (() => {
         .catch(() => {});
 
     // Pokebox step 5: the run's EV banks and the team's copies, for the allocation screen. Co-op allocates nothing (deferred).
-    const evs = coop ? null : { bank: evBank.slice(), team: evTeam() };
+    const evs = coop || !keepsEvs ? null : { bank: evBank.slice(), team: evTeam() };
     G.RunUI.showOver(
       {
         dead,
@@ -649,6 +656,7 @@ G.Game = (() => {
         t10: pl.t10,
         moves: pl.moves,
         roster,
+        coop, // #103: co-op keeps the old results card
         caught,
         evs,
         breakdown:
@@ -1046,6 +1054,8 @@ G.Game = (() => {
     }
     if (state === 'paused' || state === 'over') {
       if (G.PauseMenu.ready && G.PauseMenu.isOpen()) G.PauseMenu.keys();
+      else if (G.EndRun.ready && G.EndRun.isOpen())
+        G.EndRun.keys(); // #103
       else G.RunUI.pauseKeys();
       return;
     } // the summary sheet's keys (solo pause, end-of-run team view)
@@ -1087,7 +1097,7 @@ G.Game = (() => {
       if (++errRun === 180 && pl && state !== 'ui' && state !== 'over') {
         try {
           G.UI.hideAll();
-          quitRun();
+          quitRun(true); // a crash is not the player's choice: the run's EVs are kept
           G.UI.toast('El juego ha fallado: tu partida se ha guardado hasta aquí', 5000);
         } catch (e2) {
           console.error('[Game] could not close the game:', e2);

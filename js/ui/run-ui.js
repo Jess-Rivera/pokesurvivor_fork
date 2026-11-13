@@ -236,6 +236,20 @@ G.RunUI = (() => {
     // Pokebox step 5: with whole EVs and a team copy, the button opens the allocation screen; otherwise one line (map F10).
     const evWhole = r.evs ? G.Copies.wholeEvs(r.evs.bank) : null,
       evGive = !!evWhole && evWhole.some((v) => v > 0) && r.evs.team.length > 0;
+    // #103: a solo run ends on the End Run screen (js/ui/end-run.js); co-op keeps this results card (deferred)
+    if (!r.coop && G.EndRun.ready && G.PauseMenu.ready) {
+      const options = {
+        hasEvs: evGive,
+        review: () => {
+          if (!G.PauseMenu.openReview(() => G.EndRun.reopen())) G.EndRun.reopen();
+        },
+        learn: () => showEvs(r.evs, onBack),
+        home: onBack,
+      };
+      G.UI.hideAll();
+      G.EndRun.show(options);
+      return;
+    }
     const evLine = r.evs
       ? `<div style="grid-column:1/-1"><span>EVs</span><b>${evGive ? evText(evWhole) + ' to give' : 'No whole EVs this run'}</b>
         <div style="font-size:12px;color:var(--muted)">Lost: ${evLost(r.evs.bank)}</div></div>`
@@ -281,12 +295,6 @@ G.RunUI = (() => {
     const roster = r.roster || [];
     $('btn-team').classList.toggle('hidden', !roster.length);
     $('btn-team').onclick = () => {
-      // #92 Run Review: solo reopens the pause menu read-only; co-op keeps the old team sheet (deferred)
-      const solo = !G.Coop.active && G.PauseMenu.ready;
-      if (solo && G.PauseMenu.openReview(() => G.UI.show('scr-over'))) {
-        G.UI.hide('scr-over');
-        return;
-      }
       G.Sheet.render($('team-sheet'), roster, { sel: Math.max(0, roster.indexOf(G.Game.player)) });
       G.UI.show('scr-team');
     };

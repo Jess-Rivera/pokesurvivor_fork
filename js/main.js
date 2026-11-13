@@ -84,6 +84,7 @@
     'HudRunItemsPanel',
     'PauseMenu',
     'PauseRunInfo',
+    'EndRun',
     'Confetti',
     'Sheet',
     'MenuUI',

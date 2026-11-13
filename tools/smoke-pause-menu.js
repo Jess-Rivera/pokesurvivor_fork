@@ -26,7 +26,10 @@
 //   Bench Regeneration, the last move (over the team cards, 16 px clear of both side panels); leaving or scrolling hides.
 //   #92 Run Review: after End, the results screen's Team button reopens the menu read-only: one Back button, Run Info,
 //   detail and team panels, no Run Inventory, no drop places, a move tooltip on top, Move_Right steps; Esc, Enter and a
-//   click on Back each return to the results; the next run's pause menu is the full one again.
+//   click on Back each return to End Run; the next run's pause menu is the full one again.
+//   #103 End Run: a quit with EVs seeded shows "EXPEDITION OVER" (Michroma) with Run Review and Return Home (no EVs on
+//   quit), the HUD and old card hidden, Esc does nothing, Left / Right move the focus, Run Review comes back here,
+//   Return Home goes to the menu; a fall with EVs offers Learn from the Loss, which opens the EV screen.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -1128,6 +1131,15 @@ async function main() {
   }
   ok(sides.size === 2, 'the side is picked at random (both seen)');
 
+  // #103: give the run whole EVs and a Pokebox copy to receive them, so a fall WOULD offer them; a quit must not
+  const seedEvs = () =>
+    page.evaluate(() => {
+      const copy = G.Copies.add(G.DB.save, { dex: G.Game.player.dex });
+      G.Game.player.copyUid = G.Copies.longId(copy.u);
+      G.Game.evBank = [5 * G.Copies.EV_UNIT, 0, 0, 0, 0, 0];
+      return G.Copies.wholeEvs(G.Game.evBank)[0];
+    });
+  ok((await seedEvs()) === 5, 'the run holds 5 whole HP EVs and a copy to give them to');
   await askAndCheck('end');
   await page.click('.pm-button[data-action="end"]');
   await sleep(300);
@@ -1138,16 +1150,52 @@ async function main() {
   );
   ok(!s.ask, 'no popup was used');
 
-  // ---- #92 Run Review: the end of run's Team button reopens the menu read-only (docs/PAUSE-MENU.md section 7) ----
-  await page.waitForFunction(() => G.UI.isOpen('scr-over'), null, { timeout: 5000 });
+  // ---- #103 the End Run screen (docs/PAUSE-MENU.md section 7) ----
+  const endRunNow = () =>
+    page.evaluate(() => {
+      const layer = document.querySelector('.end-run');
+      const focused = layer.querySelector('.pm-button.focused');
+      return {
+        open: G.EndRun.isOpen(),
+        title: (layer.querySelector('.er-title') || {}).textContent,
+        titleFont: getComputedStyle(layer.querySelector('.er-title')).fontFamily,
+        buttons: [...layer.querySelectorAll('.pm-button')].map((button) => button.textContent.trim()),
+        focus: focused ? focused.textContent.trim() : null,
+        oldCard: G.UI.isOpen('scr-over'),
+        hudHidden: getComputedStyle(document.querySelector('.hud-overlay')).visibility === 'hidden',
+        state: G.Game.state,
+      };
+    });
+  await page.waitForFunction(() => G.EndRun.isOpen(), null, { timeout: 5000 });
+  await sleep(250);
+  let ending = await endRunNow();
+  await shot('end-run-quit.png');
+  ok(
+    ending.title === 'EXPEDITION OVER' && /Michroma|HudModule/.test(ending.titleFont),
+    'End Run: "EXPEDITION OVER" in Michroma'
+  );
+  ok(
+    ending.buttons.join('|') === 'Run Review|Return Home',
+    'a quit offers Run Review and Return Home, no EVs (' + ending.buttons.join(', ') + ')'
+  );
+  ok(ending.focus === 'Run Review', 'End Run: Run Review has the focus first');
+  ok(!ending.oldCard && ending.hudHidden, 'End Run: the old results card stays hidden, the run HUD hides');
+  await key('Escape', 100);
+  ok((await endRunNow()).open, 'End Run: Esc does nothing');
+  await key('ArrowRight', 100);
+  ok((await endRunNow()).focus === 'Return Home', 'End Run: Move_Right moves the focus');
+  await key('ArrowLeft', 100);
+  ok((await endRunNow()).focus === 'Run Review', 'End Run: Move_Left moves it back');
+
+  // ---- #92 Run Review: End Run's Run Review reopens the menu read-only (docs/PAUSE-MENU.md section 7) ----
   const openReview = async (label) => {
-    await page.click('#btn-team');
+    await page.click('.end-run .pm-button[data-action="review"]');
     await page.waitForFunction(() => G.PauseMenu.isFullyOpen(), null, { timeout: 3000 });
     await sleep(80);
     const r = await look();
     const extra = await page.evaluate(() => ({
       reviewing: G.PauseMenu.isReviewing(),
-      over: G.UI.isOpen('scr-over'),
+      over: G.EndRun.isOpen() || G.UI.isOpen('scr-over'),
       teamSheet: G.UI.isOpen('scr-team'),
       inventory: !!document.querySelector('.pm-panel-inventory .pm-inventory'),
       infoRows: document.querySelectorAll('.pm-panel-info .pm-info-row').length,
@@ -1187,8 +1235,8 @@ async function main() {
   );
   const backTo = async (how) => {
     await page.waitForFunction(() => !G.PauseMenu.isOpen(), null, { timeout: 3000 });
-    const after = await page.evaluate(() => ({ over: G.UI.isOpen('scr-over'), reviewing: G.PauseMenu.isReviewing() }));
-    ok(after.over && !after.reviewing, how + ' goes back to the results screen');
+    const after = await page.evaluate(() => ({ back: G.EndRun.isOpen(), reviewing: G.PauseMenu.isReviewing() }));
+    ok(after.back && !after.reviewing, how + ' goes back to the End Run screen');
   };
   await key('Escape');
   await backTo('Esc');
@@ -1198,6 +1246,15 @@ async function main() {
   await openReview('again');
   await page.click('.pm-button[data-action="back"]');
   await backTo('a click on Back');
+  ending = await endRunNow();
+  ok(
+    ending.buttons.join('|') === 'Run Review|Return Home',
+    'End Run comes back as it was (' + ending.buttons.join(', ') + ')'
+  );
+  await key('ArrowRight', 100);
+  await key('Enter', 300);
+  ending = await endRunNow();
+  ok(!ending.open && ending.state === 'ui', 'Return Home (Enter) goes back to the menu (state ' + ending.state + ')');
 
   // the next run's pause menu is the full one again
   await page.evaluate(() => G.Game.startRun());
@@ -1215,6 +1272,30 @@ async function main() {
     !nextRun.reviewing && s.buttons.join('|') === 'Resume|End Run|Settings' && nextRun.inventory && nextRun.drops > 0,
     "the next run's pause menu is the full one (" + s.buttons.join(', ') + ', ' + nextRun.drops + ' places)'
   );
+
+  // ---- #103 a fall with EVs: Learn from the Loss opens the EV screen ----
+  await key('Escape');
+  await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 3000 });
+  ok((await seedEvs()) === 5, 'the second run holds 5 whole HP EVs and a copy');
+  await page.evaluate(() => {
+    clearInterval(window.__keep);
+    for (const member of G.Game.roster) {
+      member.hp = 0;
+      member.dead = true;
+    }
+  });
+  await page.waitForFunction(() => G.EndRun.isOpen(), null, { timeout: 8000 });
+  await sleep(250);
+  ending = await endRunNow();
+  await shot('end-run-fall.png');
+  ok(
+    ending.buttons.join('|') === 'Run Review|Learn from the Loss',
+    'a fall with EVs offers Learn from the Loss (' + ending.buttons.join(', ') + ')'
+  );
+  await page.click('.end-run .pm-button[data-action="learn"]');
+  await sleep(200);
+  const learnt = await page.evaluate(() => ({ evs: G.UI.isOpen('scr-evs'), endRun: G.EndRun.isOpen() }));
+  ok(learnt.evs && !learnt.endRun, 'Learn from the Loss opens the EV screen');
 
   await page.evaluate(() => clearInterval(window.__keep));
   ok(errs.length === 0, 'no page or console errors' + (errs.length ? ': ' + errs.slice(0, 5).join(' | ') : ''));
