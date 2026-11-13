@@ -4,9 +4,9 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-11-12 night, Claude Code (home). Branch: feature/pause-menu-rework (off feature/gym-leader-ai).
 
 ## START HERE (next session, either tool)
-1. #92 (end-of-run Team screen on the new panels; it also retires the team sheet's old Run Cards totals and is the
-   natural home for #102's sheet tooltips). It is the last open child of #82; when it closes, close #82 and merge
-   back into feature/gym-leader-ai.
+1. End of run, three children of #82 (spec PAUSE-MENU section 7, decided 2026-11-12): #92 Run Review (plan
+   given, awaiting go), then #103 End Run screen (+ no EVs on quit), then #104 EV screen. When all close, close #82 and
+   merge back into feature/gym-leader-ai.
 2. File the acquisition parent issue (TODO "Next" item 4), then its slice order. Design only so far.
 3. Triage: 7 needs-triage (#93 #75 #97 #99 #100 #101 #102), #29's stale `blocked`, #86 `ready` but carded in Triage.
 

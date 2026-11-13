@@ -18,8 +18,8 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
 7. Before leaving work: commit and `git push origin feature/pause-menu-rework`, so home starts from the same tree.
 
 ## Next (from the 2026-11-12 night home session that closed #83)
-1. #92, the last child of #82 (it also retires the team sheet's Run Cards totals, still the old ones). Then close #82
-   and merge back into feature/gym-leader-ai.
+1. End of run (PAUSE-MENU section 7): #92 Run Review, then #103 End Run screen (+ no EVs on quit), then #104 EV
+   screen. Then close #82 and merge back into feature/gym-leader-ai.
 2. Owner decisions that block or shape work: #97 (permanent upgrade rework, blocks #95), #86 (gym leaders round down?),
    #99 (menu font), #93 (tooltip scope).
 3. Triage: needs-triage on #93 #75 #97 #99 #100 #101 #102 (#101 has no type or area label); #72, #79 (deferred) and #74
@@ -48,7 +48,7 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30.
 
 ## Open issues by area (numbers only, titles via gh, checked 2026-11-12 night)
-- UI and HUD: #25 #61 #74 #75 #82 (#92) #93 #95 #99 #100 #102 #72 #79 (deferred)
+- UI and HUD: #25 #61 #74 #75 #82 (#92 #103 #104) #93 #95 #99 #100 #102 #72 #79 (deferred)
 - Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #53 #57 #58 #60
 - Moves: #11 #13 #14 #38 #44
 - Engine: #8 #10 #12 #46 #48 #56 #86 #97 #101 (day/night, parked)

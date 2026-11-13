@@ -172,12 +172,33 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
   Elite Four member beaten) and that run's time; ties go to the faster time. A new save field, absent from old saves. loop number, elites killed, items picked
   up, EVs earned this run (per stat), run time, coins, badges this run, biggest single hit, shinies seen.
 
+## 7. End of run (Jess, 2026-11-12; mocks assets/excalidraw/End Run.png and End Run EV.png)
+All three screens use the pause menu's pixel style on the 1920 x 1080 stage. Co-op keeps the old screens (deferred).
+- [Approved] End Run screen (#103): the title "EXPEDITION OVER" (death or quit) and two buttons. "Run Review" opens
+  the Run Review. The second reads "Learn from the Loss" when the run has whole EVs to give (opens the EV screen) and
+  "Return Home" when it has none. Nothing else: the old results card and its extra lines (coins breakdown, balls
+  earned, shinies caught, the Ko-fi ask) are gone; Run Info has what a player needs.
+- [Approved] A run ended by quitting (End Run in the pause menu) gives no EVs, so it always shows "Return Home".
+  Code differs until #103 (a quit gives EVs).
+- [Approved] Run Review (#92): the pause menu reopened read-only: Run Info, detail and team panels where the pause
+  menu has them, all hover tooltips, no Run Inventory, nothing accepts an item. The ball holds one button, "Back", to
+  the End Run screen (Enter and Esc too); Move_Left and Move_Right step the Pokemon. The old end-of-run team sheet
+  and its Run Cards totals are retired from this path.
+- [Approved] EV screen (#104): six portrait circles across the top (an empty circle for a missing slot), "x / 510"
+  small under each. Rows HP, Attack, Defense, Speed, Special Defense, Special Attack (the hex's clockwise order), all
+  six always. The left column is what is left to give in that stat. Each cell is "- N +": the copy's current EVs in
+  white, this screen's additions as a yellow "+N" beside it. + greys out at 252 in a stat, 510 per Pokemon, or nothing
+  left in that stat.
+- [Approved] EV buttons: "Learn" saves what was given and goes home; if EVs are left over it asks first, and they are
+  discarded. "Go Home" saves nothing and always asks "Discard all EVs and return?" with "Yes" and "Cancel". The EV
+  screen has no way back to End Run or Run Review.
+
 ## Scope notes
 - [Approved] Co-op pause keeps the old screen (multiplayer is deferred). Touch versions of the hover tooltips wait
   for #72. Keyboard: Esc cancels a held item move first, then closes the menu; Move_Left and Move_Right do prev and next; either Enter key (main
   or number pad) presses the green button, and the menu's buttons never take the page's focus (the #88 Enter bug, fixed
   in #89).
-- [Approved] The end-of-run Team screen moves to the new detail and team panels later on this branch.
+- [Approved] The end of run uses the pause menu's look: section 7.
 
 ## Open questions
 Recorded in #82 until answered; answers move into the sections above.

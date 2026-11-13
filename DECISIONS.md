@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-12, End of run: End Run screen, Run Review, EV screen redesign; quitting gives no EVs (Jess)](docs/decisions/2026-11-12-end-of-run-screens-and-no-evs-on-quit.md), to build in #92, #103, #104
 - [2026-11-12, Every hover tooltip is the topmost layer; the pause menu draws all of its tooltips in one shared layer (Jess)](docs/decisions/2026-11-12-every-tooltip-is-the-topmost-layer.md), built in the pause menu, the rest in an issue
 - [2026-11-12, #83: Cards Taken is the DPS panel's count list, filtered to the cards that touch this Pokemon; the move tooltip shows what the cards changed, before and after (Jess)](docs/decisions/2026-11-12-83-cards-taken-counts-and-move-tooltip-changes.md), built in #83
 - [2026-11-12, Acquisition: no gacha; catch Stage 1s in runs (UberElite, Pokeball Belt, Flee meter), evolve by Gym Leader candy, legendaries by loop clear (Jess)](docs/decisions/2026-11-12-acquisition-no-gacha-catch-candy-legendaries.md), direction only, A1 to A15 open
