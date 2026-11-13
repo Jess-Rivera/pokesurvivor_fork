@@ -30,6 +30,13 @@
 //   #103 End Run: a quit with EVs seeded shows "EXPEDITION OVER" (Michroma) with Run Review and Return Home (no EVs on
 //   quit), the HUD and old card hidden, Esc does nothing, Left / Right move the focus, Run Review comes back here,
 //   Return Home goes to the menu; a fall with EVs offers Learn from the Loss, which opens the EV screen.
+//   #104 the EV screen: six circles (empty for a slot with no copy), x / 510, all six rows in the hex order, the bank in
+//   the left column; + gives 1 (white stays, yellow +N), greys at 252, at 510 and with nothing left; Shift-click gives 10
+//   (cut to what is left); holding repeats; - takes back; Esc does nothing; Learn asks with EVs left, Cancel stays, Yes
+//   saves exactly the adds; a third run's Go Home asks, Cancel stays, Yes saves nothing.
+//   #104b the shared stage fit: the pause menu, End Run and EV screen stages scale to the window and back.
+//   #104c Learn: the shared toast "Lessons Learned, Returning Home" (Michroma, the main menu bars' charcoal and teal
+//   rim) with the EVs already saved and the screen up but deaf, then home after about 1 s; the bad tone's red rim.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -98,6 +105,21 @@ async function main() {
     await sleep(60);
     await page.keyboard.up(name);
     if (wait) await sleep(wait);
+  };
+  // the 1920x1080 stage's fit (the kit's fitToStage, #104b): --pm-scale on a screen's root
+  const stageScale = (selector) =>
+    page.evaluate((sel) => Number(document.querySelector(sel).style.getPropertyValue('--pm-scale')), selector);
+  const checkStageScale = async (selector, label) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await sleep(120);
+    const small = await stageScale(selector);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await sleep(120);
+    const full = await stageScale(selector);
+    ok(
+      Math.abs(small - 2 / 3) < 0.001 && full === 1,
+      label + ' fits the window: ' + small.toFixed(3) + ' at 1280 x 720, ' + full + ' at 1920 x 1080'
+    );
   };
   // The shown tooltip, read from the menu's shared tooltip layer (Jess, 2026-11-12: every hover tooltip is the topmost
   // layer): its name and lines, whether the layer is the stage's last child, and how many sample points across the
@@ -246,10 +268,13 @@ async function main() {
   await sleep(200);
   drawn = await page.evaluate(() => window.__drawn);
   ok(drawn.world >= 1 && drawn.hud === 0, 'a resize while open redraws the world (' + drawn.world + '), no HUD read');
+  const menuScale = await stageScale('.pause-menu');
+  ok(Math.abs(menuScale - 900 / 1080) < 0.001, 'the pause menu stage fits 1600 x 900 (' + menuScale.toFixed(3) + ')');
   drawn = await countFor(300);
   ok(drawn.world === 0, 'then the world is held still again (' + drawn.world + ')');
   await page.setViewportSize({ width: 1920, height: 1080 });
   await sleep(200);
+  ok((await stageScale('.pause-menu')) === 1, 'the pause menu stage is back to 1 at 1920 x 1080');
   await page.evaluate(() => {
     window.__drawn = { world: 0, hud: 0 };
     const vignette = G.Settings.get('vignette');
@@ -1180,6 +1205,7 @@ async function main() {
   );
   ok(ending.focus === 'Run Review', 'End Run: Run Review has the focus first');
   ok(!ending.oldCard && ending.hudHidden, 'End Run: the old results card stays hidden, the run HUD hides');
+  await checkStageScale('.end-run', 'End Run');
   await key('Escape', 100);
   ok((await endRunNow()).open, 'End Run: Esc does nothing');
   await key('ArrowRight', 100);
@@ -1276,7 +1302,43 @@ async function main() {
   // ---- #103 a fall with EVs: Learn from the Loss opens the EV screen ----
   await key('Escape');
   await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 3000 });
-  ok((await seedEvs()) === 5, 'the second run holds 5 whole HP EVs and a copy');
+  // #104: every fighter gets a copy (its EVs before the screen set by team slot) and the run banks EVs (save order)
+  const evSeedTeam = (bank, evsBySlot) =>
+    page.evaluate(
+      ({ bank, evsBySlot }) => {
+        const save = G.DB.save,
+          uids = {};
+        for (const member of G.Game.roster) {
+          if (!member.copyUid || !G.Copies.get(save, member.copyUid))
+            member.copyUid = G.Copies.longId(G.Copies.add(save, { dex: member.dex }).u);
+          // a slot not listed starts at 0 EVs: the next run reuses these copies, so last run's EVs must not carry in
+          G.Copies.setEvs(save, member.copyUid, evsBySlot[member.teamSlot] || [0, 0, 0, 0, 0, 0]);
+          uids[member.teamSlot] = member.copyUid;
+        }
+        G.Game.evBank = bank.map((value) => value * G.Copies.EV_UNIT);
+        return uids;
+      },
+      { bank, evsBySlot }
+    );
+  const evSaved = (uids) =>
+    page.evaluate((uids) => {
+      const out = {};
+      for (const slot of Object.keys(uids)) {
+        const copy = G.Copies.get(G.DB.save, uids[slot]);
+        out[slot] = copy ? copy.ev.join(' ') : null;
+      }
+      return out;
+    }, uids);
+  // to give: 5 HP, 3 Attack, 2 Special Attack (save order HP Atk Def SpA SpD Spe)
+  const teamUids = await evSeedTeam([5, 3, 0, 2, 0, 0], {
+    0: [250, 0, 0, 0, 0, 0],
+    1: [0, 252, 0, 0, 0, 0],
+    3: [252, 252, 0, 0, 0, 6],
+  });
+  ok(
+    Object.keys(teamUids).join(' ') === '0 1 3',
+    'the second run has copies in team slots 0, 1 and 3 (' + Object.keys(teamUids).join(' ') + ')'
+  );
   await page.evaluate(() => {
     clearInterval(window.__keep);
     for (const member of G.Game.roster) {
@@ -1294,8 +1356,234 @@ async function main() {
   );
   await page.click('.end-run .pm-button[data-action="learn"]');
   await sleep(200);
-  const learnt = await page.evaluate(() => ({ evs: G.UI.isOpen('scr-evs'), endRun: G.EndRun.isOpen() }));
-  ok(learnt.evs && !learnt.endRun, 'Learn from the Loss opens the EV screen');
+
+  // ---- #104 the EV screen (docs/PAUSE-MENU.md section 7) ----
+  const evNow = () =>
+    page.evaluate(() => {
+      const layer = document.querySelector('.ev-screen');
+      const focused = layer.querySelector('.pm-button.focused');
+      const cell = (stat, column) => {
+        const box = layer.querySelector(`.ev-row[data-stat="${stat}"] .ev-cell[data-column="${column}"]`);
+        if (!box || !box.querySelector('.ev-step')) return null;
+        const [minus, plus] = box.querySelectorAll('.ev-step');
+        return {
+          now: box.querySelector('.ev-now').textContent.trim(),
+          add: box.querySelector('.ev-add').textContent.trim(),
+          minus: !minus.disabled,
+          plus: !plus.disabled,
+        };
+      };
+      const cells = {};
+      for (const row of layer.querySelectorAll('.ev-row'))
+        for (let column = 0; column < 6; column++)
+          cells[row.dataset.stat + ':' + column] = cell(row.dataset.stat, column);
+      return {
+        open: G.EvScreen.isOpen(),
+        endRun: G.EndRun.isOpen(),
+        oldScreen: !!document.getElementById('scr-evs'),
+        circles: layer.querySelectorAll('.ev-circle').length,
+        empty: layer.querySelectorAll('.ev-circle.ev-empty').length,
+        totals: [...layer.querySelectorAll('.ev-total')].map((total) => total.textContent.trim()),
+        rows: [...layer.querySelectorAll('.ev-row .ev-stat-name')].map((name) => name.textContent.trim()),
+        left: [...layer.querySelectorAll('.ev-row .ev-left')].map((left) => +left.textContent),
+        cells,
+        focus: focused ? focused.textContent.trim() : null,
+        ask: G.UI.isOpen('scr-ask'),
+        askText: document.getElementById('ask-msg').textContent,
+        state: G.Game.state,
+      };
+    });
+  const evCell = (screen, stat, column) => screen.cells[stat + ':' + column];
+  const evStep = (stat, column, direction) =>
+    `.ev-screen .ev-row[data-stat="${stat}"] .ev-cell[data-column="${column}"] .ev-step[data-step="${direction}"]`;
+  const evPress = async (selector, options) => {
+    await page.click(selector, options);
+    await sleep(60);
+    return evNow();
+  };
+  let evState = await evNow();
+  await shot('ev-screen.png');
+  ok(
+    evState.open && !evState.endRun && !evState.oldScreen,
+    'Learn from the Loss opens the EV screen; the old one is gone'
+  );
+  await checkStageScale('.ev-screen', 'EV screen');
+  ok(evState.circles === 6 && evState.empty === 3, 'EV screen: six circles, three empty (' + evState.empty + ' empty)');
+  ok(
+    evState.totals[0] === '250 / 510' && evState.totals[1] === '252 / 510' && evState.totals[3] === '510 / 510',
+    'EV screen: x / 510 under each copy (' + evState.totals.join(', ') + ')'
+  );
+  ok(
+    evState.rows.join('|') === 'HP|Attack|Defense|Speed|Special Defense|Special Attack',
+    'EV screen: all six rows in the hex order (' + evState.rows.join(', ') + ')'
+  );
+  ok(
+    evState.left.join(' ') === '5 3 0 0 0 2',
+    'EV screen: the left column is the bank (' + evState.left.join(' ') + ')'
+  );
+  const firstHp = evCell(evState, 0, 0);
+  ok(
+    firstHp.now === '250' && firstHp.add === '' && firstHp.plus && !firstHp.minus,
+    'EV screen: white 250, no yellow yet, - grey with nothing added'
+  );
+  ok(
+    !evCell(evState, 1, 1).plus && evCell(evState, 0, 1).plus,
+    'EV screen: + greys at 252 in a stat, not in the others'
+  );
+  ok(
+    [0, 1, 2, 5, 4, 3].every((stat) => !evCell(evState, stat, 3).plus),
+    'EV screen: every + greys on a copy at 510'
+  );
+  ok(
+    [0, 1, 3].every((column) => !evCell(evState, 2, column).plus),
+    'EV screen: + greys in a stat with nothing left'
+  );
+  ok(evCell(evState, 0, 2) === null, 'EV screen: an empty slot has no buttons');
+  evState = await evPress(evStep(0, 0, 1));
+  ok(
+    evCell(evState, 0, 0).now === '250' && evCell(evState, 0, 0).add === '+1' && evState.left[0] === 4,
+    'EV screen: + keeps the white 250, shows a yellow +1 and takes 1 from what is left'
+  );
+  ok(evState.totals[0] === '251 / 510' && evCell(evState, 0, 0).minus, 'EV screen: x / 510 counts the add; - wakes up');
+  evState = await evPress(evStep(0, 0, 1));
+  ok(evCell(evState, 0, 0).add === '+2' && !evCell(evState, 0, 0).plus, 'EV screen: + greys once the cell reaches 252');
+  evState = await evPress(evStep(0, 1, 1), { modifiers: ['Shift'] });
+  ok(
+    evCell(evState, 0, 1).add === '+3' && evState.left[0] === 0,
+    'EV screen: Shift-click gives 10, cut to the 3 left (' + evCell(evState, 0, 1).add + ')'
+  );
+  ok(
+    [0, 1].every((column) => !evCell(evState, 0, column).plus),
+    'EV screen: nothing left in HP greys every HP +'
+  );
+  await page.hover(evStep(1, 0, 1));
+  await page.mouse.down();
+  await sleep(900);
+  await page.mouse.up();
+  await sleep(60);
+  evState = await evNow();
+  ok(
+    evCell(evState, 1, 0).add === '+3' && evState.left[1] === 0,
+    'EV screen: holding + repeats until Attack runs out (' + evCell(evState, 1, 0).add + ')'
+  );
+  evState = await evPress(evStep(0, 1, -1));
+  ok(evCell(evState, 0, 1).add === '+2' && evState.left[0] === 1, 'EV screen: - takes one back');
+  ok(evState.focus === 'Learn', 'EV screen: Learn has the focus first');
+  await key('Escape', 100);
+  ok((await evNow()).open, 'EV screen: Esc does nothing');
+  await key('ArrowRight', 100);
+  ok((await evNow()).focus === 'Go Home', 'EV screen: Move_Right moves the focus');
+  await key('ArrowLeft', 100);
+  ok((await evNow()).focus === 'Learn', 'EV screen: Move_Left moves it back');
+  await page.click('.ev-screen .pm-button[data-action="learn"]');
+  await sleep(200);
+  evState = await evNow();
+  ok(
+    evState.ask && evState.open && /^3 EVs/.test(evState.askText),
+    'Learn with 3 EVs left asks first (' + evState.askText + ')'
+  );
+  await page.click('#ask-no');
+  await sleep(250);
+  evState = await evNow();
+  ok(!evState.ask && evState.open && evCell(evState, 0, 0).add === '+2', 'Learn: Cancel stays, with what was given');
+  await page.click('.ev-screen .pm-button[data-action="learn"]');
+  await sleep(200);
+  // #104c: the shared toast (G.UI.toast), the screen up but taking no input, then home after about 1 s
+  const toastNow = () =>
+    page.evaluate(() => {
+      const toast = document.querySelector('.toast');
+      if (!toast) return null;
+      const style = getComputedStyle(toast);
+      return {
+        shown: style.display !== 'none',
+        text: toast.textContent,
+        font: style.fontFamily,
+        body: style.backgroundColor,
+        rim: style.borderTopColor,
+      };
+    });
+  const learnedAt = Date.now();
+  await page.click('#ask-ok');
+  await sleep(150);
+  const learnToast = await toastNow();
+  evState = await evNow();
+  ok(
+    learnToast && learnToast.shown && learnToast.text === 'Lessons Learned, Returning Home' && /HudModule|Michroma/.test(learnToast.font),
+    'Learn: the toast says Lessons Learned, Returning Home in Michroma (' + (learnToast && learnToast.text) + ')'
+  );
+  ok(
+    learnToast && learnToast.body === 'rgb(24, 24, 24)' && learnToast.rim === 'rgb(41, 206, 255)',
+    "the shared toast: the main menu bars' charcoal and teal rim (" + (learnToast && learnToast.body + ', ' + learnToast.rim) + ')'
+  );
+  ok(evState.open && !evState.ask, 'Learn: the EV screen stays up during the toast');
+  let evsAfter = await evSaved(teamUids);
+  ok(
+    evsAfter[0] === '252 3 0 0 0 0' && evsAfter[1] === '2 252 0 0 0 0' && evsAfter[3] === '252 252 0 0 0 6',
+    'Learn saved exactly the adds, before the toast ends (' + JSON.stringify(evsAfter) + ')'
+  );
+  const deaf = await page.evaluate(async (plusSelector) => {
+    const plus = document.querySelector(plusSelector);
+    plus.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }));
+    document.querySelector('.ev-screen .pm-button[data-action="gohome"]').click();
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    return {
+      plusEnabled: !plus.disabled,
+      added: plus.parentElement.querySelector('.ev-add').textContent.trim(),
+      ask: G.UI.isOpen('scr-ask'),
+    };
+  }, evStep(3, 0, 1));
+  ok(
+    deaf.plusEnabled && deaf.added === '' && !deaf.ask,
+    'during the toast a + press and a Go Home click do nothing (' + JSON.stringify(deaf) + ')'
+  );
+  await page.waitForFunction(() => !G.EvScreen.isOpen(), null, { timeout: 4000 });
+  const learnTook = Date.now() - learnedAt;
+  evState = await evNow();
+  ok(
+    evState.state === 'ui' && learnTook >= 900 && learnTook < 2000,
+    'Learn: home after about 1 s (' + learnTook + ' ms, state ' + evState.state + ')'
+  );
+  const badToast = await page.evaluate(() => {
+    G.UI.toast('Smoke check', 400, 'bad');
+    return getComputedStyle(document.querySelector('.toast')).borderTopColor;
+  });
+  ok(badToast === 'rgb(200, 20, 28)', "the shared toast's bad tone keeps the shape with the red rim (" + badToast + ')');
+  await sleep(450);
+
+  // a third run: Go Home saves nothing
+  await page.evaluate(() => G.Game.startRun());
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
+  const homeUids = await evSeedTeam([4, 0, 0, 0, 0, 0], {});
+  await page.evaluate(() => {
+    for (const member of G.Game.roster) {
+      member.hp = 0;
+      member.dead = true;
+    }
+  });
+  await page.waitForFunction(() => G.EndRun.isOpen(), null, { timeout: 8000 });
+  await sleep(250);
+  await page.click('.end-run .pm-button[data-action="learn"]');
+  await sleep(200);
+  evState = await evPress(evStep(0, 0, 1));
+  ok(evState.open && evCell(evState, 0, 0).add === '+1', 'the third run gives 1 HP on the EV screen');
+  await page.click('.ev-screen .pm-button[data-action="gohome"]');
+  await sleep(200);
+  evState = await evNow();
+  ok(evState.ask && evState.askText === 'Discard all EVs and return?', 'Go Home always asks (' + evState.askText + ')');
+  await page.click('#ask-no');
+  await sleep(250);
+  ok((await evNow()).open, 'Go Home: Cancel stays');
+  await page.click('.ev-screen .pm-button[data-action="gohome"]');
+  await sleep(200);
+  await page.click('#ask-ok');
+  await sleep(300);
+  evState = await evNow();
+  ok(!evState.open && evState.state === 'ui', 'Go Home: Yes goes home (state ' + evState.state + ')');
+  evsAfter = await evSaved(homeUids);
+  ok(
+    Object.values(evsAfter).every((evs) => evs === '0 0 0 0 0 0'),
+    'Go Home saved nothing (' + JSON.stringify(evsAfter) + ')'
+  );
 
   await page.evaluate(() => clearInterval(window.__keep));
   ok(errs.length === 0, 'no page or console errors' + (errs.length ? ': ' + errs.slice(0, 5).join(' | ') : ''));

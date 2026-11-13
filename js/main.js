@@ -85,6 +85,7 @@
     'PauseMenu',
     'PauseRunInfo',
     'EndRun',
+    'EvScreen',
     'Confetti',
     'Sheet',
     'MenuUI',

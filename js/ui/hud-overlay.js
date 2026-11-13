@@ -163,6 +163,45 @@ G.HudOverlay = (() => {
     </button>`;
   }
 
+  // ---------- the menu screens' stage (pause menu, End Run, EV screen): 1920 x 1080, scaled to fit, never up ----------
+  const STAGE = { width: 1920, height: 1080 };
+  /** Keeps root's --pm-scale fitted to the window from now on. Returns the fit, to call again when the screen opens. */
+  function fitToStage(root) {
+    const fit = () => {
+      const scale = Math.min(1, innerWidth / STAGE.width, innerHeight / STAGE.height);
+      root.style.setProperty('--pm-scale', String(scale));
+    };
+    addEventListener('resize', fit);
+    fit();
+    return fit;
+  }
+
+  // ---------- a row of menu buttons on the end of run screens (End Run, EV screen) ----------
+  /**
+   * focus is the green button's index (a signal, a hover sets it too). keys() moves it with Move_Left / Move_Right (the
+   * hover sound) and presses with either Enter key; it does nothing while the shared ask dialog or Settings is up.
+   * press(index), also what a click calls, checks isOpen(), focuses the button and calls onPress(index).
+   */
+  function createButtonRow({ count, isOpen, onPress }) {
+    const focus = signal(0);
+    function press(index) {
+      if (!isOpen() || index < 0 || index >= count()) return;
+      focus.value = index;
+      onPress(index);
+    }
+    function keys() {
+      if (!isOpen() || G.UI.isOpen('scr-ask') || G.SettingsUI.isOpen) return;
+      const step = (G.Input.action('move_right') ? 1 : 0) - (G.Input.action('move_left') ? 1 : 0);
+      if (step) {
+        const next = Math.max(0, Math.min(count() - 1, focus.value + step));
+        if (next !== focus.value) G.Audio.sfx('hover');
+        focus.value = next;
+      }
+      if (G.Input.tap('enter') || G.Input.tap('numpadenter')) press(focus.value);
+    }
+    return { focus, press, keys };
+  }
+
   // ---------- the B2 bag button (b2-lower Y4 to AB5): a square with chamfered corners, a rim and the checker body ----------
   function bagButtonRow(row, artSize, rimColour) {
     const chamfer = row < 2 ? 2 - row : row > artSize - 3 ? row - (artSize - 3) : 0,
@@ -1160,6 +1199,9 @@ G.HudOverlay = (() => {
     REST_RIM,
     FOCUS_RIM,
     SlotButton,
+    STAGE,
+    fitToStage,
+    createButtonRow,
     IconCanvas,
     ItemSquare,
     ItemGrid,

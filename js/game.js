@@ -163,6 +163,7 @@ G.Game = (() => {
   function startRun(coop = null) {
     if (G.PauseMenu.ready) G.PauseMenu.hideNow();
     if (G.EndRun.ready) G.EndRun.hide();
+    if (G.EvScreen.ready) G.EvScreen.hide();
     G.Log.clear();
     G.Log.t = 0;
     holdBy = [];
@@ -1056,6 +1057,8 @@ G.Game = (() => {
       if (G.PauseMenu.ready && G.PauseMenu.isOpen()) G.PauseMenu.keys();
       else if (G.EndRun.ready && G.EndRun.isOpen())
         G.EndRun.keys(); // #103
+      else if (G.EvScreen.ready && G.EvScreen.isOpen())
+        G.EvScreen.keys(); // #104
       else G.RunUI.pauseKeys();
       return;
     } // the summary sheet's keys (solo pause, end-of-run team view)

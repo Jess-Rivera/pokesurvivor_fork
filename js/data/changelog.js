@@ -7,6 +7,22 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-13',
+    title: ['EV screen', 'EV screen'],
+    new: [
+      [
+        "New EV screen after Learn from the Loss, in the pause menu's style: your team's portraits across the top, every stat in its own row, each Pokemon's EVs in white and what you add in yellow. Click + for 1 EV, Shift-click for 10, or hold it to keep adding. Learn saves them; Go Home discards them.",
+        "New EV screen after Learn from the Loss, in the pause menu's style: your team's portraits across the top, every stat in its own row, each Pokemon's EVs in white and what you add in yellow. Click + for 1 EV, Shift-click for 10, or hold it to keep adding. Learn saves them; Go Home discards them.",
+      ],
+    ],
+    chg: [
+      [
+        "Messages that pop up at the bottom of the screen use the main menu's look now: a dark panel with the teal edge of the menu's top and bottom bars, red for bad news. After Learn, the EV screen says Lessons Learned, Returning Home for a moment before taking you back.",
+        "Messages that pop up at the bottom of the screen use the main menu's look now: a dark panel with the teal edge of the menu's top and bottom bars, red for bad news. After Learn, the EV screen says Lessons Learned, Returning Home for a moment before taking you back.",
+      ],
+    ],
+  },
+  {
     d: '2026-11-12',
     title: ['Vignette setting', 'Vignette setting'],
     new: [

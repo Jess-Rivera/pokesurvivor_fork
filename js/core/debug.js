@@ -43,6 +43,9 @@
  *   G.Debug.fighter()  the active fighter's six stats at its level and its movement px/s: plain (0 IV, 0 EV, no nature) next to this copy
  *   G.Debug.evbank(hp, atk, def, spa, spd, spe)  set THIS run's six EV banks in EVs (decimals allowed, 3.742) to test the end-of-run
  *                      allocation without an hour run; no args: logs them. Flags the run as tampered (it still allocates).
+ *   G.Debug.evset(slot, hp, atk, def, spa, spd, spe)  set the copy in team slot `slot` (0 to 5) to these EVs (save
+ *                      order), whole, 252 a stat and 510 in all (later stats cut first), to test the EV screen's
+ *                      greyed + (#104). Saved; flags the run as tampered.
  *   G.Debug.ivs(slot, v, nature)  set the copy in team slot `slot` (0 to 5) to six IVs of v (0 to 31) and, if given, a nature by
  *                      name ('jolly'). Saved; takes effect from the next run, which is flagged tampered.
  *   G.Debug.quietPause(on)  Escape (and P, and the pause button) pause and unpause with no pause menu, so the frame stays
@@ -1254,6 +1257,22 @@ G.Debug = (() => {
     return b;
   }
 
+  /** #104: the copy in team slot `slot` gets these six EVs (save order HP Atk Def SpA SpD Spe) through G.Copies.setEvs:
+   *  whole, 252 a stat and 510 in all. Saved; the EV screen shows them as its white numbers. */
+  function evset(slot = 0, ...values) {
+    if (!on || !G.DB.save) return false;
+    const member = G.DB.save.team && G.DB.save.team[slot],
+      evs = member && member.uid ? G.Copies.setEvs(G.DB.save, member.uid, values) : null;
+    if (!evs) {
+      console.warn('[Debug] team slot ' + slot + ' has no copy.');
+      return false;
+    }
+    G.DB.commit(true);
+    G.Game.debugMaxed();
+    console.log('[Debug] slot ' + slot + ' EVs (HP Atk Def SpA SpD Spe): ' + evs.join(' '));
+    return evs;
+  }
+
   // ---------- #91-2: the pause menu's Run Info panel and Region Best (map 91c "Debug tools", T1, T2) ----------
   const RUN_INFO_PRESETS = ['full', 'empty', 'tie'];
   const RUN_INFO_STATUSES = {
@@ -1694,6 +1713,7 @@ G.Debug = (() => {
     fighter,
     ivs,
     evbank,
+    evset,
     runinfo,
     regionbest,
     recordcheck,

@@ -2,15 +2,15 @@
 // Design: docs/proposals/ev-progression.md (Jess, 2026-11-04). Plan: docs/ASCII Concept Maps/Pokebox 5 - EVs.txt (F1 to F10).
 // Loads the REAL js/core/stats.js, types.js, status.js, stages.js, js/entities/player.js, js/data/species-traits.js and
 // js/systems/copies.js with stubs (pattern: pokebox-stats-harness.js), and reads js/game.js, js/entities/enemy.js, js/ui/run-ui.js,
-// js/ui/ui.js and dev.html as text for the wiring. Expected numbers are hand-derived, never read from the code under test:
+// js/ui/ev-screen.js (#104), js/ui/ui.js, js/main.js and dev.html as text for the wiring. Expected numbers are hand-derived, never read from the code under test:
 //   stat = floor((2B + IV + floor(EV / 4)) x L / 100) + 5, then the nature;  HP = (floor((2B + IV + floor(EV / 4)) x L / 100) + L + 10) x 2;
 //   EV yields written out from pokeapi pokemon_stats.csv (effort); bank rates F1: wild 1, elite 2, gym 1000 thousandths per point, shiny x2.
-// The mutation runner (pokebox-evs-mutate.js) points PE_STATS, PE_PLAYER, PE_COPIES, PE_GAME, PE_ENEMY and PE_RUNUI at altered
+// The mutation runner (pokebox-evs-mutate.js) points PE_STATS, PE_PLAYER, PE_COPIES, PE_GAME, PE_ENEMY, PE_RUNUI and PE_EVSCREEN at altered
 // copies; every mutation must make this harness fail.
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const SRC = { 'js/core/stats.js': 'PE_STATS', 'js/entities/player.js': 'PE_PLAYER', 'js/systems/copies.js': 'PE_COPIES', 'js/game.js': 'PE_GAME',
-  'js/entities/enemy.js': 'PE_ENEMY', 'js/ui/run-ui.js': 'PE_RUNUI' };
+  'js/entities/enemy.js': 'PE_ENEMY', 'js/ui/run-ui.js': 'PE_RUNUI', 'js/ui/ev-screen.js': 'PE_EVSCREEN' };
 const pathOf = p => process.env[SRC[p]] || R + '/' + p;
 const load = p => vm.runInThisContext(fs.readFileSync(pathOf(p), 'utf8'), { filename: p });
 const readText = p => fs.readFileSync(pathOf(p), 'utf8');
@@ -31,7 +31,8 @@ global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, 
 for (const p of ['js/core/stats.js', 'js/data/types.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/player.js',
   'js/data/species-traits.js', 'js/systems/copies.js']) { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } }
 const TXT = { game: readText('js/game.js'), enemy: readText('js/entities/enemy.js'), runui: readText('js/ui/run-ui.js'),
-  ui: fs.readFileSync(R + '/js/ui/ui.js', 'utf8'), dev: fs.readFileSync(R + '/dev.html', 'utf8') };
+  evscreen: readText('js/ui/ev-screen.js'), ui: fs.readFileSync(R + '/js/ui/ui.js', 'utf8'), dev: fs.readFileSync(R + '/dev.html', 'utf8'),
+  main: fs.readFileSync(R + '/js/main.js', 'utf8') };
 // @@TESTS
 const S = G.Stats, C = G.Copies, P = G.Player;
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 80) console.log('FAIL', m); } };
@@ -113,6 +114,13 @@ const evOf = (s, id) => C.get(s, id).ev;
   ok(same(sv.box[0].e, [252, 252, 0, 0, 0, 0]) && same(sv.box[1].e, [252, 252, 6, 0, 0, 0]) && !('e' in sv.box[2]), 'clean() caps a stat at 252 and the total at 510, and drops all-zero EVs');
   const back = JSON.parse(JSON.stringify(s)); C.clean(back);
   ok(same(back.box[0].e, [180, 252, 78, 0, 0, 0]) && !('e' in back.box[1]), 'a save round trip keeps the EVs');
+  // setEvs (#104b): the same cap as clean(), on one copy; numbers by hand
+  const t = mkSave();
+  ok(same(C.setEvs(t, B_ID, [300, 300, 0, 0, 0, 0]), [252, 252, 0, 0, 0, 0]) && same(evOf(t, B_ID), [252, 252, 0, 0, 0, 0]), 'setEvs caps a stat at 252');
+  ok(same(C.setEvs(t, B_ID, [252, 252, 252, 0, 0, 0]), [252, 252, 6, 0, 0, 0]) && C.get(t, B_ID).evTotal === 510, 'setEvs caps the total at 510, later stats cut first');
+  ok(same(C.setEvs(t, B_ID, [0, 0, 0, 0, 0, 0]), [0, 0, 0, 0, 0, 0]) && !('e' in t.box[1]), 'setEvs to all zero removes the field');
+  const untouched = JSON.stringify(t);
+  ok(C.setEvs(t, GONE_ID, [4, 0, 0, 0, 0, 0]) === null && C.setEvs(t, 'junk', [4, 0, 0, 0, 0, 0]) === null && JSON.stringify(t) === untouched, 'setEvs on a missing copy or a bad id returns null and changes nothing');
 }
 
 // ===== 7. a real Player: EVs in HP, damage dealt, damage taken, movement =====
@@ -144,11 +152,18 @@ const evOf = (s, id) => C.get(s, id).ev;
   ok(/function quitRun\(keepsEvs = false\) \{[\s\S]{0,80}endRun\(false, keepsEvs\);/.test(g) && /function endRun\(dead = true, keepsEvs = dead\)/.test(g), 'game.js: a quit gives no EVs, a fall keeps them (#103)');
   ok(/quitRun\(true\); \/\/ a crash/.test(g) && /\(\) => quitRun\(\) \/\/ a click passes its event/.test(g), 'game.js: the crash save keeps the EVs; the old Quit button passes no click event as keepsEvs (#103)');
   ok(/evGive = !!evWhole && evWhole\.some\(\(v\) => v > 0\) && r\.evs\.team\.length > 0/.test(u) && u.includes("'No whole EVs this run'"), 'run-ui.js: a run with no whole EVs shows one line (F10)');
-  ok(/\$\('btn-again'\)\.onclick = evGive \? \(\) => showEvs\(r\.evs, onBack\) : onBack;/.test(u), 'run-ui.js: with whole EVs, the button opens the allocation screen (F3)');
-  ok(/if \(n > 0\) \{\s*const yes = await G\.UI\.ask\(`\$\{n\} EVs will be discarded\.`/.test(u), 'run-ui.js: leaving EVs asks once (F5)');
-  ok(/G\.Copies\.applyEvPlan\(s, whole, flat\);\s*G\.DB\.commit\(true\);/.test(u), 'run-ui.js: Done gives through applyEvPlan and saves');
-  ok(/canAdd = \(i, k\) => left\(k\) > 0 && evOf\(i, k\) < G\.Copies\.EV_MAX && totalOf\(i\) < G\.Copies\.EV_TOTAL/.test(u), 'run-ui.js: [+] stops at the bank, 252 and 510 (F6)');
-  ok(TXT.ui.includes("'scr-evs'") && /id="scr-evs"/.test(TXT.dev) && /id="evs-grid"/.test(TXT.dev) && /id="evs-done"/.test(TXT.dev), 'the allocation screen exists (dev.html) and is a screen (ui.js)');
+  ok(/learn: \(\) => G\.EvScreen\.show\(r\.evs, onBack\),/.test(u) && /\$\('btn-again'\)\.onclick = evGive && G\.EvScreen\.ready \? \(\) => G\.EvScreen\.show\(r\.evs, onBack\) : onBack;/.test(u), 'run-ui.js: with whole EVs, Learn from the Loss (and the old co-op card) opens the EV screen (#104)');
+  ok(!/showEvs|scr-evs/.test(u) && !TXT.ui.includes("'scr-evs'") && !/id="scr-evs"/.test(TXT.dev), 'the old allocation screen is retired from run-ui.js, ui.js and dev.html (#104)');
+  ok(TXT.dev.includes('<script defer src="js/ui/ev-screen.js"></script>') && TXT.main.includes("'EvScreen'"), 'the EV screen loads (dev.html) and is required (main.js NEED) (#104)');
+  const v = TXT.evscreen;
+  ok(/async function learn\(\) \{\s*const left = leftTotal\(\);\s*if \(left > 0\) \{\s*const yes = await G\.UI\.ask\(/.test(v), 'ev-screen.js: Learn asks first, only when EVs are left over (F5)');
+  ok(/G\.Copies\.applyEvPlan\(G\.DB\.save, bank\.value, planned\(\)\);\s*G\.DB\.commit\(true\);/.test(v), 'ev-screen.js: Learn gives through applyEvPlan and saves');
+  const goHomeBody = (v.match(/async function goHome\(\) \{([\s\S]*?)\n  \}/) || [])[1] || '';
+  ok(/^\s*const yes = await G\.UI\.ask\('Discard all EVs and return\?'/.test(goHomeBody) && !/applyEvPlan|DB\.commit/.test(goHomeBody), 'ev-screen.js: Go Home always asks and saves nothing');
+  ok(/bankRoom = leftIn\(stat\),\s*statRoom = G\.Copies\.EV_MAX - member\.before\[stat\] - added\(column, stat\),\s*totalRoom = G\.Copies\.EV_TOTAL - member\.beforeTotal - addedTotal\(column\);\s*return Math\.max\(0, Math\.min\(bankRoom, statRoom, totalRoom\)\);/.test(v), 'ev-screen.js: [+] stops at the bank, 252 and 510 (F6)');
+  ok(/SHIFT_STEP = 10,\s*REPEAT_DELAY_MS = 350,\s*REPEAT_EVERY_MS = 83;/.test(v) && /const amount = event\.shiftKey \? SHIFT_STEP : 1;/.test(v), 'ev-screen.js: Shift-click gives 10; holding repeats after 0.35 s, about 12 a second (Jess, 2026-11-13)');
+  ok(/LEARN_TOAST_MS = 1000;/.test(v) && /G\.Copies\.applyEvPlan\(G\.DB\.save, bank\.value, planned\(\)\);\s*G\.DB\.commit\(true\);\s*G\.Audio\.sfx\('confirm'\);\s*leaving = true;[^\n]*\n\s*stopRepeat\(\);\s*G\.UI\.toast\('Lessons Learned, Returning Home', LEARN_TOAST_MS\);\s*leaveTimer = setTimeout\(leave, LEARN_TOAST_MS\);/.test(v), 'ev-screen.js: Learn saves first, then the shared toast for 1 s, then home (#104c)');
+  ok(/isOpen: \(\) => isOpen\(\) && !leaving,/.test(v) && /if \(event\.button !== 0 \|\| leaving\) return;/.test(v), 'ev-screen.js: during the toast the buttons and + / - take no input (#104c)');
 }
 
 console.log('pokebox evs harness: ' + (n - fail) + '/' + n + ' passed');

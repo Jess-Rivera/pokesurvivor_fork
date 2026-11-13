@@ -112,6 +112,11 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
   in the HUD as `HudModule`. Smooth, so the crisp-size and hard-outline rules do not apply to it; it takes a soft dark
   shadow instead. Its digits are not fixed width.
 
+- `[Approved]` **Which face for what** (Jess, 2026-11-13): the pixel text face (Truth And Ideals, `HudText`) is for what is
+  directly on or about a Pokemon (names, stats, HP, moves, EVs, its panels). Michroma (`HudModule`) is the game's own UI
+  face ("this is the game talking"): module panels, titles like EXPEDITION OVER, and messages such as toasts.
+  `[Open]` the menu buttons (pause menu, End Run, EV screen) are game UI but use `HudText` 30 px today; Jess to rule.
+
 - `[Approved]` **Tooltips use the game's UI font** (Jess, 2026-11-11, #90): GameFont (`var(--font)`, Silver-game) at
   20 px, more readable than Truth And Ideals for sentences. Every pause menu tooltip (items, the stat hex corners, the
   move rows) shares one look: `#181818` body, a 2 px `#f3b200` frame, the name in `#ffd23f`, white text with the hard
@@ -373,6 +378,13 @@ to E14 and F15 to J18; values picked by eye, not sampled.
 | Screen dim                                 | `#000000` at 55%      | eyed               |
 
 ---
+
+#### `[Approved]` Toasts (G.UI.toast, every screen; Jess, 2026-11-13, #104c)
+- Body `#181818` and a 2 px rim `#29ceff`: the main menu top and bottom bars' charcoal and teal line (bw-menu.css
+  `--bw-charcoal`, `--bw-line`), with a 2 px `#101010` outline. Bad news (`tone 'bad'`): the same with the pause menu
+  red `#c8141c` rim.
+- Text: Michroma (`HudModule`) 20 px on 30 px lines, white, the module panels' soft shadow ("Fonts": which face for
+  what); long messages wrap at about 720 px. Bottom centre.
 
 ## Shapes
 

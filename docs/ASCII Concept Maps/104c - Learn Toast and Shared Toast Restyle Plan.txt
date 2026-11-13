@@ -1,0 +1,104 @@
+104c - LEARN TOAST + SHARED TOAST RESTYLE  (Quick, 2026-11-13, branch feature/pause-menu-rework)
+Ask (Jess, feel test of #104): Learn shows a toast in the pause-menu UI style, "Lessons Learned, Returning Home",
+about 1 s, then the main menu. Restyle the ONE shared toast so every toast in the game changes with it.
+Status: APPROVED and BUILT 2026-11-13. D1 CHANGED by Jess: not the pause-menu colours below but the main menu
+top and bottom bars' look, charcoal #181818 with their teal line #29ceff as the rim (bw-menu.css --bw-charcoal,
+--bw-line); font MICHROMA (Jess: the pixel face is only for what is on or about a Pokemon); bad = pause menu red rim. D2 default (screen stays up, deaf). D3 default (bottom centre).
+
+=====================================================================================
+TODAY
+=====================================================================================
+
+  G.UI.toast(message, ms, tone)    js/ui/ui.js ~127, ONE element for the whole game
+     used by ~50 calls: menu, Pokebox, shop, gacha, settings, in-run ("X fainted on the bench!"), debug
+     looks like: css/style.css ~1295-1311  .toast / .toast.bad
+                 navy rounded box, soft shadow, body font, bottom centre, z-index 60
+                 (the old Mystery Dungeon menu look, not the pause menu's)
+
+=====================================================================================
+LEARN, AFTER THIS CHANGE
+=====================================================================================
+
+  [Learn] --(EVs left?)--yes--> ask (shared dialog) --Cancel--> stay
+     |                                  |
+     no                                Yes
+     +----------------+-----------------+
+                      v
+        save the EVs NOW (applyEvPlan + commit)      <- before the wait: closing the tab
+                      |                                  during the 1 s keeps them
+                      v
+        toast "Lessons Learned, Returning Home"  (1.0 s)
+        EV screen stays up, LOCKED: buttons, + / -, keys do nothing        (D2)
+                      |
+                   1.0 s later
+                      v
+        EV screen closes -> main menu (as today)
+
+  Go Home: no toast (you asked for Learn only), unchanged.
+
+=====================================================================================
+FILES AND WHAT CHANGES
+=====================================================================================
+
+  css/style.css   .toast and .toast.bad (~1295-1311): the new look, in place, so every caller
+                  gets it (D1). No new toast, no second style.
+                     body   #181818 (the EV panel / detail panel back)
+                     rim    2 px #e7e7e7 (the menu buttons' white rim) inside a 2 px #101010 outline
+                     text   'HudText', 20 px, white with the HUD's 8 hard shadows (HUD-STYLE "Fonts")
+                     .bad   rim #c8141c (the pause menu red, End's rim)
+                     wraps  max-width about 720 px, text wraps (some toasts are long: the iOS tip,
+                            the crash message); square corners; keeps today's position, z-index
+                            and pop animation
+  js/ui/ev-screen.js
+                  learn(): after saving, sets a "leaving" flag, calls the shared toast for 1000 ms,
+                  then closes and goes home after 1000 ms.
+                  the flag: the button row's isOpen() and the + / - press both read it, so nothing
+                  takes a press during the second. Cleared by show() and hide().
+  js/data/changelog.js   "chg": toasts use the new menu style; Learn says Lessons Learned (free edit).
+  docs/PAUSE-MENU.md     section 7 "EV buttons": the toast and the 1 s. (doc, free edit)
+  docs/HUD-STYLE.md      Working colours: a [Proposed] "Toasts" line naming the colours above.
+  No save fields. No new script, so dev.html and NEED do not change.
+
+=====================================================================================
+DECISIONS
+=====================================================================================
+
+  D1  RESTYLE EVERY TOAST (what you asked; flagged since it changes ~50 messages on every
+      screen, including the main menu screens that still use the old look).
+      Look: (a) CSS panel as above   (default)
+            (b) the pixel move-slot shape like the buttons: the toast would have to become a
+                Preact piece, much more work, and the shape does not fit wrapped text
+  D2  during the 1 s: EV screen stays up and locked   (default)
+      or: the EV screen closes at once and the toast shows over the dimmed world
+  D3  where: bottom centre, as every toast is today   (default)
+      or: middle of the screen for all toasts
+
+=====================================================================================
+TESTS (no new test files)
+=====================================================================================
+
+  tools/smoke-pause-menu.js  (existing; free edit)
+     - the Learn block: after Yes, read the toast at once: shown, text "Lessons Learned, Returning
+       Home", font HudText; the EV screen still open; a click on Go Home and a + click do nothing;
+       the EVs are ALREADY saved (read the copies before the second ends)
+     - then wait 1.2 s: EV screen closed, state 'ui'. Today's "Learn: Yes saves and goes home"
+       check waits 0.3 s, so it moves after this wait (else it fails).
+     - one look check on the shared toast: an ordinary call shows the new body and rim, and the
+       bad tone shows the red rim. Why: D1 changes every caller through one rule; one check on
+       the element covers them all.
+  docs/proposals/pokebox-evs-harness.js  (existing, text checks on ev-screen.js)
+     - Learn saves BEFORE the toast, the toast is the shared G.UI.toast with that text and
+       1000 ms, and home is called after 1000 ms.
+     - the existing "Learn gives through applyEvPlan and saves" check stays unchanged.
+  docs/proposals/pokebox-evs-mutate.js  (existing)
+     + "Learn goes home at once (no toast)", "Learn saves after the wait",
+       "the lock is ignored (+ works during the second)". Each must fail the harness.
+  tools/check.js: no change. Intent scenarios: none. Debug sets: none.
+
+  FEEL TEST: give EVs, Learn, watch the 1 s beat; then open the Pokebox (Team saved toast) and
+  sell something (Sold toast) to see the new look on the menu screens; faint a benched Pokemon in
+  a run to see the red one.
+
+  RISKS
+     - The main menu screens keep the old look around a new-look toast until they are restyled.
+     - A toast shorter than 1 s elsewhere is unchanged (only Learn passes 1000).

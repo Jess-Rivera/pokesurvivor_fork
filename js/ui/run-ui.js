@@ -243,7 +243,7 @@ G.RunUI = (() => {
         review: () => {
           if (!G.PauseMenu.openReview(() => G.EndRun.reopen())) G.EndRun.reopen();
         },
-        learn: () => showEvs(r.evs, onBack),
+        learn: () => G.EvScreen.show(r.evs, onBack),
         home: onBack,
       };
       G.UI.hideAll();
@@ -290,7 +290,7 @@ G.RunUI = (() => {
     const ask = $('over-ask');
     if (ask) ask.querySelector('.x').onclick = () => ask.remove();
     $('btn-again').textContent = evGive ? 'Give EVs' : 'Back to menu';
-    $('btn-again').onclick = evGive ? () => showEvs(r.evs, onBack) : onBack;
+    $('btn-again').onclick = evGive && G.EvScreen.ready ? () => G.EvScreen.show(r.evs, onBack) : onBack;
     // Team summary: every Pokemon's moves, upgrades and stat cards (the results card keeps only the run totals).
     const roster = r.roster || [];
     $('btn-team').classList.toggle('hidden', !roster.length);
@@ -309,75 +309,6 @@ G.RunUI = (() => {
       }
     }
     G.UI.show('scr-over');
-  }
-
-  /**
-   * Pokebox step 5 (map F3 to F6): give this run's whole EVs to the team's copies. A stat's EVs go to any copies, never to another
-   * stat; 252 in a stat and 510 per Pokemon; Done asks once if any are left, and what is left is discarded.
-   */
-  function showEvs(evs, onBack) {
-    const s = G.DB.save,
-      whole = G.Copies.wholeEvs(evs.bank),
-      team = evs.team.map((t) => Object.assign({ copy: G.Copies.get(s, t.uid) }, t)).filter((t) => t.copy),
-      plan = team.map(() => [0, 0, 0, 0, 0, 0]); // plan[column][stat]: EVs given this screen
-    const left = (k) => whole[k] - plan.reduce((a, p) => a + p[k], 0);
-    const evOf = (i, k) => team[i].copy.ev[k] + plan[i][k];
-    const totalOf = (i) => team[i].copy.evTotal + plan[i].reduce((a, v) => a + v, 0);
-    const canAdd = (i, k) => left(k) > 0 && evOf(i, k) < G.Copies.EV_MAX && totalOf(i) < G.Copies.EV_TOTAL;
-    const btn = (i, k, d, on) =>
-      `<button type="button" class="btn ghost small" data-i="${i}" data-k="${k}" data-d="${d}"${on ? '' : ' disabled'}>${d > 0 ? '+' : '−'}</button>`;
-    function render() {
-      const head = team
-        .map((t, i) => `<th>${G.DEX_BY[t.dex].name}<small>Slot ${t.slot + 1} · ${totalOf(i)} / 510</small></th>`)
-        .join('');
-      const rows = [0, 1, 2, 3, 4, 5]
-        .filter((k) => whole[k] > 0)
-        .map((k) => {
-          const cells = team
-            .map((t, i) => {
-              const add = plan[i][k] ? ` <em>+${plan[i][k]}</em>` : '';
-              return `<td>${btn(i, k, -1, plan[i][k] > 0)} <b>${evOf(i, k)}</b>${add} ${btn(i, k, 1, canAdd(i, k))}</td>`;
-            })
-            .join('');
-          return `<tr><th>${EV_STATS[k]}</th><td>${left(k)} / ${whole[k]}</td>${cells}</tr>`;
-        })
-        .join('');
-      $('evs-grid').innerHTML =
-        `<table class="evs-table"><thead><tr><th>Stat</th><th>Left</th>${head}</tr></thead><tbody>${rows}</tbody></table>`;
-    }
-    $('evs-sub').textContent =
-      'Give this run’s EVs to your team. Each stat goes to any Pokémon, up to 252 in a stat and 510 per Pokémon. What you do not give is lost.';
-    $('evs-grid').onclick = (ev) => {
-      const b = ev.target.closest('button[data-d]');
-      if (!b || b.disabled) return;
-      const i = +b.dataset.i,
-        k = +b.dataset.k,
-        d = +b.dataset.d;
-      if (d > 0 ? !canAdd(i, k) : !(plan[i][k] > 0)) return;
-      plan[i][k] += d;
-      G.Audio.sfx('click');
-      render();
-    };
-    $('evs-done').onclick = async () => {
-      const n = [0, 1, 2, 3, 4, 5].reduce((a, k) => a + left(k), 0);
-      if (n > 0) {
-        const yes = await G.UI.ask(`${n} EVs will be discarded.`, {
-          title: 'Leave EVs?',
-          ok: 'Discard',
-          cancel: 'Keep giving',
-          note: 'EVs you do not give are lost at the end of the run.',
-        });
-        if (!yes) return;
-      }
-      const flat = [];
-      team.forEach((t, i) => plan[i].forEach((v, k) => v && flat.push({ uid: t.uid, stat: k, n: v })));
-      G.Copies.applyEvPlan(s, whole, flat);
-      G.DB.commit(true);
-      G.Audio.sfx('confirm');
-      onBack();
-    };
-    render();
-    G.UI.show('scr-evs');
   }
 
   /**
@@ -622,7 +553,6 @@ G.RunUI = (() => {
     setWaiting,
     closeLevelUp,
     showOver,
-    showEvs,
     wirePause,
     showPause,
     pauseKeys,

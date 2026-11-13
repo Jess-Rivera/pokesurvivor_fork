@@ -38,7 +38,7 @@
 G.PauseMenu = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
-  const { html, signal, preact, PALETTE, PixelShape, moveSlotRow, TooltipLayer, hideTooltip } = overlay.kit;
+  const { html, signal, preact, PALETTE, PixelShape, moveSlotRow, TooltipLayer, hideTooltip, fitToStage } = overlay.kit;
   const { SlotButton, SLOT_BUTTON, REST_RIM } = overlay.kit; // the shared menu button (also the End Run screen's)
 
   // Step lengths in ms: dim and closed ball in, then ball opens with the panels sliding in. Open is about 0.23 s (Jess,
@@ -65,8 +65,6 @@ G.PauseMenu = (() => {
     { id: 'no', label: 'No', rim: GREY_RIM, focusRim: GREY_RIM, focusBody: GREY_RIM.dark },
   ];
   const POCKET_HEADER_ART_WIDTH = 130; // 390 px: "Destroy Items in Pocket?" fits inside the ball's inner circle
-  const STAGE_WIDTH = 1920,
-    STAGE_HEIGHT = 1080;
   const BUTTONS = [
     { id: 'resume', label: 'Resume' },
     { id: 'endRun', label: 'End Run' },
@@ -265,11 +263,7 @@ G.PauseMenu = (() => {
   document.body.appendChild(root);
   preact.render(html`<${Menu} />`, root);
 
-  function fitStage() {
-    const scale = Math.min(1, innerWidth / STAGE_WIDTH, innerHeight / STAGE_HEIGHT);
-    root.style.setProperty('--pm-scale', String(scale));
-  }
-  addEventListener('resize', fitStage);
+  const fitStage = fitToStage(root);
 
   // ---------- the steps ----------
   function applyLevel() {

@@ -180,7 +180,6 @@ All three screens use the pause menu's pixel style on the 1920 x 1080 stage. Co-
   Silver, shinies seen and caught and the rest. The Ko-fi ask is dropped. Poke Balls and
   Master Balls earned show on no end of run or in-run screen (they still go to the save).
 - [Approved] A run ended by quitting (End Run in the pause menu) gives no EVs, so it always shows "Return Home".
-  Code differs until #103 (a quit gives EVs).
 - [Approved] Run Review (#92): the pause menu reopened read-only: Run Info, detail and team panels where the pause
   menu has them, all hover tooltips, no Run Inventory, nothing accepts an item. The ball holds one button, "Back", to
   the End Run screen (Enter and Esc too); Move_Left and Move_Right step the Pokemon. The old end-of-run team sheet
@@ -190,9 +189,18 @@ All three screens use the pause menu's pixel style on the 1920 x 1080 stage. Co-
   six always. The left column is what is left to give in that stat. Each cell is "- N +": the copy's current EVs in
   white, this screen's additions as a yellow "+N" beside it. + greys out at 252 in a stat, 510 per Pokemon, or nothing
   left in that stat.
+- [Approved] EV giving (Jess, 2026-11-13, docs/decisions/2026-11-13-104-ev-screen-giving-and-old-screen-retired.md):
+  a click on + or - moves 1 EV, Shift-click moves 10 (cut to what fits), and holding either repeats after 0.35 s at
+  about 12 a second. "x / 510" counts this screen's additions as they are made. - only takes back this screen's
+  additions (lowering old EVs is the parked 5b berries). Built in js/ui/ev-screen.js.
 - [Approved] EV buttons: "Learn" saves what was given and goes home; if EVs are left over it asks first, and they are
   discarded. "Go Home" saves nothing and always asks "Discard all EVs and return?" with "Yes" and "Cancel". The EV
   screen has no way back to End Run or Run Review.
+- [Approved] Both asks use the shared confirmation dialog (G.UI.ask) for now; restyling that dialog to the pause
+  menu's look is a later issue (Jess, 2026-11-13). Learn has the green focus first; Move_Left and Move_Right move it,
+  either Enter key presses, Esc does nothing (End Run's rule). The old allocation screen (scr-evs) is retired.
+- [Approved] Learn's goodbye (Jess, 2026-11-13, #104c): once the EVs are saved, the shared toast says "Lessons Learned,
+  Returning Home" for 1 s while the EV screen stays up and takes no input, then the main menu. Go Home has no toast.
 
 ## Scope notes
 - [Approved] Co-op pause keeps the old screen (multiplayer is deferred). Touch versions of the hover tooltips wait

@@ -1292,22 +1292,35 @@ kbd {
   text-shadow: none;
 }
 
-.toast.bad {
-  background: rgba(120, 14, 28, 0.96);
-  border-color: #ff5f6d;
-}
+/* The shared toast (G.UI.toast, every screen; Jess, 2026-11-13, #104c): the main menu bars' charcoal with their teal
+   line as the rim (bw-menu.css :root), in Michroma, the game's own UI face, with the module panels' soft shadow (HUD-STYLE
+   "Fonts": the pixel font is only for what is on or about a Pokemon). .bad keeps the shape, with the pause menu red. */
 .toast {
   position: fixed;
   left: 50%;
   bottom: 30px;
   transform: translateX(-50%);
   z-index: 60;
-  padding: 10px 18px;
-  border-radius: 10px;
-  background: rgba(10, 20, 50, 0.95);
-  border: 2px solid var(--edge);
-  text-shadow: 2px 2px 0 var(--shadow);
+  box-sizing: border-box;
+  max-width: min(720px, calc(100vw - 40px));
+  padding: 12px 20px;
+  background: var(--bw-charcoal, #181818);
+  border: 2px solid var(--bw-line, #29ceff);
+  box-shadow: 0 0 0 2px #101010;
+  font-family: 'HudModule', 'Michroma', sans-serif;
+  font-size: 20px;
+  line-height: 30px;
+  color: #ffffff;
+  text-align: center;
+  white-space: normal;
+  text-shadow:
+    0 0 2px #101010,
+    1px 1px 0 #101010,
+    0 1px 2px #101010;
   animation: pop 0.2s ease-out;
+}
+.toast.bad {
+  border-color: #c8141c;
 }
 
 ::-webkit-scrollbar {
@@ -2381,7 +2394,6 @@ a.btn {
   #scr-levelup,
   #scr-pause,
   #scr-over,
-  #scr-evs,
   #scr-item,
   #scr-settings,
   #scr-legal,
@@ -3695,42 +3707,6 @@ a.btn {
   margin: 0;
 }
 
-/* Pokebox step 5: end-of-run EV allocation (js/ui/run-ui.js showEvs) */
-#evs-grid {
-  overflow-x: auto;
-  margin: 8px 0 12px;
-}
-.evs-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-.evs-table th,
-.evs-table td {
-  padding: 4px 6px;
-  text-align: center;
-  white-space: nowrap;
-}
-.evs-table th small {
-  display: block;
-  color: var(--muted);
-  font-weight: normal;
-}
-.evs-table tbody tr:nth-child(odd) {
-  background: rgba(255, 255, 255, 0.04);
-}
-.evs-table td b {
-  display: inline-block;
-  min-width: 2.2em;
-}
-.evs-table td em {
-  color: #ffd23f;
-  font-style: normal;
-}
-.evs-table .btn.small {
-  padding: 2px 8px;
-  min-width: 0;
-}
 /* Move Shop step 4: the Move Trainer and TM Mart screens (js/ui/shop-ui.js). Prefix mshop-, apart from the PokeCoin shop's shop- rules. */
 #scr-shop .mshop-box {
   width: min(920px, 96vw);
