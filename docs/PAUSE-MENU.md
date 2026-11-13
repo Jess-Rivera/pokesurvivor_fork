@@ -210,4 +210,4 @@ All three screens use the pause menu's pixel style on the 1920 x 1080 stage. Co-
 - [Approved] The end of run uses the pause menu's look: section 7.
 
 ## Open questions
-Recorded in #82 until answered; answers move into the sections above.
+#82 is closed (2026-11-13). A new question gets its own area:ui issue; answers move into the sections above.

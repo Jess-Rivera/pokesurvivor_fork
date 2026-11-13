@@ -42,6 +42,37 @@ Direction: the gacha goes. Luck should not hand out an end-game mon and make sta
 - T3: "knows a move" means the move is in that copy's run moveset (an in-run flag).
 - LC2: Karrablast evolves to Escavalier with the Link Cable alone; Accelgor waits until Shelmet is in the game.
 - T7: the agent's one-off proposals for Shedinja, Kingambit, Alcremie and Gholdengo are accepted, with four rule details open (R1 to R4 in the map; R3: the Kingambit rule cannot happen as written because elites never repeat a species in a run).
-Still open: R1 to R4, T5b values, EI2 (Metal Coat and Razor Claw already exist as items), LC3, LC4 (Shop tab, prices), the day/night design, L3, the hover filter, EV4, N2 (flee values), the odds ceiling, A1, A3, A7 to A9, A13 to A15, B5, C2 (banked tickets in saves), ball tier unlocks, the UberElite time limit. Not built. The region type maps are parked and feed tier 1 later.
+- Accelgor (2026-11-13, Shelmet has no sprites): Karrablast + Link Cable + Shed Shell (a new Shop item) evolves to Accelgor.
+- Kingambit (2026-11-13, replaces R3): one Bisharp elite defeated while Bisharp is on the team.
+- Gholdengo (2026-11-13): a catchable Stage 1 in the rescue pool (4 star band), not in the Lost pool. Revisit if Gimmighoul gets SpriteCollab sprites (then Gimmighoul + candy + Gimmighoul Coins from the treasure imp).
+- R5 (2026-11-13): species whose pre-evolution is not in the game count as Stage 1 for the rescue pool (Gholdengo only today).
+- R6 (2026-11-13): when Bisharp is on the team in an Unova-or-later run, the run's first elite is a Bisharp, using Bisharp's own band (T4). Today's elite cadence never lands in Bisharp's band otherwise.
+- R1 (2026-11-13): evolving Nincada also makes a Shedinja copy; a full Pokebox blocks the evolution until there is room.
+- A7 (2026-11-13): at a branching evolution the requirements decide the branch; using an item counts as choosing it.
+- R4: Alcremie's circling time is set in playtest.
+- SH2 (2026-11-13): the Shedinja uses up a Poke Ball from stock.
+- SH3 (2026-11-13): Wonder Guard gets built (only super-effective hits damage Shedinja), as its own combat-rule build plan.
+- A7a (2026-11-13): when two or more branches qualify, the player picks among them.
+- WG1 (2026-11-13): indirect damage (burn, poison, traps, hazards, recoil) goes through Wonder Guard.
+- WG3 (2026-11-13): Shedinja has a fixed 1 HP (a per-species exception to the G.Stats HP formula).
+- SH4 (2026-11-13): no Poke Ball in stock blocks the Nincada evolution, like a full box.
+- WG2 (2026-11-13): untyped direct hits are blocked by Wonder Guard.
+- WG4 (2026-11-13): gym leaders follow the same Wonder Guard rule (no boss exception). Lt. Surge and Erika have no move that can hit a Shedinja.
+- F2b (2026-11-13): HP upgrades on Shedinja show greyed out, marked "no effect".
+- WG6 (2026-11-13, per Bulbapedia): status moves land on a Wonder Guard Shedinja.
+- WG1 extended (2026-11-13, per Bulbapedia): confusion and weather damage also go through. The game's sandstorm and snow damage already hit Bug/Ghost, so weather faints a Shedinja.
+- WG5 (2026-11-13): the riders of a hit Wonder Guard blocks still roll (unlike mainline). Type-immune (x0) hits keep the slice 4 rule: no riders.
+- WG7 (2026-11-13): accepted that Lt. Surge and Erika have no damaging move that can hit Shedinja; no roster change.
+- SH1 (2026-11-13): Shedinja copies Nincada's IVs, nature and EVs.
+- A7b (2026-11-13): Perrserker and Clodsire are left out until regional forms exist (unobtainable for now).
+- A7c (2026-11-13): Black Augurite, the three apples and the two armors are sold in the Shop (classic stones stay gym drops).
+- A8 (2026-11-13): evolutions added in a later gen are always allowed, in any region.
+- A9 (2026-11-13): candy cost follows the mainline XP curve per species (median line 33,084 XP; Dragonite 207,968).
+- Candy sizes (2026-11-13): the mainline five, XS 100, S 800, M 3,000, L 10,000, XL 30,000 XP.
+- Exp Candy drop amounts (CD1 to CD4) are PARKED (2026-11-13); design focus is acquisition only.
+- A13 (2026-11-13): a rescue offers only the region's own gen (Kanto = Gen 1, Johto = Gen 2 ...).
+- A1 (2026-11-13): the gacha is removed entirely (banners, pulls, pity).
+- New save (2026-11-13): the acquisition rework ships with a new save, no migration (settles A3 and C2). A one-off owner exception to CLAUDE.md "Save-data migration safety", like docs/decisions/2026-11-03-pokebox-is-a-clean-save-checkpoint.md.
+Still open: NS1 to NS4 (what carries over, the old save, the new save's start, how a new save is detected), A13b (how a rescue picks within the pool), the UberElite time limit, N2 (flee values), the odds ceiling, EV4, A14 (shinies), A15 (species with no route), L3, the hover filter, B5, ball tier unlocks, LC3, LC4, EI2, T5b values, the day/night design. Not built. The region type maps are parked and feed tier 1 later.
 
 Canonical: docs/ASCII Concept Maps/Acquisition v1 - Catch, Candy, Legendaries.txt

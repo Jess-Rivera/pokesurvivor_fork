@@ -785,3 +785,456 @@ RESOLVED, ROUND 16 (Jess, 2026-11-12)
     flags are saved on the copy; the main menu shows "ready to evolve"; evolving is in the Team Menu
     blocked today: Accelgor (no Shelmet), Gholdengo by evolution (no Gimmighoul),
                    the 9 move lines until the 8-move import lands
+
+RESOLVED, ROUND 17 (Jess, 2026-11-13)
+-------------------------------------
+  ACCELGOR   Karrablast + Link Cable + a Shop item -> Accelgor (Karrablast + Link Cable alone -> Escavalier).
+             The item is not chosen yet. Candidate: Shed Shell (a mainline item; Accelgor is the bug that
+             sheds its shell). It joins the Shop's trade items (16 new items + the Link Cable).
+  KINGAMBIT  feat flag: Bisharp is on the team when ONE Bisharp elite is defeated. Replaces "3 Bisharp elites".
+  GHOLDENGO  a catchable Stage 1 (rescue pool). BST 550, 4 star band. Never evolves, so it is NOT in the
+             Lost pool (that pool needs an evolution). The treasure imp still needs a new prize (C1: coins).
+
+  WHAT THE NUMBERS SAY (pokedex.js)
+    species      BST  star  gen
+    Karrablast   315   1     5
+    Escavalier   495   4     5
+    Accelgor     495   4     5
+    Bisharp      490   3     5
+    Kingambit    550   4     9
+    Gholdengo    550   4     9   Steel / Ghost
+
+  KINGAMBIT WINDOW IS NARROW (js/data/enemies.js eliteDef)
+    an elite is drawn from the BST band ONE TIER ABOVE the highest active wild tier.
+    Bisharp (490) fits only the T4 band (445-515), so it can be an elite only while T3 is the top wild
+    tier: run time 2:40 to 4:20. From 4:20 the elite band is 495-560 and Bisharp is out.
+    It also needs a region of Unova or later (gen 5), and it is one random pick from that band.
+    -> most runs will never offer a Bisharp elite at all.
+
+  RULE CHANGES TO FLAG (each changes behavior; not built)
+    R5  Gholdengo is an evolved species treated as Stage 1: the rescue pool needs an exception list
+        (species whose pre-evolution is not in the game). Gholdengo is the only one today.
+    R6  Kingambit: a guaranteed Bisharp elite when Bisharp is on the team | accept the narrow window
+        | count a Bisharp elite at ANY tier (eliteDef changes)
+
+  STILL OPEN
+    the Accelgor Shop item (Shed Shell?), R5, R6, R1 Shedinja two copies, R4 Alcremie N
+
+  GIMMIGHOUL (Jess asked why it is missing, 2026-11-13)
+    Not a design choice. tools/fetch_pokedex.py keeps a species only if SpriteCollab has its Idle,
+    Walk and Attack animations; Gimmighoul (#999) and Shelmet (#616) failed that when the dex was built.
+    A live look at SpriteCollab (partial) showed a #999 form subfolder but did not confirm the base files.
+    RULING (Jess, 2026-11-13): keep Gholdengo as a catchable Stage 1 for now; REVISIT if Gimmighoul gets
+    sprites. Then the mainline route applies:
+      Gimmighoul (catchable Stage 1) + candy + Gimmighoul Coins (treasure imp prize) -> Gholdengo
+      and R5 is dropped.
+    Adding a species = a pokedex rebuild + sprites: a game-data change, propose and approve.
+
+  STILL OPEN
+    the Accelgor Shop item (Shed Shell?), R5 (until Gimmighoul), R6, R1, R4
+
+RESOLVED, ROUND 18 (Jess, 2026-11-13)
+-------------------------------------
+  R5   APPROVED: species whose pre-evolution is not in the game count as Stage 1 for the rescue pool.
+       Exception list today: Gholdengo only. Drops when Gimmighoul gets sprites.
+  ACCELGOR ITEM  Shed Shell. Karrablast + Link Cable + Shed Shell -> Accelgor. Shed Shell is NOT in
+       js/data/items.js today, so it is new: 16 new evolution items + the Link Cable, all in the Shop.
+       Watch: an earlier roadmap note lists Shed Shell as a future switch-related held item. If that
+       lands, the one item has two jobs (evolution item and held item). Decide then.
+  R6   GUARANTEE a Bisharp elite: when Bisharp is on the team, the run fields one Bisharp elite.
+
+  WHY R6 WAS NEEDED (js/systems/elites.js, read 2026-11-13)
+    elite cadence (marked TEMPORARY until gyms exist): first at 2:00, then every 6:00
+    run time   0:00    2:00        2:40 ==== 4:20      8:00         14:00
+    elites             E1                              E2           E3
+    E1 band            385-465 (T3)  Bisharp 490: no
+    E2 band                                            530-620      no
+    E3 band                                                         600-700  no
+    -> with today's cadence NO elite ever lands in Bisharp's 2:40 to 4:20 window.
+       Without R6, Kingambit is unreachable, not just rare.
+
+  R6 RULE CHANGES TO APPROVE (each changes elite behavior; not built)
+    R6a which elite becomes Bisharp: the first elite of the run (2:00) | the next elite after
+        Bisharp's band opens | a random one
+    R6b region: Bisharp elite even in a region before Unova (an out-of-region elite)
+        | only in Unova or later (then Kanto to Unova runs cannot evolve Kingambit)
+    R6c stats: the elite keeps the band it replaced (its HP comes from DPS x time-to-kill anyway,
+        elites.js ttk 25 s) | Bisharp's own band
+    R6d the 'used' set (no repeat elites) is unaffected: one forced Bisharp per run.
+
+  STILL OPEN
+    R6a to R6c, R1 Shedinja two copies, R4 Alcremie N
+
+RESOLVED, ROUND 19 (Jess, 2026-11-13)
+-------------------------------------
+  R6a  the guaranteed Bisharp is the FIRST elite of the run (2:00 on today's TEMP cadence).
+  R6b  only in Unova or later runs (region gen >= 5). Kanto to Sinnoh runs never field it,
+       so Kingambit can only be evolved from an Unova+ run.
+  R6c  it uses Bisharp's OWN band (T4, BST 445-515), not the T3 band of the elite it replaces.
+
+  THE RULE, WHOLE
+    run start ── Bisharp on the team? ── region gen >= 5? ── yes ──> elite #1 (2:00) = Bisharp
+                                                                     T4 template, elites.js HP
+    defeat it while Bisharp is still on the team ──> Kingambit flag on that Bisharp copy
+    later elites: normal draw; Bisharp is in 'used', so it never repeats
+
+  FEEL NOTE
+    HP still comes from player DPS x 25 s (elites.js), so the kill time is unchanged. Contact
+    damage comes from the T4 template (dmg 14 vs 11 for T3), about 27% harder hitting than a
+    normal 2:00 elite. Intended cost of choosing the evolution; watch it in playtest.
+    When the TEMP elite cadence is replaced by gyms, "first elite of the run" still holds.
+
+  STILL OPEN
+    R1 Shedinja two copies, R4 Alcremie N
+
+RESOLVED, ROUND 20 (Jess, 2026-11-13)
+-------------------------------------
+  R1  APPROVED: evolving Nincada also makes a Shedinja copy. If the Pokebox is FULL, the evolution is
+      BLOCKED (not skipped) until there is room.
+  R4  Alcremie's circling time N: decide later (playtest).
+  A7  branching evolutions: THE REQUIREMENTS DECIDE which branch (no free pick). Using an item (stone,
+      Link Cable, apple, armor) counts as choosing that branch.
+
+  NINCADA / SHEDINJA (how mainline does it)
+    Nincada hits level 20 -> Ninjask. If the party has an empty slot AND the bag has a spare Poke Ball,
+    a Shedinja also appears for free (the shell it left behind). Mainline Shedinja copies Nincada's
+    IVs, nature and EVs, uses up that Poke Ball, and always has exactly 1 HP; its ability Wonder Guard
+    means only super-effective hits can damage it.
+    In this game (data check):
+      Shedinja is in G.DEX (#292, Bug/Ghost, base HP 1, rarity 1); its pre-evolution is Nincada, so
+      evolving Nincada is its only source.
+      Wonder Guard exists only as a NAME in species-traits.js; no rule in js/ uses it. Without it,
+      Shedinja is a glass cannon with very low HP (the HP formula, not a fixed 1).
+
+  A7 CHECK: 19 split points, what each branch needs (pokemon_evolution.csv)
+    DECIDED CLEANLY by the requirement:
+      Gloom      Vileplume Leaf Stone | Bellossom Sun Stone
+      Poliwhirl  Poliwrath Water Stone | Politoed Cable + King's Rock
+      Slowpoke   Slowbro L37 | Slowking Cable + King's Rock (item use = choice)
+      Tyrogue    Hitmonlee Atk>Def | Hitmonchan Atk<Def | Hitmontop Atk=Def (the copy's real stats)
+      Wurmple    Silcoon | Cascoon (50/50 roll at evolve)
+      Kirlia     Gardevoir L30 | Gallade Dawn Stone + male
+      Snorunt    Glalie L42 | Froslass Dawn Stone + female
+      Clamperl   Huntail Cable + Deep Sea Tooth | Gorebyss Cable + Deep Sea Scale
+      Burmy      Wormadam female | Mothim male
+      Sneasel    Weavile Razor Claw + night | Sneasler Razor Claw + day
+      Scyther    Scizor Cable + Metal Coat | Kleavor Black Augurite
+      Applin     Flapple Tart Apple | Appletun Sweet Apple | Dipplin Syrupy Apple
+      Charcadet  Armarouge Auspicious Armor | Ceruledge Malicious Armor
+      Nincada    Ninjask + Shedinja together (R1)
+    COLLIDE (two branches can be met at once, or are identical here):
+      Meowth     Persian L28 | Perrserker L28 + Galarian form   -> IDENTICAL (no regional forms)
+      Wooper     Quagsire L20 | Clodsire L20 + Paldean form     -> IDENTICAL (no regional forms)
+      Yamask     Cofagrigus L34 | Runerigus damage feat + Galarian form -> both met once the feat flag is set
+      Eevee      Espeon friendship + day | Umbreon friendship + night | Sylveon friendship + a Fairy move
+                 -> one run can set day AND night; Sylveon overlaps both (mainline: Sylveon wins)
+    NEW ITEMS this adds (use-items, so "stones from gyms" by category): Black Augurite, Tart Apple,
+      Sweet Apple, Syrupy Apple, Auspicious Armor, Malicious Armor (6), on top of the 16 Shop items.
+
+  STILL OPEN
+    SH1 Shedinja's copy: inherits Nincada's IVs / nature / EVs (mainline) | rolls fresh
+    SH2 does it use up a Poke Ball (mainline) | free
+    SH3 Wonder Guard: build it | Shedinja is just a low-HP mon | other
+    A7a tiebreak for collisions: player picks among the branches met (only when 2+ are met)
+        | a fixed priority (e.g. Sylveon > Espeon/Umbreon, the regional one never)
+    A7b Perrserker, Clodsire (regional-form evolutions, identical requirement): need a new requirement
+        | drop until forms exist | player pick
+    A7c the 6 new evolution items: gym drops (stone rule) | Shop
+    R4  Alcremie N (playtest)
+
+RESOLVED, ROUND 21 (Jess, 2026-11-13)
+-------------------------------------
+  SH2  Shedinja USES UP a Poke Ball from your stock (mainline).
+  SH3  BUILD WONDER GUARD (a new combat rule, own build plan, propose and approve).
+  A7a  when two or more branches qualify (Eevee, Yamask), the PLAYER PICKS among the qualifying ones.
+       With one branch met, the requirements decide as before.
+
+  NINCADA EVOLVE, WHOLE
+    Team Menu: Evolve Nincada ── box full? ── yes ──> blocked (R1)
+                                └─ no ── a ball in stock? ── yes ──> Ninjask + Shedinja (ball -1)
+                                                          └─ no ───> ??? (SH4)
+
+  WONDER GUARD vs THE CURRENT HIT PATH (js/entities/player.js hurt(), read 2026-11-13)
+    hurt(amount, type, pure, ...) already computes the type multiplier against the mon's types, so
+    "only super-effective hits land" has a natural home there. Wild contact and shots carry the
+    enemy's FIRST type (COMBAT-RULES, wild STAB).
+    Who can hurt a Bug/Ghost Shedinja (super-effective: Fire, Flying, Rock, Ghost, Dark):
+      region pool   wild species   first type super-effective
+      Kanto            145              23 (16%)  Fire, Ghost, Rock
+      Johto (1-2)      238              38 (16%)
+      Unova (1-5)      579             105 (18%)
+      Paldea (1-9)     863             179 (21%)
+    -> FEEL RISK: about 4 of 5 enemies cannot touch it. In a horde game that is close to invulnerable.
+       Its offset is HP: base HP 1, so any landed hit is near lethal (mainline: always 1 HP).
+
+  RULE DECISIONS WONDER GUARD NEEDS (each changes combat behavior; not built)
+    WG1 indirect damage (pure: burn, poison, other DoT, traps, hazards, recoil): goes through
+        (mainline) | blocked
+    WG2 hits with no type (type null): blocked | go through
+    WG3 Shedinja's HP: the normal formula from base 1 (tiny, not fixed) | a fixed 1 HP like mainline
+    WG4 gym leaders: same rule | leaders ignore Wonder Guard (boss fairness)
+    plus the build plan's tests section (harness, mutation runner, debug set) before approval
+
+  STILL OPEN
+    SH1 Shedinja copies Nincada's IVs / nature / EVs | rolls fresh
+    SH4 no ball in stock: block the evolution (like R1) | Ninjask only, no Shedinja (mainline)
+    WG1 to WG4, A7b Perrserker / Clodsire, A7c the 6 new items, R4 Alcremie N
+
+RESOLVED, ROUND 22 (Jess, 2026-11-13)
+-------------------------------------
+  WG1  indirect damage (burn, poison, other DoT, traps, hazards, recoil) GOES THROUGH Wonder Guard.
+  WG3  Shedinja has a FIXED 1 HP (mainline), not the HP formula.
+  SH4  no Poke Ball in stock BLOCKS the Nincada evolution (same as a full box, R1).
+
+  NINCADA EVOLVE, FINAL
+    Team Menu: Evolve Nincada ── box full? ─────── yes ──> blocked
+                              └─ ball in stock? ── no ───> blocked
+                              └─ both ok ─────────────────> Ninjask + Shedinja, ball -1
+
+  SHEDINJA IN A RUN, FINAL
+    hit lands?   super-effective (Fire, Flying, Rock, Ghost, Dark) ... yes -> 1 HP gone = faint
+                 anything else ......................................... 0 damage
+    indirect     burn, poison, traps, hazards, recoil .................. goes through -> faint
+
+  CONSEQUENCES OF FIXED 1 HP (each is a rule exception; flagged, not built)
+    F1  G.Stats HP formula gets a per-species exception (CLAUDE.md: new combat formulas live in G.Stats).
+    F2  everything that raises HP does nothing on Shedinja: HP EVs, HP IVs, HP stat cards, heals,
+        Oran Berry, Substitute's shield paid from HP. They should be hidden or greyed out for it.
+    F3  any DoT tick or hazard that deals at least 1 damage is a faint. Status teams on the enemy side
+        (wild status class, later slice) hard-counter it. Mainline-accurate; watch in playtest.
+    F4  revive / restoreHp brings it back to 1 HP.
+
+  STILL OPEN
+    SH1 Shedinja copies Nincada's IVs / nature / EVs | rolls fresh (HP IV and HP EV are moot now)
+    WG2 hits with no type (type null): blocked | go through
+    WG4 gym leaders: same rule | leaders ignore Wonder Guard
+    F2b HP upgrades on Shedinja: hide | grey out | allow (wasted)
+    A7b Perrserker / Clodsire, A7c the 6 new items, R4 Alcremie N
+
+RESOLVED, ROUND 23 (Jess, 2026-11-13)
+-------------------------------------
+  WG2  hits with no type are BLOCKED by Wonder Guard (only super-effective typed hits land).
+  WG4  gym leaders follow the SAME rule (matches the slice 4 immunity ruling: no boss exception).
+  F2b  HP upgrades on Shedinja (HP cards, HP EVs, heals) are shown GREYED OUT, marked "no effect".
+
+  WONDER GUARD, WHOLE RULE
+    direct hit, typed, super-effective ........ lands (1 HP = faint)
+    direct hit, typed, anything else .......... 0 damage
+    direct hit, no type ........................ 0 damage
+    indirect (DoT, traps, hazards, recoil) .... goes through
+    gym leaders ................................ same rule
+
+  WG4 CHECK: Kanto leaders' moves that can hit Shedinja (js/data/gyms.js, every move id in each
+  leader's block, all loops; a text scan, so treat it as approximate)
+    Brock     Rock Throw, Wing Attack
+    Misty     Bite
+    Lt. Surge NONE        (Thunder Wave only paralyzes)
+    Erika     NONE        (Poison Sting, Sludge, Acid are Poison: not super-effective;
+                           Sleep Powder, Stun Spore are status)
+    Koga      Bite, Wing Attack
+    Sabrina   Lick, Shadow Ball
+    Blaine    Bite, Ember, Fire Blast, Shadow Ball, Wing Attack
+    Giovanni  Bite, Rock Throw
+    -> FEEL RISK: Surge and Erika cannot damage a Shedinja at all. Your other team members are
+       still hittable, so it is not a free win, but a Shedinja that stays active is untouchable there.
+
+  RULE GAPS THIS EXPOSES (each changes combat behavior; not built)
+    WG5 a blocked hit's riders (Poison Sting's poison chance, Bite's flinch): also blocked
+        (mainline: the move "doesn't affect") | still roll
+    WG6 pure status moves (Thunder Wave, Sleep Powder, Stun Spore): land on Shedinja (mainline)
+        | blocked
+    WG7 Surge / Erika vs Shedinja: accept (counter-pick is the point) | author a coverage move
+        into those rosters
+
+  STILL OPEN
+    WG5, WG6, WG7, SH1 (Shedinja inherits Nincada's IVs / nature / EVs), A7b, A7c, R4
+
+RESOLVED, ROUND 24 (Jess, 2026-11-13, by citing Bulbapedia's Wonder Guard rule)
+------------------------------------------------------------------------------
+  WG6  STATUS MOVES LAND on Shedinja (e.g. Tail Whip, Poison Powder, Thunder Wave, Sleep Powder).
+  WG1  extended: indirect damage that goes through = burn, poison, CONFUSION, WEATHER, recoil,
+       entry hazards (and the traps / other DoT already listed).
+
+  WONDER GUARD, WHOLE RULE (final unless WG5 changes)
+    typed direct hit, super-effective ......... lands (1 HP = faint)
+    typed direct hit, anything else ........... 0 damage
+    untyped direct hit ........................ 0 damage
+    status move (no damage) ................... lands
+    burn, poison, confusion, weather, recoil,
+    hazards, traps, other DoT ................. goes through
+    gym leaders ............................... same rule
+
+  WHAT THE GAME HAS TODAY (code read 2026-11-13)
+    WEATHER  js/systems/weather.js already deals sandstorm / snow damage to Pokemon whose types are
+             not immune. Shedinja is Bug/Ghost, so it is NOT immune: the first weather tick faints it.
+             Weather lasts about a minute, so a Shedinja on the field in a sandstorm or snow dies fast.
+             Mainline-accurate. FEEL: weather becomes Shedinja's main killer in hordes.
+    CONFUSION in this game confusion makes the strike FIZZLE (combat.js G.Status.fizzle); there is no
+             self-hit damage, so nothing to route through Wonder Guard today.
+    Surge and Erika: with WG6, Thunder Wave, Sleep Powder and Stun Spore now land, and Erika's Poison
+             Sting / Sludge / Acid poison chance matters only if WG5 lets riders roll.
+
+  STILL OPEN
+    WG5  riders of a BLOCKED hit: blocked (mainline: the move doesn't affect; also matches the slice 4
+         immunity ruling "an immune hit has no side effects") | still roll
+    WG7  Surge and Erika have no damaging move that can hit Shedinja: accept | coverage move
+    SH1, A7b, A7c, R4
+
+RESOLVED, ROUND 25 (Jess, 2026-11-13)
+-------------------------------------
+  WG5  the RIDERS of a hit Wonder Guard blocks STILL ROLL (Erika's Poison Sting can poison a Shedinja,
+       and the poison KOs it). Departs from mainline (there the blocked move does not affect it).
+  WG7  ACCEPTED: Lt. Surge and Erika have no damaging move that can hit Shedinja. No roster change.
+       They still land status (WG6), and Erika's poison riders roll (WG5).
+
+  WONDER GUARD, FINAL
+    typed hit, super-effective ......... lands (1 HP = faint)
+    typed hit, not super-effective ..... 0 damage, RIDERS STILL ROLL
+    untyped hit ........................ 0 damage, riders still roll
+    type-IMMUNE hit (x0: Normal and Fighting into Ghost)
+                                        0 damage, NO riders (slice 4 immunity ruling, unchanged)
+    status move ........................ lands
+    burn, poison, confusion, weather, recoil, hazards, traps, other DoT ... goes through
+    gym leaders ........................ same rule
+
+  WHY THE TWO "0 DAMAGE" ROWS DIFFER
+    The slice 4 immunity ruling (type chart x0: no damage, no side effects, everywhere) still owns
+    type immunity. Wonder Guard is a separate, ability-level block that zeroes only the damage.
+    So against Shedinja a Normal-type flinch rider never rolls (immune), but a Bite flinch or a
+    Poison Sting poison does (blocked by Wonder Guard only).
+    Order when built: type chart first (x0 ends the hit), then Wonder Guard (damage to 0, riders on).
+
+  STILL OPEN
+    SH1 Shedinja copies Nincada's IVs / nature / EVs | rolls fresh
+    A7b Perrserker, Clodsire    A7c the 6 new evolution items    R4 Alcremie N (playtest)
+
+RESOLVED, ROUND 26 (Jess, 2026-11-13)
+-------------------------------------
+  SH1  Shedinja COPIES Nincada's IVs, nature and EVs (mainline). Its HP IV and HP EVs do nothing
+       (fixed 1 HP), so they show greyed out like the other HP upgrades (F2b).
+  A7b  Perrserker and Clodsire are LEFT OUT until regional forms exist. Meowth evolves only to Persian,
+       Wooper only to Quagsire. Both species are in G.DEX, so they become unobtainable for now
+       (same situation Accelgor was in before the Shed Shell route).
+  A7c  the 6 new use-items go in the SHOP: Black Augurite (Scyther > Kleavor), Tart / Sweet / Syrupy
+       Apple (Applin > Flapple / Appletun / Dipplin), Auspicious / Malicious Armor (Charcadet >
+       Armarouge / Ceruledge).
+       Note: this is a deliberate split from "stones drop from gyms" (EI). Classic stones = gym drops;
+       these 6 newer use-items = Shop.
+
+  SHOP EVOLUTION STOCK, NOW
+    Link Cable (one-time use)
+    17 trade held items (Metal Coat and Razor Claw already exist as items, EI2 open)
+    Shed Shell (Accelgor)
+    6 newer use-items (above)
+    -> 22 new items + the Link Cable; LC3 (which tab) and LC4 (prices) still open
+
+  BRANCHING, CLOSED: every split point has a rule. Only R4 (Alcremie's circling time) is left for playtest.
+
+  STILL OPEN (evolution system)
+    A8  later-gen evolutions (45)    A9  candy cost model    candy sizes and drop amounts
+
+RESOLVED, ROUND 27 (Jess, 2026-11-13)
+-------------------------------------
+  A8   evolutions added in a later gen are ALWAYS ALLOWED, in any region (Golbat > Crobat in a Kanto
+       run, Eevee > Sylveon, Magneton > Magnezone). The gym line-completion rule is separate and unchanged.
+  A9   candy cost = the MAINLINE XP CURVE per species (its growth rate, to the evolution level).
+  SIZES the mainline five: XS 100 | S 800 | M 3,000 | L 10,000 | XL 30,000 XP.
+
+  WHAT A LINE COSTS (XP to its last LEVEL-based evolution, 247 Stage 1 lines, pokeapi experience.csv)
+    Caterpie > Butterfree   L10      1,000        Bulbasaur > Venusaur  L32   27,021
+    Abra > Kadabra          L16      2,535        Charmander > Charizard L36  40,007
+    Magikarp > Gyarados     L20     10,000        Gible > Garchomp      L48  138,240
+    Geodude > Graveler      L25     11,735        Dratini > Dragonite   L55  207,968
+    median 33,084 | 75th pct 50,653 | 90th pct 80,000 | max Deino > Hydreigon L64 327,680
+    (Alakazam, Golem etc. stop at the trade step: the Link Cable adds no XP)
+
+  DROP TABLE CANDIDATES (gym leaders drop one candy each; loop-1 runs)
+                                   2 gyms   4 gyms   all 8    Venusaur  Dragonite
+    A  by gym order                 1,600    7,600   87,600   0.3 run   2.4 runs
+       (gyms 1-2 S, 3-4 M, 5-6 L, 7-8 XL)
+    B  by loop (loop 1 all XS ...    200      400      800    34 runs  260 runs
+       loop 5+ all XL)
+    C  flat, one L per gym          20,000   40,000   80,000   0.3 run   2.6 runs
+    ("runs" = full 8-gym loop-1 clears; candy is one bag split across the whole team)
+
+  READ
+    * B starves loop 1 (a first full run cannot evolve anything past Abra). Only works if candy has
+      other sources (rescues, Lost Pokemon, missions).
+    * A rewards pushing deep: early gyms pay little, gym 7-8 pay most. Matches the power ramp.
+    * C is front-loaded: two gyms already evolve a median line partway. Fastest, least ramp.
+    * Candy is evolution only (A10), so its pace sets how fast the roster grows, not run power.
+
+  STILL OPEN
+    CD1 drop table: A by gym order | B by loop | C flat | other
+    CD2 loop scaling: later loops drop more (x loop number) | the same
+    CD3 other candy sources: none (gyms only, as decided) | also elites / rescues / missions
+    CD4 overflow: candy past the final evolution is wasted | blocked | refunded
+
+PARKED (Jess, 2026-11-13): EXP CANDY. CD1 to CD4 are tabled; A9 and the five sizes stand.
+Focus is the ACQUISITION system only (how a Pokemon is obtained), not evolution economy.
+
+ACQUISITION, WHAT IS STILL OPEN (round 28 onward)
+-------------------------------------------------
+  RESCUE EVENT (tier 1)
+    A13 which species a rescue offers (region type maps are parked, so this needs a rule now)
+        own-gen Stage 1s, wild (babies count): Kant 63 Joht 48 Hoen 63 Sinn 38 Unov 62
+                                               Kalo 31 Alol 43 Gala 34 Pald 41  (+ Gholdengo)
+    X   UberElite time limit (s), and whether it scales with loop or region
+    N2  flee values 5 / 3 / 1 (easy / default / hard nature)
+    E-cap  the 90% catch ceiling
+    EV4 a hard cap on rescue events per run
+    A14 shinies: a shiny chance on rescues and Lost Pokemon | other
+    A15 species with no route: 4 Paradoxes (rarity 5, never evolve), mythicals
+  LOST POKEMON
+    L3  its nature on the toast     the hover filter (Beldum, Dreepy left out)
+  BALLS AND BELT
+    B5  ball and belt prices (coins)      ball tiers: how Great / Ultra unlock
+  GACHA REMOVAL AND SAVES
+    A1  remove the gacha entirely | keep a cosmetic or shiny-only shop
+    A3  copies already pulled (evolved mons, legendaries): keep all | keep Stage 1s + legendaries | convert
+    C2  banked tickets: convert to coins | convert to balls | drop
+  SHOP
+    LC3 which tab sells the evolution items + Link Cable    LC4 prices
+    EI2 Metal Coat and Razor Claw already exist as items
+
+RESOLVED, ROUND 28 (Jess, 2026-11-13)
+-------------------------------------
+  A13  rescues offer the region's OWN GEN only (Kanto = Gen 1, Johto = Gen 2 ...). No earlier-gen fill.
+       Unlike the spawner (own gen first, earlier gens fill) and Lost Pokemon (any region).
+  A1   the gacha is REMOVED ENTIRELY: banners, pulls, pity. No cosmetic shop in its place.
+  SAVE the acquisition rework ships with a NEW SAVE (no migration). This settles A3 (pulled copies)
+       and C2 (banked tickets): neither carries over.
+       A one-off owner exception to CLAUDE.md "Save-data migration safety", like the 2026-11-03
+       Pokebox clean save checkpoint (there: old save kept in the browser as a backup, and a notice
+       tells the player). The rule still applies to everything else.
+
+  RESCUE POOL BY REGION (own gen, wild Stage 1s incl. babies, + Gholdengo in Paldea)
+    region   total   1 star  2 star  3 star  4 star
+    Kanto      63      32      23       4       4
+    Johto      48      24      12      10       2
+    Hoenn      63      37      14      12       0
+    Sinnoh     38      20      14       4       0
+    Unova      62      36      15      10       1
+    Kalos      31      14      12       3       2
+    Alola      43      13       8      12      10
+    Galar      34      23       0       6       5
+    Paldea     42      24       3       3      12
+    -> Hoenn and Sinnoh rescues never offer a 4 star (hard) catch; Galar never a 2 star.
+       Alola and Paldea lean hard (UBs, Paradoxes): about 1 in 4 rescues is a 4 star.
+
+  THE THREE ROUTES, WHOLE
+    rescue          own gen Stage 1s      UberElite + belt + nature flee
+    Lost Pokemon    any region Stage 1s   escort, 20 / 12 / 6% by star     (must have an evolution)
+    legendary       region legendaries    Loop 6 + Legendary Boss
+    evolution       everything past Stage 1, by candy + requirements
+
+  OPEN FROM THE NEW SAVE (rule changes, each needs explicit approval)
+    NS1 what carries over: nothing | settings only (volume, graphics) | settings + Pokedex seen list
+    NS2 old save: kept in the browser as a backup + a notice (2026-11-03 precedent) | deleted
+    NS3 a new save starts with: one starter pick (the pending region-based starter decision) | other
+    NS4 detection: a save version number bump wipes on load | a manual "start over" | both
+
+  STILL OPEN (acquisition)
+    A13b how a rescue picks within the pool: uniform | weighted by star | other
+    X UberElite time limit, N2 flee values, E-cap 90%, EV4, A14 shinies, A15 no-route species,
+    L3, hover filter, B5 prices, ball tiers, LC3, LC4, EI2

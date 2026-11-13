@@ -356,9 +356,10 @@ The chevrons floating off the character toward an off-screen target. Adopted fro
 - The border runs all the way around each chevron, ends included (square caps on every layer).
 - Labels are the standard HUD text (Fonts: Truth And Ideals 20 px, white, hard `#101010` outline).
 
-#### `[Proposed]` Pause menu (#88)
+#### `[Approved]` Pause menu (#88)
 
-Working colours for the Poke Ball pause menu (docs/PAUSE-MENU.md), awaiting Jess's feel test. Look after b2-lower A11
+Working colours for the Poke Ball pause menu (docs/PAUSE-MENU.md), feel-tested by Jess across #88 to #104 (2026-11-11 to
+13). Look after b2-lower A11
 to E14 and F15 to J18; values picked by eye, not sampled.
 
 | Role                                       | Colour                | Source             |
