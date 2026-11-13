@@ -241,3 +241,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Broke: a few Python writes to the device silently did not land; redone with read-back. A smoke variable clashed
   (sides), caught by the syntax check. The device link dropped once mid-session.
 - Stopped at: Jess runs check.js and both smokes, feel-tests, commits; check.js not run this session.
+
+## 2026-11-12 night (Claude Code, home), close #83
+- #83 closed: checks green (run from Quick, not logged then), feel test passed. Body now also names the shared
+  tooltip layer that shipped with it; comment lists what shipped. #82 has only #92 left.
+- Looked at moving the team slots above the ball (under the inventory) to free a tooltip zone below it: fits with
+  about 16 px spare, Jess dropped it. No code touched.
+- Stopped at: #92 next; acquisition parent issue still to file.
