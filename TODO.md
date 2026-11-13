@@ -33,8 +33,8 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
 9. Chore for Jess: delete merged branches (chore/docs-cleanup, feature/entity-model, feature/gym-upgrade-authoring,
    feature/item-rework-v2, feature/leader-roster-ui, feature/pokeboxes, fix/onboarding-flow, fix/playtest-round-1,
    fix/ui-upgrade, and feature/pause-menu-rework once merged).
-10. #56 (In Progress, 2026-11-13): all 64 STALE mutation patterns handled, 63 retargeted and 1 removed; Jess runs
-    the 13 mutate scripts, then close it.
+10. #56 closed 2026-11-13 on a 0-STALE scan (63 retargeted, 1 removed). The 13 scripts were not run after the
+    retarget, so a MISSED retargeted break would first show the next time that script runs.
 11. Deferred hook (#91-2 C): when the real loop counter lands (#24), Region Best's "gyms" must become gyms cleared on
     the final loop, not G.Gym.splits.length.
 12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op.
