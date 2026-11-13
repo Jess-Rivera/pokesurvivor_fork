@@ -284,3 +284,13 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
   misjudge proportional; growth 0..0.2. LEADER-AI updated. Rule change: misjudge 0.1 at the default.
 - Nothing in js/ touched this afternoon; check.js not run.
 - Stopped at: #53 plan approved (R2, aimError 10 px at the default, confirmed last). A new chat builds it.
+
+## 2026-11-13 evening (Quick, work), #53 built and closed; four agent skills added
+- Skills in .claude/skills (adapted from JordanCoin/codingskills, cursor/plugins, iliaal/ai-skills, with Quick twins):
+  coding-principles, structural-review, writing-check, review-feedback. The coding-principles plan check ran on #53.
+- #53 built from the approved plan plus A1 to A3, T1 and T2: curves, misjudge noise, fractional reads, validator,
+  harness section 17, the sharpness duel, 21 mutants (2 retargeted). leader-ai.js is now 1086 lines.
+- Broke: gyms-only-harness's judg ban caught misjudge; fixed in the guard (decision 2026-11-13-53-judgment-guard-...).
+- check.js: only the two #30 harnesses red; the mutant result was not reported here. Feel test passed; #53 closed.
+- Filed #107 (trigger set limits). Context steering for leaders considered and skipped (movement feels fine).
+- Stopped at: #39 next (open the slice: goal, done-condition, test).

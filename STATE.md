@@ -1,24 +1,29 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-13 afternoon, Quick (work). Branch: feature/gym-leader-ai (rules:
-docs/branch-rules/feature-gym-leader-ai.md). feature/pause-menu-rework merged into it 2026-11-13 (78d69120).
+Last updated: 2026-11-13 evening, Quick (work). Branch: feature/gym-leader-ai (rules:
+docs/branch-rules/feature-gym-leader-ai.md).
 
 ## START HERE (next session, either tool)
-1. #53 leader intelligence: designed and APPROVED (2026-11-13), ready to build. Read the top of map "53 - Intelligence and Misjudge Build
-   Plan" (decided / open / first). Build it (CLAUDE.md edit workflow).
-   All decisions settled. Rules: decision 2026-11-13-53-leader-intelligence-one-score-with-overrides.
-2. Then #39 (personalities), then #30 (the two red harnesses), then gym-leader-ai merges to main.
-3. Acquisition parent issue (TODO Next 3). Triage (TODO Next 4).
+1. #39 personalities (5b): open the slice first (goal, how we know it is done, the test; branch rules "Slice shape"),
+   then a plan with the coding-principles plan check. It builds on #53's intelligence, overrides and growth.
+2. Then #30 (the two red harnesses), then a structural review of the branch against main, then gym-leader-ai
+   merges to main.
+3. #49: all four build slices shipped (#50 to #53); its Bait end-goal is blocked on #60. Close it, or keep it on #60.
+4. Acquisition parent issue (TODO Next 4). Triage (TODO Next 5).
 
 ## Where we are
-- Leader AI refresher: docs/gym-leader-ai-map.html (interactive), map "Gym Leader AI - Refresher Map".
-- #53 design: one `intelligence` (base + growth 0..0.2 per loop) drives misjudge, reflex, dodgeRead, memoryUse,
-  aimError through two-line curves meeting at the default; nothing perfect at the top; overrides allowed.
-- #56 closed on a 0-STALE scan (63 retargeted, 1 removed); the 13 scripts were not re-run after.
-- #82 and #104 closed; pause menu rework merged.
+- #53 built and closed 2026-11-13: one intelligence per leader drives misjudge, reflex, dodgeRead, memoryUse and
+  aimError; misjudge 0.1 and aimError 10 px at the default. Maps "53 - Intelligence and Misjudge Build Plan", "53 - Plan
+  Check". Rulings: decisions 2026-11-13-53-trigger-sets-refuse-intelligence-keep-reflex-floor and
+  2026-11-13-53-judgment-guard-allows-misjudge.
+- New agent skills in .claude/skills: coding-principles (every plan and approved change), structural-review (the
+  pre-merge gate), writing-check (human-facing prose), review-feedback (acting on review findings).
+- Leader AI refresher: docs/gym-leader-ai-map.html, map "Gym Leader AI - Refresher Map".
 
 ## Watch
+- leader-ai.js is 1086 lines (over 1000 before #53); the structural review flags a branch adding about 100 to it.
+- #53's mutant run result was not reported to Quick; if unsure, rerun leader-ai-mutate.js.
 - smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83. Unfiled.
 - Quick has no node or browser; check.js on the machine is truth.
 - Jess's Git Bash: noclobber is on (use >|), and node output cannot be piped or redirected (winpty).
@@ -29,6 +34,7 @@ docs/branch-rules/feature-gym-leader-ai.md). feature/pause-menu-rework merged in
 
 ## Open owner decisions
 - Acquisition: Accelgor route, Kingambit rule, Gholdengo source, R1 Shedinja, R4 Alcremie N, ball tiers,
-  UberElite time limit. #86; #93; #99 menu font (buttons); #97 (blocks #95); #60 Bait.
+  UberElite time limit. #86; #93; #99 menu font (buttons); #97 (blocks #95); #60 Bait; #107 (refuse or rebuild the
+  bag); #49 close or keep.
 
-Rules: CLAUDE.md. Maps today: docs/ASCII Concept Maps/ (104, 104b, 104c, 82, Gym Leader AI, 53 x3).
+Rules: CLAUDE.md. Maps today: docs/ASCII Concept Maps/ (53 x4, 104, 104b, 104c, 82, Gym Leader AI).
