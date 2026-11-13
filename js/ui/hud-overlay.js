@@ -94,6 +94,114 @@ G.HudOverlay = (() => {
     </svg>`;
   }
 
+  // ---------- the B2 move button (b2-lower F15 to J16, measured 2026-11-10) ----------
+  /**
+   * Its left end, row by row, at half the rip's height (22 rows): a short 45 degree run down to a flat point (rows 6 to 8),
+   * then a steep run back, one pixel across per two rows. The right end is the same profile turned 180 degrees.
+   */
+  const moveSlotLeftEdge = (row) => (row <= 5 ? 6 - row : row <= 8 ? 0 : Math.ceil((row - 8) / 2));
+
+  /** One row of the B2 move button: outline, a rim ramp ({ light, base, dark }) at both ends, and bodyFill inside.
+   *  Used by the run screen's move slots (hud-player-panel.js) and the pause menu's buttons (pause-menu.js). */
+  function moveSlotRow(row, artWidth, artRows, rim, bodyFill) {
+    const left = moveSlotLeftEdge(row),
+      right = artWidth - 1 - moveSlotLeftEdge(artRows - 1 - row);
+    if (row === 0 || row === artRows - 1) return [[left, right - left + 1, PALETTE.outline]];
+    const inner = row === 1 || row === artRows - 2 ? rim.dark : null;
+    const ends = [
+      [left, 1, PALETTE.outline],
+      [left + 1, 1, rim.light],
+      [left + 2, 1, rim.base],
+      [left + 3, 1, PALETTE.outline],
+      [right - 3, 1, PALETTE.outline],
+      [right - 2, 1, rim.base],
+      [right - 1, 1, rim.light],
+      [right, 1, PALETTE.outline],
+    ];
+    return [[left + 4, right - 3 - (left + 4), inner || bodyFill], ...ends];
+  }
+
+  // ---------- the menu button: the move slot shape at 1.5x (pause menu #88, End Run #103) ----------
+  const SLOT_BUTTON = { artWidth: 105, artRows: 22, artPixel: 3 }; // 315 x 66 px (Jess, 2026-11-11)
+  // Rim ramps (HUD-STYLE "Pause menu"): white at rest, green on focus.
+  const REST_RIM = { light: '#ffffff', base: PALETTE.paper, dark: PALETTE.paperEdge },
+    FOCUS_RIM = { light: '#9be895', base: '#38d030', dark: '#1d6c19' };
+  // Menu buttons never take the page's keyboard focus (#89, the Enter bug from #88): a focused page button turns Enter
+  // into a click on itself, so after one click Enter pressed that button instead of the green one.
+  const keepPageFocus = (event) => event.preventDefault();
+  /** One menu button in the move slot shape: rim colours (at rest and focused), focused body, art width, label. */
+  function SlotButton({
+    id,
+    label,
+    rim = REST_RIM,
+    focusRim,
+    focusBody,
+    artWidth = SLOT_BUTTON.artWidth,
+    focused,
+    onEnter,
+    onPress,
+  }) {
+    const rimNow = focused ? focusRim || FOCUS_RIM : rim,
+      bodyNow = focused && focusBody ? focusBody : PALETTE.body;
+    return html`<button
+      type="button"
+      class=${'pm-button' + (focused ? ' focused' : '')}
+      style=${{ width: artWidth * SLOT_BUTTON.artPixel + 'px' }}
+      data-action=${id}
+      tabindex="-1"
+      onMouseDown=${keepPageFocus}
+      onMouseEnter=${onEnter}
+      onClick=${onPress}
+    >
+      <${PixelShape}
+        artWidth=${artWidth}
+        artRows=${SLOT_BUTTON.artRows}
+        artPixel=${SLOT_BUTTON.artPixel}
+        paintRow=${(row) => moveSlotRow(row, artWidth, SLOT_BUTTON.artRows, rimNow, bodyNow)}
+      />
+      <span class="hud-text hud-text-30">${label}</span>
+    </button>`;
+  }
+
+  // ---------- the menu screens' stage (pause menu, End Run, EV screen): 1920 x 1080, scaled to fit, never up ----------
+  const STAGE = { width: 1920, height: 1080 };
+  /** Keeps root's --pm-scale fitted to the window from now on. Returns the fit, to call again when the screen opens. */
+  function fitToStage(root) {
+    const fit = () => {
+      const scale = Math.min(1, innerWidth / STAGE.width, innerHeight / STAGE.height);
+      root.style.setProperty('--pm-scale', String(scale));
+    };
+    addEventListener('resize', fit);
+    fit();
+    return fit;
+  }
+
+  // ---------- a row of menu buttons on the end of run screens (End Run, EV screen) ----------
+  /**
+   * focus is the green button's index (a signal, a hover sets it too). keys() moves it with Move_Left / Move_Right (the
+   * hover sound) and presses with either Enter key; it does nothing while the shared ask dialog or Settings is up.
+   * press(index), also what a click calls, checks isOpen(), focuses the button and calls onPress(index).
+   */
+  function createButtonRow({ count, isOpen, onPress }) {
+    const focus = signal(0);
+    function press(index) {
+      if (!isOpen() || index < 0 || index >= count()) return;
+      focus.value = index;
+      onPress(index);
+    }
+    function keys() {
+      if (!isOpen() || G.UI.isOpen('scr-ask') || G.SettingsUI.isOpen) return;
+      const step = (G.Input.action('move_right') ? 1 : 0) - (G.Input.action('move_left') ? 1 : 0);
+      if (step) {
+        const next = Math.max(0, Math.min(count() - 1, focus.value + step));
+        if (next !== focus.value) G.Audio.sfx('hover');
+        focus.value = next;
+      }
+      if (G.Input.tap('enter') || G.Input.tap('numpadenter')) press(focus.value);
+    }
+    return { focus, press, keys };
+  }
+
   // ---------- the B2 bag button (b2-lower Y4 to AB5): a square with chamfered corners, a rim and the checker body ----------
   function bagButtonRow(row, artSize, rimColour) {
     const chamfer = row < 2 ? 2 - row : row > artSize - 3 ? row - (artSize - 3) : 0,
@@ -155,6 +263,212 @@ G.HudOverlay = (() => {
     </div>`;
   }
 
+  /**
+   * The tight 2x2 item grid (#90, HUD-STYLE "Berry bag"): item squares in two columns, half a square between them, filling
+   * row by row. Used by the run screen's berry bag and the pause menu's Run Inventory.
+   * slots: [{ key, icon, locked, tip: { name, desc }, className, attrs }]: icon null = empty; locked = dimmed (not bought);
+   * tip = the hover tooltip (none on the run screen), drawn in the screen's TooltipLayer; attrs = extra attributes for
+   * the slot's element (data-*, handlers). tipPlace: where the tooltip opens (showTooltip's place; above by default).
+   */
+  function ItemGrid({ slots, artSize = 20, className, tipPlace }) {
+    const size = artSize * 2,
+      gap = size / 2;
+    return html`<div
+      class=${'hud-item-grid' + (className ? ' ' + className : '')}
+      style=${{ gridTemplateColumns: `${size}px ${size}px`, gap: gap + 'px' }}
+    >
+      ${slots.map(
+        (slot) =>
+          html`<div
+            key=${slot.key}
+            class=${
+              'hud-grid-slot' +
+              (slot.icon ? ' is-filled' : '') +
+              (slot.locked ? ' is-locked' : '') +
+              (slot.className ? ' ' + slot.className : '')
+            }
+            ...${slot.tip && slot.icon ? itemTipHandlers(slot.tip, tipPlace) : {}}
+            ...${slot.attrs || {}}
+          >
+            <${ItemSquare} icon=${slot.icon || null} artSize=${artSize} />
+          </div>`
+      )}
+    </div>`;
+  }
+  const itemTipHandlers = (tip, place) =>
+    tooltipHandlers({ name: tip.name, lines: tip.desc ? [tip.desc] : [], variant: 'item' }, place);
+
+  // ---------- the shared tooltip layer (Jess, 2026-11-12: every hover tooltip is the topmost layer) ----------
+  /**
+   * One tooltip at a time, drawn by TooltipLayer, which a screen mounts as the LAST child of its stage (the pause
+   * menu's 1920 x 1080 stage), above everything else on it. No tooltip lives inside its panel any more: there it was
+   * trapped under later panels (the team cards over the move list's tooltip) and clipped by scroll boxes.
+   * showTooltip(anchor, content, place): content { name, lines, variant } (variant 'item': name and a 300 px
+   *   description; 'detail': the detail panel's 558 px box; 'plain': one line, no name); nothing to show hides it.
+   *   place { side: 'above' (default) | 'below' | 'leftOf', align: 'centre' (default) | 'start' | 'end', gap (px,
+   *   default 8), beside: for 'leftOf', the element or a selector (closest to the anchor) whose left edge it is off }.
+   * hideTooltip(): gone (a scroll, a redraw, a pick-up, the menu closing).
+   * tooltipHandlers(content, place): an anchor's hover handlers; content may be a function read on each show. A
+   *   pointer move re-shows it after a redraw under a still pointer (an item put down, the next Pokemon by key).
+   */
+  const tooltipState = signal(null); // { anchor, name, lines, variant, x, y, shift } in stage pixels
+  let tooltipLayer = null; // the mounted layer's element
+  function hideTooltip() {
+    if (tooltipState.value) tooltipState.value = null;
+  }
+  function showTooltip(anchor, content, place = {}) {
+    const layer = tooltipLayer;
+    const lines = (content && content.lines ? content.lines : []).filter(Boolean);
+    if (!layer || !anchor || !content || !(content.name || lines.length)) return hideTooltip();
+    const layerBox = layer.getBoundingClientRect(),
+      anchorBox = anchor.getBoundingClientRect(),
+      scale = layerBox.width / (layer.offsetWidth || layerBox.width || 1); // the stage is scaled to fit the window
+    const toStageX = (x) => (x - layerBox.left) / scale,
+      toStageY = (y) => (y - layerBox.top) / scale;
+    const side = place.side || 'above',
+      align = place.align || 'centre',
+      gap = place.gap != null ? place.gap : 8;
+    let x, y, shift;
+    if (side === 'leftOf') {
+      const beside = (typeof place.beside === 'string' ? anchor.closest(place.beside) : place.beside) || anchor;
+      x = toStageX(beside.getBoundingClientRect().left) - gap;
+      y = toStageY(anchorBox.top);
+      shift = 'translate(-100%, 0)';
+    } else {
+      const edge =
+        align === 'start' ? anchorBox.left : align === 'end' ? anchorBox.right : (anchorBox.left + anchorBox.right) / 2;
+      x = toStageX(edge);
+      y = side === 'below' ? toStageY(anchorBox.bottom) + gap : toStageY(anchorBox.top) - gap;
+      const shiftX = align === 'start' ? '0' : align === 'end' ? '-100%' : '-50%';
+      shift = 'translate(' + shiftX + ', ' + (side === 'below' ? '0' : '-100%') + ')';
+    }
+    tooltipState.value = { anchor, name: content.name || '', lines, variant: content.variant || 'item', x, y, shift };
+  }
+  function tooltipHandlers(content, place) {
+    const contentNow = () => (typeof content === 'function' ? content() : content);
+    const show = (event) => showTooltip(event.currentTarget, contentNow(), place);
+    return {
+      onMouseEnter: show,
+      onMouseMove: (event) => {
+        const shown = tooltipState.value;
+        if (!shown || shown.anchor !== event.currentTarget) show(event);
+      },
+      onMouseLeave: (event) => {
+        const shown = tooltipState.value;
+        if (shown && shown.anchor === event.currentTarget) hideTooltip();
+      },
+    };
+  }
+  /** The layer itself: mount it as the stage's last child. It never catches the pointer. */
+  function TooltipLayer() {
+    const ref = preactHooks.useRef(null);
+    preactHooks.useLayoutEffect(() => {
+      tooltipLayer = ref.current;
+      return () => {
+        if (tooltipLayer === ref.current) tooltipLayer = null;
+      };
+    }, []);
+    const shown = tooltipState.value;
+    return html`<div class="hud-tip-layer" ref=${ref}>
+      ${
+        shown
+          ? html`<div
+              class=${'hud-tip is-' + shown.variant}
+              style=${{ left: shown.x + 'px', top: shown.y + 'px', transform: shown.shift }}
+            >
+              ${shown.name ? html`<div class="hud-text hud-tip-name">${shown.name}</div>` : null}
+              ${shown.lines.map((line, index) => html`<div key=${index} class="hud-text hud-tip-line">${line}</div>`)}
+            </div>`
+          : null
+      }
+    </div>`;
+  }
+
+  /**
+   * A scrolling box with the pause menu's thin scroll bar (dex-buttons AF2-AF20). Made for the move list in #89,
+   * shared in #91-2 so Run Info and Cards Taken use the same one. The page's own bar is hidden; the thumb follows
+   * the scroll, at least 24 px tall, and hides when the content fits. The wheel scrolls it, and the thumb can be
+   * dragged (#91-2 DD1).
+   * box: { left, top, width, height } in px, the scrolling area; trackRight: the bar's gap to the parent's right edge;
+   * colours: { track, thumb, thumbRim }; resetOn: values that send it back to the top when one changes (fixed length);
+   * onScroll: called on every scroll, before the thumb moves (the move list drops its hover tooltip there).
+   */
+  function ScrollBox({ box, trackRight, colours, resetOn = [], onScroll, children }) {
+    const scrollRef = preactHooks.useRef(null),
+      thumbState = preactHooks.useRef({ top: 0, height: 0 }); // the thumb, in px
+    const [, redraw] = preactHooks.useState(0);
+    const drag = preactHooks.useRef(null); // { pointerY, scrollTop } while the thumb is held
+    const measure = () => {
+      const element = scrollRef.current;
+      if (!element) return;
+      const ratio = element.clientHeight / Math.max(1, element.scrollHeight);
+      const next =
+        ratio >= 1
+          ? { top: 0, height: 0 }
+          : {
+              top: (element.scrollTop / element.scrollHeight) * element.clientHeight,
+              height: Math.max(24, ratio * element.clientHeight),
+            };
+      if (next.top !== thumbState.current.top || next.height !== thumbState.current.height) {
+        thumbState.current = next;
+        redraw((count) => count + 1);
+      }
+    };
+    preactHooks.useLayoutEffect(() => {
+      if (scrollRef.current) scrollRef.current.scrollTop = 0;
+      measure();
+    }, resetOn);
+    const holdThumb = (event) => {
+      const element = scrollRef.current;
+      if (!element) return;
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      drag.current = { pointerY: event.clientY, scrollTop: element.scrollTop };
+    };
+    const dragThumb = (event) => {
+      const element = scrollRef.current;
+      if (!drag.current || !element) return;
+      const screenScale = element.getBoundingClientRect().height / element.clientHeight; // the menu is scaled to fit
+      const movedThumb = (event.clientY - drag.current.pointerY) / screenScale;
+      element.scrollTop = drag.current.scrollTop + movedThumb * (element.scrollHeight / element.clientHeight);
+    };
+    const dropThumb = () => (drag.current = null);
+    const thumbNow = thumbState.current;
+    return html`<div
+        class="hud-scroll-box"
+        ref=${scrollRef}
+        onScroll=${() => {
+          if (onScroll) onScroll();
+          measure();
+        }}
+        style=${{ left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' }}
+      >
+        ${children}
+      </div>
+      <div
+        class="hud-scroll-track"
+        style=${{ right: trackRight + 'px', top: box.top + 'px', height: box.height + 'px', background: colours.track }}
+      >
+        ${
+          thumbNow.height
+            ? html`<div
+                class="hud-scroll-thumb"
+                onPointerDown=${holdThumb}
+                onPointerMove=${dragThumb}
+                onPointerUp=${dropThumb}
+                onPointerCancel=${dropThumb}
+                style=${{
+                  top: thumbNow.top + 'px',
+                  height: thumbNow.height + 'px',
+                  background: colours.thumb,
+                  borderColor: colours.thumbRim,
+                }}
+              ></div>`
+            : null
+        }
+      </div>`;
+  }
+
   // ---------- the B2 selection cursor (b2-lower Z2 to AC3): four yellow corner brackets with an outline ----------
   function CursorCorner({ corner }) {
     const size = 7;
@@ -186,6 +500,175 @@ G.HudOverlay = (() => {
   }
   const CURSOR_CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
   const Cursor = () => CURSOR_CORNERS.map((corner) => html`<${CursorCorner} key=${corner} corner=${corner} />`);
+
+  // ---------- the roster card (b2-lower Y15 to AA16): the run screen's roster rows and the pause menu's team panel ----------
+  // HUD-STYLE "Roster rows". The box is drawn at 2 px per art pixel, 32 rows tall; its width varies (the run screen's
+  // rows are 139 art pixels, the pause menu's team cards narrower). The same box with no HP bar and a flat body frames
+  // the pause menu's detail boxes (any height).
+  const ROSTER_ART_PIXEL = 2,
+    ROSTER_ART_ROWS = 32,
+    ROSTER_FACE = { left: 14, top: 10, size: 44 }, // the portrait circle: a 40 px portrait inside a 2 px stroke
+    ROSTER_NAME = { left: 66, top: 17 }, // just right of the portrait, a little below the middle of the space above the bar
+    ROSTER_BAR = { artLeft: 33, artTop: 19 }, // the HP bar: right of the portrait, along the bottom
+    // The B2 small bar (b2-lower Y16 to Z16): the "HP" label is the life meter's (20 px italic HUD text), then the track's
+    // frame (t) and its empty inside (f), rows 2 to 5 of the bar.
+    ROSTER_LABEL_ART = 12, // "HP" at 20 px with its outline is 24 px wide, as the life meter's label
+    ROSTER_TRACK_TOP = 2, // the track's frame rows: 2 and 5, its inside 3 and 4
+    // the label's 24 px line centred on the track's frame
+    ROSTER_LABEL_TOP = (ROSTER_BAR.artTop + ROSTER_TRACK_TOP) * ROSTER_ART_PIXEL + 2 * ROSTER_ART_PIXEL - 12;
+  // The left end of the rip's top 8 rows and one straight row, one letter per art pixel from the box's left edge; the
+  // rest of each row is its last letter's fill. The right end is the mirror, the bottom 8 rows the top's mirror.
+  //   o outline, D / B / L the rim's dark, base and light, G the body, space nothing.
+  const ROSTER_LEFT_END = [
+    ['      oooo', ' '], // the corner bump rises above the top edge
+    ['     oDBBDo', ' '],
+    ['    oDBooBD', 'o'],
+    ['   oDBoLBo', 'B'],
+    ['  oDBoLLL', 'o'],
+    [' oDBoLLLo', 'G'],
+    ['oDBoLLLo', 'G'],
+    ['oBoLLL', 'G'],
+  ];
+  const ROSTER_STRAIGHT_LEFT = ['oBoLLo', 'G'];
+  /** The track's right frame column (from the bar's left edge) for a card artWidth wide: one pixel clear of the right rim. */
+  const rosterBarRight = (artWidth) => artWidth - 8 - ROSTER_BAR.artLeft;
+  /** The fill's width in art pixels for a card artWidth wide. */
+  const rosterFillArtWidth = (artWidth) => rosterBarRight(artWidth) - ROSTER_LABEL_ART - 1;
+  const ROSTER_FILL_LEFT = ROSTER_BAR.artLeft + ROSTER_LABEL_ART + 1;
+
+  /** The box as a grid of letters, one string per art row; withBar stamps the HP bar's track. Cached per size. */
+  const rosterGrids = new Map();
+  function rosterBoxGrid(artWidth, artRows = ROSTER_ART_ROWS, withBar = true) {
+    const cacheKey = artWidth + 'x' + artRows + (withBar ? 'b' : '');
+    if (rosterGrids.has(cacheKey)) return rosterGrids.get(cacheKey);
+    const rowOf = ([left, fill]) => {
+      const right = left.split('').reverse().join('');
+      return left + fill.repeat(artWidth - 2 * left.length) + right;
+    };
+    const grid = [];
+    for (let row = 0; row < artRows; row++) {
+      const fromTop = Math.min(row, artRows - 1 - row);
+      grid.push(rowOf(fromTop < ROSTER_LEFT_END.length ? ROSTER_LEFT_END[fromTop] : ROSTER_STRAIGHT_LEFT).split(''));
+    }
+    if (withBar) {
+      // stamp the HP bar's track: its frame and its empty inside (the label is text, drawn over it in the row)
+      const barRight = rosterBarRight(artWidth);
+      for (let trackRow = 0; trackRow < 4; trackRow++) {
+        const line = grid[ROSTER_BAR.artTop + ROSTER_TRACK_TOP + trackRow],
+          stamp = (column, letter) => (line[ROSTER_BAR.artLeft + column] = letter);
+        if (trackRow === 0 || trackRow === 3)
+          for (let column = ROSTER_LABEL_ART; column <= barRight; column++) stamp(column, 't');
+        else {
+          stamp(ROSTER_LABEL_ART, 't');
+          for (let column = ROSTER_LABEL_ART + 1; column < barRight; column++) stamp(column, 'f');
+          stamp(barRight, 't');
+        }
+      }
+    }
+    const lines = grid.map((line) => line.join(''));
+    rosterGrids.set(cacheKey, lines);
+    return lines;
+  }
+  /** The letters' colours for a rim ramp; body is the box's inside (the slot grid on the run screen). */
+  const rosterColours = (rim, body = SLOT_GRID) => ({
+    o: PALETTE.outline,
+    D: rim.dark,
+    B: rim.base,
+    L: rim.light,
+    G: body,
+    f: PALETTE.frame,
+    t: PALETTE.trackEdge,
+  });
+  /** paintRow for a grid of letters: runs of one letter become one rectangle. */
+  const letterRows = (grid, colours) => (row) => {
+    const line = grid[row],
+      runs = [];
+    let start = 0;
+    for (let column = 1; column <= line.length; column++) {
+      if (column < line.length && line[column] === line[start]) continue;
+      if (line[start] !== ' ') runs.push([start, column - start, colours[line[start]]]);
+      start = column;
+    }
+    return runs;
+  };
+  /** The HP fill for a card artWidth wide: whole art pixels as a fraction of the track, one pixel while alive. */
+  function rosterFill(hpFraction, fainted, artWidth) {
+    const fillArt = rosterFillArtWidth(artWidth),
+      units = fainted || hpFraction <= 0 ? 0 : Math.max(1, Math.round(Math.min(1, hpFraction) * fillArt));
+    return units / fillArt;
+  }
+  const rosterStripes = (band) => {
+    const colours = HP_COLOURS[band];
+    return `linear-gradient(${colours.fill} 0 ${ROSTER_ART_PIXEL}px, ${colours.shade} ${ROSTER_ART_PIXEL}px ${2 * ROSTER_ART_PIXEL}px)`;
+  };
+  /**
+   * One roster card: the box rimmed in `rim`, the HP fill (fill from rosterFill, band from hpBand), the "HP" label, the
+   * portrait in its circle and the name. Extra pieces (chips, the cooldown shade, the key, the cursor) come as children.
+   * faceClass adds a class to the portrait circle (the pause menu's selected card).
+   */
+  function RosterCard({
+    artWidth,
+    rim,
+    fill,
+    band,
+    dex,
+    shiny,
+    name,
+    fainted,
+    className,
+    style,
+    faceClass,
+    onClick,
+    attrs,
+    children,
+  }) {
+    const width = artWidth * ROSTER_ART_PIXEL,
+      height = ROSTER_ART_ROWS * ROSTER_ART_PIXEL;
+    return html`<div
+      class=${'hud-roster-row' + (fainted ? ' is-fainted' : '') + (className ? ' ' + className : '')}
+      style=${{ ...style, width: width + 'px', height: height + 'px' }}
+      onClick=${onClick}
+      ...${attrs || {}}
+    >
+      <${PixelShape}
+        artWidth=${artWidth}
+        artRows=${ROSTER_ART_ROWS}
+        artPixel=${ROSTER_ART_PIXEL}
+        paintRow=${letterRows(rosterBoxGrid(artWidth), rosterColours(rim))}
+      />
+      <div
+        class="hud-roster-fill"
+        style=${{
+          left: ROSTER_FILL_LEFT * ROSTER_ART_PIXEL + 'px',
+          top: (ROSTER_BAR.artTop + 3) * ROSTER_ART_PIXEL + 'px',
+          width: rosterFillArtWidth(artWidth) * ROSTER_ART_PIXEL + 'px',
+          height: 2 * ROSTER_ART_PIXEL + 'px',
+          background: rosterStripes(band),
+          transform: `scaleX(${fill})`,
+        }}
+      ></div>
+      <span
+        class="hud-hp-label"
+        style=${{ left: ROSTER_BAR.artLeft * ROSTER_ART_PIXEL + 'px', top: ROSTER_LABEL_TOP + 'px' }}
+        >HP</span
+      >
+      <div
+        class=${'hud-roster-face' + (faceClass ? ' ' + faceClass : '')}
+        style=${{
+          left: ROSTER_FACE.left + 'px',
+          top: ROSTER_FACE.top + 'px',
+          width: ROSTER_FACE.size + 'px',
+          height: ROSTER_FACE.size + 'px',
+        }}
+      >
+        <img src=${portraitSource(dex, shiny)} data-dex=${dex} alt="" onError=${portraitFallback} />
+      </div>
+      <span class="hud-text hud-roster-name" style=${{ left: ROSTER_NAME.left + 'px', top: ROSTER_NAME.top + 'px' }}
+        >${name}</span
+      >
+      ${children}
+    </div>`;
+  }
 
   // ---------- status chips (HUD-STYLE "Status chips"): the major statuses plus poison, bad poison and burn, solid; ----------
   // the minor ones hollow (a dark body inside the coloured rim, coloured text), in the character panel only (#78)
@@ -711,9 +1194,30 @@ G.HudOverlay = (() => {
     FAINTED_RIM,
     PixelShape,
     bagButtonRow,
+    moveSlotRow,
+    SLOT_BUTTON,
+    REST_RIM,
+    FOCUS_RIM,
+    SlotButton,
+    STAGE,
+    fitToStage,
+    createButtonRow,
     IconCanvas,
     ItemSquare,
+    ItemGrid,
+    ScrollBox,
+    TooltipLayer,
+    showTooltip,
+    hideTooltip,
+    tooltipHandlers,
     Cursor,
+    RosterCard,
+    ROSTER_ART_PIXEL,
+    ROSTER_ART_ROWS,
+    rosterBoxGrid,
+    rosterColours,
+    letterRows,
+    rosterFill,
     CHIP_STYLES,
     hasChip,
     Chip,

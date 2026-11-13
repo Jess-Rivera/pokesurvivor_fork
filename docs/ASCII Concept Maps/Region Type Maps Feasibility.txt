@@ -1,0 +1,73 @@
+REGION TYPE MAPS: FEASIBILITY (2026-11-12, design only, no code)
+================================================================
+Idea (Jess): 9 maps per region, 2-3 types each (feeds a later acquisition
+mechanic). Spawns weight the region's own gen, earlier gens fill where thin.
+
+STRUCTURE
+---------
+  Region (gen N)
+    |
+    +-- Map 1..9  [type A + type B (+ C)]
+          |
+          +-- Tier casts T1..T6 (enemies.js TIERS, 9 species each)
+                pool = wild (rarity<5) AND has a map type (either slot)
+                       AND BST in tier band
+                order:  own gen N  -->  gens N-1..1 fill  -->  lower BST tier
+                        (weighted)      (previous gens only, 2026-10-17 rule)
+
+  9 maps x 2 types = 18 slots = every type exactly once per region.
+  9 maps x 3 types = 27 slots = 9 types appear on two maps.
+
+THE BINDING CONSTRAINT IS THE CAST MIX, NOT SPECIES COUNT
+---------------------------------------------------------
+  castFor wants per tier: 9 species, >=3 melee, >=3 range, >=2 support.
+  Failures across all regions (2-type maps):  range 66 | support 48 | count 11 | melee 3
+
+  Support-class species by type, ALL 9 gens combined:
+    electric 4 | dark 4 | fire 5 | dragon 5 | ghost 6 | fighting 9 | rock 10
+    ... psychic 24 (top)
+
+TIER CASTS THAT WORK (out of 54 per region = 9 maps x 6 tiers)
+--------------------------------------------------------------
+  region   strict mix   A: any mix,     B: off-type fills
+           (as today)   >=6 on-type     family gaps, >=4 on-type
+  Kanto        25           51              53
+  Johto        39           54              54
+  Hoenn        38           54              54
+  Sinnoh       46           54              54
+  Unova        46           54              54
+  Kalos        52           54              54
+  Alola        51           54              54
+  Galar        51           54              54
+  Paldea       48           54              54
+  (counts include earlier-gen fill and poolFor's lower-tier borrowing)
+
+KANTO, 2-type pairing (balanced: biggest type + smallest type)
+  ok = Gen 1 fills it    X = fails    letters = short on n/m/r/s
+                    T1    T2    T3    T4    T5    T6
+   poison+dark    | Xrs | ok  | ok  | ok  | ok  | ok  |
+   water+steel    | ok  | ok  | ok  | ok  | ok  | ok  |
+   normal+dragon  | Xr  | Xr  | Xr  | Xr  | Xr  | Xr  |
+   flying+ghost   | Xnrs| Xrs | Xr  | Xr  | ok  | ok  |
+   grass+ice      | Xnrs| Xrs | ok  | ok  | ok  | ok  |
+   ground+fairy   | Xnrs| Xr  | Xr  | Xr  | Xr  | Xr  |
+   psychic+fight  | Xnrs| Xnr | Xr  | ok  | ok  | ok  |
+   bug+electric   | Xrs | Xr  | Xr  | Xr  | ok  | ok  |
+   fire+rock      | Xnmrs| Xs | Xs  | ok  | ok  | ok  |
+  Kanto has no earlier gen to borrow from, and it is the only open region.
+
+FEEL RISKS
+----------
+  * Lower-tier borrowing: a T6 cast on a thin map fills with T1-T5 species,
+    so the late run gets WEAKER-looking enemies. Bad for the power ramp.
+  * Hordes: hordeTypes() on a 2-type map can only roll the map's own types,
+    so a horde event adds nothing new. Needs a rethink per map.
+  * Elites (eliteDef) are region-only, not type-aware: decide if they should be.
+
+OPEN DECISIONS (each changes existing spawn behavior)
+-----------------------------------------------------
+  D1  Fill rule when a map tier is short:  A relax mix | B off-type fill
+      (same idea as the gym off-type fill rule) | C borrow later gens
+  D2  Own-gen weighting: fixed ratio (e.g. 3:1) | own first, earlier only to fill
+  D3  2 or 3 types per map (2 = clean 18-type partition)
+  D4  Type match: either slot (as hordes do today) | primary only

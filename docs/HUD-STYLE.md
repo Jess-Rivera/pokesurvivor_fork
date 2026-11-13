@@ -112,6 +112,23 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
   in the HUD as `HudModule`. Smooth, so the crisp-size and hard-outline rules do not apply to it; it takes a soft dark
   shadow instead. Its digits are not fixed width.
 
+- `[Approved]` **Which face for what** (Jess, 2026-11-13): the pixel text face (Truth And Ideals, `HudText`) is for what is
+  directly on or about a Pokemon (names, stats, HP, moves, EVs, its panels). Michroma (`HudModule`) is the game's own UI
+  face ("this is the game talking"): module panels, titles like EXPEDITION OVER, and messages such as toasts.
+  `[Open]` the menu buttons (pause menu, End Run, EV screen) are game UI but use `HudText` 30 px today; Jess to rule.
+
+- `[Approved]` **Tooltips use the game's UI font** (Jess, 2026-11-11, #90): GameFont (`var(--font)`, Silver-game) at
+  20 px, more readable than Truth And Ideals for sentences. Every pause menu tooltip (items, the stat hex corners, the
+  move rows) shares one look: `#181818` body, a 2 px `#f3b200` frame, the name in `#ffd23f`, white text with the hard
+  outline. A hovered tooltip is always on top of its neighbours.
+- `[Approved]` **Every hover tooltip is the topmost layer of its screen** (Jess, 2026-11-12). In the pause menu every
+  tooltip is drawn in one shared layer, the kit's `TooltipLayer` (js/ui/hud-overlay.js), mounted as the stage's last
+  child at z-index 100; no tooltip lives inside its panel (there it was trapped under later panels and clipped by scroll
+  boxes). Nothing else on a stage may use a z-index of 100 or more. New tooltips use `tooltipHandlers` or `showTooltip`,
+  never a hidden child shown on `:hover`. The smokes check each one is the top element across its whole box.
+  `[Legacy behavior]` Outside the pause menu (the old team sheet's move tooltips, the browser `title` tips) this is
+  not done yet: #102.
+
 - `[Approved]` **No PokeBW in the HUD.** It has only 81 characters (no plus, minus, accented capitals, female or male
   signs).
 
@@ -339,7 +356,36 @@ The chevrons floating off the character toward an off-screen target. Adopted fro
 - The border runs all the way around each chevron, ends included (square caps on every layer).
 - Labels are the standard HUD text (Fonts: Truth And Ideals 20 px, white, hard `#101010` outline).
 
+#### `[Approved]` Pause menu (#88)
+
+Working colours for the Poke Ball pause menu (docs/PAUSE-MENU.md), feel-tested by Jess across #88 to #104 (2026-11-11 to
+13). Look after b2-lower A11
+to E14 and F15 to J18; values picked by eye, not sampled.
+
+| Role                                       | Colour                | Source             |
+| ------------------------------------------ | --------------------- | ------------------ |
+| Ball top cap                               | `#c8141c`             | b2-lower red, eyed |
+| Ball bottom cap                            | `#313a46`             | b2-lower slate     |
+| Ball cap edge                              | `#ffffff`             | b2-lower           |
+| Circle ring, outer edge                    | `#747474`             | b2-lower, eyed     |
+| Circle ring                                | `#575757`             | b2-lower, eyed     |
+| Ball inside (open)                         | `#000000`             | mockup             |
+| Menu button rim (rest)                     | `#ffffff`             | Jess, 2026-11-11   |
+| Menu button rim (focus or hover)           | `#38d030`             | mockup green, eyed |
+| End answer rim (light, base, dark)         | `#ff8a90` `#e8202a` `#7c1016` | eyed, ramped |
+| End answer body when focused               | `#7c1016`             | its dark rim, Jess |
+| No answer body when focused                | `#848484`             | its dark rim, Jess |
+| Menu button body (flat, no grid)           | `#181818`             | panel body         |
+| Screen dim                                 | `#000000` at 55%      | eyed               |
+
 ---
+
+#### `[Approved]` Toasts (G.UI.toast, every screen; Jess, 2026-11-13, #104c)
+- Body `#181818` and a 2 px rim `#29ceff`: the main menu top and bottom bars' charcoal and teal line (bw-menu.css
+  `--bw-charcoal`, `--bw-line`), with a 2 px `#101010` outline. Bad news (`tone 'bad'`): the same with the pause menu
+  red `#c8141c` rim.
+- Text: Michroma (`HudModule`) 20 px on 30 px lines, white, the module panels' soft shadow ("Fonts": which face for
+  what); long messages wrap at about 720 px. Bottom centre.
 
 ## Shapes
 
@@ -481,14 +527,15 @@ Jess set these on 2026-11-10 (the #63 plan review). Everything is drawn at 2 px 
 - `[Approved]` **Active row:** the B2 selection cursor, as the active move slot. **Fainted:** the portrait darkly dimmed
   (as the leader circles), the name at half opacity, an empty bar, and the rim in the panel greys (`#7f7f7f`, `#495151`,
   `#303030` as Light, Base, Dark).
-- `[Approved]` **Berry bag:** the #62 held item square at 40 px with the berry's name under it, 2x2, only the purchased
+- `[Approved]` **Berry bag:** the #62 held item square at 40 px, no name (Jess, 2026-11-11, #90: names live in the pause menu tooltips), a tight 2x2 with half a square (20 px) between squares, only the purchased
   slots; an empty slot is the square with a slate rim and no name.
 - `[Approved]` **Run items: the B2 item box** (`b2-lower` AD4 to AG5), 32 art rows: slanted ends (flat for 6 rows in the
   middle, then one pixel in for every three rows out), corner bumps, the same rim order as the roster rows, in the Lv
   yellow ramp (`#f3b200` Light, `#9a6110` Base, `#6d5000` corner shade). The white patch (`#e7e7e7`, its top and right
   edges `#848484`) runs from the box's flat middle down to its bottom outline, and holds the item's icon at 1x.
-  - The item's name sits above the box, left-aligned, at 30 px.
-  - Right of the patch: the live tracker in the EXP blue when the item has one, otherwise its short description in
+  - The item's name sits inside the box, in the band above the patch: top and left aligned (lined up with the patch,
+    clear of the slanted end), 20 px, running across the band and squeezed sideways when longer (Jess, 2026-11-11, #94).
+  - Right of the patch, from the patch's top down (16 px lines): the live tracker in the EXP blue when the item has one, otherwise its short description in
     white, at most two lines with an ellipsis.
   - Only unlocked slots show, slot 1 at the bottom. An empty slot shows the box with an empty patch and no name.
 
@@ -778,7 +825,7 @@ items from the right edge.
 | Held item square  | about 32 px, right of the row   | 48 px (24 art), 8 px right of the row, centred on it                           |
 | Berry bag         | 2x2, 40 px squares              | 40 px squares, columns 128 px apart, rows 72 px apart, 12 px above the roster  |
 | Run item box      | 142 x 48, 39 px from the right  | 280 x 64 (140 x 32 art), 24 px from the right, slot 1 42 px up                 |
-| Run item name     | inside the box                  | 30 px, above the box, 2 px gap; slots 104 px apart                             |
+| Run item name     | inside the box                  | 20 px, inside the top band (art rows 4 to 12), x 12; slots 72 px apart (#94)   |
 | Run item patch    | (none)                          | 22 art wide, from art row 13 to the bottom outline; icon 32 px                 |
 
 ### DPS-Upgrades panel (#66)

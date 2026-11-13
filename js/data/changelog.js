@@ -7,6 +7,92 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-13',
+    title: ['EV screen', 'EV screen'],
+    new: [
+      [
+        "New EV screen after Learn from the Loss, in the pause menu's style: your team's portraits across the top, every stat in its own row, each Pokemon's EVs in white and what you add in yellow. Click + for 1 EV, Shift-click for 10, or hold it to keep adding. Learn saves them; Go Home discards them.",
+        "New EV screen after Learn from the Loss, in the pause menu's style: your team's portraits across the top, every stat in its own row, each Pokemon's EVs in white and what you add in yellow. Click + for 1 EV, Shift-click for 10, or hold it to keep adding. Learn saves them; Go Home discards them.",
+      ],
+    ],
+    chg: [
+      [
+        "Messages that pop up at the bottom of the screen use the main menu's look now: a dark panel with the teal edge of the menu's top and bottom bars, red for bad news. After Learn, the EV screen says Lessons Learned, Returning Home for a moment before taking you back.",
+        "Messages that pop up at the bottom of the screen use the main menu's look now: a dark panel with the teal edge of the menu's top and bottom bars, red for bad news. After Learn, the EV screen says Lessons Learned, Returning Home for a moment before taking you back.",
+      ],
+    ],
+    fix: [
+      [
+        'Pop-up messages no longer slide in from the right and jump to the middle: they appear centred.',
+        'Pop-up messages no longer slide in from the right and jump to the middle: they appear centred.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-12',
+    title: ['Vignette setting', 'Vignette setting'],
+    new: [
+      [
+        "New End Run screen: EXPEDITION OVER with Run Review and Learn from the Loss (or Return Home when there are no EVs to give). Run Review opens the pause menu one last time, read only: Run Info, every Pokemon's page and the team.",
+        "New End Run screen: EXPEDITION OVER with Run Review and Learn from the Loss (or Return Home when there are no EVs to give). Run Review opens the pause menu one last time, read only: Run Info, every Pokemon's page and the team.",
+      ],
+      [
+        'New Graphics setting: Vignette (on or off). It darkens the screen edges in a run and on the menu. It now starts off, which keeps the edges clear and can raise the frame rate on slower machines. Fog still dims the edges either way.',
+        'New Graphics setting: Vignette (on or off). It darkens the screen edges in a run and on the menu. It now starts off, which keeps the edges clear and can raise the frame rate on slower machines. Fog still dims the edges either way.',
+      ],
+      [
+        'New in the pause menu: the Run Info panel on the left. It shows your progress, combat numbers, faints, the statuses you inflicted, loot, EVs earned and your Region Best.',
+        'New in the pause menu: the Run Info panel on the left. It shows your progress, combat numbers, faints, the statuses you inflicted, loot, EVs earned and your Region Best.',
+      ],
+      [
+        'Region Best: your furthest run in each region is kept, and Run Info shows your pace against it, ahead or behind, gym by gym.',
+        'Region Best: your furthest run in each region is kept, and Run Info shows your pace against it, ahead or behind, gym by gym.',
+      ],
+      [
+        "New in the pause menu: each Pokemon's page has a Run Stats box with its kills, time on the field, damage and share of the team's, best hit, super effective share, damage taken and healed, faints, time fainted, statuses inflicted and burn or poison damage. Hover Statuses to see each kind.",
+        "New in the pause menu: each Pokemon's page has a Run Stats box with its kills, time on the field, damage and share of the team's, best hit, super effective share, damage taken and healed, faints, time fainted, statuses inflicted and burn or poison damage. Hover Statuses to see each kind.",
+      ],
+      [
+        'New in the pause menu: each Pokemon\'s page has a Cards Taken box listing the upgrade cards that work on that Pokemon and how many times you picked each. Hover a move to see exactly what your cards changed on it, for example "cd 1.2 s to 0.92 s", with (max) where a card has hit its limit. Hover Stat Climb Speed, Stat Change Duration or Bench Regeneration to see their real numbers.',
+        'New in the pause menu: each Pokemon\'s page has a Cards Taken box listing the upgrade cards that work on that Pokemon and how many times you picked each. Hover a move to see exactly what your cards changed on it, for example "cd 1.2 s to 0.92 s", with (max) where a card has hit its limit. Hover Stat Climb Speed, Stat Change Duration or Bench Regeneration to see their real numbers.',
+      ],
+    ],
+    chg: [
+      [
+        'Quitting a run (End Run in the pause menu) no longer gives EVs. Only a run that ends with your team down lets you Learn from the Loss.',
+        'Quitting a run (End Run in the pause menu) no longer gives EVs. Only a run that ends with your team down lets you Learn from the Loss.',
+      ],
+      ['The vignette is cheaper to draw when it is on.', 'The vignette is cheaper to draw when it is on.'],
+      ["The pause menu's scroll bars can now be dragged.", "The pause menu's scroll bars can now be dragged."],
+      [
+        "The pause menu's move tooltip is wider, so long lines wrap less.",
+        "The pause menu's move tooltip is wider, so long lines wrap less.",
+      ],
+      [
+        'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
+        'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
+      ],
+      [
+        "The pause menu's team panel is just the six cards now, with no box behind them.",
+        "The pause menu's team panel is just the six cards now, with no box behind them.",
+      ],
+      [
+        'Burn and poison damage on enemies now counts for the Pokemon that inflicted it: it shows in the DPS panel and in your team damage, so status teams read higher than before.',
+        'Burn and poison damage on enemies now counts for the Pokemon that inflicted it: it shows in the DPS panel and in your team damage, so status teams read higher than before.',
+      ],
+    ],
+    fix: [
+      [
+        "The pause menu's grids (the pockets and the team cards) show again.",
+        "The pause menu's grids (the pockets and the team cards) show again.",
+      ],
+      [
+        'Pause menu tooltips are always on top now: a move near the bottom of the list no longer shows its tooltip under the team cards.',
+        'Pause menu tooltips are always on top now: a move near the bottom of the list no longer shows its tooltip under the team cards.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-11',
     title: ['Buffs join your status chips', 'Buffs join your status chips'],
     chg: [

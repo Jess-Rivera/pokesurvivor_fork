@@ -1,32 +1,39 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-11, Claude Code (home): feature/leader-roster-ui finished (#35 closed) and is being fast-forwarded into
-feature/gym-leader-ai. No branch rules file for leader-roster-ui; docs/branch-rules/feature-gym-leader-ai.md governs gym-leader-ai.
+Last updated: 2026-11-13 morning, Quick (work). Branch: feature/pause-menu-rework, merging back into
+feature/gym-leader-ai (rules: docs/branch-rules/feature-gym-leader-ai.md).
 
 ## START HERE (next session, either tool)
-1. Done: gym-leader-ai fast-forwarded to leader-roster-ui and pushed.
-2. feature/gym-leader-ai is the main line. Side features (UI etc.) branch off it and merge back (branch rules file).
-3. Before gym-leader-ai merges to main: #30 (re-baseline the two red harnesses until check.js is all green).
+1. If not done: merge feature/pause-menu-rework into feature/gym-leader-ai. #82 and #104 are closed; the NEED
+   fix for PausePokemon and PauseInventory is built (map "82 - Pause Panels in NEED Plan").
+2. Apply the drafted board fixes: comment on #99, close #106 as its duplicate, comment on #102.
+3. File the acquisition parent issue, then its slices (TODO Next 3). Design only.
+4. Triage (TODO Next 4).
 
 ## Where we are
-- Run screen rework (#35) done: character panel, roster, run items, boss and elite name bar, map, DPS panel, arrows, chips.
-  #61 (docs/HUD-STYLE.md) stays open as the style guide's standing tracker.
-- Upgrade cards (#84): renamed with one-line hints; Attack, Stat Climb and Impact Speed are rate cards named as speeds;
-  All Damage Up +5%. Reference: docs/UPGRADE-CARDS.md. DPS panel lists cards by pick count (#77).
-- Species names are stored in English (#73); tools/species_names.js in check.js. Spawner messages are English in code.
-- Shake Off prompt has a white draining bar (#87, G.Status.shakeTarget).
-- Leader AI (carried): #59 closed; next #53, then #39. Bait parked on #60.
-- check.js: red only on gym-harness and leader-stats-harness, by design until #30.
+- #82 pause menu rework done and feel-tested. #104 built today: js/ui/ev-screen.js, opened by Learn from the Loss.
+  Click 1, Shift-click 10, hold repeats; Learn saves, then a 2 s toast "Lessons Learned, Returning Home", then
+  home; Go Home asks and saves nothing. The old scr-evs screen is retired.
+- HUD kit: fitToStage, createButtonRow (End Run, EV screen). copies.js: cappedEvs, setEvs; G.Debug.evset.
+- Shared toast (G.UI.toast): main menu charcoal, teal rim, Michroma, red rim for bad news; centred pop-in.
+- Font rule (HUD-STYLE Fonts): HudText for what is on or about a Pokemon, Michroma for the game's own UI.
+  Menu buttons still HudText, open in #99.
+- Quick agent follows CLAUDE.md git rules and drafts every commit message (it still cannot run git or gh).
 
 ## Watch
-- Headless frame-rate checks need the GPU flags (see tools/smoke-status-fx.js).
-- Headless file:// blocks fonts: screenshot HUD text over http. Python on Windows writes CRLF (use newline='').
-- Untracked art in assets/raw and assets/excalidraw (Jess's; never staged by the assistant).
+- smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83, likely the smoke's own 1028 scale
+  math. Unfiled.
+- Quick has no node or browser: its harness runs are sandbox bundles; check.js on the machine is truth.
+- Quick writing to the device: use `with open` and read it back.
+- Keep new code within 120 columns and run npm run format before the mutate runners, or patterns go STALE.
+- GitHub from Quick: api.github.com/search/issues?q=repo:Jess-Rivera/pokesurvivor_fork+is:issue+is:open
+  returns far more before truncation than the issues list.
+- Acquisition blockers: Accelgor (no Shelmet sprites), Gholdengo (no Gimmighoul), 9 move-gated lines, Kingambit.
 
 ## Open owner decisions
-- #86 whole levels: gym leaders round to nearest, switch to round down too? Bait (#60).
-- Team sheet Run Cards display (#83, pause menu branch #82); #82 scope.
-- Bench recharge; boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out. #74 spare weather art.
+- Acquisition: Accelgor route, Kingambit rule, Gholdengo source, R1 Shedinja, R4 Alcremie N, gacha removal and save
+  migration, ball tiers, UberElite time limit.
+- #86 gym leaders round down?; #93 tooltip scope; #99 menu font (buttons); #97 upgrade rework (blocks #95); #60 Bait.
 
-Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs click #tap-start first.
+Rules: CLAUDE.md. Maps: docs/ASCII Concept Maps/ (104, 104b, 104c and 82 today).

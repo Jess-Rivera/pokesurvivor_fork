@@ -62,6 +62,19 @@ const code = src => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''
   S.set(-5);
   ok(S.amount === 0, 'the balance never goes below zero'); }
 
+// 4b. #91-2 run totals (DS1, Jess 2026-11-12): earned is kill pay only (not the starting 100, not set()), spent is successful
+// spends only, reset() zeroes both. A kill at 15:00 pays 2.55 (section 2).
+{ S.reset();
+  ok(S.earned === 0 && S.spent === 0, 'a run starts with 0 earned and 0 spent: the starting 100 is not earned');
+  S.kill(900); S.kill(900);
+  ok(near(S.earned, 5.1) && near(S.amount, 105.1), 'two kills at 15:00: 5.1 earned, 105.1 held: ' + S.earned + ' / ' + S.amount);
+  S.set(50);
+  ok(near(S.earned, 5.1) && S.spent === 0, 'set() (G.Debug.silver) is neither earned nor spent');
+  ok(S.spend(60) === false && S.spent === 0, 'a refused spend counts nothing as spent');
+  ok(S.spend(20) === true && S.spend(5) === true && S.spent === 25, 'successful spends add what they took (20 + 5): ' + S.spent);
+  S.reset();
+  ok(S.earned === 0 && S.spent === 0 && S.whole === 100, 'reset() zeroes both totals'); }
+
 // 5. run-only: the run start resets it, the end of a run and the save never see it
 { const game = read('js/game.js'), silver = code(read('js/systems/silver.js'));
   ok(/G\.Silver\.reset\(\)/.test(body(game, 'function startRun(')), 'game.js: startRun resets Silver');

@@ -6,7 +6,7 @@
  * first type, its portrait in a circle, its name, a benched Pokemon's status chips, and the B2 "HP" bar (b2-lower Y16 to
  * Z16) along the bottom. The held item square sits to the right of each row. The active row wears the selection cursor;
  * the others dim under the swap cooldown. A team of one shows no roster, since the bottom panel already shows it.
- * Above the roster: the berry bag, 2x2, only the purchased slots. Reads the team once per frame, never writes it.
+ * Above the roster: the berry bag, the kit's tight 2x2 grid, only the purchased slots, no names. Reads the team once per frame, never writes it.
  *
  * Positions are fixed CSS pixels from the screen's bottom left (the wireframe is not 16:9, so the lower panels are placed
  * from the bottom).
@@ -14,101 +14,33 @@
 G.HudRosterPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
-  const { html, signal, PALETTE, HP_COLOURS, SLOT_GRID, FAINTED_RIM, PixelShape, typeColours, hpBand } = overlay.kit;
-  const { ItemSquare, Cursor, Chip, createChipReader, portraitSource, portraitFallback } = overlay.kit;
+  const { html, signal, FAINTED_RIM, typeColours, hpBand } = overlay.kit;
+  const {
+    ItemSquare,
+    ItemGrid,
+    Cursor,
+    Chip,
+    createChipReader,
+    RosterCard,
+    ROSTER_ART_PIXEL,
+    ROSTER_ART_ROWS,
+    rosterFill,
+  } = overlay.kit;
 
   // ---------- sizes and places (HUD-STYLE "Panel sizes at 1080p", roster and berry bag) ----------
-  const ART_PIXEL = 2,
-    // A row: the rip's corners at 2x, with the straight sides cut down to 32 rows. 139 art pixels holds the portrait, the
-    // widest species name in the HUD font (116 px, measured 2026-11-10) and one status chip side by side.
-    ROW = { artRows: 32, artWidth: 139, left: 16, bottom: 42, gap: 4 },
-    FACE = { left: 14, top: 10, size: 44 }, // the portrait circle: a 40 px portrait inside a 2 px stroke
-    NAME = { left: 66, top: 17 }, // just right of the portrait, a little below the middle of the space above the bar
+  const ART_PIXEL = ROSTER_ART_PIXEL,
+    // A row: the kit's roster card at 139 art pixels, which holds the portrait, the widest species name in the HUD font
+    // (116 px, measured 2026-11-10) and one status chip side by side.
+    ROW = { artRows: ROSTER_ART_ROWS, artWidth: 139, left: 16, bottom: 42, gap: 4 },
     CHIP_ROW = { right: 14, top: 12, gap: 6 }, // a benched Pokemon's chips, top right inside the box
-    BAR = { artLeft: 33, artTop: 19 }, // the HP bar: right of the portrait, along the bottom
     HELD = { artSize: 24, gap: 8 }, // the held item square, right of the row, centred on it
-    BERRY = { artSize: 20, column: 128, rowPitch: 72, gapAbove: 12, nameGap: 4 };
+    BERRY = { artSize: 20, gapAbove: 12 }; // the kit's tight 2x2 grid: 40 px squares, 20 px apart, no names (#90)
   const ROW_WIDTH = ROW.artWidth * ART_PIXEL,
     ROW_HEIGHT = ROW.artRows * ART_PIXEL,
     ROW_PITCH = ROW_HEIGHT + ROW.gap,
     HELD_SIZE = HELD.artSize * ART_PIXEL,
-    BERRY_SIZE = BERRY.artSize * ART_PIXEL;
-
-  // ---------- the roster box (b2-lower Y15 to AA16) ----------
-  // The left end of the rip's top 8 rows and one straight row, one letter per art pixel from the box's left edge; the
-  // rest of each row is its last letter's fill. The right end is the mirror, the bottom 8 rows the top's mirror.
-  //   o outline, D / B / L the rim's dark, base and light, G the body grid, space nothing.
-  const LEFT_END = [
-    ['      oooo', ' '], // the corner bump rises above the top edge
-    ['     oDBBDo', ' '],
-    ['    oDBooBD', 'o'],
-    ['   oDBoLBo', 'B'],
-    ['  oDBoLLL', 'o'],
-    [' oDBoLLLo', 'G'],
-    ['oDBoLLLo', 'G'],
-    ['oBoLLL', 'G'],
-  ];
-  const STRAIGHT_LEFT = ['oBoLLo', 'G'];
-  // The B2 small bar (b2-lower Y16 to Z16): the "HP" label is the life meter's (20 px italic HUD text, Jess 2026-11-10:
-  // the same style as the centre bar), then the track's frame (t) and its empty inside (f), rows 2 to 5 of the bar.
-  const LABEL_ART = 12, // "HP" at 20 px with its outline is 24 px wide, as the life meter's label (hud-overlay.js)
-    TRACK_LEFT = LABEL_ART, // the track's left frame column, from the bar's left edge, right after the label
-    TRACK_TOP = 2, // the track's frame rows: 2 and 5, its inside 3 and 4
-    BAR_RIGHT = ROW.artWidth - 8 - BAR.artLeft, // the track's right frame column: one pixel clear of the right rim
-    FILL_LEFT = BAR.artLeft + TRACK_LEFT + 1,
-    FILL_ART_WIDTH = BAR_RIGHT - TRACK_LEFT - 1,
-    // the label's 24 px line centred on the track's frame
-    LABEL_TOP = (BAR.artTop + TRACK_TOP) * ART_PIXEL + 2 * ART_PIXEL - 12;
-
-  /** The box and its HP bar as a grid of letters, one string per art row. */
-  const BOX_GRID = (() => {
-    const width = ROW.artWidth,
-      rows = ROW.artRows;
-    const rowOf = ([left, fill]) => {
-      const right = left.split('').reverse().join('');
-      return left + fill.repeat(width - 2 * left.length) + right;
-    };
-    const grid = [];
-    for (let row = 0; row < rows; row++) {
-      const fromTop = Math.min(row, rows - 1 - row);
-      grid.push(rowOf(fromTop < LEFT_END.length ? LEFT_END[fromTop] : STRAIGHT_LEFT).split(''));
-    }
-    // stamp the HP bar's track: its frame and its empty inside (the label is text, drawn over it in the row)
-    for (let trackRow = 0; trackRow < 4; trackRow++) {
-      const line = grid[BAR.artTop + TRACK_TOP + trackRow],
-        stamp = (column, letter) => (line[BAR.artLeft + column] = letter);
-      if (trackRow === 0 || trackRow === 3)
-        for (let column = TRACK_LEFT; column <= BAR_RIGHT; column++) stamp(column, 't');
-      else {
-        stamp(TRACK_LEFT, 't');
-        for (let column = TRACK_LEFT + 1; column < BAR_RIGHT; column++) stamp(column, 'f');
-        stamp(BAR_RIGHT, 't');
-      }
-    }
-    return grid.map((line) => line.join(''));
-  })();
-
-  const letterColours = (rim) => ({
-    o: PALETTE.outline,
-    D: rim.dark,
-    B: rim.base,
-    L: rim.light,
-    G: SLOT_GRID,
-    f: PALETTE.frame,
-    t: PALETTE.trackEdge,
-  });
-  /** paintRow for a grid of letters: runs of one letter become one rectangle. */
-  const gridRows = (grid, colours) => (row) => {
-    const line = grid[row],
-      runs = [];
-    let start = 0;
-    for (let column = 1; column <= line.length; column++) {
-      if (column < line.length && line[column] === line[start]) continue;
-      if (line[start] !== ' ') runs.push([start, column - start, colours[line[start]]]);
-      start = column;
-    }
-    return runs;
-  };
+    BERRY_SIZE = BERRY.artSize * ART_PIXEL,
+    BERRY_PITCH = BERRY_SIZE * 1.5; // a square and the half-square gap
 
   // The swap cooldown shade is clipped to the box's outline (the corners' 45 degree steps, without the bumps).
   const BOX_CLIP = (() => {
@@ -122,49 +54,24 @@ G.HudRosterPanel = (() => {
 
   // ---------- state the page shows (signals) ----------
   const rows = signal([]), // per filled slot, top to bottom: see readRow
-    berries = signal([]), // per purchased slot: { key, name, icon } or { key } when empty
+    berries = signal([]), // per purchased slot: { key, icon } or { key } when empty
     showRoster = signal(false),
     visible = signal(false);
 
   // ---------- components ----------
-  const stripes = (band) => {
-    const colours = HP_COLOURS[band];
-    return `linear-gradient(${colours.fill} 0 ${ART_PIXEL}px, ${colours.shade} ${ART_PIXEL}px ${2 * ART_PIXEL}px)`;
-  };
-
   function RosterRow({ row, index, count }) {
     const bottom = ROW.bottom + (count - 1 - index) * ROW_PITCH;
-    return html`<div
-        class=${'hud-roster-row' + (row.fainted ? ' is-fainted' : '')}
-        style=${{ left: ROW.left + 'px', bottom: bottom + 'px', width: ROW_WIDTH + 'px', height: ROW_HEIGHT + 'px' }}
+    return html`<${RosterCard}
+        artWidth=${ROW.artWidth}
+        rim=${row.rim}
+        fill=${row.fill}
+        band=${row.band}
+        dex=${row.dex}
+        shiny=${row.shiny}
+        name=${row.name}
+        fainted=${row.fainted}
+        style=${{ left: ROW.left + 'px', bottom: bottom + 'px' }}
       >
-        <${PixelShape}
-          artWidth=${ROW.artWidth}
-          artRows=${ROW.artRows}
-          artPixel=${ART_PIXEL}
-          paintRow=${gridRows(BOX_GRID, letterColours(row.rim))}
-        />
-        <div
-          class="hud-roster-fill"
-          style=${{
-            left: FILL_LEFT * ART_PIXEL + 'px',
-            top: (BAR.artTop + 3) * ART_PIXEL + 'px',
-            width: FILL_ART_WIDTH * ART_PIXEL + 'px',
-            height: 2 * ART_PIXEL + 'px',
-            background: stripes(row.band),
-            transform: `scaleX(${row.fill})`,
-          }}
-        ></div>
-        <span class="hud-hp-label" style=${{ left: BAR.artLeft * ART_PIXEL + 'px', top: LABEL_TOP + 'px' }}>HP</span>
-        <div
-          class="hud-roster-face"
-          style=${{ left: FACE.left + 'px', top: FACE.top + 'px', width: FACE.size + 'px', height: FACE.size + 'px' }}
-        >
-          <img src=${portraitSource(row.dex, row.shiny)} data-dex=${row.dex} alt="" onError=${portraitFallback} />
-        </div>
-        <span class="hud-text hud-roster-name" style=${{ left: NAME.left + 'px', top: NAME.top + 'px' }}
-          >${row.name}</span
-        >
         ${
           row.chips.length
             ? html`<div
@@ -184,7 +91,7 @@ G.HudRosterPanel = (() => {
         }
         <span class="hud-text hud-roster-key">${row.keyLabel}</span>
         ${row.active ? html`<${Cursor} />` : null}
-      </div>
+      </${RosterCard}>
       <div
         class="hud-roster-held"
         style=${{
@@ -200,34 +107,16 @@ G.HudRosterPanel = (() => {
   const berriesBottom = (rowCount) =>
     rowCount ? ROW.bottom + rowCount * ROW_PITCH - ROW.gap + BERRY.gapAbove : ROW.bottom;
 
+  /** The berry bag: the kit's tight 2x2 grid, only the purchased slots, no names (Jess, 2026-11-11, #90). */
   function BerryBag() {
-    const list = berries.value,
-      gridRowCount = Math.ceil(list.length / 2),
-      bottomEdge = berriesBottom(showRoster.value ? rows.value.length : 0);
-    return list.map((berry, index) => {
-      const column = index % 2,
-        gridRow = Math.floor(index / 2),
-        cellBottom = bottomEdge + (gridRowCount - 1 - gridRow) * BERRY.rowPitch,
-        left = ROW.left + column * BERRY.column;
-      return html`<div
-          key=${berry.key}
-          class="hud-berry"
-          style=${{ left: left + 'px', bottom: cellBottom + 20 + BERRY.nameGap + 'px' }}
-        >
-          <${ItemSquare} icon=${berry.icon || null} artSize=${BERRY.artSize} />
-        </div>
-        ${
-          berry.name
-            ? html`<div
-                key=${berry.key + 'name'}
-                class="hud-text hud-berry-name"
-                style=${{ left: left + 'px', bottom: cellBottom + 'px' }}
-              >
-                ${berry.name}
-              </div>`
-            : null
-        }`;
-    });
+    const list = berries.value;
+    if (!list.length) return null;
+    return html`<div
+      class="hud-berry-bag"
+      style=${{ left: ROW.left + 'px', bottom: berriesBottom(showRoster.value ? rows.value.length : 0) + 'px' }}
+    >
+      <${ItemGrid} slots=${list} artSize=${BERRY.artSize} />
+    </div>`;
   }
 
   function RosterPanel() {
@@ -249,8 +138,7 @@ G.HudRosterPanel = (() => {
       fainted = !!member.dead;
     if (!chipReaders.has(slot)) chipReaders.set(slot, createChipReader());
     const chipRead = chipReaders.get(slot)(member); // read every frame, so the peaks stay current while active
-    const fraction = member.maxHp > 0 ? Math.min(1, Math.max(0, member.hp / member.maxHp)) : 0,
-      fillUnits = fainted || member.hp <= 0 ? 0 : Math.max(1, Math.round(fraction * FILL_ART_WIDTH));
+    const fraction = member.maxHp > 0 ? Math.min(1, Math.max(0, member.hp / member.maxHp)) : 0;
     const type = (member.mon && member.mon.types && member.mon.types[0]) || 'normal';
     const heldDef = member.item && G.Items.BY[member.item];
     return {
@@ -263,7 +151,7 @@ G.HudRosterPanel = (() => {
       rimKey: fainted ? 'fainted' : type,
       active: isActive && !fainted,
       fainted,
-      fill: fillUnits / FILL_ART_WIDTH,
+      fill: rosterFill(member.hp > 0 ? fraction : 0, fainted, ROW.artWidth),
       band: hpBand(fraction),
       cooldown: !isActive && !fainted ? swapShade : 0,
       chips: isActive || fainted ? [] : chipRead.chips, // the active Pokemon's chips are on the bottom panel
@@ -310,7 +198,7 @@ G.HudRosterPanel = (() => {
     const next = [];
     for (let index = 0; index < slotCount; index++) {
       const def = held[index] && G.Grounds.BY[held[index]];
-      next.push(def ? { key: 'berry' + index, name: def.name, icon: 'ps:' + def.icon } : { key: 'berry' + index });
+      next.push(def ? { key: 'berry' + index, icon: 'ps:' + def.icon } : { key: 'berry' + index });
     }
     const key = next.map((berry) => berry.icon || '-').join('|');
     if (key !== lastBerriesKey) {
@@ -331,7 +219,7 @@ G.HudRosterPanel = (() => {
   function buffsLeft() {
     if (showRoster.value) return ROW.left + ROW_WIDTH + HELD.gap + HELD_SIZE + 12;
     const columns = Math.min(2, berries.value.length);
-    return columns ? ROW.left + (columns - 1) * BERRY.column + BERRY_SIZE + 12 : 16;
+    return columns ? ROW.left + (columns - 1) * BERRY_PITCH + BERRY_SIZE + 12 : 16;
   }
 
   overlay.addPanel({ id: 'roster', View: RosterPanel, sync });

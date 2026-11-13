@@ -393,5 +393,56 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   ok(/\|\|\s*set === 'cards'\s*\) \{/.test(dbg) && dbg.includes('function cards(id, n = 1)') && /newcombat,\s*cards,\s*movechecker,?\s*\};/.test(dbg), 'debug: the cards set gets dummy rings and G.Debug.cards is exported');     // export list retargeted 2026-10-31 (movechecker added)
   console.log('9 debug set'); }
 
+// ===== 10. #83 (Jess 2026-11-12): what the cards changed on a move, and the pause menu's Cards Taken rows =====
+// Expected values are hand-derived from the step table (docs/UPGRADE-CARDS.md) and the synthetic moves below.
+{ const own = picks => ({ teamCards: storeWith(picks) });
+  const texts = (picks, id) => TC.changes(own(picks), id).map(c => c.text);
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  syn('c83-burn', { payload: [{ t: 'damage' }, { t: 'ailment', id: 'burn', chance: 10 }] });
+  syn('c83-toxic', { payload: [{ t: 'damage' }, { t: 'ailment', id: 'toxic', chance: 30 }] });
+  syn('c83-cone', { space: { shape: 'radial', radRadius: 50, radArc: Math.PI / 2 }, payload: [{ t: 'damage' }] });
+  syn('c83-delay', { delivery: { delay: 1 }, payload: [{ t: 'damage' }] });
+  syn('c83-fire', { type: 'fire', cd: 1.2, payload: [{ t: 'damage' }] });
+  syn('c83-fan', { space: { shape: 'radial', radRadius: 10, count: 3, spread: 0.3 }, payload: [{ t: 'damage' }] });
+  syn('c83-stat', { basePower: 0, power: 0, payload: [{ t: 'stat', side: 'self', stat: 'atk', stages: 1 }] });
+  let t;
+  ok(same(t = texts([['ailment', 5]], 'c83-burn'), ['burn 10% to 60%']), 'changes: Ailment x5 on a 10% burn is 60% (' + t + ')');
+  ok(same(t = texts([['ailment', 25]], 'c83-burn'), ['burn 10% to 100% (max)']), 'changes: Ailment x25 stops at 100% and says so (' + t + ')');
+  const capped = TC.changes(own([['ailment', 25]]), 'c83-burn')[0] || {};
+  ok(capped.capped === true && capped.to === 100 && capped.from === 10, 'changes: the capped entry carries from 10, to 100, capped');
+  ok(same(t = texts([['ailment', 1]], 'c83-toxic'), ['bad poison 30% to 40%']), 'changes: toxic reads "bad poison" (' + t + ')');
+  ok(same(t = texts([['presence', 2]], 'c83-cone'), ['arc 90° to 117°']), 'changes: Width x2 opens a 90° cone to 117° (' + t + ')');
+  // x20: 90 x 4 lands on 2 pi, a hair under the cap's 6.2832, still a full circle (presence's own 0.01 slack);
+  // x25: 90 x 4.75 = 427.5 is clamped to the cap
+  ok(same(t = texts([['presence', 20]], 'c83-cone'), ['arc 90° to 360° (max)']), 'changes: Width x20 reaches a full circle (' + t + ')');
+  ok(same(t = texts([['presence', 25]], 'c83-cone'), ['arc 90° to 360° (max)']), 'changes: Width x25 stops at a full circle (' + t + ')');
+  ok(same(t = texts([['area', 1]], 'c83-cone'), ['radius 50 to 53.6']), 'changes: Size x1 grows the radius by the square root of 1.15 (' + t + ')');
+  ok(same(t = texts([['delay', 2]], 'c83-delay'), ['delay 1.0 s to 0.77 s']), 'changes: Impact Speed x2 is 1 / 1.3 (' + t + ')');
+  ok(same(t = texts([['delay', 10]], 'c83-delay'), ['delay 1.0 s to 0.5 s (max)']), 'changes: Impact Speed x10 stops at the half floor (' + t + ')');
+  ok(same(t = texts([['damage', 2], ['type:fire', 2], ['type:water', 3]], 'c83-fire'), ['power 40 to 56']),
+    'changes: All Damage x2 and Fire Damage x2 share one pool, one line, 40 x 1.4; Water Damage does nothing (' + t + ')');
+  ok(same(t = texts([['cooldown', 2]], 'c83-fire'), ['cd 1.2 s to 0.92 s']), 'changes: Attack Speed x2 is cd / 1.3 (' + t + ')');
+  ok(same(t = texts([['count', 5]], 'c83-fan'), ['projectiles 3 to 6 (max)']), 'changes: Count x5 counts to its cap of 3 and says so (' + t + ')');
+  ok(TC.changes(own([]), 'c83-burn').length === 0 && TC.changes(own([['chain', 3]]), 'c83-burn').length === 0 &&
+    TC.changes({}, 'c83-burn').length === 0 && TC.changes(own([['ailment', 1]]), 'no-such-move').length === 0,
+    'changes: nothing for no store, no cards, a card the move cannot take, or an unknown move');
+  const store = storeWith([['damage', 2], ['chain', 1], ['type:water', 1], ['type:fire', 1], ['vitamins:atk', 2], ['regen', 1], ['gate', 2], ['duration', 1]]);
+  const ids = rows => rows.map(r => r.id).join('|');
+  const solo = TC.takenBy(store, ['c83-fire'], 1);
+  ok(ids(solo) === 'type:fire|vitamins:atk|damage', 'takenBy: a fire attacker alone sees Fire Damage, Vitamins and All Damage only (' + ids(solo) + ')');
+  const vit = solo.find(r => r.id === 'vitamins:atk') || {};
+  ok(vit.label === 'Protein' && vit.picks === 2 && vit.tip === null, 'takenBy: Vitamins by the vitamin\'s name, its pick count, no tip');
+  const duo = TC.takenBy(store, ['c83-fire', 'c83-stat'], 2), by = id => duo.find(r => r.id === id) || {};
+  ok(ids(duo) === 'regen|type:fire|duration|gate|vitamins:atk|damage', 'takenBy: a stat move adds Gate and Duration, a team of 2 adds Bench Regeneration (' + ids(duo) + ')');
+  ok(by('gate').tip === 'Stat stage Gate 6.0 s to 5.0 s', 'takenBy: the Gate tip, 6.0 / 1.2 (' + by('gate').tip + ')');
+  ok(by('duration').tip === 'Stat stage Duration 6.1 s to 6.71 s', 'takenBy: the Duration tip, 6.1 x 1.1 (' + by('duration').tip + ')');
+  ok(by('regen').tip === 'Benched Pokemon regain 0.5% of max HP per second (empty to full in 200 s)', 'takenBy: the Bench Regeneration tip (' + by('regen').tip + ')');
+  ok(by('damage').tip === null && by('damage').label === 'All Damage Up' && by('damage').picks === 2, 'takenBy: a move card has no tip (its moves show it)');
+  ok(TC.takenBy(TC.store(), ['c83-fire'], 2).length === 0 && TC.takenBy(null, ['c83-fire'], 2).length === 0, 'takenBy: no rows with no cards');
+  const pp = fs.readFileSync(R + '/js/ui/pause-pokemon.js', 'utf8'), sh2 = fs.readFileSync(R + '/js/ui/sheet.js', 'utf8');
+  ok(pp.includes('G.TeamCards.takenBy(member.teamCards, moveIds, team().length)') && pp.includes('lines.cards'), 'pause menu: Cards Taken reads takenBy, the move tooltip shows the cards line');
+  ok(sh2.includes('G.TeamCards.changes(pl, m.id)') && sh2.includes("'Cards: '"), 'sheet: detailOf builds the cards line from G.TeamCards.changes');
+  console.log('10 #83 changes and Cards Taken'); }
+
 console.log(fail ? '\nteam-cards harness: ' + fail + ' FAILED of ' + n : '\nteam-cards harness: ' + n + '/' + n + ' checks passed');
 process.exit(fail ? 1 : 0);

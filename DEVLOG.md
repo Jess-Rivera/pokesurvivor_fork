@@ -165,3 +165,110 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - #73: species names stored in English (14 fixed from pokeapi-master), tools/species_names.js in check.js. #85: elites use the enemy name bar; elite, shiny and swarm messages English in code.
 - Found: wild Pokemon spawn at fractional levels; Jess ruled whole levels, filed as #86 for its own branch. #87: Shake Off white draining bar.
 - All feel-tested and closed with #35 and #59; #61 kept as the style guide's tracker. Stopped at: fast-forward into feature/gym-leader-ai, path forward next session.
+
+## 2026-11-11 (Claude Code, home), pause menu slice 1 (#88) on feature/pause-menu-rework
+- Ruled: side features branch off feature/gym-leader-ai and merge back (decision 2026-11-11-side-branches-off-gym-leader-ai).
+- Jess's pause menu design saved as docs/PAUSE-MENU.md; #82 scoped, children #88 to #92 filed, #83 became slice 5, #93 split off.
+- #88 built: js/ui/pause-menu.js (Preact, HUD kit), css/pause-menu.css, tools/smoke-pause-menu.js. Three feel-test rounds
+  (timings, layering, centre button, move slot buttons, End Run asked inside the ball); decision 2026-11-11-88-pause-menu-shell.
+- Found and fixed: the Esc that closes Settings also unpaused. moveSlotRow moved into the HUD kit (run screen unchanged).
+- Stopped at: #88 closed; next #89.
+
+
+## 2026-11-11 (Claude Code, home), pause menu slice 2 (#89) on feature/pause-menu-rework
+- Built js/ui/pause-pokemon.js: detail panel (two-tier type bars, HP, portrait, held item, stat hex, move list by bond,
+  prev / next) and team panel (narrowed roster cards, empty frames, green stroke and shimmer on the shown one).
+- RosterCard moved into the HUD kit (run screen roster byte-identical before and after). Fixed the #88 Enter bug.
+- Stat hex ruled over several rounds: real stats in growing bands, HP mainline, edge 300 / 600 / 1000, final stats with a
+  Base / IV / EV hover (decision 2026-11-11-89-pause-menu-detail-panel-and-stat-hex). Move-info-in-the-hex idea dropped.
+- Filed #94 (Run Item title outside its card). Stopped at: #89 in Needs Playtest; next #90.
+
+## 2026-11-11 (Claude Code, home), pause menu slice 3 (#90) and berry slots (#96) on feature/pause-menu-rework
+- #89 passed its feel test and closed. #96 built and closed: berry slots 2 to 4 on the Shop's Team Upgrades tab
+  (team item slot prices), G.Debug.berryslots, tools/smoke-berry-slots.js.
+- #90 built: js/ui/pause-inventory.js (three tight 2x2 grids, Temporary Pocket on G.Team, click and drag held item moves),
+  the in-ball "Destroy Items in Pocket?" prompt gating resume, kit ItemGrid shared with the run screen berry bag (no names).
+  Tooltips moved to GameFont after the feel test. tools/smoke-pause-inventory.js, 38 checks.
+- Filed #95 (hex counts meta HP as a run effect; blocked by the new #97 upgrade rework), #98 (hex +X% under the number;
+  also fixes the smoke-pause-menu fit check that fails at Jess's radius 110), #99 (menu font). Decision 2026-11-11-90-run-inventory-pocket-and-item-moves.
+- Stopped at: #90 in Needs Playtest (item moves, prompt, berry bag still to feel-test); tooltips confirmed.
+
+## 2026-11-12 (Claude Code, home), #90 closed, #94 and #98 on feature/pause-menu-rework
+- #90 feel test: berries and run items now go into the Temporary Pocket (G.Team storeToPocket, pocketToStore) to be
+  destroyed on resume; run item effects turn off and on for the whole team; the Stone rule holds. Feel test passed, closed.
+- #98: side hex corners stack name / number / +X%; smoke-pause-menu green again at radius 110. Closed.
+- #94: run item name inside the card's top band, squeezed to fit; description starts at the patch top. Closed.
+- smoke-hud-overlay had 6 old failures (the pause team cards counted as roster rows, berry names gone since #90): fixed.
+- Decision 2026-11-12-90-pocket-takes-berries-and-run-items. Stopped at: next is #91.
+
+## 2026-11-12 (Quick, work), laptop perf, pause polish, #91 planned, 91-1 built
+- Perf (Firefox laptop): profile showed HUD paint 37% and the vignette fill 18%, Preact 1.3%. Built: Vignette setting
+  (Graphics, default off, cached); pause menu holds the world still and hides the HUD while fully open. Fixed: grids
+  vanished in the menu (.hud-defs hidden with the HUD). Team panel frame removed. All committed by Jess and feel-tested.
+- #91 planned panel by panel (maps 91, 91b to 91e, 91-1); every counting rule approved into PAUSE-MENU 4 and 6.
+- 91-1 built: G.RunStats + hooks (onDealt widened, onInflicted, onFaint, revive, restoreHp as the one heal path); burn
+  and poison now credit their inflicter, so the DPS panel reads higher for status teams. run-stats harness 70/70 and 36/36
+  mutants caught, plus 7 existing harnesses, all bundled in Quick's sandbox (not real node). Re-pointed 2 STALE mutants.
+- Broke: two parallel edits to player.js and enemy.js raced, one lost; the harness caught it, re-applied one at a time.
+- Stopped at: Jess runs check.js and the three mutate scripts, commits 91-1; next is 91-2 (Run Info panel).
+
+## 2026-11-12 (Quick, work), #91 built end to end: Run Info, Region Best, Run Stats box
+- 91-1 checks passed on the machine after two fixes: boss-owner-harness crashed stringifying stDot (its by is now the
+  caster); a STALE Brock cards mutant from #84 re-pointed.
+- 91-2: hits carry their move id; Silver earned / spent; Region Best (save.regionBest, solo and clean only, pace delta,
+  rules DR1 to DR5, RC1, RC2); Run Info panel (pause-run-info.js, pure sections()); debug runinfo / regionbest /
+  recordcheck. Cleanups: shared kit ScrollBox (now draggable), Silver kill pays once, onDealt takes named fields.
+- 91-3: Run Stats box, 12 rows scrolling in its 200 px box (Jess kept the size); G.U.compact, fieldSeconds, statusList.
+- Tests: run-info harness and mutate runner new (78 checks, 28 mutants); run-stats harness 108; all in Quick's sandbox.
+- Broke: a changelog entry mis-nested (parsed fine); smoke read the Statuses tooltip as one string. Both fixed.
+- Stopped at: Jess re-runs smoke-pause-menu, feel-tests #91; next is #83. GitHub API empty from Quick all session.
+
+## 2026-11-12 evening (Quick, work), design session: types by region, type maps, acquisition rework
+- Built a types-by-region dashboard (docs/type-region-dashboard.html). Found Kanto T6 rolls no hordes, publish needs a missing make_seo_pages.py.
+- Region type maps designed then PARKED: 8 type maps + a Stage 3 map per region (Biomes v2, decision filed).
+- Acquisition rework decided in direction over 16 rounds: gacha out, rescue catch (UberElite, belt, nature flee), Lost
+  Pokemon recruits, candy evolution with mainline requirements, Link Cable. Map Acquisition v1, decision filed.
+- Filed by Jess: #101 day/night (parked), #102 tooltips everywhere. Nothing in js/ touched; check.js not run.
+- Stopped at: file the acquisition parent issue; #83 checks and close still owed from earlier today.
+
+## 2026-11-12 afternoon (Quick, work), #83 Cards Taken and the shared tooltip layer
+- #91 feel test passed. #83 built: Cards Taken is the DPS panel's count list, filtered to this Pokemon's cards
+  (G.TeamCards.takenBy), team-only cards show real numbers on hover; the move tooltip gets a before/after "Cards:" line
+  from the real fold (G.TeamCards.changes). Detail tooltip widened to 558 px (16 px clear of both side panels).
+- Decided: every hover tooltip is the topmost layer; the pause menu draws all of them in one shared TooltipLayer
+  (chosen over a CSS lift). Everything else is #102. Two decision files filed.
+- Tests: team-cards harness 183/183 (25 new) in Quick's sandbox; both pause smokes rewritten for the layer, NOT run.
+- Broke: a few Python writes to the device silently did not land; redone with read-back. A smoke variable clashed
+  (sides), caught by the syntax check. The device link dropped once mid-session.
+- Stopped at: Jess runs check.js and both smokes, feel-tests, commits; check.js not run this session.
+
+## 2026-11-12 night (Claude Code, home), close #83
+- #83 closed: checks green (run from Quick, not logged then), feel test passed. Body now also names the shared
+  tooltip layer that shipped with it; comment lists what shipped. #82 has only #92 left.
+- Looked at moving the team slots above the ball (under the inventory) to free a tooltip zone below it: fits with
+  about 16 px spare, Jess dropped it. No code touched.
+- Stopped at: #92 next; acquisition parent issue still to file.
+
+## 2026-11-12 late night (Claude Code, home), end of run: #92 Run Review, #103 End Run, no EVs on quit
+- Decided from the End Run mocks: End Run screen, Run Review (pause menu read-only), EV screen redesign (#104), a quit
+  gives no EVs (crash keeps them), balls earned show nowhere. Decision file and PAUSE-MENU section 7; #103, #104 filed.
+- Built #92 (openReview, read-only panels) and #103 (js/ui/end-run.js, SlotButton moved into the HUD kit,
+  quitRun(keepsEvs)). Both feel-tested and closed. Fixed on the way: the old Quit button passed its click as keepsEvs.
+- Tests: smoke-pause-menu End Run and Run Review sections, pokebox-evs harness 63/63, mutate 31/31. Its Cards Taken
+  400 px check reads 401 since #83 (not ours).
+- Stopped at: #104 EV screen next, the last child of #82.
+
+## 2026-11-13 morning (Quick, work), #104 EV screen; #82 closed
+- Quick agent aligned to CLAUDE.md (git allowlist, a full commit message every slice); its catch-up, wrap-up and
+  board-sync workflows updated to match. No repo change for that.
+- Built #104 (js/ui/ev-screen.js): six rows, current EVs white and adds yellow, click 1 / Shift 10 / hold; Learn
+  saves then a 2 s toast; Go Home asks. Old scr-evs retired. 104b: fitToStage and createButtonRow in the HUD kit,
+  cappedEvs and setEvs in copies.js. 104c: the shared toast restyled (charcoal, teal rim, Michroma), centred pop-in.
+- Decided: decision files for the 104 giving rules and the 104c toast look; font rule in HUD-STYLE; toast 1 s was
+  too fast, 3 s too long, 2 s it is. Doc tidy: PAUSE-MENU open questions, HUD-STYLE pause colours Approved.
+- Tests: pokebox-evs harness 72/72 and 32 mutants caught in Quick's sandbox; Jess ran check.js, the mutate runner
+  and the smoke, then committed and pushed (results not logged here). Broke: the smoke's third run reused last
+  run's 252 EVs (fixed); the toast's pop animation dropped its centring (old bug, fixed).
+- Closed #104 and #82; filed #105 (G.UI.ask restyle) and #106 (menu font, a duplicate of #99).
+- Built (approved): PausePokemon and PauseInventory in main.js NEED, with a run-info harness check and 2 mutants.
+- Stopped at: the merge into feature/gym-leader-ai.

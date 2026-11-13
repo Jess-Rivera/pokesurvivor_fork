@@ -1,0 +1,199 @@
+#91c: RUN INFO PANEL, the left panel (2026-11-12, Quick)  [Approved, debug tools included]
+Debug tools approved (Jess, 2026-11-12): T1 recordcheck dry run by default, 'write' allowed as a dev bypass; T2 names.
+Rules approved (Jess, 2026-11-12): F1, F2, S1 as recommended; F3, S2, S3, C1, C2 as recommended (no change asked).
+D5 Region Best approved as written (Jess, 2026-11-12), with a debug tool to verify it (guest saves do not persist).
+Jess, 2026-11-12: everything in the mock below as shown; R1 = 24 px text / 36 px rows; the panel SCROLLS;
+add FAINTS (with Most Faints and time fainted, tracked per Pokemon for Run Stats later) and STATUSES
+INFLICTED (aggregated from the per-Pokemon Run Stats). Swaps made is dropped for Faints.
+=====================================================================
+Where: pause menu, left of the ball. 635 x 1028 px (same box as the detail panel), slides in from the left.
+Look: the DPS-Upgrades panel's style (Michroma, name left / value right rows, 2 px slate dividers), NOT tied
+to that panel's opacity or on/off setting (PAUSE-MENU 6).
+SCOPE RULE [Approved, Jess 2026-11-12]: Run Info holds everything about the run, or team wide / run wide.
+Anything about ONE Pokemon goes to the detail panel. A per-Pokemon stat can show here only as its team total.
+
+MOCK (1080p, R1 = 1.5x text)                                       src   data
++--------------------------------- 635 -----------------------------+
+| KANTO RUN                                              12:34       |  spec  have (region, run time)
+|====================================================================|
+| PROGRESS                                                           |
+|  Loop                                                  1           |  spec  have (G.Gym.loop, dev-set)
+|  Badges                                    Boulder, Cascade  (2)   |  spec  have (G.Gym.badges)    R3
+|  Gym splits                    Boulder 4:52     Cascade 9:10       |  +A4   new  (stamp at onWin)
+|--------------------------------------------------------------------|
+| COMBAT                                                             |
+|  Kills                                                 1,204       |  spec  have (team kills)
+|  Kills per minute                                      97          |  +B4   have (kills / time)
+|  Elites                                                3           |  spec  new  (elite kill count)
+|  Biggest hit              Charizard  Flamethrower      2,450       |  spec  new  (max hit + who;
+|                                                                    |              move name needs *1)
+|  Super effective                                       41%         |  +A2   new  (team share)
+|  Damage taken / healed                         3,100 / 1,800       |  +A3   new  (team totals)
+|--------------------------------------------------------------------|
+| LOOT                                                               |
+|  Coins                                                 312         |  spec  have
+|  Silver                                    spent 240 / earned 410  |  +B6   ?    (G.Silver)
+|  Items picked up                                       14          |  spec  new  (D4 kinds)
+|  Shinies                                   seen 1, caught 0        |  spec  new seen / have caught
+|--------------------------------------------------------------------|
+| EVS EARNED                                                         |  spec  have (run EV banks)
+|   HP    Atk    Def    SpA    SpD    Spe                            |        R4 layout
+|    2     11      4      0      1      6                            |
+|--------------------------------------------------------------------|
+| REGION BEST                                                        |  spec  new  (save field, D5)
+|  Furthest                     Loop 1, Gym 3              18:40     |
+|  This run                     ahead by 2:10   (or "No record yet") |  +A4/A5 new (needs splits)
++--------------------------------------------------------------------+
+ src: spec = already in PAUSE-MENU 6 | +A2.. = genre add from 91b | *1 = hit must carry its move id
+
+HEIGHT BUDGET (R1 = 1.5x: 24 px text, 36 px rows)
+---------------------------------------------------------------------
+ header 48 + 5 section titles x 30 + 4 dividers x 14 + 17 rows x 36  = ~866 px  of ~980 usable  -> fits
+ at 1x (DPS panel's own 16 px / 24 px):  ~590 px, half the panel empty -> reads tiny on a big box
+
+WHAT MOVES OUT OF HERE (to the detail panel's Run Stats box, per Pokemon)
+---------------------------------------------------------------------
+ per-mon kills, time on field, damage dealt, best hit, times fainted, its own super effective %,
+ its own taken / healed. Run Info keeps only the TEAM totals of those.
+
+MORE RUN-WIDE CANDIDATES (fit the scope rule; not in the mock yet, R6)
+---------------------------------------------------------------------
+ B3 Swaps made                         team wide   new (the swap already has a hook)
+ B4 Peak enemies on screen             run wide    new (also a density / perf gauge)
+ B7 Cards drafted, rerolls, skips      team wide   have cards (team cards are team stores); ? rest
+    (the DPS panel already lists the team cards by name; this would be the counts only)
+ B5 Closest call, lowest team HP %     team wide   new
+ -- Run items equipped                 team wide   have, but the Run Inventory above the ball already
+                                                   shows them: skip here (no duplicate)
+ -- Weather seen / biomes reached      run wide    have (biome changes every 4 min)
+ all 5 = ~180 px more: ~866 + 180 = ~1046, OVER the ~980 usable. About 3 fit (~108 px, ~974).
+
+DECIDED (Jess, 2026-11-12)
+---------------------------------------------------------------------
+ R1 24 px text, 36 px rows.   R2 all five genre adds (the mock as shown).   R3 badges as names + count.
+ R4 EVs as one 6-column row.  R5 biggest hit = who + number, the move name once hits carry it (*1).
+ R6 Faints + Statuses inflicted (below); swaps, peak enemies, cards/rerolls, closest call, biomes: not now.
+ The panel scrolls (it no longer has to fit 980 px).
+ Still open from the #91 plan, unchanged: D1 kill credit (rule), D5 region record (rule + save field).
+
+ADDED SECTIONS (go after COMBAT, before LOOT)
+---------------------------------------------------------------------
+|--------------------------------------------------------------------|
+| FAINTS                                                             |
+|  Faints                                                9           |  new  team total
+|    Most faints                       Charmander      6 times       |  new  per-mon count, max (F3)
+|    Time fainted                                     3:12           |  new  team total, run time (F2)
+|--------------------------------------------------------------------|
+| STATUSES INFLICTED                                                 |
+|  Burn            41        Paralysis       20                      |  new  2 columns, per kind
+|  Poison          12        Sleep            8                      |       only kinds landed (S2)
+|  Toxic            3        Freeze           2                      |
+|  Confusion        5        Trap             4                      |
+|  Daze             1        Drowsy           0 (hidden)             |
+|  Damage over time                                    5,400         |  new  burn/poison/toxic/trap
+|--------------------------------------------------------------------|     ticks on enemies (S3; trap deals no damage, see PAUSE-MENU 6)
+ 10 status kinds today (G.Status CONTROL: paralysis, freeze, sleep, confusion, trap, daze, drowsy; plus the DoT
+ majors burn, poison, toxic). 2 columns keeps it to 5 rows + the DoT row.
+
+ PER-POKEMON SIDE (stored now, shown later in the detail panel's Run Stats box)
+   each member: faints, time fainted, statuses inflicted per kind, DoT damage. Run Info sums them.
+   Who inflicted a status = the Pokemon whose hit carried it: same unlocated spot as *1 and D1a, found
+   before the build. Enemy-side burn/poison ticks live apart from G.Status.applyDot (player only): also
+   located before the build.
+
+SCROLLING
+---------------------------------------------------------------------
+ new height: ~866 + Faints ~152 + Statuses ~260 = ~1278 px of ~980 usable  ->  scrolls
+ +------------------------------+-+
+ | KANTO RUN            12:34   | |   header stays pinned (run name + time) (C2)
+ |------------------------------|#|   the rest scrolls under it
+ | PROGRESS ...                 |#|   mouse wheel over the panel, or drag the bar
+ | COMBAT ...                   | |   Up/Down keys stay the ball's button focus (no change)
+ | FAINTS ...                   | |   opens at the top every time the menu opens
+ +------------------------------+-+
+ Bar: the Cards Taken / Move List scroll bar (dex-buttons AF2-AF20), coloured slate, since Run Info has no
+ type (C1). Shown only when the content overflows.
+
+NEW DECISIONS  (F1, F2, S1 are counting RULES: flagged on their own)
+---------------------------------------------------------------------
+ F1 RULE what counts as a faint: every time a team member reaches 0 HP: on the field, on the bench (DoT),
+        and the final team wipe. A Focus Sash save is not a faint. <- rec
+ F2 RULE time fainted: run time from the faint until that member is revived (badge revive, Re-Do) or the
+        run ends. The pause stops it, since run time stops. <- rec
+ F3 Most faints tie: (a) the lower team slot shows <- rec   (b) both names ("Charmander, Squirtle 3 times")
+    No faints: the Faints row reads 0 and the two sub-lines hide.
+ S1 RULE what counts as inflicted: a status that LANDS (a new one). A refresh of the same status, an
+        immune, a blocked major, or a reapply window does not count. <- rec
+        (alternative: count refreshes too, "applications" instead of "inflicted")
+ S2 show only kinds landed this run, "None yet" when empty <- rec  (b) all 10 kinds with zeros
+ S3 Damage over time: the DoT ticks your team's statuses deal to enemies (burn, poison, toxic, trap). <- rec
+    CORRECTION (checked 2026-11-12): enemy DoT ticks (enemy.js takeDot) carry no source and are NOT counted
+    in the team's damage or DPS today. Who inflicted it, and whether it should count, are decided in the
+    91d map (Run Stats box, P5).
+ C1 scroll bar colour: slate <- rec  (b) the field Pokemon's first type colour
+ C2 header pinned while the rest scrolls <- rec  (b) everything scrolls
+
+TESTS ADDED BY THIS SECTION (to the #91 plan's run-stats-harness.js and run-stats-mutate.js)
+---------------------------------------------------------------------
+ harness: a field faint, a bench DoT faint and the final wipe all count; a Focus Sash save does not;
+   time fainted runs only while fainted, stops at a revive, closes at run end, freezes during pause;
+   Most faints picks the max and the lower slot on a tie; a landed status counts once per kind and is
+   credited to its inflicter; refresh / immune / blocked / window do not count; DoT damage sums the ticks
+   and the per-mon parts add up to the team total.
+ mutants (+5): count a Sash save as a faint; keep the fainted clock running after a revive; count a
+   refresh as inflicted; tie picks the higher slot; DoT damage credited to the field mon, not the inflicter.
+ smoke (smoke-pause-menu.js): seeded faints and statuses show; Drowsy at 0 is hidden; a tall seeded panel
+   scrolls with the wheel, the header stays put, it reopens at the top.
+
+DEBUG TOOLS FOR THE PANEL  [Approved]   js/core/debug.js, ?dev only, all English console output
+=====================================================================
+Why: under ?dev you play as a guest, whose save lives in memory only (db.js: guest saves are never stored).
+A reload forgets everything, and any debug call flags the run, which (D5) never sets a record. So a record
+can never be seen the natural way in a dev session. These tools seed and inspect instead.
+
+ G.Debug.runinfo(preset)        seed THIS run's counters so every Run Info row has something to show
+   'full'   every section filled, tall enough to SCROLL: kills, elites, splits for 3 gyms, faints spread over
+            the team (one Pokemon clearly "most"), every status kind landed, DoT, taken / healed, items,
+            shinies seen 2 caught 1, biggest hit, EVs. Per-Pokemon parts are seeded too (they must add up).
+   'empty'  a fresh run: Faints 0 with its sub-lines hidden, Statuses "None yet", no splits
+   'tie'    'full', but two Pokemon tie on Most faints (the lower slot must show)
+   no arg   logs the run's counters as a table (team totals and per Pokemon)
+   Flags the run (like every debug call). Opens nothing: pause to look.
+
+ G.Debug.regionbest(arg)        the region record on the current save (in memory for a guest)
+   no arg            logs this region's record, or "No record yet"
+   { loop, gyms, time }   sets it, e.g. { loop: 1, gyms: 3, time: 1120 } (seconds), plus its gym splits
+   'clear'           removes this region's record (the empty state)
+   'old'             removes the WHOLE save field, as an old save has it (tests the default path)
+
+ G.Debug.recordcheck(write)     runs the real end-of-run compare on THIS run, as if it ended now
+   no arg            dry run: logs "would be a new best" or "not better", and WHY (loop, gyms, then time),
+                     and that a normal run end would refuse it because the run is flagged. Writes nothing.
+   'write'           writes it anyway, so a following pause or run shows the new record  (T1, a dev bypass)
+
+ WHAT A ONE-SESSION TEST LOOKS LIKE (no reload, so the guest save keeps it)
+   1  dev.html?dev, start a run, G.Debug.runinfo('empty'), pause        -> "No record yet", "None yet"
+   2  G.Debug.runinfo('full'), pause                                    -> every row, panel scrolls,
+                                                                           header stays, reopens at top
+   3  G.Debug.runinfo('tie'), pause                                     -> Most faints = lower slot
+   4  G.Debug.regionbest({ loop: 1, gyms: 2, time: 900 }), pause        -> Region Best shows it,
+                                                                           "This run" ahead / behind
+   5  G.Debug.recordcheck()                 -> dry-run verdict and reason in the console
+   6  G.Debug.recordcheck('write'), End Run, new run, pause            -> the record carried over
+   7  G.Debug.regionbest('old'), pause                                  -> "No record yet", no error
+
+ DECISIONS
+   T1 recordcheck('write') writes a record from a flagged run. That bypasses D5's "flagged never sets a
+      record", but ONLY through this explicit dev call; a normal run end still refuses. <- rec (dry run
+      by default).  Alternative: no write at all, set records only with regionbest().
+   T2 names: runinfo / regionbest / recordcheck, lowercase like the other debug calls (evbank, runslots) <- rec
+
+ TESTS FOR THE TOOLS
+   smoke-pause-menu.js seeds through these same calls (so the tools are exercised every smoke run):
+     runinfo('empty') then 'full' then 'tie' checks as in the panel's smoke list above; regionbest({..})
+     shows the record; regionbest('clear') and ('old') show "No record yet" with no page error;
+     recordcheck() writes nothing; recordcheck('write') writes and a new run's pause shows it.
+   run-stats-harness.js: the compare that recordcheck calls is the same function the harness tests
+     (one compare, not a debug copy), checked by a harness line that both paths give the same verdict.
+   debug.js header comment: the three calls listed with the others.
+   Debug set for feel testing: the 7-step session above.

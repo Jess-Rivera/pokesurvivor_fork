@@ -12,18 +12,20 @@
 G.HudRunItemsPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
-  const { html, signal, PALETTE, SLOT_GRID, PixelShape, IconCanvas } = overlay.kit;
+  const { html, hooks, signal, PALETTE, SLOT_GRID, PixelShape, IconCanvas } = overlay.kit;
 
   // ---------- sizes and places (HUD-STYLE "Panel sizes at 1080p", run items) ----------
   const ART_PIXEL = 2,
     BOX = { artRows: 32, artWidth: 140, right: 24, bottom: 42 },
-    NAME = { gap: 2, height: 30 }, // the name line above the box, 30 px text
-    SLOT_GAP = 8, // between one slot's box and the next slot's name line
+    // the name inside the box's top band (#94, Jess 2026-11-11): from just inside the top rim down to the patch, left
+    // aligned over the patch and running across the band, squeezed sideways when it is wider
+    NAME = { artTop: 4, inset: 2 }, // art rows: the rim's first inside row; px: how far the name may reach into the slant
+    SLOT_GAP = 8, // between one slot's box and the next
     PATCH = { artTop: 13, artWidth: 22 }, // the white patch: from the box's flat middle down to its bottom edge
-    TEXT = { gap: 8, top: 8, bottom: 8, right: 20 }; // the text area right of the patch
+    TEXT = { gap: 8, bottom: 6, right: 20 }; // the text area right of the patch, from the patch's top down
   const BOX_WIDTH = BOX.artWidth * ART_PIXEL,
     BOX_HEIGHT = BOX.artRows * ART_PIXEL,
-    SLOT_PITCH = BOX_HEIGHT + NAME.gap + NAME.height + SLOT_GAP,
+    SLOT_PITCH = BOX_HEIGHT + SLOT_GAP,
     MIDDLE = (BOX.artRows - 1) / 2;
 
   // ---------- the run item box (b2-lower AD4 to AG5) ----------
@@ -99,6 +101,33 @@ G.HudRunItemsPanel = (() => {
       top: ((PATCH.artTop + 1 + BOX.artRows - 2) / 2) * ART_PIXEL - ICON_SIZE / 2 + 'px',
     },
     TEXT_LEFT = (PATCH_LEFT_INSET + PATCH.artWidth) * ART_PIXEL + TEXT.gap;
+  // The name band: its left edge lines up with the patch, kept clear of the slanted end at the band's top row.
+  const NAME_SIDE = Math.max(
+      (edgeOf(PATCH.artTop) + PATCH_LEFT_INSET) * ART_PIXEL,
+      (edgeOf(NAME.artTop) + PATCH_LEFT_INSET) * ART_PIXEL - NAME.inset
+    ),
+    NAME_PLACE = {
+      left: NAME_SIDE + 'px',
+      right: NAME_SIDE + 'px',
+      top: NAME.artTop * ART_PIXEL + 'px',
+      height: (PATCH.artTop - NAME.artTop) * ART_PIXEL + 'px',
+    },
+    NAME_ROOM = BOX_WIDTH - 2 * NAME_SIDE;
+
+  /** The item's name, squeezed sideways (held at its left edge) when it is wider than the band. */
+  function RunName({ text }) {
+    const ref = hooks.useRef(null);
+    hooks.useLayoutEffect(() => {
+      const element = ref.current;
+      if (!element) return;
+      element.style.transform = '';
+      const width = element.scrollWidth;
+      if (width > NAME_ROOM) element.style.transform = `scaleX(${NAME_ROOM / width})`;
+    });
+    return html`<div class="hud-text hud-run-name" style=${NAME_PLACE}>
+      <span ref=${ref}>${text}</span>
+    </div>`;
+  }
 
   // ---------- state the page shows (signals) ----------
   const visible = signal(false),
@@ -107,40 +136,31 @@ G.HudRunItemsPanel = (() => {
   // ---------- components ----------
   function RunItem({ slot, index }) {
     const bottom = BOX.bottom + index * SLOT_PITCH;
-    return html`${
+    return html`<div
+      class="hud-run-item"
+      style=${{ right: BOX.right + 'px', bottom: bottom + 'px', width: BOX_WIDTH + 'px', height: BOX_HEIGHT + 'px' }}
+    >
+      <${PixelShape} artWidth=${BOX.artWidth} artRows=${BOX.artRows} artPixel=${ART_PIXEL} paintRow=${paintRow} />
+      ${
         slot.id
-          ? html`<div
-              class="hud-text hud-text-30 hud-run-name"
-              style=${{ right: BOX.right + 'px', bottom: bottom + BOX_HEIGHT + NAME.gap + 'px', width: BOX_WIDTH + 'px' }}
-            >
-              ${slot.name}
-            </div>`
+          ? html`<${RunName} text=${slot.name} />
+              <div class="hud-run-icon" style=${ICON_PLACE}>
+                <${IconCanvas} icon=${slot.icon} size=${ICON_SIZE} />
+              </div>
+              <div
+                class=${'hud-text hud-run-text' + (slot.live ? ' is-live' : '')}
+                style=${{
+                  left: TEXT_LEFT + 'px',
+                  right: TEXT.right + 'px',
+                  top: PATCH.artTop * ART_PIXEL + 'px',
+                  bottom: TEXT.bottom + 'px',
+                }}
+              >
+                <span>${slot.text}</span>
+              </div>`
           : null
       }
-      <div
-        class="hud-run-item"
-        style=${{ right: BOX.right + 'px', bottom: bottom + 'px', width: BOX_WIDTH + 'px', height: BOX_HEIGHT + 'px' }}
-      >
-        <${PixelShape} artWidth=${BOX.artWidth} artRows=${BOX.artRows} artPixel=${ART_PIXEL} paintRow=${paintRow} />
-        ${
-          slot.id
-            ? html`<div class="hud-run-icon" style=${ICON_PLACE}>
-                  <${IconCanvas} icon=${slot.icon} size=${ICON_SIZE} />
-                </div>
-                <div
-                  class=${'hud-text hud-run-text' + (slot.live ? ' is-live' : '')}
-                  style=${{
-                    left: TEXT_LEFT + 'px',
-                    right: TEXT.right + 'px',
-                    top: TEXT.top + 'px',
-                    bottom: TEXT.bottom + 'px',
-                  }}
-                >
-                  <span>${slot.text}</span>
-                </div>`
-            : null
-        }
-      </div>`;
+    </div>`;
   }
 
   function RunItemsPanel() {

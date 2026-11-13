@@ -29,6 +29,10 @@
  *   hasStat(def), selfOnly(def)   part E: a Gate / Duration taker; the new-path buff test for the 2-buff limit (every effect on its own side)
  *   stepText(card), hintText(card), summary(store)   parts E and F: card text, its plain explanation (#84), and the team
  *                            sheet's "Run Cards" rows { id, label, family, stacks, total }
+ *   changes(o, id)           #83: what the team's cards changed on move `id`, one entry per field, from the real
+ *                            fold (caps and floors included): { path, text, from, to, capped }, "cd 1.2 s to 0.92 s"
+ *   takenBy(store, moveIds, teamSize)   #83: the pause menu's Cards Taken rows for one Pokemon
+ *                            { id, label, picks, tip }
  */
 G.TeamCards = (() => {
   const TAU = 6.2832,
@@ -581,6 +585,175 @@ G.TeamCards = (() => {
     );
   }
 
+  // ---- #83 (Jess, 2026-11-12): what the cards did to one move, and the cards that touch one Pokemon ----
+  const DEGREES = 180 / Math.PI;
+  const AILMENT_NAME = { toxic: 'bad poison' };
+  /** Seconds with at least one decimal: 6.0, 5.45, 0.92. */
+  const seconds = (value) => {
+    const rounded = Math.round(value * 100) / 100;
+    return Number.isInteger(rounded * 10) ? rounded.toFixed(1) : String(rounded);
+  };
+  /** A plain number: whole past 100, one decimal past 10, else two (trailing zeros dropped). */
+  const plain = (value) => {
+    const size = Math.abs(value);
+    return String(
+      size >= 100 ? Math.round(value) : size >= 10 ? Math.round(value * 10) / 10 : Math.round(value * 100) / 100
+    );
+  };
+  /** The words for a field a card changes: { label, unit, scale }. unit ' s' uses seconds(), '°' and '%' round. */
+  function fieldWords(cardId, key, holder, path) {
+    const arcGrowth = path.includes('grow') && holder.dim === 'radArc';
+    switch (key) {
+      case 'basePower':
+        return { label: 'power', unit: '', scale: 1 };
+      case 'cd':
+        return { label: 'cd', unit: ' s', scale: 1 };
+      case 'rehit':
+        return { label: 'tick', unit: ' s', scale: 1 };
+      case 'every':
+        return { label: 'every', unit: ' s', scale: 1 };
+      case 'delay':
+        return { label: 'delay', unit: ' s', scale: 1 };
+      case 'time':
+        return { label: cardId === 'reach' ? 'flight' : 'lasts', unit: ' s', scale: 1 };
+      case 'radRadius':
+        return { label: 'radius', unit: '', scale: 1 };
+      case 'radArc':
+        return { label: 'arc', unit: '°', scale: DEGREES };
+      case 'linLength':
+        return { label: 'length', unit: '', scale: 1 };
+      case 'linWidth':
+        return { label: 'width', unit: '', scale: 1 };
+      case 'orbitRadius':
+        return { label: 'orbit radius', unit: '', scale: 1 };
+      case 'growSpeed':
+        return arcGrowth
+          ? { label: 'arc growth', unit: '°/s', scale: DEGREES }
+          : { label: 'growth speed', unit: '', scale: 1 };
+      case 'max':
+        if (path.includes('grow'))
+          return arcGrowth
+            ? { label: 'max arc', unit: '°', scale: DEGREES }
+            : { label: 'max size', unit: '', scale: 1 };
+        return { label: 'shield max', unit: '', scale: 1 };
+      case 'count':
+        return { label: 'projectiles', unit: '', scale: 1 };
+      case 'pierce':
+        return { label: 'pierce', unit: '', scale: 1 };
+      case 'chainHops':
+        return { label: 'chain hops', unit: '', scale: 1 };
+      case 'range':
+        return { label: 'range', unit: '', scale: 1 };
+      case 'moveSpeed':
+        return { label: 'speed', unit: '', scale: 1 };
+      case 'angularSpeed':
+        return { label: 'spin', unit: '°/s', scale: DEGREES };
+      case 'distance':
+        return { label: 'knockback', unit: '', scale: 1 };
+      case 'chance':
+        return { label: AILMENT_NAME[holder.id] || holder.id || 'ailment', unit: '%', scale: 1 };
+      case 'fraction':
+        return { label: cardId === 'recoil' ? 'recoil' : 'heal', unit: '%', scale: 100 };
+      case 'amount':
+        return { label: 'shield', unit: '', scale: 1 };
+      default:
+        return { label: key, unit: '', scale: 1 };
+    }
+  }
+  const valueText = (value, words) => {
+    const shown = value * words.scale;
+    if (words.unit === ' s') return seconds(shown) + ' s';
+    if (words.unit === '°' || words.unit === '°/s') return Math.round(shown) + words.unit;
+    if (words.unit === '%') return Math.round(shown * 10) / 10 + '%';
+    return plain(shown);
+  };
+  /** Every object in a def mapped to its key path, so a field found on the frozen def is read on the folded copy. */
+  function pathsOf(root) {
+    const where = new Map();
+    (function walkPaths(value, path) {
+      if (!value || typeof value !== 'object' || where.has(value)) return;
+      where.set(value, path);
+      for (const key of Object.keys(value)) walkPaths(value[key], path.concat(key));
+    })(root, []);
+    return where;
+  }
+  const readPath = (root, path) => path.reduce((value, key) => (value == null ? value : value[key]), root);
+  /** What the owner's team cards changed on move `id`: one entry per field, the move's own value and the value combat
+   *  uses now (the same fold, so caps and floors are exact). Fields two cards share (All Damage Up and a type Damage
+   *  card on power) are one entry. capped: a cap, a floor or the card's pick limit stopped it. Empty when nothing
+   *  changed. */
+  function changes(o, id) {
+    const base = G.MoveDefs[id],
+      s = o && o.teamCards;
+    if (!base || !s || !s.n) return [];
+    const now = defOf(o, id);
+    if (now === base) return [];
+    const where = pathsOf(base),
+      seen = new Set(),
+      out = [];
+    for (const cardId of Object.keys(s.stacks).sort()) {
+      const c = BY_ID[cardId],
+        picks = s.stacks[cardId];
+      if (!c || !c.targets || !(picks > 0)) continue;
+      for (const [holder, key, , opt] of targets(c, base)) {
+        const holderPath = where.get(holder);
+        if (!holderPath) continue;
+        const path = holderPath.concat(key).join('.');
+        if (seen.has(path)) continue;
+        seen.add(path);
+        const from = holder[key],
+          to = readPath(now, holderPath.concat(key)),
+          words = fieldWords(cardId, key, holder, holderPath);
+        if (from && typeof from === 'object' && to && to.op === 'multiply') {
+          out.push({ path, from: 1, to: to.args[1], capped: false, text: words.label + ' x' + plain(to.args[1]) });
+          continue;
+        }
+        if (!num(from) || !num(to) || Math.abs(to - from) < EPS) continue;
+        // a max reached within 0.01 counts, the same slack presence() uses (2 pi lands a hair under TAU's 6.2832)
+        const capped =
+          (opt && opt.max != null && to >= opt.max - 0.01) ||
+          (opt && opt.floor != null && to <= from * opt.floor + EPS) ||
+          (!!c.cap && picks >= c.cap);
+        const text =
+          words.label + ' ' + valueText(from, words) + ' to ' + valueText(to, words) + (capped ? ' (max)' : '');
+        if (!out.some((entry) => entry.text === text)) out.push({ path, from, to, capped, text });
+      }
+    }
+    return out;
+  }
+  /** The Cards Taken rows for one Pokemon (Jess, 2026-11-12): the summary's cards and order, kept when they touch it.
+   *  A move card or type Damage card: one of its moves can take it. Stat Climb Speed and Stat Change Duration: one of
+   *  its moves changes a stat. Bench Regeneration: a team of 2 or more. Vitamins: always, by the vitamin's name. The
+   *  three team-only cards carry a tip with their real number, since no move shows it. */
+  function takenBy(s, moveIds, teamSize) {
+    const defs = (moveIds || []).map((moveId) => G.MoveDefs[moveId]).filter(Boolean);
+    const vitaminName = {};
+    for (const vitamin of STATS) vitaminName['vitamins:' + vitamin.id] = vitamin.label;
+    const out = [];
+    for (const row of summary(s)) {
+      const c = BY_ID[row.id];
+      let shown = false,
+        tip = null;
+      if (row.id.startsWith('vitamins:')) shown = true;
+      else if (row.id === 'regen') {
+        const perSecond = regen(s);
+        shown = teamSize >= 2;
+        const percent = Math.round(perSecond * 1000) / 10;
+        tip = 'Benched Pokemon regain ' + percent + '% of max HP per second (empty to full in ';
+        tip += Math.round(1 / perSecond) + ' s)';
+      } else if (row.id === 'gate') {
+        shown = defs.some(hasStat);
+        const gate = G.Stages.GATE * gateMul({ teamCards: s });
+        tip = 'Stat stage Gate ' + seconds(G.Stages.GATE) + ' s to ' + seconds(gate) + ' s';
+      } else if (row.id === 'duration') {
+        shown = defs.some(hasStat);
+        tip = 'Stat stage Duration ' + seconds(G.Stages.DURATION) + ' s to ' + seconds(durOf({ teamCards: s })) + ' s';
+      } else shown = !!c && !!c.targets && defs.some((d) => usable(c, d));
+      if (shown) out.push({ id: row.id, label: vitaminName[row.id] || row.label, picks: row.stacks, tip });
+    }
+    return out;
+  }
+
   return {
     CARDS,
     BY_ID,
@@ -603,6 +776,8 @@ G.TeamCards = (() => {
     stepText,
     hintText,
     summary,
+    changes,
+    takenBy,
     STAT_NAME,
     STATS,
   };

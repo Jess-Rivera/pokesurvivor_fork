@@ -25,10 +25,13 @@ below) never change, so saves and gym rosters keep working.
   "Can be taken N times per run". Recoil Reduction's line shows its real share of base recoil now and after the pick.
 - **DPS-Upgrades panel:** each card's name and pick count ("Attack Speed Up x3", Vitamins by name: "Protein x2"), #77.
 - **Team sheet run total** (Run Cards tab) is `totalText`: speed cards show their speed, Recoil Reduction its real cut,
-  other cards `picks × step`, and only Projectile Count and Pierce know about a cap. #83 makes it match the real effect.
+  other cards `picks × step`, and only Projectile Count and Pierce know about a cap. It keeps these totals until #92.
+- **Pause menu** (#83, Jess 2026-11-12): Cards Taken shows the pick counts of the cards that touch the shown Pokemon
+  (`takenBy`); each move's tooltip shows what the cards changed on it, read from the real fold (`changes`), so the gaps
+  below are exact there.
 - **cardLock:** a move can block a card's field (its `cardLock` list), so that card never touches that move.
 
-## Remaining gaps (for #83)
+## Remaining gaps (team sheet Run Cards totals only, until #92)
 
 | Card | Real effect | Team sheet total |
 |---|---|---|

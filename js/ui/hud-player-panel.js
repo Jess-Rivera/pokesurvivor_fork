@@ -12,7 +12,7 @@
 G.HudPlayerPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
-  const { html, signal, hooks, PALETTE, SLOT_GRID, PixelShape, createLifeBar, typeColours } = overlay.kit;
+  const { html, signal, hooks, PALETTE, SLOT_GRID, PixelShape, moveSlotRow, createLifeBar, typeColours } = overlay.kit;
   const { ItemSquare, Cursor, Chip, hasChip, createEffectChipReader } = overlay.kit;
   const { portraitSource, portraitFallback } = overlay.kit;
 
@@ -85,34 +85,10 @@ G.HudPlayerPanel = (() => {
   const placeRight = (x, y) => ({ right: -x + 'px', bottom: y + 'px' });
 
   // ---------- shapes ----------
-  /**
-   * The B2 move button's left end, row by row, at half the rip's height (b2-lower F15 to J16, measured 2026-11-10): a short
-   * 45 degree run down to a flat point (rows 6 to 8), then a steep run back, one pixel across per two rows.
-   */
-  const slotLeftEdge = (row) => (row <= 5 ? 6 - row : row <= 8 ? 0 : Math.ceil((row - 8) / 2));
-
-  /** The B2 move button: the left end above, and the right end the same profile turned 180 degrees. */
-  function slotRow(row, rim) {
-    const width = SLOT_ART_WIDTH,
-      rows = SLOT_ART_ROWS,
-      left = slotLeftEdge(row),
-      right = width - 1 - slotLeftEdge(rows - 1 - row);
-    if (row === 0 || row === rows - 1) return [[left, right - left + 1, PALETTE.outline]];
-    const inner = row === 1 || row === rows - 2 ? rim.dark : null;
-    const ends = [
-      [left, 1, PALETTE.outline],
-      [left + 1, 1, rim.light],
-      [left + 2, 1, rim.base],
-      [left + 3, 1, PALETTE.outline],
-      [right - 3, 1, PALETTE.outline],
-      [right - 2, 1, rim.base],
-      [right - 1, 1, rim.light],
-      [right, 1, PALETTE.outline],
-    ];
-    // the body: the B2 grid with its dark squares 50% larger (Jess, 2026-11-10); flat black for an empty slot
-    const body = [left + 4, right - 3 - (left + 4), inner || (rim === EMPTY_RIM ? PALETTE.body : SLOT_GRID)];
-    return [body, ...ends];
-  }
+  /** The B2 move button (the kit's moveSlotRow): the B2 grid with its dark squares 50% larger (Jess, 2026-11-10); flat
+   *  black for an empty slot. */
+  const slotRow = (row, rim) =>
+    moveSlotRow(row, SLOT_ART_WIDTH, SLOT_ART_ROWS, rim, rim === EMPTY_RIM ? PALETTE.body : SLOT_GRID);
 
   /** The B2 "FIGHT!" badge (b2-lower B12 to D12): pointed ends, an outline, a shade rim and a shade band at the bottom. */
   function promptRow(row, artWidth, fill, shade) {

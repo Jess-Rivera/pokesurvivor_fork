@@ -40,6 +40,9 @@
   width: 0;
   height: 0;
   overflow: hidden;
+  /* the shared grid patterns live here and the pause menu uses them: a pattern takes its visibility from where it is
+   * defined, so they stay visible when the pause menu hides the HUD layer (F2 fix, 2026-11-12). 0 x 0, paints nothing. */
+  visibility: visible;
 }
 .hud-pixels {
   display: block;
@@ -575,8 +578,65 @@
   top: 0;
 }
 .hud-roster-held,
-.hud-berry {
+.hud-berry-bag {
   position: absolute;
+}
+
+/* ---------- the tight 2x2 item grid (#90): the berry bag and the pause menu's Run Inventory ---------- */
+.hud-item-grid {
+  display: grid;
+}
+.hud-grid-slot {
+  position: relative;
+}
+.hud-grid-slot.is-locked {
+  opacity: 0.3;
+}
+
+/* ---------- the shared tooltip layer (js/ui/hud-overlay.js TooltipLayer; Jess, 2026-11-12: every hover tooltip is
+   the topmost layer). The layer is the stage's last child and sits above everything on it; nothing else on a stage
+   may use a z-index of 100 or more. ---------- */
+.hud-tip-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+/* the look every tooltip shares (Jess, 2026-11-11): the game's UI font (GameFont, more readable than the pixel HUD
+   font at this size), a yellow frame, the name in yellow */
+.hud-tip {
+  position: absolute;
+  font-family: var(--font);
+  background: #181818;
+  border: 2px solid #f3b200;
+  box-shadow: 0 0 0 2px #101010;
+  pointer-events: none;
+}
+.hud-tip-name {
+  color: #ffd23f;
+}
+/* an item: name and its effect, the effect 300 px wide */
+.hud-tip.is-item {
+  padding: 8px 12px;
+}
+.hud-tip.is-item .hud-tip-line {
+  margin-top: 6px;
+  width: 300px;
+  white-space: normal;
+}
+/* the pause menu's detail panel (moves, Run Stats, Cards Taken): 558 px (border-box) spans the gap between Run Info
+   (ends at x 665) and the detail panel (starts at 1255) with 16 px clear of each (Jess, 2026-11-12) */
+.hud-tip.is-detail {
+  width: 558px;
+  padding: 12px 14px;
+}
+.hud-tip.is-detail .hud-text {
+  white-space: normal;
+  line-height: 26px;
+}
+/* one line, no name (the stat hex's make-up) */
+.hud-tip.is-plain {
+  padding: 8px 10px;
 }
 
 /* ---------- run items (#63): pieces placed from the screen's bottom right ---------- */
@@ -603,7 +663,18 @@
   height: 32px;
   image-rendering: pixelated;
 }
+/* the name inside the box's top band (#94): left aligned, squeezed sideways from its left edge when wider */
+.hud-run-name {
+  display: flex;
+  align-items: center;
+  overflow: visible;
+}
+.hud-run-name span {
+  display: inline-block;
+  transform-origin: 0 50%;
+}
 .hud-run-text {
+  line-height: 16px; /* two lines fit beside the patch under the name band */
   display: flex;
   align-items: center;
   white-space: normal;
@@ -842,4 +913,26 @@
 }
 .hud-dps-card-count {
   color: #8cfff7; /* Secondary text */
+}
+
+/* ---------- the shared scroll box (kit ScrollBox, #91-2): the page's bar hidden, a thin 8 px bar drawn beside it ---------- */
+.hud-scroll-box {
+  position: absolute;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.hud-scroll-box::-webkit-scrollbar {
+  display: none;
+}
+.hud-scroll-track {
+  position: absolute;
+  width: 8px;
+}
+.hud-scroll-thumb {
+  position: absolute;
+  left: -2px;
+  width: 8px;
+  border: 2px solid;
+  cursor: grab; /* the thumb can be dragged (#91-2 DD1) */
+  touch-action: none;
 }

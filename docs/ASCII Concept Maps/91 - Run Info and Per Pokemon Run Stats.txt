@@ -1,0 +1,107 @@
+#91: RUN INFO PANEL + PER POKEMON RUN STATS (2026-11-12, Quick)  [Proposed]
+=========================================================================
+Spec: docs/PAUSE-MENU.md sections 4 (Run Stats box) and 6 (Run Info). Issue body not readable from here
+(GitHub API empty), so this plan works from the spec. Local only: co-op keeps the old pause screen (deferred).
+
+WHAT EACH ROW READS  (have = already tracked, NEW = this slice adds it)
+-------------------------------------------------------------------------
+ RUN INFO (left panel, the DPS panel's look: Michroma, same frame/divider style, no sparkline,
+           not tied to the DPS panel's opacity or on/off)
+ +--------------------------------------------------------------------------+
+ | RUN          Run time ........ have  game time                            |
+ |              Loop ............ have  G.Gym.loop (dev-set until a counter) |
+ |              Badges .......... have  G.Gym.badges (this run)              |
+ |              Kills ........... have  team kills                           |
+ |              Elites .......... NEW   elite kills only (bosses mixes gyms) |
+ | LOOT         Coins ........... have  coins picked up        (D2)          |
+ |              Silver .......... have  G.Silver               (D2)          |
+ |              Items ........... NEW   pickups counted        (D4)          |
+ |              Shinies ......... NEW   seen; caught = have    (D3)          |
+ | BEST         Biggest hit ..... NEW   team max single hit + who dealt it   |
+ | EVS          HP..Spe ......... have  run EV banks, as whole EVs (D6)      |
+ | REGION BEST  Furthest + time . NEW   save field, per region (D5)          |
+ +--------------------------------------------------------------------------+
+
+ RUN STATS box (detail panel, left column, already an empty titled box)
+   Kills .......... NEW  per Pokemon (D1)
+   Time on field .. have DPS record's per-second "who ended it", m:ss
+   Damage dealt ... have DPS record's per-member damage, summed
+   Best hit ....... NEW  per Pokemon max single hit
+   Fainted ........ NEW  per Pokemon faint count (bench DoT faints count too)
+
+DATA FLOW
+-------------------------------------------------------------------------
+ startRun ---> G.RunStats.create() ---> runTeam.runStats   (run only, never saved)
+ hit lands --> Player.onDealt ------> best hit (member + team)     [beside the DPS record]
+ enemy dies -> payKill (enemy.js) --> member kill (D1), elite count
+ faint ------> Player hurt faint path (run team only, not leaders) -> faint count
+ spawn ------> spawner shiny roll ---> shinies seen
+ pickup -----> game.js onCollect ----> items (D4)
+ run ends ---> endRun ---------------> region record check (D5) -> save
+ pause open -> Run Info + Run Stats read once (like the rest of the menu), never per frame
+
+FILES
+-------------------------------------------------------------------------
+ NEW js/systems/run-stats.js   G.RunStats: the run's counters and the region-record compare. Pure, like
+                               dps-history.js, so node harnesses can test it.
+ NEW js/ui/pause-run-info.js   the Run Info panel, mounted by pause-menu.js like pause-pokemon.js
+     (both new files: added to dev.html's script list AND main.js NEED; hard reload needed)
+ js/game.js            startRun creates the record; onCollect counts items; endRun writes the region record
+ js/entities/enemy.js  payKill: member kill credit and the elite count
+ js/entities/player.js onDealt: best hit; faint path: faint count; (D1a) the hit marks who hit the enemy last
+ js/systems/spawner.js the shiny roll counts a shiny seen
+ js/core/db.js         new save field stats.regionBest = {} for new saves; old saves lack it, so every read
+                       null-checks and defaults (no wipe, no clear needed)
+ js/ui/pause-menu.js   mounts the Run Info panel in its empty frame
+ js/ui/pause-pokemon.js the Run Stats box gets its five rows
+ css/pause-menu.css    Run Info rows in the DPS panel style
+ docs/PAUSE-MENU.md    section 6 cleaned up (its contents sentence is run together) + the D answers
+ js/data/changelog.js  new: Run Info and per-Pokemon run stats in the pause menu
+ NOTE: I have not found where a hit hands damage to Player.onDealt yet (not enemy.js or combat.js);
+       D1a's "last hit by" mark goes in that same spot. I find it before building, not after.
+
+DECISIONS FOR JESS  (D1, D5 change how things are counted or saved: flagged as rules)
+-------------------------------------------------------------------------
+ D1 per-Pokemon kill credit  RULE
+    (a) the Pokemon whose hit finished it  <- rec. Matches the damage rule: a move still in flight after
+        a swap credits its caster. Needs a new "last hit by" mark on enemies.
+    (b) whoever is on the field when it dies. Simpler, but a swap mid-flight gives the newcomer the kill.
+    Either way the TEAM kill count is unchanged.
+ D2 "coins" row: (a) coins picked up AND Silver, two rows <- rec  (b) coins only  (c) the end-of-run payout
+ D3 shinies: (a) "seen" = shiny enemies that spawned, with "caught" beside it <- rec  (b) caught only
+ D4 items: (a) item pickups that offer a choice, plus berries, plus ground items <- rec
+           (b) only held and run items
+ D5 region record  RULE + NEW SAVE FIELD
+    Stored per region. Checked when a run ends (faint or End Run). Better = higher loop, then more gyms
+    beaten, then faster time on a tie (spec). Runs flagged by the debug tools (the same flag that keeps a run
+    off the ranking) never set a record <- rec. Today the Elite Four does not exist and loop is dev-only, so a
+    real run's record is "gyms beaten + time" until those land. Shown as "No record yet" on an empty region.
+ D6 EVs shown as: (a) whole EVs (what allocation gives; fractions dropped) <- rec  (b) one decimal
+
+TESTS
+-------------------------------------------------------------------------
+ NEW docs/proposals/run-stats-harness.js
+   Checks: a fresh record is all zero; a kill credits the D1 member and the team count matches; elites count
+   apart from wild and gym kills; best hit is a MAX, not a sum (member and team, and "who" follows it); a faint
+   counts once, bench DoT faints count, a revive (Re-Do, badge) keeps the count; shiny seen counts once per
+   spawn; items count per D4 kinds; region record: higher loop wins, then gyms, tie goes to the FASTER time,
+   a debug-flagged run never writes, an old save without the field reads "no record" and writes cleanly.
+   Why: all new logic; dps-history-harness covers only damage and time on field.
+ NEW docs/proposals/run-stats-mutate.js  (about 9 mutants, each must make the harness FAIL)
+   tie keeps the slower time; best hit sums instead of max; kill credited to the on-field member (if D1a);
+   elites read from the bosses count; a debug-flagged run writes the record; the old-save default removed;
+   a faint counted twice; loop compare reversed; shiny counted on catch instead of spawn.
+ Changed smoke tools/smoke-pause-menu.js
+   Run Info shows every row with seeded numbers; the Run Stats box shows the shown Pokemon's five numbers and
+   changes with prev/next and a team card click; a seeded region record shows; an empty one says
+   "No record yet".
+ check.js: registers the new harness only if it lists harnesses by name (I check at build).
+ Intent scenarios: none (no moves). Debug sets: none.
+ STALE scan after build: existing mutants may target payKill (enemy.js), onDealt and the faint block
+   (player.js), onCollect and endRun (game.js). I re-check every *-mutate.js pattern against those edits.
+
+FEEL TEST (about a minute, dev.html?dev, hard reload)
+-------------------------------------------------------------------------
+ Play ~2 min with a swap or two, pause: Run Info rows fill; Run Stats differ per Pokemon and the two members'
+ damage adds up to roughly the team's; let one faint and see Fainted 1; End Run, start again, pause:
+ Region Best shows the last run.

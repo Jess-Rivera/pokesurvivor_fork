@@ -66,13 +66,13 @@ async function main() {
     await page.keyboard.down('Escape');
     await sleep(80);
     await page.keyboard.up('Escape');
-    await sleep(150);
+    await sleep(900); // the Poke Ball menu's opening or closing (#88, about 0.7 s) has finished
   };
   const look = () =>
     page.evaluate(() => ({
       state: G.Game.state,
       time: G.Log.t,
-      menu: G.UI.isOpen('scr-pause'),
+      menu: G.PauseMenu.isOpen(), // the solo pause menu (#88; scr-pause is co-op only now)
       anyScreen: [...document.querySelectorAll('.scr')].some((s) => !s.classList.contains('hidden')),
     }));
   const clockMoves = async () => {

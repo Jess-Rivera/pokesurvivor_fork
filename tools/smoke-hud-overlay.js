@@ -821,7 +821,8 @@ async function playerPanel(browser) {
 /** #63: the roster rows, held items, benched chips and berry bag (lower left), and the run item column (lower right). */
 const rosterState = (page) =>
   page.evaluate(() => {
-    const rows = [...document.querySelectorAll('.hud-roster-row')].map((row) => {
+    // the run screen's rows only (the pause menu's team cards reuse the row, #89)
+    const rows = [...document.querySelectorAll('.hud-roster-row:not(.pm-team-card)')].map((row) => {
       const rect = row.getBoundingClientRect();
       return {
         name: row.querySelector('.hud-roster-name').textContent.trim(),
@@ -837,12 +838,13 @@ const rosterState = (page) =>
       };
     });
     const held = [...document.querySelectorAll('.hud-roster-held')].map((square) => square.getBoundingClientRect());
-    const berries = [...document.querySelectorAll('.hud-berry')].length;
-    const berryNames = [...document.querySelectorAll('.hud-berry-name')].map((name) => name.textContent.trim());
+    const berries = [...document.querySelectorAll('.hud-berry-bag .hud-grid-slot')].length;
+    // the berry bag shows no names since #90, only the icons
+    const berryFilled = document.querySelectorAll('.hud-berry-bag .hud-grid-slot.is-filled').length;
     const runBoxes = [...document.querySelectorAll('.hud-run-item')].map((box) => box.getBoundingClientRect());
     const runNames = [...document.querySelectorAll('.hud-run-name')].map((name) => name.textContent.trim());
     const runIcons = document.querySelectorAll('.hud-run-icon canvas').length;
-    return { rows, held, berries, berryNames, runBoxes, runNames, runIcons };
+    return { rows, held, berries, berryFilled, runBoxes, runNames, runIcons };
   });
 
 async function rosterPanel(browser) {
@@ -936,11 +938,11 @@ async function rosterPanel(browser) {
   await page.waitForTimeout(100);
   state = await rosterState(page);
   ok(
-    state.berries === 3 && state.berryNames.join(',') === 'Cheri Berry',
-    'roster: 3 berry slots for 3 purchased; the stored Cheri Berry shows its name (' +
+    state.berries === 3 && state.berryFilled === 1,
+    'roster: 3 berry slots for 3 purchased; the stored Cheri Berry fills one (' +
       state.berries +
       ', ' +
-      state.berryNames.join(',') +
+      state.berryFilled +
       ')'
   );
 
@@ -961,6 +963,18 @@ async function rosterPanel(browser) {
     lowestRun && lowestRun.right === 1920 - 24 && lowestRun.bottom === 1080 - 42 && lowestRun.width === 280,
     'run items: slot 1 is the lowest box, 280 px wide, 24 px from the right and 42 px from the bottom'
   );
+  // #94: the name sits inside its card, in the top band above the icon's patch
+  const nameInCard = await page.evaluate(() => {
+    const card = document.querySelector('.hud-run-item'),
+      box = card.getBoundingClientRect(),
+      name = card.querySelector('.hud-run-name span'),
+      icon = card.querySelector('.hud-run-icon');
+    if (!name || !icon) return null;
+    const r = name.getBoundingClientRect(),
+      iconBox = icon.getBoundingClientRect();
+    return r.left >= box.left && r.right <= box.right && r.top >= box.top && r.bottom <= iconBox.top;
+  });
+  ok(nameInCard === true, 'run items: the name is inside its card, above the icon (' + nameInCard + ')');
 
   // a team of one shows no roster; the berry bag drops to the corner
   await page.evaluate(() => {

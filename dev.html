@@ -97,6 +97,7 @@
     <link rel="stylesheet" href="css/bw-upgrades.css" />
     <link rel="stylesheet" href="css/bw-settings.css" />
     <link rel="stylesheet" href="css/hud-overlay.css" />
+    <link rel="stylesheet" href="css/pause-menu.css" />
   </head>
   <body>
     <canvas id="game"></canvas>
@@ -852,18 +853,6 @@
       </div>
     </section>
 
-    <!-- pokebox step 5: end-of-run EV allocation (js/ui/run-ui.js showEvs) -->
-    <section id="scr-evs" class="scr dim hidden">
-      <div class="box center" style="width: min(760px, 100%)">
-        <h2>Train your team</h2>
-        <p id="evs-sub" class="sub"></p>
-        <div id="evs-grid"></div>
-        <div class="row" style="justify-content: center">
-          <button id="evs-done" class="btn gold">Done</button>
-        </div>
-      </div>
-    </section>
-
     <!-- datos generados -->
     <!-- scripts:begin -->
     <script defer src="js/core/util.js"></script>
@@ -960,6 +949,7 @@
     <script defer src="js/data/move-resolver.js"></script>
     <script defer src="js/systems/team-cards.js"></script>
     <script defer src="js/systems/dps-history.js"></script>
+    <script defer src="js/systems/run-stats.js"></script>
     <script defer src="js/systems/move-geom.js"></script>
     <script defer src="js/systems/move-sim.js"></script>
     <script defer src="js/systems/move-effects.js"></script>
@@ -986,6 +976,12 @@
     <script defer src="js/ui/hud-run-items-panel.js"></script>
     <script defer src="js/ui/hud-map-panel.js"></script>
     <script defer src="js/ui/hud-dps-panel.js"></script>
+    <script defer src="js/ui/pause-inventory.js"></script>
+    <script defer src="js/ui/pause-pokemon.js"></script>
+    <script defer src="js/ui/pause-run-info.js"></script>
+    <script defer src="js/ui/pause-menu.js"></script>
+    <script defer src="js/ui/end-run.js"></script>
+    <script defer src="js/ui/ev-screen.js"></script>
     <script defer src="js/ui/confetti.js"></script>
     <script defer src="js/ui/gym-present.js"></script>
     <script defer src="js/ui/login.js"></script>

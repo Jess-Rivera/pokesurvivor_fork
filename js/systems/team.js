@@ -1,7 +1,7 @@
 /* ============ team.js: a team of fighters (G.Team, entity model slice 2) ============
  *
  * Who is on the field, the 5 s team swap lock, the swap and faint rules, bench ticking, and the stores every member shares
- * (team stages, team cards, run items, dodge charges, the berry bag, the unspent links). Plan: docs/proposals/host-model-plan.md
+ * (team stages, team cards, run items, dodge charges, the berry bag, the unspent links, the Temporary Pocket). Plan: docs/proposals/host-model-plan.md
  * slice 2. Pure rules: no sound, camera, text or input here. game.js shows the effects and passes in the run-progress carry, so a
  * GymLeader can own a Team later (slice 7) with its own carry.
  *
@@ -9,7 +9,9 @@
  */
 G.Team = (() => {
   const SWAP_LOCK = 5, // s before another manual swap
-    SWAP_IFRAME = 0.5; // s of invulnerability for the member coming in
+    SWAP_IFRAME = 0.5, // s of invulnerability for the member coming in
+    POCKET_SLOTS = 4, // the Temporary Pocket's slots (#90)
+    NO_SASH_SAVE = -999; // Player.sashT with no Focus Sash save yet
 
   class Team {
     /**
@@ -42,6 +44,96 @@ G.Team = (() => {
         f.berries = this.berries;
         f.team = this;
       }
+      // The Temporary Pocket (#90, PAUSE-MENU section 3): items set aside in the pause menu, by slot. Each entry is
+      // { kind: 'held', id, sashT } (a held item; the Focus Sash cooldown travels with it), { kind: 'berry', id },
+      // { kind: 'run', id } (a run item), or null. Run only, never saved.
+      this.pocket = new Array(POCKET_SLOTS).fill(null);
+    }
+
+    // ---------- berries and run items between their stores and the Temporary Pocket ----------
+    /** The shared store for a pocket kind: the berry bag or the run items (a compact list, slot order). */
+    storeOf(kind) {
+      return kind === 'berry' ? this.berries : kind === 'run' ? this.runItems : null;
+    }
+    /** A run item's effect on or off for every member (berries have no standing effect). */
+    turnStoreItem(kind, id, on) {
+      if (kind !== 'run') return;
+      const def = G.Items.BY[id];
+      if (!def) return;
+      for (const member of this.members) def[on ? 'on' : 'off'](member);
+    }
+    /** May `id` join the store of `kind`, taking the place of the item at `replacingIndex` (or none, -1)? No copy of the
+     *  same item, and for run items only one of a group (the Stones) at once. */
+    storeAccepts(kind, id, replacingIndex = -1) {
+      const others = this.storeOf(kind).filter((other, index) => index !== replacingIndex);
+      if (others.includes(id)) return false;
+      const group = kind === 'run' && G.Items.BY[id] && G.Items.BY[id].group;
+      return !group || !others.some((other) => G.Items.BY[other] && G.Items.BY[other].group === group);
+    }
+    /** Store item `storeIndex` of `kind` into pocket slot `pocketIndex`. An empty pocket slot takes it (the store closes
+     *  the gap); one holding the same kind swaps with it in place. True when something moved. */
+    storeToPocket(kind, storeIndex, pocketIndex) {
+      const store = this.storeOf(kind);
+      if (!store || pocketIndex < 0 || pocketIndex >= POCKET_SLOTS) return false;
+      const id = store[storeIndex],
+        incoming = this.pocket[pocketIndex];
+      if (!id) return false;
+      if (incoming) {
+        if (incoming.kind !== kind || !this.storeAccepts(kind, incoming.id, storeIndex)) return false;
+        this.turnStoreItem(kind, id, false);
+        this.turnStoreItem(kind, incoming.id, true);
+        store[storeIndex] = incoming.id;
+      } else {
+        this.turnStoreItem(kind, id, false);
+        store.splice(storeIndex, 1);
+      }
+      this.pocket[pocketIndex] = { kind, id };
+      return true;
+    }
+    /** Pocket slot `pocketIndex` into store slot `storeIndex` of `kind` (`slotCount` bought). A filled store slot swaps;
+     *  an empty bought one takes it at the end of the list. True when something moved. */
+    pocketToStore(kind, pocketIndex, storeIndex, slotCount) {
+      const store = this.storeOf(kind),
+        incoming = this.pocket[pocketIndex];
+      if (!store || !incoming || incoming.kind !== kind || storeIndex < 0 || storeIndex >= slotCount) return false;
+      if (store[storeIndex]) return this.storeToPocket(kind, storeIndex, pocketIndex);
+      if (store.length >= slotCount || !this.storeAccepts(kind, incoming.id)) return false;
+      this.turnStoreItem(kind, incoming.id, true);
+      store.push(incoming.id);
+      this.pocket[pocketIndex] = null;
+      return true;
+    }
+
+    // ---------- held items between members and the Temporary Pocket (the pause menu's moves) ----------
+    /** How many items the Temporary Pocket holds. */
+    pocketCount() {
+      return this.pocket.filter(Boolean).length;
+    }
+    /** Swap `member`'s held item with pocket slot `index` (either side may be empty, not both). Each item goes through
+     *  the Player's equip, so its on / off effects stay exact. True when something moved. */
+    swapWithPocket(member, index) {
+      if (!member || index < 0 || index >= POCKET_SLOTS) return false;
+      const incoming = this.pocket[index];
+      if (incoming && incoming.kind !== 'held') return false; // berries and run items never go on a Pokemon
+      if (!incoming && !member.item) return false;
+      const outgoing = member.item ? { kind: 'held', id: member.item, sashT: member.sashT } : null;
+      member.equip(incoming ? incoming.id : null);
+      member.sashT = incoming ? incoming.sashT : NO_SASH_SAVE;
+      this.pocket[index] = outgoing;
+      return true;
+    }
+    /** Swap two pocket slots (a move into an empty one). True when something moved. */
+    swapPocketSlots(fromIndex, toIndex) {
+      const pocket = this.pocket;
+      if (fromIndex === toIndex || !pocket[fromIndex] || toIndex < 0 || toIndex >= POCKET_SLOTS) return false;
+      [pocket[fromIndex], pocket[toIndex]] = [pocket[toIndex], pocket[fromIndex]];
+      return true;
+    }
+    /** Destroy everything in the Temporary Pocket; returns how many items were lost. */
+    emptyPocket() {
+      const lost = this.pocketCount();
+      this.pocket.fill(null);
+      return lost;
     }
 
     /** The member on the field. */
@@ -147,6 +239,7 @@ G.Team = (() => {
     Team,
     SWAP_LOCK,
     SWAP_IFRAME,
+    POCKET_SLOTS,
     create: (members, carry) => new Team(members, carry),
   };
 })();
