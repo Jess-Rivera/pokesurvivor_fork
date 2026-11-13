@@ -177,7 +177,8 @@ All three screens use the pause menu's pixel style on the 1920 x 1080 stage. Co-
 - [Approved] End Run screen (#103): the title "EXPEDITION OVER" (death or quit) and two buttons. "Run Review" opens
   the Run Review. The second reads "Learn from the Loss" when the run has whole EVs to give (opens the EV screen) and
   "Return Home" when it has none. Nothing else: the old results card is gone, since Run Info already shows coins,
-  Silver, shinies seen and caught and the rest. The Ko-fi ask is dropped.
+  Silver, shinies seen and caught and the rest. The Ko-fi ask is dropped. Poke Balls and
+  Master Balls earned show on no end of run or in-run screen (they still go to the save).
 - [Approved] A run ended by quitting (End Run in the pause menu) gives no EVs, so it always shows "Return Home".
   Code differs until #103 (a quit gives EVs).
 - [Approved] Run Review (#92): the pause menu reopened read-only: Run Info, detail and team panels where the pause
