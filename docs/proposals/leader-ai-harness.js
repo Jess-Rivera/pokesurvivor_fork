@@ -2639,81 +2639,89 @@ if (G.LeaderPlanner) {
       ok(JSON.stringify(t1) === JSON.stringify(t2), '16e: one seed, one trace (' + t1.length + ' samples)');
       ok(!/gapClose|decide|triggers|swapMargin/.test(Object.getOwnPropertyNames(AI.prototype).filter((k) => ['gapClose', 'decide', 'triggers', 'swapMargin'].includes(k)).join()), '16e: the old swap choice and the gap-closing dodge are gone');
       ok(['stay', 'margin', 'ccLeft', 'ccScore', 'lowHp', 'lowTo', 'lowScore', 'matchupX', 'matchupHp', 'gapClose'].every((k) => !(k in AI.BASE)) && AI.BASE.swapWill === 1, '16e: their settings are gone; swapWill 1 is the baseline');
-      // ---- 16f. 39a (#39): the personalities as planner inputs and outputs (decision
-      // 2026-11-14-39-planner-checks-replace-duels). Each check hands the planner a section 15 world with a leader's authored
-      // tables, and the expected pick and numbers are worked out by hand from section 15's own. No fights: how the two read in
-      // play is Jess's feel test.
-      const brockAI = testLeaders.real(() => K[gymIdx('Brock')].ai),
-        mistyAI = testLeaders.real(() => K[gymIdx('Misty')].ai),
-        scores = (choice) => choice.ranking.map((c) => c.goal + ' ' + c.score.toFixed(4)).join(', ');
-      // 16f-a. Brock on 15b's world (the default: Pressure 0.251 over Endurance 0.1981). His weights make Endurance
-      // 0.1 x 1.4 + 0.0981 = 0.2381 and Pressure 0.12 x 0.7 + 0.131 = 0.215. His tag multipliers (retreat, buff) touch neither
-      // plan (close, then use), so Endurance wins.
-      const brockPick = P.choose(
-        Object.assign(world(), { goalWeights: brockAI.goalWeights, tagMultipliers: brockAI.tagMultipliers })
-      );
-      ok(
-        brockPick.pick.goal === 'endurance' &&
-          near(of(brockPick, 'endurance').score, 0.2381) &&
-          near(of(brockPick, 'pressure').score, 0.215),
-        "16f-a: on 15b's world Brock picks Endurance 0.2381 over Pressure 0.215: " + scores(brockPick)
-      );
-      // 16f-b. Misty's goal weights on 15e's world (the default: Endurance 0.141, Kite 0.1275, Pressure 0.105). No tag
-      // multipliers, so every plan's cost stays; only values scale. Kite 0.1 x 1.5 + 0.0275 = 0.1775, Pressure
-      // 0.12 x 1.3 - 0.015 = 0.141, Endurance 0.1 x 0.7 + 0.041 = 0.111: Kite wins.
-      const mistyPick = P.choose(Object.assign(D(), { goalWeights: mistyAI.goalWeights }));
-      ok(
-        mistyPick.pick.goal === 'kite' &&
-          near(of(mistyPick, 'kite').score, 0.1775) &&
-          near(of(mistyPick, 'pressure').score, 0.141) &&
-          near(of(mistyPick, 'endurance').score, 0.111),
-        "16f-b: on 15e's world Misty picks Kite 0.1775 (Pressure 0.141, Endurance 0.111): " + scores(mistyPick)
-      );
-      // 16f-c. A tag multiplier scales a step's whole cost. 15b's Pressure plan (close: approach; use: attack) costs -0.131;
-      // both tags at 2 make it -0.262; Brock's multipliers (retreat, buff) leave it at -0.131.
-      const pressureSteps = of(P.choose(world()), 'pressure').steps,
-        pressureCost = (tagMultipliers) => P.costOf(Object.assign(world(), { tagMultipliers }), 'pressure', pressureSteps),
-        costs = [pressureCost(undefined), pressureCost({ approach: 2, attack: 2 }), pressureCost(brockAI.tagMultipliers)];
-      ok(
-        near(costs[0], -0.131) && near(costs[1], -0.262) && near(costs[2], -0.131),
-        '16f-c: tag multipliers scale the cost: -0.131, x2 -0.262, Brock -0.131: ' + costs.map((x) => x.toFixed(4)).join(', ')
-      );
-      // 16f-d. `range` decides what counts as at range (TUNE.rangeBand, 20 px either side). One Use slot 1 step from 150 px
-      // off (your gun reaches 300): at a range of 150 that hit is at range (|150 - 150| = 0), at the default 220 it is not
-      // (|150 - 220| = 70). Fixed 2026-11-14: the first version read Maintain's chosen plan, but the planner keeps each goal's
-      // best scoring plan, and a longer plan with two hits beats one hit, so the chosen plan was the wrong output to read.
-      const hitAtRange = (preferredRange) => {
-        const shotWorld = world({ moves: [gun()], top: { distance: 150, preferredRange } });
-        return P.apply(shotWorld, P.startState(shotWorld), { verb: 'use', slot: 0 }).step.effect.atRange;
-      };
-      ok(
-        hitAtRange(150) === true && hitAtRange(AI.BASE.range) === false,
-        '16f-d: a hit from 150 px is at range for range 150, not for 220: ' + hitAtRange(150) + ' vs ' + hitAtRange(AI.BASE.range)
-      );
-      // 16f-e. Buff against a physical shot (a jab, a Defense buff worth 0.2, your whip in reach): Brock's Buff weight 1.5 raises
-      // its value and his buff multiplier 0.8 lowers its cost (taken while you whip him is above 0), so its score goes up.
-      const defenseBuff = move({ id: 'defense-curl', form: 'buff', tag: 'buff', reach: 0, hitFraction: 0, tell: 0, cooldown: 0, buffReady: true, buffValue: 0.2 }),
+      // ---- 16f. 39a (#39): the personality settings, checked as relations (decision 2026-11-14-tests-check-relations-not-values).
+      // No expected number is written here and no check reads Brock's or Misty's tuning: each compares two outputs of the
+      // planner or the settings, on section 15's made-up worlds. How the two leaders read in play is Jess's feel test.
+      const rankOf = (choice, goal) => choice.ranking.findIndex((c) => c.goal === goal),
+        defenseBuff = move({ id: 'defense-curl', form: 'buff', tag: 'buff', reach: 0, hitFraction: 0, tell: 0, cooldown: 0, buffReady: true, buffValue: 0.2 }),
         physical = { bestReach: 120, bestHit: 0.2, threats: [{ id: 'whip', category: 'physical', hitFraction: 0.2, reach: 120, cycle: 1, nextFireIn: 0 }] },
-        buffWorld = (top) => world({ moves: [jab(), defenseBuff], you: physical, top }),
-        plainBuff = of(P.choose(buffWorld({})), 'buff'),
-        brockBuff = of(P.choose(buffWorld({ goalWeights: brockAI.goalWeights, tagMultipliers: brockAI.tagMultipliers })), 'buff');
-      ok(
-        !!plainBuff && !!brockBuff && brockBuff.score > plainBuff.score,
-        "16f-e: against a physical shot Brock's Buff scores higher: " +
-          (brockBuff && brockBuff.score.toFixed(4)) + ' vs ' + (plainBuff && plainBuff.score.toFixed(4))
-      );
-      // 16f-f. Reflex from intelligence (the #53 curves, two lines meeting at 0.5). Brock 0.4 + 0.08 a loop: 0.18 s at loop 1,
-      // 0.132 s at loop 6 (0.8). Misty 0.6 + 0.08: 0.144 s and 0.12 s (1.0). A test leader reads 0.15 s at both.
-      const reflexOf = (name, loop) => AI.settings(Object.assign({}, K[gymIdx(name)], { loop })).reflex,
-        fourReflexes = () => [reflexOf('Brock', 1), reflexOf('Brock', 6), reflexOf('Misty', 1), reflexOf('Misty', 6)],
-        shippedReflex = testLeaders.real(fourReflexes),
-        testReflex = fourReflexes();
-      ok(
-        [0.18, 0.132, 0.144, 0.12].every((want, i) => near(shippedReflex[i], want)) && testReflex.every((r) => near(r, 0.15)),
-        '16f-f: reflex Brock 0.18 / 0.132 s, Misty 0.144 / 0.12 s (loops 1 / 6), test leaders 0.15 s: ' +
-          JSON.stringify({ shipped: shippedReflex, test: testReflex })
-      );
-      // 16f-g. The wiring (gyms.js, then the settings, then Belief's snapshot): the shipped tables and range arrive as
+        WORLDS = [
+          ['15b', () => world()],
+          ['15e', () => D()],
+          ['a buff against a physical shot', () => world({ moves: [jab(), defenseBuff], you: physical })],
+        ];
+      // 16f-a. A goal weight of 2 raises its own goal by at least that goal's value at weight 1 (its old best plan is worth
+      // twice as much, at the same cost), never drops its rank, and leaves every other goal's score where it was.
+      const weightProblems = [];
+      for (const [label, make] of WORLDS) {
+        const base = P.choose(make());
+        for (const entry of base.ranking) {
+          const raised = P.choose(Object.assign(make(), { goalWeights: { [entry.goal]: 2 } })),
+            up = of(raised, entry.goal);
+          if (!up || up.score < entry.score + entry.value - 1e-9 || rankOf(raised, entry.goal) > rankOf(base, entry.goal))
+            weightProblems.push(label + ', ' + entry.goal + ': ' + entry.score.toFixed(4) + ' rank ' + rankOf(base, entry.goal) +
+              ' became ' + (up ? up.score.toFixed(4) + ' rank ' + rankOf(raised, entry.goal) : 'no plan'));
+          for (const other of base.ranking)
+            if (other.goal !== entry.goal && !(of(raised, other.goal) && near(of(raised, other.goal).score, other.score)))
+              weightProblems.push(label + ', a weight on ' + entry.goal + ' moved ' + other.goal);
+        }
+      }
+      ok(!weightProblems.length, '16f-a: a goal weight raises only its own goal and never drops its rank: ' + weightProblems.join('; '));
+      // 16f-b. A goal weight of 0 leaves that goal worth nothing.
+      const zeroProblems = [];
+      for (const [label, make] of WORLDS)
+        for (const entry of P.choose(make()).ranking) {
+          const zeroed = of(P.choose(Object.assign(make(), { goalWeights: { [entry.goal]: 0 } })), entry.goal);
+          if (zeroed && Math.abs(zeroed.value) > 1e-12) zeroProblems.push(label + ', ' + entry.goal + ' still worth ' + zeroed.value);
+        }
+      ok(!zeroProblems.length, '16f-b: a goal weight of 0 makes its goal worth nothing: ' + zeroProblems.join('; '));
+      // 16f-c. Every tag a plan's steps carry at x2 doubles that plan's cost; x2 on a tag none of its steps carry changes nothing.
+      const costProblems = [];
+      for (const [label, make] of WORLDS)
+        for (const entry of P.choose(make()).ranking) {
+          const tags = [...new Set(entry.steps.map((s) => s.tag))],
+            unused = P.TAG_NAMES.find((tag) => !tags.includes(tag)),
+            costWith = (tagMultipliers) => P.costOf(Object.assign(make(), { tagMultipliers }), entry.goal, entry.steps),
+            plain = costWith(undefined),
+            doubled = costWith(Object.fromEntries(tags.map((tag) => [tag, 2])));
+          if (!near(doubled, 2 * plain)) costProblems.push(label + ', ' + entry.goal + ': ' + plain + ' x2 gave ' + doubled);
+          if (unused && !near(costWith({ [unused]: 2 }), plain)) costProblems.push(label + ', ' + entry.goal + ': ' + unused + ' x2 moved it');
+        }
+      ok(!costProblems.length, '16f-c: tag multipliers scale exactly the steps that carry them: ' + costProblems.join('; '));
+      // 16f-d. `range` sets the band a hit counts as at range in: for any range, a hit from it or from its band's edges counts,
+      // one from a pixel past either edge does not. The band is read from the planner (TUNE.rangeBand).
+      const band = P.TUNE.rangeBand,
+        atRangeFrom = (distance, preferredRange) => {
+          const shotWorld = world({ moves: [gun()], top: { distance, preferredRange } });
+          return P.apply(shotWorld, P.startState(shotWorld), { verb: 'use', slot: 0 }).step.effect.atRange;
+        },
+        rangeProblems = [];
+      for (const range of [80, 150, 200]) {
+        const inside = [range, range - band, range + band].filter((d) => !atRangeFrom(d, range)),
+          outside = [range - band - 1, range + band + 1].filter((d) => atRangeFrom(d, range));
+        if (inside.length || outside.length) rangeProblems.push('range ' + range + ': inside missed ' + inside + ', outside counted ' + outside);
+      }
+      ok(!rangeProblems.length, '16f-d: range sets the at-range band: ' + rangeProblems.join('; '));
+      // 16f-e. Intelligence growth never makes a leader duller: for each shipped leader, every setting intelligence drives is
+      // at least as sharp at loop 6 as at loop 1 (sharper means toward the curve's top, read from INTELLIGENCE_CURVES). A test
+      // leader carries no intelligence, so every one of those settings reads its default.
+      const CURVES = AI.INTELLIGENCE_CURVES,
+        notDuller = (key, later, earlier) =>
+          CURVES[key].atOne < CURVES[key].atZero ? later <= earlier + 1e-12 : later >= earlier - 1e-12,
+        settingsAt = (name, loop) => AI.settings(Object.assign({}, K[gymIdx(name)], { loop })),
+        sharpProblems = [];
+      for (const name of ['Brock', 'Misty']) {
+        const loop1 = testLeaders.real(() => settingsAt(name, 1)),
+          loop6 = testLeaders.real(() => settingsAt(name, 6)),
+          plain1 = settingsAt(name, 1),
+          plain6 = settingsAt(name, 6);
+        for (const key of Object.keys(CURVES)) {
+          if (!notDuller(key, loop6[key], loop1[key])) sharpProblems.push(name + ' ' + key + ': ' + loop1[key] + ' at loop 1, ' + loop6[key] + ' at 6');
+          if (!near(plain1[key], AI.BASE[key]) || !near(plain6[key], AI.BASE[key])) sharpProblems.push(name + "'s test leader " + key + ' is not the default');
+        }
+      }
+      ok(!sharpProblems.length, '16f-e: intelligence growth never dulls a leader; test leaders read the defaults: ' + sharpProblems.join('; '));
+      // 16f-f. The wiring (gyms.js, then the settings, then Belief's snapshot): the shipped tables and range arrive as
       // authored; a test leader carries none.
       const snapshotOf = (name) => {
           open(name, 1, 200);
@@ -2730,12 +2738,12 @@ if (G.LeaderPlanner) {
             same(shippedWorld.goalWeights, entry.goalWeights) &&
             same(shippedWorld.tagMultipliers, entry.tagMultipliers) &&
             shippedWorld.preferredRange === entry.range,
-          '16f-g: ' + name + "'s goal weights, tag multipliers and range reach Belief's snapshot as authored: " +
+          '16f-f: ' + name + "'s goal weights, tag multipliers and range reach Belief's snapshot as authored: " +
             JSON.stringify(shippedWorld && { goalWeights: shippedWorld.goalWeights, tagMultipliers: shippedWorld.tagMultipliers, range: shippedWorld.preferredRange })
         );
         ok(
           !!plainWorld && plainWorld.goalWeights == null && plainWorld.tagMultipliers == null && plainWorld.preferredRange === AI.BASE.range,
-          '16f-g: ' + name + "'s test leader carries no personality (range " + (plainWorld && plainWorld.preferredRange) + ')'
+          '16f-f: ' + name + "'s test leader carries no personality (range " + (plainWorld && plainWorld.preferredRange) + ')'
         );
       }
     }

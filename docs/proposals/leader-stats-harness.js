@@ -415,15 +415,32 @@ const ZERO = [0, 0, 0, 0, 0, 0],
   ok(near(p.stMajor.t, 2), 'a plain Player entity: freeze 2 s');
 }
 
-// MISTY, STEP B (hand numbers): Staryu L20 HP 84 x 25 = 2100; Zinc 3: Sp. Def 27 x 1.15 = 31.05; no enrage
+// MISTY, STEP B, as relations (decision 2026-11-14-tests-check-relations-not-values): her real loop 1 build takes what you take with the same cards, her HP
+// is her hpMult times the HP of the same build at hpMult 1, and she enrages only if her restrictions author it. No number of
+// hers is written here, so a retune of her cards, hpMult or restrictions never breaks it.
 {
-  const e = G.Boss.make(defOf(gymOf({ hpMult: G.Gyms.hpMultFor(MISTY, 1), cards: G.Gyms.cardsFor(MISTY, 1), restrictions: MISTY.restrictions })), 0, 0);
-  ok(e.maxHp === 2100, 'Misty at level 20: 2100 HP: ' + e.maxHp);
-  ok(G.Gyms.cardsFor(MISTY, 1)['vitamins:spd'] === 3, 'Misty holds Zinc 3');
-  ok(near(take(e, 'special'), 1000 / 31.05 + 2, 1e-4) && near(take(e, 'physical'), 1000 / 27 + 2, 1e-4), 'Misty: Zinc softens special hits only');
+  const cards = G.Gyms.cardsFor(MISTY, 1),
+    hpMult = G.Gyms.hpMultFor(MISTY, 1),
+    misty = () => leader(gymOf({ hpMult, cards, restrictions: MISTY.restrictions })),
+    you = () => {
+      const p = plain();
+      p.teamCards = G.TeamCards.store();
+      for (const id of Object.keys(cards)) G.TeamCards.add(p.teamCards, id, cards[id]);
+      return p;
+    };
+  // a fresh body for each hit, so no hit lands in another's i-frames; leader() moves her off Tackle (your melee cushion)
+  for (const cat of ['physical', 'special']) {
+    const hers = take(misty(), cat),
+      yours = take(you(), cat);
+    ok(near(hers, yours, 1e-6), 'Misty with her loop 1 cards takes what you take with them, by ' + cat + ': ' + hers + ' vs ' + yours);
+  }
+  const e = misty(),
+    one = leader(gymOf({ hpMult: 1, cards, restrictions: MISTY.restrictions }));
+  ok(Math.abs(e.maxHp - one.maxHp * hpMult) <= 1, 'Misty: her HP is hpMult x the same build at hpMult 1: ' + e.maxHp + ' vs ' + one.maxHp + ' x ' + hpMult);
   e.gym.engagedAt = 0;
   T.time = 400;
-  ok(G.Gym.enrageMul(e) === 1 && G.Gym.enrageIn(e) === null, 'Misty never enrages');
+  const authored = !!(MISTY.restrictions && MISTY.restrictions.enrage === true);
+  ok(G.Gym.enrages(e) === authored && (G.Gym.enrageMul(e) === 1) === !authored, 'Misty enrages only if her restrictions author it (' + authored + ')');
   T.time = 0;
 }
 
@@ -475,23 +492,31 @@ const ZERO = [0, 0, 0, 0, 0, 0],
   ok(has(v((g) => (g.restrictions.hitIframes = 11)), 'hitIframes is seconds'), 'hitIframes 11 is rejected');
 }
 
-// h. CARD BUDGET (Q5, N5): one stack is one pick; a player at level L has had L - 1. A warning, never a block
+// h. CARD BUDGET (Q5, N5): one stack is one pick; a player at level L has had L - 1. A warning, never a block.
+// #30 (2026-11-14): on a made-up pool of 16 stacks, so retuning a real leader's cards never moves these (Jess: no check
+// on how many cards a leader holds)
 {
-  const z = clone(MISTY);
-  z.cards[1]['vitamins:spd'] = 3; // 13 + 3 = 16 stacks
-  ok(typeof G.Gyms.budgetWarn(z, 1, 16) === 'string', '16 stacks at level 16 warns');
-  ok(G.Gyms.budgetWarn(z, 1, 17) === null, '16 stacks at level 17 does not');
-  ok(G.Gyms.budgetWarn(MISTY, 1, 17) === null && typeof G.Gyms.budgetWarn(MISTY, 1, 16) === 'string', "Misty's 16 stacks (with Zinc): fine at 17, a warning at 16");
-  ok(!errs(z).length, 'the budget never blocks validation');
+  const pool16 = { 1: { damage: 10, area: 6 } },
+    made = { leader: 'Test', cards: pool16 };
+  ok(typeof G.Gyms.budgetWarn(made, 1, 16) === 'string', '16 stacks at level 16 warns');
+  ok(G.Gyms.budgetWarn(made, 1, 17) === null, '16 stacks at level 17 does not');
+  const big = clone(MISTY);
+  big.cards = { 1: { damage: 40 } };
+  ok(!errs(big).some((s) => /stack|budget/i.test(s)), 'the budget never blocks validation: ' + errs(big).join('; '));
+  // makeDef raises it at fight start: Misty's real entry with the made-up pool in place of her cards, for this call only
   const said = [],
-    w0 = console.warn;
+    warn0 = console.warn,
+    cards0 = MISTY.cards;
   console.warn = (m) => said.push(m);
+  MISTY.cards = pool16;
   try {
     G.Gym.makeDef({ idx: G.Gyms.KANTO.indexOf(MISTY), level: 5 }, 0);
   } catch (x) {
     said.push('threw ' + x.message);
+  } finally {
+    MISTY.cards = cards0;
+    console.warn = warn0;
   }
-  console.warn = w0;
   ok(said.length === 1 && said[0].includes('16 card stacks at level 5'), 'makeDef warns at fight start: ' + JSON.stringify(said));
 }
 

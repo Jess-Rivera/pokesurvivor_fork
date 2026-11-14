@@ -12,7 +12,12 @@ Adapted from the ideas in mattpocock/skills (tdd). Applies to sim and data logic
 ## The cycle
 1. **Seams, in the prose plan.** The plan (no code) has a "Seams" section: each seam under test (the G.* surface you observe from outside), with one line on what it catches and what it misses. Jess's OK on the plan confirms them. No test at an unconfirmed seam.
 2. **Vertical slices.** One scenario, then the minimal code to pass it, then repeat. Never write all the scenarios first. Show the red run, then the green run. Write only enough code to pass the test, nothing speculative.
-3. **Independent expected values.** Take them from MOVE-INTENT, COMBAT-RULES (for example the Damage formula worked by hand), the D-table, the data file, or a worked example. Never recompute them the way the code does and never copy code output. A scenario that depends on an open owner decision is marked blocked, never guessed.
+3. **Relations, not values** (Jess, 2026-11-14, decision 2026-11-14-tests-check-relations-not-values). A check compares outputs the code produces with each other. No expected number is written into the test, and no check takes tuning data (js/data numbers, TUNE and BASE constants, BALANCE values) as its expectation, so a retune never breaks a test when nothing is wrong. Four kinds:
+   - **Parity**: a leader gives the same result as you with the same build (COMBAT-RULES "Host model", LEADER PRINCIPLE).
+   - **Does what it says**: a setting moves its output the way its name says, on made-up inputs (x2 doubles, a higher weight never lowers its goal, inside a band counts and a pixel past it does not).
+   - **Wiring**: authored data arrives where it is used, unchanged.
+   - **Shape**: real data passes the validator, and bad data is refused.
+   How a leader or a move reads in play is Jess's feel test, never a scripted fight. A scenario that depends on an open owner decision is marked blocked, never guessed. Older checks that pin numbers are converted as they are touched (the sweep issue).
 4. **Mutation checks.** Always for a new mechanic or slice. For a bug fix, only when the harness missed the bug. Add or refresh entries in the area's *-mutate.js and run it: a miss is a gap, a STALE pattern means the quoted code moved (refresh it). Keep new code within Prettier's 120 columns or patterns go stale.
 5. **Refactor after green only.** Behavior-neutral, with the harness green before and after. At the end of the slice, offer the built-in `/simplify` (reuse and simplification) and `/code-review` (correctness); run them only on Jess's yes.
 6. **Spec check, before the final commit.** Compare the diff with what was approved: the slice's plan (concept map or proposal), the MOVE-INTENT entries, and the issue's done condition. List anything missing, anything extra (scope creep), and anything implemented but wrong, quoting the spec line for each. Only `[Approved]` items count as requirements; `[Proposed]` and `[Open]` never do.
@@ -30,7 +35,7 @@ Adapted from mattpocock/skills (codebase-design). Terms are in GLOSSARY.md "Desi
 - **Deletion test before adding a wrapper.** If deleting it would leave the complexity where it was, do not add it.
 - **One variation is not a seam.** Do not add an indirection layer for a variation that does not exist yet.
 - **When modules merge or move (a refactor):**
-  - Keep the hand-derived scenarios; delete one only when its behavior is gone.
+  - Keep the scenarios (converted to relations when touched); delete one only when its behavior is gone.
   - Repoint the harness source maps and the *-mutate.js file paths (the `<PREFIX>_<FILE>` overrides) and refresh any STALE pattern.
   - Update the dev.html script list and the `NEED` array in js/main.js for any file added, removed or reordered.
   - Do not rename Spanish identifiers or i18n keys, keep old saves loading, and watch per-frame hot paths.
@@ -39,4 +44,5 @@ Adapted from mattpocock/skills (codebase-design). Terms are in GLOSSARY.md "Desi
 ## Tests that do not count
 - **Implementation-coupled**: breaks on a refactor with no behavior change.
 - **Tautological**: the expectation is computed the way the code computes it, so it passes by construction.
+- **Value-pinned**: it asserts a number from tuning data or a hand-worked value, so a retune breaks it with nothing wrong (step 3).
 - **Horizontal**: all scenarios written first, then all the code. They verify imagined behavior.

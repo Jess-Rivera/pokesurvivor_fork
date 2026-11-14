@@ -63,7 +63,7 @@ How a move counts as reviewed, for any batch of moves on any branch:
 - A move with a docs/MOVE-INTENT.md entry is reviewed when its data and code match that entry (its intent scenarios pass in docs/proposals/move-intent-harness.js).
 - A move without an entry is reviewed with the batch that routes it: Jess reviews the batch's scenario table (tools/move_report.js) when the batch lands, and signs it off in the `batchReviewed` list of docs/move_rework_holding/move-intent-scenarios.json. No separate per-move pass beforehand.
 - Anything that needs specific disambiguation during a batch review becomes a new MOVE-INTENT entry, so it is owned from then on. That includes cd rulings (intended or regression).
-- A scenario whose outcome depends on an open owner decision is marked blocked on that decision, never guessed. Expected outcomes are hand-derived from MOVE-INTENT or the data and the D-table, never copied from code output.
+- A scenario whose outcome depends on an open owner decision is marked blocked on that decision, never guessed. Expected outcomes are relations the move's outputs must satisfy, read from its MOVE-INTENT entry (docs/TEST-FIRST.md step 3, decision 2026-11-14-tests-check-relations-not-values): never a number copied from code output or taken from tuning data.
 
 ## Edit boundary and workflow
 Dividing line: "does this change what the game does when you run it?"
@@ -131,7 +131,7 @@ An ID cited outside the file that defines it carries that file's name: `<file na
 - General combat rules (stats and HP, damage, orthogonal dials, G.Stats, the swap rule, status effects including trap, damage over time, stat stages (the tracker model)): docs/COMBAT-RULES.md.
 - Move data shape (axes, fields, enums, file roles, validator rules): docs/MOVE-AXIS-SCHEMA.md.
 - Move runtime (invariants, data flow, executors, move-path specifics): docs/current feature planning/combat-architecture.md.
-- Test-first practice (say "tdd"): docs/TEST-FIRST.md.
+- Test-first practice (say "tdd") and the rule every check follows (relations, not values): docs/TEST-FIRST.md.
 - Leader AI (how a Player-entity leader sees, remembers and is authored): docs/LEADER-AI.md.
 - Per-move intended behavior: docs/MOVE-INTENT.md. Validation scenarios: docs/current feature planning/combat-validation-and-handoff.md.
 - Run progression (level curve, gyms, elites, Elite Four, escalation, badges, region completion and loops): BOSS-REWORK.md. Gym rosters: docs/GYM-ROSTERS.md. Boss authoring template: docs/BOSS-AUTHORING.md.

@@ -7,7 +7,7 @@
 <body>
 <main>
 <h1>#39 Issue drafts <span class="pill info">For you to apply</span> <span class="tag">feature/gym-leader-ai</span></h1>
-<p class="lede">Each Copy button gives one complete <code>gh</code> command for Git Bash. Paste it, press Enter. A, B and C any time; D and E after you push.</p>
+<p class="lede">Each Copy button gives one complete <code>gh</code> command for Git Bash. Paste it, press Enter. A, B, C and F any time; D and E after you push.</p>
 <style>
   /* Standalone page (opened from file://): theme tokens are set here because the app does not inject them. */
   :root {
@@ -91,7 +91,7 @@ Spec: docs/LEADER-AI.md (&quot;Authoring a leader&quot;, Build order 5b). Openin
 
 **Done when:**
 1. The validator accepts the new keys within their limits and refuses unknown goals, unknown tags and out-of-range values.
-2. leader-ai-harness 16f passes: each personality on the planner&#x27;s hand-made worlds gives the hand-derived pick, reflex and wiring.
+2. leader-ai-harness 16f passes: the personality settings checked as relations on made-up worlds (a goal weight raises only its goal, tag multipliers scale exactly their steps, range sets the band, intelligence growth never dulls a leader), plus the wiring.
 3. The rest of leader-ai-harness still passes (the 16e counter-play, learning and sharpness duels are retired: decision 2026-11-14-39-planner-checks-replace-duels).
 4. Jess&#x27;s feel test: the two read as distinct. (How much each fights versus moves is tuning, tracked in its own balance issue.)
 
@@ -123,7 +123,7 @@ Shipped:
 - Goal weights and tag multipliers are authorable in a gym&#x27;s `ai` (validated against the planner&#x27;s 9 goals and 11 tags, limits 0 to 3 and 0.25 to 4) and reach the planner through the settings and Belief.
 - Brock (wall) and Misty (tempo) authored, with intelligence growth 0.08 per loop. Numbers: BALANCE.md &quot;Leader AI&quot;.
 - Bait parked in code until #60 (it won 97 to 98% of think ticks for every leader).
-- Tests: leader-ai-harness 16f checks each personality as planner inputs and outputs, 17f the validator, section 9 the #59 reflex rule; the mechanics harnesses fight test leaders (tools/test-leaders.js). The 16e counter-play, learning and sharpness duels are retired (their scripted player stood still).
+- Tests: leader-ai-harness 16f checks the personality settings as relations (no hard numbers), 17f the validator, section 9 the #59 reflex rule; the mechanics harnesses fight test leaders (tools/test-leaders.js). The 16e counter-play, learning and sharpness duels are retired (their scripted player stood still).
 
 check.js clean except gym-harness and leader-stats-harness (#30). All mutants caught.
 
@@ -131,6 +131,20 @@ Feel test (Jess): the two read as distinct, only overtuned. Tuning continues in 
 EOF</pre></div></div>
 <div class="card"><h2>E. Close #39 (after D)</h2><p class="step">Closing moves its card to Shipped by the board's automation, so no board command is needed.</p><div class="copybox"><button class="copy" data-target="cmdE">Copy</button><pre id="cmdE">gh issue close 39 --repo Jess-Rivera/pokesurvivor_fork --reason completed</pre></div></div>
 
+<div class="card"><h2>F. Create the test sweep issue</h2><p class="step">Labels area:docs, ready. Any time.</p><div class="copybox"><button class="copy" data-target="cmdF">Copy</button><pre id="cmdF">gh issue create --repo Jess-Rivera/pokesurvivor_fork --title &quot;Convert harness checks from hard-coded values to relations&quot; --label area:docs --label ready --body-file - &lt;&lt;&#x27;EOF&#x27;
+Decision 2026-11-14-tests-check-relations-not-values (docs/TEST-FIRST.md, The cycle, step 3): a check compares outputs the code produces (parity with your path, a setting doing what its name says on made-up inputs, wiring, the validator&#x27;s shape). No expected number is written into a test, and no check takes tuning data as its expectation.
+
+Already converted (2026-11-14): leader-ai-harness 16f, and leader-stats-harness&#x27;s Misty step B check.
+
+Still pinning numbers (known so far; search each harness for more):
+- leader-ai-harness: sections 15, 16a to 16d and 17 (hand-worked planner scores and costs, the intelligence curve values)
+- leader-stats-harness: sections a to h (hand-worked HP, factors and damage taken)
+- gym-harness: Brock&#x27;s and Misty&#x27;s real values (Geodude HP 1029, Tackle Power 52, Water Pulse 96 and the rest)
+- the move intent scenarios (docs/proposals/move-intent-harness.js, docs/move_rework_holding/move-intent-scenarios.json): CLAUDE.md&#x27;s Move review rule now asks for relations read from MOVE-INTENT
+- the other harnesses under docs/proposals, not yet surveyed
+
+**Done when:** no harness asserts a number from tuning data or a hand-worked value; each converted harness passes, and its *-mutate.js still catches every mutant (a mutant only a pinned number caught gets a relation check). One harness per pass.
+EOF</pre></div><p class="muted">No type label fits (bug, feature, balance, design); add one on github.com if you want it.</p></div>
 <footer>docs/LEADER-AI.md wins wherever this page differs. Written by the PokeSurvivor agent in Quick.</footer>
 </main>
 <script>

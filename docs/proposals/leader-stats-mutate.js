@@ -13,7 +13,8 @@ const LD = 'js/entities/gym-leader.js',
 const ENV = { [LD]: 'LS_LEADER', [BR]: 'LS_BRAIN', [ST]: 'LS_STATUS', [GY]: 'LS_GYMS', [GM]: 'LS_GYM' };
 const M = [
   // D1: your attack formula
-  ['the brain factor is put back on the leader', BR, '      // A G.GymLeader inherits these four', '      e.moveFactor = (m) => this.factor(m);\n      // A G.GymLeader inherits these four'],
+  // #30 (2026-11-14): 'the brain factor is put back on the leader' is retired: it edited boss-ai.js, which a leader no longer
+  // runs (#41). Your attack formula on a leader is covered by section a's parity and 'enrage never reaches her factor'.
   // finding C: the order
   ['max HP is set before the cards', LD, '    this.becomeSimOwner(); // first (slice 6, finding C): its card store holds the Vitamins that max HP reads\n    this.maxHp = this.maxHpAt(this.level);\n    this.hp = this.maxHp;\n', '    this.maxHp = this.maxHpAt(this.level);\n    this.hp = this.maxHp;\n    this.becomeSimOwner();\n'], // #41 retarget
   ['the items go on before the sim owner setup', LD, '    this.becomeSimOwner(); // first', '    this.arm();\n    this.becomeSimOwner(); // first'], // #41 retarget
@@ -36,9 +37,11 @@ const M = [
   ['the run item cap is gone', GY, 'if (held.length > RUN_ITEM_MAX)', 'if (false)'],
   ['the def drops the held item', GM, "        item: G.Gyms.perLoop(sig.item, loop) || null,", '        item: null,'],
   ['the def drops the run items', GM, '        runItems: G.Gyms.runItemsFor(entry, loop),', '        runItems: [],'],
-  ['the brain skips the Life Orb cost', BR, '          this.orbCost(this.def(c.id));\n', ''],
-  ['Life Orb has no floor', BR, 'e.hp = Math.max(1, e.hp - Math.max(1, e.maxHp * 0.01));', 'e.hp = e.hp - Math.max(1, e.maxHp * 0.01);'],
-  ['Life Orb costs with no Life Orb', BR, "if (e.isPlayer && e.hasItem('lifeorb') &&", 'if (e.isPlayer &&'],
+  // #30 (2026-11-14): the Life Orb mutants retargeted from boss-ai.js (the old brain, which a leader no longer runs since #41)
+  // to the leader's own SimPass in gym-leader.js
+  ['the leader skips the Life Orb cost', LD, '        this.orbCost(e, e.moveDef(c.id));\n', ''],
+  ['Life Orb has no floor', LD, 'e.hp = Math.max(1, e.hp - Math.max(1, e.maxHp * 0.01));', 'e.hp = e.hp - Math.max(1, e.maxHp * 0.01);'],
+  ['Life Orb costs with no Life Orb', LD, "if (e.hasItem('lifeorb') && !(d && d.persistent))", 'if (!(d && d.persistent))'],
   // Q3, N3: restrictions
   ['the status cut defaults to half', LD, '    return v != null ? v : 1;', '    return v != null ? v : 0.5;'],
   ['the hard CC gap defaults to 5 s', LD, '    return v != null ? v : G.Status.GRACE;', '    return v != null ? v : 5;'],
