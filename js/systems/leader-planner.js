@@ -15,7 +15,8 @@
  *   CHOICE   score = goal value - plan cost, both in HP fractions (a fraction of its own max HP counts one to one with a fraction of
  *            yours, decision 2026-11-09-51-opening-stance-traces-and-set-trigger and the #51 plan); with no plan reaching a goal,
  *            its best plan counts at value x the fraction of the gap it closes. The running plan adds its commitment bonus;
- *            `randomness` draws from the ranking with its own seeded source. #53: `misjudge` reads each plan's cost
+ *            `randomness` draws from the ranking with its own seeded source. A parked goal (PARKED_GOALS: Bait,
+ *            #60) is never ranked. #53: `misjudge` reads each plan's cost
  *            as cost x (1 + misjudge x a seeded draw in -1 to 1) before the ranking, one draw per plan per think tick
  *            (MISJUDGMENT).
  * All numbers are TUNE (BALANCE.md "Leader AI").
@@ -32,6 +33,9 @@ G.LeaderPlanner = (() => {
     'finish',
     'conserve',
   ]);
+  /** Goals the choice skips while their design is open (decision 2026-11-14-bait-parked-in-code): Bait waits on #60.
+   *  The search still plans them, so their mechanics stay tested, but no parked goal is ranked, chosen or shown. */
+  const PARKED_GOALS = Object.freeze(new Set(['bait']));
   /** The words of the cost profiles as weights: damage taken and dealt, and the time term (HP fraction per second). */
   const WEIGHT = Object.freeze({ lowest: 0.3, low: 0.6, neutral: 1, high: 1.5, veryHigh: 2, highest: 2.5, ignored: 0 });
   const TIME = Object.freeze({ veryLow: 0.002, low: 0.005, neutral: 0.01, high: 0.02 });
@@ -83,6 +87,9 @@ G.LeaderPlanner = (() => {
     dodge: 'dodge',
     swap: 'swap',
   });
+  /** 39a: every tag a plan step carries (each action's TAGS, plus the move tags a Use slot takes), for the validator's
+   *  tagMultipliers (G.Gyms.validate) and the harness. */
+  const TAG_NAMES = Object.freeze([...new Set(Object.values(TAGS)), 'attack', 'status', 'buff', 'heal']);
   const HIT_GOALS = new Set(['endurance', 'maintain', 'pressure', 'kite', 'bait']);
   const EPS = 1e-9;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -653,7 +660,7 @@ G.LeaderPlanner = (() => {
       ranking = [];
     for (const goal of GOALS) {
       const c = found[goal];
-      if (!c) continue;
+      if (!c || PARKED_GOALS.has(goal)) continue;
       let bonus = 0;
       if (running && running.goal === goal && sameAction(c.steps[0], running.step))
         bonus = running.invested * TUNE.commitPerSecond * world.stubbornness * utility(goal, world);
@@ -680,6 +687,7 @@ G.LeaderPlanner = (() => {
 
   return {
     GOALS,
+    TAG_NAMES,
     PROFILE,
     BASE_VALUE,
     WEIGHT,

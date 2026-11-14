@@ -10,6 +10,8 @@
 //   --full        use every core but two (still low priority). For when you step away.
 //   -v            print every FAIL line of a caught mutation, not only the first.
 // MUTATE_JSON=<file> also writes the verdicts as JSON (tools/mutate-compare.js reads it).
+// MUTATE_ONLY=word,word runs only the mutations whose name contains one of the words (any case), for checking one
+// slice's mutants without the full run. None matching is an error.
 //
 // Usage from a mutate script:
 //   require('../../tools/mutate-runner.js')({ label, root, harnesses, mutants, ...options });
@@ -138,8 +140,22 @@ async function runMutations(opts) {
     process.exit(130);
   });
 
+  const onlyWords = (process.env.MUTATE_ONLY || '')
+      .split(',')
+      .map((word) => word.trim().toLowerCase())
+      .filter(Boolean),
+    mutants = onlyWords.length
+      ? opts.mutants.filter((m) => onlyWords.some((word) => m.name.toLowerCase().includes(word)))
+      : opts.mutants;
+  if (!mutants.length) {
+    console.log(label + ': MUTATE_ONLY matches no mutation name (' + onlyWords.join(', ') + ')');
+    cleanup();
+    process.exitCode = 1;
+    return { aborted: true };
+  }
+
   // Write every mutated copy first (each in its own folder, so parallel runs never share a file).
-  const results = opts.mutants.map((m, i) => {
+  const results = mutants.map((m, i) => {
     const text = applyEdits(opts, m);
     if (text == null) return { name: m.name, verdict: 'STALE' };
     const dir = path.join(tmp, String(i));

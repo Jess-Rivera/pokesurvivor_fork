@@ -208,6 +208,7 @@ function youHost() {
     },
   };
 }
+require(path.join(R, 'tools/test-leaders.js'))(G); // 39a part G: Brock and Misty without their personality
 const K = G.Gyms.listFor(null);
 /** Misty's lead at loop 1 in a real gym fight, stepped as the game does (the enemy list, then the arena). */
 function leaderHost(loop = 1) {

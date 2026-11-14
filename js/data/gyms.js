@@ -76,7 +76,10 @@ G.Gyms = (() => {
     'misjudge',
   ];
   const AI_UNIT = ['aggression', 'confStart', 'confMin', 'confMax', 'randomness', 'misjudge']; // 0 to 1
-  const AI_OWN_SHAPE = ['intelligence', 'triggers', 'lines']; // ai keys with their own shape and their own check
+  // ai keys with their own shape and their own check (39a: goalWeights and tagMultipliers, personalityTableProblems)
+  const AI_OWN_SHAPE = ['intelligence', 'goalWeights', 'tagMultipliers', 'triggers', 'lines'];
+  // 39a (#39): the Decider's personality tables, each { name: number } within its limits (TUNE, decision P3)
+  const PERSONALITY_LIMITS = Object.freeze({ goalWeights: { min: 0, max: 3 }, tagMultipliers: { min: 0.25, max: 4 } });
   // slice 3: ai.triggers (LEADER-AI TRIGGERS) and ai.lines (up and down, on a big confidence swing). A trigger is { on, ... }:
   // 'start'; 'hp' with `below` (its own HP fraction); 'faint' with `side` ('yours' or 'own'); 'sendIn' (you send in a mon); 'time'
   // with `at` seconds; slice 4: 'exploit' (it starts acting on a pattern it believes: your usual lead). Then any of: line, set
@@ -238,6 +241,15 @@ G.Gyms = (() => {
       // Slice 4 (#33): he keeps the baseline learnRate (3 fights to read your usual lead); the exploit line is a draft.
       ai: {
         aggression: 0.35,
+        // 39a (#39, decision 2026-11-14-39-opening-split-and-profile-test): the wall. Patient, mid range,
+        // buffs early, rarely backs off or swaps, a little slow to react, sharper each loop. TUNE (BALANCE.md "Leader AI")
+        goalWeights: { endurance: 1.4, maintain: 1.2, pressure: 0.7, kite: 0.6, buff: 1.5 },
+        tagMultipliers: { retreat: 1.4, buff: 0.8 },
+        range: 150,
+        swapWill: 2,
+        risk: 0.8,
+        stubbornness: 1.5,
+        intelligence: { base: 0.4, growth: 0.08 },
         triggers: [
           { on: 'start', line: "Rock holds its ground. Let's see you move it." },
           { on: 'hp', below: 0.5, line: 'Time to get serious.', set: { aggression: 0.5 }, for: 10 },
@@ -321,6 +333,15 @@ G.Gyms = (() => {
       ai: {
         aggression: 0.68,
         learnRate: 2,
+        // 39a (#39): tempo. Kites at Water Pulse range (its reach is about 420 px), pushes when ahead, swaps readily,
+        // reads you fast, sharper each loop (intelligence 1.0 at loop 6). TUNE (BALANCE.md "Leader AI")
+        goalWeights: { endurance: 0.7, pressure: 1.3, kite: 1.5, buff: 0.6 },
+        tagMultipliers: { retreat: 0.8, position: 0.8, approach: 1.2 },
+        range: 260,
+        swapWill: 0.6,
+        risk: 1.1,
+        stubbornness: 0.7,
+        intelligence: { base: 0.6, growth: 0.08 },
         triggers: [
           { on: 'start', line: 'Think you can keep your head above water?' },
           { on: 'hp', below: 0.5, line: "Okay, now I'm annoyed!" },
@@ -884,6 +905,18 @@ G.Gyms = (() => {
   }
 
   const unknownKeys = (o, allowed) => Object.keys(o).filter((k) => !allowed.includes(k));
+  /** 39a: the problems with one personality table (`key` goalWeights or tagMultipliers): an object of numbers within
+   *  PERSONALITY_LIMITS, keyed by known names when `names` is a list (no name check otherwise). Pure. */
+  function personalityTableProblems(table, key, names) {
+    if (table == null) return [];
+    if (typeof table !== 'object' || Array.isArray(table)) return ['ai ' + key + ' is { name: number }'];
+    const { min, max } = PERSONALITY_LIMITS[key],
+      unknown = Array.isArray(names) ? unknownKeys(table, names) : [],
+      problems = unknown.map((name) => 'ai ' + key + ': unknown name ' + name);
+    if (Object.values(table).some((value) => !(typeof value === 'number' && value >= min && value <= max)))
+      problems.push('ai ' + key + ' values are from ' + min + ' to ' + max);
+    return problems;
+  }
   const sigName = (s) => (s && s.line && s.line[0] && G.DEX_BY[s.line[0].dex] ? G.DEX_BY[s.line[0].dex].name : '?');
 
   /** Checks an entry against the catalog; returns a list of problems (empty = valid). */
@@ -1014,10 +1047,12 @@ G.Gyms = (() => {
       }
       // #53: intelligence is a number from 0 to 1, or { base 0 to 1, growth from 0 to the growth limit (D2) }, and
       // an authored reflex keeps the fairness floor. Both limits live in G.LeaderAI, read when it is loaded (every
-      // harness that authors ai loads it)
+      // harness that authors ai loads it). 39a: a limit is read only when it is a number, since a harness without
+      // the module may stand a placeholder in for G.LeaderAI; that check is skipped there
       const LA = G.LeaderAI,
-        growthMax = LA ? LA.INTELLIGENCE_GROWTH_MAX : Infinity,
-        floor = LA ? LA.REFLEX_FLOOR_SECONDS : 0,
+        limitOr = (value, fallback) => (typeof value === 'number' ? value : fallback),
+        growthMax = limitOr(LA && LA.INTELLIGENCE_GROWTH_MAX, Infinity),
+        floor = limitOr(LA && LA.REFLEX_FLOOR_SECONDS, 0),
         unit = (x) => typeof x === 'number' && x >= 0 && x <= 1,
         intel = g.ai.intelligence;
       if (intel != null && !unit(intel)) {
@@ -1030,6 +1065,13 @@ G.Gyms = (() => {
       }
       if (valuesOf(g.ai.reflex).some((x) => typeof x === 'number' && x < floor))
         bad.push(L + ': ai reflex is at least ' + floor + ' s (the fairness floor)');
+      // 39a: goalWeights and tagMultipliers, flat per leader (not keyed by loop). Their names come from
+      // G.LeaderPlanner, read when it is loaded (every harness that authors ai loads it), as #53's limits come
+      // from G.LeaderAI
+      const LP = G.LeaderPlanner,
+        names = { goalWeights: LP && LP.GOALS, tagMultipliers: LP && LP.TAG_NAMES };
+      for (const key of Object.keys(PERSONALITY_LIMITS))
+        for (const problem of personalityTableProblems(g.ai[key], key, names[key])) bad.push(L + ': ' + problem);
       const str = (s) => typeof s === 'string' && s.length > 0;
       const tr = g.ai.triggers;
       if (tr != null && !Array.isArray(tr)) bad.push(L + ': ai triggers is a list');

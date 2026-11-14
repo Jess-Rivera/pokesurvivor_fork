@@ -204,6 +204,12 @@ const M = [
   ['dodgeRead is not checked to 10', GY, "for (const k of ['predictCap', 'dodgeRead']) {", "for (const k of ['predictCap']) {"],
   ['a trigger may set intelligence (T1)', GY, "if (k === 'intelligence') bad.push(", 'if (false) bad.push('],
   ['a trigger may set reflex under the floor (T2)', GY, "else if (k === 'reflex' && t.set[k] < floor)", 'else if (false)'],
+  // 39a (#39): the personality tables, gyms.js to Belief's snapshot
+  ['the snapshot drops goalWeights', BE, '        goalWeights: settings.goalWeights,\n', ''],
+  ['the snapshot drops tagMultipliers', BE, '        tagMultipliers: settings.tagMultipliers,\n', ''],
+  ['the validator skips the goal names', GY, 'names = { goalWeights: LP && LP.GOALS,', 'names = { goalWeights: null,'],
+  ['the goal weights go through the per-loop step', AI, 'if (a.goalWeights) out.goalWeights = a.goalWeights;', 'if (a.goalWeights) out.goalWeights = G.Gyms.perLoop(a.goalWeights, loop);'],
+  ['Bait is not parked', PL, "const PARKED_GOALS = Object.freeze(new Set(['bait']));", 'const PARKED_GOALS = Object.freeze(new Set([]));'],
 ];
 
 require('../../tools/mutate-runner.js')({

@@ -111,6 +111,18 @@ for (const p of FILES) {
 // through section 10 too, so slice 2's checks see slice 2's behavior; sections 11 on turn them on.
 if ('LeaderAI' in base && G.LeaderAI.off) Object.assign(G.LeaderAI.off, { swaps: true, dodges: true, confidence: true, triggers: true });
 
+// Only failures print (Jess, 2026-11-14). The game's own log and warn lines ('[Gym] ...', '[MoveEffects] ...': a fight
+// report on every gate, card budget warnings) are counted and named once in the summary instead. console.error still
+// prints, since a SimBus subscriber failing is a real error.
+const gameNotes = new Map();
+for (const method of ['log', 'warn']) {
+  const print = console[method].bind(console);
+  console[method] = (...args) => {
+    const first = typeof args[0] === 'string' ? args[0] : '';
+    if (!/^\[[A-Za-z]+\] /.test(first)) return print(...args);
+    if (method === 'warn') gameNotes.set(first, (gameNotes.get(first) || 0) + 1);
+  };
+}
 let fail = 0,
   n = 0;
 const ok = (c, m) => {
@@ -125,10 +137,13 @@ const ok = (c, m) => {
 let blockedN = 0;
 const blocked = (c, m, issue) => {
   blockedN++;
-  console.log((c ? 'BLOCKED (#' + issue + ', now passes: unblock it) ' : 'BLOCKED (#' + issue + ') ') + m);
+  if (c) console.log('BLOCKED (#' + issue + ', now passes: unblock it) ' + m); // a still-blocked check counts in the summary
 };
 const near = (a, b, e = 1e-6) => typeof a === 'number' && Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const DT = 1 / 60;
+// 39a part G (tools/test-leaders.js): the mechanics sections fight Brock and Misty without their personality; 16f and
+// 17f (39a) run the shipped ones inside testLeaders.real()
+const testLeaders = require(path.join(R, 'tools/test-leaders.js'))(G);
 const K = G.Gyms.listFor(null);
 const gymIdx = (name) => K.findIndex((g) => g.leader === name);
 function infoOf(name, level) {
@@ -687,6 +702,34 @@ if (built2) {
     r = readOne(() => (e.dodges.cd = [0, 0]));
     ok(r.read && r.dodge, '#52: with two ready it keeps a spare, so it dodges');
     ai.set.risk = 1;
+    // #59 REFLEX (decision 2026-11-09-59-reflex-weighs-the-plan-bait-parked, item 1), as an input and output check: a running
+    // plan with an unanswered Dodge your shot step ahead is worth its value minus its cost, here 0.5 - 0.1 = 0.4, and it keeps
+    // one charge back for that step. Two ready, dodgeReserve 0: a reflex dodge would leave 1, the kept-back count (0 + 1 for
+    // the plan), so it goes only when your hit beats 0.4. The planner is off and its world cleared, so the plan stays as set
+    // and your hit reads 0: kept. The same plan without the dodge step is worth 0 and keeps nothing back: it dodges.
+    const withDodge = { goal: 'endurance', value: 0.5, cost: 0.1, at: 0, steps: [{ verb: 'wait' }, { verb: 'dodge' }] },
+      noDodge = { goal: 'endurance', value: 0.5, cost: 0.1, at: 0, steps: [{ verb: 'wait' }, { verb: 'use' }] },
+      plannerWasOff = AI.off.planner,
+      runningPlan = (plan) => () => {
+        ai.plan = plan;
+        ai.expect = null;
+        ai.world = null;
+        e.dodges.cd = [0, 0];
+      };
+    AI.off.planner = true;
+    runningPlan(withDodge)();
+    ok(near(ai.plannedDodgeWorth(), 0.4), '#59: a plan with a dodge step ahead is worth 0.5 - 0.1 = 0.4: ' + ai.plannedDodgeWorth());
+    r = readOne(runningPlan(withDodge));
+    ok(
+      r.read && !r.dodge && ai.log.some((d) => d.act === 'dodge' && /kept for the plan/.test(d.text)),
+      "#59: two charges ready, the plan's dodge ahead: the reflex dodge keeps the plan's charge"
+    );
+    runningPlan(noDodge)();
+    ok(ai.plannedDodgeWorth() === 0, '#59: with no dodge step ahead the plan keeps nothing back: ' + ai.plannedDodgeWorth());
+    r = readOne(runningPlan(noDodge));
+    ok(r.read && r.dodge, '#59: and the reflex dodge goes');
+    ai.plan = null;
+    AI.off.planner = plannerWasOff;
     // a commitment holds a read dodge; it fires on the first free frame while the threat lasts
     r = null;
     for (let k = 0; k < 10 && !(r && r.read); k++) {
@@ -2401,8 +2444,10 @@ if (G.LeaderPlanner) {
       ok(dodges.length === 1 && dodges[0].yourMove === 'ember', '16d: right after it, Dodge your shot is open');
       const d2 = P.apply(w(), d1.state, dodges[0]);
       ok(near(d2.step.taken, -0.12) && near(d2.step.duration, 0.5) && d2.state.chargesReady === 1, '16d: dodge: -0.2 x 0.6 = -0.12, 0.5 s, one charge spent: ' + JSON.stringify([d2.step.taken, d2.step.duration, d2.state.chargesReady]));
-      const c = P.choose(w());
-      ok(text(of(c, 'bait')) === 'use 1, draw, dodge, use 1' && near(of(c, 'bait').cost, 0.02), '16d: Bait is use 1, draw, dodge, use 1 at 0.02: ' + text(of(c, 'bait')) + ' ' + (of(c, 'bait') || {}).cost);
+      const c = P.choose(w()),
+        baitPlan = P.search(w()).bait; // Bait is parked (#60): the search still plans it, the choice never ranks it
+      ok(text(baitPlan) === 'use 1, draw, dodge, use 1' && near(baitPlan.cost, 0.02), '16d: Bait is use 1, draw, dodge, use 1 at 0.02: ' + text(baitPlan) + ' ' + (baitPlan || {}).cost);
+      ok(!of(c, 'bait') && c.ranking.length > 0, '16d (decision 2026-11-14-bait-parked-in-code): a parked Bait is never ranked: ' + c.ranking.map((r) => r.goal).join(', '));
       const three = P.apply(w(), d2.state, { verb: 'use', slot: 0 }),
         threeCost = P.costOf(w(), 'bait', [d1.step, d2.step, three.step]);
       ok(three.step.effect.yourMoveCooling && near(threeCost, 0.09225), '16d: and draw, dodge, use 1 reaches Bait too, at 0.09225: ' + threeCost);
@@ -2583,58 +2628,9 @@ if (G.LeaderPlanner) {
       const notes = r.ai.log,
         early = notes.filter((d) => d.act === 'dodge' && d.serial != null && !notes.some((x) => x.act === 'threat' && x.serial === d.serial && x.read));
       ok(early.length === 0, '16e: every dodge answers a threat the bag read: ' + early.length + ' did not');
-      // counter-play: cycling slots gets more of your Fire Blasts through than staying on it (cycling keeps his window for it wide).
-      // Each side sums several seeded duels, since one duel holds only about a dozen Fire Blasts and one dodge would flip it.
-      const SEEDS = [7, 11, 13, 17, 19],
-        pct = (x) => Math.round(x * 100) + '%',
-        sum = (runs) => {
-          const shots = runs.reduce((t, r) => t + r.mainShots, 0),
-            through = runs.reduce((t, r) => t + r.mainThrough, 0);
-          return { shots, avoided: shots ? (shots - through) / shots : 0 };
-        },
-        stay = sum(SEEDS.map((duelSeed) => duel({ main: 'fire-blast', alt: 'ember', secs: 40, duelSeed }))),
-        cyc = sum(SEEDS.map((duelSeed) => duel({ main: 'fire-blast', alt: 'ember', secs: 40, cycle: true, duelSeed })));
-      ok(cyc.shots > 0 && stay.shots > 0 && cyc.avoided < stay.avoided, '16e: counter-play: cycling Fire Blast and Ember gets more Fire Blasts through than staying on it: he avoids ' + pct(cyc.avoided) + ' of ' + cyc.shots + ' vs ' + pct(stay.avoided) + ' of ' + stay.shots);
-      // learning: fight 3 of a run avoids a bigger share of your Fire Blasts than fight 1 (run memory keeps the cooldown window),
-      // one run per seed
-      const firsts = [],
-        thirds = [];
-      for (const duelSeed of SEEDS) {
-        G.GymArena.reset();
-        G.LeaderMemory.start();
-        firsts.push(duel({ main: 'fire-blast', alt: 'ember', duelSeed }));
-        G.GymArena.reset();
-        duel({ main: 'fire-blast', alt: 'ember', duelSeed });
-        G.GymArena.reset();
-        thirds.push(duel({ main: 'fire-blast', alt: 'ember', duelSeed }));
-        G.GymArena.reset();
-        G.LeaderMemory.end();
-      }
-      const f1 = sum(firsts),
-        f3 = sum(thirds);
-      ok(f1.shots > 0 && f3.shots > 0 && f3.avoided > f1.avoided, '16e: learning: fight 3 avoids more of your Fire Blasts than fight 1: ' + pct(f3.avoided) + ' of ' + f3.shots + ' vs ' + pct(f1.avoided) + ' of ' + f1.shots);
-      // #53 SHARPNESS DUEL (D3, written at #53's start): Brock's loop 1 team with a test growth of 0.1, against your Fire Blast and
-      // Ember cycle, the same 5 seeds. Only the loop his settings read changes: loop 6 holds intelligence 1.0 (0.5 + 0.1 x 5), loop 1
-      // the default 0.5. His HP trade (his hits' size on you minus your hits' size on him, max-HP fractions) must be better at loop
-      // 6. A fail is a tuning finding for #39, never fixed by changing this test.
-      const sharpnessDuel = ({ loop, intelligenceGrowth, duelSeed }) => {
-        const settings0 = AI.settings,
-          pin0 = pinOldDefaults,
-          growth = { intelligence: { base: AI.BASE.intelligence, growth: intelligenceGrowth } };
-        AI.settings = (g) => settings0(Object.assign({}, g, { loop, ai: Object.assign({}, g && g.ai, growth) }));
-        pinOldDefaults = false;
-        try {
-          return duel({ main: 'fire-blast', alt: 'ember', cycle: true, secs: 40, duelSeed });
-        } finally {
-          AI.settings = settings0;
-          pinOldDefaults = pin0;
-        }
-      };
-      const sharp = SEEDS.map((duelSeed) => sharpnessDuel({ loop: 6, intelligenceGrowth: 0.1, duelSeed })),
-        dull = SEEDS.map((duelSeed) => sharpnessDuel({ loop: 1, intelligenceGrowth: 0.1, duelSeed })),
-        tradeOf = (runs) => runs.reduce((t, r) => t + r.trade, 0);
-      ok(near(sharp[0].ai.set.intelligence, 1) && near(dull[0].ai.set.intelligence, 0.5) && near(sharp[0].ai.set.reflex, 0.12), '16e (#53): the sharpness duel reads loop 6 at intelligence 1.0 and loop 1 at 0.5, on the same loop 1 team');
-      ok(tradeOf(sharp) > tradeOf(dull), '16e (#53, D3): sharpness duel: loop 6 Brock trades better than loop 1 Brock over 5 seeds: ' + tradeOf(sharp).toFixed(3) + ' vs ' + tradeOf(dull).toFixed(3));
+      // RETIRED 2026-11-14 (decision 2026-11-14-39-planner-checks-replace-duels): the counter-play, learning and #53 sharpness
+      // duels. Their scripted you stands still and never dodges, so their numbers said nothing about how a player fights.
+      // What they aimed at keeps direct checks: the cooldown window and its run memory (#50), the intelligence curves (17).
       // determinism: one seed, one trace
       const t1 = [],
         t2 = [];
@@ -2643,6 +2639,105 @@ if (G.LeaderPlanner) {
       ok(JSON.stringify(t1) === JSON.stringify(t2), '16e: one seed, one trace (' + t1.length + ' samples)');
       ok(!/gapClose|decide|triggers|swapMargin/.test(Object.getOwnPropertyNames(AI.prototype).filter((k) => ['gapClose', 'decide', 'triggers', 'swapMargin'].includes(k)).join()), '16e: the old swap choice and the gap-closing dodge are gone');
       ok(['stay', 'margin', 'ccLeft', 'ccScore', 'lowHp', 'lowTo', 'lowScore', 'matchupX', 'matchupHp', 'gapClose'].every((k) => !(k in AI.BASE)) && AI.BASE.swapWill === 1, '16e: their settings are gone; swapWill 1 is the baseline');
+      // ---- 16f. 39a (#39): the personalities as planner inputs and outputs (decision
+      // 2026-11-14-39-planner-checks-replace-duels). Each check hands the planner a section 15 world with a leader's authored
+      // tables, and the expected pick and numbers are worked out by hand from section 15's own. No fights: how the two read in
+      // play is Jess's feel test.
+      const brockAI = testLeaders.real(() => K[gymIdx('Brock')].ai),
+        mistyAI = testLeaders.real(() => K[gymIdx('Misty')].ai),
+        scores = (choice) => choice.ranking.map((c) => c.goal + ' ' + c.score.toFixed(4)).join(', ');
+      // 16f-a. Brock on 15b's world (the default: Pressure 0.251 over Endurance 0.1981). His weights make Endurance
+      // 0.1 x 1.4 + 0.0981 = 0.2381 and Pressure 0.12 x 0.7 + 0.131 = 0.215. His tag multipliers (retreat, buff) touch neither
+      // plan (close, then use), so Endurance wins.
+      const brockPick = P.choose(
+        Object.assign(world(), { goalWeights: brockAI.goalWeights, tagMultipliers: brockAI.tagMultipliers })
+      );
+      ok(
+        brockPick.pick.goal === 'endurance' &&
+          near(of(brockPick, 'endurance').score, 0.2381) &&
+          near(of(brockPick, 'pressure').score, 0.215),
+        "16f-a: on 15b's world Brock picks Endurance 0.2381 over Pressure 0.215: " + scores(brockPick)
+      );
+      // 16f-b. Misty's goal weights on 15e's world (the default: Endurance 0.141, Kite 0.1275, Pressure 0.105). No tag
+      // multipliers, so every plan's cost stays; only values scale. Kite 0.1 x 1.5 + 0.0275 = 0.1775, Pressure
+      // 0.12 x 1.3 - 0.015 = 0.141, Endurance 0.1 x 0.7 + 0.041 = 0.111: Kite wins.
+      const mistyPick = P.choose(Object.assign(D(), { goalWeights: mistyAI.goalWeights }));
+      ok(
+        mistyPick.pick.goal === 'kite' &&
+          near(of(mistyPick, 'kite').score, 0.1775) &&
+          near(of(mistyPick, 'pressure').score, 0.141) &&
+          near(of(mistyPick, 'endurance').score, 0.111),
+        "16f-b: on 15e's world Misty picks Kite 0.1775 (Pressure 0.141, Endurance 0.111): " + scores(mistyPick)
+      );
+      // 16f-c. A tag multiplier scales a step's whole cost. 15b's Pressure plan (close: approach; use: attack) costs -0.131;
+      // both tags at 2 make it -0.262; Brock's multipliers (retreat, buff) leave it at -0.131.
+      const pressureSteps = of(P.choose(world()), 'pressure').steps,
+        pressureCost = (tagMultipliers) => P.costOf(Object.assign(world(), { tagMultipliers }), 'pressure', pressureSteps),
+        costs = [pressureCost(undefined), pressureCost({ approach: 2, attack: 2 }), pressureCost(brockAI.tagMultipliers)];
+      ok(
+        near(costs[0], -0.131) && near(costs[1], -0.262) && near(costs[2], -0.131),
+        '16f-c: tag multipliers scale the cost: -0.131, x2 -0.262, Brock -0.131: ' + costs.map((x) => x.toFixed(4)).join(', ')
+      );
+      // 16f-d. `range` decides what counts as at range (TUNE.rangeBand, 20 px either side). One Use slot 1 step from 150 px
+      // off (your gun reaches 300): at a range of 150 that hit is at range (|150 - 150| = 0), at the default 220 it is not
+      // (|150 - 220| = 70). Fixed 2026-11-14: the first version read Maintain's chosen plan, but the planner keeps each goal's
+      // best scoring plan, and a longer plan with two hits beats one hit, so the chosen plan was the wrong output to read.
+      const hitAtRange = (preferredRange) => {
+        const shotWorld = world({ moves: [gun()], top: { distance: 150, preferredRange } });
+        return P.apply(shotWorld, P.startState(shotWorld), { verb: 'use', slot: 0 }).step.effect.atRange;
+      };
+      ok(
+        hitAtRange(150) === true && hitAtRange(AI.BASE.range) === false,
+        '16f-d: a hit from 150 px is at range for range 150, not for 220: ' + hitAtRange(150) + ' vs ' + hitAtRange(AI.BASE.range)
+      );
+      // 16f-e. Buff against a physical shot (a jab, a Defense buff worth 0.2, your whip in reach): Brock's Buff weight 1.5 raises
+      // its value and his buff multiplier 0.8 lowers its cost (taken while you whip him is above 0), so its score goes up.
+      const defenseBuff = move({ id: 'defense-curl', form: 'buff', tag: 'buff', reach: 0, hitFraction: 0, tell: 0, cooldown: 0, buffReady: true, buffValue: 0.2 }),
+        physical = { bestReach: 120, bestHit: 0.2, threats: [{ id: 'whip', category: 'physical', hitFraction: 0.2, reach: 120, cycle: 1, nextFireIn: 0 }] },
+        buffWorld = (top) => world({ moves: [jab(), defenseBuff], you: physical, top }),
+        plainBuff = of(P.choose(buffWorld({})), 'buff'),
+        brockBuff = of(P.choose(buffWorld({ goalWeights: brockAI.goalWeights, tagMultipliers: brockAI.tagMultipliers })), 'buff');
+      ok(
+        !!plainBuff && !!brockBuff && brockBuff.score > plainBuff.score,
+        "16f-e: against a physical shot Brock's Buff scores higher: " +
+          (brockBuff && brockBuff.score.toFixed(4)) + ' vs ' + (plainBuff && plainBuff.score.toFixed(4))
+      );
+      // 16f-f. Reflex from intelligence (the #53 curves, two lines meeting at 0.5). Brock 0.4 + 0.08 a loop: 0.18 s at loop 1,
+      // 0.132 s at loop 6 (0.8). Misty 0.6 + 0.08: 0.144 s and 0.12 s (1.0). A test leader reads 0.15 s at both.
+      const reflexOf = (name, loop) => AI.settings(Object.assign({}, K[gymIdx(name)], { loop })).reflex,
+        fourReflexes = () => [reflexOf('Brock', 1), reflexOf('Brock', 6), reflexOf('Misty', 1), reflexOf('Misty', 6)],
+        shippedReflex = testLeaders.real(fourReflexes),
+        testReflex = fourReflexes();
+      ok(
+        [0.18, 0.132, 0.144, 0.12].every((want, i) => near(shippedReflex[i], want)) && testReflex.every((r) => near(r, 0.15)),
+        '16f-f: reflex Brock 0.18 / 0.132 s, Misty 0.144 / 0.12 s (loops 1 / 6), test leaders 0.15 s: ' +
+          JSON.stringify({ shipped: shippedReflex, test: testReflex })
+      );
+      // 16f-g. The wiring (gyms.js, then the settings, then Belief's snapshot): the shipped tables and range arrive as
+      // authored; a test leader carries none.
+      const snapshotOf = (name) => {
+          open(name, 1, 200);
+          run(1);
+          return G.GymArena.leaderAI.world;
+        },
+        same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+      for (const name of ['Brock', 'Misty']) {
+        const entry = testLeaders.real(() => K[gymIdx(name)].ai),
+          shippedWorld = testLeaders.real(() => snapshotOf(name)),
+          plainWorld = snapshotOf(name);
+        ok(
+          !!shippedWorld &&
+            same(shippedWorld.goalWeights, entry.goalWeights) &&
+            same(shippedWorld.tagMultipliers, entry.tagMultipliers) &&
+            shippedWorld.preferredRange === entry.range,
+          '16f-g: ' + name + "'s goal weights, tag multipliers and range reach Belief's snapshot as authored: " +
+            JSON.stringify(shippedWorld && { goalWeights: shippedWorld.goalWeights, tagMultipliers: shippedWorld.tagMultipliers, range: shippedWorld.preferredRange })
+        );
+        ok(
+          !!plainWorld && plainWorld.goalWeights == null && plainWorld.tagMultipliers == null && plainWorld.preferredRange === AI.BASE.range,
+          '16f-g: ' + name + "'s test leader carries no personality (range " + (plainWorld && plainWorld.preferredRange) + ')'
+        );
+      }
     }
   }
   // ---------------- 17. #53 (#49 slice 4): intelligence, its curves and misjudge (docs/LEADER-AI.md "The Decider (#49)") ----------------
@@ -2760,6 +2855,24 @@ if (G.LeaderPlanner) {
         ],
         notFine = fine.filter((ai) => errs(ai).length !== n0);
       ok(!notFine.length, '17f: and accepts the shapes above' + (notFine.length ? ': refused ' + JSON.stringify(notFine) : ''));
+      // 17f (39a): the personality tables (names from G.LeaderPlanner, limits PERSONALITY_LIMITS: goal weights 0 to 3, tag
+      // multipliers 0.25 to 4, decision P3). A trigger may not set them (D5): they are not numeric settings.
+      ok(refused({ goalWeights: { greed: 1 } }, /ai goalWeights: unknown name greed/), '17f (39a): an unknown goal is refused');
+      ok(refused({ tagMultipliers: { sprint: 1 } }, /ai tagMultipliers: unknown name sprint/), '17f (39a): an unknown tag is refused');
+      ok(refused({ goalWeights: { kite: 3.5 } }, /ai goalWeights values are from 0 to 3/), '17f (39a): a goal weight of 3.5 is refused');
+      ok(refused({ tagMultipliers: { retreat: 0.2 } }, /ai tagMultipliers values are from 0\.25 to 4/),
+        '17f (39a): a tag multiplier of 0.2 is refused');
+      ok(refused({ goalWeights: [1, 2] }, /ai goalWeights is \{ name: number \}/), '17f (39a): a list is not a goal table');
+      ok(refused({ triggers: [{ on: 'start', set: { goalWeights: 1 } }] }, /set goalWeights is a known setting/),
+        '17f (39a, D5): a trigger may not set goalWeights');
+      ok(errs({ goalWeights: { endurance: 0, conserve: 3 }, tagMultipliers: { retreat: 0.25, heal: 4 } }).length === n0,
+        '17f (39a): the limits themselves are accepted');
+      const problemsOf = (name) => G.Gyms.validate(K[gymIdx(name)]).join('; ');
+      ok(['Brock', 'Misty'].every((name) => testLeaders.real(() => problemsOf(name)) === problemsOf(name)),
+        "17f (39a): Brock's and Misty's personalities add no validator problems");
+      const ELEVEN = ['approach', 'position', 'retreat', 'wait', 'dash', 'dodge', 'swap', 'attack', 'status', 'buff', 'heal'];
+      ok(G.LeaderPlanner.TAG_NAMES.length === 11 && ELEVEN.every((tag) => G.LeaderPlanner.TAG_NAMES.includes(tag)),
+        '17f (39a): the planner names the eleven tags: ' + G.LeaderPlanner.TAG_NAMES.join(', '));
       // 17g. the override warning (a dev warning at fight start, never a block)
       const warnOf = (ai) => AI.intelligenceOverrideWarning(gymWith(ai, 1)),
         three = warnOf({ reflex: 0.2, dodgeRead: 7, memoryUse: 0.6 });
@@ -2845,5 +2958,10 @@ if (G.LeaderPlanner) {
   }
 }
 
-console.log((fail ? 'leader-ai-harness: ' + fail + ' of ' + n + ' FAILED' : 'leader-ai-harness: all ' + n + ' passed') + (blockedN ? ' (' + blockedN + ' blocked)' : ''));
+const warned = [...gameNotes.keys()].map((note) => note + ' (x' + gameNotes.get(note) + ')');
+console.log(
+  (fail ? 'leader-ai-harness: ' + fail + ' of ' + n + ' FAILED' : 'leader-ai-harness: all ' + n + ' passed') +
+    (blockedN ? ' (' + blockedN + ' blocked)' : '') +
+    (warned.length ? '; game warnings: ' + warned.join('; ') : '')
+);
 process.exit(fail ? 1 : 0);

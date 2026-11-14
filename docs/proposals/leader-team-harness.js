@@ -89,6 +89,7 @@ const ok = (c, m) => {
 };
 const near = (a, b, e = 1e-6) => typeof a === 'number' && Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const DT = 1 / 60;
+require(path.join(R, 'tools/test-leaders.js'))(G); // 39a part G: Brock and Misty without their personality
 const K = G.Gyms.listFor(null);
 const gymIdx = (name) => K.findIndex((g) => g.leader === name);
 /** The gate info G.Gym builds (gym.js update), for the named leader at `level`. */

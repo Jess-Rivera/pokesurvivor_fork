@@ -923,6 +923,10 @@ G.LeaderAI = class LeaderAI {
         at = v != null && typeof v === 'object' ? G.Gyms.perLoop(v, loop) : v;
       out[k] = at != null ? at : LeaderAI.BASE[k];
     }
+    // 39a: the Decider's goal weights and tag multipliers, flat per leader and passed on as authored (never keyed by
+    // loop; the planner reads an absent table, or an absent name in it, as 1)
+    if (a.goalWeights) out.goalWeights = a.goalWeights;
+    if (a.tagMultipliers) out.tagMultipliers = a.tagMultipliers;
     out.intelligence = LeaderAI.intelligenceForLoop(a.intelligence, loop);
     for (const k of Object.keys(LeaderAI.INTELLIGENCE_CURVES))
       if (a[k] == null) out[k] = LeaderAI.settingFromIntelligence(k, out.intelligence);

@@ -305,6 +305,9 @@ G.LeaderBelief = (() => {
         misjudge: settings.misjudge,
         risk: settings.risk,
         stubbornness: settings.stubbornness,
+        // 39a: the leader's personality tables (absent: every weight and multiplier 1)
+        goalWeights: settings.goalWeights,
+        tagMultipliers: settings.tagMultipliers,
         randomness: settings.randomness,
         confidence,
         reflex: settings.reflex,

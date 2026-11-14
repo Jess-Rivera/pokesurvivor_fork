@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Leader AI - Shape Map</title>
+</head>
+<body>
+<main>
+<h1>Leader AI: shape map <span class="tag">js/entities/leader-ai.js</span> <span class="tag">feature/gym-leader-ai</span> <span class="pill info">Reading aid, 2026-11-14</span></h1>
+<p class="lede">The file itself: what G.LeaderAI holds, the order of one think() frame, what it answers through your controller, who calls in, and the tangles. For the design (Belief, planner, goals) see the Gym Leader AI refresher map and LEADER-AI.md. No code changes; leader-ai.js wins wherever this differs.</p>
+<style>
+  /* Standalone page (opened from file://): theme tokens are set here because the app does not inject them. */
+  :root {
+    color-scheme: dark;
+    --color-bg: #121218; --color-bg-secondary: #1b1b23; --color-surface: #23232d; --color-surface-hover: #2b2b37;
+    --color-border: rgba(255,255,255,0.13); --color-border-light: rgba(255,255,255,0.07);
+    --color-text: #ececf1; --color-text-secondary: #b0b0bc; --color-text-muted: #7a7a86;
+    --color-primary: #c084fc; --color-primary-bg: rgba(168,85,247,0.16); --color-primary-border: rgba(192,132,252,0.45);
+    --color-success-bg: rgba(34,197,94,0.14); --color-success-border: rgba(74,222,128,0.4); --color-success-dark: #4ade80;
+    --color-warning-bg: rgba(245,158,11,0.14); --color-warning-border: rgba(251,191,36,0.45); --color-warning-text: #fbbf24;
+    --color-info-bg: rgba(59,130,246,0.16); --color-info-border: rgba(96,165,250,0.45); --color-info-text: #93c5fd;
+    --color-error-bg: rgba(239,68,68,0.14); --color-error-border: rgba(248,113,113,0.45); --color-error-dark: #f87171;
+    --font-sans: 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    --radius-sm: 6px; --radius-md: 10px; --radius-pill: 17px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.45);
+    --c-head: #7a7a86; --c-build: #60a5fa; --c-frame: #fbbf24; --c-move: #34d399; --c-plan: #c084fc;
+    --c-swap: #22d3ee; --c-dodge: #f87171; --c-feel: #fb923c; --c-dev: #f472b6; --c-trig: #a3e635; --c-data: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 28px 40px; background: var(--color-bg); color: var(--color-text);
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.55; }
+  main { max-width: 1120px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; font-weight: 650; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  h2 { font-size: 17px; margin: 0 0 10px; font-weight: 650; }
+  h3 { font-size: 13px; margin: 14px 0 6px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .lede { color: var(--color-text-secondary); margin: 0 0 18px; }
+  .pill { font-size: 12px; font-weight: 600; border-radius: var(--radius-pill); padding: 2px 10px; border: 1px solid; white-space: nowrap; }
+  .ok { background: var(--color-success-bg); border-color: var(--color-success-border); color: var(--color-success-dark); }
+  .wait { background: var(--color-warning-bg); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .info { background: var(--color-info-bg); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .no { background: var(--color-error-bg); border-color: var(--color-error-border); color: var(--color-error-dark); }
+  .pri { background: var(--color-primary-bg); border-color: var(--color-primary-border); color: var(--color-primary); }
+  .tag { font-family: var(--font-mono); font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-pill); padding: 1px 8px; color: var(--color-text-secondary); font-weight: 500; }
+  code { font-family: var(--font-mono); font-size: 13px; background: var(--color-surface); padding: 1px 5px; border-radius: 4px; }
+  .card { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .tile { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md); padding: 12px 14px; }
+  .tile .v { font-family: var(--font-mono); font-size: 26px; font-weight: 650; }
+  .tile .l { font-size: 12px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .tile .s { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } .tiles { grid-template-columns: 1fr 1fr; } }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--color-text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+  td.n { font-family: var(--font-mono); white-space: nowrap; font-size: 13px; }
+  td.f { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); }
+  td.c { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
+  tr:hover td { background: var(--color-surface-hover); }
+  tr.grp td { background: var(--color-surface); color: var(--color-text-muted); font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; padding: 5px 10px; }
+  .bar { display: inline-block; height: 8px; border-radius: 4px; background: var(--color-primary); vertical-align: middle; margin-left: 6px; opacity: 0.8; }
+  .strip { display: flex; height: 46px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--color-border); }
+  .seg { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #121218;
+    white-space: nowrap; overflow: hidden; border-right: 1px solid rgba(0,0,0,0.35); cursor: default; }
+  .seg:hover { filter: brightness(1.15); }
+  .keys { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 12px; color: var(--color-text-secondary); }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  .ladder { display: flex; flex-direction: column; }
+  .step { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; background: var(--color-surface);
+    border: 1px solid var(--color-border-light); border-radius: var(--radius-sm); padding: 8px 12px; }
+  .step .k { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-muted); }
+  .step .q { font-size: 14px; }
+  .step .q small { display: block; color: var(--color-text-muted); font-size: 12px; margin-top: 1px; }
+  .step .r { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .down { text-align: center; color: var(--color-text-muted); font-size: 12px; line-height: 15px; height: 15px; }
+  .step.s-plan { border-left: 3px solid var(--c-plan); }
+  .step.s-dodge { border-left: 3px solid var(--c-dodge); }
+  .step.s-feel { border-left: 3px solid var(--c-feel); }
+  .step.s-move { border-left: 3px solid var(--c-move); }
+  .step.s-trig { border-left: 3px solid var(--c-trig); }
+  .step.s-dev { border-left: 3px solid var(--c-dev); }
+  .step.s-gate { border-left: 3px solid var(--c-frame); }
+  .chips span { display: inline-block; font-family: var(--font-mono); font-size: 12px; background: var(--color-surface);
+    border: 1px solid var(--color-border-light); border-radius: 4px; padding: 1px 6px; margin: 2px 3px 2px 0; color: var(--color-text-secondary); }
+  .chips span.out { border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .chips span.rng { border-color: var(--color-info-border); color: var(--color-info-text); }
+  ul { margin: 6px 0 0; padding-left: 20px; } li { margin: 4px 0; }
+  .muted { color: var(--color-text-muted); font-size: 13px; }
+  .rank { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--color-text-muted); }
+  .ctl { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .ctl div { background: var(--color-surface); border: 1px solid var(--color-border-light); border-radius: var(--radius-sm); padding: 8px; font-size: 12px; }
+  .ctl b { display: block; font-family: var(--font-mono); font-size: 13px; color: var(--color-text); margin-bottom: 2px; }
+  .ctl span { color: var(--color-text-muted); }
+  .ctl .live { border-color: var(--color-success-border); }
+  .ctl .live b { color: var(--color-success-dark); }
+  @media (max-width: 860px) { .ctl { grid-template-columns: 1fr 1fr; } }
+</style>
+
+<div class="tiles">
+  <div class="tile"><div class="l">Size</div><div class="v">1090</div><div class="s">lines; 49 of them are the header</div></div>
+  <div class="tile"><div class="l">Methods</div><div class="v">56</div><div class="s">+ the Bag class (3)</div></div>
+  <div class="tile"><div class="l">Settings</div><div class="v">24</div><div class="s">BASE keys, plus 39a's two tables</div></div>
+  <div class="tile"><div class="l">State</div><div class="v">~40</div><div class="s">fields on one AI player</div></div>
+  <div class="tile"><div class="l">Game callers</div><div class="v">5</div><div class="s">files; plus 11 harness files</div></div>
+</div>
+
+<!-- ============ 1. FILE STRIP ============ -->
+<div class="card">
+  <h2>1. The file, to scale</h2>
+  <div class="strip">
+    <div class="seg" style="flex:49;background:var(--c-head)" title="1-49: header (slice history)">Hdr</div>
+    <div class="seg" style="flex:84;background:var(--c-build)" title="50-133: constructor, controller, active">Build</div>
+    <div class="seg" style="flex:30;background:var(--c-frame)" title="134-163: think()">T</div>
+    <div class="seg" style="flex:76;background:var(--c-move)" title="164-239: edge unstick">Unstick</div>
+    <div class="seg" style="flex:244;background:var(--c-plan)" title="240-483: replan, execute, stepState, headingFor">Plan executor</div>
+    <div class="seg" style="flex:94;background:var(--c-swap)" title="484-577: legs, slots, swaps, matchup">Slots, swaps</div>
+    <div class="seg" style="flex:32;background:var(--c-feel)" title="578-609: open (lead read)">L</div>
+    <div class="seg" style="flex:114;background:var(--c-dodge)" title="610-723: watch, dodges, lean, aggr">Dodges</div>
+    <div class="seg" style="flex:36;background:var(--c-feel)" title="724-759: feel (confidence)">C</div>
+    <div class="seg" style="flex:63;background:var(--c-dev)" title="760-822: ?dev overlay text">Overlay</div>
+    <div class="seg" style="flex:77;background:var(--c-trig)" title="823-899: triggers and lines">Triggers</div>
+    <div class="seg" style="flex:60;background:var(--c-data)" title="900-959: note, statics, settings()">Statics</div>
+    <div class="seg" style="flex:91;background:var(--c-data)" title="960-1050: BASE, CONF, curves, flags">Consts</div>
+    <div class="seg" style="flex:40;background:var(--c-dodge)" title="1051-1090: Bag (seeded read bag)">Bag</div>
+  </div>
+  <div class="keys">
+    <span><span class="sw" style="background:var(--c-head)"></span>1-49 header</span>
+    <span><span class="sw" style="background:var(--c-build)"></span>50-133 build + controller</span>
+    <span><span class="sw" style="background:var(--c-frame)"></span>134-163 think</span>
+    <span><span class="sw" style="background:var(--c-move)"></span>164-239 unstick</span>
+    <span><span class="sw" style="background:var(--c-plan)"></span>240-483 plan executor</span>
+    <span><span class="sw" style="background:var(--c-swap)"></span>484-577 slots, swaps</span>
+    <span><span class="sw" style="background:var(--c-feel)"></span>578-609 lead read · 724-759 confidence</span>
+    <span><span class="sw" style="background:var(--c-dodge)"></span>610-723 dodges · 1051-1090 Bag</span>
+    <span><span class="sw" style="background:var(--c-dev)"></span>760-822 overlay</span>
+    <span><span class="sw" style="background:var(--c-trig)"></span>823-899 triggers, lines</span>
+    <span><span class="sw" style="background:var(--c-data)"></span>900-1050 statics, settings, constants</span>
+  </div>
+</div>
+
+<!-- ============ 2. THINK FRAME ============ -->
+<div class="card">
+  <h2>2. <code>think(e, dt, pl)</code>: one frame, top to bottom</h2>
+  <p class="muted">Called once per frame per leader mon, from gym-leader.js:142 (the Decider step). It only fills in answers; the body acts on them under your rules.</p>
+  <div class="ladder">
+    <div class="step s-move"><div class="k">1</div><div class="q"><code>noteStuck</code>: how far last frame's body step moved along the last heading</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">2</div><div class="q"><code>clock</code> and <code>fieldT</code> count up</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step s-feel"><div class="k">3</div><div class="q"><code>feel</code>: Belief ticks (memoryUse) · fight events move confidence · long-window drift · trigger overrides expire · a big swing queues a line</div><div class="r"><span class="pill info">reads Belief</span></div></div>
+    <div class="down">↓</div>
+    <div class="step s-gate"><div class="k">4</div><div class="q">Think tick due every <code>think</code> s (0.25)<small>free = not inside a tell or move commitment. A tick inside one waits, never skipped.</small></div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step s-feel"><div class="k">5</div><div class="q">First free tick of the fight → <code>open</code>: the lead read (once)<small>believed pattern + prediction cap bag → may set <code>expectYou</code> for this tick's plan</small></div><div class="r"><span class="pill wait">once</span></div></div>
+    <div class="down">↓</div>
+    <div class="step s-plan"><div class="k">6</div><div class="q"><code>replan</code> if free and (tick, or the plan ended or broke)<small>Belief snapshot → <code>G.LeaderPlanner.choose</code> → plan of up to 4 steps. Logs only goal changes.</small></div><div class="r"><span class="pill pri">planner</span></div></div>
+    <div class="down">↓</div>
+    <div class="step s-plan"><div class="k">7</div><div class="q"><code>execute</code>: is the step done, running or broken? → advance, or replan at once<small>then press the slot the step keeps active, make the step's one press (swap, dash, arm a dodge), and pick a heading</small></div><div class="r"><span class="pill ok">heading</span><span class="pill ok">slot</span></div></div>
+    <div class="down">↓</div>
+    <div class="step s-move"><div class="k">8</div><div class="q"><code>unstick</code> bends that heading around corners → <code>e.heading</code></div><div class="r"><span class="pill ok">writes heading</span></div></div>
+    <div class="down">↓</div>
+    <div class="step s-dodge"><div class="k">9</div><div class="q"><code>watch</code>: new threats through the read bag · a read one answered <code>reflex</code> s later · charge reserve and keep score<small>a dodge OVERWRITES <code>e.heading</code> with the dodge direction</small></div><div class="r"><span class="pill no">writes heading again</span><span class="pill ok">dodge</span></div></div>
+    <div class="down">↓</div>
+    <div class="step s-trig"><div class="k">10</div><div class="q">Triggers: watch states (start, HP line, time) · fire due ones when free (a line, settings for a while)</div><div class="r"><span class="pill wait">mutates settings</span></div></div>
+    <div class="down">↓</div>
+    <div class="step s-dev"><div class="k">11</div><div class="q"><code>flushLines</code>: next queued line onto the banner (<code>G.Spawner.say</code>) if none is up</div><div class="r"><span class="pill no">present</span></div></div>
+    <div class="down">↓</div>
+    <div class="step s-move"><div class="k">12</div><div class="q">Remember <code>lastHeading</code> for step 1 next frame</div><div class="r"></div></div>
+  </div>
+  <p class="muted" style="margin-top:8px">Each of steps 6, 9 and 10 can be switched off with <code>G.LeaderAI.off</code> (planner, dodges, triggers; plus confidence, memory and swaps inside their steps).</p>
+</div>
+
+<!-- ============ 3. CONTROLLER ============ -->
+<div class="card">
+  <h2>3. What it answers: your controller's 7 calls</h2>
+  <div class="ctl">
+    <div class="live"><b>axis</b><span>the field mon's <code>heading</code></span></div>
+    <div class="live"><b>dodge</b><span><code>dodgeAnswer</code>, spent when read</span></div>
+    <div class="live"><b>slots</b><span><code>slotQ</code>, drained when read</span></div>
+    <div class="live"><b>swapSlot</b><span><code>swapAnswer</code>, set only inside the arena's swap step</span></div>
+    <div><b>shake</b><span>always false (authored autoShake instead)</span></div>
+    <div><b>swapDir</b><span>always 0</span></div>
+    <div><b>cycles</b><span>always none</span></div>
+  </div>
+  <p class="muted" style="margin-top:8px">The constructor hands this same controller to every team member (<code>m.ai</code>, <code>m.controller</code>), so one AI player drives the whole team.</p>
+</div>
+
+<!-- ============ 4. STEP STATES ============ -->
+<div class="card">
+  <h2>4. <code>stepState</code>: when a plan step is done or broken</h2>
+  <p class="muted">Checked every frame in step 7. Every step also ends as "done" at <code>stepTimeout</code> × max(its estimate, think).</p>
+  <table>
+    <tr><th>Verb</th><th>Done when</th><th>Broken when</th></tr>
+    <tr><td class="n">close</td><td>within the step's reach of you</td><td>(only the timeout)</td></tr>
+    <tr><td class="n">hold, recover</td><td>its duration has passed</td><td></td></tr>
+    <tr><td class="n">backOff</td><td>at least <code>to</code> px from you</td><td></td></tr>
+    <tr><td class="n">swap</td><td>(the mon arriving replans)</td><td><span class="pill no">your rules refused the swap</span> after 0.1 s</td></tr>
+    <tr><td class="n">dash</td><td>the dodge started, then ended</td><td><span class="pill no">your rules refused the dash</span> after 0.1 s</td></tr>
+    <tr><td class="n">dodge</td><td>the watch answered (or let) your move</td><td></td></tr>
+    <tr><td class="n">draw</td><td>you cast that move since the step began</td><td></td></tr>
+    <tr><td class="n">wait (your move)</td><td>you cast that move</td><td><span class="pill no">you left its reach</span></td></tr>
+    <tr><td class="n">wait (slot)</td><td>a move in that slot is off cooldown</td><td></td></tr>
+    <tr><td class="n">use</td><td>a move in the slot was cast (cooldown jumped)</td><td><span class="pill no">no heal left</span> · <span class="pill no">you left its reach</span></td></tr>
+  </table>
+  <p class="muted" style="margin-top:8px">"You" here is Belief's guess of where you are (<code>yourGuess</code>), falling back to your real position.</p>
+</div>
+
+<!-- ============ 5. STATE ============ -->
+<div class="card">
+  <h2>5. What one AI player holds, by job</h2>
+  <p class="muted">Blue chips are random sources. Amber chips are set on the leader's mons, not on the AI player.</p>
+  <table>
+    <tr><th style="width:170px">Job</th><th>Fields</th></tr>
+    <tr><td>Who it drives</td><td class="chips"><span>members</span><span>team</span><span>name</span><span>controller</span><span class="out">m.ai</span><span class="out">m.controller</span></td></tr>
+    <tr><td>Settings</td><td class="chips"><span>set</span><span>temp</span></td></tr>
+    <tr><td>Answers for the body</td><td class="chips"><span>slotQ</span><span>swapReq</span><span>swapAnswer</span><span>dodgeAnswer</span><span class="out">e.heading</span></td></tr>
+    <tr><td>Clocks</td><td class="chips"><span>clock</span><span>tickT</span><span>due</span><span>fieldT</span><span>swaps</span></td></tr>
+    <tr><td>Plan</td><td class="chips"><span>plan</span><span>choice</span><span>world</span><span>goalSince</span><span>replanNow</span><span>lastWhy</span><span>expect</span><span>expectYou</span><span>dashFor</span></td></tr>
+    <tr><td>Dodges</td><td class="chips"><span class="rng">bag</span><span>seen</span><span>pending</span></td></tr>
+    <tr><td>Planner randomness</td><td class="chips"><span class="rng">draw</span><span class="rng">misjudgeSource</span><span class="rng">mem.cap</span></td></tr>
+    <tr><td>Confidence, lines</td><td class="chips"><span>conf</span><span>swingRef</span><span>swingAt</span><span>lineSet</span><span>lines</span></td></tr>
+    <tr><td>Triggers, memory</td><td class="chips"><span>trig</span><span>started</span><span>opened</span></td></tr>
+    <tr><td>Movement (per mon)</td><td class="chips"><span>legs</span><span>→ stuckT</span><span>sideStepT</span><span>sideStepWay</span><span>side</span><span>lastHeading</span></td></tr>
+    <tr><td>Dev log</td><td class="chips"><span>log</span></td></tr>
+  </table>
+</div>
+
+<!-- ============ 6. SETTINGS ============ -->
+<div class="card">
+  <h2>6. The 24 settings, and who reads them</h2>
+  <p class="muted"><code>settings(gym)</code> builds them: authored value (or per loop), else BASE; intelligence fills the five it drives unless authored. 39a adds <code>goalWeights</code> and <code>tagMultipliers</code> here (lines 926-929).</p>
+  <table>
+    <tr><th>Read by</th><th>Settings</th></tr>
+    <tr><td>leader-ai.js only</td><td class="chips"><span>think</span><span>threatWindow</span><span>minField</span><span>swapLimit</span><span>aggression</span><span>confStart</span><span>confSwing</span><span>confMin</span><span>confMax</span><span>lean</span><span>learnRate</span><span>predictCap</span><span>memoryUse</span></td></tr>
+    <tr><td>both</td><td class="chips"><span>reflex</span><span>dodgeRead</span><span>dodgeReserve</span><span>risk</span><span>misjudge</span></td></tr>
+    <tr><td>leader-belief.js only</td><td class="chips"><span class="out">swapWill</span><span class="out">randomness</span><span class="out">range</span><span class="out">aimError</span><span class="out">stubbornness</span></td></tr>
+    <tr><td>settings() only</td><td class="chips"><span>intelligence</span></td></tr>
+  </table>
+  <p class="muted" style="margin-top:8px">Belief gets them through <code>snapshot(e, this.set, ...)</code> on every replan, so a trigger's "settings for a while" reach the planner too.</p>
+</div>
+
+<!-- ============ 7. CALLS ============ -->
+<div class="grid2">
+  <div class="card">
+    <h2>7a. Who calls in</h2>
+    <table>
+      <tr><th>From</th><th>Calls</th></tr>
+      <tr class="grp"><td colspan="2">Game</td></tr>
+      <tr><td class="f">gym-leader.js</td><td><code>new LeaderAI</code> (lone mon, team) · <code>think</code></td></tr>
+      <tr><td class="f">gym-arena.js</td><td><code>arrived</code> ×2 · <code>swapFrame</code> · <code>intelligenceOverrideWarning</code></td></tr>
+      <tr><td class="f">gym.js</td><td><code>settings</code></td></tr>
+      <tr><td class="f">move-render.js</td><td><code>overlayLines</code> (?dev)</td></tr>
+      <tr><td class="f">leader-belief.js, gyms.js</td><td><code>BASE</code>, <code>BAG</code>, statics</td></tr>
+      <tr class="grp"><td colspan="2">Harnesses (11 files)</td></tr>
+      <tr><td class="f">leader-ai-harness.js and others</td><td><code>off</code> flags (16) · <code>legsOf</code> · <code>noteStuck</code> · <code>execute</code> · <code>useTriggers</code> · <code>yourAttack</code> · <code>pressSlot</code> · <code>requestSwap</code> · <code>Bag</code> · <code>prototype</code></td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h2>7b. What it reaches out to</h2>
+    <table>
+      <tr><th>Global</th><th>For</th></tr>
+      <tr><td class="n">G.LeaderBelief</td><td>snapshot, threats, events, windows, yourGuess, sinceCast, memory</td></tr>
+      <tr><td class="n">G.LeaderPlanner</td><td>choose, sameAction, seeded, TUNE</td></tr>
+      <tr><td class="n">G.LeaderMemory</td><td>lead pattern</td></tr>
+      <tr><td class="n">G.Game</td><td><span class="pill wait">roster, activeIndex, player</span></td></tr>
+      <tr><td class="n">G.Spawner</td><td><span class="pill no">banner, say</span></td></tr>
+      <tr><td class="n">G.World, G.Path</td><td>room probes, path heading</td></tr>
+      <tr><td class="n">G.Boss, G.Gyms</td><td>slot open, reach, move form</td></tr>
+      <tr><td class="n">G.MoveSim, G.Team, G.Status</td><td>busy, stuck checks</td></tr>
+      <tr><td class="n">G.GymLeader, G.PlayerEntity</td><td>keep score, dodge direction</td></tr>
+    </table>
+    <p class="muted" style="margin-top:8px">On the mon it reads: heading, lastStep, slots, active, tell, mvRoot, stFl, swapT, isHeld(), dodges, dodgeT, healsLeft, moveDef(), hp, maxHp, r, gym.</p>
+  </div>
+</div>
+
+<!-- ============ 8. TANGLES ============ -->
+<div class="card">
+  <h2>8. Where the tangles are</h2>
+  <table>
+    <tr><th style="width:36px">#</th><th>Tangle</th><th>Where</th><th>Untangle by</th></tr>
+    <tr><td class="rank">1</td><td><b>The header is a history log.</b> 49 lines of slices 1 to #59, with "GONE:" lists. Reading the top tells you what used to exist.</td><td class="f">1-49</td><td>a short "what it is now" header pointing at LEADER-AI.md; history stays in DEVLOG</td></tr>
+    <tr><td class="rank">2</td><td><b>Presentation and dev text inside the AI.</b> Banner lines through <code>G.Spawner</code>, plus about 75 lines building overlay strings.</td><td class="f">say, flushLines, status, overlayLines, windowBars, planText, stepText</td><td>a <code>leader:line</code> event on SimBus; overlay text moves next to move-render. Frees about 100 lines (the 1086-line watch item)</td></tr>
+    <tr><td class="rank">3</td><td><b><code>e.heading</code> is written twice a frame.</b> The plan heading (step 8), then the dodge overwrites it (step 9). It works only because of the order.</td><td class="f">think 154, watch 661</td><td>collect the frame's answers, combine once at the end</td></tr>
+    <tr><td class="rank">4</td><td><b>Settings live here, but a fifth are read elsewhere,</b> and triggers rewrite them mid-fight. Config and live state in one object.</td><td class="f">BASE 970, settings 916, fireTriggers 865</td><td>authored settings read-only; trigger overrides as a layer on top</td></tr>
+    <tr><td class="rank">5</td><td><b>Belief is not quite "its only door".</b> It reads <code>G.Game</code> straight for your roster, your active mon and your position.</td><td class="f">yours 906, open 586, lean 705</td><td>route those through Belief, or say in LEADER-AI that roster is open knowledge</td></tr>
+    <tr><td class="rank">6</td><td><b>Two unseeded rolls.</b> Four seeded sources, but the side-step side uses <code>Math.random</code>.</td><td class="f">pickSide 214, headingFor 444</td><td>roll from one of the seeded sources</td></tr>
+    <tr><td class="rank">7</td><td><b>Harnesses reach into internals.</b> Tests call private methods by name, so renaming or splitting any of them breaks tests.</td><td class="f">legsOf, noteStuck, execute, useTriggers, yourAttack...</td><td>test through think() and its answers where practical</td></tr>
+    <tr><td class="rank">8</td><td><b>Verbs as strings.</b> stepState is a 55-line if-chain over 10 verb names; stepText repeats the list.</td><td class="f">stepState 364, stepText 301</td><td>one verb table: done check + text per verb</td></tr>
+    <tr><td class="rank">9</td><td><b>A kept empty hook.</b> <code>forcedAction()</code> does nothing ("kept unused").</td><td class="f">876</td><td>remove (YAGNI); the validator already refuses forced actions</td></tr>
+  </table>
+</div>
+
+<!-- ============ 9. #39 ============ -->
+<div class="card">
+  <h2>9. Touch points for #39 personalities</h2>
+  <ul>
+    <li><code>settings()</code> 926-929 already passes <code>goalWeights</code> and <code>tagMultipliers</code> through; the planner reads them from the snapshot.</li>
+    <li>Anything a personality changes that is NOT a planner weight (dodge habits, lines, confidence swing) lands in this file's settings and gets read in steps 3, 9 or 10.</li>
+    <li>File size: tangle #2's split is the cheapest way to make room before #39 adds to it.</li>
+  </ul>
+</div>
+
+<!-- ============ 10. WORTH CHECKING ============ -->
+<div class="card">
+  <h2>10. Worth checking <span class="pill wait">not verified</span></h2>
+  <table>
+    <tr><th>What</th><th>Why it might matter</th></tr>
+    <tr><td>The two <code>Math.random</code> side picks (214, 444)</td><td>a seeded harness or mutate run is not fully repeatable when a leader gets stuck</td></tr>
+    <tr><td><code>G.Game</code> reads against the header's "its only door" wording</td><td>either the code or the spec wording is out of date</td></tr>
+    <tr><td>Dodge heading overwriting the plan heading (step 9)</td><td>probably intended (the dodge needs its own direction); worth one line in LEADER-AI FRAME so a split keeps it</td></tr>
+    <tr><td>Seeds fall back to <code>Date.now()</code> when <code>LeaderAI.seed</code> is unset</td><td>fine for play; a harness that forgets to set the seed is not repeatable</td></tr>
+  </table>
+</div>
+
+</main>
+</body>
+</html>

@@ -7,6 +7,20 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-14',
+    title: ['Gym leader styles', 'Gym leader styles'],
+    chg: [
+      [
+        'Brock and Misty now fight in their own styles. Brock stands his ground, hardens up early and rarely backs off or switches. Misty keeps her distance, backs away when you close in, switches Pokemon more readily and reacts faster to your shots. Both get a little sharper every loop.',
+        'Brock and Misty now fight in their own styles. Brock stands his ground, hardens up early and rarely backs off or switches. Misty keeps her distance, backs away when you close in, switches Pokemon more readily and reacts faster to your shots. Both get a little sharper every loop.',
+      ],
+      [
+        'Gym leaders no longer try to bait out your strongest move and punish its cooldown. That tactic is set aside until it is reworked.',
+        'Gym leaders no longer try to bait out your strongest move and punish its cooldown. That tactic is set aside until it is reworked.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-13',
     title: ['EV screen', 'EV screen'],
     new: [

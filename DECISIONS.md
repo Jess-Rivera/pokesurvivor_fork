@@ -6,6 +6,9 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-14, 39a: planner input and output checks replace the duel profile; the counter-play, learning and sharpness duels are retired, since their scripted you stood still (Jess)](docs/decisions/2026-11-14-39-planner-checks-replace-duels.md)
+- [2026-11-14, Bait parked in code: the goal choice skips it until #60 rules; it ran 97 to 98% of the time (Jess)](docs/decisions/2026-11-14-bait-parked-in-code.md)
+- [2026-11-14, #39 opening: 39a authors goal weights and tag multipliers for Brock and Misty, signature actions split to 39b, a seeded duel profile checks "distinct" (Jess)](docs/decisions/2026-11-14-39-opening-split-and-profile-test.md)
 - [2026-11-13, #53: a trigger's set may not name intelligence; a set reflex keeps the 0.1 s floor (Jess)](docs/decisions/2026-11-13-53-trigger-sets-refuse-intelligence-keep-reflex-floor.md), built in #53
 - [2026-11-13, #53: the gyms-only search guard allows misjudge (Jess)](docs/decisions/2026-11-13-53-judgment-guard-allows-misjudge.md), built in #53
 - [2026-11-13, #53: one intelligence score per leader (base + per-loop growth) drives misjudge, reflex, dodgeRead, memoryUse and aimError through two-line curves that never reach perfect, with overrides; misjudge about 0.1 by default (Jess)](docs/decisions/2026-11-13-53-leader-intelligence-one-score-with-overrides.md), to build in #53
