@@ -119,6 +119,11 @@ not a deferred micro-optimization.
 ## Prose style
 No em-dashes, anywhere. Use commas, parentheses, "since"/"because" instead.
 
+## Output format (Jess, 2026-11-14)
+Every output for Jess that is not code (plans, concept maps, reviews, reports) is a Markdown file built on Mermaid
+diagrams (fenced mermaid blocks; Jess previews them in VS Code with Ctrl+Shift+V), saved in docs/ASCII Concept Maps/.
+Tables are fine; keep prose minimal; plans still hold no code. Older .txt and HTML pages stay as they are.
+
 ## Requirement tags
 Spec rules carry one of four tags. `[Approved]` is owner-approved intended behavior (items marked LOCKED, RESOLVED, DECIDED, DEFAULT ACCEPTED, APPROVED or signed off, never DRAFT, PROPOSED, OPEN or TBD); approved but not yet built is still `[Approved]` with a short "code differs, see TODO" note. `[Legacy behavior]` is what the live game does today where it differs from an approved rule, and always names the slice that removes it. `[Proposed]` is written but not approved. `[Open]` is a recorded question with no answer. When tags or dates conflict, the later dated owner decision wins.
 

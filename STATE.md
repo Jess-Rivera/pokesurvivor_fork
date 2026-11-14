@@ -8,10 +8,10 @@ docs/branch-rules/feature-gym-leader-ai.md). Tree clean, level with origin, 212 
 1. #49 (utility-AI Decider): close it (its four build slices and #39 shipped) or keep it as the umbrella. Jess rules.
    Board, by hand if not done yet: #86 Triage to Accepted; #29 out of Blocked unless the CP1 sign-off blocks it;
    #95 "Blocked by" #97 in Relationships; a type label on #79; the new balance and test sweep cards out of Triage.
-2. Gyms 3 to 8: merge first and migrate after, or migrate on this branch first. Then fix
-   docs/proposals/host-model-plan.md line 152, which disagrees with the branch rules.
-3. Full leader-ai-mutate run (--full; not rerun since 16f was rewritten), then the structural review against main,
-   then the merge.
+2. Gyms 3 to 8 ruled: merge first, slice 12 on its own branch after the Brock and Misty tuning
+   (decision 2026-11-14-gyms-3-to-8-migrate-after-merge). File its parent issue.
+3. Structural review done, verdict Discuss: rule D1 and D2 in docs/ASCII Concept Maps/feature-gym-leader-ai -
+   Structural Review.md, act on the picked findings, then the merge. (Full mutate run passed 2026-11-14.)
 4. Brock and Misty tuning (the balance issue); starting notes: 39a - Feel Test Retune Plan.html (not approved).
 
 ## Where we are
@@ -23,7 +23,7 @@ docs/branch-rules/feature-gym-leader-ai.md). Tree clean, level with origin, 212 
 - Tests check relations, not values (docs/TEST-FIRST.md step 3, decision 2026-11-14-tests-check-relations-not-values).
   Mechanics harnesses fight test leaders (tools/test-leaders.js). 16e counter-play, learning and sharpness duels retired.
 - Tools: MUTATE_ONLY=word,word in tools/mutate-runner.js; harnesses print only failures.
-- Plan and map pages are dark HTML in docs/ASCII Concept Maps/.
+- Non-code outputs are Mermaid .md in docs/ASCII Concept Maps/ (CLAUDE.md "Output format").
 
 ## Watch
 - Brock 13 and Misty 16 card stacks at level 12, over the 11 a player could hold; now in the balance issue's done-condition.
@@ -34,8 +34,8 @@ docs/branch-rules/feature-gym-leader-ai.md). Tree clean, level with origin, 212 
 - GitHub from Quick: Jess runs the catch-up gh block into tools/cache/catchup.txt and Quick reads it.
 
 ## Open owner decisions
-- #49 close or keep. Gyms 3 to 8 timing. #107 (refuse or rebuild the bag); #86; #99; #93; #97 (blocks #95); #60 Bait.
+- #49 close or keep. #107 (refuse or rebuild the bag); #86; #99; #93; #97 (blocks #95); #60 Bait.
 - Acquisition: Accelgor route, Kingambit rule, Gholdengo source, R1 Shedinja, R4 Alcremie N, ball tiers, UberElite
   time limit.
 
-Rules: CLAUDE.md. Today's pages: docs/ASCII Concept Maps/ (39 x2, 39a x2, 39 - Issue Drafts).
+Rules: CLAUDE.md.
