@@ -93,7 +93,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 
 ### `js/core/` (engine services)
 - `util.js` creates `G`, shared helpers. `stats.js` (`G.Stats`) the shared combat-stat formulas (HP, attack factor, damage).
-- `simbus.js` (`G.SimBus`) the sim-to-presentation event bus (docs/SIM-PRESENT-BOUNDARY.md). `debug.js` (`G.Debug`) dev tools behind `?dev`, including `G.Debug.newcombat(set)` (move test scenes; the name outlived the removed flag).
+- `simbus.js` (`G.SimBus`) the sim-to-presentation event bus (docs/SIM-PRESENT-BOUNDARY.md). `debug.js` (`G.Debug`) dev tools behind `?dev` (plus `debug-run-screens.js` and `debug-leader.js`, which add their commands onto `G.Debug`; F6, 2026-11-14), including `G.Debug.newcombat(set)` (move test scenes; the name outlived the removed flag).
 - `db.js` the save layer (localStorage, salted SHA-256 passwords; also the merge logic). A save's Pokemon copies (`save.box`) are read only through `js/systems/copies.js` (G.Copies), rolled from the generated `js/data/species-traits.js` (`tools/species_traits.js`). The game font is the face GameFont in `css/style.css`, a trimmed Silver (`tools/subset_silver.py`).
 - `audio.js` Web Audio synthesizer + sound effects (scores live in `js/data/music.js`).
 - `input.js` keyboard/mouse, `touch.js` mobile joystick + touch controls.
@@ -203,3 +203,6 @@ propose or implement cloud or multiplayer work during the local-first phase.
 
 Always add new scripts to BOTH the `dev.html` script block and the `NEED` array in
 `js/main.js`, then rebuild with `node tools/build.js` before publishing.
+Exception: the dev-only `js/core/debug*.js` files are not in `NEED` (inert without `?dev`, so a missing one never
+blocks the game); `docs/proposals/debug-registry-harness.js` checks their wiring instead (decision
+2026-11-14-debug-split-files-stay-out-of-need).
