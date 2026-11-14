@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-14, F6: the split debug files (debug-run-screens.js, debug-leader.js) stay out of NEED; the registry harness checks them (Jess)](docs/decisions/2026-11-14-debug-split-files-stay-out-of-need.md)
 - [2026-11-14, slice shape (goal, done-condition, end-goal test before any build) is repo-wide; the gym-leader-ai branch rules become history (Jess)](docs/decisions/2026-11-14-slice-shape-is-repo-wide.md)
 - [2026-11-14, structural review: files new on a branch count against the 1000-line rule; F2, F4, F7 before the merge, F1, F3, F5, F6 as issues (Jess)](docs/decisions/2026-11-14-structural-review-new-files-count.md)
 - [2026-11-14, gyms 3 to 8 migrate after feature/gym-leader-ai merges, on their own branch off main, after the Brock and Misty tuning (Jess)](docs/decisions/2026-11-14-gyms-3-to-8-migrate-after-merge.md)

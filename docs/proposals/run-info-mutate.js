@@ -10,7 +10,7 @@ const root = path.resolve(__dirname, '../..');
 const SRC = {
   panel: ['js/ui/pause-run-info.js', 'RI_PANEL'],
   menu: ['js/ui/pause-menu.js', 'RI_MENU'],
-  debug: ['js/core/debug.js', 'RI_DEBUG'],
+  debug: ['js/core/debug-run-screens.js', 'RI_DEBUG'],
   game: ['js/game.js', 'RI_GAME'],
   gym: ['js/systems/gym.js', 'RI_GYM'],
   overlay: ['js/ui/hud-kit-items.js', 'RI_OVERLAY'],
