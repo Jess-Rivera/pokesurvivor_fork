@@ -7,4 +7,7 @@ one gym per session, and starts after the Brock and Misty tuning settles the per
 need retuning; each gym also moves from one mon to a team, so its feel test stays isolated. The two leader paths on main
 are the duplication the host-model plan accepts: keep the window short, add no features to the old brain.
 
+Ordering superseded the same day by 2026-11-14-template-check-then-gyms-then-full-tuning (template check, then gyms 3 to
+8, then one tuning pass across all eight). The rest of this ruling stands.
+
 Canonical: docs/proposals/host-model-plan.md, slice 12.

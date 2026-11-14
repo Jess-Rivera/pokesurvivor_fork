@@ -4,11 +4,13 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-11-14 afternoon, Quick (work). Branch: main, clean and pushed. No branch rules file is live.
 
 ## START HERE (next session, either tool)
-1. #109 Brock and Misty tuning: open the slice (goal, done-check, test; CLAUDE.md "Slice shape")
-   on its own branch off main. Starting notes, not approved: docs/ASCII Concept Maps/39a - Feel Test Retune Plan.html.
+1. #109 Brock and Misty template check: open the slice (goal, done-check, test; CLAUDE.md "Slice shape") on its own
+   branch off main. Only proves the dials make a wall and a tempo leader; numbers stay provisional
+   (decision 2026-11-14-template-check-then-gyms-then-full-tuning). Starting notes, not approved:
+   docs/ASCII Concept Maps/39a - Feel Test Retune Plan.html.
 2. #49 (utility-AI Decider): close it or keep it as the umbrella. Jess rules.
 3. Any time: #121 (move-system dev tools out of debug.js, 1346 lines), #120 (planner verb test gap), #110, #57, #58.
-4. #111 host-model slice 12 (gyms 3 to 8) after the tuning, one gym per session, its own branch.
+4. #111 host-model slice 12 (gyms 3 to 8) after #109, one gym per session, its own branch. Then the eight-gym tuning pass.
 
 ## Where we are
 - Merged 2026-11-14: feature/gym-leader-ai (Brock wall, Misty tempo, on the utility-AI Decider; the HUD and pause
@@ -20,7 +22,7 @@ Last updated: 2026-11-14 afternoon, Quick (work). Branch: main, clean and pushed
   outputs are Mermaid .md (CLAUDE.md "Output format"); the split debug files stay out of NEED.
 
 ## Watch
-- Brock 13 and Misty 16 card stacks at level 12, over the 11 a player could hold (#109 checks it).
+- Brock 13 and Misty 16 card stacks at level 12, over the 11 a player could hold (the eight-gym tuning pass checks it).
 - GymBrain and the AI player both live on main until slice 12: no features on the old brain.
 - smoke-status-fx's frame check failed once on the work machine (28 ms vs 16.7 bare); trust it with a real GPU.
 - Merge messages go in tools/cache/merge-msg.txt with -F <file>; git merge -F - does not read stdin.
