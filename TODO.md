@@ -4,25 +4,24 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date at home (Claude Code), from the 2026-11-14 morning Quick session
+## Getting up to date at home (Claude Code), from the 2026-11-14 midday Quick session (the merge)
 Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
-1. Before leaving work: commit this wrap-up and push feature/gym-leader-ai.
-2. At home, `git status` must be clean. If it is not, commit what is there first (never edit on a dirty tree).
-3. `git fetch origin`, then `git checkout feature/gym-leader-ai`, then `git pull --ff-only`. If it refuses, the two
-   machines diverged: stop and tell the assistant.
-4. Check: `git log --oneline -5` shows this wrap-up, then the #30, #39 close and 39a commits.
-5. `node tools/check.js` must end with "check: all passed" (no expected reds any more).
-6. Say "catch me up". New rule to know: tests check relations, not values (docs/TEST-FIRST.md step 3).
+1. At home, `git status` must be clean. If it is not, commit what is there first (never edit on a dirty tree).
+2. `git fetch origin`, then `git checkout main`, then `git pull --ff-only`. If it refuses, stop and tell the assistant.
+3. Check: `git log --oneline -3` shows the merge of feature/gym-leader-ai on top.
+4. `node tools/check.js` must end with "check: all passed".
+5. If feature/gym-leader-ai still exists locally: `git branch -d feature/gym-leader-ai`.
+6. Say "catch me up". New today: slice shape and Mermaid outputs are repo-wide rules in CLAUDE.md.
 7. Before leaving home: commit and push, so work starts from the same tree.
 
-## Next (from the 2026-11-14 Quick sessions: 39a, Bait parked, #30, the relations rule, GitHub cleanup)
+## Next (from the 2026-11-14 Quick sessions: the gym-leader-ai merge)
 1. #49: close (Decider done) or keep as umbrella. Board by hand if not done: #86 to Accepted, #29 out of Blocked,
-   #95 blocked by #97 (Relationships), type label on #79, the new balance and test sweep cards out of Triage.
-2. Gyms 3 to 8: merge first (decision 2026-11-14-gyms-3-to-8-migrate-after-merge); file the slice-12 parent issue.
-3. Pre-merge fixes F2 and F4 (Pre-Merge Fixes Plan.md), then merge. After: F1 hud-overlay split first, then F3, F5, F6.
-   Planner gaps #57 and #58 any time.
-4. The Brock and Misty balance issue (filed 2026-11-14): retune from the overlay's goal and step in play.
-   The relations test sweep issue (filed 2026-11-14): one harness per pass, any time.
+   #95 blocked by #97 (Relationships), type label on #79, the new cards out of Triage, slice 12 blocked by the
+   balance issue.
+2. Brock and Misty balance issue, on its own branch off main (CLAUDE.md "Slice shape").
+3. hud-overlay.js split (review F1) first after the merge; F3 planner verb table, F5 Region Best, F6 debug.js any
+   time. Planner gaps #57 and #58 any time.
+4. Slice 12 (gyms 3 to 8) after the tuning. The relations test sweep issue: one harness per pass, any time.
 5. Acquisition rework (decision 2026-11-12-acquisition-no-gacha-catch-candy-legendaries): file one parent issue,
    then slices.
 6. Triage: needs-triage on #74 #75 #93 #97 #99 #100 #101 #102 #105 #107 (checked 2026-11-14). #86 is `ready`.
@@ -39,7 +38,7 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
 
 ## Open issues by area (numbers only, titles on GitHub, checked 2026-11-14 late morning, Quick)
 - UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 #99 #100 #102 #105
-- Gyms: #6 #9 #20 #21 #24 #49 #57 #58 #60 #107, plus the Brock and Misty balance issue
+- Gyms: #6 #9 #20 #21 #24 #49 #57 #58 #60 #107, plus the balance and slice 12 issues
 - Moves: #11 #13 #14 #16 #18 #38 #44
 - Engine: #8 #10 #12 #46 #48 #86 #97 #101 (day/night, parked)
 - Items: #36

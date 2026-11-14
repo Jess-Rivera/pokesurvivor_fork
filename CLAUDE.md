@@ -65,6 +65,12 @@ How a move counts as reviewed, for any batch of moves on any branch:
 - Anything that needs specific disambiguation during a batch review becomes a new MOVE-INTENT entry, so it is owned from then on. That includes cd rulings (intended or regression).
 - A scenario whose outcome depends on an open owner decision is marked blocked on that decision, never guessed. Expected outcomes are relations the move's outputs must satisfy, read from its MOVE-INTENT entry (docs/TEST-FIRST.md step 3, decision 2026-11-14-tests-check-relations-not-values): never a number copied from code output or taken from tuning data.
 
+## Slice shape (Jess, 2026-11-08; repo-wide since 2026-11-14)
+Every slice, on any branch, opens with three things agreed with Jess before any build: its goal, how we know it is
+done, and the test that validates it (written at the slice's start, as the end-goal test). Then the prose plan
+(below) and the build. A slice closes by updating every doc, issue and plan it touched. The slice's issue carries
+the three opening items as its done-condition.
+
 ## Edit boundary and workflow
 Dividing line: "does this change what the game does when you run it?"
 - YES (game code, js/data/*.js, dev.html, build config, assets): the assistant gives a prose plan in chat and waits for Jess's edits or OK. Then it builds, runs the harness and headless-browser tests, and writes straight into the repo in one step. Risky changes are flagged in the plan; proceed assuming yes unless he denies or edits. A plan approves only the scope it describes. Jess feel-tests after each change (about a minute), so applied changes are not described as untested.

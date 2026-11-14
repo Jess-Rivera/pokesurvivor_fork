@@ -1,4 +1,8 @@
-# Branch rules: feature/gym-leader-ai
+# Branch rules: feature/gym-leader-ai (HISTORY)
+
+**History since 2026-11-14:** the branch merged to main. Slice shape moved to CLAUDE.md "Slice shape" (repo-wide);
+the bar and the four roles live in LEADER-AI "FRAME" and COMBAT-RULES "Host model"; gyms 3 to 8 are decision
+2026-11-14-gyms-3-to-8-migrate-after-merge. Nothing below is a live rule.
 
 Rules that hold only while this branch is open. Read at session start when STATE.md names this branch. General agent rules stay in CLAUDE.md; where the two differ for work on this branch, this file wins.
 
