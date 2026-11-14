@@ -867,7 +867,9 @@ G.LeaderAI = class LeaderAI {
           until = d.for != null ? this.clock + d.for : Infinity;
         if (had) had.until = until;
         else this.temp.push({ k, old: this.set[k], until });
-        this.set[k] = d.set[k];
+        // #109 T3: a trigger's goal weights change only the goals it names, merged into the table in force (a new object, so
+        // the gym's own table is never written); the restore above puts the old table back whole
+        this.set[k] = k === 'goalWeights' ? Object.assign({}, this.set[k], d.set[k]) : d.set[k];
       }
     }
   }

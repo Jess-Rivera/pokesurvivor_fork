@@ -211,6 +211,11 @@ const M = [
   ['the validator skips the goal names', GY, 'names = { goalWeights: LP && LP.GOALS,', 'names = { goalWeights: null,'],
   ['the goal weights go through the per-loop step', ST, 'if (a.goalWeights) out.goalWeights = a.goalWeights;', 'if (a.goalWeights) out.goalWeights = G.Gyms.perLoop(a.goalWeights, loop);'],
   ['Bait is not parked', PL, "const PARKED_GOALS = Object.freeze(new Set(['bait']));", 'const PARKED_GOALS = Object.freeze(new Set([]));'],
+  // #109 T3 (decision 2026-11-14-109-brock-and-misty-target-feel): a trigger may set goal weights, merged and within limits
+  ['a trigger replaces the whole goal table (#109 T3)', AI, 'Object.assign({}, this.set[k], d.set[k])', 'd.set[k]'],
+  ["a trigger's set never wears off (#109 T3)", AI, '      S[t.k] = t.old;\n', ''],
+  ["a trigger's goal weights skip the limits (#109 T3)", GY, "for (const problem of personalityTableProblems(t.set[k], k, names[k])) bad.push(T + ': set ' + problem);", 'null;'],
+  ['a trigger may set tagMultipliers (#109 T3)', GY, "else if (k === 'goalWeights')", "else if (k === 'goalWeights' || k === 'tagMultipliers')"],
 ];
 
 require('../../tools/mutate-runner.js')({

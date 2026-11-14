@@ -11,10 +11,20 @@
 // LEADER-AI "INTELLIGENCE AND STYLE" and #39: the ai keys that make a personality (a new personality key goes here too)
 const PERSONALITY_KEYS = ['goalWeights', 'tagMultipliers', 'range', 'swapWill', 'risk', 'stubbornness', 'intelligence'];
 
-/** A copy of a leader's ai settings without its personality keys. */
+/** A copy of a leader's ai settings without its personality keys. #109 T3: goal weights a trigger sets are personality
+ *  too, so each trigger's set loses its goalWeights (a set left empty goes; the trigger keeps its line and the rest). */
 function withoutPersonality(ai) {
   const copy = Object.assign({}, ai);
   for (const key of PERSONALITY_KEYS) delete copy[key];
+  if (Array.isArray(ai.triggers))
+    copy.triggers = ai.triggers.map((trigger) => {
+      if (!trigger || !trigger.set || trigger.set.goalWeights == null) return trigger;
+      const set = Object.assign({}, trigger.set);
+      delete set.goalWeights;
+      const plain = Object.assign({}, trigger, { set });
+      if (!Object.keys(set).length) delete plain.set;
+      return plain;
+    });
   return copy;
 }
 

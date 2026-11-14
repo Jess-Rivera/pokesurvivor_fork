@@ -1,13 +1,13 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-14 afternoon, Quick (work). Branch: main, clean and pushed. No branch rules file is live.
+Last updated: 2026-11-14 afternoon, Quick (work). Branch: balance/109-template-check. No branch rules file is live.
 
 ## START HERE (next session, either tool)
-1. #109 Brock and Misty template check: open the slice (goal, done-check, test; CLAUDE.md "Slice shape") on its own
-   branch off main. Only proves the dials make a wall and a tempo leader; numbers stay provisional
-   (decision 2026-11-14-template-check-then-gyms-then-full-tuning). Starting notes, not approved:
-   docs/ASCII Concept Maps/39a - Feel Test Retune Plan.html.
+1. #109 template check, on balance/109-template-check. Target feel agreed (decision 2026-11-14-109-brock-and-misty-target-feel).
+   Round 1 numbers and T3 (a trigger may set goal weights) are written, check.js pending. Next: the leader decision trace
+   (plan "109 - Leader Decision Trace Plan.md", awaiting Jess), then the round 1 feel test. Maps: "109 - ..." in
+   docs/ASCII Concept Maps/.
 2. #49 (utility-AI Decider): close it or keep it as the umbrella. Jess rules.
 3. Any time: #121 (move-system dev tools out of debug.js, 1346 lines), #120 (planner verb test gap), #110, #57, #58.
 4. #111 host-model slice 12 (gyms 3 to 8) after #109, one gym per session, its own branch. Then #122, the tuning pass.

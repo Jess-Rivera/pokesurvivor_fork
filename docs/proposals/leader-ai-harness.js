@@ -2746,6 +2746,31 @@ if (G.LeaderPlanner) {
           '16f-f: ' + name + "'s test leader carries no personality (range " + (plainWorld && plainWorld.preferredRange) + ')'
         );
       }
+      // 16f-g (#109 T3, decision 2026-11-14-109-brock-and-misty-target-feel). A trigger's goal weights change only the goals
+      // it names, and the table in force before it comes back when its `for` runs out. Made-up tables on a test leader, so
+      // no tuning data is read; the gym's ai is put back whatever happens.
+      const brockEntry = K[gymIdx('Brock')],
+        testAi = brockEntry.ai,
+        ownWeights = { endurance: 1.3, pressure: 0.9 },
+        triggerWeights = { kite: 2 };
+      let during = null,
+        after = null;
+      brockEntry.ai = Object.assign({}, testAi, {
+        goalWeights: ownWeights,
+        triggers: [{ on: 'start', set: { goalWeights: triggerWeights }, for: 1 }],
+      });
+      try {
+        open('Brock', 1, 200);
+        run(0.5);
+        during = G.GymArena.leaderAI && G.GymArena.leaderAI.world && G.GymArena.leaderAI.world.goalWeights;
+        run(1.5);
+        after = G.GymArena.leaderAI && G.GymArena.leaderAI.world && G.GymArena.leaderAI.world.goalWeights;
+      } finally {
+        brockEntry.ai = testAi;
+      }
+      ok(!!during && during.kite === triggerWeights.kite && Object.keys(ownWeights).every((goal) => during[goal] === ownWeights[goal]),
+        '16f-g: a trigger sets the goal weights it names and keeps the rest: ' + JSON.stringify(during));
+      ok(same(after, ownWeights), "16f-g: the leader's own goal weights come back when the trigger's time runs out: " + JSON.stringify(after));
     }
   }
   // ---------------- 17. #53 (#49 slice 4): intelligence, its curves and misjudge (docs/LEADER-AI.md "The Decider (#49)") ----------------
@@ -2869,15 +2894,22 @@ if (G.LeaderPlanner) {
         notFine = fine.filter((ai) => errs(ai).length !== n0);
       ok(!notFine.length, '17f: and accepts the shapes above' + (notFine.length ? ': refused ' + JSON.stringify(notFine) : ''));
       // 17f (39a): the personality tables (names from G.LeaderPlanner, limits PERSONALITY_LIMITS: goal weights 0 to 3, tag
-      // multipliers 0.25 to 4, decision P3). A trigger may not set them (D5): they are not numeric settings.
+      // multipliers 0.25 to 4, decision P3). A trigger may set goal weights within the same names and limits (#109 T3,
+      // decision 2026-11-14-109-brock-and-misty-target-feel, replacing 39a D5 for them); never tag multipliers.
       ok(refused({ goalWeights: { greed: 1 } }, /ai goalWeights: unknown name greed/), '17f (39a): an unknown goal is refused');
       ok(refused({ tagMultipliers: { sprint: 1 } }, /ai tagMultipliers: unknown name sprint/), '17f (39a): an unknown tag is refused');
       ok(refused({ goalWeights: { kite: 3.5 } }, /ai goalWeights values are from 0 to 3/), '17f (39a): a goal weight of 3.5 is refused');
       ok(refused({ tagMultipliers: { retreat: 0.2 } }, /ai tagMultipliers values are from 0\.25 to 4/),
         '17f (39a): a tag multiplier of 0.2 is refused');
       ok(refused({ goalWeights: [1, 2] }, /ai goalWeights is \{ name: number \}/), '17f (39a): a list is not a goal table');
-      ok(refused({ triggers: [{ on: 'start', set: { goalWeights: 1 } }] }, /set goalWeights is a known setting/),
-        '17f (39a, D5): a trigger may not set goalWeights');
+      const triggerSets = (set) => ({ triggers: [{ on: 'start', set }] });
+      ok(errs(triggerSets({ goalWeights: { pressure: 2 } })).length === n0, '17f (#109 T3): a trigger goal weight inside 0 to 3 is accepted');
+      ok(refused(triggerSets({ goalWeights: { pressure: 3.5 } }), /set ai goalWeights values are from 0 to 3/),
+        '17f (#109 T3): a trigger goal weight of 3.5 is refused');
+      ok(refused(triggerSets({ goalWeights: { greed: 1 } }), /set ai goalWeights: unknown name greed/),
+        '17f (#109 T3): an unknown goal in a trigger is refused');
+      ok(refused(triggerSets({ tagMultipliers: { retreat: 2 } }), /set tagMultipliers is a known setting/),
+        '17f (#109 T3): a trigger may not set tagMultipliers');
       ok(errs({ goalWeights: { endurance: 0, conserve: 3 }, tagMultipliers: { retreat: 0.25, heal: 4 } }).length === n0,
         '17f (39a): the limits themselves are accepted');
       const problemsOf = (name) => G.Gyms.validate(K[gymIdx(name)]).join('; ');
