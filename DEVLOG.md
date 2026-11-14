@@ -305,3 +305,16 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
   catchers when the duels went (section 9 checks added); 4 leader-stats mutants targeted the old brain (retargeted).
 - #30: check.js all passed. Tools: test leaders, MUTATE_ONLY, failure-only harness output. Plan pages now dark HTML.
 - Stopped at: gyms 3 to 8 (merge first or migrate first), then the structural review and the merge.
+
+## 2026-11-14 afternoon (Quick, work), the gym-leader-ai merge and the structural review follow-ups
+- Merged feature/gym-leader-ai to main (gyms 3 to 8 ruled to migrate after, slice 12 issue filed), after the
+  structural review (Mermaid page) and its pre-merge fixes: F2 leader settings into js/data/leader-ai-settings.js,
+  F4 the pause key asks the pause menu once, F7 mutate output untracked.
+- Then on their own branches, each merged: F1 hud-overlay.js split into a core plus four hud-kit files (38 kit names,
+  smoke-hud-overlay checks the wiring); F3 planner STEP_BY_VERB table (new tools/planner-step-parity.js); F6 dev
+  tools into debug-run-screens.js and debug-leader.js (new debug-registry-harness.js). F5 ruled not done.
+- Decided: new files count against the 1000-line rule; slice shape is repo-wide (CLAUDE.md); non-code outputs are
+  Mermaid .md; the split debug files stay out of NEED. Filed: #121, the planner verb test-gap issue, and others.
+- Broke: the first merge never ran (git merge -F - does not read stdin), so check.js showed old main's Misty fails.
+  smoke-status-fx's frame check failed once on the work machine (GPU). Every check.js run passed after.
+- Stopped at: main clean. Next: open the Brock and Misty tuning slice; rule #49.
