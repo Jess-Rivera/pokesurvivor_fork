@@ -19,8 +19,8 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
    #95 blocked by #97 (Relationships), type label on #79, the new cards out of Triage, slice 12 blocked by the
    balance issue.
 2. Brock and Misty balance issue, on its own branch off main (CLAUDE.md "Slice shape").
-3. hud-overlay.js split (review F1) first after the merge; F3 planner verb table, F5 Region Best, F6 debug.js any
-   time. Planner gaps #57 and #58 any time.
+3. Review follow-ups (F1 merged 2026-11-14): F3 planner verb table, F5 Region Best, F6 debug.js, any time. Planner
+   gaps #57 and #58 any time.
 4. Slice 12 (gyms 3 to 8) after the tuning. The relations test sweep issue: one harness per pass, any time.
 5. Acquisition rework (decision 2026-11-12-acquisition-no-gacha-catch-candy-legendaries): file one parent issue,
    then slices.
