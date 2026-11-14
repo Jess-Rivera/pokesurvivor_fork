@@ -7,7 +7,7 @@
 <body>
 <main>
 <h1>#39 Issue drafts <span class="pill info">For you to apply</span> <span class="tag">feature/gym-leader-ai</span></h1>
-<p class="lede">Two GitHub changes from the approved opening. Quick cannot write to GitHub, so these are drafts.</p>
+<p class="lede">Each Copy button gives one complete <code>gh</code> command for Git Bash. Paste it, press Enter. Run them in order, A to E.</p>
 <style>
   /* Standalone page (opened from file://): theme tokens are set here because the app does not inject them. */
   :root {
@@ -78,13 +78,16 @@
   .field .k { color: var(--color-text-muted); font-size: 13px; }
   footer { color: var(--color-text-muted); font-size: 12px; margin-top: 24px; }
 </style>
-<div class="callout">Apply B first, then replace <code>#NEW</code> in A with its number. The Copy button copies the body as GitHub Markdown.</div><div class="card"><h2>A. Replace the title and body of #39</h2><div class="field"><span class="k">Title</span><span><b>Leader AI slice 5b (39a): Brock and Misty personalities on the Decider</b></span></div><div class="field"><span class="k">Labels</span><span><span class="tag">feature</span> <span class="tag">area:gyms</span> <span class="tag">ready</span></span></div><h3>Body</h3><div class="copybox" id="bodyA">Spec: docs/LEADER-AI.md (&quot;Authoring a leader&quot;, Build order 5b). Opening: docs/ASCII Concept Maps/39 - Slice Opening.html,
-decision 2026-11-14-39-opening-split-and-profile-test.
 
-**Goal:** Brock and Misty each get an authored personality on the Decider. Brock is a wall (patient, mid range, buffs
-early, rarely swaps, a little slow to react). Misty is tempo (kites at Water Pulse range, pushes when ahead, swaps for
-matchups, reads you fast). Built from goal weights, tag multipliers, `range`, `swapWill`, `risk`, `stubbornness` and an
-intelligence base plus growth. Signature actions moved to #NEW (39b).
+<style>
+  .copybox pre { margin: 0; padding-right: 64px; white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; }
+  .step { color: var(--color-text-secondary); margin: 0 0 10px; }
+</style>
+<div class="callout">Run from Git Bash, any folder (each command names the repo). Run D and E only after you push the 39a commit.</div>
+<div class="card"><h2>A. Replace the title and body of #39</h2><p class="step">Keeps its labels (feature, area:gyms, ready).</p><div class="copybox"><button class="copy" data-target="cmdA">Copy</button><pre id="cmdA">gh issue edit 39 --repo Jess-Rivera/pokesurvivor_fork --title &quot;Leader AI slice 5b (39a): Brock and Misty personalities on the Decider&quot; --body-file - &lt;&lt;&#x27;EOF&#x27;
+Spec: docs/LEADER-AI.md (&quot;Authoring a leader&quot;, Build order 5b). Opening: docs/ASCII Concept Maps/39 - Slice Opening.html, decision 2026-11-14-39-opening-split-and-profile-test.
+
+**Goal:** Brock and Misty each get an authored personality on the Decider. Brock is a wall (patient, mid range, buffs early, rarely swaps, a little slow to react). Misty is tempo (kites at Water Pulse range, pushes when ahead, swaps for matchups, reads you fast). Built from goal weights, tag multipliers, `range`, `swapWill`, `risk`, `stubbornness` and an intelligence base plus growth. Signature actions and per-action overrides moved to their own issue (39b).
 
 **Done when:**
 1. The validator accepts the new keys within their limits and refuses unknown goals, unknown tags and out-of-range values.
@@ -92,52 +95,56 @@ intelligence base plus growth. Signature actions moved to #NEW (39b).
 3. The rest of leader-ai-harness still passes (the 16e counter-play, learning and sharpness duels are retired: decision 2026-11-14-39-planner-checks-replace-duels).
 4. Jess&#x27;s feel test: the two read as distinct, and both spend more time attacking than the default did in the #52 feel test.
 
-**Test:** leader-ai-harness 16f (planner inputs and outputs) and 17f (the validator); leader-ai-mutate gains a mutant for
-each new wire, plus one for parking Bait.<button class="copy" data-target="bodyA">Copy</button></div></div><div class="card"><h2>B. New issue (39b)</h2><div class="field"><span class="k">Title</span><span><b>Leader AI 39b: signature actions (Brock&#x27;s Sandbag)</b></span></div><div class="field"><span class="k">Labels</span><span><span class="tag">feature</span> <span class="tag">area:gyms</span> <span class="tag">blocked</span></span></div><div class="field"><span class="k">Blocked by</span><span>#39</span></div><h3>Body</h3><div class="copybox" id="bodyB">LEADER-AI &quot;SIGNATURE ACTIONS&quot;: a leader adds named actions to its own pool (one base verb, extra preconditions from the
-shared list, its own cost multiplier, an optional line). Data only, no new code path. Example: Brock&#x27;s Sandbag (Hold at
-range, own Defense at +1 or more, cost x0.6).
+**Test:** leader-ai-harness 16f (planner inputs and outputs), 17f (the validator) and section 9 (the #59 reflex rule); leader-ai-mutate gains a mutant for each new wire, plus one for parking Bait.
+EOF</pre></div></div>
+<div class="card"><h2>B. Create the 39b issue</h2><p class="step">New issue, labels feature, area:gyms, blocked. It mentions #39, so GitHub links the two.</p><div class="copybox"><button class="copy" data-target="cmdB">Copy</button><pre id="cmdB">gh issue create --repo Jess-Rivera/pokesurvivor_fork --title &quot;Leader AI 39b: signature actions (Brock&#x27;s Sandbag)&quot; --label feature --label area:gyms --label blocked --body-file - &lt;&lt;&#x27;EOF&#x27;
+LEADER-AI &quot;SIGNATURE ACTIONS&quot;: a leader adds named actions to its own pool (one base verb, extra preconditions from the shared list, its own cost multiplier, an optional line). Data only, no new code path. Example: Brock&#x27;s Sandbag (Hold at range, own Defense at +1 or more, cost x0.6). Per-action overrides (a cost multiplier on one action) also live here (39a plan, P4).
 
-Per-action overrides (a cost multiplier on one action) also live here (39a plan, P4).
+Split out of #39 (decision 2026-11-14-39-opening-split-and-profile-test). Build it only if the 39a feel test says Brock and Misty still do not read apart. The key name is decided here, since `signatures` in js/data/gyms.js already holds the roster.
 
-Split out of #39 (decision 2026-11-14-39-opening-split-and-profile-test). Build it only if the 39a feel test says Brock and
-Misty still do not read apart. The key name is decided here, since `signatures` in js/data/gyms.js already holds the roster.
+Blocked by #39.
 
-**Done when:** the validator accepts a signature action built from the shared preconditions and refuses an unknown verb or
-precondition; with the seed fixed, Brock&#x27;s Sandbag shows in the decision log at +1 Defense and never below it.<button class="copy" data-target="bodyB">Copy</button></div></div><div class="card"><h2>C. Comment on #60</h2><div class="field"><span class="k">Issue</span><span>#60 Bait parked</span></div><h3>Comment</h3><div class="copybox" id="bodyC">Found in 39a (#39) on 2026-11-14 (leader-ai-harness 16f, 3 seeds, 30 s, your Fire Blast and Ember cycle, loop 1):
-Bait was the running goal 97 to 98% of the time for Brock, Misty and both default-personality test leaders.
+**Done when:** the validator accepts a signature action built from the shared preconditions and refuses an unknown verb or precondition; with the seed fixed, Brock&#x27;s Sandbag shows in the decision log at +1 Defense and never below it.
+EOF</pre></div><p class="muted">The "Blocked by #39" relationship itself is not set by this command; set it in the issue's Relationships panel on github.com.</p></div>
+<div class="card"><h2>C. Comment on #60 (Bait)</h2><p class="step">Records today's numbers for the Bait ruling.</p><div class="copybox"><button class="copy" data-target="cmdC">Copy</button><pre id="cmdC">gh issue comment 60 --repo Jess-Rivera/pokesurvivor_fork --body-file - &lt;&lt;&#x27;EOF&#x27;
+Found in 39a (#39) on 2026-11-14 (leader-ai-harness 16f, Brock and Misty at loop 1): Bait was the running goal 97 to 98% of the time for Brock, Misty and both default-personality test leaders.
 
-Why: as written, any hit that lands while your best revealed move cools reaches Bait, so it needs no draw or dodge;
-its base value (0.14) tops every other goal (Pressure 0.12, Endurance, Maintain, Kite 0.10). It played as a
-higher-valued Endurance, which is why it never planned a dodge here.
+Why: as written, any hit that lands while your best revealed move cools reaches Bait, so it needs no draw or dodge, and its base value (0.14) tops every other goal (Pressure 0.12; Endurance, Maintain, Kite 0.10). It played as a higher-valued Endurance, which is why it never planned a dodge.
 
-Parked in code now (decision 2026-11-14-bait-parked-in-code): the goal choice skips Bait. The search still plans it, so
-16d keeps testing its plan shape, and the 16e Bait check stays blocked here.
+Parked in code now (decision 2026-11-14-bait-parked-in-code): the goal choice skips Bait. The search still plans it, so 16d keeps testing its plan shape, and the 16e Bait duel stays blocked here.
 
-For the ruling: if Bait comes back, its target likely needs a real setup step (a draw or a wait for your move) before
-the hit, not just a hit during your cooldown.<button class="copy" data-target="bodyC">Copy</button></div></div><div class="card"><h2>D. Comment on #39 (after the commit), then move its card to Needs Playtest</h2><h3>Comment</h3><div class="copybox" id="bodyD">39a code landed on feature/gym-leader-ai (2026-11-14).
+For the ruling: if Bait comes back, its target likely needs a real setup step (a draw or a wait for your move) before the hit, not just a hit during your cooldown.
+EOF</pre></div></div>
+<div class="card"><h2>D. Comment on #39 (after the push)</h2><p class="step">What shipped.</p><div class="copybox"><button class="copy" data-target="cmdD">Copy</button><pre id="cmdD">gh issue comment 39 --repo Jess-Rivera/pokesurvivor_fork --body-file - &lt;&lt;&#x27;EOF&#x27;
+39a landed on feature/gym-leader-ai (2026-11-14).
 
 Shipped:
-- Goal weights and tag multipliers are authorable in a gym&#x27;s `ai` (validated against the planner&#x27;s 9 goals and 11 tags,
-  limits 0 to 3 and 0.25 to 4) and reach the planner through the settings and Belief.
+- Goal weights and tag multipliers are authorable in a gym&#x27;s `ai` (validated against the planner&#x27;s 9 goals and 11 tags, limits 0 to 3 and 0.25 to 4) and reach the planner through the settings and Belief.
 - Brock (wall) and Misty (tempo) authored, with intelligence growth 0.08 per loop. Numbers: BALANCE.md &quot;Leader AI&quot;.
 - Bait parked in code until #60 (it won 97 to 98% of think ticks for every leader).
-- Tests: leader-ai-harness 16f checks each personality as planner inputs and outputs, 17f the validator, section 9 the
-  #59 reflex rule; mechanics harnesses fight test leaders (tools/test-leaders.js). The 16e counter-play, learning and
-  sharpness duels are retired (their scripted player stood still).
+- Tests: leader-ai-harness 16f checks each personality as planner inputs and outputs, 17f the validator, section 9 the #59 reflex rule; the mechanics harnesses fight test leaders (tools/test-leaders.js). The 16e counter-play, learning and sharpness duels are retired (their scripted player stood still).
 
-check.js clean except gym-harness and leader-stats-harness (#30). Mutants all caught.
+check.js clean except gym-harness and leader-stats-harness (#30). All mutants caught.
 
-Needs Jess&#x27;s feel test: Brock and Misty at loop 1 (and swapping at loop 2).<button class="copy" data-target="bodyD">Copy</button></div></div>
+Needs Jess&#x27;s feel test: Brock and Misty at loop 1, and swapping at loop 2.
+EOF</pre></div><p class="muted">Then run E.</p></div>
+
+<div class="card"><h2>E. Move #39 to Needs Playtest (after D)</h2><p class="step">Looks up the board's IDs itself, then moves the card. Needs the token's <code>project</code> scope (<code>gh auth refresh -s project</code> once, if it refuses).</p><div class="copybox"><button class="copy" data-target="cmdE">Copy</button><pre id="cmdE">P=2; OWNER=Jess-Rivera
+PROJECT=$(gh project view $P --owner $OWNER --format json --jq .id)
+FIELD=$(gh project field-list $P --owner $OWNER --format json --jq &#x27;.fields[] | select(.name==&quot;Status&quot;) | .id&#x27;)
+OPTION=$(gh project field-list $P --owner $OWNER --format json --jq &#x27;.fields[] | select(.name==&quot;Status&quot;) | .options[] | select(.name==&quot;Needs Playtest&quot;) | .id&#x27;)
+ITEM=$(gh project item-list $P --owner $OWNER --format json --limit 200 --jq &#x27;.items[] | select(.content.url != null and (.content.url | endswith(&quot;/pokesurvivor_fork/issues/39&quot;))) | .id&#x27;)
+if [ -z &quot;$PROJECT&quot; ] || [ -z &quot;$FIELD&quot; ] || [ -z &quot;$OPTION&quot; ] || [ -z &quot;$ITEM&quot; ]; then echo &quot;lookup failed: project=$PROJECT field=$FIELD option=$OPTION item=$ITEM&quot;; else gh project item-edit --id &quot;$ITEM&quot; --project-id &quot;$PROJECT&quot; --field-id &quot;$FIELD&quot; --single-select-option-id &quot;$OPTION&quot; &amp;&amp; echo &quot;#39 moved to Needs Playtest&quot;; fi</pre></div><p class="muted">If it prints "lookup failed", one name did not match: the column field may not be called Status, or the option not exactly Needs Playtest. <code>gh project field-list 2 --owner Jess-Rivera</code> shows the real names.</p></div>
 <footer>docs/LEADER-AI.md wins wherever this page differs. Written by the PokeSurvivor agent in Quick.</footer>
 </main>
 <script>
 document.querySelectorAll('.copy').forEach(function (b) {
   b.addEventListener('click', function () {
-    var t = document.getElementById(b.dataset.target).innerText;
+    var t = document.getElementById(b.dataset.target).textContent;
     var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1200); };
+    var fallback = function () { var a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select();
+      document.execCommand('copy'); a.remove(); done(); };
     if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, fallback); else fallback();
-    function fallback() { var a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select();
-      document.execCommand('copy'); a.remove(); done(); }
   });
 });
 </script>

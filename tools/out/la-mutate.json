@@ -1,0 +1,837 @@
+{
+ "label": "leader-ai-mutate",
+ "workers": 6,
+ "seconds": 1351.6,
+ "results": [
+  {
+   "name": "the window never narrows",
+   "verdict": "caught",
+   "fails": 10
+  },
+  {
+   "name": "a gap outside has no overshoot",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "no minimum width",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "readiness has no ramp",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "danger ignores readiness",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "opportunity ignores its timers",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a switch keeps the gap clean",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a switch forgets the last cast",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the cast clock runs on the bench",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the gaps are not kept for the run",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the long window stays 15 s",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the Decider keeps its memoryUse",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the Decider reads Info directly",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "your scheduler ignores castDue",
+   "verdict": "caught",
+   "fails": 10
+  },
+  {
+   "name": "the active slot recharges twice",
+   "verdict": "caught",
+   "fails": 5
+  },
+  {
+   "name": "the caster skips your sim pass",
+   "verdict": "caught",
+   "fails": 24
+  },
+  {
+   "name": "a stun leaves the wind-up running",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a cancelled attack counts as cast",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a stunned body starts a wind-up",
+   "verdict": "caught",
+   "fails": 4
+  },
+  {
+   "name": "the body never reads its slot keys",
+   "verdict": "caught",
+   "fails": 9
+  },
+  {
+   "name": "the sim pass runs before the body",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the first wait is hard-coded",
+   "verdict": "caught",
+   "fails": 6
+  },
+  {
+   "name": "the first wait is ignored by the Body",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "a flinch hold accepts an attack",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "an attack starts with no due handoff",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a new wind-up advances on its first frame",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the AI gates its heading on a stun",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the AI stops deciding while stunned",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the unstick reads the whole frame, not its own step",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a slot press is answered once for good",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the validator ignores firstWait",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a leader always takes the wild divisor",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a leader never takes the wild divisor",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the validator ignores wildStatusDivisor",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a heal waits until hurt again",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "unhurt it sits on the heal slot",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the AI keeps its stun exception",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "minField is ignored",
+   "verdict": "caught",
+   "fails": 13
+  },
+  {
+   "name": "swapLimit is ignored",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a send-in does not restart the clock",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "a voluntary swap does not restart the clock",
+   "verdict": "caught",
+   "fails": 5
+  },
+  {
+   "name": "a swap is decided inside a tell",
+   "verdict": "caught",
+   "fails": 6
+  },
+  {
+   "name": "the recovery counts as the tell",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "no STAB",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "every move of yours counts as revealed",
+   "verdict": "caught",
+   "fails": 5
+  },
+  {
+   "name": "a tie ignores power",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the guess takes the first type",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "no reflex",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a dodge inside a commitment",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a dodge with no charge to spare",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "dodgeReserve is ignored",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the bag rolls dice",
+   "verdict": "caught",
+   "fails": 8
+  },
+  {
+   "name": "the floor is ignored",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "it dodges toward the path",
+   "verdict": "caught",
+   "fails": 6
+  },
+  {
+   "name": "a still shape: dodged sideways",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a miss is a threat",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a bench faint is not paid",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a bench faint is the boss kill",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a bench faint is loud",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "aggr ignores confidence",
+   "verdict": "caught",
+   "fails": 4
+  },
+  {
+   "name": "no floor or ceiling",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "its own faint lifts it",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "confSwing is ignored",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "no drift",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the long window never empties",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "any shape counts as hers",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "its own faints are not seen",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "your send-in is not seen",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "no lean",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "the lean goes past you",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the lean goes the wrong way",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "repeat is ignored",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "once is ignored",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "a trigger fires inside a commitment",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "an HP line never re-arms",
+   "verdict": "caught",
+   "fails": 0
+  },
+  {
+   "name": "a set lasts forever",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a line ignores the banner",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a line is never dropped",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "no swing line cooldown",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "Finish has no KO bonus",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "risk is ignored",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "damage dealt is not in the cost",
+   "verdict": "caught",
+   "fails": 18
+  },
+  {
+   "name": "no time term",
+   "verdict": "caught",
+   "fails": 33
+  },
+  {
+   "name": "no commitment bonus",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "confidence leaves Pressure and Finish alone",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "plans run past their payoff",
+   "verdict": "caught",
+   "fails": 16
+  },
+  {
+   "name": "randomness is ignored",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "no partial credit",
+   "verdict": "caught",
+   "fails": 4
+  },
+  {
+   "name": "plans of 5 actions",
+   "verdict": "caught",
+   "fails": 4
+  },
+  {
+   "name": "your shots ignore their reach",
+   "verdict": "caught",
+   "fails": 15
+  },
+  {
+   "name": "a swap at any step",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a swap has no cost",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a swap ignores swapWill",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "no matchup term",
+   "verdict": "caught",
+   "fails": 5
+  },
+  {
+   "name": "a sleep is not stood out",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a swap stands out the sleep too",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "no KO term",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a dash spends the reserve",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a dash past one dodge",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the kept charge is free",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "draw twice a plan",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a dodge without its draw",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a dodge ignores reflex",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the swap gate ignores minField",
+   "verdict": "caught",
+   "fails": 12
+  },
+  {
+   "name": "the reflex keep check is off",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a reflex spends the plan's charge",
+   "verdict": "MISSED",
+   "fails": 0
+  },
+  {
+   "name": "the plan is worth nothing",
+   "verdict": "MISSED",
+   "fails": 0
+  },
+  {
+   "name": "the read still forces a swap",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "no sideways escape",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "Finish counts its damage twice",
+   "verdict": "caught",
+   "fails": 18
+  },
+  {
+   "name": "Recover counts what the plan spent",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a broken action waits for the tick",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "it plans inside a tell",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the planner switch is ignored",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the 0 to 1 check is off",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a trigger may do nothing",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "a trigger may force a swap",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "Misty's aggression is the baseline",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the store outlives the run",
+   "verdict": "caught",
+   "fails": 5
+  },
+  {
+   "name": "learnRate is ignored",
+   "verdict": "caught",
+   "fails": 4
+  },
+  {
+   "name": "a tie is a pattern",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the lead is the first mon seen",
+   "verdict": "caught",
+   "fails": 4
+  },
+  {
+   "name": "a faint send-in is a swap",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "every swap is low HP",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "sentIn never ends",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "a dodge counts every frame",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "no stale reveals",
+   "verdict": "caught",
+   "fails": 8
+  },
+  {
+   "name": "a stale move outlives 10 s",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a stale move is never seen missing",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "no read",
+   "verdict": "caught",
+   "fails": 13
+  },
+  {
+   "name": "the read waits out minField",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "the cap is ignored",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "a tie swaps",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the read is of your mon on the field",
+   "verdict": "caught",
+   "fails": 5
+  },
+  {
+   "name": "the memory switch is ignored",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the read line waits its turn",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "no exploit trigger",
+   "verdict": "caught",
+   "fails": 5
+  },
+  {
+   "name": "Misty's learnRate is the baseline",
+   "verdict": "caught",
+   "fails": 14
+  },
+  {
+   "name": "the predictCap check is off",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "intelligence is ignored",
+   "verdict": "caught",
+   "fails": 6
+  },
+  {
+   "name": "growth is ignored",
+   "verdict": "caught",
+   "fails": 5
+  },
+  {
+   "name": "growth already counts at loop 1",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "intelligence is not held in 0 to 1",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "an override loses to the curve",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "one straight line (the default skipped)",
+   "verdict": "caught",
+   "fails": 21
+  },
+  {
+   "name": "a curve reaches perfect at the top",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "aimError is left off the curves",
+   "verdict": "caught",
+   "fails": 0
+  },
+  {
+   "name": "the fraction of a read is dropped",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "readCarry is not reset at fight start",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "misjudge shares randomness's source",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the override warning is off",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "no misjudge noise",
+   "verdict": "caught",
+   "fails": 5
+  },
+  {
+   "name": "the noise comes from Math.random",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "the noise is drawn per goal, not per plan",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the ranking reads the true cost",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the snapshot drops misjudge",
+   "verdict": "caught",
+   "fails": 3
+  },
+  {
+   "name": "the validator accepts intelligence 1.5",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the reflex floor is off",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "dodgeRead is not checked to 10",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a trigger may set intelligence (T1)",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "a trigger may set reflex under the floor (T2)",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the snapshot drops goalWeights",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the snapshot drops tagMultipliers",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "the validator skips the goal names",
+   "verdict": "caught",
+   "fails": 1
+  },
+  {
+   "name": "the goal weights go through the per-loop step",
+   "verdict": "caught",
+   "fails": 2
+  },
+  {
+   "name": "Bait is not parked",
+   "verdict": "caught",
+   "fails": 1
+  }
+ ]
+}
