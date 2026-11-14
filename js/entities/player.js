@@ -739,10 +739,7 @@ G.PlayerEntity = class PlayerEntity {
         scale = this.dmgTakenScale; // slice 4 H2: the human takes ENEMY_DMG_SCALAR, any other Player entity DMG_SCALAR
       const defB = st ? st[2] : 50,
         spdB = st ? st[4] : 50;
-      const defMul =
-        (1 + (atk.cat === 'special' ? this.incOf('spd') : this.incOf('def'))) *
-        G.Stages.mul(this, atk.cat === 'special' ? 'spd' : 'def') *
-        (this.defItemMul || 1); // Iron / Zinc, then the Def / Sp. Def stage (slice E2a), then Eviolite and Metal Powder
+      const defMul = this.defenseMul(atk.cat);
       if (LOG) {
         neutral = (atk.factor / 50 + 2) * stab * scale * mul;
         cat = atk.cat === 'special' ? 1 : 0;
@@ -774,11 +771,7 @@ G.PlayerEntity = class PlayerEntity {
         this.stgTeam && G.Stages.teamSum(this.stgTeam, 'guard_' + type) > 0 && (tk > 1 || type === 'normal') ? 0.5 : 1;
       amount *= (stone ? Math.max(1, tk * wk) : tk * wk) * guard;
     }
-    // With a melee attack active you take 25% less: you have to
-    // be on top of the enemies to hit (they lagged far behind). A gym leader too, since its one active slot (slice 8, Q6).
-    const close = this.activeGroup().some((m) => G.MoveDefs[m.id] && G.MoveDefs[m.id].balanceClass === 'melee')
-      ? 0.75
-      : 1;
+    const close = this.meleeCushion();
     const raw = pure ? amount : amount * (1 - this.reduction) * close;
     let d = Math.max(1, raw);
     if (this.shield) {
@@ -836,6 +829,20 @@ G.PlayerEntity = class PlayerEntity {
       this.clearEffects(); // slice E2b: fainting wipes every status and own stage drop
       this.onFaint();
     }
+  }
+  /** The multiplier hurt() puts on this entity's Def (or Sp. Def, for a `cat` 'special' hit): Iron or Zinc, then the Def or
+   *  Sp. Def stage (slice E2a), then Eviolite and Metal Powder. A gym leader's Belief reads it too (#109). */
+  defenseMul(cat) {
+    const special = cat === 'special';
+    return (
+      (1 + this.incOf(special ? 'spd' : 'def')) * G.Stages.mul(this, special ? 'spd' : 'def') * (this.defItemMul || 1)
+    );
+  }
+  /** With a melee attack active this entity takes 25% less: it has to be on top of the enemies to hit (they lagged
+   *  far behind). A gym leader too, since its one active slot (slice 8, Q6). Read in hurt() and by a leader's Belief
+   *  (#109). */
+  meleeCushion() {
+    return this.activeGroup().some((m) => G.MoveDefs[m.id] && G.MoveDefs[m.id].balanceClass === 'melee') ? 0.75 : 1;
   }
 
   /**

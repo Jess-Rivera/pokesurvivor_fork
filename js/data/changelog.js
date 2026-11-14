@@ -18,6 +18,10 @@ G.CHANGELOG = [
         'Gym leaders no longer try to bait out your strongest move and punish its cooldown. That tactic is set aside until it is reworked.',
         'Gym leaders no longer try to bait out your strongest move and punish its cooldown. That tactic is set aside until it is reworked.',
       ],
+      [
+        'Brock and Misty now weigh their whole kit when they pick what to do: every rock or pulse of a spread shot, their upgrades and held items, their crits and their own defenses. They lean on their ranged moves more instead of walking in to tackle you.',
+        'Brock and Misty now weigh their whole kit when they pick what to do: every rock or pulse of a spread shot, their upgrades and held items, their crits and their own defenses. They lean on their ranged moves more instead of walking in to tackle you.',
+      ],
     ],
   },
   {

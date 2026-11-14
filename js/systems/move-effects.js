@@ -116,10 +116,31 @@ G.MoveEffects = (() => {
    * The hit an attack hands its target (slice 4a, the one hit contract). The attacker decides its half: the attacker factor A (D6),
    * STAB from the ATTACKER (D8; every attacker declares it with stabFor since slice 4b, a gym leader's mon included), the crit roll (D10) and
    * its multiplier. The target's family runs the defense half: PlayerEntity.takeHit, or the wild defense in damage() below.
+   * #109: the terms come from attackTerms, so a leader's Belief sizes its own hit with the same numbers; only the crit
+   * is rolled here.
    */
   function blowOf(inst, e, rng) {
     const def = inst.spec,
-      o = inst.cast.owner;
+      o = inst.cast.owner,
+      terms = attackTerms(def, o, e),
+      c = terms.critChance;
+    return {
+      A: terms.A,
+      m: terms.m,
+      cat: def.category,
+      type: def.type,
+      stab: terms.stab,
+      crit: c > 0 && rng() < c, // D10: one roll per damage hit, only when it can crit
+      critMul: terms.critMul,
+      owner: o,
+    };
+  }
+  /** #109: the attacker's half of the hit contract that owner o's move `def` hands target e, with nothing rolled. A is
+   *  the attacker factor at hit time (owner.moveFactor: folded Power, stat cards, stages, held and run items, enrage;
+   *  D6), m its G.Stats adapter (D5, with statusBonus on POWER, D13), stab (D8), critChance and critMul (D10), typeMult (type x weather
+   *  with the Power Stone floor, D9) and itemMul (the held type items, D11). blowOf rolls the crit from it; G.LeaderBelief reads
+   *  it to size a leader's own hit on you (LEADER-AI BELIEF: its own exact state). */
+  function attackTerms(def, o, e) {
     const sb = specialOf(def, 'statusBonus'); // D13: a POWER term, checked per hop target
     const m = {
       cat: def.category,
@@ -127,16 +148,15 @@ G.MoveEffects = (() => {
       type: def.type,
     }; // adapter into G.Stats (D5: P = basePower)
     const cfx = fxOf(def, 'crit'),
-      c = critOf(o) + (cfx ? pct(cfx.critChance || 0) : 0);
+      typeMult = typeK(o, def.type, e);
     return {
       A: o.moveFactor(m), // D6, at hit time
       m,
-      cat: def.category,
-      type: def.type,
       stab: def.category !== 'status' && o.stabFor && o.stabFor(m) ? G.Stats.STAB : 1,
-      crit: c > 0 && rng() < c, // D10: one roll per damage hit, only when it can crit
+      critChance: critOf(o) + (cfx ? pct(cfx.critChance || 0) : 0),
       critMul: CRIT_MUL * (o.critDmgMul || 1),
-      owner: o,
+      typeMult,
+      itemMul: G.Stats.itemDmgMul(o, def.type, typeMult),
     };
   }
 
@@ -573,5 +593,6 @@ G.MoveEffects = (() => {
     statReady,
     endHeal,
     gateMulOf,
+    attackTerms,
   };
 })();

@@ -2748,29 +2748,175 @@ if (G.LeaderPlanner) {
       }
       // 16f-g (#109 T3, decision 2026-11-14-109-brock-and-misty-target-feel). A trigger's goal weights change only the goals
       // it names, and the table in force before it comes back when its `for` runs out. Made-up tables on a test leader, so
-      // no tuning data is read; the gym's ai is put back whatever happens.
+      // no tuning data is read; the gym's ai is put back whatever happens. A trigger waits out a tell or commitment, so the
+      // fight steps until it has fired (not to a fixed time), and the weights are read from a fresh snapshot of the settings.
       const brockEntry = K[gymIdx('Brock')],
         testAi = brockEntry.ai,
         ownWeights = { endurance: 1.3, pressure: 0.9 },
-        triggerWeights = { kite: 2 };
+        triggerWeights = { kite: 2 },
+        triggerFor = 1,
+        weightsNow = () => {
+          const ai = G.GymArena.leaderAI,
+            world = ai && G.GymArena.leaderBelief.snapshot(ai.active, ai.set, ai.conf);
+          return world && world.goalWeights;
+        };
       let during = null,
-        after = null;
+        after = null,
+        firedAt = null;
       brockEntry.ai = Object.assign({}, testAi, {
         goalWeights: ownWeights,
-        triggers: [{ on: 'start', set: { goalWeights: triggerWeights }, for: 1 }],
+        triggers: [{ on: 'start', set: { goalWeights: triggerWeights }, for: triggerFor }],
       });
       try {
         open('Brock', 1, 200);
-        run(0.5);
-        during = G.GymArena.leaderAI && G.GymArena.leaderAI.world && G.GymArena.leaderAI.world.goalWeights;
-        run(1.5);
-        after = G.GymArena.leaderAI && G.GymArena.leaderAI.world && G.GymArena.leaderAI.world.goalWeights;
+        const ai = G.GymArena.leaderAI,
+          fired = () => ai.log.find((d) => d.act === 'trigger' && d.text === 'start');
+        for (let frames = 0; frames < 5 / DT && !fired(); frames++) frame();
+        firedAt = fired() ? fired().t : null;
+        during = weightsNow();
+        run(triggerFor + 0.5);
+        after = weightsNow();
       } finally {
         brockEntry.ai = testAi;
       }
+      ok(firedAt != null, '16f-g: the start trigger fires within 5 s');
       ok(!!during && during.kite === triggerWeights.kite && Object.keys(ownWeights).every((goal) => during[goal] === ownWeights[goal]),
-        '16f-g: a trigger sets the goal weights it names and keeps the rest: ' + JSON.stringify(during));
+        '16f-g: a trigger sets the goal weights it names and keeps the rest (fired at ' + firedAt + ' s): ' + JSON.stringify(during));
       ok(same(after, ownWeights), "16f-g: the leader's own goal weights come back when the trigger's time runs out: " + JSON.stringify(after));
+      // 16h (#109, plan "109 - Leader Decision Trace Plan.md"): the dev decision trace. The trace file loads here with the
+      // dev flag on, as dev.html loads it after the leader AI. Wiring: a record holds what the AI chose and read at that
+      // choice. Parity: attached or not, a seeded fight makes the same choices. Made-up goal weights on a test leader.
+      const traceFile = 'js/core/debug-leader-trace.js',
+        traceWeights = { endurance: 1.2, pressure: 0.8 },
+        seedBeforeTrace = AI.seed;
+      G.Debug = { on: true };
+      vm.runInThisContext(fs.readFileSync(process.env.LA_TRACE || path.join(R, traceFile), 'utf8'), { filename: traceFile });
+      const recorder = G.LeaderAI.recorder;
+      ok(typeof recorder === 'function' && Array.isArray(recorder.fights), '16h: under ?dev the trace attaches its recorder');
+      const tracedFight = (attached) => {
+        G.LeaderAI.recorder = attached ? recorder : null;
+        brockEntry.ai = Object.assign({}, testAi, { goalWeights: traceWeights });
+        try {
+          open('Brock', 1, 200);
+          run(3);
+          const ai = G.GymArena.leaderAI;
+          return { ai, goals: ai.log.filter((d) => d.act === 'goal').map((d) => d.t + ' ' + d.text) };
+        } finally {
+          brockEntry.ai = testAi;
+        }
+      };
+      AI.seed = 7;
+      try {
+        const fightsBefore = recorder.fights.length,
+          plain = tracedFight(false);
+        ok(recorder.fights.length === fightsBefore, '16h: with no recorder attached nothing is kept');
+        const traced = tracedFight(true),
+          fight = recorder.fights[recorder.fights.length - 1],
+          records = fight ? fight.records : [],
+          last = records[records.length - 1],
+          liveRanking = traced.ai.choice ? traced.ai.choice.ranking : [];
+        ok(records.length > 0 && records.every((rec, i) => i === 0 || rec.t >= records[i - 1].t),
+          '16h: the trace keeps one record per choice, in clock order (' + records.length + ')');
+        ok(!!last && last.pick === (traced.ai.choice.pick ? traced.ai.choice.pick.goal : null) &&
+            last.ranking.length === liveRanking.length &&
+            last.ranking.every((entry, i) => entry.goal === liveRanking[i].goal && near(entry.total, liveRanking[i].total, 1e-3)),
+          "16h: the last record holds the AI's last choice and its whole ranking");
+        ok(!!last && same(last.inputs.goalWeights, traced.ai.world.goalWeights), '16h: a record holds the goal weights the planner read');
+        ok(same(plain.goals, traced.goals), '16h: the trace changes no choice: ' + plain.goals.length + ' vs ' + traced.goals.length + ' goal changes');
+        const mark = G.Debug.leaderMark('16h');
+        ok(!!mark && near(mark.t, traced.ai.clock, 1e-3) && fight.events.includes(mark), '16h: a mark lands at the fight clock');
+        for (let more = 0; more < recorder.TRACE.fightsKept; more++) tracedFight(true);
+        ok(recorder.fights.length === recorder.TRACE.fightsKept, '16h: the trace keeps only the last fightsKept fights');
+      } finally {
+        G.LeaderAI.recorder = null;
+        AI.seed = seedBeforeTrace;
+        delete base.Debug;
+      }
+      // 16i (#109, plan "109 - Leader Reads Its Whole Kit Plan.md", decisions K1 and K3): the leader reads its own whole kit
+      // and your side as seen. Relations only: a made-up change to Misty's test-leader mon moves Belief's numbers the way the
+      // real hit moves; made-up shots for the fan. No tuning data is read and no expected number is written here.
+      const kitArena = open('Misty', 1, 200);
+      run(0.5);
+      const kitMon = kitArena.team.active,
+        kitAI = G.GymArena.leaderAI,
+        kitBelief = G.GymArena.leaderBelief,
+        viewsNow = () => {
+          const world = kitBelief.snapshot(kitMon, kitAI.set, kitAI.conf);
+          return world ? world.slots.flatMap((slot) => slot.moves) : [];
+        },
+        firstAttack = viewsNow().find((view) => view.tag === 'attack');
+      ok(!!firstAttack, "16i: Misty's mon has an attack in Belief's snapshot");
+      if (firstAttack) {
+        const hisHit = () => (viewsNow().find((view) => view.id === firstAttack.id) || { hitFraction: NaN }).hitFraction,
+          hitWith = (field, value) => {
+            const own = Object.prototype.hasOwnProperty.call(kitMon, field),
+              before = kitMon[field];
+            kitMon[field] = value;
+            try {
+              return hisHit();
+            } finally {
+              if (own) kitMon[field] = before;
+              else delete kitMon[field];
+            }
+          },
+          attackDef = kitMon.moveDef(firstAttack.id),
+          plainHit = hisHit(),
+          realFactor = kitMon.moveFactor;
+        // its own attack half: the factor its cards, items and stages give (moveFactor), the crit at its expectation, its item
+        const doubledFactor = hitWith('moveFactor', (m) => realFactor.call(kitMon, m) * 2);
+        ok(plainHit > 0 && doubledFactor > plainHit,
+          "16i: its hit on you reads its own attack factor (moveFactor): " + plainHit + ' then ' + doubledFactor);
+        const critMul = G.MoveEffects.attackTerms(attackDef, kitMon, human).critMul,
+          noCrit = hitWith('critChance', 0);
+        ok(near(hitWith('critChance', 1) / noCrit, critMul, 1e-9) &&
+            near(hitWith('critChance', 0.5) / noCrit, 1 + 0.5 * (critMul - 1), 1e-9),
+          "16i: a crit chance raises its hit by chance x (the hit contract's crit multiplier - 1)");
+        const itemMul = G.Stats.itemDmgMul({ typeBoost: attackDef.type }, attackDef.type, 1);
+        ok(itemMul > 1 && near(hitWith('typeBoost', attackDef.type) / plainHit, itemMul, 1e-9),
+          "16i: a held type item raises its hit by the hit contract's item multiplier");
+        // the fan: the snapshot's count is the folded move's (wiring); then made-up shots through Belief's own fan reader
+        const countProblems = viewsNow()
+          .filter((view) => view.count !== ((kitMon.moveDef(view.id).space || {}).count || 1))
+          .map((view) => view.id);
+        ok(!countProblems.length, "16i: each move's projectile count reaches the snapshot as folded: " + countProblems.join(', '));
+        const fanOf = G.LeaderBelief.fanSidewaysOf,
+          stillYou = { radius: 10, sidewaysSpeed: 0 },
+          strafingYou = { radius: 10, sidewaysSpeed: 60 },
+          landed = (count, spread, distance, who) => P.hitChance(gun({ fanSideways: fanOf(count, spread) }), distance, who),
+          oneStill = landed(1, 0.3, 200, stillYou),
+          threeStill = landed(3, 0.3, 200, stillYou);
+        ok(landed(1, 0.3, 200, strafingYou) === P.hitChance(gun(), 200, strafingYou), '16i: one projectile lands as before');
+        ok(near(landed(3, 0.3, 0, stillYou), 3, 1e-9), '16i: standing still at point blank, every projectile of a fan lands');
+        ok(threeStill > oneStill && threeStill <= 3, '16i: three projectiles land more than one and never more than three: ' +
+          oneStill + ' and ' + threeStill);
+        ok(landed(3, 0.6, 200, stillYou) < threeStill, '16i: standing still at range, a wider fan lands less');
+        ok(landed(3, 0.3, 200, strafingYou) >= landed(1, 0.3, 200, strafingYou), '16i: strafing, a fan lands at least one shot');
+        // your hit on it: Belief's size equals what its own hurt() takes (parity), and reads its own defense (wiring)
+        const yourStats = G.DEX_BY[you[0].dex].stats,
+          takenFrom = (category, type, power) => {
+            const factor = G.Stats.attackFactor(yourStats[1], yourStats[3], human.level, { dmg: power, cat: category });
+            Object.assign(kitMon, { hp: kitMon.maxHp, invuln: 0, shield: null });
+            kitMon.hurt(factor, type, false, { factor, cat: category, mul: 1, stab: 1 });
+            return (kitMon.maxHp - kitMon.hp) / kitMon.maxHp;
+          },
+          hpBefore = kitMon.hp;
+        const parity = ['physical', 'special'].map((category) => [category,
+          G.LeaderBelief.hitOnLeader(you[0], kitMon, 45, category, 'normal'), takenFrom(category, 'normal', 45)]);
+        Object.assign(kitMon, { hp: hpBefore, invuln: 0 });
+        ok(parity.every(([, seen, taken]) => seen > 0 && near(seen, taken, 1e-9)),
+          '16i: your hit on it as Belief sizes it is what its hurt() takes: ' + JSON.stringify(parity));
+        const plainThreats = kitBelief.yourThreats(kitMon).map((threat) => threat.hitFraction),
+          realDefense = kitMon.defenseMul;
+        kitMon.defenseMul = (cat) => realDefense.call(kitMon, cat) * 2;
+        let sturdier = [];
+        try {
+          sturdier = kitBelief.yourThreats(kitMon).map((threat) => threat.hitFraction);
+        } finally {
+          delete kitMon.defenseMul;
+        }
+        ok(plainThreats.length > 0 && plainThreats.every((hit, i) => hit > 0 && sturdier[i] < hit),
+          '16i: your hit on it reads its own defense (defenseMul): ' + plainThreats.join(', ') + ' then ' + sturdier.join(', '));
+      }
     }
   }
   // ---------------- 17. #53 (#49 slice 4): intelligence, its curves and misjudge (docs/LEADER-AI.md "The Decider (#49)") ----------------

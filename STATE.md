@@ -5,9 +5,12 @@ Last updated: 2026-11-14 afternoon, Quick (work). Branch: balance/109-template-c
 
 ## START HERE (next session, either tool)
 1. #109 template check, on balance/109-template-check. Target feel agreed (decision 2026-11-14-109-brock-and-misty-target-feel).
-   Round 1 numbers and T3 (a trigger may set goal weights) are written, check.js pending. Next: the leader decision trace
-   (plan "109 - Leader Decision Trace Plan.md", awaiting Jess), then the round 1 feel test. Maps: "109 - ..." in
-   docs/ASCII Concept Maps/.
+   Round 1 numbers and T3 (a trigger may set goal weights) built, check.js green. The decision trace
+   (js/core/debug-leader-trace.js, G.Debug.leaderTrace and leaderMark) is written. Round 1 traced: both leaders walk in
+   to Tackle because the planner scores a multi-projectile shot as one projectile ("109 - Round 1 Trace Findings.md").
+   Feel: Brock stable, Misty clings. "109 - Leader Reads Its Whole Kit Plan.md" approved (K1 to K4) and written, check.js
+   pending (harness 16i, six mutants). Next: check.js, then rerun round 1's numbers unchanged with the trace.
+   Maps: "109 - ..." in docs/ASCII Concept Maps/.
 2. #49 (utility-AI Decider): close it or keep it as the umbrella. Jess rules.
 3. Any time: #121 (move-system dev tools out of debug.js, 1346 lines), #120 (planner verb test gap), #110, #57, #58.
 4. #111 host-model slice 12 (gyms 3 to 8) after #109, one gym per session, its own branch. Then #122, the tuning pass.

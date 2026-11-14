@@ -95,10 +95,15 @@ G.LeaderPlanner = (() => {
   const EPS = 1e-9;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const WIDE_FORMS = new Set(['melee', 'nova', 'multi']);
+  /** A move with no fan in its view (a hand-made one): one projectile, aimed straight at you. */
+  const ONE_PROJECTILE = Object.freeze([0]);
 
   /** The chance a move of its own lands on you from `distance`: inside its reach plus your body, else falling to 0 over
    *  reachFalloff px; then your sideways step while its aim is locked (the tell, plus a shot's flight) plus aimError, against the
-   *  shape's half width plus your body. A cone, nova or burst is wide enough to count as 1 sideways. */
+   *  shape's half width plus your body. A cone, nova or burst is wide enough to count as 1 sideways.
+   *  #109 B (decision K3): a fan counts every projectile (move.fanSideways, from Belief: each one's sideways share of
+   *  the distance), each at its sideways offset, with your sideways step as likely one way as the other, so the result
+   *  is the expected number of projectiles that land. One projectile is exactly the chance above. */
   function hitChance(move, distance, you, aimError = 0) {
     const reachEdge = move.reach + you.radius,
       inReach = distance <= reachEdge ? 1 : clamp(1 - (distance - reachEdge) / TUNE.reachFalloff, 0, 1);
@@ -106,7 +111,12 @@ G.LeaderPlanner = (() => {
     const flight = move.travelSpeed > 0 ? distance / move.travelSpeed : 0,
       escape = you.sidewaysSpeed * (move.tell + flight) + aimError,
       half = move.halfWidth + you.radius;
-    return inReach * (half / (half + escape));
+    let landed = 0;
+    for (const share of move.fanSideways || ONE_PROJECTILE) {
+      const offset = share * distance;
+      landed += (half / (half + Math.abs(escape - offset)) + half / (half + Math.abs(escape + offset))) / 2;
+    }
+    return inReach * landed;
   }
 
   /** The utility multiplier of a goal: its weight, with confidence raising Pressure and Finish and lowering Conserve and Endurance. */

@@ -232,10 +232,16 @@ G.Stats = (() => {
   // ([hp, atk, def, spa, spd, spe]) and levels only: no IVs, EVs, nature, items or stages, since none of them shows on screen.
   // The leader's Belief reads it for danger and opportunity.
   function visibleHitFrac(atkStats, atkLevel, defStats, defLevel, power, cat, stabMul, typeMult, scale) {
-    if (!(power > 0) || !(typeMult > 0) || !atkStats || !defStats) return 0;
-    const move = { dmg: power, cat },
-      factor = attackFactor(atkStats[1], atkStats[3], atkLevel, move),
-      dmg = applyDamage(factor, defStats[2], defStats[4], move, defLevel, stabMul, 1, scale) * typeMult;
+    if (!(power > 0) || !atkStats) return 0;
+    const move = { dmg: power, cat };
+    const factor = attackFactor(atkStats[1], atkStats[3], atkLevel, move);
+    return visibleDefenseFrac(factor, defStats, defLevel, move, stabMul, typeMult, scale);
+  }
+  // #109: visibleHitFrac's defense half on its own, for an attacker factor already known (a leader sizing its own hit
+  // on you from its whole build). `move` is { dmg, cat }; the defender is read as seen: species base stats and level.
+  function visibleDefenseFrac(factor, defStats, defLevel, move, stabMul, typeMult, scale) {
+    if (!(move.dmg > 0) || !(typeMult > 0) || !defStats) return 0;
+    const dmg = applyDamage(factor, defStats[2], defStats[4], move, defLevel, stabMul, 1, scale) * typeMult;
     return dmg / Math.max(1, hpForLevel(defStats[0], defLevel));
   }
 
@@ -284,5 +290,6 @@ G.Stats = (() => {
     enemyAttackFactor,
     applyPlayerDefense,
     visibleHitFrac,
+    visibleDefenseFrac,
   };
 })();

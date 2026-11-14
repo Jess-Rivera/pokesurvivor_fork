@@ -12,6 +12,10 @@
  *            hit on a leader mon: that attack's visible size x its readiness) and opportunity (that mon's best hit on your mon on the
  *            field among its moves ready now, from its own exact timers), both fractions of the struck mon's max HP (G.Stats
  *            visibleHitFrac). No reader until #51.
+ *   OWN KIT  (#109, decision K1) the planner's world reads the leader's own side exactly and yours as seen: its hit on
+ *            you from the real hit contract (G.MoveEffects.attackTerms) with the crit at its expectation, every
+ *            projectile of a fan (fanSidewaysOf), and your hit on it against its own defense as hurt() runs it
+ *            (hitOnLeader). danger, opportunity and a buff's worth (buffValue) stay visible-only.
  * memoryUse is the Decider's setting (G.LeaderAI.BASE), handed in on each tick.
  */
 G.LeaderBelief = (() => {
@@ -99,7 +103,8 @@ G.LeaderBelief = (() => {
 
   /** A hit's visible size on `target` (a fraction of its max HP), from `attacker`: power, category, type multiplier and STAB, at the
    *  damage scale of the side it lands on (G.Stats.visibleHitFrac, species stats and levels only). #51: then read against the max HP
-   *  its HP bar shows, so an authored HP multiplier (a leader's hpMult) counts: the bar's drop is on screen. */
+   *  its HP bar shows, so an authored HP multiplier (a leader's hpMult) counts: the bar's drop is on screen. #109: only
+   *  buffValue reads it now. */
   function hitSize(attacker, target, power, category, type, scale, barMax = target && target.maxHp) {
     const stab = typesOf(attacker).includes(type) ? G.Stats.STAB : 1,
       stats = statsOf(target),
@@ -118,6 +123,65 @@ G.LeaderBelief = (() => {
         scale
       )
     );
+  }
+  /** #109 (K1): leader mon e's hit with its move d (the card-folded def) on you, a fraction of your max HP (pl.maxHp,
+   *  the bar you see). Its own half is exact, the real hit contract's (G.MoveEffects.attackTerms: moveFactor with its
+   *  cards, items, stages and enrage; STAB; type x weather with the Power Stone floor; held type items), with the crit
+   *  at its expectation. Your half is as seen: species base stats and level (G.Stats.visibleDefenseFrac), at your
+   *  damage-taken scale. */
+  function hitOnYou(e, d, you, pl) {
+    const terms = G.MoveEffects.attackTerms(d, e, pl),
+      yourStats = statsOf(you),
+      level = levelOf(you),
+      expectedCrit = 1 + Math.min(1, terms.critChance) * (terms.critMul - 1),
+      bar = pl.maxHp > 0 && yourStats ? G.Stats.hpForLevel(yourStats[0], level) / pl.maxHp : 1;
+    const seen = G.Stats.visibleDefenseFrac(
+      terms.A,
+      yourStats,
+      level,
+      terms.m,
+      terms.stab,
+      terms.typeMult,
+      G.Stats.ENEMY_DMG_SCALAR
+    );
+    return bar * seen * expectedCrit * terms.itemMul;
+  }
+  /** #109 (K1): your hit on leader mon m with a move of `power`, `category` and `type`, a fraction of its max HP
+   *  (hpMult in). Your half is as seen (species and level; STAB from your types). Its own half is exact, as
+   *  PlayerEntity.hurt runs it: its Def or Sp. Def with its IVs, EVs and nature and defenseMul (Iron and Zinc, its
+   *  stage, defense items), its damage scale, then type x weather, its damage reduction and its melee cushion. */
+  function hitOnLeader(you, m, power, category, type) {
+    const yourStats = statsOf(you),
+      ownStats = statsOf(m),
+      typeMult = G.Types.mult(type, typesOf(m)) * G.Weather.mult(type);
+    if (!(power > 0) || !(typeMult > 0) || !yourStats || !ownStats) return 0;
+    const move = { dmg: power, cat: category },
+      cat = category === 'special' ? 'special' : 'physical', // a Player entity's defense knows physical and special only
+      factor = G.Stats.attackFactor(yourStats[1], yourStats[3], levelOf(you), move),
+      stab = category !== 'status' && typesOf(you).includes(type) ? G.Stats.STAB : 1;
+    const dmg = G.Stats.applyPlayerDefense(
+      factor,
+      ownStats[2],
+      ownStats[4],
+      cat,
+      levelOf(m),
+      m.defenseMul(cat),
+      m.statProf,
+      stab,
+      m.dmgTakenScale
+    );
+    return (dmg * typeMult * (1 - m.reduction) * m.meleeCushion()) / Math.max(1, m.maxHp);
+  }
+  /** #109 B: a fan of `count` projectiles over `spread` radians as the planner reads it: each projectile's sideways
+   *  share of the distance (the sine of its angle off the aim, by the sim's own G.MoveSim.fanAngle), leaving out any
+   *  that fly away from you (a ring wider than half a turn). One projectile is [0]. */
+  function fanSidewaysOf(count, spread) {
+    const shares = [];
+    for (let i = 0; i < count; i++) {
+      const angle = G.MoveSim.fanAngle(0, i, count, spread || 0);
+      if (Math.cos(angle) > 0) shares.push(Math.sin(angle));
+    }
+    return shares;
   }
   /** A move's attack form and reach (G.Gyms.formOf and reachOf); reach Infinity when it has no attack form the leader reads. */
   function reachOfMove(d) {
@@ -237,7 +301,7 @@ G.LeaderBelief = (() => {
         out.push({
           id,
           category: d.category,
-          hitFraction: hitSize(you, m, d.basePower, d.category, d.type, G.Stats.DMG_SCALAR),
+          hitFraction: hitOnLeader(you, m, d.basePower, d.category, d.type),
           reach: reachOfMove(d).reach,
           travelSpeed: reachOfMove(d).form === 'shot' ? (d.delivery && d.delivery.moveSpeed) || 0 : 0,
           cycle,
@@ -251,7 +315,7 @@ G.LeaderBelief = (() => {
       out.push({
         id: null,
         category,
-        hitFraction: hitSize(you, m, TUNE.guessPower, category, a.type, G.Stats.DMG_SCALAR),
+        hitFraction: hitOnLeader(you, m, TUNE.guessPower, category, a.type),
         reach: Infinity,
         travelSpeed: 0,
         cycle: TUNE.guessCycle,
@@ -345,12 +409,14 @@ G.LeaderBelief = (() => {
         },
       };
     }
-    /** One open move of leader mon e as the planner reads it (its own exact state: timers, reach, its hit on you). */
+    /** One open move of leader mon e as the planner reads it (its own exact state: timers, reach, its hit on you, and
+     *  #109 its projectile count with the fan they fly in, both from the card-folded def). */
     moveView(e, s, pl, you, threats) {
       const d = e.moveDef(s.id),
         { form, reach } = reachOfMove(d),
         tempo = (e.gym && e.gym.tempo) || 1,
-        backs = !!form && form !== 'buff' && form !== 'heal' && setsBack(e, d, pl);
+        backs = !!form && form !== 'buff' && form !== 'heal' && setsBack(e, d, pl),
+        count = (d.space && d.space.count) || 1;
       let tag = 'none';
       if (form === 'heal' || form === 'buff') tag = form;
       else if (form && d.basePower > 0) tag = 'attack';
@@ -362,11 +428,12 @@ G.LeaderBelief = (() => {
         reach: Number.isFinite(reach) ? reach : 0,
         cooldown: (d.cd || 0) * (e.cdMul || 1),
         remaining: Math.max(0, s.t || 0),
-        hitFraction:
-          tag === 'attack' ? hitSize(e, you, d.basePower, d.category, d.type, G.Stats.ENEMY_DMG_SCALAR, pl.maxHp) : 0,
+        hitFraction: tag === 'attack' ? hitOnYou(e, d, you, pl) : 0,
         tell: e.tellsOn && G.Boss.TUNE.TELL[form] ? G.Boss.TUNE.TELL[form] / tempo : 0,
         travelSpeed: form === 'shot' ? (d.delivery && d.delivery.moveSpeed) || 0 : 0,
         halfWidth: (d.space && (d.space.radRadius || (d.space.linWidth || 0) / 2)) || 10,
+        count,
+        fanSideways: fanSidewaysOf(count, d.space && d.space.spread),
         setsBack: backs,
       };
       if (tag === 'buff') {
@@ -465,6 +532,8 @@ G.LeaderBelief = (() => {
     readinessIn,
     yourAttack,
     matchup,
+    hitOnLeader, // #109: the harness checks it against hurt()
+    fanSidewaysOf, // #109: the harness reads a fan through it
     /** A switched gym's fight starts: the Belief over its G.LeaderInfo record. */
     create(info) {
       return (cur = info ? new Belief(info) : null);
