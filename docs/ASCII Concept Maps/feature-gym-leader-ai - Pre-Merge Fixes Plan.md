@@ -12,6 +12,15 @@ flowchart LR
   FT --> M["Merge to main"]
 ```
 
+**Built 2026-11-14 (approved as recommended).** Two differences from the plan: 10 mutants moved with their lines, not 7, and
+nine harness load lists gained the new file just before leader-ai.js (a load-order need, not a reader change). No
+changelog line: nothing a player sees changed.
+
+| File | Lines |
+|---|---|
+| js/entities/leader-ai.js | 1089 to 973 |
+| js/data/leader-ai-settings.js (new) | 154 |
+
 ## F2: leader settings move into their own file
 
 ```mermaid

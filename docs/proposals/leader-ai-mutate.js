@@ -6,6 +6,7 @@
 const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const AI = 'js/entities/leader-ai.js',
+  ST = 'js/data/leader-ai-settings.js',
   IN = 'js/systems/leader-info.js',
   BE = 'js/systems/leader-belief.js',
   PL = 'js/systems/leader-planner.js',
@@ -16,7 +17,7 @@ const AI = 'js/entities/leader-ai.js',
   GY = 'js/data/gyms.js',
   SM = 'js/systems/move-sim.js',
   EF = 'js/systems/move-effects.js';
-const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [BE]: 'LA_BELIEF', [PL]: 'LA_PLANNER', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS', [SM]: 'LA_SIM', [EF]: 'LA_EFFECTS' };
+const ENV = { [AI]: 'LA_AI', [ST]: 'LA_SETTINGS', [IN]: 'LA_INFO', [BE]: 'LA_BELIEF', [PL]: 'LA_PLANNER', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS', [SM]: 'LA_SIM', [EF]: 'LA_EFFECTS' };
 const M = [
   // #50 (#49 slice 1): Belief, the cooldown window and the gaps it is derived from
   ['the window never narrows', BE, '    lo += (gap - lo) * memoryUse;\n', ''],
@@ -182,18 +183,18 @@ const M = [
   ["Misty's learnRate is the baseline", GY, '        learnRate: 2,\n', ''],
   ['the predictCap check is off', GY, "if (vals.some((x) => typeof x === 'number' && x > 10)) bad.push(", 'if (false) bad.push('], // #53 retarget
   // #53 (#49 slice 4): intelligence, its curves, fractional reads and misjudge
-  ['intelligence is ignored', AI, 'out.intelligence = LeaderAI.intelligenceForLoop(a.intelligence, loop);', 'out.intelligence = LeaderAI.BASE.intelligence;'],
-  ['growth is ignored', AI, 'growth = shape.growth || 0;', 'growth = 0;'],
-  ['growth already counts at loop 1', AI, 'return G.U.clamp(base + growth * (loop - 1), 0, 1);', 'return G.U.clamp(base + growth * loop, 0, 1);'],
-  ['intelligence is not held in 0 to 1', AI, 'return G.U.clamp(base + growth * (loop - 1), 0, 1);', 'return base + growth * (loop - 1);'],
-  ['an override loses to the curve', AI, 'if (a[k] == null) out[k] = LeaderAI.settingFromIntelligence(k, out.intelligence);', 'out[k] = LeaderAI.settingFromIntelligence(k, out.intelligence);'],
-  ['one straight line (the default skipped)', AI, '    return intelligenceForLoop < half\n      ? G.U.lerp(curve.atDefault, curve.atZero, (half - intelligenceForLoop) / half)\n      : G.U.lerp(curve.atDefault, curve.atOne, (intelligenceForLoop - half) / (1 - half));', '    return G.U.lerp(curve.atZero, curve.atOne, intelligenceForLoop);'],
-  ['a curve reaches perfect at the top', AI, 'misjudge: Object.freeze({ atZero: 0.3, atDefault: G.LeaderAI.BASE.misjudge, atOne: 0.04 }),', 'misjudge: Object.freeze({ atZero: 0.3, atDefault: G.LeaderAI.BASE.misjudge, atOne: 0 }),'],
-  ['aimError is left off the curves', AI, '  aimError: Object.freeze({ atZero: 40, atDefault: G.LeaderAI.BASE.aimError, atOne: 4 }),\n', ''],
+  ['intelligence is ignored', ST, 'out.intelligence = intelligenceForLoop(a.intelligence, loop);', 'out.intelligence = BASE.intelligence;'],
+  ['growth is ignored', ST, 'growth = shape.growth || 0;', 'growth = 0;'],
+  ['growth already counts at loop 1', ST, 'return G.U.clamp(base + growth * (loop - 1), 0, 1);', 'return G.U.clamp(base + growth * loop, 0, 1);'],
+  ['intelligence is not held in 0 to 1', ST, 'return G.U.clamp(base + growth * (loop - 1), 0, 1);', 'return base + growth * (loop - 1);'],
+  ['an override loses to the curve', ST, 'if (a[k] == null) out[k] = settingFromIntelligence(k, out.intelligence);', 'out[k] = settingFromIntelligence(k, out.intelligence);'],
+  ['one straight line (the default skipped)', ST, '    return intelligenceAtLoop < half\n      ? G.U.lerp(curve.atDefault, curve.atZero, (half - intelligenceAtLoop) / half)\n      : G.U.lerp(curve.atDefault, curve.atOne, (intelligenceAtLoop - half) / (1 - half));', '    return G.U.lerp(curve.atZero, curve.atOne, intelligenceAtLoop);'],
+  ['a curve reaches perfect at the top', ST, 'misjudge: Object.freeze({ atZero: 0.3, atDefault: BASE.misjudge, atOne: 0.04 }),', 'misjudge: Object.freeze({ atZero: 0.3, atDefault: BASE.misjudge, atOne: 0 }),'],
+  ['aimError is left off the curves', ST, '  aimError: Object.freeze({ atZero: 40, atDefault: BASE.aimError, atOne: 4 }),\n', ''],
   ['the fraction of a read is dropped', AI, 'this.fractionalReads = Math.max(0, held - this.reads);', 'this.fractionalReads = 0;'],
   ['readCarry is not reset at fight start', AI, 'this.readCarry = 0;', 'this.readCarry = 0.9;'],
   ["misjudge shares randomness's source", AI, 'this.misjudgeSource = G.LeaderPlanner.seeded(', 'this.misjudgeSource = this.draw || G.LeaderPlanner.seeded('],
-  ['the override warning is off', AI, 'if (authored.length < LeaderAI.OVERRIDE_WARN_AT) return null;', 'return null;'],
+  ['the override warning is off', ST, 'if (authored.length < OVERRIDE_WARN_AT) return null;', 'return null;'],
   ['no misjudge noise', PL, 'const noiseDraw = misjudge > 0 ? misjudgeSource() * 2 - 1 : 0;', 'const noiseDraw = 0;'],
   ['the noise comes from Math.random', PL, 'const noiseDraw = misjudge > 0 ? misjudgeSource() * 2 - 1 : 0;', 'const noiseDraw = misjudge > 0 ? Math.random() * 2 - 1 : 0;'],
   ['the noise is drawn per goal, not per plan', PL, 'costOf(world, goal, steps), false, noiseDraw);', 'costOf(world, goal, steps), false, misjudge > 0 ? misjudgeSource() * 2 - 1 : 0);'],
@@ -208,7 +209,7 @@ const M = [
   ['the snapshot drops goalWeights', BE, '        goalWeights: settings.goalWeights,\n', ''],
   ['the snapshot drops tagMultipliers', BE, '        tagMultipliers: settings.tagMultipliers,\n', ''],
   ['the validator skips the goal names', GY, 'names = { goalWeights: LP && LP.GOALS,', 'names = { goalWeights: null,'],
-  ['the goal weights go through the per-loop step', AI, 'if (a.goalWeights) out.goalWeights = a.goalWeights;', 'if (a.goalWeights) out.goalWeights = G.Gyms.perLoop(a.goalWeights, loop);'],
+  ['the goal weights go through the per-loop step', ST, 'if (a.goalWeights) out.goalWeights = a.goalWeights;', 'if (a.goalWeights) out.goalWeights = G.Gyms.perLoop(a.goalWeights, loop);'],
   ['Bait is not parked', PL, "const PARKED_GOALS = Object.freeze(new Set(['bait']));", 'const PARKED_GOALS = Object.freeze(new Set([]));'],
 ];
 

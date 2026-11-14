@@ -466,6 +466,16 @@ G.PauseMenu = (() => {
     }
     return false;
   }
+  /** The pause key (Esc or P) while G.Game is paused. False when the menu is not open (G.Game resumes on its own).
+   *  Open, in this order: End Run or the pocket prompt asking answers No; an item picked up goes back, or the
+   *  Temporary Pocket asks (#90); a closing turns around; else the closing plays and resume runs once it is gone. */
+  function answerPauseKey(resume) {
+    if (!isOpen()) return false;
+    if (answerNo() || blockResume()) return true;
+    if (isClosing()) open();
+    else close(resume);
+    return true;
+  }
   function pressAnswer(index) {
     if (!asking.value || target !== STEPS) return;
     if (ANSWERS[index].id === 'no') {
@@ -539,6 +549,7 @@ G.PauseMenu = (() => {
     askedSide,
     answerNo,
     blockResume,
+    answerPauseKey,
     keys,
     wire,
     openReview,

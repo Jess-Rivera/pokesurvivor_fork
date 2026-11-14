@@ -165,7 +165,7 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
 - 150 px over 0.5 s (300 px/s), 2 charges, 7 s cooldown each (Jess's band 5 to 10 s), 0.2 s gap, body circle 20% for the first 0.3 s. One place: Player.DODGE in js/entities/player.js. Ice glide holds 300 px/s.
 
 ## Leader AI (feature/gym-leader-ai slice 2, #31, built 2026-11-08; all TUNE by feel)
-Baselines in G.LeaderAI.BASE (js/entities/leader-ai.js); a gym overrides any of them as `ai` in js/data/gyms.js, each a number or keyed by loop. Spec: docs/LEADER-AI.md.
+Baselines in G.LeaderSettings.BASE (js/data/leader-ai-settings.js, also G.LeaderAI.BASE); a gym overrides any of them as `ai` in js/data/gyms.js, each a number or keyed by loop. Spec: docs/LEADER-AI.md.
 - Timing: think tick 0.25 s, reflex 0.15 s, threat window 0.6 s (a shot that reaches the body within it is a threat).
 - Dodge: dodgeRead 6 per block of 10 threats (seeded shuffle bag, no streak cap), dodgeReserve 0.
 - Swaps: minField 8 s, swapLimit none. (History, gone in #52: STAY 1, margin 1.1.) Triggers (history, gone in #52): asleep or frozen with 1.5 s+ left (score 3, to the healthiest); under 25% HP with no self heal, once per mon (score 2.5, to the best matchup at 50%+); a bench matchup 2x or better at 40%+ (score: the ratio).

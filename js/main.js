@@ -41,6 +41,7 @@
     'PlayerEntity',
     'Player',
     'GymLeader',
+    'LeaderSettings',
     'LeaderAI',
     'Combat',
     'Spawner',

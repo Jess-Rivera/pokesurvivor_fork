@@ -138,20 +138,14 @@ G.Game = (() => {
       if (!G.Debug.quietPauseActive()) showSoloPause(); // ?dev quiet pause (#54): freeze the frame, no menu
       G.Audio.sfx('pause');
     } else if (state === 'paused') {
-      // The Poke Ball menu plays its closing first; the game stays paused until it is gone. Pausing again mid-close
-      // turns it around.
-      if (G.PauseMenu.ready && G.PauseMenu.isOpen()) {
-        if (G.PauseMenu.answerNo()) return; // End Run is asking: Esc or the pause key answer No, the menu stays
-        if (G.PauseMenu.blockResume()) return; // #90: a picked-up item goes back, or the Temporary Pocket asks first
-        if (G.PauseMenu.isClosing()) G.PauseMenu.open();
-        else
-          G.PauseMenu.close(() => {
-            if (state !== 'paused') return;
-            state = 'playing';
-            G.UI.hideAll();
-          });
-        return;
-      }
+      // The Poke Ball menu answers the key itself (G.PauseMenu.answerPauseKey) and plays its closing first; the game
+      // stays paused until it is gone.
+      const resumeOnceClosed = () => {
+        if (state !== 'paused') return;
+        state = 'playing';
+        G.UI.hideAll();
+      };
+      if (G.PauseMenu.ready && G.PauseMenu.answerPauseKey(resumeOnceClosed)) return;
       state = 'playing';
       G.UI.hideAll();
     }

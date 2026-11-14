@@ -10,8 +10,8 @@ docs/branch-rules/feature-gym-leader-ai.md). Tree clean, level with origin, 212 
    #95 "Blocked by" #97 in Relationships; a type label on #79; the new balance and test sweep cards out of Triage.
 2. Gyms 3 to 8 ruled: merge first, slice 12 on its own branch after the Brock and Misty tuning
    (decision 2026-11-14-gyms-3-to-8-migrate-after-merge). File its parent issue.
-3. Review ruled: F2 and F4 per docs/ASCII Concept Maps/feature-gym-leader-ai - Pre-Merge Fixes Plan.md (awaiting OK),
-   F7 done (Jess untracks the file), then the merge. F1, F3, F5, F6 filed as issues. Mutate run passed.
+3. F2 and F4 built 2026-11-14 (Pre-Merge Fixes Plan.md): Jess runs format, check.js, the moved mutants, a feel test.
+   Then the merge. F7 done. F1, F3, F5, F6 filed as issues.
 4. Brock and Misty tuning (the balance issue); starting notes: 39a - Feel Test Retune Plan.html (not approved).
 
 ## Where we are
