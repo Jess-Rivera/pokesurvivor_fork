@@ -17,10 +17,10 @@ Slice 5a had to change no behavior, so it moved GymBrain's one step (move, choos
 - **The roles:** Decider, Controller, Body, SimPass, each blind to the others' jobs. Rule text: LEADER-AI "FRAME" and the GLOSSARY entries; this file holds none of it. #40 built the order for the frame; #41 and #43 closed the code gaps (both shipped).
 
 ## Standing rulings on this branch
-- gym-harness and leader-stats-harness stay red until the branch nears completion (#30); `check: FAILED (2 harness)` from those two is expected, any other failure is not.
+- `node tools/check.js` must end with "check: all passed". Any failure is a regression. (#30 closed 2026-11-14: gym-harness and leader-stats-harness, the two harnesses it held red, are green.)
 - Gyms 3 to 8 stay on the old GymBrain; only Misty and Brock get the AI player.
 - Side branches (Jess, 2026-11-11): other features (UI work and the like) branch off feature/gym-leader-ai, not main, and merge back into it when done (as feature/leader-roster-ui did). Each finished feature brings the work back here, so the leader AI stays the main line. Main gets everything when this branch merges.
 
 ## Before this branch merges
-- #30 resolved and `node tools/check.js` ends with "check: all passed".
+- `node tools/check.js` ends with "check: all passed" (met 2026-11-14 when #30 closed; keep it green).
 - Move any rule here that should outlive the branch to its permanent home, then mark this file history.

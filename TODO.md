@@ -15,18 +15,20 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
 6. Say "catch me up". New rule to know: tests check relations, not values (docs/TEST-FIRST.md step 3).
 7. Before leaving home: commit and push, so work starts from the same tree.
 
-## Next (from the 2026-11-14 morning Quick session: 39a, Bait parked, #30, the relations rule)
-1. GitHub: cards B, C, F in docs/ASCII Concept Maps/39 - Issue Drafts.html; close #30; close #108 as not planned.
+## Next (from the 2026-11-14 Quick sessions: 39a, Bait parked, #30, the relations rule, GitHub cleanup)
+1. #49: close (Decider done) or keep as umbrella. Board by hand if not done: #86 to Accepted, #29 out of Blocked,
+   #95 blocked by #97 (Relationships), type label on #79, the new balance and test sweep cards out of Triage.
 2. Gyms 3 to 8: merge first and migrate after, or migrate here first (STATE START HERE 2); fix host-model-plan
    line 152 to match the ruling, and file the slice-12 issue if migrating after.
 3. Full leader-ai-mutate run (--full), then the structural review of feature/gym-leader-ai against main, then merge.
    Planner gaps #57 and #58 any time.
-4. The Brock and Misty balance issue (once filed): retune from the overlay's goal and step in play.
+4. The Brock and Misty balance issue (filed 2026-11-14): retune from the overlay's goal and step in play.
+   The relations test sweep issue (filed 2026-11-14): one harness per pass, any time.
 5. Acquisition rework (decision 2026-11-12-acquisition-no-gacha-catch-candy-legendaries): file one parent issue,
    then slices.
-6. Triage: needs-triage on #74 #75 #93 #97 #99 #100 #101 #102 #105 #107. #86 is `ready`.
-7. Owner decisions that block or shape work: #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
-8. New issues to file: card stacks over the level 12 budget (Brock 13, Misty 16); region type maps, PARKED;
+6. Triage: needs-triage on #74 #75 #93 #97 #99 #100 #101 #102 #105 #107 (checked 2026-11-14). #86 is `ready`.
+7. Owner decisions that block or shape work: #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
+8. New issues to file: region type maps, PARKED;
    Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing, so the publish command's last step fails.
 9. Possible issue: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83. Ask Jess whether to file.
 10. Chore for Jess: delete merged branches (chore/docs-cleanup, feature/entity-model, feature/gym-upgrade-authoring,
@@ -36,13 +38,13 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
     the final loop, not G.Gym.splits.length.
 12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op.
 
-## Open issues by area (numbers only, titles on GitHub, checked 2026-11-14, Quick)
+## Open issues by area (numbers only, titles on GitHub, checked 2026-11-14 late morning, Quick)
 - UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 #99 #100 #102 #105
-- Gyms: #6 #9 #20 #21 #24 #30 #49 #57 #58 #60 #107 #108
+- Gyms: #6 #9 #20 #21 #24 #49 #57 #58 #60 #107, plus the Brock and Misty balance issue
 - Moves: #11 #13 #14 #16 #18 #38 #44
 - Engine: #8 #10 #12 #46 #48 #86 #97 #101 (day/night, parked)
 - Items: #36
-- Docs: #28 #29
+- Docs: #28 #29, plus the relations test sweep issue
 
 ## Deferred (cloud and multiplayer phase, do not start)
 Open an issue labeled `deferred`; old notes are in docs/TODO-notes-2026-11.md.
