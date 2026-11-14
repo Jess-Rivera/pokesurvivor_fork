@@ -149,7 +149,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: move-lab with new shapes on a leader.
 
 **12. Migrate gyms 3 to 8, delete the old brain (L, one gym per session).**
-- Brock moved early, 2026-11-07 (entity model close-out, Jess: Brock and Misty are the gyms he playtests): docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt. Slices 9 to 12 move to the feature/gym-leader-ai branch.
+- Brock moved early, 2026-11-07 (entity model close-out, Jess: Brock and Misty are the gyms he playtests): docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt. Slices 9 to 11 moved to the feature/gym-leader-ai branch. Slice 12 runs on its own branch off main after feature/gym-leader-ai merges, starting after the Brock and Misty tuning (decision 2026-11-14-gyms-3-to-8-migrate-after-merge).
 - Files: gyms.js (switch on, cards, `hpMult` and restrictions per gym), then remove the switch, the old brain, `formOf`, `STRONG_HOST_GATE_MUL` and the gym branches left in the wild class. BOSS-AUTHORING, GYM-ROSTERS and the gyms sheet updated.
 - Tests: hpMult tuned by feel per gym (the fight-time report was scrapped in slice 6, D5); smoke-ui fights one gym per session; the old-model harnesses retire here.
 - Feel test: each gym as it moves over, and this is the natural point to bring in playtesters.
