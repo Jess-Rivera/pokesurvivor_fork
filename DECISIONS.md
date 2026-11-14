@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-14, #39 closes on the feel test (distinct, overtuned); 39b is not filed; Brock and Misty tuning moves to a balance issue (Jess)](docs/decisions/2026-11-14-39-closes-on-feel-test-no-39b.md)
 - [2026-11-14, 39a: planner input and output checks replace the duel profile; the counter-play, learning and sharpness duels are retired, since their scripted you stood still (Jess)](docs/decisions/2026-11-14-39-planner-checks-replace-duels.md)
 - [2026-11-14, Bait parked in code: the goal choice skips it until #60 rules; it ran 97 to 98% of the time (Jess)](docs/decisions/2026-11-14-bait-parked-in-code.md)
 - [2026-11-14, #39 opening: 39a authors goal weights and tag multipliers for Brock and Misty, signature actions split to 39b, a seeded duel profile checks "distinct" (Jess)](docs/decisions/2026-11-14-39-opening-split-and-profile-test.md)

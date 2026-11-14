@@ -8,7 +8,7 @@
 //   testLeaders.real(() => { ... });
 'use strict';
 
-// LEADER-AI "INTELLIGENCE AND STYLE" and #39: the ai keys that make a personality (39b adds its own key here)
+// LEADER-AI "INTELLIGENCE AND STYLE" and #39: the ai keys that make a personality (a new personality key goes here too)
 const PERSONALITY_KEYS = ['goalWeights', 'tagMultipliers', 'range', 'swapWill', 'risk', 'stubbornness', 'intelligence'];
 
 /** A copy of a leader's ai settings without its personality keys. */
