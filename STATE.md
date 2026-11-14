@@ -9,7 +9,8 @@ its branch rules file is history. No branch rules file is live.
 2. Brock and Misty tuning (the balance issue) on its own branch off main. Starting notes, not approved:
    docs/ASCII Concept Maps/39a - Feel Test Retune Plan.html. It opens with goal, done-check and test (CLAUDE.md
    "Slice shape").
-3. Structural review follow-ups F3 (planner verb table), F5 (Region Best into run-stats), F6 (debug.js split), any time.
+3. F3 built 2026-11-14 on refactor/planner-verb-table (F3 - Planner Verb Table Plan.md): Jess runs format, check.js,
+   tools/planner-step-parity.js, the swap mutants, a feel test; then merge. F5, F6 any time.
 4. Host-model slice 12 (gyms 3 to 8, parent issue) after the tuning, one gym per session, its own branch.
 
 ## Where we are

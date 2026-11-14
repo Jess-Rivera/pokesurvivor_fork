@@ -6,6 +6,7 @@
  *            slot to be ready, or for a move of yours to fire), use (a slot), recover (a spent charge or cooldown back); and #52's
  *            dash (a dodge toward you that brings a slot into reach), draw (step into a move of yours as it comes ready, so it fires),
  *            dodge (that drawn shot, planned; it fires on the reflex clock) and swap (to a bench mon, a plan's first step only).
+ *            Use slot is useSlot; every other verb's step is its handler in STEP_BY_VERB (F3, 2026-11-14).
  *   STATE    the plan state carries which mon is on the field (state.mon: null the active one, else its bench index), its sleep or
  *            freeze left (every action but a swap first stands it out), and its HP left: a step that takes it to 0 adds the KO
  *            bonus to its damage taken (decision 2026-11-09-52-opening-stall-guards-dodge-cost-swap-value, A), and nothing follows.
@@ -328,8 +329,9 @@ G.LeaderPlanner = (() => {
     }
     return out;
   }
-  /** The action itself. A sleep or freeze on the field is stood out first by every action but a swap: your shots land, it does
-   *  nothing, its own timers run. */
+  /** The action itself. A sleep or freeze on the field is stood out first by every action but a swap: your shots
+   *  land, it does nothing, its own timers run. Use slot is useSlot; every other verb is its handler in STEP_BY_VERB
+   *  (F3, 2026-11-14). */
   function applyAction(world, state, action) {
     if (state.stunLeft > EPS && action.verb !== 'swap') {
       const slept = copy(state),
@@ -348,92 +350,134 @@ G.LeaderPlanner = (() => {
       return out;
     }
     const next = copy(state),
-      mon = monOf(world, state),
-      own = mon.own,
       step = Object.assign({ taken: 0, dealt: 0, extra: 0, effect: null }, action);
-    const travel = (to) => Math.abs(to - state.distance) / Math.max(1, own.speed);
-    if (action.verb === 'close') {
-      const to = Math.max(0, action.reach + world.you.radius - TUNE.closeInset);
-      step.duration = travel(to);
-      step.keepSlot = action.slot;
-      step.taken = shotsDuring(world, next, Math.min(state.distance, to), step.duration);
-      next.distance = to;
-    } else if (action.verb === 'hold') {
-      step.duration = travel(action.range) + TUNE.holdSeconds;
-      step.taken = shotsDuring(world, next, Math.min(state.distance, action.range), step.duration);
-      next.distance = action.range;
-      step.effect = { kind: 'atRange' };
-    } else if (action.verb === 'backOff') {
-      step.duration = travel(action.to);
-      step.taken = shotsDuring(world, next, state.distance, step.duration);
-      next.distance = action.to;
-    } else if (action.verb === 'wait' && action.yourMove != null) {
-      step.duration = Math.max(0, state.threatNext[action.threat] - state.time);
-      step.taken = shotsDuring(world, next, state.distance, step.duration + EPS); // the shot it waits for lands at the end
-      step.effect = { kind: 'yourShot', id: action.yourMove };
-    } else if (action.verb === 'wait') {
-      const left = state.remaining[action.slot].filter((r) => r > EPS);
-      step.duration = left.length ? Math.min(...left) : 0;
-      step.taken = shotsDuring(world, next, state.distance, step.duration);
-    } else if (action.verb === 'recover') {
-      const back = action.back
-        ? { ...action.back, seconds: action.back.seconds - state.time }
-        : recoverIn(world, state);
-      delete step.back;
-      step.duration = Math.max(0, back.seconds);
-      step.taken = shotsDuring(world, next, state.distance, step.duration);
-      step.effect = { kind: 'recovered', worth: back.worth, what: back.what };
-      if (back.what === 'a dodge charge') next.chargesReady++;
-    } else if (action.verb === 'dash') {
-      const to = Math.max(0, state.distance - world.dodge.dist);
-      step.duration = world.dodge.time;
-      step.keepSlot = action.slot;
-      step.taken = shotsDuring(world, next, to, step.duration) + spendCharge(world, state, next);
-      next.distance = to;
-    } else if (action.verb === 'draw') {
-      // it walks to just inside M's reach, arriving as M's window opens (it waits outside when it would arrive early)
-      const to = Math.max(0, action.reach + own.radius - TUNE.closeInset);
-      step.walk = travel(to);
-      step.duration = Math.max(step.walk, state.threatNext[action.threat] - state.time);
-      step.taken = shotsDuring(world, next, to, step.duration + EPS); // M lands as it arrives
-      next.distance = to;
-      next.drew = true;
-      step.effect = { kind: 'yourShot', id: action.yourMove };
-    } else if (action.verb === 'dodge') {
-      const threat = mon.threats[action.threat];
-      step.duration = world.dodge.time;
-      step.taken =
-        -threat.hitFraction * dodgeSuccess(world, threat, state.distance) +
-        shotsDuring(world, next, state.distance, step.duration) +
-        spendCharge(world, state, next);
-      next.dodged = true;
-    } else if (action.verb === 'swap') {
-      // the incoming mon takes the field: its slots, timers, HP and your shots sized against it; the send-in i-frames take nothing
-      next.mon = action.to;
-      const incoming = monOf(world, next);
-      next.remaining = incoming.slots.map((slot) => slot.moves.map((m) => m.remaining));
-      next.activeSlot = incoming.own.activeSlot;
-      next.hpFraction = next.hpLeft = incoming.own.hpFraction;
-      next.healsLeft = incoming.own.healsLeft;
-      next.stunLeft = 0;
-      next.ko = false;
-      step.duration = world.swap.iframes;
-      shotsDuring(world, next, state.distance, step.duration);
-      step.extra = TUNE.swapCost * (world.swap.will != null ? world.swap.will : 1);
-      // the matchup over the long window, as Buff is valued: the damage per second your shots take off the incoming mon instead of
-      // the outgoing one, and its best hit per second on you instead of the outgoing one's (decision
-      // 2026-11-09-52-swap-matchup-window-and-duels). Signed: a worse matchup costs.
-      const out = monOf(world, state),
-        gain = matchupRates(out),
-        into = matchupRates(incoming);
-      step.taken = (into.danger - gain.danger) * TUNE.buffWindow;
-      step.dealt = (into.opportunity - gain.opportunity) * TUNE.buffWindow;
-      step.effect = { kind: 'swapped', taken: step.taken, dealt: step.dealt };
-    } else if (action.verb === 'use') return useSlot(world, state, next, step);
+    if (action.verb === 'use') return useSlot(world, state, next, step);
+    const stepOfVerb = STEP_BY_VERB[action.verb];
+    if (!stepOfVerb) throw new Error('[LeaderPlanner] no step handler for the verb ' + action.verb);
+    stepOfVerb(world, state, action, next, step);
     step.tag = TAGS[action.verb];
     advance(next, step.duration);
     return { state: next, step };
   }
+
+  // ---- the step handlers, one per verb (F3, decision 2026-11-14-structural-review-new-files-count). Each fills in
+  // the next state and the step for its action; applyAction stands out a stun first, then tags and advances after.
+  /** Seconds to walk from the state's distance to `to` at the field mon's speed. */
+  const travelTime = (world, state, to) => Math.abs(to - state.distance) / Math.max(1, monOf(world, state).own.speed);
+  /** Close to slot X's reach. */
+  function closeStep(world, state, action, next, step) {
+    const to = Math.max(0, action.reach + world.you.radius - TUNE.closeInset);
+    step.duration = travelTime(world, state, to);
+    step.keepSlot = action.slot;
+    step.taken = shotsDuring(world, next, Math.min(state.distance, to), step.duration);
+    next.distance = to;
+  }
+  /** Hold at the preferred range. */
+  function holdStep(world, state, action, next, step) {
+    step.duration = travelTime(world, state, action.range) + TUNE.holdSeconds;
+    step.taken = shotsDuring(world, next, Math.min(state.distance, action.range), step.duration);
+    next.distance = action.range;
+    step.effect = { kind: 'atRange' };
+  }
+  /** Back off outside your reach. */
+  function backOffStep(world, state, action, next, step) {
+    step.duration = travelTime(world, state, action.to);
+    step.taken = shotsDuring(world, next, state.distance, step.duration);
+    next.distance = action.to;
+  }
+  /** Wait for your move to fire: the shot it waits for lands at the end. */
+  function waitForYourShotStep(world, state, action, next, step) {
+    step.duration = Math.max(0, state.threatNext[action.threat] - state.time);
+    step.taken = shotsDuring(world, next, state.distance, step.duration + EPS); // the shot it waits for lands at the end
+    step.effect = { kind: 'yourShot', id: action.yourMove };
+  }
+  /** Wait for its own slot: until the slot's first cooling move is ready. */
+  function waitForSlotStep(world, state, action, next, step) {
+    const left = state.remaining[action.slot].filter((r) => r > EPS);
+    step.duration = left.length ? Math.min(...left) : 0;
+    step.taken = shotsDuring(world, next, state.distance, step.duration);
+  }
+  /** Wait (D2: one verb, two handlers): for your shot when the action names your move, else for its own slot. */
+  function waitStep(world, state, action, next, step) {
+    if (action.yourMove != null) waitForYourShotStep(world, state, action, next, step);
+    else waitForSlotStep(world, state, action, next, step);
+  }
+  /** Recover a spent charge or cooldown: it waits for the resource to come back. */
+  function recoverStep(world, state, action, next, step) {
+    const back = action.back ? { ...action.back, seconds: action.back.seconds - state.time } : recoverIn(world, state);
+    delete step.back;
+    step.duration = Math.max(0, back.seconds);
+    step.taken = shotsDuring(world, next, state.distance, step.duration);
+    step.effect = { kind: 'recovered', worth: back.worth, what: back.what };
+    if (back.what === 'a dodge charge') next.chargesReady++;
+  }
+  /** Dash in: a dodge toward you that brings slot X into reach. */
+  function dashStep(world, state, action, next, step) {
+    const to = Math.max(0, state.distance - world.dodge.dist);
+    step.duration = world.dodge.time;
+    step.keepSlot = action.slot;
+    step.taken = shotsDuring(world, next, to, step.duration) + spendCharge(world, state, next);
+    next.distance = to;
+  }
+  /** Draw your shot: step into your move as it comes ready, so it fires. */
+  function drawStep(world, state, action, next, step) {
+    const own = monOf(world, state).own;
+    // it walks to just inside M's reach, arriving as M's window opens (it waits outside when it would arrive early)
+    const to = Math.max(0, action.reach + own.radius - TUNE.closeInset);
+    step.walk = travelTime(world, state, to);
+    step.duration = Math.max(step.walk, state.threatNext[action.threat] - state.time);
+    step.taken = shotsDuring(world, next, to, step.duration + EPS); // M lands as it arrives
+    next.distance = to;
+    next.drew = true;
+    step.effect = { kind: 'yourShot', id: action.yourMove };
+  }
+  /** Dodge your drawn shot, planned. */
+  function dodgeStep(world, state, action, next, step) {
+    const mon = monOf(world, state);
+    const threat = mon.threats[action.threat];
+    step.duration = world.dodge.time;
+    step.taken =
+      -threat.hitFraction * dodgeSuccess(world, threat, state.distance) +
+      shotsDuring(world, next, state.distance, step.duration) +
+      spendCharge(world, state, next);
+    next.dodged = true;
+  }
+  /** Swap to a bench mon (a plan's first step only). */
+  function swapStep(world, state, action, next, step) {
+    // the incoming mon takes the field: its slots, timers, HP and your shots sized against it; the send-in i-frames take nothing
+    next.mon = action.to;
+    const incoming = monOf(world, next);
+    next.remaining = incoming.slots.map((slot) => slot.moves.map((m) => m.remaining));
+    next.activeSlot = incoming.own.activeSlot;
+    next.hpFraction = next.hpLeft = incoming.own.hpFraction;
+    next.healsLeft = incoming.own.healsLeft;
+    next.stunLeft = 0;
+    next.ko = false;
+    step.duration = world.swap.iframes;
+    shotsDuring(world, next, state.distance, step.duration);
+    step.extra = TUNE.swapCost * (world.swap.will != null ? world.swap.will : 1);
+    // the matchup over the long window, as Buff is valued: the damage per second your shots take off the incoming mon instead of
+    // the outgoing one, and its best hit per second on you instead of the outgoing one's (decision
+    // 2026-11-09-52-swap-matchup-window-and-duels). Signed: a worse matchup costs.
+    const out = monOf(world, state),
+      gain = matchupRates(out),
+      into = matchupRates(incoming);
+    step.taken = (into.danger - gain.danger) * TUNE.buffWindow;
+    step.dealt = (into.opportunity - gain.opportunity) * TUNE.buffWindow;
+    step.effect = { kind: 'swapped', taken: step.taken, dealt: step.dealt };
+  }
+  /** Every verb but use, to its step handler. A verb with no entry throws (D1). */
+  const STEP_BY_VERB = Object.freeze({
+    close: closeStep,
+    hold: holdStep,
+    backOff: backOffStep,
+    wait: waitStep,
+    recover: recoverStep,
+    dash: dashStep,
+    draw: drawStep,
+    dodge: dodgeStep,
+    swap: swapStep,
+  });
   /** Use slot X: it waits for its moves to be ready, then fires them together (a bonded slot), after the tell. */
   function useSlot(world, state, next, step) {
     const i = step.slot,
