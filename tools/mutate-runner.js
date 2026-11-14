@@ -9,7 +9,7 @@
 //   --workers N   run N harnesses at once (also MUTATE_WORKERS=N). Default: half the cores.
 //   --full        use every core but two (still low priority). For when you step away.
 //   -v            print every FAIL line of a caught mutation, not only the first.
-// MUTATE_JSON=<file> also writes the verdicts as JSON (tools/mutate-compare.js reads it).
+// MUTATE_JSON=<file> also writes the verdicts as JSON (tools/mutate-compare.js reads it). Put it under tools/cache/.
 // MUTATE_ONLY=word,word runs only the mutations whose name contains one of the words (any case), for checking one
 // slice's mutants without the full run. None matching is an error.
 //

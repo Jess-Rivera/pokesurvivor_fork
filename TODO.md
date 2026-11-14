@@ -18,9 +18,8 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
 ## Next (from the 2026-11-14 Quick sessions: 39a, Bait parked, #30, the relations rule, GitHub cleanup)
 1. #49: close (Decider done) or keep as umbrella. Board by hand if not done: #86 to Accepted, #29 out of Blocked,
    #95 blocked by #97 (Relationships), type label on #79, the new balance and test sweep cards out of Triage.
-2. Gyms 3 to 8: merge first and migrate after, or migrate here first (STATE START HERE 2); fix host-model-plan
-   line 152 to match the ruling, and file the slice-12 issue if migrating after.
-3. Full leader-ai-mutate run (--full), then the structural review of feature/gym-leader-ai against main, then merge.
+2. Gyms 3 to 8: merge first (decision 2026-11-14-gyms-3-to-8-migrate-after-merge); file the slice-12 parent issue.
+3. Pre-merge fixes F2 and F4 (Pre-Merge Fixes Plan.md), then merge. After: F1 hud-overlay split first, then F3, F5, F6.
    Planner gaps #57 and #58 any time.
 4. The Brock and Misty balance issue (filed 2026-11-14): retune from the overlay's goal and step in play.
    The relations test sweep issue (filed 2026-11-14): one harness per pass, any time.

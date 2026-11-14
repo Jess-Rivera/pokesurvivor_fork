@@ -4,6 +4,9 @@ Rulebook: .claude/skills/structural-review/SKILL.md. Scope: 212 commits, 570 fil
 Reviewed js/ and dev.html; js/net/ skipped (deferred). Limit: Quick has no hunk diff, so modified files were judged
 from numstat plus the current code. New files were read whole where it mattered.
 
+**Ruled (Jess, 2026-11-14):** both recommendations. F2, F4, F7 before the merge; F1, F3, F5, F6 as issues. Decision
+2026-11-14-structural-review-new-files-count. Plan: feature-gym-leader-ai - Pre-Merge Fixes Plan.md.
+
 ## Verdict
 
 ```mermaid

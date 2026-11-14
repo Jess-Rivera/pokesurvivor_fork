@@ -60,6 +60,8 @@ Fewer findings with high conviction beat a long cosmetic list. Do not bury struc
   enemy.js, menu.js, debug.js, game.js, hud.js, player.js, hud-overlay.js, move-sim.js, db.js, tiles.js and
   leader-ai.js. Flag when the branch adds more than about 100 lines to one, and ask whether the addition could live
   in a new file instead.
+- A file that does not exist on main counts as crossing when the branch brings it in over 1000, whatever list above
+  names it (Jess, 2026-11-14, decision 2026-11-14-structural-review-new-files-count).
 - Exempt: generated data (sprites-meta.js, pokedex.js), js/data/changelog.js, and data tables whose growth is content
   rather than logic (gyms.js, items.js, species-traits.js entries).
 - Every split remedy states its cost: a new script goes in both the dev.html script block and the NEED array in

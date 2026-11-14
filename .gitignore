@@ -28,6 +28,9 @@ docs/CONTACTOS_CREADORES.md
 # Caché local de wrangler (Cloudflare)
 .wrangler/
 
+# Mutate runs write their JSON verdicts here only by MUTATE_JSON; put them in tools/cache/ (2026-11-14)
+tools/out/*-mutate.json
+
 # Regenerable scratch from the class-review tooling (tools/classify_species.py); never commit
 docs/proposals/review-build/
 
