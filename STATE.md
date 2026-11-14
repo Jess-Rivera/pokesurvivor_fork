@@ -9,7 +9,8 @@ its branch rules file is history. No branch rules file is live.
 2. Brock and Misty tuning (the balance issue) on its own branch off main. Starting notes, not approved:
    docs/ASCII Concept Maps/39a - Feel Test Retune Plan.html. It opens with goal, done-check and test (CLAUDE.md
    "Slice shape").
-3. The hud-overlay.js split (structural review F1), the first post-merge issue; F3, F5, F6 any time.
+3. F1 hud-overlay.js split built 2026-11-14 on refactor/hud-kit-split (F1 - HUD Kit Split Plan.md): Jess runs format,
+   check.js, the smokes, the run-info mutant, a feel test; then merge to main. F3, F5, F6 any time.
 4. Host-model slice 12 (gyms 3 to 8, parent issue) after the tuning, one gym per session, its own branch.
 
 ## Where we are

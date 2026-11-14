@@ -1334,6 +1334,66 @@ async function eliteBar(browser) {
   return { context, errors, page };
 }
 
+/** F1 (2026-11-14): the js/ files under js/ (vendor skipped), for the kit wiring check. */
+const jsFiles = (dir) =>
+  fs.readdirSync(path.join(root, dir), { withFileTypes: true }).flatMap((entry) => {
+    const relative = dir + '/' + entry.name;
+    if (entry.isDirectory()) return entry.name === 'vendor' ? [] : jsFiles(relative);
+    return entry.name.endsWith('.js') ? [relative] : [];
+  });
+const KIT_DESTRUCTURE = /const \{([^}]*)\}\s*=\s*(?:overlay|G\.HudOverlay)\.kit\b/g;
+/** Every name a panel or screen takes from G.HudOverlay.kit, read from the files themselves (never listed here). */
+function namesTakenFromKit() {
+  const taken = new Set();
+  for (const file of jsFiles('js')) {
+    const source = fs.readFileSync(path.join(root, file), 'utf8');
+    for (const match of source.matchAll(KIT_DESTRUCTURE))
+      match[1]
+        .split(',')
+        .map((part) => part.split(':')[0].trim())
+        .filter(Boolean)
+        .forEach((name) => taken.add(name));
+  }
+  return [...taken];
+}
+
+/** F1: the kit files are ready, every name the readers take is on G.HudOverlay.kit, and no two kit files hold one. */
+async function kitWiring(browser) {
+  const opened = await boot(browser);
+  const names = namesTakenFromKit();
+  const found = await opened.page.evaluate((taken) => {
+    const kitFiles = {
+      HudKit: G.HudKit,
+      HudKitItems: G.HudKitItems,
+      HudKitHpBars: G.HudKitHpBars,
+      HudKitChips: G.HudKitChips,
+    };
+    const kit = G.HudOverlay.kit || {};
+    const holders = {};
+    for (const [file, exported] of Object.entries(kitFiles))
+      Object.keys(exported || {})
+        .filter((name) => name !== 'ready')
+        .forEach((name) => (holders[name] = (holders[name] || []).concat(file)));
+    return {
+      filesReady: Object.values(kitFiles).every((file) => file && file.ready),
+      missing: taken.filter((name) => !(name in kit)),
+      shared: Object.keys(holders).filter((name) => holders[name].length > 1),
+    };
+  }, names);
+  ok(
+    names.length > 0 && found.filesReady && !found.missing.length,
+    'kit: the four kit files are ready and all ' +
+      names.length +
+      ' names the readers take are on G.HudOverlay.kit' +
+      (found.missing.length ? ': missing ' + found.missing.join(', ') : '')
+  );
+  ok(
+    !found.shared.length,
+    'kit: no two kit files hold the same name' + (found.shared.length ? ': ' + found.shared.join(', ') : '')
+  );
+  return opened;
+}
+
 async function built(browser) {
   const { context, page, errors } = await openPage(browser, 'index.html');
   await page.waitForTimeout(1500);
@@ -1354,7 +1414,7 @@ async function built(browser) {
 
 (async () => {
   const browser = await chromium.launch();
-  const runs = [brock, surge, playerPanel, rosterPanel, mapPanel, dpsPanel, eliteBar];
+  const runs = [kitWiring, brock, surge, playerPanel, rosterPanel, mapPanel, dpsPanel, eliteBar];
   if (process.argv.includes('--built')) {
     if (fs.existsSync(path.join(root, 'index.html'))) runs.push(built);
     else ok(false, 'built index.html: missing, run node tools/build.js first');

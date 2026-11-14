@@ -14,7 +14,7 @@ const SRC = {
   'js/core/debug.js': 'RI_DEBUG',
   'js/game.js': 'RI_GAME',
   'js/systems/gym.js': 'RI_GYM',
-  'js/ui/hud-overlay.js': 'RI_OVERLAY',
+  'js/ui/hud-kit-items.js': 'RI_OVERLAY',
   'dev.html': 'RI_DEV',
   'js/main.js': 'RI_MAIN',
   'js/core/util.js': 'RI_UTIL',
@@ -210,7 +210,7 @@ const value = (shown, title, label) => (row(shown, title, label) || {}).value;
   ok(/get runIsClean\(\) \{\s*return clean\(\);/.test(game) && /\n    regionKey,\n/.test(game), 'G.Game.runIsClean and regionKey');
   ok(/debugBadges\(entries\) \{\s*badges = entries\.map\(\(entry\) => entry\.badge\);\s*splits = entries\.map\(\(entry\) => entry\.at\);/
     .test(read('js/systems/gym.js')), 'G.Gym.debugBadges sets the badges and their splits together');
-  const overlay = read('js/ui/hud-overlay.js');
+  const overlay = read('js/ui/hud-kit-items.js'); // the shared ScrollBox (F1, 2026-11-14)
   ok(overlay.includes('event.currentTarget.setPointerCapture(event.pointerId);') && overlay.includes('onPointerMove=${dragThumb}'),
     'the shared ScrollBox thumb can be dragged (DD1)');
 }

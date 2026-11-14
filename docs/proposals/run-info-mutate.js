@@ -13,7 +13,7 @@ const SRC = {
   debug: ['js/core/debug.js', 'RI_DEBUG'],
   game: ['js/game.js', 'RI_GAME'],
   gym: ['js/systems/gym.js', 'RI_GYM'],
-  overlay: ['js/ui/hud-overlay.js', 'RI_OVERLAY'],
+  overlay: ['js/ui/hud-kit-items.js', 'RI_OVERLAY'],
   dev: ['dev.html', 'RI_DEV'],
   main: ['js/main.js', 'RI_MAIN'],
   util: ['js/core/util.js', 'RI_UTIL'],
