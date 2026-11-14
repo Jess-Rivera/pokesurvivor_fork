@@ -22,8 +22,8 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
    type label on #79, the new cards out of Triage.
 3. (done 2026-11-14: #112 to #115 closed as duplicates; #95 and #111 blocked-by links set.)
 4. Any time: #121 (debug-moves split), #120 (planner verb test gap), #57, #58, #110 (relations test sweep).
-5. #111 slice 12 (gyms 3 to 8) after #109. Then the eight-gym tuning pass (new issue, blocked by #111; Jess files it,
-   then re-sync).
+5. #111 slice 12 (gyms 3 to 8) after #109. Then #122, the eight-gym tuning pass (blocked by #111; per-loop levers incl.
+   cards in docs/ASCII Concept Maps/109 - Brock and Misty Target Feel.md).
 6. Acquisition rework (decision 2026-11-12-acquisition-no-gacha-catch-candy-legendaries): file one parent issue,
    then slices.
 7. Triage: needs-triage on #74 #75 #93 #97 #99 #100 #101 #102 #105 #107 (checked 2026-11-14). #86 is `ready`.
@@ -39,7 +39,7 @@ Jess runs these in a terminal at the repo root (CLAUDE.md "Git and GitHub").
 ## Open issues by area (numbers only, titles on GitHub, checked 2026-11-14 afternoon, Quick)
 Confirmed from #85 to #121. The API cut off below #85, so lower numbers stay as they were (unconfirmed).
 - UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 (blocked by #97) #99 #100 #102 #105
-- Gyms: #6 #9 #20 #21 #24 #49 #57 #58 #60 #107 #109 #111 (blocked by #109) #120
+- Gyms: #6 #9 #20 #21 #24 #49 #57 #58 #60 #107 #109 #111 (blocked by #109) #120 #122 (blocked by #111)
 - Moves: #11 #13 #14 #16 #18 #38 #44
 - Engine: #8 #10 #12 #46 #48 #86 #97 #101 (day/night, parked) #121
 - Items: #36
