@@ -332,7 +332,7 @@ Current behavior. Architecture: ONBOARDING.md.
   (76 MB, PNG with a lossless palette). **CC BY-NC 4.0: non-commercial use and
   attribution** (114 artists in `CREDITS.md`).
 - **Data:** stats and names in Spanish downloaded **once** from PokeAPI.
-- **Font:** Silver by Poppy Works (the B/W menu screens also use a Pokemon B/W fan font and Korataki, and the Settings labels use Monogram).
+- **Font:** Silver by Poppy Works (the B/W menu screens also use a Pokemon B/W fan font and Michroma (SIL OFL; it replaced the personal-use Korataki on 2026-11-09, #37), and the Settings labels use Monogram).
 - The generated files are rebuilt with the scripts in `tools/`.
 
 ## 11. Pending

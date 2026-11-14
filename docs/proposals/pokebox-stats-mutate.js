@@ -6,9 +6,8 @@
 // Not mutated, with the reason: the whole-number nature step (stat x 110 / 100) against a plain float x1.1. No stat from 5 to 800
 // loses a point to the float, so no check can tell them apart; the whole-number form is a guard, not a behavior. The LOG-only dStat
 // line in hurt() (it only feeds the dev log). debug.js fighter and ivs (console readouts, feel-tested; setIvNature is mutated).
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
-const harness = path.join(root, 'docs/proposals/pokebox-stats-harness.js');
 const SRC = { stats: ['js/core/stats.js', 'PS_STATS'], player: ['js/entities/player.js', 'PS_PLAYER'], copies: ['js/systems/copies.js', 'PS_COPIES'],
   game: ['js/game.js', 'PS_GAME'] };
 // [name, file key, [[text to find, replacement], ...]]
@@ -35,22 +34,13 @@ const M = [
   ["buildFighter ignores the uid", "game", [["new G.Player(mon, perks, shiny, G.Copies.profileOf(save, uid, mon.dex))", "new G.Player(mon, perks, shiny)"]]],
   ["the roster loop drops the uid", "game", [["G.DB.ownsShiny(t.dex), t.uid);", "G.DB.ownsShiny(t.dex));"]]],
 ];
-const runHarness = env => cp.spawnSync(process.execPath, [harness, root], { encoding: 'utf8', env: Object.assign({}, process.env, env) });
-const failed = r => r.status !== 0 || /FAIL/.test(r.stdout || '');
-const clean = runHarness({});
-if (failed(clean)) { console.log('The harness fails on the real code; fix that first.\n' + clean.stdout); process.exit(1); }
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pokebox-stats-mut-'));
-let caught = 0, missed = 0, stale = 0;
-for (const [name, key, edits] of M) {
-  const [rel, env] = SRC[key];
-  let src = fs.readFileSync(path.join(root, rel), 'utf8'), found = true;
-  for (const [a, b] of edits) { if (!src.includes(a)) { found = false; break; } src = src.replace(a, b); }
-  if (!found) { stale++; console.log('STALE  ' + name); continue; }
-  const f = path.join(tmp, key + '.js');
-  fs.writeFileSync(f, src);
-  if (failed(runHarness({ [env]: f }))) caught++;
-  else { missed++; console.log('MISSED ' + name); }
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log('pokebox stats mutations: ' + caught + '/' + M.length + ' caught' + (missed ? ', ' + missed + ' missed' : '') + (stale ? ', ' + stale + ' stale' : ''));
-process.exit(missed || stale ? 1 : 0);
+
+require('../../tools/mutate-runner.js')({
+  label: 'pokebox-stats-mutate',
+  root,
+  harnesses: ['docs/proposals/pokebox-stats-harness.js'],
+  args: [root],
+  baseline: true,
+  failed: (r) => r.status !== 0 || /FAIL/.test(r.stdout || ''),
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

@@ -55,11 +55,14 @@ const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b))
   console.log('1 modules: G.GymArena in, the portal and minute-30 modules out, load order ok'); }
 
 // 2. search guard over js/ and dev.html (allowed: js/net/ deferred, lang-en dead keys, changelog history, the generated pokedex and sprite
-//    meta, the gacha's legendary rarity (D1), the old save field names in core/db.js, and lines about the pokedex leg exclusion)
+//    meta, the gacha's legendary rarity (D1), the old save field names in core/db.js, and lines about the pokedex leg exclusion;
+//    #53: the leader AI's misjudge setting is not the Judgment, so judg after 'mis' is allowed)
 { const SKIP = /^js\/(net\/|app\.min\.js$|data\/(lang-en|changelog|pokedex|sprites-meta)\.js$)/;
   const LEG_OK_FILES = new Set(['js/systems/gacha.js', 'js/ui/gacha-ui.js', 'js/ui/slots.js', 'js/ui/icons.js']);
   const SAVE_FIELDS = /\b(legends|arenas|riftWins|judged|judgeTime|judgeBosses)\b/;
-  const BAN = [/(^|[^a-z])rift/i, /grieta/i, /judg|arceus/i, /\.legend\b|\bleg_|LEGEND_T10|BOSS_T10/];
+  const BAN = [/(^|[^a-z])rift/i, /grieta/i, /(?<!mis)judg|arceus/i, /\.legend\b|\bleg_|LEGEND_T10|BOSS_T10/];
+  const JUDG = BAN[2];
+  ok(['Judgment', 'judged', 'judgeTime', 'G.Judgment', 'arceus'].every((w) => JUDG.test(w)) && !['misjudge', 'MISJUDGMENT', 'misjudgeSource'].some((w) => JUDG.test(w)), 'the judg guard still catches the Judgment and spares misjudge (#53)');
   const walk = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => (e.isDirectory() ? walk(d + '/' + e.name) : [d + '/' + e.name]));
   const files = walk(R + '/js').filter(f => f.endsWith('.js')).map(f => path.relative(R, f).replace(/\\/g, '/')).filter(f => !SKIP.test(f));
   const hits = [];

@@ -1,0 +1,6 @@
+## 2026-11-09, #59: a reflex dodge weighs the plan it would break; duels count shots avoided; Bait parked (Jess)
+1. Weigh, not hold: while the running plan still has a Dodge your shot step ahead, a reflex dodge that would spend the charge that step needs goes only when your hit (x the goal's damage-taken weight x `risk`) beats the plan's worth (its value minus its cost). Why: spending the charge breaks the whole plan, not just one dodge; a hard hold would be a scripted rule (PRINCIPLE).
+2. Counter-play and learning count the share of your Fire Blasts Brock avoids (a shot that never touches his body that frame), summed over 5 seeds, not his hits. Why: his casts fire whenever ready in your reach, so his hits cannot see his choices; one duel holds only about a dozen Fire Blasts.
+3. Bait is parked (#60). Most cooldowns sit in 0 to 2.5 s, so dodge then punish has no window: the planner never plans the dodge (vs Ember the next shot lands during the dodge; vs Fire Blast, 0 planned dodges in 5 seeds). The 16e Bait duel is blocked on #60.
+Result: counter-play 20% avoided cycling vs 26% staying (was 27 vs 26); learning 29% fight 3 vs 24% fight 1.
+Canonical: docs/LEADER-AI.md "The Decider (#49)", REFLEX and TESTS

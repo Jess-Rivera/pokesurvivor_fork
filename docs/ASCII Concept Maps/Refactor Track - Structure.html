@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Refactor Track - Structure</title>
+</head>
+<body>
+<main>
+<h1>Refactor track: how to structure it <span class="tag">proposed</span> <span class="pill info">2026-11-14</span></h1>
+<p class="lede">A side track that pays down the tangles from the three shape maps without touching feature work in progress. Small slices, each proven to change nothing, in their own folder and branch. Nothing here is approved yet; section 7 lists the decisions.</p>
+<style>
+  /* Standalone page (opened from file://): theme tokens are set here because the app does not inject them. */
+  :root {
+    color-scheme: dark;
+    --color-bg: #121218; --color-bg-secondary: #1b1b23; --color-surface: #23232d; --color-surface-hover: #2b2b37;
+    --color-border: rgba(255,255,255,0.13); --color-border-light: rgba(255,255,255,0.07);
+    --color-text: #ececf1; --color-text-secondary: #b0b0bc; --color-text-muted: #7a7a86;
+    --color-primary: #c084fc; --color-primary-bg: rgba(168,85,247,0.16); --color-primary-border: rgba(192,132,252,0.45);
+    --color-success-bg: rgba(34,197,94,0.14); --color-success-border: rgba(74,222,128,0.4); --color-success-dark: #4ade80;
+    --color-warning-bg: rgba(245,158,11,0.14); --color-warning-border: rgba(251,191,36,0.45); --color-warning-text: #fbbf24;
+    --color-info-bg: rgba(59,130,246,0.16); --color-info-border: rgba(96,165,250,0.45); --color-info-text: #93c5fd;
+    --color-error-bg: rgba(239,68,68,0.14); --color-error-border: rgba(248,113,113,0.45); --color-error-dark: #f87171;
+    --font-sans: 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    --radius-sm: 6px; --radius-md: 10px; --radius-pill: 17px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.45);
+    --lane-main: #4ade80; --lane-feat: #fbbf24; --lane-ref: #38bdf8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 28px 40px; background: var(--color-bg); color: var(--color-text);
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.55; }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; font-weight: 650; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  h2 { font-size: 17px; margin: 0 0 10px; font-weight: 650; }
+  h3 { font-size: 13px; margin: 14px 0 6px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .lede { color: var(--color-text-secondary); margin: 0 0 18px; }
+  .pill { font-size: 12px; font-weight: 600; border-radius: var(--radius-pill); padding: 2px 10px; border: 1px solid; white-space: nowrap; }
+  .ok { background: var(--color-success-bg); border-color: var(--color-success-border); color: var(--color-success-dark); }
+  .wait { background: var(--color-warning-bg); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .info { background: var(--color-info-bg); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .no { background: var(--color-error-bg); border-color: var(--color-error-border); color: var(--color-error-dark); }
+  .pri { background: var(--color-primary-bg); border-color: var(--color-primary-border); color: var(--color-primary); }
+  .tag { font-family: var(--font-mono); font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-pill); padding: 1px 8px; color: var(--color-text-secondary); font-weight: 500; }
+  code { font-family: var(--font-mono); font-size: 13px; background: var(--color-surface); padding: 1px 5px; border-radius: 4px; }
+  .card { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 860px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--color-text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+  td.n { font-family: var(--font-mono); white-space: nowrap; font-size: 13px; }
+  td.f { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); }
+  tr:hover td { background: var(--color-surface-hover); }
+  tr.grp td { background: var(--color-surface); color: var(--color-text-muted); font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; padding: 5px 10px; }
+  ul { margin: 6px 0 0; padding-left: 20px; } li { margin: 4px 0; }
+  .muted { color: var(--color-text-muted); font-size: 13px; }
+  /* lanes */
+  .lanes { display: flex; flex-direction: column; gap: 10px; }
+  .lane { display: grid; grid-template-columns: 210px 1fr; gap: 12px; align-items: center; }
+  .lane .who { font-size: 13px; }
+  .lane .who b { display: block; font-family: var(--font-mono); font-size: 13px; }
+  .lane .who span { color: var(--color-text-muted); font-size: 12px; }
+  .track { position: relative; height: 34px; display: flex; align-items: center; gap: 8px; padding-left: 10px;
+    border-radius: var(--radius-pill); background: var(--color-surface); border-left: 4px solid; }
+  .track.m { border-color: var(--lane-main); } .track.f { border-color: var(--lane-feat); } .track.r { border-color: var(--lane-ref); }
+  .dot { font-family: var(--font-mono); font-size: 11px; padding: 2px 8px; border-radius: var(--radius-pill); border: 1px solid var(--color-border);
+    background: var(--color-bg); color: var(--color-text-secondary); white-space: nowrap; }
+  .dot.m { border-color: var(--lane-main); color: var(--lane-main); }
+  .dot.f { border-color: var(--lane-feat); color: var(--lane-feat); }
+  .dot.r { border-color: var(--lane-ref); color: var(--lane-ref); }
+  .arrow { color: var(--color-text-muted); font-size: 12px; }
+  .box { background: var(--color-surface); border: 1px solid var(--color-border-light); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .box h3 { margin-top: 0; }
+  .box.r { border-top: 3px solid var(--lane-ref); } .box.f { border-top: 3px solid var(--lane-feat); } .box.m { border-top: 3px solid var(--lane-main); }
+  /* ladder */
+  .ladder { display: flex; flex-direction: column; }
+  .step { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; background: var(--color-surface);
+    border: 1px solid var(--color-border-light); border-radius: var(--radius-sm); padding: 8px 12px; }
+  .step .k { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-muted); }
+  .step .q small { display: block; color: var(--color-text-muted); font-size: 12px; margin-top: 1px; }
+  .step .r { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .down { text-align: center; color: var(--color-text-muted); font-size: 12px; line-height: 15px; height: 15px; }
+  /* phases */
+  .phase { border-left: 3px solid var(--lane-ref); }
+  .ph { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--lane-ref); }
+  /* commands */
+  .cmd { display: flex; align-items: center; gap: 10px; background: var(--color-bg); border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm); padding: 8px 10px; margin: 6px 0; }
+  .cmd code { flex: 1; background: none; padding: 0; font-size: 13px; color: var(--color-text); overflow-x: auto; white-space: nowrap; }
+  .cmd .why { color: var(--color-text-muted); font-size: 12px; white-space: nowrap; }
+  .copy { border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-secondary); border-radius: var(--radius-sm);
+    font: inherit; font-size: 12px; padding: 3px 10px; cursor: pointer; transition: all 0.15s ease; }
+  .copy:hover { background: var(--color-surface-hover); color: var(--color-text); }
+  .copy.done { border-color: var(--color-success-border); color: var(--color-success-dark); }
+  .dec { border-left: 3px solid var(--color-warning-text); }
+</style>
+
+<!-- ============ 1. SHAPE ============ -->
+<div class="card">
+  <h2>1. The shape: three lanes, two folders</h2>
+  <div class="lanes">
+    <div class="lane"><div class="who"><b>main</b><span>always playable</span></div>
+      <div class="track m"><span class="dot m">today</span><span class="arrow">→</span><span class="dot f">gym-leader-ai merges</span><span class="arrow">→</span><span class="dot r">R0 merges</span><span class="arrow">→</span><span class="dot r">R1 merges</span><span class="arrow">→</span><span class="dot r">R2 ...</span></div></div>
+    <div class="lane"><div class="who"><b>feature/*</b><span>pokesurvivor_fork/ · current work, either tool</span></div>
+      <div class="track f"><span class="dot f">#39</span><span class="arrow">→</span><span class="dot f">#30</span><span class="arrow">→</span><span class="dot f">review</span><span class="arrow">→</span><span class="dot f">merge</span><span class="arrow">·</span><span class="dot f">next feature merges main, picks up R slices</span></div></div>
+    <div class="lane"><div class="who"><b>refactor/*</b><span>pokesurvivor_refactor/ · a second folder</span></div>
+      <div class="track r"><span class="dot r">R0 safety net</span><span class="arrow">→</span><span class="dot r">R1</span><span class="arrow">→</span><span class="dot r">R2</span><span class="arrow">→</span><span class="dot r">...</span><span class="arrow">·</span><span class="dot r">one short branch per slice, cut from main</span></div></div>
+  </div>
+  <div class="grid3" style="margin-top:14px">
+    <div class="box m"><h3>main</h3>Only receives finished, proven slices. Both tracks start from it and merge back into it.</div>
+    <div class="box f"><h3>Feature folder</h3>Unchanged: <code>pokesurvivor_fork/</code>, STATE.md, the board. Cleanups that touch its own files happen here as touched-code cleanups (like the leader-ai split before #39).</div>
+    <div class="box r"><h3>Refactor folder</h3>A git worktree: same repo, second folder, its own branch. The two can never edit the same checkout, and one branch can't be checked out in both.</div>
+  </div>
+</div>
+
+<!-- ============ 2. ISOLATION ============ -->
+<div class="card">
+  <h2>2. Not damaging the other session</h2>
+  <table>
+    <tr><th>Risk</th><th>Rule</th></tr>
+    <tr><td>Both sessions edit the same working files</td><td>Separate folder (worktree) per track. Quick and Claude Desktop each get told which folder is which.</td></tr>
+    <tr><td>Refactor rewrites a file the feature is mid-change on</td><td><b>No-touch list:</b> files the open feature branch has changed vs main. A slice that needs one waits until that feature merges. (Today: leader-ai.js, gym-leader.js, likely status.js and enemy.js; confirm with the first command in section 8.)</td></tr>
+    <tr><td>Shared handoff docs conflict on every merge</td><td>The refactor track does not edit STATE, TODO, DEVLOG or the DECISIONS index. It keeps its own handoff in <code>docs/branch-rules/refactor-track.md</code>; one DEVLOG line is added when a slice merges (decision D2).</td></tr>
+    <tr><td>changelog.js conflicts</td><td>Behavior-preserving slices add no patch note, or one line at merge (decision D3).</td></tr>
+    <tr><td>Long-lived branch drifts from main</td><td>One branch per slice, merged within about a week. Merge main into it before starting each session.</td></tr>
+    <tr><td>Two tools on one branch</td><td>One owner per branch at a time. Switching tools: commit, push, pull on the other side (same as today).</td></tr>
+    <tr><td>Behavior sneaks in under "refactor"</td><td>Every slice is behavior-preserving by default. Any change a player could notice is a standalone decision, never a line in a plan.</td></tr>
+  </table>
+</div>
+
+<!-- ============ 3. ONE SLICE ============ -->
+<div class="card">
+  <h2>3. One slice, start to finish (manageable)</h2>
+  <div class="ladder">
+    <div class="step"><div class="k">1</div><div class="q">Pick ONE tangle from a shape map's tangle table<small>one issue, label <code>type:refactor</code>, done-condition = "same behavior, tangle gone"</small></div><div class="r"><span class="pill info">issue</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">2</div><div class="q">Check the no-touch list<small>file on it → wait, or pick another tangle</small></div><div class="r"><span class="pill wait">gate</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">3</div><div class="q">Pin today's behavior first ("tdd")<small>a characterization harness that passes on the OLD code, including the odd cases (the port notes)</small></div><div class="r"><span class="pill ok">harness</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">4</div><div class="q">Plan map with the plan check filled in<small>reuses · new · not built · where it lives · size · touched-code cleanups. You approve.</small></div><div class="r"><span class="pill pri">approval</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">5</div><div class="q">Change in small commits, harness green after each</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">6</div><div class="q">Prove nothing changed<small>check.js · the pinned harness · its mutation runner · the replay diff (once R1 exists) · one-minute feel test</small></div><div class="r"><span class="pill ok">proof</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">7</div><div class="q">Merge to main · delete the branch · tick the tangle off its map</div><div class="r"><span class="pill ok">done</span></div></div>
+  </div>
+  <h3>Size cap per slice</h3>
+  <ul>
+    <li>One tangle, about one session of work, two or three files.</li>
+    <li>A slice that grows past that is split: the extra part becomes the next slice's issue.</li>
+  </ul>
+</div>
+
+<!-- ============ 4. PROOF ============ -->
+<div class="grid2">
+  <div class="card">
+    <h2>4a. The safety net (built first)</h2>
+    <table>
+      <tr><th>Tool</th><th>What it proves</th></tr>
+      <tr><td><b>Characterization harness</b> per slice</td><td>the exact current outcomes of the code being moved</td></tr>
+      <tr><td><b>Mutation runner</b> per harness</td><td>the harness actually catches breaks (existing pattern)</td></tr>
+      <tr><td><b>Replay diff</b> (needs R1)</td><td>a seeded headless run records every sim event; before and after must match line for line. One check that covers everything.</td></tr>
+      <tr><td><b>Ratchet counts</b> in check.js</td><td>numbers that may only go down: unseeded rolls in sim files, FX/Audio/animator calls in sim files, files over 1000 lines. Stops new spaghetti from either session once on main.</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h2>4b. Principles, aimed at your tangles</h2>
+    <table>
+      <tr><th>Principle</th><th>Means here</th></tr>
+      <tr><td><b>YAGNI</b></td><td>delete first: forcedAction, the unused <code>mul</code>, dead fallbacks. Cheapest refactor there is.</td></tr>
+      <tr><td><b>DRY</b></td><td>one home per rule: one status path, not two</td></tr>
+      <tr><td><b>KISS</b></td><td>flatten before abstracting: split the 329-line update(), early returns, a verb table</td></tr>
+      <tr><td><b>SRP / separation</b></td><td>sim emits, presentation listens (SimBus)</td></tr>
+      <tr><td><b>Open through data</b></td><td>behavior strings and step verbs become tables</td></tr>
+      <tr><td><b>Demeter</b></td><td>leader reads you through Belief, not G.Game</td></tr>
+    </table>
+    <p class="muted" style="margin-top:8px">Conflict order from the rulebook: correct and safe, then KISS, then YAGNI, then DRY. New shared helpers only on the third real repeat.</p>
+  </div>
+</div>
+
+<!-- ============ 5. BACKLOG ============ -->
+<div class="card">
+  <h2>5. Proposed order <span class="pill wait">proposed</span></h2>
+  <p class="muted">Enablers first (they make every later proof cheap), then the tangles with the most friction. Each row is one or more slices.</p>
+  <table>
+    <tr><th style="width:44px">#</th><th>Slice</th><th>Tangles it clears</th><th>Files</th><th>Kind</th></tr>
+    <tr class="phase"><td class="ph">R0</td><td><b>Safety net.</b> Ratchet counts in check.js; characterization harnesses for status and for hurt/die.</td><td>none directly; makes R1+ safe</td><td class="f">tools/check.js, docs/proposals/*</td><td><span class="pill ok">tools only</span></td></tr>
+    <tr class="phase"><td class="ph">R1</td><td><b>Determinism.</b> One seeded random source for sim code; the clock passed in, fixed step. Then the replay recorder.</td><td>~68 unseeded rolls, leader-ai side picks, browser-driven loop</td><td class="f">game.js, util.js, sim files; tools/</td><td><span class="pill pri">game code</span> <span class="pill wait">D5</span></td></tr>
+    <tr class="phase"><td class="ph">R2</td><td><b>Delete the dead.</b> Proven-unused hooks, arguments and fallbacks.</td><td>forcedAction, apply's mul, takeDot/dot/statusDot chain</td><td class="f">leader-ai.js, status.js, enemy.js</td><td><span class="pill pri">game code</span></td></tr>
+    <tr class="phase"><td class="ph">R3</td><td><b>One status path.</b> Wild burn and poison onto the shared DoT; host rules decided once at spawn.</td><td>enemy #1, status "three places", 17 read fields</td><td class="f">status.js, enemy.js</td><td><span class="pill pri">game code</span></td></tr>
+    <tr class="phase"><td class="ph">R4</td><td><b>Sim emits, screen listens.</b> hurt/die/showHurt, status words, leader lines onto SimBus.</td><td>enemy #2, #7; status presentation; leader #2</td><td class="f">enemy.js, status.js, leader-ai.js, new present file</td><td><span class="pill pri">game code</span></td></tr>
+    <tr class="phase"><td class="ph">R5</td><td><b>Split the wild frame.</b> update() into think, move, animate; behaviors as a table.</td><td>enemy #4</td><td class="f">enemy.js (maybe a new behaviors file)</td><td><span class="pill pri">game code</span></td></tr>
+    <tr class="phase"><td class="ph">R6</td><td><b>Body sizes as data; bands in world units.</b></td><td>enemy #5, #6</td><td class="f">a new data table, enemy.js, tools/</td><td><span class="pill no">D4 behavior</span></td></tr>
+    <tr><td class="ph" style="color:var(--color-text-muted)">—</td><td><b>Co-op branches.</b> Not refactored; they stay as they are.</td><td>enemy #3</td><td class="f">js/net (deferred)</td><td><span class="pill info">issue draft only</span></td></tr>
+  </table>
+  <p class="muted" style="margin-top:8px">Not on this track: the leader-ai overlay/lines split before #39. That file is on the feature branch, so it happens there.</p>
+</div>
+
+<!-- ============ 6. ANSWERS ============ -->
+<div class="grid3">
+  <div class="box r"><h3>1. Manageable</h3>One tangle per slice, one session each, a pinned harness before touching anything, merge and delete. The shape maps are the backlog.</div>
+  <div class="box f"><h3>2. Aside, safely</h3>A second folder on its own branch, a no-touch list of the feature's files, and its own handoff file instead of STATE, TODO and DEVLOG.</div>
+  <div class="box m"><h3>3. Principles</h3>Each plan fills in the rulebook's plan check, deletes before restructuring, and the ratchet counts keep new spaghetti from coming back.</div>
+</div>
+
+<!-- ============ 7. DECISIONS ============ -->
+<div class="card dec" style="margin-top:16px">
+  <h2>7. Decisions for you <span class="pill wait">open</span></h2>
+  <table>
+    <tr><th style="width:44px">#</th><th>Decision</th><th>Options</th><th>Lean</th></tr>
+    <tr><td class="n">D1</td><td>When does the track start?</td><td>(a) after gym-leader-ai merges · (b) now, only on files outside the no-touch list</td><td>(b) for R0 (tools only, no conflicts), (a) for R1 onward</td></tr>
+    <tr><td class="n">D2</td><td>Shared handoff docs on refactor branches</td><td>(a) own handoff file, one DEVLOG line at merge · (b) edit STATE/DEVLOG like features</td><td>(a)</td></tr>
+    <tr><td class="n">D3</td><td>Patch notes for behavior-preserving slices</td><td>(a) none · (b) one "under the hood" line per merge</td><td>(b), short</td></tr>
+    <tr><td class="n">D4</td><td>Spacing bands in world units (R6)</td><td>changes feel on wide or tall windows; decided when R6 opens</td><td>later</td></tr>
+    <tr><td class="n">D5</td><td>One seeded random source (R1)</td><td>same odds, different sequence: an old seed won't replay the same run. Fine?</td><td>yes</td></tr>
+  </table>
+</div>
+
+<!-- ============ 8. COMMANDS ============ -->
+<div class="card">
+  <h2>8. Commands (you run these)</h2>
+  <h3>Before starting: which files the feature branch has changed (the no-touch list)</h3>
+  <div class="cmd"><code>git diff --name-only main...feature/gym-leader-ai</code><span class="why">in pokesurvivor_fork</span><button class="copy">Copy</button></div>
+  <h3>Make the refactor folder (once per slice branch)</h3>
+  <div class="cmd"><code>git worktree add ../pokesurvivor_refactor -b refactor/safety-net main</code><span class="why">in pokesurvivor_fork</span><button class="copy">Copy</button></div>
+  <div class="cmd"><code>npm install</code><span class="why">in pokesurvivor_refactor (node_modules isn't shared)</span><button class="copy">Copy</button></div>
+  <p class="muted">Then add <code>C:\Users\jessvri\Desktop\pokesurvivor_refactor</code> to Quick's allowed folders, and open it as its own project in Claude Desktop.</p>
+  <h3>Each session on the refactor track</h3>
+  <div class="cmd"><code>git fetch</code><span class="why">in pokesurvivor_refactor</span><button class="copy">Copy</button></div>
+  <div class="cmd"><code>git merge origin/main</code><span class="why">stay current with main</span><button class="copy">Copy</button></div>
+  <h3>Next slice, same folder (after the last one merged)</h3>
+  <div class="cmd"><code>git switch -c refactor/determinism origin/main</code><span class="why">in pokesurvivor_refactor</span><button class="copy">Copy</button></div>
+  <h3>Done with the track</h3>
+  <div class="cmd"><code>git worktree remove ../pokesurvivor_refactor</code><span class="why">in pokesurvivor_fork</span><button class="copy">Copy</button></div>
+</div>
+
+</main>
+<script>
+  document.querySelectorAll('.copy').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var text = button.parentElement.querySelector('code').textContent;
+      var done = function () { button.textContent = 'Copied'; button.classList.add('done');
+        setTimeout(function () { button.textContent = 'Copy'; button.classList.remove('done'); }, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
+      else { var area = document.createElement('textarea'); area.value = text; document.body.appendChild(area);
+        area.select(); try { document.execCommand('copy'); } catch (e) {} area.remove(); done(); }
+    });
+  });
+</script>
+</body>
+</html>

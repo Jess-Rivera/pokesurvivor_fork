@@ -1,0 +1,118 @@
+#91-3: RUN STATS BOX, build plan (2026-11-12, Quick)  [Approved with an edit, BUILT]
+Jess, 2026-11-12: RS1 (a) hit damage only; RS3 (a) zeros always show; RS2 CHANGED: 26 px rows, but the box does NOT
+grow to 360 px: it keeps today's 200 px and scrolls its rows in the shared ScrollBox (91d P1 b). Cards Taken keeps its
+536 / 400 px. So the LAYOUT section below is superseded: no box moves.
+Built 2026-11-12 (Quick sandbox, not real node): run-info-harness 78/78, dps-history-harness 28/28, all 28 run-info
+mutants caught (9 new, 1 re-pointed). smoke-pause-menu.js extended, NOT run (no browser in Quick).
+Build notes: the Statuses hover reuses the move list's tooltip (MoveTooltip, through a shared showTip), since a tooltip
+inside the scrolling box would be clipped by it; the box reads in render, which runs only on open, a Pokemon picked or
+an item moved. One extra mutant: the box is not drawn. fieldSeconds has no mutant (dps-history has no mutation runner).
+Design: 91d (approved: D1, P5, P1a 360 px, P2 12 rows, P3a one Statuses row + hover, P4a compact numbers, P6).
+Data: all of it already exists after 91-1 and 91-2. This slice is almost entirely VIEW.
+=====================================================================================================
+
+WHAT ALREADY EXISTS (reuse, do not rebuild)
+-----------------------------------------------------------------------------------------------------
+ row          source (built)                                       new?
+ Kills        G.RunStats.member(record, slot).kills                no
+ Field        DPS record outSlot (the slot that ended each second)  ONE helper: DpsHistory.fieldSeconds
+ Damage       G.DpsHistory.totalDamage(history, slot) (91-2 D)      no (built for this)
+ Share        totalDamage(slot) / totalDamage()                     no
+ Best hit     member(...).bestHit                                   no
+ Super eff.   member(...).superDamage / its hit damage (RS1)        no
+ Taken        member(...).taken                                     no
+ Healed       member(...).healed                                    no
+ Faints       member(...).faints                                    no
+ Down         G.RunStats.downTime(record, slot, now)                no
+ Statuses     member(...).statuses, total + per kind on hover       reuse Run Info's kind order (below)
+ DoT dmg      member(...).dotDamage                                 no
+ the box      pause-pokemon.js box() + Box, RUN_STATS_BOX (L49)     resize only
+ tooltip      the stat hex's .pm-hex-tip look (pause-menu.css L534) one more hover selector, no new style
+ redraw       DetailPanel already redraws on open / select /        no per-frame reads: read in render,
+                refresh (readCount, shownSlot)                       which only runs on those events
+ mm:ss        G.U.mmss                                              no
+ test seeding G.Debug.runinfo('full'/'tie') seeds per Pokemon       one fix: spread field time (below)
+
+NEW, SMALL, AND WHY
+-----------------------------------------------------------------------------------------------------
+ G.DpsHistory.fieldSeconds(history, slot)   finished seconds that slot ended on the field. Field row.
+ G.U.compact(n)                             P4: up to 9,999 as "1,204", then "41.2k", "1.3M" (one decimal,
+                                            a trailing .0 dropped: "10k"). util.js, beside G.U.mmss.
+ G.PauseRunInfo.statusList(statuses)        the kinds landed, in the panel's fixed order, as [{ kind, name,
+                                            count }]. Run Info's own statuses() switches to it, so the box's
+                                            hover and Run Info list kinds identically (one order, not two).
+ pause-pokemon.js runStatsRows(numbers)     PURE, defined BEFORE the HUD-kit guard (the pause-run-info.js
+                                            pattern) so the offline harness loads it with no browser. Holds
+                                            every box rule: labels, compact, %, mm:ss, the hover text.
+
+FILES
+-----------------------------------------------------------------------------------------------------
+ js/ui/pause-pokemon.js   RUN_STATS_BOX 200 -> 360 px; CARDS_BOX top 536 -> 696, 400 -> 240 px (its content and
+                          scrolling are #83, untouched); runStatsRows (pure); a RunStatsBox view inside the box;
+                          DetailPanel passes the shown member. Exposes runStatsRows on G.PausePokemon.
+ js/ui/pause-run-info.js  statusList() exported; statuses() uses it (same output, harness proves it).
+ js/systems/dps-history.js  fieldSeconds().
+ js/core/util.js          G.U.compact().
+ css/pause-menu.css       .pm-stats-row (label left, number right, 26 px rows), the hover selector on the
+                          existing .pm-hex-tip rule.
+ js/core/debug.js         seedRunInfo: give each seeded member a run of field seconds (today every second
+                          lands on slot 0, so Field reads 0:00 for the rest). Dev only.
+ js/data/changelog.js     today's new: the Run Stats box (free edit, parse-checked).
+ (no new script file: dev.html and NEED unchanged)
+
+LAYOUT (left column, x 16, 200 px)
+-----------------------------------------------------------------------------------------------------
+ 320 +- Run Stats -------+   title at 16 px (as today), rows from 44
+     | Kills        312 |   12 rows x 26 px = 312  ->  44 + 312 = 356 of 360    (RS2)
+     | ...              |
+ 680 +------------------+
+ 696 +- Cards Taken -----+   240 px (#83 fills and scrolls it)
+ 936 +------------------+
+
+DECISIONS TO APPROVE
+-----------------------------------------------------------------------------------------------------
+ RS1 RULE  Super eff. for one Pokemon = its super effective damage / its HIT damage (Damage minus DoT dmg),
+           the same as Run Info's DD3. 91d said "share of its damage", which with P5 now includes ticks, so a
+           burner would read low.  <- rec   (b) / all its Damage, ticks included
+ RS2 FIT   91d's "11 rows x 28 px" was written before the 12th row: 12 x 28 needs ~392 px.
+           (a) 26 px rows, the box stays 360 and Cards Taken 240 as approved  <- rec
+           (b) 28 px rows, Run Stats 392 px, Cards Taken 208 px
+ RS3       Rows at zero always show ("0", "0:00", "0%"; Share "--" while the team has no damage, Super eff.
+           "--" with no hit damage). Statuses at 0 has no hover.  <- rec   (b) hide zero rows (the box jumps
+           as you flip through the team)
+
+TESTS
+-----------------------------------------------------------------------------------------------------
+ EXTEND HARNESS  docs/proposals/run-info-harness.js, new section 9 "Run Stats box" (it already loads util.js
+   and is the pause menu #91 view harness; it now also loads pause-pokemon.js's pure part)
+   checks: G.U.compact (9,999 / 10,000 / 41,234 / 1,300,000 / 0); every row label in 91d order; Field and Down
+   in mm:ss; Share and Super eff. % and their "--" cases (RS1, RS3); compact on Damage / Taken / Healed /
+   DoT dmg; Statuses total and its hover text "Burn 12, Paralysis 8, Sleep 3"; no hover at 0; statusList
+   order equals Run Info's (one list); Run Info's statuses() output unchanged
+   why: the box's rules are new view logic no harness loads; smoke is not in check.js
+ EXTEND MUTATION RUNNER  docs/proposals/run-info-mutate.js, +8 (new RI_POKEMON, RI_UTIL env entries)
+   compact starts at 1,000; compact drops the decimal; Share over living members only (team total -> sum of
+   shown); Super eff. counts ticks; Down reads only closed faints; Statuses shows kinds (not the total);
+   the hover lists a 0-count kind; Run Info keeps its own status order (statusList not used)
+   why: each is a one-word slip that still looks plausible in the box
+ EXTEND  docs/proposals/dps-history-harness.js: fieldSeconds per slot, a swap mid-run, unfinished second not
+   counted, no record reads 0
+ run-stats-harness  no change (no counting logic changes in 91-3)
+ SMOKE (extend)  tools/smoke-pause-menu.js: after runinfo('full'): the box shows the shown Pokemon's numbers
+   (Kills matches G.RunStats.member), they change on next / prev and a team card click, the Statuses hover
+   lists kinds, a compact number reads like "41.2k" (seed a 41,234 Damage), the box is 360 px and Cards Taken
+   starts at 696
+ INTENT SCENARIOS  none (no move changes)
+ DEBUG SET (feel)  G.Debug.runinfo('full'), pause, flip the team with Move_Left / Move_Right and card clicks:
+   numbers change per Pokemon, nothing overflows the 200 px column, the Statuses hover sits on top, Field adds
+   up to about the run time across the team
+ check.js        no change
+ STALE SCAN      pause-pokemon.js (run-info, team-cards and gym-leader mutate files that read it, if any),
+                 pause-run-info.js statuses(), dps-history.js, util.js, debug.js seedRunInfo
+
+RISK
+-----------------------------------------------------------------------------------------------------
+ R1 pause-pokemon.js gains a pure block above its kit guard: it must read only G.U, G.RunStats, G.DpsHistory and
+    G.PauseRunInfo at call time (pause-run-info.js loads AFTER pause-pokemon.js; render time is fine).
+ R2 the 200 px column: the HudText font at its box size fits ~16 characters; "Super eff." + "100%" is the
+    widest row. The smoke checks no row overflows.

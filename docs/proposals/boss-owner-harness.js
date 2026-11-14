@@ -75,7 +75,7 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   ok(JSON.stringify(Gy.cardsFor(fake, 1)) === '{"damage":3}' && JSON.stringify(Gy.cardsFor(fake, 2)) === '{"damage":4,"area":1}', 'a leader card pool is the running sum of the loops gained so far');
   const over = JSON.parse(JSON.stringify(BROCK)); over.cards[2] = { count: 2 };
   ok(Gy.validate(over).some(m => m.includes('capped at 3')), 'a cap counts the stacks gained in earlier loops'); }
-ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 2, velocity: 3, area: 2 }), 'Brock loop 1 cards are Damage 3, Count 2, Velocity 3, Area 2');
+ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 6, count: 2, velocity: 3, area: 2 }), 'Brock loop 1 cards are All Damage 6 (+30% at +5% since #84), Count 2, Velocity 3, Area 2');
   ok(PILOT.map(m => m.id).join() === 'tackle,rock-throw,harden', 'slot 1 pilot set (loop 2 on)');
   ok(SLOT1.sets[1].map(m => m.id).join() === 'tackle,defense-curl,rock-throw', 'slot 1 loop 1: Tackle, Defense Curl, Rock Throw (Jess 2026-11-02)');
   ok(Gy.movesFor(SLOT1, 0, 1) === SLOT1.sets[1] && [2, 3, 6].every(L => Gy.movesFor(SLOT1, 0, L) === PILOT), 'movesFor: loop 1 its own set, loops 2 to 6 hold the pilot set');
@@ -115,7 +115,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
     ['typo on a slot', s => { s.cardz = {}; }, 'unknown field cardz']
   ];
   for (const [name, mut, needle] of cases) { const out = flags(mut); ok(out.some(m => m.includes(needle)), 'validate missed "' + name + '" (wanted ' + needle + '): ' + JSON.stringify(out)); }
-  console.log('1 data: Brock valid; slot 1 loop 1 = Tackle, Defense Curl, Rock Throw, loop 2 on the pilot Tackle, Rock Throw, Harden with Damage 3, Count 2, Velocity 3, Area 2; ' + cases.length + ' negative cases flagged'); }
+  console.log('1 data: Brock valid; slot 1 loop 1 = Tackle, Defense Curl, Rock Throw, loop 2 on the pilot Tackle, Rock Throw, Harden with All Damage 6, Count 2, Velocity 3, Area 2; ' + cases.length + ' negative cases flagged'); }
 
 // 2. the owner: player size, its own folded defs, the player as its only foe
 { fresh(); const e = mkBoss(), b = e.brain;
@@ -127,7 +127,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   ok(h === G.MoveDefs.harden, 'no card fits Harden, so it runs the frozen def');
   ok(G.MoveDefs.tackle.basePower === 40 && G.MoveDefs['rock-throw'].space.count === 1, 'the frozen defs are untouched');
   ok(e.foes().length === 1 && e.foes()[0] === pl, 'the player is its only foe'); pl.dead = true; ok(e.foes().length === 0, 'a fainted player is no foe'); pl.dead = false;
-  ok(e.strongHost === true && near(e.cdMul, 1) && near(G.MoveEffects.gateMulOf(e), S.STRONG_HOST_GATE_MUL), 'a strong host: the strong-host Gate multiplier, cdMul 1 at tempo 1');
+  ok(!('strongHost' in e) && S.STRONG_HOST_GATE_MUL === undefined && near(e.cdMul, 1) && near(G.MoveEffects.gateMulOf(e), 1), 'your Gate (#45): no strong-host flag or multiplier, a cardless boss has Gate multiplier 1, cdMul 1 at tempo 1');
   ok(near(G.MoveEffects.gateMulOf({}), 1), 'an owner with no cards and not a strong host keeps the base Gate');
   console.log('2 owner: player size, Tackle 52 / 70.2 px / cd 0.5, Rock Throw 58.5 x3 rocks 11.7 px at 377 px/s / cd 1.167, Harden unfolded, the player is its only foe'); }
 
@@ -250,7 +250,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   { fresh(); const e = boss(['body-slam']); hitWith(e, 'body-slam', 0.99); ok(pl.hurts.length === 1 && !pl.stMajor, 'Body Slam, roll 0.99: damage, no paralysis');
     hitWith(e, 'body-slam', 0); ok(pl.stMajor && pl.stMajor.k === 'paralysis', 'Body Slam, roll 0: paralysis on the player');
     hitWith(e, 'sludge', 0); ok(!pl.stDot, 'Sludge cannot poison a paralyzed player (one major at a time)'); }
-  { fresh(); const e = boss(['sludge']); hitWith(e, 'sludge', 0); ok(pl.stDot && pl.stDot.k === 'poison' && pl.stDot.left === 4, 'Sludge poisons through the damage over time: 4 turns: ' + JSON.stringify(pl.stDot));
+  { fresh(); const e = boss(['sludge']); hitWith(e, 'sludge', 0); ok(pl.stDot && pl.stDot.k === 'poison' && pl.stDot.left === 4 && pl.stDot.by === e, 'Sludge poisons through the damage over time: 4 turns, the caster kept on the state (#91): ' + JSON.stringify(pl.stDot && { k: pl.stDot.k, left: pl.stDot.left, byCaster: pl.stDot.by === e }));
     fresh(); pl.mon.types = ['poison']; hitWith(e, 'sludge', 0); ok(!pl.stDot, 'a Poison-type player is immune'); pl.mon.types = ['typeless'];
     fresh(); hitWith(e, 'ember', 0); ok(pl.stDot && pl.stDot.k === 'burn', 'Ember burns');
     fresh(); hitWith(e, 'powder-snow', 0); ok(pl.stMajor && pl.stMajor.k === 'freeze' && G.Status.stunned(pl), 'Powder Snow freezes');
@@ -258,7 +258,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   // foe drops on your own tracker, the leader's own raise and drain
   { fresh(); const e = boss(['mud-shot']), src = G.MoveEffects.srcOf(e.brain.def('mud-shot'), e);
     hitWith(e, 'mud-shot', 0.99); const t = S.tracker(pl, 'spe', src, false);
-    ok(S.stage(pl, 'spe') === -1 && t && near(t.g, 6 * S.STRONG_HOST_GATE_MUL), 'Mud Shot: Speed -1 on your own tracker, the strong-host Gate (6 s): ' + JSON.stringify(t));
+    ok(S.stage(pl, 'spe') === -1 && t && near(t.g, 6), 'Mud Shot: Speed -1 on your own tracker, your plain Gate (6 s): ' + JSON.stringify(t));
     hitWith(e, 'mud-shot', 0.99); ok(S.stage(pl, 'spe') === -1, 'a second hit inside the Gate only refreshes'); }
   { fresh(); const e = boss(['metal-claw']); hitWith(e, 'metal-claw', 0.99); ok(S.stage(e, 'atk') === 0, 'Metal Claw, roll 0.99: no raise');
     hitWith(e, 'metal-claw', 0); ok(S.stage(e, 'atk') === 1 && e.trk && e.trk.atk && S.stage(pl, 'atk') === 0, "Metal Claw, roll 0: Attack +1 on the leader's own tracker, none on you"); }

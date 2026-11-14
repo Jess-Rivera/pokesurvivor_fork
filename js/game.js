@@ -23,7 +23,8 @@ G.Game = (() => {
   let state = 'ui';
   let time = 0,
     last = 0,
-    pendingLevels = 0;
+    pendingLevels = 0,
+    cardsDueAt = null; // run time the level-up cards open at (#62: after the HUD's Lv rattle settles), null while none wait
   let evBank = [0, 0, 0, 0, 0, 0]; // pokebox step 5: this run's six EV banks in thousandths (G.Copies.killEvs), reset each run
   let pl = null;
   // ---- team (Phase A) ----
@@ -46,15 +47,22 @@ G.Game = (() => {
     ctx = cv.getContext('2d');
     resize();
     addEventListener('resize', resize);
+    // F2 (2026-11-12): a setting changed while the pause menu holds the world still redraws one frame (Vignette)
+    G.Settings.on(() => (frozenRedraw = true));
     G.Touch.init(cv);
     // On mobile: switching apps or turning it portrait pauses the game.
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) autoPause();
     });
-    G.RunUI.wirePause(() => {
-      state = 'playing';
-      G.UI.hideAll();
-    }, quitRun);
+    G.RunUI.wirePause(
+      () => {
+        state = 'playing';
+        G.UI.hideAll();
+      },
+      () => quitRun() // a click passes its event, which must not read as keepsEvs
+    );
+    if (G.PauseMenu.ready)
+      G.PauseMenu.wire({ resume: togglePause, endRun: endRunFromPause, settings: () => G.SettingsUI.open('sound') });
     Backdrop.init();
     last = performance.now();
     requestAnimationFrame(loop);
@@ -68,6 +76,7 @@ G.Game = (() => {
     h = cv.clientHeight;
     cv.width = Math.round(w * dpr);
     cv.height = Math.round(h * dpr);
+    frozenRedraw = true; // resizing blanks the canvas: a world held still behind the pause menu draws once more
     G.Camera.resize(w, h, dpr);
     checkOrientation();
   }
@@ -88,8 +97,21 @@ G.Game = (() => {
     G.Touch.reset();
     if (state === 'playing' && !G.Coop.active) {
       state = 'paused';
-      G.RunUI.showPause();
+      showSoloPause();
     }
+  }
+
+  /** Solo pause screen: the Poke Ball menu (#82, js/ui/pause-menu.js); the old Team summary if its libraries failed to load. */
+  function showSoloPause() {
+    if (G.PauseMenu.ready) G.PauseMenu.open();
+    else G.RunUI.showPause();
+  }
+
+  /** The pause menu's End answer (it asks inside the ball first, js/ui/pause-menu.js). */
+  function endRunFromPause() {
+    if (state !== 'paused') return;
+    G.PauseMenu.hideNow();
+    quitRun();
   }
 
   /** Pause/continue (Esc or P key, or the mobile pause button). */
@@ -106,11 +128,24 @@ G.Game = (() => {
       }
       return;
     }
+    if (state === 'over') {
+      // #92: Esc or the pause key in the Run Review goes back to the end of run screen
+      if (G.PauseMenu.ready && G.PauseMenu.isReviewing()) G.PauseMenu.leaveReview();
+      return;
+    }
     if (state === 'playing') {
       state = 'paused';
-      G.RunUI.showPause();
+      if (!G.Debug.quietPauseActive()) showSoloPause(); // ?dev quiet pause (#54): freeze the frame, no menu
       G.Audio.sfx('pause');
     } else if (state === 'paused') {
+      // The Poke Ball menu answers the key itself (G.PauseMenu.answerPauseKey) and plays its closing first; the game
+      // stays paused until it is gone.
+      const resumeOnceClosed = () => {
+        if (state !== 'paused') return;
+        state = 'playing';
+        G.UI.hideAll();
+      };
+      if (G.PauseMenu.ready && G.PauseMenu.answerPauseKey(resumeOnceClosed)) return;
       state = 'playing';
       G.UI.hideAll();
     }
@@ -120,6 +155,9 @@ G.Game = (() => {
 
   /** @param coop  { seed, host, members } for a group game */
   function startRun(coop = null) {
+    if (G.PauseMenu.ready) G.PauseMenu.hideNow();
+    if (G.EndRun.ready) G.EndRun.hide();
+    if (G.EvScreen.ready) G.EvScreen.hide();
     G.Log.clear();
     G.Log.t = 0;
     holdBy = [];
@@ -139,6 +177,7 @@ G.Game = (() => {
     G.Pickups.clear();
     G.Spawner.reset();
     G.GymArena.reset();
+    G.LeaderMemory.start(); // Leader AI slice 4: every leader starts the run knowing nothing of you (after the arena books its fight)
     G.Gym.reset();
     G.Shops.reset(); // Move Shop step 3: the first pair is due at 2:00 again
     G.Events.reset();
@@ -152,6 +191,7 @@ G.Game = (() => {
     time = 0;
     pendingLevels = 0;
     evBank = [0, 0, 0, 0, 0, 0];
+    cardsDueAt = null;
     runReal = performance.now();
     tampered = debugDirty;
 
@@ -172,6 +212,8 @@ G.Game = (() => {
     // you fresh ones), the berry bag, and the unspent links. Slot 1 leads with the lock at 0.
     runTeam = G.Team.create(roster, carryRun);
     pl = runTeam.active;
+    runTeam.dpsHistory = G.DpsHistory.create(); // #66: the run's damage per second, for the HUD's DPS-Upgrades panel
+    runTeam.runStats = G.RunStats.create(); // #91: the run's other counters (kills, faints, statuses...), for the pause menu
     // F3d-2 pre-run loadout (Inventory screen): equip the team items you chose, in slot order, through the same path as a pickup.
     for (const id of G.Items.cleanLoadout(save)) if (id) equipRun(id);
     banked = { t1: 0, t10: 0 };
@@ -194,9 +236,11 @@ G.Game = (() => {
     state = 'playing';
   }
 
-  function quitRun() {
+  /** Ends the run without a fall. keepsEvs: a quit by choice (End Run, signing out) gives no EVs (#103, Jess
+   *  2026-11-12); the crash save keeps them, since the player did not choose it. */
+  function quitRun(keepsEvs = false) {
     if (G.Coop.active) G.Coop.leave();
-    endRun(false);
+    endRun(false, keepsEvs);
   }
 
   /** Build one team member (a Player) with its moves and binds applied. uid: the team slot's copy, whose IVs and
@@ -287,24 +331,10 @@ G.Game = (() => {
   /** Keyboard swap: cycle prev/next (skipping fainted) and direct-to-slot. */
   function handleSwap() {
     if (roster.length < 2 || runTeam.lock > 0 || state !== 'playing' || pl.dead) return;
-    // The swap input comes from the member's controller (slice 3; yours reads the keyboard). Direct keys are by SLOT number; an
-    // empty slot (or a fainted member) does nothing.
-    const c = pl.controller,
-      n = c.swapSlot();
-    if (n >= 0) {
-      const j = roster.findIndex((f) => f.teamSlot === n);
-      if (j >= 0) swapTo(j);
-      return;
-    }
-    const dir = c.swapDir();
-    if (!dir) return;
-    for (let step = 1; step <= roster.length; step++) {
-      const j = (runTeam.activeIdx + dir * step + roster.length * step) % roster.length;
-      if (!roster[j].dead && j !== runTeam.activeIdx) {
-        swapTo(j);
-        return;
-      }
-    }
+    // The swap input comes from the member's controller (slice 3; yours reads the keyboard), read by the Team (G.Team.requested),
+    // the same for a leader's AI player.
+    const j = runTeam.requested(pl.controller);
+    if (j >= 0) swapTo(j);
   }
 
   /** All players in the game (you first). */
@@ -518,7 +548,40 @@ G.Game = (() => {
   const fullBoxLine = (name, coins) =>
     `Your boxes are full: ${name} was sold for ${coins.toLocaleString('en-US')} PokéCoins.`;
 
-  function endRun(dead = true) {
+  /** #91-2 part C: the Region Best key (map 91-2C, RC2): the region's gen, or 'all' with no region picked. */
+  function regionKey() {
+    return G.Enemies.region == null ? 'all' : String(G.Enemies.region);
+  }
+
+  /** #91-2: this region's record on the save, or null (an old save, or no record yet). */
+  function regionBest() {
+    const save = G.DB.save;
+    return (save && save.regionBest && save.regionBest[regionKey()]) || null;
+  }
+
+  /** #91-2 part C: this run against the region's record, as if it ended now. write: keep it when it is better
+   *  (endRun passes solo and clean; G.Debug.recordcheck('write') passes true). One compare for both. */
+  function regionRecord({ write = false } = {}) {
+    const save = G.DB.save;
+    if (!save || !pl) return null;
+    const best = regionBest();
+    const entry = G.RunStats.regionEntry({
+      loop: G.Gym.loop,
+      splits: G.Gym.splits,
+      fightStartedAt: G.Gym.fightStartedAt,
+      endTime: time,
+    });
+    const verdict = G.RunStats.compareRegion(entry, best);
+    const written = !!(write && verdict.better);
+    if (written) {
+      if (!save.regionBest || typeof save.regionBest !== 'object') save.regionBest = {};
+      save.regionBest[regionKey()] = entry;
+    }
+    return { entry, best, better: verdict.better, reason: verdict.reason, written };
+  }
+
+  /** dead: the team fell. keepsEvs: the run's EVs go to the end of run (every fall and a crash; never a quit, #103). */
+  function endRun(dead = true, keepsEvs = dead) {
     if (state === 'over' || !pl) return;
     const coop = !!pl.uid; // only group games give it a uid
     const wasHost = !!pl.coopHost;
@@ -526,6 +589,7 @@ G.Game = (() => {
     if (G.Coop.active) G.Coop.end();
     if (coop) G.Social.setPlaying(false);
     state = 'over';
+    G.LeaderMemory.end(); // Leader AI slice 4: what the leaders remembered of you dies with the run, never saved
     G.Audio.music(null);
     G.Audio.sfx(dead ? 'gameover' : 'back');
     const save = G.DB.save;
@@ -549,6 +613,9 @@ G.Game = (() => {
     save.stats.coinsEarned += coins;
     G.Progress.event('runEnd', { time, level: pl.level, coins: pl.coins, types: pl.mon.types, group: coop });
     G.Progress.checkAch();
+    // If the game was tampered with (see clean()), it does not go to the ranking (silently) or set a Region Best.
+    const ok = clean();
+    regionRecord({ write: ok && !coop }); // #91-2: solo and clean only (DR2, D5), saved with the commit below
     // To the cloud on finishing the game (at most every 30 min); if the record enters
     // a top (today, week or month), right away (below, after submitting it to the ranking).
     G.DB.commit('run');
@@ -556,8 +623,6 @@ G.Game = (() => {
 
     // Ranking: solo everyone their own; in a group the host submits it.
     const mark = { t: Math.floor(time), lv: pl.level, kills: pl.kills };
-    // If the game was tampered with (see clean()), it does not go to the ranking (silently); everything else does.
-    const ok = clean();
     const sent =
       ok && !coop
         ? G.Ranking.submitSolo(Object.assign(mark, { dex: pl.dex, shiny: pl.shiny }))
@@ -572,7 +637,7 @@ G.Game = (() => {
         .catch(() => {});
 
     // Pokebox step 5: the run's EV banks and the team's copies, for the allocation screen. Co-op allocates nothing (deferred).
-    const evs = coop ? null : { bank: evBank.slice(), team: evTeam() };
+    const evs = coop || !keepsEvs ? null : { bank: evBank.slice(), team: evTeam() };
     G.RunUI.showOver(
       {
         dead,
@@ -586,6 +651,7 @@ G.Game = (() => {
         t10: pl.t10,
         moves: pl.moves,
         roster,
+        coop, // #103: co-op keeps the old results card
         caught,
         evs,
         breakdown:
@@ -624,6 +690,11 @@ G.Game = (() => {
 
   // ---------------- level up ----------------
 
+  // #62 (Jess, 2026-11-10): a gained level first rattles the Lv number on the HUD while you keep playing; the cards open
+  // once it settles (the 0.6 s rattle in css/hud-overlay.css, then half a second). Run time, so a pause holds the wait.
+  // Levels still queued after a pick open straight on.
+  const LEVEL_CARDS_DELAY = 1.1;
+
   function maybeLevelUp() {
     if (pendingLevels <= 0 || state !== 'playing') return;
     if (G.Coop.active) {
@@ -635,8 +706,11 @@ G.Game = (() => {
     }
     // Never open cards with the Pokemon down (dying and picking up XP in the same frame).
     if (pl.dead) return;
+    if (cardsDueAt === null) cardsDueAt = time + LEVEL_CARDS_DELAY;
+    if (time < cardsDueAt) return;
     const cards = G.LevelUp.offer(pl, 3, roster);
     pendingLevels--;
+    cardsDueAt = pendingLevels > 0 ? time : null; // a queued level opens next, with no second wait
     // Nothing left to offer (every move maxed, slots full): skip the screen so the run cannot soft-lock.
     if (!cards.length) return;
     state = 'levelup';
@@ -646,6 +720,8 @@ G.Game = (() => {
       card.apply(pl);
       state = 'playing';
     });
+    // confetti from the popup's top corners; it fades out over 1 s once the screen closes (js/ui/confetti.js)
+    if (G.Confetti) G.Confetti.burstFrom('scr-levelup');
   }
 
   // ---------------- links ----------------
@@ -858,6 +934,7 @@ G.Game = (() => {
     }
     if (G.Coop.active) G.Coop.collected(p, who);
     if (mine || p.kind === 'bomb') G.Audio.sfx(PICK_SFX[p.kind]);
+    if (mine && (p.kind === 'item' || p.kind === 'ground')) G.RunStats.item(runTeam.runStats); // #91 D4: items picked up
     if (p.kind === 'xp' || p.kind === 'xpBig') {
       const before = pl.level;
       const coopK = G.Coop.active ? G.Coop.xpFactor() : 1;
@@ -923,10 +1000,16 @@ G.Game = (() => {
 
   // ---------------- keyboard ----------------
 
+  let settingsWasOpen = false; // Settings' own key listener closes it on Esc before this frame reads the same Esc
   function handleKeys() {
     if (G.SettingsUI.isOpen) {
+      settingsWasOpen = true;
       if (G.Input.tap('escape')) G.SettingsUI.close();
       return;
+    }
+    if (settingsWasOpen) {
+      settingsWasOpen = false;
+      if (G.Input.tap('escape')) return; // that Esc closed Settings: it must not also close the pause menu behind it
     }
     if (state === 'levelup') {
       G.RunUI.levelKeys();
@@ -965,14 +1048,17 @@ G.Game = (() => {
       return;
     }
     if (state === 'paused' || state === 'over') {
-      G.RunUI.pauseKeys();
+      if (G.PauseMenu.ready && G.PauseMenu.isOpen()) G.PauseMenu.keys();
+      else if (G.EndRun.ready && G.EndRun.isOpen())
+        G.EndRun.keys(); // #103
+      else if (G.EvScreen.ready && G.EvScreen.isOpen())
+        G.EvScreen.keys(); // #104
+      else G.RunUI.pauseKeys();
       return;
     } // the summary sheet's keys (solo pause, end-of-run team view)
     if (state !== 'playing' || !pl) return;
     // Move slots (slice 3, D4): the member's controller lists the slot keys and cycle keys that went down this frame, in key order.
-    const c = pl.controller;
-    for (const i of c.slots()) pl.setActive(i);
-    for (const d of c.cycles()) pl.cycle(d);
+    pl.takeSlotInput();
   }
 
   // ---------------- loop ----------------
@@ -985,6 +1071,10 @@ G.Game = (() => {
   let fpsShown = 60,
     fpsAcc = 0,
     fpsN = 0;
+  // F2 (2026-11-12): while the pause menu is fully open the world is held still. The canvas keeps its last frame and
+  // the HTML HUD (hidden by pause-menu.css) is not read; frozenRedraw asks for one more frame (a resize, a setting).
+  let frozenRedraw = false;
+  const heldByPauseMenu = () => state === 'paused' && !!pl && G.PauseMenu.ready && G.PauseMenu.isFullyOpen();
   // The next frame is requested BEFORE anything else: if something fails midway, the
   // game continues (before it would freeze forever and you had to reload;
   // that is how a huge game was lost once).
@@ -1004,7 +1094,7 @@ G.Game = (() => {
       if (++errRun === 180 && pl && state !== 'ui' && state !== 'over') {
         try {
           G.UI.hideAll();
-          quitRun();
+          quitRun(true); // a crash is not the player's choice: the run's EVs are kept
           G.UI.toast('El juego ha fallado: tu partida se ha guardado hasta aquí', 5000);
         } catch (e2) {
           console.error('[Game] could not close the game:', e2);
@@ -1029,16 +1119,21 @@ G.Game = (() => {
 
     handleKeys();
 
+    const held = heldByPauseMenu();
     if (state === 'playing') update(dt);
-    else if (pl && state !== 'ui') {
+    else if (pl && state !== 'ui' && !held) {
       G.FX.update(dt * 0.25);
       pl.anim.update(dt * 0.25);
     }
     // The network is always serviced (even with the level cards open).
     if (G.Coop.active && pl && state !== 'ui' && state !== 'over') G.Coop.tick(dt);
 
-    if (pl && state !== 'ui') render();
+    if (held) {
+      if (frozenRedraw) render();
+    } else if (pl && state !== 'ui') render();
     else Backdrop.render(ctx, w, h, dpr, dt);
+    frozenRedraw = false;
+    if (!held) G.HudOverlay.sync(!!pl && state !== 'ui'); // #64: the HTML HUD reads the frame just drawn
     G.UI.tick(dt);
 
     G.Input.endFrame();
@@ -1094,10 +1189,8 @@ G.Game = (() => {
     if (G.Log.on) G.Log.sample();
     runTeam.tickLock(dt);
     handleSwap();
-    if (pl.controller.shake() && G.Status.shake(pl))
-      G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2); // Shake off (slice E1)
-    else if (G.Settings.get('autoShake') && G.Status.autoShake(pl, dt))
-      G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2); // accessibility auto-shake, 3 taps/s (E2e)
+    G.DpsHistory.advance(runTeam.dpsHistory, dt, pl); // #66: run time only; after the swap keys, so a second shows who ended it
+    pl.shakeStep(dt); // Shake off (slice E1), or the accessibility auto shake (E2e): one path for every Player entity (#43)
 
     const b = Math.floor(time / 240);
     if (b !== biome && !G.GymArena.inArena) {
@@ -1129,7 +1222,7 @@ G.Game = (() => {
     } else G.Spawner.tickBanner(dt);
     G.EnemyMgr.update(dt, all);
     G.EnemyMgr.rebuildGrid();
-    if (!pl.dead && pl.swapT > 0) pl.swapT = Math.max(0, pl.swapT - dt); // the swap lock (was in the legacy G.Combat.tick until 7b-2a)
+    pl.tickSlotLock(dt); // the slot hold, after the body and before your sim pass (a leader's runs at the same point of its frame, #43)
     G.MoveRoute.tick(dt, pl, time); // the player's moves and gym leaders' casts run in G.MoveSim (slice 7b flip)
     G.Projectiles.update(dt, pl, G.EnemyMgr.all());
     G.Combat.resolve(dt, pl, time);
@@ -1214,7 +1307,7 @@ G.Game = (() => {
     ctx.restore();
 
     G.Weather.draw(ctx, w, h, frameDt);
-    G.World.drawVignette(ctx, w, h);
+    if (G.Settings.get('vignette')) G.World.drawVignette(ctx, w, h); // Graphics setting, default off (2026-11-12)
     // Fog: the vignette closes in a bit (without covering the center).
     const fog = G.Weather.vignette;
     if (fog > 0) {
@@ -1346,7 +1439,7 @@ G.Game = (() => {
       G.Camera.apply(ctx);
       drawScene(G.Camera, wanderers);
       ctx.restore();
-      G.World.drawVignette(ctx, w, h);
+      if (G.Settings.get('vignette')) G.World.drawVignette(ctx, w, h); // same Graphics setting as the run
     }
 
     /** On returning from a run, it restores the menu world. */
@@ -1441,6 +1534,24 @@ G.Game = (() => {
     },
     get player() {
       return pl;
+    },
+    /** #91: this run's counters (G.RunStats), or the last run's after it ends; null before the first run. */
+    get runStats() {
+      return runTeam ? runTeam.runStats : null;
+    },
+    /** #91-2: this region's Region Best entry, or null. */
+    get regionBest() {
+      return regionBest();
+    },
+    regionRecord,
+    regionKey,
+    /** #91-2: false once this run is flagged (debug tools, tampering): it never sets a record or posts a score. */
+    get runIsClean() {
+      return clean();
+    },
+    /** #91-2: shinies caught this run (Run Info "Shinies"). */
+    get shiniesCaught() {
+      return caught.length;
     },
     st,
     // team (Phase A)

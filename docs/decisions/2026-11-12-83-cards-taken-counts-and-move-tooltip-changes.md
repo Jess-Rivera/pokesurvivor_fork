@@ -1,0 +1,6 @@
+## 2026-11-12, #83: Cards Taken is a count list; what cards do to a move lives in the move tooltip (Jess)
+Cards Taken (detail panel) shows the DPS panel's rows: card name and pick count, Vitamins by the vitamin's name, same order. It lists only the cards that touch the shown Pokemon: a move card or type Damage card when one of its moves can take it (checked on the move's own data, so a card that maxed a move still shows), Stat Climb Speed and Stat Change Duration when one of its moves changes a stat, Bench Regeneration with a team of 2 or more, Vitamins always.
+The move list tooltip gets a "Cards:" line: each field the cards changed, the move's own value then the one combat uses ("cd 1.2 s to 0.92 s"), "(max)" where a cap, floor or pick limit stopped it. Fields two cards share (All Damage Up and a type Damage card on power) are one entry.
+The three team-only cards (Stat Climb Speed, Stat Change Duration, Bench Regeneration) show their real number on hover in Cards Taken, since no move shows it. Long card names wrap to a second line rather than squeezing.
+The team sheet's Run Cards tab keeps its old totals until #92 replaces that screen.
+Canonical: docs/PAUSE-MENU.md section 4 (Cards Taken).

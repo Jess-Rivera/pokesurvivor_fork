@@ -200,6 +200,29 @@ G.Copies = (() => {
   }
   /** The whole EVs six banks (in thousandths) can give; the fractions are dropped. */
   const wholeEvs = (bank) => bank.map((v) => Math.floor(Math.max(0, v) / EV_UNIT));
+  /** v made a whole number from 0 to max; anything that is not a number is 0 (save cleaning and the EV cap). */
+  const wholeUpTo = (v, max) => (Number.isFinite(+v) ? Math.max(0, Math.min(max, Math.floor(+v))) : 0);
+  /** Six EVs as a copy may hold them: whole, at most 252 in a stat and 510 in all (later stats are cut first). */
+  function cappedEvs(six) {
+    let left = EV_TOTAL;
+    return [0, 1, 2, 3, 4, 5].map((k) => {
+      const v = Math.min(left, wholeUpTo(Array.isArray(six) ? six[k] : 0, EV_MAX));
+      left -= v;
+      return v;
+    });
+  }
+  /** Set a copy's six EVs outright, capped as cappedEvs (debug and test tools; play adds through addEvs). All zero
+   *  removes the field, as clean() does. Returns the six saved, or null when the copy is gone. The caller saves. */
+  function setEvs(save, id, six) {
+    if (!isId(id)) return null;
+    const u = shortId(id),
+      c = (save.box || []).find((x) => x.u === u);
+    if (!c) return null;
+    const e = cappedEvs(six);
+    if (e.some((v) => v > 0)) c.e = e;
+    else delete c.e;
+    return e;
+  }
   /** Add n EVs in stat k to a copy, up to 252 in the stat and 510 in total. Returns how many landed (0 when the copy is gone). */
   function addEvs(save, id, k, n) {
     if (!isId(id) || !(k >= 0 && k <= 5)) return 0;
@@ -500,7 +523,6 @@ G.Copies = (() => {
       save.box = [];
       return;
     }
-    const whole = (v, max) => (Number.isFinite(+v) ? Math.max(0, Math.min(max, Math.floor(+v))) : 0);
     const seen = new Set();
     save.boxCount = boxCount(save);
     save.box = save.box.filter((c) => {
@@ -508,42 +530,37 @@ G.Copies = (() => {
       const t = traitsOf(c.d);
       if (!t || (G.DEX_BY && !G.DEX_BY[c.d])) return false;
       seen.add(c.u);
-      c.t = whole(c.t, Number.MAX_SAFE_INTEGER);
+      c.t = wholeUpTo(c.t, Number.MAX_SAFE_INTEGER);
       if (!METHOD_NAME[c.m]) c.m = METHODS.other;
-      c.n = Math.max(1, Math.min(25, whole(c.n, 25)));
+      c.n = Math.max(1, Math.min(25, wholeUpTo(c.n, 25)));
       const iv = typeof c.i === 'string' ? [...c.i] : [];
       c.i = [0, 1, 2, 3, 4, 5].map((k) => (IV_CHARS.includes(iv[k]) ? iv[k] : IV_CHARS[0])).join('');
       const sexed = t[0] >= 0;
       if (!sexed) c.g = 2;
       else if (t[0] === 0 || t[0] === 8) c.g = t[0] === 8 ? 1 : 0;
       else if (c.g !== 0 && c.g !== 1) c.g = 0;
-      c.x = whole(c.x, SCALE_MAX);
-      c.y = whole(c.y, SCALE_MAX);
+      c.x = wholeUpTo(c.x, SCALE_MAX);
+      c.y = wholeUpTo(c.y, SCALE_MAX);
       if (![1, 2, 3].includes(c.a) || !t[1][c.a - 1]) c.a = 1;
       if (c.s) c.s = 1;
       else delete c.s;
       if (c.e) {
-        let left = EV_TOTAL;
-        c.e = [0, 1, 2, 3, 4, 5].map((k) => {
-          const v = Math.min(left, whole(Array.isArray(c.e) ? c.e[k] : 0, EV_MAX));
-          left -= v;
-          return v;
-        });
+        c.e = cappedEvs(c.e);
         if (!c.e.some((v) => v > 0)) delete c.e;
       }
       const nick = typeof c.k === 'string' ? cleanNickname(c.k) : ''; // a hand-edited or old save is cleaned like typed text
       if (nick) c.k = nick;
       else delete c.k;
-      if (c.h != null) c.h = whole(c.h, FRIEND_MAX);
+      if (c.h != null) c.h = wholeUpTo(c.h, FRIEND_MAX);
       if (c.v != null && (typeof c.v !== 'string' || (G.MoveDefs && !G.MoveDefs[c.v]))) delete c.v;
-      if (c.p && typeof c.p === 'object') for (const id of Object.keys(c.p)) c.p[id] = whole(c.p[id], RANK_MAX);
+      if (c.p && typeof c.p === 'object') for (const id of Object.keys(c.p)) c.p[id] = wholeUpTo(c.p[id], RANK_MAX);
       else delete c.p;
       for (const flag of ['f', 'l'])
         if (c[flag]) c[flag] = 1;
         else delete c[flag];
       if (typeof c.o !== 'string' || !c.o) delete c.o;
       if (typeof c.r !== 'string' || !c.r) delete c.r;
-      if (c.b != null) c.b = whole(c.b, save.boxCount - 1);
+      if (c.b != null) c.b = wholeUpTo(c.b, save.boxCount - 1);
       if (!c.b) delete c.b;
       return true;
     });
@@ -564,6 +581,7 @@ G.Copies = (() => {
     killEvs,
     wholeEvs,
     addEvs,
+    setEvs,
     applyEvPlan,
     EV_RATE,
     SHINY_EV,

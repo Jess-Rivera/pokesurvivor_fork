@@ -28,6 +28,7 @@ if (T) {
   if (!s.teamItems || !s.teamItems.luckyegg || !s.teamItems.amuletcoin) bad('new save lacks the starters');
   if (Object.keys(s.teamItems).length !== 2) bad('new save should hold exactly the 2 starters, got ' + Object.keys(s.teamItems));
   if (!Array.isArray(s.teamLoadout) || s.teamLoadout.length) bad('new save loadout should be empty');
+  if (!s.regionBest || typeof s.regionBest !== 'object' || Object.keys(s.regionBest).length) bad('new save should have an empty regionBest (#91-2)');
   console.log('1 new save: starters Lucky Egg + Amulet Coin, empty loadout');
 }
 
@@ -38,6 +39,10 @@ if (T) {
   if (!m.teamItems || !m.teamItems.luckyegg || !m.teamItems.amuletcoin) bad('old save did not get the starters');
   if (!Array.isArray(m.teamLoadout)) bad('old save lost loadout array');
   if (m.coins !== 777 || m.runSlots !== 2) bad('migration clobbered existing fields');
+  const pre = T.newSave('Pre'); delete pre.regionBest; const pm = T.migrate(pre, 'Pre');
+  if (!pm.regionBest || Object.keys(pm.regionBest).length) bad('an old save without regionBest should get an empty one (#91-2)');
+  const kept = T.newSave('Kept'); kept.regionBest = { 1: { loop: 1, gyms: 2 } };
+  if (T.migrate(kept, 'Kept').regionBest[1].gyms !== 2) bad('migrate must keep an existing regionBest (#91-2)');
   const again = T.migrate(JSON.parse(JSON.stringify(m)), 'Old');
   if (JSON.stringify(Object.keys(again.teamItems).sort()) !== JSON.stringify(Object.keys(m.teamItems).sort())) bad('migrate is not idempotent');
   console.log('2 old save: starters granted, existing data kept, idempotent');

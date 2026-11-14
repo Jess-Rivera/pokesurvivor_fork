@@ -2,10 +2,7 @@
 // Usage from the repo root:  node docs/proposals/leader-items-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs leader-items-harness.js against it
 // (LI_<FILE>). The harness must fail every time; a miss is a gap, a stale pattern is reported as STALE.
-const fs = require('fs'),
-  os = require('os'),
-  path = require('path'),
-  cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const IT = 'js/data/items.js',
   LD = 'js/entities/gym-leader.js',
@@ -34,29 +31,11 @@ const M = [
   ['the ban list keeps Re-Do', GY, '  const LEADER_ITEM_BAN = {\n', "  const LEADER_ITEM_BAN = {\n    redo: 'it reads a team',\n"],
   ['the 3+ warning is dropped', GY, 'if (!idle.length || size >= min) return null;', 'return null;'],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'leader-items-mut-'));
-let caught = 0,
-  bad = 0;
-for (const [name, file, a, b] of M) {
-  const s = fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
-  if (!s.includes(a)) {
-    console.log('STALE mutation (pattern not found): ' + name);
-    bad++;
-    continue;
-  }
-  const out = path.join(tmp, path.basename(file));
-  fs.writeFileSync(out, s.replace(a, b));
-  const env = Object.assign({}, process.env, { [ENV[file]]: out });
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/leader-items-harness.js')], { env, encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n');
-  if (r.status !== 0) {
-    caught++;
-    console.log('caught  ' + name + '  (' + (lines.find((l) => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')');
-  } else {
-    bad++;
-    console.log('MISSED  ' + name);
-  }
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log(caught + '/' + M.length + ' mutations caught');
-process.exit(bad ? 1 : 0);
+
+require('../../tools/mutate-runner.js')({
+  label: 'leader-items-mutate',
+  root,
+  harnesses: ['docs/proposals/leader-items-harness.js'],
+  crlf: true,
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { [ENV[file]]: '<out>' } })),
+});

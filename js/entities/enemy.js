@@ -108,6 +108,8 @@
       this.poisonTick = 0;
       this.poisonN = 0;
       this.poisonMul = 1; // *Mul = DoT strength of the source move
+      this.burnBy = null; // #91: the Pokemon whose move put this burn / poison on (its ticks are that Pokemon's damage), or null
+      this.poisonBy = null;
       this.stFl = null;
       this.fsp = 0;
       this.fdx = 0;
@@ -282,11 +284,14 @@
       this.hurt(amount, color, dirX, dirY, knock, null);
     }
 
-    /** Damage over time (burn/poison): a normal hit plus a dev-log line. */
+    /** Damage over time (burn/poison): a normal hit plus a dev-log line. #91 (PAUSE-MENU 4): the HP it took is credited to
+     *  whoever inflicted it (its damage and DPS, and the kill when the tick finishes the enemy). */
     dot(kind, amount, color) {
       const hp0 = this.hp;
       this.hurt(amount, color);
       if (G.Log.on) G.Log.dot(this, kind, amount, hp0, Math.max(0, this.hp));
+      const by = kind === 'burn' ? this.burnBy : this.poisonBy;
+      if (by && by.onDealt) by.onDealt(Math.max(0, hp0 - Math.max(0, this.hp)), { target: this, dot: true });
     }
 
     /** What is SEEN when taking a hit. */
@@ -323,8 +328,9 @@
     }
 
     /** Burn: one state; a re-hit refreshes the duration and leaves the tick timer alone (constant re-hits cannot stall it).
-     *  ignoreImmune: Fire Spin's trap damage rides on the burn flag until the trap status exists, and a trap is not type-blocked. */
-    applyBurn(lv = 1, ignoreImmune = false, mul = 1, durMul = 1) {
+     *  ignoreImmune: Fire Spin's trap damage rides on the burn flag until the trap status exists, and a trap is not type-blocked.
+     *  by (#91): the caster, kept for the whole state (the first one keeps it; a refresh does not change it). */
+    applyBurn(lv = 1, ignoreImmune = false, mul = 1, durMul = 1, by = null) {
       if (!ignoreImmune && this.statusImmune('burn')) {
         this.immuneText();
         return;
@@ -339,11 +345,13 @@
         this.burn = 1;
         this.burnTick = S.turn;
         this.burnMul = mul;
+        this.burnBy = by;
       } else if (mul > this.burnMul) this.burnMul = mul; // the strongest source wins while the state lasts
       this.burnLeft = Math.max(this.burnLeft, Math.max(1, Math.round(S.turns * durMul))); // durMul 0.5 = Fire Spin's half-length burn
     }
-    /** Poison: lv 1 = poisoned (1/8 per turn), lv 2 or more = badly poisoned (Toxic, N/16 per turn). Badly poisoned never downgrades. */
-    applyPoison(lv = 1, mul = 1) {
+    /** Poison: lv 1 = poisoned (1/8 per turn), lv 2 or more = badly poisoned (Toxic, N/16 per turn). Badly poisoned never downgrades.
+     *  by (#91): as applyBurn. */
+    applyPoison(lv = 1, mul = 1, by = null) {
       const bad = lv >= 2,
         S = G.Enemies.STATUS[bad ? 'toxic' : 'poison'];
       if (this.statusImmune(bad ? 'toxic' : 'poison')) {
@@ -359,6 +367,7 @@
       if (was <= 0) {
         this.poisonTick = S.turn;
         this.poisonMul = mul;
+        this.poisonBy = by;
       } else if (mul > this.poisonMul) this.poisonMul = mul;
       if (bad && was !== 2) {
         this.poison = 2;
@@ -1510,6 +1519,7 @@
       // Those that float are already in the air in their sprite: they only sway a bit.
       // (And the ones that jump, in an arc.)
       const lift = (this.flying && !this.boss ? 1 + Math.sin(this.bob) * 1.5 : 0) + (this.jumpLift || 0);
+      G.StatusFx.drawBehind(ctx, this, lift); // the stat-up ring, under the sprite (#78)
       this.anim.draw(
         ctx,
         this.x,
@@ -1534,34 +1544,8 @@
         ctx.restore();
       }
 
-      if (this.burn > 0 || this.poison > 0 || (this.net && this.net.st & 3)) {
-        ctx.save();
-        ctx.globalAlpha = 0.45;
-        ctx.fillStyle = this.burn > 0 || (this.net && this.net.st & 1) ? '#ff8a3d' : '#c86bdc';
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y, this.r * 1.2, this.r * 0.5, 0, 0, 6.2832);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // Control statuses (slice C): a colored ring under the feet, like burn and poison.
-      const cs = this.stMajor
-        ? G.Status.CONTROL[this.stMajor.k]
-        : this.stTrap
-          ? G.Status.CONTROL.trap
-          : this.stCnf
-            ? G.Status.CONTROL.confusion
-            : null;
-      if (cs) {
-        ctx.save();
-        ctx.globalAlpha = 0.5;
-        ctx.strokeStyle = cs.color;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y, this.r * 1.35, this.r * 0.55, 0, 0, 6.2832);
-        ctx.stroke();
-        ctx.restore();
-      }
+      // Statuses and stat changes (#78): looping animations on the sprite, majors on top of minors (G.StatusFx).
+      G.StatusFx.drawFront(ctx, this, lift);
 
       // Support ones: an icon above, to know who to go for first.
       const SUP = { healer: 'heart', shielder: 'shield', summoner: 'friends' };
@@ -1629,6 +1613,27 @@
     }
     function get(id) {
       return byId.get(id);
+    }
+    /** `next` takes `out`'s place in the list (a leader's voluntary swap, #43): safe inside update(), which neither skips anyone nor
+     *  runs `next` again this frame. */
+    function replace(out, next) {
+      const i = list.indexOf(out);
+      if (i < 0) return add(next);
+      list[i] = next;
+      byId.delete(out.id);
+      byId.set(next.id, next);
+      if (G.Coop.isHost) {
+        G.Coop.enemyGone(out, false);
+        G.Coop.enemyAdded(next);
+      }
+      return next;
+    }
+    /** Takes a living unit out of the list, no corpse (a leader mon going to the bench, LEADER-AI slice 1). */
+    function remove(e) {
+      byId.delete(e.id);
+      const i = list.indexOf(e);
+      if (i >= 0) list.splice(i, 1);
+      if (G.Coop.isHost) G.Coop.enemyGone(e, false);
     }
 
     /** Local copy of a host's enemy (co-op). */
@@ -1792,6 +1797,22 @@
     // Seconds a straggler has to be out of sight before coming back out ahead.
     const LAG_T = 2.5;
 
+    /** A kill paid to `pl`: the count, the log, the run's progress, the EV banks and Silver. A gym leader's mon that faints on the
+     *  bench (not in this list) is paid through here too (gym-arena.js, COMBAT-RULES "LEADER VOLUNTARY SWAPS"). */
+    function payKill(e, pl) {
+      pl.kills++;
+      if (G.Log.on) G.Log.kill(e);
+      if (e.boss || e.elite) pl.bosses++;
+      G.Progress.kill(e);
+      G.Game.evKill(e); // pokebox step 5: the run's EV banks
+      G.Silver.kill(G.Game.st.time); // Move Shop step 2: every kill pays Silver, the same for every enemy
+      // #91 (PAUSE-MENU 4): the kill is its last hitter's when that is on your team (a move still flying after a swap, a burn
+      // tick), else the Pokemon on the field. The team count above is unchanged.
+      const stats = pl.team && pl.team.runStats,
+        killer = e.lastHitBy && e.lastHitBy.team === pl.team ? e.lastHitBy : pl;
+      if (stats) G.RunStats.kill(stats, killer, !!e.elite);
+    }
+
     function update(dt, players) {
       if (!Array.isArray(players)) players = [players];
       const pl = players[0];
@@ -1819,12 +1840,7 @@
         const e = list[i];
         if (e.remote) continue;
         if (e.dead) {
-          pl.kills++;
-          if (G.Log.on) G.Log.kill(e);
-          if (e.boss || e.elite) pl.bosses++;
-          G.Progress.kill(e);
-          G.Game.evKill(e); // pokebox step 5: the run's EV banks
-          G.Silver.kill(G.Game.st.time); // Move Shop step 2: every kill pays Silver, the same for every enemy
+          payKill(e, pl);
           corpses.push(e);
           list.splice(i, 1);
           byId.delete(e.id);
@@ -1898,13 +1914,16 @@
       clear,
       all,
       add,
+      replace,
       get,
+      remove,
       addRemote,
       removeRemote,
       stash,
       restore,
       clearRemote,
       update,
+      payKill,
       drawables,
       queryCircle,
       queryCircleEach,

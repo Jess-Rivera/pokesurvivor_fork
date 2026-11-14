@@ -22,7 +22,8 @@ G.Gym = (() => {
   let beaten = 0,
     nextAt = FIRST_AT,
     gate = null,
-    badges = [];
+    badges = [],
+    splits = []; // #91: the run time each badge was won, same order as badges (Run Info "Gym splits")
   let fight = null; // readout of the current gym fight: { t0, hp, minFrac, taken, casts }
   let esc = null; // escalation state while a gate is open past grace: { bump, acc } (null = grace or no gate)
   let loop = 1; // which loop of the region this run is in: loop N fields the first N roster slots (G.Gyms.lineup). Dev-set until the real loop counter exists.
@@ -33,6 +34,7 @@ G.Gym = (() => {
     nextAt = FIRST_AT;
     gate = null;
     badges = [];
+    splits = [];
     fight = null;
     esc = null;
     loop = 1;
@@ -156,10 +158,11 @@ G.Gym = (() => {
       shotDmg: 10,
       shotCd: 1,
       range: 260,
-      // moves and cards are read by the GymBrain (boss-ai.js), which casts the moves through G.MoveSim with the cards folded in (slice 7a)
+      // moves and cards are read by G.GymLeader and its SimPass on a switched gym (leader AI slice 5a), else by the GymBrain (boss-ai.js); both
+      // cast the moves through G.MoveSim with the cards folded in (slice 7a)
       gym: {
         level: lvl,
-        loop, // the loop this fight is in: it also caps the leader's self heals per fight (GymBrain.healsLeft)
+        loop, // the loop this fight is in: it also caps the leader's self heals per fight (healsLeft)
         leader: g.leader,
         badge: g.badge,
         species: mon.name,
@@ -169,6 +172,7 @@ G.Gym = (() => {
         playerEntity: !!entry.playerEntity, // the slice 5 switch: G.Boss.make builds a G.GymLeader instead of the wild body
         hpMult: G.Gyms.hpMultFor(entry, loop),
         restrictions: entry.restrictions || null,
+        ai: entry.ai || null, // LEADER-AI "Authoring a leader": the AI player's settings, each a number or keyed by loop (G.LeaderAI.settings)
         profile: G.Gyms.profileFor(sig, loop), // slice 6 (D3): this loop's IVs, EVs and nature, or null (neutral)
         item: G.Gyms.perLoop(sig.item, loop) || null, // slice 6 (Q4): this loop's held item
         runItems: G.Gyms.runItemsFor(entry, loop), // slice 6 (Q4): the run items gained at loops 1 to this one
@@ -201,6 +205,7 @@ G.Gym = (() => {
   /** Badge package on a win: level, team revive, the run-long team boost. The item and the Bond come from the leader drop / arena win (GymArena.won). */
   function onWin(g) {
     badges.push(g.badge);
+    splits.push(now());
     report('won');
     fight = null;
     G.Game.grantLevels(1); // guaranteed level (no XP is dropped; the leader pays a level, not orbs)
@@ -258,6 +263,12 @@ G.Gym = (() => {
     debugLoop(n) {
       loop = Math.max(1, Math.min(G.Gyms.LOOPS, n | 0));
     },
+    /** Dev (G.Debug.runinfo, #91-2): set this run's badges and their split times, [{ badge, at }]. The gate schedule
+     *  is untouched. Cleared by reset() on a new run. */
+    debugBadges(entries) {
+      badges = entries.map((entry) => entry.badge);
+      splits = entries.map((entry) => entry.at);
+    },
     get loop() {
       return loop;
     },
@@ -276,6 +287,15 @@ G.Gym = (() => {
     },
     get badges() {
       return badges;
+    },
+    /** #91: the run time each badge in `badges` was won, by index. */
+    get splits() {
+      return splits;
+    },
+    /** #91-2: run time the current gym fight began (its readout's t0), or null outside a fight. A run that ends while
+     *  this is set ended inside that fight (Region Best, map 91-2C, RC1). */
+    get fightStartedAt() {
+      return fight ? fight.t0 : null;
     },
   };
 })();

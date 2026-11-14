@@ -1,3 +1,5 @@
+// HISTORY (2026-11-09): Q10 closed as superseded, decision 2026-11-09-slice-8-dps-report-q10-closed-as-superseded. It no longer runs
+// (broke at leader AI slice 1, #22) and compares two GymBrain versions that no longer drive Misty or Brock. Do not revive.
 // Slice 8 DPS report (Node only; NOT a harness, so tools/check.js never runs it). Usage:  node docs/proposals/leader-dps-report.js
 // Map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt (Q10). Misty loop 1, her real moves, cards and restrictions,
 // 60 s against a still dummy at three distances, twice: slice 8 (one slot per move) and slice 7 (the same slots rebuilt as one group, so
@@ -71,7 +73,7 @@ try {
 } catch (e) {
   /* it reads the DOM at the end; G.U is set before that */
 }
-for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
+for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/data/leader-ai-settings.js', 'js/entities/leader-ai.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
   try {
     load(p);
   } catch (e) {

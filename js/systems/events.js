@@ -440,7 +440,7 @@ G.Events = (() => {
       ctx.lineWidth = 4;
       ctx.strokeStyle = 'rgba(0,0,0,.8)';
       ctx.strokeText(txt, w / 2, 112);
-      ctx.fillStyle = cur.id === 'gold' ? '#ffd23f' : G.U.TYPE_COLOR[cur.type] || '#fff';
+      ctx.fillStyle = cur.id === 'gold' ? '#ffd23f' : G.U.TYPE_COLOR_LIGHT[cur.type] || '#fff'; // map text: Light tone
       ctx.fillText(txt, w / 2, 112);
       ctx.restore();
     }

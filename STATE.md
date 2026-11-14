@@ -1,39 +1,37 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-08, Claude Code (home). On main; chore/docs-cleanup merged (#26, #27 shipped), ponytail removed.
+Last updated: 2026-11-14 midday, Quick (work). Branch: main. feature/gym-leader-ai merged 2026-11-14 (--no-ff);
+its branch rules file is history. No branch rules file is live.
 
 ## START HERE (next session, either tool)
-1. Jess pulls main into feature/gym-leader-ai (fast-forward, the branch has no unique commits). Do not resume gym work before that.
-2. Check that /triage loads in a new session (it did not appear in the skill list this session). Then #28 (architecture skill) is unblocked.
-3. Then the gym AI: Jess answers G1 to G11 in docs/proposals/gym-leader-ai-design.md ([Proposed]); order and issue numbers are in TODO.md.
+1. #49 (utility-AI Decider): close it or keep it as the umbrella. Jess rules.
+2. Brock and Misty tuning (the balance issue) on its own branch off main. Starting notes, not approved:
+   docs/ASCII Concept Maps/39a - Feel Test Retune Plan.html. It opens with goal, done-check and test (CLAUDE.md
+   "Slice shape").
+3. The hud-overlay.js split (structural review F1), the first post-merge issue; F3, F5, F6 any time.
+4. Host-model slice 12 (gyms 3 to 8, parent issue) after the tuning, one gym per session, its own branch.
 
 ## Where we are
-- Workflow overhaul done 2026-11-08: the assistant may commit and manage issues, board and PRs (CLAUDE.md "Git and GitHub", enforced by the hook); TODO.md is a handoff pointing at issue numbers; "catch me up" runs a read-only briefing (CONTEXT.md). Skills: grilling, triage, diagnosing-bugs; also docs/TEST-FIRST.md, GLOSSARY.md. landing-skills/ stays untracked until #28 (improve-codebase-architecture) resolves.
-- DECISIONS.md is now an index; each decision is a file in docs/decisions/, cited by file name (CLAUDE.md "Cross-document IDs"). Follow-up #29 (promote review CP1 rulings).
-- Entity slices 1 to 8 built, 7b and 8 green. Close-out built, checks owed:
-  Brock on G.GymLeader beside Misty (hpMult {1: 16, 2: 12}, Misty's restrictions, no enrage, no touch).
-  Map: docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt.
-- Gyms 3 to 8 stay on the old brain for the playtesters (copy in about 4 days). Two leader paths until slice 12.
-- Slice 8 DPS report (Q10) still unread: no tempo or power change yet.
-- Lint: 0 errors (hook now linted as node code), 69 warnings in inherited code (do not --fix).
-- Red 2026-11-08, not investigated: gym-harness (Misty loop 1 pool), leader-stats-harness (Misty Zinc).
-
-## Next
-See TODO.md (the handoff, with issue numbers).
+- Merged: the leader AI (Brock wall, Misty tempo, on the utility-AI Decider), the HUD and pause menu work, the
+  relations test rule. Pre-merge fixes: leader settings in js/data/leader-ai-settings.js (G.LeaderSettings, aliased
+  on G.LeaderAI; leader-ai.js 973 lines), the pause key asks the pause menu once (answerPauseKey).
+- check.js all passed, full leader-ai-mutate passed, the moved mutants caught, feel test clean (Jess, 2026-11-14).
+- GitHub cleanup 2026-11-14: #30 and #108 closed; balance, test sweep, slice 12 and F1/F3/F5/F6 issues filed.
+- Rulings today: gyms 3 to 8 after the merge; new files count against the 1000-line rule; slice shape repo-wide;
+  non-code outputs are Mermaid .md in docs/ASCII Concept Maps/ (CLAUDE.md "Output format").
 
 ## Watch
-- Quick cannot run node. After ANY code edit, re-check mutate patterns against the edited files.
-- Keep new code within Prettier's 120 columns, or a format pass makes mutation patterns STALE.
-- If gym-leader-harness section 12 FAILs on defense-curl: Brock's Tackle may starve his buff visit (slice 8 rule).
-- http smokes fail ~1 run in 3 (ERR_NO_BUFFER_SPACE); repeat first.
-- Rocky Helmet bugged, rejected on leaders. Bright Powder inert until the AI dodges.
-- File:// font: Chromium blocks Silver-game.ttf (dev.html line 52).
-- `move-sim-mutate` "routing filter ignored" is a real MISS (28/29), older than slice 5.
+- Brock 13 and Misty 16 card stacks at level 12, over the 11 a player could hold (the balance issue checks it).
+- GymBrain and the AI player both live on main until slice 12: no features on the old brain.
+- A full leader-ai-mutate run takes about 22 min; inside a slice use MUTATE_ONLY.
+- Quick writing to the device: read the file back in a separate call.
+- Jess's Git Bash: noclobber is on (use >|); node output cannot be piped or redirected (winpty). git and gh can.
+- GitHub from Quick: Jess runs the catch-up gh block into tools/cache/catchup.txt and Quick reads it.
 
 ## Open owner decisions
-- Board cleanup: see TODO.md item 5.
-- Boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out; Korataki licence.
-- Owed by Jess: tooltip confusions, move tuning list, animation mismatch details, bench recharge call.
+- #49. #107 (refuse or rebuild the bag); #86; #99; #93; #97 (blocks #95); #60 Bait.
+- Acquisition: Accelgor route, Kingambit rule, Gholdengo source, R1 Shedinja, R4 Alcremie N, ball tiers, UberElite
+  time limit.
 
-Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs click #tap-start first.
+Rules: CLAUDE.md.

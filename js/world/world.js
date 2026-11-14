@@ -741,13 +741,37 @@ G.World = (() => {
     return G.Tiles.BIOMES[biome].name;
   }
 
-  /** Vignette in screen coordinates. */
+  /**
+   * Vignette in screen coordinates. The gradient is painted once into an offscreen canvas at device pixel size and
+   * stamped each frame; it is repainted only when the window size or pixel ratio changes (2026-11-12: a full-screen
+   * gradient fill every frame was 18% of a Firefox laptop's frame). Same pixels as before.
+   */
+  let vignetteCache = null,
+    vignetteKey = '';
   function drawVignette(ctx, w, h) {
-    const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.34, w / 2, h / 2, Math.max(w, h) * 0.78);
-    g.addColorStop(0, 'rgba(0,0,0,0)');
-    g.addColorStop(1, 'rgba(0,0,0,.5)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
+    const scale = ctx.getTransform ? ctx.getTransform().a : 1,
+      pixelWidth = Math.max(1, Math.round(w * scale)),
+      pixelHeight = Math.max(1, Math.round(h * scale)),
+      key = w + 'x' + h + '@' + scale;
+    if (key !== vignetteKey || !vignetteCache) {
+      vignetteKey = key;
+      vignetteCache = vignetteCache || document.createElement('canvas');
+      vignetteCache.width = pixelWidth;
+      vignetteCache.height = pixelHeight;
+      const cacheContext = vignetteCache.getContext('2d');
+      cacheContext.setTransform(scale, 0, 0, scale, 0, 0);
+      const inner = Math.min(w, h) * 0.34,
+        outer = Math.max(w, h) * 0.78;
+      const g = cacheContext.createRadialGradient(w / 2, h / 2, inner, w / 2, h / 2, outer);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,.5)');
+      cacheContext.fillStyle = g;
+      cacheContext.fillRect(0, 0, w, h);
+    }
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(vignetteCache, 0, 0);
+    ctx.restore();
   }
 
   return {

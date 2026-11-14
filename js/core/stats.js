@@ -228,6 +228,17 @@ G.Stats = (() => {
     return (factor / Math.max(1, stat * defMul) + 2) * stab * scale;
   }
 
+  // #50 (LEADER-AI BELIEF): a hit's size as an onlooker sees it, a fraction of the defender's max HP. Species base stats
+  // ([hp, atk, def, spa, spd, spe]) and levels only: no IVs, EVs, nature, items or stages, since none of them shows on screen.
+  // The leader's Belief reads it for danger and opportunity.
+  function visibleHitFrac(atkStats, atkLevel, defStats, defLevel, power, cat, stabMul, typeMult, scale) {
+    if (!(power > 0) || !(typeMult > 0) || !atkStats || !defStats) return 0;
+    const move = { dmg: power, cat },
+      factor = attackFactor(atkStats[1], atkStats[3], atkLevel, move),
+      dmg = applyDamage(factor, defStats[2], defStats[4], move, defLevel, stabMul, 1, scale) * typeMult;
+    return dmg / Math.max(1, hpForLevel(defStats[0], defLevel));
+  }
+
   // A move's damage category: 'physical' | 'special' | 'status'. Prefer the move's
   // own cat; a move missing it takes its resolved def's category (slice 7a), else physical.
   function moveCat(m) {
@@ -272,5 +283,6 @@ G.Stats = (() => {
     enemyCat,
     enemyAttackFactor,
     applyPlayerDefense,
+    visibleHitFrac,
   };
 })();

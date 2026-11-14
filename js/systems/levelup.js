@@ -30,6 +30,18 @@ G.LevelUp = (() => {
     return nm.slice(0, 3).join(', ') + (nm.length > 3 ? ' +' + (nm.length - 3) + ' more' : '');
   };
 
+  /** A card's plain explanation and a space, or nothing (#84). Recoil Reduction shows the real share of base recoil now and after
+   *  this pick (a rate card: 1 / (1 + stacks x step)). */
+  function cardHint(c, s) {
+    if (c.id === 'recoil') {
+      const picks = G.TeamCards.stacks(s, 'recoil'),
+        share = (k) => Math.round(100 / (1 + k * c.step));
+      return 'Recoil: ' + share(picks) + '% of base now, ' + share(picks + 1) + '% after this pick. ';
+    }
+    const hint = G.TeamCards.hintText(c);
+    return hint ? hint + ' ' : '';
+  }
+
   /** The candidate cards on the new path, grouped by family. A card is offered only when a team move can take it. */
   function teamFamilies(pl, roster) {
     const TC = G.TeamCards,
@@ -63,9 +75,9 @@ G.LevelUp = (() => {
       if (c.cap && TC.stacks(s, c.id) >= c.cap) continue;
       const takers = moves.filter((x) => TC.usable(c, x.def));
       if (!takers.length) continue;
-      add(c.family, mk(c, { desc: 'Team-wide. Works on: ' + namesOf(takers) }));
+      add(c.family, mk(c, { desc: cardHint(c, s) + 'Team-wide. Works on: ' + namesOf(takers) }));
     }
-    // --- General: ONE random Type card per offer (it shares Damage Up's pool) ---
+    // --- General: ONE random Type card per offer (it shares All Damage Up's pool) ---
     const types = TC.TYPES.map((t) => TC.cardOf('type:' + t))
       .map((c) => ({ c, takers: moves.filter((x) => TC.usable(c, x.def)) }))
       .filter((x) => x.takers.length);
@@ -75,7 +87,7 @@ G.LevelUp = (() => {
         'General',
         mk(c, {
           color: (G.U.TYPE_COLOR && G.U.TYPE_COLOR[c.type]) || '#9fb1c9',
-          desc: 'Team-wide. Works on: ' + namesOf(takers),
+          desc: cardHint(c, s) + 'Team-wide. Works on: ' + namesOf(takers),
         })
       );
     }

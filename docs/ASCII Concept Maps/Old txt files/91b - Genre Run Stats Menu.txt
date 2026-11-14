@@ -1,0 +1,70 @@
+#91b: RUN STATS THE GENRE SHOWS, AND WHAT TRANSLATES (2026-11-12, Quick)  [Proposed, a menu to pick from]
+=====================================================================================================
+Companion to "91 - Run Info and Per Pokemon Run Stats.txt". Nothing here is approved yet.
+
+WHAT THE GENRE ACTUALLY SHOWS  (sourced)
+-----------------------------------------------------------------------------------------------------
+ Vampire Survivors  results screen: stage, mode, time survived, gold, level, enemies defeated; per WEAPON
+                    its level, damage, time held and DPS, the top damage and top DPS weapon in yellow;
+                    every pickup with its count.            https://vampire.survivors.wiki/w/Results
+                    Caveat (players): a late weapon's DPS reads high because enemy density climbs.
+                    https://steamcommunity.com/app/1794680/discussions/0/5287792084460039699/
+ Brotato            stats screen shows each weapon's damage in the LAST WAVE, so you know what to invest in.
+                    https://www.player.one/brotato-update-0616-improves-stats-screen-implements-gladiator-changes-152839
+ Halls of Torment   per-map personal records: high score, fastest time, most kills, by map and mode.
+                    https://steamcommunity.com/app/2218750/allnews/
+ Hades (community)  players ask for a live "my stats right now" screen: attack %, crit, dodge.
+                    https://steamcommunity.com/app/1145360/discussions/0/1736636051411523768/
+
+ Pattern: (1) a per-SOURCE damage table with a highlighted MVP, (2) records per map, (3) pickups counted.
+
+WHAT TRANSLATES  (my picks; "have" = tracked today, "new" = a counter to add, "?" = not checked yet)
+-----------------------------------------------------------------------------------------------------
+ TIER A, strong fit, cheap                                         where            data
+ ---------------------------------------------------------------------------------------------------
+ A1 Per MOVE damage, share %, DPS while slotted (the VS table)    move list rows    new (?)  *1
+    MVP move in yellow, like VS
+ A2 Super effective share: % of damage that was super effective,  Run Stats box     new
+    and % resisted. Pure Pokemon; teaches typing                  + Run Info total
+ A3 Damage taken, and healed (berries, Shell Bell, springs, regen) Run Stats box    new (hurt, heal exist)
+ A4 Gym splits: the run time each badge was won, vs region best   Run Info          new (onWin exists)
+    (speedrun-style, green if ahead)
+ A5 Region records beyond "furthest": fastest gym 1, most kills,  Run Info / end    new save fields
+    biggest hit. "NEW BEST" tag when this run beats one           of run (#92)
+
+ TIER B, good fit, a bit more work
+ ---------------------------------------------------------------------------------------------------
+ B1 Statuses inflicted (burn, para, sleep...) and DoT damage      Run Stats box     new
+ B2 Crits landed, crit rate                                       Run Stats box     ?   *1
+ B3 Swaps made; kills in the first 3 s after a swap-in            Run Info          new (swap hook exists)
+ B4 Kills per minute and peak enemies on screen                   Run Info          new; peak doubles as
+                                                                                    a perf / density gauge
+ B5 Closest call: lowest HP % this run, Focus Sash saves          Run Stats box     new
+ B6 Silver earned vs spent, shops visited                         Run Info          ? (G.Silver)
+ B7 Cards drafted, rerolls / skips used                           Run Info          have cards, ? rest
+
+ TIER C, flavour, end-of-run only (#92), keeps the pause menu lean
+ ---------------------------------------------------------------------------------------------------
+ C1 Species defeated this run (unique count), first-time species  end of run        new
+ C2 Distance walked                                               end of run        new
+ C3 Hades-style one-line "run clear" quip picked from the stats   end of run        new
+    ("Pikachu carried: 61% of the damage")
+
+ *1 Needs the hit to carry its move id (and crit flag) into Player.onDealt. onDealt gets only the damage
+    today; the same unlocated spot as D1a's "last hit by". A1 and B2 ride on that one change.
+
+FEEL / READABILITY GUARDS  (design reference: choice paralysis, unreadable screens)
+-----------------------------------------------------------------------------------------------------
+ - The pause menu is a glance, not a spreadsheet: Run Info ~12 rows max, Run Stats box 5 to 7 rows.
+ - Deep tables (per move per Pokemon, records) live on the end-of-run screen (#92), like VS's results.
+ - Show DPS beside total damage, never alone (the VS density caveat): A1 shows damage AND share %.
+ - Counters are plain increments at events, never per-frame scans: no perf cost worth measuring.
+
+SUGGESTED CUT
+-----------------------------------------------------------------------------------------------------
+ #91 now   current plan + A2 + A3 (Run Stats box: Kills, Time on field, Damage, Best hit, Fainted,
+           Super effective %, Taken / Healed)                    -> 7 rows, fits the 200 px box (I check)
+ #91 maybe A4 gym splits (needs A5's save field for "vs best", or show splits alone first)
+ new issue A1 + B2 (the move id on the hit, then the move list numbers)
+ #92       A5 records + NEW BEST, Tier C
+ park      rest of Tier B, pick after a playtest

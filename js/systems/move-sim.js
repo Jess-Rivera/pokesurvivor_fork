@@ -32,14 +32,17 @@
  * within range. delay (D28): an instance with delivery.delay spends whole steps waiting (no motion, collision, aging or endOn; only an
  * owner faint ends it, as it would anyway), then acts as if cast in the frame after its wait ran out; 'move:land' marks that first
  * live step for the render. falls (R8): a world shape that never moves; the drop is drawn by the render, moveSpeed is ignored.
- * Slice 7a (D-ENEMY): an enemy owner (a gym leader's mon, js/entities/boss-ai.js) names its foes (owner.foes(), the player). Its brain
- * times the casts and calls castAt with the aim it locked at the tell; its shapes collide only with those foes (never enemies or
+ * Slice 7a (D-ENEMY): an enemy owner (a gym leader's mon: G.GymLeader with its SimPass, or the old body's GymBrain) names its foes (owner.foes(),
+ * the player). It times its attacks and calls castAt with the aim it locked at the tell (a Player-entity leader runs turn for the
+ * rest, leader AI slice 5a); its shapes collide only with those foes (never enemies or
  * props), and a hit goes through G.MoveEffects to the player's own hurt. The step is shared, so its shapes move with everyone's.
  *
  *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()) that pass the
  *                         routing filter, then step.
  *   step(dt, now)         all live instances, in the frame order of architecture B: motion (age first), growth (inside
  *                         G.MoveGeom.shapeOf), collision and eligibility, payload, termination.
+ *   turn(dt, owner, now)  leader AI slice 5a: tick without the step, for a Player-entity leader's own frame; an owner with
+ *                         castDue is handed each due slot instead of the cast (its authored rules decide)
  *   castAt(owner, slot, def, now, aim, target)   slice 7a: one cast now along `aim` (no cast gate), for a gym leader's brain; `target`
  *                         is the { x, y } spot a target-anchored strike lands on (Thunderbolt), locked at its tell
  *   persist(owner, now)   slice 3 of the gym lore sets (Jess 2026-11-02): the persistent upkeep alone, for a gym leader's brain, so a
@@ -406,25 +409,28 @@ G.MoveSim = (() => {
       !cms.some((m) => m.o === o && m.part === 'movement' && m.type === 'rooted') &&
       (def.delivery.repositionMode !== 'swept' || speedOf(o) * (def.delivery.dashMult || 1) > EPS));
 
-  /** `forced` (slice 7a, castAt): a gym leader's cast with the aim its brain locked at the tell; it replaces the cast gate. */
+  /** The cast gate after the Body (#47a, decision 2026-11-09-42-leader-attacks-wait-on-your-cast-gate): the targeting gate (AIM), or
+   *  `forced` in its place, then P3 (the cast cost would kill, or a shield is live) and 4c-2 (no dash over a live dash, no dash at speed
+   *  0). The pick, or null when it holds the cast. Pure: no roll and no state change, so a leader's tell can ask it first (gateOpen). */
+  function gateOf(o, def, forced) {
+    const gate = forced || (AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null);
+    if (!gate || !G.MoveEffects.canCast(def, o) || !repoCanGo(def, o)) return null;
+    return gate;
+  }
+  /** Would your cast gate let `def` fire for `o` now (gateOf, no `forced`)? A Player-entity leader's tell starts only when it would. */
+  const gateOpen = (o, def) => !!gateOf(o, def, null);
+
+  /** `forced` (slice 7a, castAt): a gym leader's cast with the aim its brain locked at the tell; it replaces the targeting gate. */
   function castSlot(o, slot, def, now, forced) {
-    if (G.Status.stunned(o)) {
+    if (o.acceptsCast ? !o.acceptsCast() : G.Status.stunned(o)) {
       slot.t = RETRY;
       return null;
-    } // a stunned owner casts nothing; the move stays ready
-    const gate = forced || (AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null);
+    } // a Player entity's Body refuses a new cast while stunned (#43); any other owner: a stunned one casts nothing. The move stays ready
+    const gate = gateOf(o, def, forced);
     if (!gate) {
       slot.t = RETRY;
       return null;
-    } // cast gate: retry every 0.05 s
-    if (!G.MoveEffects.canCast(def, o)) {
-      slot.t = RETRY;
-      return null;
-    } // P3: the cost would kill, or a shield is live; cooldown not spent
-    if (!repoCanGo(def, o)) {
-      slot.t = RETRY;
-      return null;
-    } // 4c-2: no dash over a live dash, no dash at speed 0
+    } // the cast gate holds: retry every 0.05 s, the cooldown not spent
     const buff = G.MoveEffects.isPureBuff(def); // SS8 (slice 5a): a pure buff has no cooldown; its trackers decide when it casts
     slot.t = buff ? 0 : Math.max(0.05, def.cd * (o.cdMul || 1)); // D3
     if (G.Status.fizzle(o, rng)) {
@@ -456,6 +462,9 @@ G.MoveSim = (() => {
     G.SimBus.emit('move:cast', {
       moveId: def.id,
       ownerId: o.id != null ? o.id : null,
+      ownerUid: o.copyUid != null ? o.copyUid : null, // the leader AI's reveal key (LEADER-AI REVEALS): your mons carry no id
+      ownerSlot: o.teamSlot != null ? o.teamSlot : null,
+      rival: !!o.isRival,
       x: o.x,
       y: o.y,
       aim: pick.aim,
@@ -631,7 +640,17 @@ G.MoveSim = (() => {
     if (orphans.length) endGroup(orphans, o.dead ? 'ownerDeath' : 'notActive');
   }
 
+  /** A due slot casts, or, for an owner with castDue (a Player-entity leader, G.GymLeader.SimPass.due; #41), is handed to
+   *  it: its authored rules decide (an attack waits for its tell, a self heal for the heal cap). */
+  const fire = (o, slot, def, now) => (o.castDue ? o.castDue(slot, def, now) : castSlot(o, slot, def, now));
+
   function tick(dt, o, now) {
+    turn(dt, o, now);
+    step(dt, now);
+  }
+  /** Leader AI slice 5a (#34): an owner's own part of tick, everything but the shared step. A Player-entity leader runs it from its
+   *  own frame, after its slot press, as yours runs after yours; the step runs once, in your tick. */
+  function turn(dt, o, now) {
     if (o.dead) {
       upkeepPersistent(o, now);
       endOwner(o);
@@ -642,7 +661,7 @@ G.MoveSim = (() => {
       if (o.flyT > 0) {
         // Fly: every slot timer is frozen and nothing casts until landing; the persistent groups end (a slot switch)
         upkeepPersistent(o, now);
-        return step(dt, now);
+        return;
       }
       const act = o.activeGroup();
       // S13: a frozen timer does not run and does not cast. The active group goes first and its hold is decided before its casts (a
@@ -659,17 +678,19 @@ G.MoveSim = (() => {
             slot.t -= dt;
             if (slot.t > EPS) continue;
           }
-          if (G.MoveEffects.statReady(def, o)) castSlot(o, slot, def, now);
+          if (G.MoveEffects.statReady(def, o)) fire(o, slot, def, now);
           continue;
         }
         if (def.cd == null) continue;
         slot.t -= dt;
-        if (slot.t <= EPS) castSlot(o, slot, def, now);
+        if (slot.t <= EPS) fire(o, slot, def, now);
       }
+      // by slot, not by group: a leader's active group is a filtered copy (its closed hpBelow moves recharge here)
       for (const g of o.slots)
         if (g !== act)
           for (const slot of g) {
             // inactive slots recharge too
+            if (act.includes(slot)) continue;
             const def = defOf(o, slot.id);
             if (
               !def ||
@@ -683,7 +704,6 @@ G.MoveSim = (() => {
           }
       upkeepPersistent(o, now); // slice 4c-1 (R7): after the casts, so a new group acts this frame like any root
     }
-    step(dt, now);
   }
 
   // ---- motion table, keyed by delivery.motion (I3) ----
@@ -1135,9 +1155,12 @@ G.MoveSim = (() => {
 
   return {
     tick,
+    turn,
     step,
     clear,
     castAt,
+    gateOpen,
+    RETRY, // a refused cast's wait, seconds: a Player-entity leader's refusals wait it too (#47a)
     persist: upkeepPersistent,
     flinch,
     setRng: (fn) => {

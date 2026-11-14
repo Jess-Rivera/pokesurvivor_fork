@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>#39a Personalities build plan</title>
+</head>
+<body>
+<main>
+<h1>#39a Personalities build plan <span class="pill ok">Done 2026-11-14: checks clean, feel test passed (distinct, overtuned)</span> <span class="tag">feature/gym-leader-ai</span></h1>
+<p class="lede">Opening approved (see "39 - Slice Opening"). P1 to P7 approved 2026-11-14. Part G (the test leader) added after the build check; no game code written yet.</p>
+<style>
+  /* Standalone page (opened from file://): theme tokens are set here because the app does not inject them. */
+  :root {
+    color-scheme: dark;
+    --color-bg: #121218; --color-bg-secondary: #1b1b23; --color-surface: #23232d; --color-surface-hover: #2b2b37;
+    --color-border: rgba(255,255,255,0.13); --color-border-light: rgba(255,255,255,0.07);
+    --color-text: #ececf1; --color-text-secondary: #b0b0bc; --color-text-muted: #7a7a86;
+    --color-primary: #c084fc; --color-primary-bg: rgba(168,85,247,0.16); --color-primary-border: rgba(192,132,252,0.45);
+    --color-success-bg: rgba(34,197,94,0.14); --color-success-border: rgba(74,222,128,0.4); --color-success-dark: #4ade80;
+    --color-warning-bg: rgba(245,158,11,0.14); --color-warning-border: rgba(251,191,36,0.45); --color-warning-text: #fbbf24;
+    --color-info-bg: rgba(59,130,246,0.16); --color-info-border: rgba(96,165,250,0.45); --color-info-text: #93c5fd;
+    --color-error-bg: rgba(239,68,68,0.14); --color-error-border: rgba(248,113,113,0.45); --color-error-dark: #f87171;
+    --font-sans: 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    --radius-sm: 6px; --radius-md: 10px; --radius-pill: 17px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.45);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 28px 40px; background: var(--color-bg); color: var(--color-text);
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.55; }
+  main { max-width: 1040px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; font-weight: 650; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  h2 { font-size: 17px; margin: 0 0 10px; font-weight: 650; }
+  h3 { font-size: 14px; margin: 14px 0 6px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .lede { color: var(--color-text-secondary); margin: 0 0 18px; }
+  .pill { font-size: 12px; font-weight: 600; border-radius: var(--radius-pill); padding: 2px 10px; border: 1px solid; }
+  .ok { background: var(--color-success-bg); border-color: var(--color-success-border); color: var(--color-success-dark); }
+  .wait { background: var(--color-warning-bg); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .info { background: var(--color-info-bg); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .no { background: var(--color-error-bg); border-color: var(--color-error-border); color: var(--color-error-dark); }
+  .tag { font-family: var(--font-mono); font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-pill); padding: 1px 8px; color: var(--color-text-secondary); }
+  code { font-family: var(--font-mono); font-size: 13px; background: var(--color-surface); padding: 1px 5px; border-radius: 4px; }
+  .card { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .leader { border-top: 4px solid var(--color-border); }
+  .leader.brock { border-top-color: #f59e0b; } .leader.misty { border-top-color: #38bdf8; }
+  .leader .who { font-size: 20px; font-weight: 700; } .leader .style { color: var(--color-text-secondary); margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--color-text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+  td.n { font-family: var(--font-mono); white-space: nowrap; }
+  tr:hover td { background: var(--color-surface-hover); }
+  .up { color: var(--color-success-dark); font-weight: 600; } .down { color: var(--color-error-dark); font-weight: 600; }
+  .same { color: var(--color-text-muted); }
+  ol, ul { margin: 6px 0 0; padding-left: 22px; } li { margin: 4px 0; }
+  .flow { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .node { flex: 1 1 140px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-size: 13px; }
+  .node b { display: block; font-size: 14px; } .node.new { background: var(--color-primary-bg); border-color: var(--color-primary-border); }
+  .node.same { opacity: 0.75; }
+  .arrow { align-self: center; color: var(--color-text-muted); font-size: 20px; }
+  .dec { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: start; padding: 10px 0;
+    border-bottom: 1px solid var(--color-border-light); }
+  .dec:last-child { border-bottom: none; } .dec .id { font-family: var(--font-mono); font-weight: 700; color: var(--color-primary); }
+  .dec .why { color: var(--color-text-secondary); font-size: 13px; margin-top: 2px; }
+  .callout { border-left: 4px solid var(--color-warning-border); background: var(--color-warning-bg); padding: 10px 14px;
+    border-radius: var(--radius-sm); margin: 8px 0; color: var(--color-warning-text); }
+  .muted { color: var(--color-text-muted); font-size: 13px; }
+  .copybox { position: relative; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: 12px 14px; white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; }
+  .copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 12px; cursor: pointer; border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary); border-radius: var(--radius-pill); padding: 2px 10px; transition: all 0.15s ease; }
+  .copy:hover { background: var(--color-surface-hover); }
+  .field { display: grid; grid-template-columns: 110px 1fr; gap: 8px; margin: 4px 0; }
+  .field .k { color: var(--color-text-muted); font-size: 13px; }
+  footer { color: var(--color-text-muted); font-size: 12px; margin-top: 24px; }
+</style>
+
+<div class="card"><h2>The wiring, before and after</h2>
+<h3>Today</h3>
+<div class="flow"><div class="node"><b>gyms.js ai</b>no goal or tag keys</div><div class="arrow">&#x2715;</div><div class="node"><b>Settings</b></div><div class="arrow">&#x2715;</div><div class="node"><b>Belief snapshot</b></div><div class="arrow">&#x2715;</div><div class="node same"><b>Planner</b>reads goalWeights, tagMultipliers; absent means 1</div></div>
+<h3>After 39a</h3>
+<div class="flow"><div class="node new"><b>gyms.js ai</b>goalWeights, tagMultipliers</div><div class="arrow">&#x2192;</div><div class="node new"><b>validate()</b>names and limits</div><div class="arrow">&#x2192;</div><div class="node new"><b>Settings</b>copied as authored</div><div class="arrow">&#x2192;</div><div class="node new"><b>Belief snapshot</b>passes both on</div><div class="arrow">&#x2192;</div><div class="node same"><b>Planner</b>unchanged</div></div>
+<p class="muted">The planner and the cost math do not change. Purple boxes change.</p></div>
+
+<div class="card"><h2>The two personalities</h2>
+<div class="grid2">
+ <div class="card leader brock"><div class="who">Brock</div><div class="style">Wall: stands in, Hardens early, rarely backs off or swaps</div></div>
+ <div class="card leader misty"><div class="who">Misty</div><div class="style">Tempo: sits far, backs off when you close, reacts fast</div></div>
+</div>
+<table><thead><tr><th>Setting</th><th>Default</th><th>Brock</th><th>Misty</th><th>Why</th></tr></thead><tbody><tr><td>Goal: Endurance</td><td class="n">1</td><td class="n"><span class="up">1.4</span></td><td class="n"><span class="down">0.7</span></td><td>patient vs not</td></tr><tr><td>Goal: Maintain</td><td class="n">1</td><td class="n"><span class="up">1.2</span></td><td class="n">1</td><td>holds his spot</td></tr><tr><td>Goal: Pressure</td><td class="n">1</td><td class="n"><span class="down">0.7</span></td><td class="n"><span class="up">1.3</span></td><td>Misty pushes (confidence adds on top)</td></tr><tr><td>Goal: Kite</td><td class="n">1</td><td class="n"><span class="down">0.6</span></td><td class="n"><span class="up">1.5</span></td><td>Misty's core</td></tr><tr><td>Goal: Buff</td><td class="n">1</td><td class="n"><span class="up">1.5</span></td><td class="n"><span class="down">0.6</span></td><td>Brock buffs early (Harden, Defense Curl)</td></tr><tr><td>Goal: Setback, Bait, Finish, Conserve</td><td class="n">1</td><td class="n">1</td><td class="n">1</td><td>untouched (Bait parked on #60)</td></tr><tr><td>Tag: retreat (Back off)</td><td class="n">1</td><td class="n"><span class="up">1.4</span></td><td class="n"><span class="down">0.8</span></td><td>Brock rarely backs off; Misty kites</td></tr><tr><td>Tag: position (Hold at range)</td><td class="n">1</td><td class="n">1</td><td class="n"><span class="down">0.8</span></td><td>holding range is cheaper for Misty</td></tr><tr><td>Tag: approach (Close in)</td><td class="n">1</td><td class="n">1</td><td class="n"><span class="up">1.2</span></td><td>Misty does not walk in</td></tr><tr><td>Tag: buff</td><td class="n">1</td><td class="n"><span class="down">0.8</span></td><td class="n">1</td><td>buffs cost Brock less</td></tr><tr><td><code>range</code> (px)</td><td class="n">220</td><td class="n">150</td><td class="n">260</td><td>mid vs far (P2)</td></tr><tr><td><code>swapWill</code></td><td class="n">1</td><td class="n">2.0</td><td class="n">0.6</td><td>rarely vs readily</td></tr><tr><td><code>risk</code></td><td class="n">1</td><td class="n">0.8</td><td class="n">1.1</td><td>the wall accepts trades</td></tr><tr><td><code>stubbornness</code></td><td class="n">1</td><td class="n">1.5</td><td class="n">0.7</td><td>sticks to plans vs switches fast</td></tr><tr><td><code>aggression</code></td><td class="n">0.5</td><td class="n">0.35 (kept)</td><td class="n">0.68 (kept)</td><td>dodge lean and effective aggression (P7)</td></tr><tr><td><code>intelligence</code></td><td class="n">0.5</td><td class="n">base 0.4, +0.08/loop</td><td class="n">base 0.6, +0.08/loop</td><td>slow vs fast reader (P6)</td></tr></tbody></table>
+<p class="muted">Higher multiplier means a costlier action. Every number is TUNE and goes into BALANCE.md "Leader AI".</p>
+<h3>What intelligence resolves to (the #53 curves)</h3>
+<table><thead><tr><th>Leader</th><th>Loop</th><th>Reflex</th><th>Dodge read</th><th>Misjudge</th><th>Memory use</th><th>Aim error</th></tr></thead><tbody><tr><td>Default</td><td>any</td><td class="n">0.150 s</td><td class="n">6.0 / 10</td><td class="n">0.100</td><td class="n">0.50</td><td class="n">10.0 px</td></tr><tr><td>Brock</td><td>1</td><td class="n">0.180 s</td><td class="n">5.2 / 10</td><td class="n">0.140</td><td class="n">0.43</td><td class="n">16.0 px</td></tr><tr><td>Brock</td><td>6</td><td class="n">0.132 s</td><td class="n">7.2 / 10</td><td class="n">0.064</td><td class="n">0.62</td><td class="n">6.4 px</td></tr><tr><td>Misty</td><td>1</td><td class="n">0.144 s</td><td class="n">6.4 / 10</td><td class="n">0.088</td><td class="n">0.54</td><td class="n">8.8 px</td></tr><tr><td>Misty</td><td>6</td><td class="n">0.120 s</td><td class="n">8.0 / 10</td><td class="n">0.040</td><td class="n">0.70</td><td class="n">4.0 px</td></tr></tbody></table></div>
+
+<div class="card"><h2>The parts</h2>
+<table><thead><tr><th>Part</th><th>File and spot</th><th>What changes</th></tr></thead><tbody><tr><td>A. Validator</td><td>js/data/gyms.js, validate(), the ai block beside #53's intelligence check</td><td>Both keys join the "own shape" list. Unknown goal and tag names are caught with the validator's existing <code>unknownKeys</code> helper, the same one that catches unknown ai settings. goalWeights: an object, keys from the nine goals, values 0 to 3. tagMultipliers: an object, keys from the eleven tags, values 0.25 to 4. Flat per leader, not keyed by loop. A trigger setting either is already refused (D5 needs only a harness line).</td></tr><tr><td>B. One list of tag names</td><td>js/systems/leader-planner.js, next to TAGS</td><td>Export a frozen list of the eleven tags (approach, position, retreat, wait, dash, dodge, swap, attack, status, buff, heal), so the validator and the harness read one list. Goals already export.</td></tr><tr><td>C. Settings</td><td>js/entities/leader-ai.js, the settings resolution</td><td>Copy both objects through as authored, skipping the per-loop step every object-valued setting goes through today. About 3 lines.</td></tr><tr><td>D. Belief</td><td>js/systems/leader-belief.js, snapshot, beside risk and stubbornness</td><td>Pass both objects into the snapshot the planner reads. 2 lines.</td></tr><tr><td>E. Authoring</td><td>js/data/gyms.js, Brock's and Misty's ai</td><td>The table above. Triggers and lines unchanged.</td></tr><tr><td>F. Docs and notes</td><td>LEADER-AI, BALANCE.md, js/data/changelog.js</td><td>DEFAULT LEADER (Misty and Brock leave it), "Authoring a leader" (the two keys and limits), Build order 5b (39a, 39b); BALANCE rows; a changelog line "Brock and Misty now fight in their own styles", parse-checked.</td></tr><tr><td>G. Test leader</td><td>tools/test-leaders.js (new) and 5 harnesses</td><td>Mechanics tests fight Brock and Misty without the 39a keys; personality tests fight the real ones. Card below.</td></tr></tbody></table></div>
+
+<div class="card"><h2>Plan check (coding principles)</h2>
+<table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td><b>Reuses</b></td><td>The planner's existing goal-weight and tag-multiplier reads; the validator's <code>unknownKeys</code> helper; the GOALS export; the "own shape" key list; #53's pattern of validate() reading limits from a loaded module; the settings resolution; the snapshot block; the 16e duel and the sharpness duel's settings override.</td></tr><tr><td><b>New</b></td><td>The tag-name export (one home for two readers); two validator checks; 4 limit constants in gyms.js beside AI_UNIT.</td></tr><tr><td><b>Not built</b></td><td>Per-action overrides (P4), signature actions (39b), per-loop goal weights, trigger-set of the new keys, gyms 3 to 8, any planner or cost change.</td></tr><tr><td><b>Lives in</b></td><td>Data and validation in gyms.js (the boundary); wiring in Belief (the Decider's only door).</td></tr><tr><td><b>Size</b></td><td>gyms.js 1214 to about 1250 (already over 1000; the structural review will flag it, not 39a's to fix). leader-ai.js 1086 to about 1089. leader-belief.js 478 to 480. leader-planner.js 701 to about 704.</td></tr><tr><td><b>Cleanups</b></td><td>None. Seen, not touched: the planner's tag read turns a 0 into 1; the 0.25 floor keeps a 0 out.</td></tr></tbody></table></div>
+
+<div class="card"><h2>Tests</h2>
+<h3>1. docs/proposals/leader-ai-harness.js, new section 16f "personality profile"</h3>
+<p>No new harness file: 16f reuses the 16e duel, which lives in this file, so a new file would copy it.</p><ul>
+<li>The duel gains a <code>gym</code> option (Brock by default, so 16e replays unchanged) and logs the running goal, verb and distance on each think tick.</li>
+<li>Runs default, Brock and Misty over 5 seeds, Fire Blast cycling with Ember, 40 s; the default first.</li>
+<li>Checks the profile directions from the opening page; distance Brock &lt; default &lt; Misty; reflex Brock &gt; default &gt; Misty.</li>
+<li>Validator lines: Brock and Misty pass; an unknown goal, an unknown tag, a weight of 3.5, a multiplier of 0.2 and a trigger setting goalWeights are each refused.</li>
+<li>A fail in 16f is a tuning finding: retune the numbers, never loosen the check.</li></ul>
+<h3>2. docs/proposals/leader-ai-mutate.js, 4 new mutants</h3>
+<table><thead><tr><th>Mutant</th><th>What it breaks</th><th>Caught by</th></tr></thead><tbody><tr><td>M1</td><td>Belief drops goalWeights (both leaders read the default goals)</td><td>16f goal-share checks</td></tr><tr><td>M2</td><td>Belief drops tagMultipliers</td><td>16f Brock movement share</td></tr><tr><td>M3</td><td>validate() skips the goal-name check</td><td>the unknown-goal line</td></tr><tr><td>M4</td><td>The settings send the new objects through the per-loop step (the trap in part C)</td><td>16f (weights read as missing)</td></tr></tbody></table>
+<h3>3. Existing checks</h3><p>Five harnesses gain one call to the test leader (part G, so their mechanics tests stay on today's leaders). 16e, the #53 sharpness duel and determinism must pass unchanged. tools/check.js: no change (it already runs this harness). No intent scenarios (no move changes). No new debug set.</p>
+<h3>4. Your feel test (about a minute each, dev.html?dev, hitbox overlay on to read the goal line)</h3>
+<p>Brock loop 1, then Misty loop 1. Brock should stand in, Harden early and rarely back off. Misty should sit far, back off when you close and react faster to your shots. Swapping shows at loop 2 (P5).</p></div>
+
+<div class="card" style="border-left:4px solid var(--color-primary-border)"><h2>Part G: the test leader <span class="pill ok">G1, G2 approved</span></h2>
+<p>Added 2026-11-14 after the build check found that old mechanics tests borrow the real Brock and Misty. Tests now split by what they test.</p>
+<div class="grid2">
+ <div class="card"><h3 style="margin-top:0">Mechanics tests</h3>Fight the <b>test leader</b>: Brock's or Misty's real team, triggers and lines, with every 39a personality key removed. That is exactly today's entries, so these tests replay unchanged, and retuning the real leaders never moves them again.</div>
+ <div class="card"><h3 style="margin-top:0">Personality tests</h3>Fight the <b>real</b> Brock and Misty from gyms.js: 16f, the validator lines, the overlay smoke, and your feel test.</div>
+</div>
+<h3>New file: tools/test-leaders.js (dev tool, never ships)</h3><ul>
+<li>One job: in a harness's loaded copy of the gym list, swap Brock's and Misty's <code>ai</code> for a copy without the personality keys (goalWeights, tagMultipliers, range, swapWill, risk, stubbornness, intelligence). It changes only the harness's in-memory copy, never gyms.js.</li>
+<li>It keeps the real entries and gives one way back to them, for 16f's runs.</li>
+<li>About 30 lines. The key list lives only here (39b adds its key here too).</li>
+<li>Why shared: 5 harnesses need it (DRY's third-repeat rule is met), and it is the same knowledge each time.</li></ul>
+<h3>Which files call it, and why</h3>
+<table><thead><tr><th>File</th><th>Opens a real leader through the arena?</th><th>Planner on?</th><th>Change</th></tr></thead><tbody>
+<tr><td>leader-ai-harness.js</td><td>yes, Brock and Misty</td><td>yes</td><td>call it after load; 16f runs the real ones; the sharpness duel stays on the test Brock (as #53 built it)</td></tr>
+<tr><td>leader-cast-gate-harness.js</td><td>yes, Misty</td><td>yes</td><td>call it after load</td></tr>
+<tr><td>leader-items-harness.js</td><td>yes, Misty</td><td>yes</td><td>call it after load</td></tr>
+<tr><td>leader-team-harness.js</td><td>yes, Misty</td><td>yes</td><td>call it after load</td></tr>
+<tr><td>player-move-trace-harness.js</td><td>yes, Misty</td><td>off</td><td>call it after load, so its recorded trace cannot move with intelligence (P6)</td></tr>
+<tr><td>gym-leader-harness.js, leader-slots-harness.js</td><td>no (built leaders, planner stubbed)</td><td>stubbed</td><td><span class="same">none</span>; their "Brock and Misty validate" lines check the real entries, which is right</td></tr>
+<tr><td>leader-stats-harness.js</td><td>stats only</td><td>no</td><td><span class="same">none</span> (red until #30 anyway)</td></tr>
+<tr><td>tools/smoke-leader-overlay.js</td><td>real game in a browser</td><td>yes</td><td><span class="same">none</span>: it checks the overlay's shape, and running the real Misty there is a useful check (G2)</td></tr>
+</tbody></table>
+<h3>Decisions</h3>
+<div><div class="dec"><div class="id">G1</div><div>Keep #53's <code>pinOldDefaults</code> separate for now; do not fold it into the test leader.<div class="why">Folding would also pin misjudge 0 and aimError 0 in the 4 other harnesses, which read the defaults today, so their results would move. One idea at a time.</div></div><span class="pill info">rec: keep separate</span></div>
+<div class="dec"><div class="id">G2</div><div>smoke-leader-overlay keeps the real Misty.<div class="why">It checks the overlay draws a plan, not her numbers; it doubles as a check that the shipped personality runs.</div></div><span class="pill info">rec: yes</span></div></div>
+<p class="muted">No mutant for the helper: if it stripped nothing, 17h (Misty's misjudge 0.10 at loop 2) and the other old sections would go red on the normal run.</p></div>
+<div class="card" style="border-left:4px solid var(--color-info-border)"><h2>Changes after the first check.js run <span class="pill ok">approved 2026-11-14</span></h2>
+<table><thead><tr><th>Found</th><th>Change</th></tr></thead><tbody>
+<tr><td>boss-owner and gym harnesses refused Brock's intelligence ("growth 0 to undefined"). They do not load the leader AI, and their stand-in G answers G.LeaderAI with a placeholder, so #53's limits read as undefined. Dormant until a leader authored intelligence.</td><td>js/data/gyms.js validate(): the growth limit and the reflex floor are read only when they are numbers, else that check is skipped (as when the module is absent). The 39a name check already guarded this.</td></tr>
+<tr><td>leader-ai-harness hit check.js's 60 s limit (its last line was a gate warning, no summary).</td><td>16f: 3 seeds of 30 s instead of 5 of 40 s.</td></tr>
+<tr><td>leader-stats-harness: Zinc check.</td><td><span class="same">none</span>: expected red until #30; 39a touches no stats.</td></tr>
+</tbody></table></div>
+<div class="card" style="border-left:4px solid var(--color-warning-border)"><h2>Test rework <span class="pill ok">approved 2026-11-14</span> <span class="pill wait">numbers superseded</span></h2><div class="callout">Later the same day these checks were rewritten as relations, with no hard numbers (decision 2026-11-14-tests-check-relations-not-values). The table below is history.</div>
+<p>The duel-based tests were dropped: their scripted opponent stands still and never dodges, so they measured nothing a player does. Tests now check <b>given an input, is the output correct</b>.</p>
+<table><thead><tr><th>Check</th><th>Input</th><th>Expected (worked out by hand)</th></tr></thead><tbody>
+<tr><td>16f-a</td><td>Brock's tables on 15b's world</td><td>Endurance 0.2381 beats Pressure 0.215</td></tr>
+<tr><td>16f-b</td><td>Misty's goal weights on 15e's world</td><td>Kite 0.1775 beats Pressure 0.141, Endurance 0.111</td></tr>
+<tr><td>16f-c</td><td>15b's Pressure plan, tags x2, then Brock's</td><td>cost -0.131, -0.262, -0.131</td></tr>
+<tr><td>16f-d</td><td>your gun 150 px off, range 150 vs 220</td><td>one hit is Maintain at 150, not at 220</td></tr>
+<tr><td>16f-e</td><td>a Defense buff, your physical whip</td><td>Brock's Buff scores higher than the default's</td></tr>
+<tr><td>16f-f</td><td>settings at loops 1 and 6</td><td>reflex Brock 0.18 / 0.132 s, Misty 0.144 / 0.12 s, test leaders 0.15 s</td></tr>
+<tr><td>16f-g</td><td>a gate opened, one step</td><td>tables and range reach Belief's snapshot; test leaders carry none</td></tr>
+</tbody></table>
+<p class="muted">Retired from 16e: counter-play, learning, the #53 sharpness duel (decision 2026-11-14-39-planner-checks-replace-duels). Kept: determinism, the Bait duel (blocked on #60). Bait is parked in code (decision 2026-11-14-bait-parked-in-code).</p></div>
+<div class="card"><h2>Decisions <span class="pill ok">all approved 2026-11-14</span></h2>
+<div><div class="dec"><div class="id">P1</div><div>Brock's numbers as in the table.<div class="why">Tune after the feel test.</div></div><span class="pill ok">approved</span></div><div class="dec"><div class="id">P2</div><div>Misty's numbers. Her range 260 is checked against Water Pulse's reach when built; if it is past it, it becomes that reach minus 20 px and I tell you.<div class="why">A range past her reach would never let Maintain land.</div></div><span class="pill ok">approved</span></div><div class="dec"><div class="id">P3</div><div>New validator limits: goal weights 0 to 3, tag multipliers 0.25 to 4.</div><span class="pill ok">approved</span></div><div class="dec"><div class="id">P4</div><div><b>Scope change vs D2:</b> per-action overrides move to 39b.<div class="why">Neither leader needs one with these numbers (YAGNI).</div></div><span class="pill ok">approved</span></div><div class="dec"><div class="id">P5</div><div><b>Test change vs the opening:</b> the swaps row leaves the profile.<div class="why">The duel fields one mon; swapWill shows in the feel test at loop 2.</div></div><span class="pill ok">approved</span></div><div class="dec"><div class="id">P6</div><div><b>Game behavior change:</b> both leaders gain intelligence growth 0.08 per loop, so they get sharper each loop. Misty reaches 1.0 at loop 6.<div class="why">Today both sit at 0.5 every loop.</div></div><span class="pill ok">approved</span></div><div class="dec"><div class="id">P7</div><div>Keep aggression as authored (0.35, 0.68).<div class="why">It drives the dodge lean and the effective aggression on the overlay, not the goal choice.</div></div><span class="pill ok">approved</span></div></div></div>
+
+<div class="card"><h2>Risks</h2><ul>
+<li>Confidence already lifts Pressure and Finish when ahead, so Misty's Pressure 1.3 may overshoot; 16f and the feel test show it.</li>
+<li>Brock at range 150 with Tackle's reach of 70: Maintain can only land Rock Throw from there. Intended (mid range).</li>
+<li>If the duel's <code>gym</code> option needs more than about 20 lines, I stop and tell you before going on.</li>
+</ul></div>
+
+<footer>docs/LEADER-AI.md wins wherever this page differs. Written by the PokeSurvivor agent in Quick.</footer>
+</main>
+
+</body>
+</html>

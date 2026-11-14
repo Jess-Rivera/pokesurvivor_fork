@@ -1,0 +1,86 @@
+PERF F2: freeze behind the pause menu (2026-11-12, Quick)  [Approved, BUILT]
+Jess's calls: D1 freeze, D2 both (resize + any setting), D3 FPS counter freeze is a separate issue (TODO.md).
+Not run here (no node): Jess runs node tools/smoke-pause-menu.js and node tools/check.js.
+FOLLOW-UP FIX (same day): hiding the HUD layer also hid the shared SVG grid patterns (.hud-defs) the pause menu
+borrows, so pockets and team cards lost their grid. css/hud-overlay.css keeps .hud-defs visible; smoke checks it.
+LESSON: anything that hides .hud-overlay must leave .hud-defs visible (patterns inherit visibility from their defs).
+=====================================================================
+Why: Firefox laptop, pause menu swings 22..74 fps. While paused the game
+still redraws the whole world, ticks FX at 1/4 speed, and runs the HTML
+HUD's per-frame read under a HUD that is only opacity 0.
+
+WHEN THE FREEZE APPLIES  (menu levels from pause-menu.js)
+---------------------------------------------------------------------
+ Esc        opening 230 ms          FULLY OPEN            closing 160 ms
+  |------ step1 ---- step2 ------|=====================|---- back ----|
+  world  : 1/4 speed (as now)    | FROZEN: last frame  | 1/4 speed    |
+  HUD    : fading out (as now)   | hidden, no reads    | reads resume,|
+                                 |                     | fades back in|
+ "Fully open" = G.PauseMenu.isFullyOpen() (last step done, no timer).
+
+FILES AND SPOTS
+---------------------------------------------------------------------
+ js/game.js  frame()  (the paused branch, lines ~1068 to 1078)
+   - one "frozen" check: paused AND pause menu fully open
+   - frozen: skip the 1/4-speed FX + player anim updates
+   - frozen: skip render() (canvas keeps the last drawn frame)
+   - frozen: skip G.HudOverlay.sync
+   - still runs: handleKeys, G.UI.tick (toasts), input end-frame
+   - one-frame redraw while frozen when (D2):
+       a) the window resizes (resizing a canvas blanks it)
+       b) a setting changes (e.g. Vignette toggled from pause > Settings)
+     done with a "redraw once" flag set by the existing resize() and a
+     G.Settings.on listener; the flag is read and cleared in frame()
+
+ css/pause-menu.css  "body.pm-open .hud-overlay"  (line ~27)
+   - add visibility hidden on top of opacity 0, delayed by the fade's
+     own 75 ms so the fade-out still plays; on close it turns visible
+     at once so the fade-in plays as now
+   - result: Firefox stops painting the HUD and its looping CSS
+     animations (chip glow, circle flicker, Shake Off flash) stop
+
+ js/data/changelog.js  chg today: "The pause menu now holds the game
+   still behind it, so it stays smooth on slower machines."
+
+ NOT touched: pause menu's own animations (shimmer, pocket pulse),
+ level-up / item screens, the solo "pause with no menu" setting path,
+ co-op tick (deferred), HUD panel code.
+
+DECISIONS FOR JESS
+---------------------------------------------------------------------
+ D1 background  behind the fully open menu, effects and your Pokemon's
+                idle animation STOP (still image under the dim).
+                Today they creep at 1/4 speed. (a) freeze <- rec.
+                (b) keep creeping (most of the win is lost)
+ D2 redraws     while frozen, redraw one frame on (a) resize and
+                (b) any settings change.  both <- rec.
+ D3 FPS counter it is canvas text, so it freezes at its last value
+                while the menu is open. (a) accept <- rec.
+                (b) out of scope fix later
+
+TESTS
+---------------------------------------------------------------------
+ New harness:      none (no game logic changes; pause state, clock,
+                   resume flow untouched and already covered).
+ Mutation runner:  none (no sim rule to break). STALE scan done: no
+                   *-mutate.js pattern targets frame(), render()'s
+                   vignette line, or the pm-open CSS.
+ Intent scenarios: none.   Debug sets: none.
+ Changed smoke:    tools/smoke-pause-menu.js, new checks in the
+                   open/close section (counts calls by wrapping
+                   G.Projectiles.draw = world drawn, and
+                   G.HudOverlay.sync = HUD read):
+   1. fully open for 300 ms: 0 world draws, 0 HUD reads
+   2. HUD computed visibility is "hidden" while fully open
+   3. resize while open: exactly one redraw, then frozen again
+   4. after closing: world draws and HUD reads climb again, HUD
+      visible (the existing "the run HUD is back" check stays)
+   Existing "the run HUD steps aside (opacity 0)" check stays valid.
+ smoke-hud-overlay: no change (no check runs with the pause menu open).
+ check.js: no change. Jess runs node tools/check.js (no node here).
+
+ Feel test (~1 min, Firefox laptop, dev.html?dev):
+   - pause mid-fight with lots on screen: steady fps, still background
+   - open/close still animates; the world moves again during the close
+   - resize the window while paused: background redraws, not black
+   - pause > Settings > toggle Vignette: background updates at once

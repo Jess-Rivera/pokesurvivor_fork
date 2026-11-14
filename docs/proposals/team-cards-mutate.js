@@ -9,7 +9,7 @@
 // Not mutated, with the reason: the sorted stack order in fold (reordering two or three addends of these sizes seldom changes the last
 // bit, so a harness catch would be luck; the order row still guards the rule), and the pure-buff guard in Cooldown Down (a pure buff has
 // no cd, rehit or emitter, so the guard is a second fence; the eligibility row checks the result).
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { cards: ['js/systems/team-cards.js', 'TC_CARDS'], sim: ['js/systems/move-sim.js', 'TC_SIM'], render: ['js/systems/move-render.js', 'TC_RENDER'],
   fx: ['js/systems/move-effects.js', 'TC_FX'], stages: ['js/systems/stages.js', 'TC_STAGES'], player: ['js/entities/player.js', 'TC_PLAYER'],
@@ -60,7 +60,8 @@ const M = [
   ['team raises skip the cards', 'fx', [["else if (teamOf(fx, o)) G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);", "else if (teamOf(fx, o)) G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));"]]],
   ['a fizzled pure buff ignores the Gate card', 'sim', [['slot.t = G.Stages.gateOf(false, G.MoveEffects.gateMulOf(o));', 'slot.t = G.Stages.gateOf(false);']]],
   // ---- part D: HP Regen and Vitamins ----
-  ['regen ignores the max HP cap', 'player', [['this.hp = Math.min(this.maxHp, this.hp + rg * this.maxHp * dt);', 'this.hp = this.hp + rg * this.maxHp * dt;']]],
+  // re-pointed #91-1: bench regen now heals through restoreHp, which holds the cap for every heal
+  ['regen ignores the max HP cap', 'player', [['this.hp = Math.min(this.maxHp, this.hp + amount);', 'this.hp = this.hp + amount;']]],
   ['regen heals the fainted', 'player', [['    if (this.dead) return;\n    this.benched = true;', '    this.benched = true;'], ['if (rg > 0 && !this.dead && this.hp < this.maxHp)', 'if (rg > 0 && this.hp < this.maxHp)']]],
   ['regen heals the active member too', 'player', [['  tickShield(dt) {\n', '  tickShield(dt) {\n    if (this.teamCards) this.hp += G.TeamCards.regen(this.teamCards) * this.maxHp * dt;\n']]],
   ['incOf ignores Vitamins', 'player', [[' +\n      (this.teamCards ? G.TeamCards.vit(this.teamCards, k) : 0)\n    );', '\n    );']]],
@@ -85,23 +86,11 @@ const M = [
   ['a rate card shows its step, not its cut', 'cards', [["if (c.mode === 'rate') return '-' + Math.round((1 - 1 / (1 + v)) * 100) + '%';", "if (c.mode === 'rate') return '-' + Math.round(v * 100) + '%';"]]],
   ['the summary ignores a cap', 'cards', [['const k = c.cap ? Math.min(n, c.cap) : n,\n      v = k * c.step,', 'const k = n,\n      v = k * c.step,']]]
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'team-cards-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/team-cards-harness.js'), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'team-cards-mutate',
+  root,
+  harnesses: ['docs/proposals/team-cards-harness.js'],
+  args: [root],
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

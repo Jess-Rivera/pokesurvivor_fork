@@ -385,28 +385,42 @@ G.PlayerEntity = class PlayerEntity {
     const dc = this.hasItem('brightpowder') ? dt / 0.85 : dt;
     for (let i = 0; i < c.cd.length; i++) if (c.cd[i] > 0) c.cd[i] = Math.max(0, c.cd[i] - dc);
   }
-  /** Starts a dodge along (ax, ay), or your last heading when standing still. Needs a ready charge, the gap after the last dodge to
-   *  be over, and nothing holding your movement (frozen, asleep, flinched, pushed, or a move's dash or root). */
-  tryDodge(ax, ay) {
-    const D = PlayerEntity.DODGE,
-      c = this.dodges,
-      i = c.cd.indexOf(0);
-    if (this.dead || this.dodgeT > 0 || c.gap > 0 || i < 0) return false;
-    if (this.frozen || this.stFl || this.stPush || this.mvRoot || G.Status.stunned(this)) return false;
-    const [nx, ny] = ax || ay ? G.U.norm(ax, ay) : [Math.cos(this.moveAngle), Math.sin(this.moveAngle)],
-      v = D.dist / D.dur;
-    c.cd[i] = D.cd;
-    this.dodgeT = D.dur;
-    this.dodgeEl = 0;
-    this.dodgeVx = nx * v;
-    this.dodgeVy = ny * v;
-    this.iceGlide = false;
-    if (!this.dodgeR0) {
-      this.dodgeR0 = this.r;
-      this.r *= D.shrink;
+  /** The Body's acceptance of a heading (LEADER-AI FRAME): frozen, asleep, flinched or pushed, it refuses (null: nothing passes on to
+   *  the SimPass). Otherwise the controller's heading under your statuses: confused, it drifts (half weight); dazed, it is jittered
+   *  (slice E1). (In co-op pausing does not stop the game: `frozen`, you just stay still.) */
+  acceptHeading() {
+    if (this.frozen || this.stFl || this.stPush || G.Status.stunned(this)) return null;
+    let [ax, ay] = this.controller.axis(); // slice 3: the controller
+    if (this.stCnf && (ax || ay)) {
+      const m = Math.hypot(ax, ay),
+        w = G.Status.wander(this, ax / m, ay / m, 0.5);
+      ax = w[0] * m;
+      ay = w[1] * m;
     }
-    G.FX.burst(this.x, this.y, '#d8d0b8', 6, 60);
-    return true;
+    if (this.stDaze && (ax || ay)) {
+      const m = Math.hypot(ax, ay),
+        j = G.Status.jitter(this, ax / m, ay / m);
+      ax = j[0] * m;
+      ay = j[1] * m;
+    }
+    return [ax, ay];
+  }
+  /** The Body's acceptance of a dodge along the accepted heading, or your last heading when there is none: a ready charge, the gap
+   *  after the last dodge over, and nothing holding your movement (frozen, asleep, flinched, pushed, or a move's dash or root).
+   *  Accepted: { charge, nx, ny } for the SimPass to start (G.PlayerEntity.SimPass.startDodge). Refused: null. */
+  acceptDodge(heading) {
+    const c = this.dodges,
+      i = c.cd.indexOf(0);
+    if (this.dead || this.dodgeT > 0 || c.gap > 0 || i < 0) return null;
+    if (this.frozen || this.stFl || this.stPush || this.mvRoot || G.Status.stunned(this)) return null;
+    const [ax, ay] = heading || [0, 0],
+      [nx, ny] = ax || ay ? G.U.norm(ax, ay) : [Math.cos(this.moveAngle), Math.sin(this.moveAngle)];
+    return { charge: i, nx, ny };
+  }
+  /** The Body's acceptance of a new cast (LEADER-AI FRAME, YOUR RULES): a stun refuses it; the move stays ready. G.MoveSim asks it
+   *  before any cast of a Player entity. A leader's attacks have more refusals (G.GymLeader acceptsAttack). */
+  acceptsCast() {
+    return !G.Status.stunned(this);
   }
   /** Ends the dodge (finished, cancelled, or swapped out): the body grows back and the gap before the next dodge starts. */
   endDodge() {
@@ -438,6 +452,38 @@ G.PlayerEntity = class PlayerEntity {
     if (!free) this.swapT = PlayerEntity.SWAP_LOCK;
     const m = this.slots[i][0];
     G.FX.ring(this.x, this.y - G.LIFT * 0.5, 6, this.r * 3.4, G.U.TYPE_COLOR[m.type], 0.3, 3);
+    // the ring is the switch you can see, so the leader AI may know it (LEADER-AI REVEALS: a bond needs no switch between casts)
+    G.SimBus.emit('slot:switch', {
+      ownerUid: this.copyUid != null ? this.copyUid : null,
+      ownerSlot: this.teamSlot != null ? this.teamSlot : null,
+      rival: !!this.isRival,
+      slot: i,
+    });
+  }
+
+  /** The slot hold (swapT) runs down, once per frame, after the body and before the sim pass: yours in game.js, a leader's in its own
+   *  frame (#43 step B, decision 2026-11-09-42-one-swap-clock-and-one-swap-point). */
+  tickSlotLock(dt) {
+    if (!this.dead && this.swapT > 0) this.swapT = Math.max(0, this.swapT - dt);
+  }
+  /** Your accessibility setting `autoShake` (Shake off taps itself 3 times a second). A bare Player entity has it off; HumanPlayer reads
+   *  the settings menu, a leader has it on unless its gym turns it off (2026-11-09-42-leader-auto-shake-is-your-accessibility-setting). */
+  autoShakeOn() {
+    return false;
+  }
+  /** Shake off (slice E1), after the swap point and before the body: the controller's shake press, else the auto shake. One path for
+   *  every Player entity (#43 step B); the white ring shows each shake. */
+  shakeStep(dt) {
+    if (this.controller.shake() && G.Status.shake(this)) G.FX.ring(this.x, this.y, 4, 34, '#ffffff', 0.18, 2);
+    else if (this.autoShakeOn() && G.Status.autoShake(this, dt)) G.FX.ring(this.x, this.y, 4, 34, '#ffffff', 0.18, 2); // 3 taps/s (E2e)
+  }
+
+  /** The slot keys and cycle keys the controller lists this frame, in key order (slice 3, D4): yours from game.js, a leader's
+   *  from its AI player (G.LeaderAI), so both switch under the same slot hold. */
+  takeSlotInput() {
+    const c = this.controller;
+    for (const i of c.slots()) this.setActive(i);
+    for (const d of c.cycles()) this.cycle(d);
   }
 
   cycle(dir) {
@@ -630,12 +676,16 @@ G.PlayerEntity = class PlayerEntity {
 
   statusDot(kind, amount, color) {
     if (this.dead) return;
+    // #91 (PAUSE-MENU 4): who inflicted this burn or poison (move-effects.js ailPlayer), read before a faint wipes it
+    const by = this.stDot && this.stDot.by,
+      hp0 = this.hp;
     const inv = this.invuln;
     this.invuln = 0;
     this.dot = true; // status damage still lands in the air (Fly)
     this.hurt(amount, null, true, color ? { color } : null);
     this.dot = false;
     if (!this.dead) this.invuln = inv;
+    if (by && by.onDealt) by.onDealt(Math.max(0, hp0 - Math.max(0, this.hp)), { target: this, dot: true });
   }
 
   /**
@@ -657,8 +707,12 @@ G.PlayerEntity = class PlayerEntity {
     );
     G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ff5f6d', 6, 90);
   }
-  /** Called once when hurt() faints this entity, after its effects are wiped. A gym leader pays its drops here (slice 5). */
-  onFaint() {}
+  /** Called once when hurt() faints this entity, after its effects are wiped. A gym leader pays its drops here (slice 5).
+   *  #91: a run team member's faint goes in the run's record (the count, and its down clock starts). */
+  onFaint() {
+    const stats = this.team && this.team.runStats;
+    if (stats) G.RunStats.faint(stats, this, G.Game.st.time);
+  }
   /** Seconds of invulnerability a hit leaves (slice 5: a gym leader has none, COMBAT-RULES "Host model"). */
   get hitIframes() {
     return 0.45;
@@ -698,7 +752,7 @@ G.PlayerEntity = class PlayerEntity {
             : G.Stats.defense(defB, this.level, this.statIv(2), this.statEv(2), this.statNat(2))) * defMul;
       }
       amount = atk.neutral
-        ? (amount / G.Stats.PROP_DEF + 2) * scale * mul // a status-category hit on a gym leader (slice 5): the neutral denominator, as on a wild entity
+        ? (amount / G.Stats.PROP_DEF + 2) * scale * mul // a status-category hit on a gym leader that authors wildStatusDivisor (#41): the neutral denominator
         : G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul, this.statProf, stab, scale) * mul;
     }
     const afterDef = amount;
@@ -768,6 +822,9 @@ G.PlayerEntity = class PlayerEntity {
       G.FX.dmgText(this.x, this.y - this.bodyH - 16, 'Focus Sash!', '#ff9a3d', true);
       G.FX.ring(this.x, this.y, 6, 70, '#ff9a3d', 0.5, 4);
     }
+    // #91: HP lost to hits and DoT from others (recoil and Life Orb take HP outside hurt, so they never count)
+    const stats = this.team && this.team.runStats;
+    if (stats) G.RunStats.taken(stats, this, hp0 - Math.max(0, this.hp));
     if (this.hp <= 0) {
       this.hp = 0;
       this.dead = true;
@@ -831,7 +888,7 @@ G.PlayerEntity = class PlayerEntity {
     G.Stages.tick(this, dt);
     // Slice 5b HP Regen card: benched members only (a reason to swap); no floating number on the bench (Jess, 2026-10-31)
     const rg = this.teamCards ? G.TeamCards.regen(this.teamCards) : 0;
-    if (rg > 0 && !this.dead && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + rg * this.maxHp * dt);
+    if (rg > 0 && !this.dead && this.hp < this.maxHp) this.restoreHp(rg * this.maxHp * dt);
     this.benched = false;
   }
 
@@ -865,10 +922,20 @@ G.PlayerEntity = class PlayerEntity {
 
   heal(amount) {
     const before = this.hp;
-    this.hp = Math.min(this.maxHp, this.hp + amount);
+    this.restoreHp(amount);
     const got = Math.round(this.hp - before);
     if (G.Log.on && !this.isRival) G.Log.heal(amount, this.hp - before, this.hp, this.maxHp);
     if (got >= 1) G.FX.dmgText(this.x, this.y - this.bodyH - 6, '+' + got, '#5fe08a');
+  }
+
+  /** HP back, up to the max, with no number shown (heal() shows one; the per-frame heals never did: bench regen, Shell Bell,
+   *  Regeneration, springs). #91: what it actually added goes in the run's record (Healed). A revive or a max HP gain is no
+   *  heal and does not come through here. */
+  restoreHp(amount) {
+    const before = this.hp;
+    this.hp = Math.min(this.maxHp, this.hp + amount);
+    const stats = this.team && this.team.runStats;
+    if (stats) G.RunStats.healed(stats, this, this.hp - before);
   }
 
   addMaxHp(amount) {
@@ -930,9 +997,24 @@ G.PlayerEntity = class PlayerEntity {
     return { a, b };
   }
 
-  /** Shell Bell: a little health for the damage you do (cap 4/s). */
-  onDealt(dmg) {
-    if (this.hasItem('shellbell')) this.bellHeal = Math.min(4, this.bellHeal + dmg * 0.04);
+  /** After every hit this Pokemon lands: the Shell Bell heal (a little health for the damage you do, cap 4/s), and the
+   *  team's damage record (#66; your run team only, leaders have none). The rest is named and optional (an old caller
+   *  passes the damage alone): target and typeMult (#91) mark the target's last hitter (kill credit) and feed the run's
+   *  record (best hit, super effective share); dot (#91): a burn or poison tick this Pokemon inflicted (enemy.js dot,
+   *  statusDot), damage and DPS but no hit, and Shell Bell keeps ignoring it; moveId (#91-2): the move that dealt a
+   *  hit, so the run's biggest hit can name it (a tick has none). */
+  onDealt(dmg, { target = null, typeMult = 1, dot = false, moveId = null } = {}) {
+    if (!dot && this.hasItem('shellbell')) this.bellHeal = Math.min(4, this.bellHeal + dmg * 0.04);
+    if (target && dmg > 0) target.lastHitBy = this;
+    const team = this.team;
+    if (team && team.dpsHistory) G.DpsHistory.record(team.dpsHistory, this, dmg);
+    if (team && team.runStats) G.RunStats.dealt(team.runStats, this, dmg, { typeMult, dot, moveId });
+  }
+
+  /** #91: a status this Pokemon newly landed on a foe (move-effects.js ailment, ailPlayer), for the run's record. */
+  onInflicted(kind) {
+    const stats = this.team && this.team.runStats;
+    if (stats) G.RunStats.inflicted(stats, this, kind);
   }
 
   /** An altar's power (see systems/interact.js): it applies and removes itself. */
@@ -943,158 +1025,29 @@ G.PlayerEntity = class PlayerEntity {
   }
 
   // ---------------- ciclo ----------------
+  /** One frame of the body (#43, LEADER-AI "FRAME"): the SimPass ticks the timers, statuses and over-time effects; the Body accepts or
+   *  refuses this frame's heading and dodge; the SimPass carries them out (G.PlayerEntity.SimPass, in js/entities/player-sim-pass.js)
+   *  and picks the target; then the walk animation. */
   update(dt) {
     this.anim.update(dt);
     if (this.dead) return;
-    if (this.invuln > 0) this.invuln -= dt;
-    if (this.flash > 0) this.flash -= dt;
-    if (this.attackFace > 0) this.attackFace -= dt;
-    if (this.flyT > 0 && (this.flyT -= dt) <= 0) this.land();
-    else if (this.flyT <= 0 && this.flyCd > 0) this.flyCd = Math.max(0, this.flyCd - dt);
-    this.tickDodges(dt);
-    if (this.skillAt(this.active)) {
-      // a skill never stays active (it may land there when slots change): the first castable slot takes over
-      const i = this.slots.findIndex((g, k) => !this.skillAt(k));
-      if (i >= 0) this.active = i;
-    }
-
-    G.Stages.teamTick(this.stgTeam, dt); // the shared team raises: only the active member runs update(), so they tick exactly once per frame
-    if (this.slowT > 0) this.slowT -= dt;
-    G.Status.tick(this, dt);
-    G.Stages.tick(this, dt);
+    const S = G.PlayerEntity.SimPass;
+    S.tick(this, dt);
     if (this.dead) return;
-    if (this.bellHeal > 0) {
-      const h = Math.min(this.bellHeal, 4 * dt);
-      this.hp = Math.min(this.maxHp, this.hp + h);
-      this.bellHeal -= h;
+    S.overTime(this, dt);
+    const heading = this.acceptHeading();
+    S.cancelDodge(this);
+    if (this.controller.dodge()) {
+      const dodge = this.acceptDodge(heading);
+      if (dodge) S.startDodge(this, dodge);
     }
-    if (this.power && (this.power.t -= dt) <= 0) {
-      this.power.def.off(this);
-      this.power = null;
-    }
-    this.tickShield(dt);
-    if (this.regen > 0) this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
-    // Black Sludge on a non-Poison holder: small chip, never lethal (F3b).
-    if (this.sludgeHurt && !this.dead) this.hp = Math.max(1, this.hp - this.maxHp * 0.01 * dt);
-
-    // --- movement with collisions ---
-    // (In co-op pausing does not stop the game: you just stay still.)
-    let [ax, ay] = this.frozen || this.stFl || this.stPush || G.Status.stunned(this) ? [0, 0] : this.controller.axis(); // frozen, asleep, flinched or pushed: no input (slice 3: the controller)
-    if (this.stCnf && (ax || ay)) {
-      // confused: your heading drifts (half weight)
-      const m = Math.hypot(ax, ay),
-        w = G.Status.wander(this, ax / m, ay / m, 0.5);
-      ax = w[0] * m;
-      ay = w[1] * m;
-    }
-    if (this.stDaze && (ax || ay)) {
-      // dazed: the heading is jittered (slice E1)
-      const m = Math.hypot(ax, ay),
-        j = G.Status.jitter(this, ax / m, ay / m);
-      ax = j[0] * m;
-      ay = j[1] * m;
-    }
-    // Dodge: a push, a flinch, freezing or sleep cancels the one in progress (its charge stays spent).
-    if (this.dodgeT > 0 && (this.frozen || this.stFl || this.stPush || G.Status.stunned(this))) this.endDodge();
-    if (this.controller.dodge()) this.tryDodge(ax, ay);
-    const dodging = this.dodgeT > 0;
-    this.walking = ax !== 0 || ay !== 0 || dodging;
-    const s = this.spd;
-    // Ice: you slide (the velocity changes slowly).
-    const slide = this.inLiquid && G.World.liquidEffect(this.mon.types).slide;
-    if (!slide) this.iceGlide = false;
-    if (this.stPush) {
-      // a push (Roar) moves you; it ends after PUSH_T
-      this.svx = this.stPush.vx;
-      this.svy = this.stPush.vy;
-      if ((this.stPush.t -= dt) <= 0) this.stPush = null;
-    } else if (this.stFl)
-      [this.svx, this.svy] = this.flinchMove(dt); // the flinch recoil moves you
-    else if (dodging) {
-      // a dodge holds its heading and speed, ice or not
-      this.svx = this.dodgeVx;
-      this.svy = this.dodgeVy;
-    } else if (this.iceGlide) {
-      // a dodge that ended on ice keeps its speed until you leave the ice; your keys turn the heading as slowly as ice steering
-      const v = PlayerEntity.DODGE.dist / PlayerEntity.DODGE.dur,
-        [hx, hy] = ax || ay ? [ax, ay] : G.U.norm(this.svx || 0, this.svy || 0);
-      const gx = G.U.damp(this.svx || 0, hx * v, 1.6, dt),
-        gy = G.U.damp(this.svy || 0, hy * v, 1.6, dt),
-        g = Math.hypot(gx, gy) || 1;
-      this.svx = (gx / g) * v;
-      this.svy = (gy / g) * v;
-    } else {
-      this.svx = slide ? G.U.damp(this.svx || 0, ax * s * 1.15, 1.6, dt) : ax * s;
-      this.svy = slide ? G.U.damp(this.svy || 0, ay * s * 1.15, 1.6, dt) : ay * s;
-    }
-    // Fast moves step in 4 px pieces so the shrunk body cannot skip over a thin obstacle on a long frame.
-    const steps = Math.max(1, Math.ceil((Math.hypot(this.svx, this.svy) * dt) / 4));
-    for (let k = 0; k < steps; k++) {
-      this.x += (this.svx * dt) / steps;
-      this.y += (this.svy * dt) / steps;
-      if (this.flyT > 0) this.keepInArena();
-      else G.World.collide(this); // in the air walls and objects do not block
-    }
-    if (dodging) {
-      this.moveAngle = Math.atan2(this.dodgeVy, this.dodgeVx);
-      this.dodgeEl += dt;
-      // past the shrink window the body grows back as soon as it fits where you stand (it never pops out of a gap mid-dodge)
-      const fits = this.flyT > 0 || G.World.isFree(this.x, this.y, this.dodgeR0, true);
-      if (this.dodgeR0 && this.dodgeEl >= PlayerEntity.DODGE.shrinkT && fits) {
-        this.r = this.dodgeR0;
-        this.dodgeR0 = 0;
-      }
-      if (this.dodgeT > dt + 1e-6)
-        this.dodgeT -= dt; // the epsilon keeps 0.5 s at 30 frames, not 31
-      else {
-        this.endDodge();
-        this.iceGlide =
-          !(this.flyT > 0) && G.World.isLiquid(this.x, this.y) && !!G.World.liquidEffect(this.mon.types).slide;
-      }
-    } else if (this.walking) this.moveAngle = Math.atan2(ay, ax);
-
-    // --- liquid terrain ---
-    this.inLiquid = !(this.flyT > 0) && G.World.isLiquid(this.x, this.y);
-    if (this.inLiquid) {
-      const le = G.World.liquidEffect(this.mon.types);
-      if (le.dmg) {
-        this.lavaTick -= dt;
-        if (this.lavaTick <= 0) {
-          this.lavaTick = le.every;
-          this.invuln = 0;
-          this.hurt(Math.max(le.flat, this.maxHp * le.dmg * 0.5));
-          G.FX.burst(this.x, this.y - 4, le.color, 5, 70);
-        }
-      } else if (this.walking && Math.random() < dt * 8) {
-        G.FX.burst(this.x, this.y, le.slide ? '#ffffff' : '#b3defa', 2, 40);
-      }
-    }
-
-    // --- targeting: nearest enemy; if none, toward where you walk ---
-    // Target priority based on the active attack:
-    //   ranged (a shot that travels, or a beam): the boss if in range > what is touching you > the nearest
-    //   melee and the rest:           what is touching you > the boss > the nearest
-    // With a horde on top something is almost always touching you; if that always won,
-    // ranged attacks would never hit the boss.
-    // With no foes, it targets aimFallback() (yours: the nearest rock or chest). Foes are this.aimTargets() (slice 3; yours: the enemies).
-    const all = this.aimTargets();
-    const m = this.activeMove();
-    const md = m && G.MoveDefs[m.id];
-    const ranged = !!md && ((md.delivery || {}).motion === 'travels' || (md.space || {}).shape === 'linear');
-    const threat = G.Projectiles.nearest(all, this.x, this.y, this.r + 24);
-    const boss = all.find((e) => e.boss && !e.dead && G.U.dist(this.x, this.y, e.x, e.y) < 330);
-    const tg =
-      (ranged ? boss || threat : threat || boss) ||
-      G.Projectiles.nearest(all, this.x, this.y, 520) ||
-      this.aimFallback();
-    this.target = tg;
-    if (tg) this.aim = Math.atan2(tg.y - this.y, tg.x - this.x);
-    else if (this.walking) this.aim = this.moveAngle;
+    const speed = S.move(this, heading, dt);
+    S.aim(this);
 
     // --- animation: look at the target when attacking, otherwise where it walks ---
     const face = this.attackFace > 0 || !this.walking ? this.aim : this.moveAngle;
     this.anim.dir = G.Sprites.dirFromAngle(face);
-    this.anim.loop(this.walking ? 'Walk' : 'Idle', this.walking ? s / 110 : 1);
+    this.anim.loop(this.walking ? 'Walk' : 'Idle', this.walking ? speed / 110 : 1);
   }
 
   /** What this entity aims at (slice 3). A bare Player entity has none; HumanPlayer: the enemy list. Not named foes(): G.MoveSim
@@ -1123,6 +1076,9 @@ G.PlayerEntity = class PlayerEntity {
 
   /** Gets back up (revived by a teammate in co-op). */
   revive(frac = 0.5) {
+    // #91: a run team member's down clock stops (badge revive, Re-Do)
+    const stats = this.dead && this.team && this.team.runStats;
+    if (stats) G.RunStats.revive(stats, this, G.Game.st.time);
     this.clearEffects(); // slice E2b: a revive starts clean
     this.dead = false;
     this.hp = Math.max(1, this.maxHp * frac);
@@ -1162,6 +1118,7 @@ G.PlayerEntity = class PlayerEntity {
 
     const alpha = this.invuln > 0 && !this.dead ? (Math.floor(this.invuln * 18) % 2 ? 0.45 : 1) : 1;
     const lift = this.flyT > 0 ? 22 + Math.sin(performance.now() / 160) * 3 : 0; // Fly: the sprite rises, the shadow stays on the ground
+    G.StatusFx.drawBehind(ctx, this, lift); // the stat-up ring, under the sprite (#78)
     this.anim.draw(
       ctx,
       this.x,
@@ -1192,114 +1149,11 @@ G.PlayerEntity = class PlayerEntity {
       ctx.restore();
     }
 
-    // Buff arcs around the feet.
-    const COL = { atk: '#ff6b4d', spe: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a', spa: '#b99dff', spd: '#6ea4ff' };
-    let i = 0;
-    for (const k of G.Stages.teamKeys(this.stgTeam)) {
-      // legacy keys plus team tracker stats (slice 5a)
-      const L = this.stgTeam[k] || [];
-      if (!COL[k] || !G.Stages.teamLive(this.stgTeam, k)) continue; // berry keys (guard_*, pct_*, crit, drop) show in the HUD chips, not as feet arcs
-      const frac = k === 'regen' ? Math.min(1, L.length / 4) : Math.min(1, G.Stages.teamSum(this.stgTeam, k) / 6);
-      ctx.save();
-      ctx.globalAlpha = 0.6;
-      ctx.strokeStyle = COL[k];
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(this.x, this.y, this.r * 1.8 + i * 5, (this.r * 1.8 + i * 5) * 0.42, 0, 0, 6.2832 * frac);
-      ctx.stroke();
-      ctx.restore();
-      i++;
-    }
+    // Team raises show as the #78 stat-up effect below and as chips (#76); regen as the REG chip only (#80, Jess
+    // 2026-11-11). The old feet arcs are retired.
 
-    // Statuses (slice E1): a coloured ring under the feet for the most restrictive one, and a floating zzz while drowsy or asleep.
-    if (!this.dead) {
-      const S = G.Status,
-        cs = this.stMajor
-          ? S.CONTROL[this.stMajor.k]
-          : this.stCnf
-            ? S.CONTROL.confusion
-            : this.stDaze
-              ? S.CONTROL.daze
-              : this.stTrap
-                ? S.CONTROL.trap
-                : this.stDrow
-                  ? S.CONTROL.drowsy
-                  : null;
-      if (cs) {
-        ctx.save();
-        ctx.globalAlpha = 0.55;
-        ctx.strokeStyle = cs.color;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y, this.r * 1.35, this.r * 0.55, 0, 0, 6.2832);
-        ctx.stroke();
-        ctx.restore();
-      }
-      if (this.stDrow || (this.stMajor && this.stMajor.k === 'sleep')) {
-        const t = performance.now() / 1000;
-        ctx.save();
-        ctx.font = '800 9px GameFont,"Segoe UI",sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#cfc6ff';
-        ctx.strokeStyle = 'rgba(0,0,0,.7)';
-        ctx.lineWidth = 2;
-        for (let i = 0; i < 3; i++) {
-          const ph = (t * 0.7 + i / 3) % 1; // three letters rising and fading in turn
-          ctx.globalAlpha = Math.sin(ph * Math.PI);
-          const zx = this.x + 8 + ph * 8,
-            zy = this.y - this.bodyH - 4 - ph * 16;
-          ctx.strokeText('z', zx, zy);
-          ctx.fillText('z', zx, zy);
-        }
-        ctx.restore();
-      }
-    }
-
-    // Status icons above the head (slice E1): a small 3-letter pill per status with a thin timer bar. Drowsy has its zzz instead.
-    if (!this.dead) {
-      const L = G.Status.list(this).filter((x) => x.k !== 'drowsy');
-      const mx = this._stMax || (this._stMax = {});
-      for (const k in mx) if (!L.some((x) => x.k === k)) delete mx[k];
-      if (L.length) {
-        const TAG = {
-          burn: 'BRN',
-          poison: 'PSN',
-          toxic: 'TOX',
-          paralysis: 'PAR',
-          sleep: 'SLP',
-          freeze: 'FRZ',
-          confusion: 'CNF',
-          daze: 'DZE',
-          trap: 'TRP',
-          slow: 'SLW',
-        };
-        ctx.save();
-        ctx.font = '800 7px GameFont,"Segoe UI",sans-serif';
-        ctx.textAlign = 'center';
-        const gap = 2,
-          h = 9,
-          ws = L.map((x) => Math.ceil(ctx.measureText(TAG[x.k] || x.k.slice(0, 3).toUpperCase()).width) + 6);
-        let x = this.x - (ws.reduce((a, b) => a + b, 0) + gap * (L.length - 1)) / 2;
-        const y = this.y - this.bodyH - (this.tag || this.isRival ? 24 : 14); // above the name tag, or a gym leader's HP bar
-        L.forEach((st, i) => {
-          if (st.t != null) mx[st.k] = Math.max(mx[st.k] || 0, st.t);
-          ctx.fillStyle = 'rgba(20,0,6,.82)';
-          ctx.beginPath();
-          ctx.roundRect(x, y, ws[i], h, 3);
-          ctx.fill();
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = st.color;
-          ctx.stroke();
-          ctx.fillStyle = st.color;
-          ctx.fillText(TAG[st.k] || st.k.slice(0, 3).toUpperCase(), x + ws[i] / 2, y + 7);
-          if (st.t != null && mx[st.k] > 0) {
-            ctx.fillRect(x + 1, y + h + 1, (ws[i] - 2) * Math.max(0, Math.min(1, st.t / mx[st.k])), 1.5);
-          }
-          x += ws[i] + gap;
-        });
-        ctx.restore();
-      }
-    }
+    // Statuses and stat changes (#78): looping animations on the sprite, majors on top of minors (G.StatusFx).
+    G.StatusFx.drawFront(ctx, this, lift);
 
     // Co-op: a "reviving" ring and the name above.
     if (this.dead && this.reviveT > 0) {
@@ -1375,6 +1229,9 @@ G.HumanPlayer = class HumanPlayer extends G.PlayerEntity {
 
   aimTargets() {
     return G.EnemyMgr.all();
+  }
+  autoShakeOn() {
+    return !!G.Settings.get('autoShake');
   }
   aimFallback() {
     return G.World.nearestBreakable(this.x, this.y, 200);

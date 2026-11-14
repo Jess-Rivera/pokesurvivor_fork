@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Status Engine - Shape Map</title>
+</head>
+<body>
+<main>
+<h1>Status Engine: shape map <span class="tag">js/systems/status.js</span> <span class="tag">feature/gym-leader-ai</span> <span class="pill info">Reading aid, 2026-11-14</span></h1>
+<p class="lede">What G.Status owns, what it reads from the host, who calls it, and the order things happen. No code changes. status.js wins wherever this differs.</p>
+<style>
+  /* Standalone page (opened from file://): theme tokens are set here because the app does not inject them. */
+  :root {
+    color-scheme: dark;
+    --color-bg: #121218; --color-bg-secondary: #1b1b23; --color-surface: #23232d; --color-surface-hover: #2b2b37;
+    --color-border: rgba(255,255,255,0.13); --color-border-light: rgba(255,255,255,0.07);
+    --color-text: #ececf1; --color-text-secondary: #b0b0bc; --color-text-muted: #7a7a86;
+    --color-primary: #c084fc; --color-primary-bg: rgba(168,85,247,0.16); --color-primary-border: rgba(192,132,252,0.45);
+    --color-success-bg: rgba(34,197,94,0.14); --color-success-border: rgba(74,222,128,0.4); --color-success-dark: #4ade80;
+    --color-warning-bg: rgba(245,158,11,0.14); --color-warning-border: rgba(251,191,36,0.45); --color-warning-text: #fbbf24;
+    --color-info-bg: rgba(59,130,246,0.16); --color-info-border: rgba(96,165,250,0.45); --color-info-text: #93c5fd;
+    --color-error-bg: rgba(239,68,68,0.14); --color-error-border: rgba(248,113,113,0.45); --color-error-dark: #f87171;
+    --font-sans: 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    --radius-sm: 6px; --radius-md: 10px; --radius-pill: 17px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.45);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 28px 40px; background: var(--color-bg); color: var(--color-text);
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.55; }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; font-weight: 650; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  h2 { font-size: 17px; margin: 0 0 10px; font-weight: 650; }
+  h3 { font-size: 13px; margin: 14px 0 6px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .lede { color: var(--color-text-secondary); margin: 0 0 18px; }
+  .pill { font-size: 12px; font-weight: 600; border-radius: var(--radius-pill); padding: 2px 10px; border: 1px solid; white-space: nowrap; }
+  .ok { background: var(--color-success-bg); border-color: var(--color-success-border); color: var(--color-success-dark); }
+  .wait { background: var(--color-warning-bg); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .info { background: var(--color-info-bg); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .no { background: var(--color-error-bg); border-color: var(--color-error-border); color: var(--color-error-dark); }
+  .pri { background: var(--color-primary-bg); border-color: var(--color-primary-border); color: var(--color-primary); }
+  .tag { font-family: var(--font-mono); font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-pill); padding: 1px 8px; color: var(--color-text-secondary); font-weight: 500; }
+  code { font-family: var(--font-mono); font-size: 13px; background: var(--color-surface); padding: 1px 5px; border-radius: 4px; }
+  .card { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .tile { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md); padding: 12px 14px; }
+  .tile .v { font-family: var(--font-mono); font-size: 26px; font-weight: 650; }
+  .tile .l { font-size: 12px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .tile .s { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } .tiles { grid-template-columns: 1fr 1fr; } }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--color-text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+  td.n { font-family: var(--font-mono); white-space: nowrap; font-size: 13px; }
+  td.f { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); }
+  td.c { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
+  tr:hover td { background: var(--color-surface-hover); }
+  tr.grp td { background: var(--color-surface); color: var(--color-text-muted); font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; padding: 5px 10px; }
+  .bar { display: inline-block; height: 8px; border-radius: 4px; background: var(--color-primary); vertical-align: middle; margin-left: 6px; opacity: 0.8; }
+  /* decision ladder */
+  .ladder { display: flex; flex-direction: column; gap: 0; }
+  .step { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; background: var(--color-surface);
+    border: 1px solid var(--color-border-light); border-radius: var(--radius-sm); padding: 9px 12px; }
+  .step .k { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-muted); }
+  .step .q { font-size: 14px; }
+  .step .q small { display: block; color: var(--color-text-muted); font-size: 12px; margin-top: 1px; }
+  .step .r { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .down { text-align: center; color: var(--color-text-muted); font-size: 12px; line-height: 16px; height: 16px; }
+  .step.present { border-left: 3px solid #f472b6; }
+  .step.dmg { border-left: 3px solid #f87171; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--color-text-secondary); margin-top: 10px; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  ul { margin: 6px 0 0; padding-left: 20px; } li { margin: 4px 0; }
+  .muted { color: var(--color-text-muted); font-size: 13px; }
+</style>
+
+<div class="tiles">
+  <div class="tile"><div class="l">Size</div><div class="v">517</div><div class="s">lines, 31 exports</div></div>
+  <div class="tile"><div class="l">Callers</div><div class="v">82</div><div class="s">call sites in 19 files</div></div>
+  <div class="tile"><div class="l">Owns on the host</div><div class="v">10</div><div class="s">fields it creates and clears</div></div>
+  <div class="tile"><div class="l">Reads from the host</div><div class="v">17</div><div class="s">fields set somewhere else, plus 3 methods</div></div>
+</div>
+
+<!-- ============ 1. THE HOST ============ -->
+<div class="card">
+  <h2>1. The host: the shape nobody declares</h2>
+  <p class="muted">Every G.Status function takes <code>h</code>. Nothing in status.js lists what <code>h</code> must have; this is it.</p>
+  <div class="grid2">
+    <div>
+      <h3>Reads (set somewhere else)</h3>
+      <table>
+        <tr><th>Field</th><th>Set by</th><th>Used for</th></tr>
+        <tr><td class="n">isPlayer</td><td class="f">player.js:114</td><td>you or a leader's mon: full timers, Shake off, trap = swap lock</td></tr>
+        <tr><td class="n">boss, strongStatus, gym</td><td class="f">enemy.js, elite.js</td><td><code>strong()</code>: 25% CC, 10 s window</td></tr>
+        <tr><td class="n">leaderStatus</td><td class="f">gym-leader.js:50</td><td>turns <code>strong()</code> off for leaders</td></tr>
+        <tr><td class="n">statusCut, ccWindow</td><td class="f">gym-leader.js:64, 69</td><td>authored per gym (gyms.js)</td></tr>
+        <tr><td class="n">types / mon.types</td><td class="f">enemy.js / the copy</td><td>immunities</td></tr>
+        <tr><td class="n">burn, poison</td><td class="f">enemy.js (slice A)</td><td><code>majorKind()</code> on wild mons</td></tr>
+        <tr><td class="n">dead, maxHp</td><td class="f">the host</td><td>skip / DoT size</td></tr>
+        <tr><td class="n">x, y, bodyH</td><td class="f">the host</td><td>where the floating word goes</td></tr>
+        <tr><td class="n">anim</td><td class="f">sprites.js Animator</td><td>writes <code>anim.frozen</code></td></tr>
+        <tr><td class="n">takeDot / dot / statusDot</td><td class="f">player.js:606, enemy.js:278</td><td>DoT damage, tried in that order</td></tr>
+      </table>
+      <h3>Globals it reaches</h3>
+      <span class="tag">G.Enemies.STATUS</span> <span class="tag">G.Grounds.berryGuard</span> <span class="tag">G.U.rand</span> <span class="tag">G.FX.dmgText</span> <span class="tag">G.Stages.remaining</span>
+    </div>
+    <div>
+      <h3>Writes (owned here, null until used)</h3>
+      <table>
+        <tr><th>Field</th><th>Shape</th><th>Lifetime</th></tr>
+        <tr><td class="n">stMajor</td><td class="f">{ k, t, age }</td><td>paralysis, freeze, sleep</td></tr>
+        <tr><td class="n">stDot</td><td class="f">{ k, left, tick, n, mul }</td><td>Player entities only: burn, poison, toxic</td></tr>
+        <tr><td class="n">stCnf</td><td class="f">{ t, wa, wt }</td><td>confusion + wander angle</td></tr>
+        <tr><td class="n">stTrap</td><td class="f">{ t }</td><td>root (others) or swap lock (players)</td></tr>
+        <tr><td class="n">stDaze</td><td class="f">{ t, a, ta, wt }</td><td>heading jitter</td></tr>
+        <tr><td class="n">stDrow</td><td class="f">{ t }</td><td>sleep chance x1.5</td></tr>
+        <tr><td class="n">stWin</td><td class="f">{ freeze, sleep, trap, hard }</td><td>no-reapply windows; keys appear and vanish</td></tr>
+        <tr><td class="n">shakeCd</td><td class="f">number</td><td>12 taps/s cap</td></tr>
+        <tr><td class="n">autoShakeT</td><td class="f">number</td><td>3 taps/s auto-shake</td></tr>
+        <tr><td class="n">immCd</td><td class="f">number</td><td>Immune note gap, 0.5 s</td></tr>
+      </table>
+      <p class="muted" style="margin-top:8px">One major at a time is split across three places: <code>stMajor</code>, <code>stDot</code>, and the host's own <code>burn</code>/<code>poison</code>. <code>majorKind()</code> checks all three.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. WHO CALLS WHAT ============ -->
+<div class="card">
+  <h2>2. Who calls what</h2>
+  <table>
+    <tr><th>Export</th><th style="text-align:right">Sites</th><th>From</th><th>Kind</th></tr>
+    <tr class="grp"><td colspan="4">Putting a status on</td></tr>
+    <tr><td class="n">apply</td><td class="c">7<span class="bar" style="width:28px"></span></td><td class="f">move-effects (2), player (2), enemy, gym-leader, debug</td><td><span class="pill ok">sim</span> <span class="pill pri">+ words</span></td></tr>
+    <tr><td class="n">applyDot</td><td class="c">5<span class="bar" style="width:20px"></span></td><td class="f">gym-leader (2), player, move-effects, debug</td><td><span class="pill ok">sim</span> <span class="pill pri">+ words</span></td></tr>
+    <tr><td class="n">onHit</td><td class="c">3<span class="bar" style="width:12px"></span></td><td class="f">move-effects (3)</td><td><span class="pill ok">sim</span></td></tr>
+    <tr><td class="n">blocked, majorKind</td><td class="c">6<span class="bar" style="width:24px"></span></td><td class="f">enemy (2), boss-ai (2), leader-belief, move-effects</td><td><span class="pill ok">sim</span></td></tr>
+    <tr class="grp"><td colspan="4">Every frame</td></tr>
+    <tr><td class="n">tick</td><td class="c">3<span class="bar" style="width:12px"></span></td><td class="f">enemy:579, player:887, player-sim-pass:31</td><td><span class="pill ok">sim</span> <span class="pill pri">+ anim</span></td></tr>
+    <tr><td class="n">shake, autoShake</td><td class="c">3<span class="bar" style="width:12px"></span></td><td class="f">player (2), hud</td><td><span class="pill ok">sim</span></td></tr>
+    <tr class="grp"><td colspan="4">Asked by movement, casting and AI</td></tr>
+    <tr><td class="n">stunned</td><td class="c">17<span class="bar" style="width:68px"></span></td><td class="f">player (5), enemy (3), move-sim (3), gym-leader (2), player-sim-pass, leader-ai, combat, move-render</td><td><span class="pill ok">sim</span></td></tr>
+    <tr><td class="n">rooted</td><td class="c">4<span class="bar" style="width:16px"></span></td><td class="f">enemy (3), leader-ai</td><td><span class="pill ok">sim</span></td></tr>
+    <tr><td class="n">fizzle</td><td class="c">3<span class="bar" style="width:12px"></span></td><td class="f">enemy, combat, move-sim</td><td><span class="pill ok">sim</span> <span class="pill pri">+ words</span></td></tr>
+    <tr><td class="n">speedMul, wander, jitter</td><td class="c">5<span class="bar" style="width:20px"></span></td><td class="f">player (3), enemy (2)</td><td><span class="pill ok">sim</span></td></tr>
+    <tr><td class="n">sleepChance, swapLocked, strong</td><td class="c">3<span class="bar" style="width:12px"></span></td><td class="f">player, team, gym-leader</td><td><span class="pill ok">sim</span></td></tr>
+    <tr><td class="n">clear</td><td class="c">1<span class="bar" style="width:4px"></span></td><td class="f">player:875 only</td><td><span class="pill ok">sim</span></td></tr>
+    <tr class="grp"><td colspan="4">HUD and drawing</td></tr>
+    <tr><td class="n">list</td><td class="c">8<span class="bar" style="width:32px"></span></td><td class="f">hud (3), hud-overlay (2), move-render (2), status-fx</td><td><span class="pill no">present</span></td></tr>
+    <tr><td class="n">shakeable, shakeTarget</td><td class="c">3<span class="bar" style="width:12px"></span></td><td class="f">hud, hud-player-panel (2)</td><td><span class="pill no">present</span></td></tr>
+    <tr><td class="n">tintOf, ailColor</td><td class="c">3<span class="bar" style="width:12px"></span></td><td class="f">player, enemy (2)</td><td><span class="pill no">present</span></td></tr>
+    <tr><td class="n">immuneNote</td><td class="c">2<span class="bar" style="width:8px"></span></td><td class="f">player, move-effects</td><td><span class="pill no">present</span></td></tr>
+    <tr class="grp"><td colspan="4">Constants read elsewhere</td></tr>
+    <tr><td class="n">CONTROL, GRACE, isControl</td><td class="c">6<span class="bar" style="width:24px"></span></td><td class="f">gym-leader (2), debug (2), game.js, enemies.js</td><td><span class="pill info">data</span></td></tr>
+  </table>
+  <p class="muted" style="margin-top:8px">Counts are text matches of <code>G.Status.&lt;name&gt;</code>; one in move-render.js may be a comment.</p>
+</div>
+
+<!-- ============ 3. APPLY LADDER ============ -->
+<div class="card">
+  <h2>3. <code>apply(h, kind, mul, durMul, secs)</code>: the decision ladder</h2>
+  <p class="muted">Top to bottom; the first rule that matches returns.</p>
+  <div class="ladder">
+    <div class="step"><div class="k">1</div><div class="q">Unknown kind, or host fainted?</div><div class="r"><span class="pill wait">'none'</span></div></div>
+    <div class="down">↓</div>
+    <div class="step present"><div class="k">2</div><div class="q">Host's type is immune?<small>paralysis: Electric, freeze: Ice, trap: Ghost. Shows "Immune".</small></div><div class="r"><span class="pill no">'immune'</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">3</div><div class="q">Trap on a non-player (a root)<small>trap window open → window. Already trapped → refresh (strong hosts do not extend). Else root 2 s, cut to 25% on strong hosts.</small></div><div class="r"><span class="pill wait">'window'</span><span class="pill info">'refresh'</span><span class="pill ok">'ok'</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">4</div><div class="q">Player entity, hard CC, grace still open?<small>sleep, freeze, paralysis within 2.5 s (or the leader's ccWindow) of the last one ending</small></div><div class="r"><span class="pill wait">'window'</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">5</div><div class="q">A major (paralysis, freeze, sleep)<small>other major held → blocked. Same one → paralysis extends to the 10 s table time, freeze and sleep never extend. Its window open → window. Player and a berry stored → berry. Else set <code>stMajor</code>, show label.</small></div><div class="r"><span class="pill no">'blocked'</span><span class="pill info">'refresh'</span><span class="pill wait">'window'</span><span class="pill pri">'berry'</span><span class="pill ok">'ok'</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">6</div><div class="q">Confusion<small>new + player + berry → berry. Duration rolled 2 to 8 s (even on refresh). New one rolls a wander angle.</small></div><div class="r"><span class="pill pri">'berry'</span><span class="pill info">'refresh'</span><span class="pill ok">'ok'</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">7</div><div class="q">Daze, then Drowsy<small>table time only (6 s, 8 s); a move's own <code>secs</code> is ignored</small></div><div class="r"><span class="pill info">'refresh'</span><span class="pill ok">'ok'</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">8</div><div class="q">Anything left is trap on a Player entity<small>8 s swap lock, table time only</small></div><div class="r"><span class="pill info">'refresh'</span><span class="pill ok">'ok'</span></div></div>
+  </div>
+  <h3>applyDot (burn, poison, toxic on Player entities)</h3>
+  <div class="ladder">
+    <div class="step"><div class="k">1</div><div class="q">Unknown kind or fainted · immune (burn: Fire, poison: Poison/Steel)</div><div class="r"><span class="pill wait">'none'</span><span class="pill no">'immune'</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">2</div><div class="q">A major of another family holds it<small>poison and toxic are one family</small></div><div class="r"><span class="pill no">'blocked'</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">3</div><div class="q">Already has a DoT<small>poison upgrades to toxic (stacks reset), turns take the max, strength (<code>mul</code>) only goes up</small></div><div class="r"><span class="pill info">'refresh'</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">4</div><div class="q">Player + berry → berry, else new <code>stDot</code><small>no "Burned" word appears here</small></div><div class="r"><span class="pill pri">'berry'</span><span class="pill ok">'ok'</span></div></div>
+  </div>
+</div>
+
+<!-- ============ 4. TICK ============ -->
+<div class="card">
+  <h2>4. <code>tick(h, dt)</code>: order inside one frame</h2>
+  <div class="ladder">
+    <div class="step"><div class="k">1</div><div class="q"><code>stWin</code>: count each window down, delete keys at 0, null when empty</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">2</div><div class="q"><code>stMajor</code>: <code>t</code> down, <code>age</code> up. At 0 → <code>endMajor</code><small>opens a window: freeze 4 s, strong freeze/sleep 10 s. Player entity hard CC → grace 2.5 s (or ccWindow).</small></div><div class="r"><span class="pill wait">opens window</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">3</div><div class="q"><code>stCnf</code>: down; re-roll wander every 0.5 to 1.1 s</div><div class="r"><span class="pill info">random</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">4</div><div class="q"><code>shakeCd</code>, <code>immCd</code> down</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step present"><div class="k">5</div><div class="q"><code>anim.frozen</code> = frozen?</div><div class="r"><span class="pill no">present</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">6</div><div class="q"><code>stTrap</code>: down. At 0 on a strong non-player → trap window 10 s</div><div class="r"><span class="pill wait">opens window</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">7</div><div class="q"><code>stDaze</code>: down; new target angle every 0.2 to 0.4 s; ease toward it</div><div class="r"><span class="pill info">random</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">8</div><div class="q"><code>stDrow</code>: down</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step dmg"><div class="k">9</div><div class="q"><code>stDot</code> (alive only): every 2 s, maxHp × fraction × mul → host's <code>takeDot</code><small>burn 1/16, poison 1/8, toxic n/16 ramping to 15/16. Wild mons' own burn/poison tick in enemy.js, not here.</small></div><div class="r"><span class="pill no">damage</span></div></div>
+  </div>
+  <div class="legend">
+    <span><span class="sw" style="background:#f472b6"></span>presentation inside the sim</span>
+    <span><span class="sw" style="background:#f87171"></span>writes HP (through the host)</span>
+  </div>
+</div>
+
+<!-- ============ 5. SIM VS PRESENT ============ -->
+<div class="grid2">
+  <div class="card">
+    <h2>5. Sim inside this file</h2>
+    <ul>
+      <li>All timers, windows, grace</li>
+      <li>One-major rule, immunities, berry guard</li>
+      <li>DoT ticks into <code>takeDot</code></li>
+      <li>Movement answers: stunned, rooted, speedMul, wander, jitter</li>
+      <li>Fizzle roll, sleep chance, swap lock, Shake off</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Presentation mixed in</h2>
+    <ul>
+      <li><code>text()</code> → <code>G.FX.dmgText</code>: "Immune" (apply, applyDot, immuneNote), labels on a new status, "Fizzled"</li>
+      <li><code>anim.frozen</code> written in <code>tick</code> and <code>clear</code></li>
+      <li>Labels and colors in <code>CONTROL</code>; <code>TINT</code>, <code>tintOf</code>, <code>AIL_COLOR</code>, <code>ailColor</code></li>
+      <li><code>list()</code> builds HUD label text</li>
+    </ul>
+    <p class="muted">Candidates for SimBus events (SIM-PRESENT-BOUNDARY), like gym.js already did.</p>
+  </div>
+</div>
+
+<!-- ============ 6. WORTH CHECKING ============ -->
+<div class="card">
+  <h2>6. Worth checking <span class="pill wait">not verified</span></h2>
+  <table>
+    <tr><th>What</th><th>Why it might matter</th></tr>
+    <tr><td><code>tick</code> is called from player.js:887 and player-sim-pass.js:31</td><td>I didn't check whether any host goes through both in one frame (that would tick it twice)</td></tr>
+    <tr><td>Paralysis refresh ignores a move's own <code>secs</code></td><td>a long-paralysis move refreshes to 10 s, not its own time</td></tr>
+    <tr><td>Daze, drowsy and the player trap ignore <code>secs</code></td><td>confusion and the majors use it; inconsistent</td></tr>
+    <tr><td><code>apply</code>'s <code>mul</code> is never read</td><td>comment says trap uses it; dead argument</td></tr>
+    <tr><td><code>clear</code> also nulls <code>stFl</code> (flinch), owned elsewhere</td><td>hidden coupling to the flinch code</td></tr>
+  </table>
+</div>
+
+</main>
+</body>
+</html>

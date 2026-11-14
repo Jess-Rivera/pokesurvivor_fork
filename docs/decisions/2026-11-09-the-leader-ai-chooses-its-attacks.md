@@ -1,0 +1,5 @@
+## 2026-11-09, The leader's AI chooses its attacks; fixed differences take your baseline (Jess)
+Rules #42 item 10: the move choice (today the utility pick in G.GymLeader.Caster) is the Decider's, so it moves to G.LeaderAI and comes out as slot presses; the Body then decides nothing. The tell (a wind-up before release) stays an authored SimPass difference. Built in #41.
+Rules #41 items 5 and 6, each an authored setting with your rule as its baseline (as firstWait): 5, a status-category hit on a leader no longer divides by the wild neutral 50; 6, a self heal casts whenever due, as yours, and "only while hurt" becomes the AI's choice (being unhurt sharply lowers a self heal's score). The per-fight heal cap stays authored.
+Also: the AI's stun exception to its tell and commitment gate is deleted (2026-11-09-four-roles-decider-controller-body-sim-pass). Scoring stunned-refused actions lower is an optional personality touch for #39, not a fix.
+Canonical: docs/LEADER-AI.md (FRAME, YOUR RULES); COMBAT-RULES "Host model" (LEADER PRINCIPLE)

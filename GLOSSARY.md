@@ -85,6 +85,127 @@ A subclass of the Player entity that fights a gym. Its HP is the player formula 
 
 Rule: docs/COMBAT-RULES.md "Host model", LEADER RULES
 
+The four roles below are every Player entity's frame, in order: the Decider decides, the Controller carries, the Body accepts or refuses, the SimPass resolves. Each is blind to the others' jobs.
+
+**Decider**:
+Whoever decides for a Player entity: you, or a leader's AI. It takes in the screen only (your eyes; the AI's eyes are `G.LeaderInfo`, plus its own HUD as you see yours) and answers commands to the Controller. It decides and enforces no rule; it keeps no stun check of its own.
+
+_Avoid_: mind, brain (GymBrain was a body and a decider in one)
+
+Rule: docs/LEADER-AI.md "FRAME"
+
+**AI player** (also "the AI", of a leader):
+A leader's Decider: the one module that drives every Player-entity leader. Code: `G.LeaderAI`, with what it believes (`G.LeaderBelief`, its only door, #50), what it sees (`G.LeaderInfo`) and remembers (`G.LeaderMemory`). It acts only through the Controller. Not the GymBrain, which it replaces.
+
+Rule: docs/LEADER-AI.md "The AI player"
+
+**Belief** (of a leader):
+What a leader's Decider believes about the fight, derived each time it is read from what `G.LeaderInfo` saw and `G.LeaderMemory` kept: your cooldown windows and readiness, the matchup, danger and opportunity, the rolling windows. It only derives and stores no observation. Code: `G.LeaderBelief` (#50). Not perception (`G.LeaderInfo`) and not memory.
+
+_Avoid_: knowledge, model (the opponent model is one part of it)
+
+Rule: docs/LEADER-AI.md "The Decider (#49)" BELIEF
+
+**Goal** (of a leader):
+One of the nine outcomes a leader's Decider can aim for on a think tick (Endurance, Maintain, Pressure, Setback, Kite, Buff, Bait, Finish, Conserve): a target that is something landed or gained, never a position, with a fixed cost profile. Leaders only weight them. Code: `G.LeaderPlanner.GOALS` (#51). Not a stance (pacing is gone).
+
+Rule: docs/LEADER-AI.md "The Decider (#49)" GOALS
+
+**Plan** and **action** (of a leader):
+A plan is at most 4 actions that reach a goal's target, the cheapest found on the think tick; an action is one of the verbs (Close to reach, Hold at range, Back off, Wait for a window, Use slot, Recover; #52 adds Dash in, Draw your shot, Dodge your shot, Swap) filled in per slot, range or move of yours. The executor in `G.LeaderAI` steers each through the Controller. Code: `G.LeaderPlanner` (#51).
+
+_Avoid_: script, routine (nothing is scripted: every plan comes out of scores)
+
+Rule: docs/LEADER-AI.md "The Decider (#49)" PLANS, ACTIONS
+
+**Cooldown window** (of a leader):
+The span of seconds in which a leader believes one of your moves comes back, per revealed move: opened on its base cooldown, narrowed by each clean gap (two casts with the slot kept active), never narrower than the minimum width. Readiness ramps across it. Measured in your mon's field time, so a benched mon's clock waits as its cooldowns do.
+
+Rule: docs/LEADER-AI.md "The Decider (#49)" COOLDOWN WINDOW
+
+**Controller**:
+Your hands, or the AI's `controller`: the only channel from the Decider to the Body. It carries the Decider's answers as requests through the seven calls (heading, dodge, shake, swap mon, swap direction, slot keys, cycle) and decides and filters nothing. Yours is `G.HumanPlayer.KEYBOARD`.
+
+_Avoid_: hands as a separate term (it is the Controller)
+
+Rule: docs/LEADER-AI.md "FRAME", "YOUR CONTROLS ONLY"
+
+**Body**:
+The mon a Player entity fields: what you can hit and kill. It holds the state (HP, stats, statuses, stages, slots, dodges, locks) and checks each request against its acceptance rules (statuses, locks, authored "allowed to do" restrictions); what it accepts goes to the SimPass, and a refusal passes nothing on. It decides nothing and changes no state itself. Yours is `G.HumanPlayer`; a leader's is `G.GymLeader`. Its checks, on every Player entity: `acceptHeading`, `acceptDodge`, `acceptsCast` (a stun refuses a new cast); a leader adds `acceptsAttack` (#43 step A).
+
+_Avoid_: brain
+
+Rule: docs/LEADER-AI.md "FRAME"
+
+**SimPass**:
+The last step of a Player entity's frame: it resolves what the Body accepted and everything nobody asked for (move timers, damage and heal over time, commitments, due casts, other entities' hits), updating the game state. It never asks why. Authored "how it plays out" differences (a tell before release, the enrage) live here. Every Player entity's movement step is `G.PlayerEntity.SimPass` (timers, statuses, over-time effects, the dodge's travel, walking, ice, pushes, flinch recoil, liquid terrain, the target pick), run inside its update (#43). The casts: yours `G.MoveRoute.tick`; a leader's `G.GymLeader.SimPass`, which runs `G.MoveSim.turn` at the end of its own frame.
+
+_Avoid_: sim (alone)
+
+Rule: docs/LEADER-AI.md "FRAME"
+
+**Authoring layers**:
+Where a Player entity's differences from you come from, in order: the Player parent (your rules), then its class's authoring (every World Boss is a raid fight), then its instance's (a gym, "Gyarados, World Boss"). A layer with no authoring falls through to the one above. Class authoring is one declared list per class, never checks scattered in code.
+
+Rule: docs/COMBAT-RULES.md "Host model", LEADER PRINCIPLE
+
+**Reveal**:
+The moment a leader learns something about one of your mons from the screen: a move when it is cast, a bond when its moves fire together, a held item when its effect shows. Cards and stats are never revealed.
+
+Rule: docs/LEADER-AI.md "What it can see"
+
+**Run memory**:
+What a leader remembers of its own fights for the rest of the run: your reveals and behavior counts. In memory only, never saved.
+
+Rule: docs/LEADER-AI.md "Run memory and behavior tracking"
+
+**Pattern**:
+A habit of yours the leader has counted (for example, swapping out under 30% HP). It is believed once it has enough observations (`learnRate`) and exploited at most the prediction cap's share of the time.
+
+Rule: docs/LEADER-AI.md "Run memory and behavior tracking", "Fairness"
+
+**Prediction cap**:
+The most often a leader acts on a believed pattern (default about 70%, authorable to about 95%), so a prediction is never certain.
+
+Rule: docs/LEADER-AI.md "Fairness"
+
+**Reflex delay / think interval**:
+The two reaction limits of the AI player: the reflex delay before it responds to anything it sees (dodging, aiming), and the think interval between slot and swap choices.
+
+Rule: docs/LEADER-AI.md "Fairness"
+
+**Confidence**:
+A leader's runtime value, moved by fight events, that shifts its style settings toward caution or aggression. It never changes damage or HP.
+
+Rule: docs/LEADER-AI.md "Authoring a leader"
+
+**Trigger / line**:
+A trigger is an authored condition and action on a leader (an HP line, a faint, fight start) that acts through your controls. A line is a short English text the leader says on screen at a trigger or a large confidence swing.
+
+Rule: docs/LEADER-AI.md "Authoring a leader"
+
+**Goal / plan / plan action**:
+The planner's three terms inside a leader's Decider. A goal is one of nine fixed in code (Endurance, Maintain, Pressure, Setback, Kite, Buff, Bait, Finish, Conserve), with an outcome target (something landed or gained), a value and a cost profile. A plan is up to 4 plan actions that reach a goal. A plan action is a tactical verb (close to a slot's reach, hold at range, activate a slot, swap to a mon, dash in, back off) with preconditions, expected effects and a cost in HP traded; it answers the Controller every frame.
+
+_Avoid_: "action" alone (moves and the Controller also act); manager (superseded)
+
+Rule: docs/LEADER-AI.md "The Decider (#49)"
+
+**Signature action**:
+A plan action one leader adds to its own pool, built only from the existing preconditions, effects and verbs with its own numbers. Authored data, never a new code path.
+
+Rule: docs/LEADER-AI.md "The Decider (#49)"
+
+**Sharpness / style**:
+The two kinds of leader setting. Sharpness is how well it learns and judges (`misjudge`, `memoryUse`, `reflex`, `dodgeRead`) and grows with the loop: a per-leader base plus a per-loop growth. Style is how it likes to play (goal weights, cost multipliers, `range`, `swapWill`, `risk`) and stays flat per leader.
+
+Rule: docs/LEADER-AI.md "The Decider (#49)"
+
+**Misjudgment** (`misjudge`):
+A sharpness setting: seeded noise on each candidate plan's cost, drawn per think tick, so a leader sometimes thinks a bad plan is good. Not `randomness`, which picks a worse goal on purpose.
+
+Rule: docs/LEADER-AI.md "The Decider (#49)"
+
 ### Damage and stats
 
 **Orthogonal dials**:
@@ -171,7 +292,7 @@ How many enemies an instance passes through before it ends; UNLIMITED never ends
 The area multiplier (`moveRadiusMul`) applied to radii, arcs, beam length and orbit radius.
 
 **cast gate**:
-The check that holds a cast until a target is in reach (retries every 0.05 s). Not the stage Gate.
+The check that holds a cast until a target is in reach (retries every 0.05 s). Not the stage Gate. A leader's attacks wait on it too, as yours (2026-11-09-42-leader-attacks-wait-on-your-cast-gate; built in #47a: the tell starts when the gate would let the move fire, G.MoveSim.gateOpen).
 
 **maxStacks**:
 RETIRED 2026-10-30 by the stat stage model; on the new path until slice 5, the live applications one self-buff move may keep on its host.

@@ -41,12 +41,68 @@ G.Gyms = (() => {
     'hpMult',
     'restrictions',
     'runItems',
+    'ai',
   ];
+  // LEADER-AI "Authoring a leader" (slice 2, #31): `ai` is the AI player's settings on a switched gym, each a number from 0 or keyed by
+  // loop; a setting not authored takes the baseline in code (G.LeaderAI.BASE). The keys built so far:
+  const AI_KEYS = [
+    'think',
+    'reflex',
+    'threatWindow',
+    'dodgeRead',
+    'dodgeReserve',
+    'minField',
+    'swapLimit',
+    // #52 (#49 slice 3): the swap choice's stay, margin, cc, low HP and matchup keys and gapClose are gone. swapWill: x the swap cost
+    'swapWill',
+    'randomness',
+    // slice 3 (#32): style, confidence and pacing
+    'aggression',
+    'confStart',
+    'confSwing',
+    'confMin',
+    'confMax',
+    'lean',
+    // slice 4 (#33): run memory. learnRate: sightings before a pattern is believed; predictCap: acts per 10 chances (0 to 10)
+    'learnRate',
+    'predictCap',
+    // #51 (#49 slice 2): the planner's. range (px), aimError (px), risk and stubbornness (multipliers)
+    'range',
+    'aimError',
+    'risk',
+    'stubbornness',
+    // #53 (#49 slice 4): misjudge, 0 to 1 (noise on each plan's cost). `intelligence` has its own shape (a number,
+    // or { base, growth }) and its own check in validate(), so it is not a key here
+    'misjudge',
+  ];
+  const AI_UNIT = ['aggression', 'confStart', 'confMin', 'confMax', 'randomness', 'misjudge']; // 0 to 1
+  // ai keys with their own shape and their own check (39a: goalWeights and tagMultipliers, personalityTableProblems)
+  const AI_OWN_SHAPE = ['intelligence', 'goalWeights', 'tagMultipliers', 'triggers', 'lines'];
+  // 39a (#39): the Decider's personality tables, each { name: number } within its limits (TUNE, decision P3)
+  const PERSONALITY_LIMITS = Object.freeze({ goalWeights: { min: 0, max: 3 }, tagMultipliers: { min: 0.25, max: 4 } });
+  // slice 3: ai.triggers (LEADER-AI TRIGGERS) and ai.lines (up and down, on a big confidence swing). A trigger is { on, ... }:
+  // 'start'; 'hp' with `below` (its own HP fraction); 'faint' with `side` ('yours' or 'own'); 'sendIn' (you send in a mon); 'time'
+  // with `at` seconds; slice 4: 'exploit' (it starts acting on a pattern it believes: your usual lead). Then any of: line, set
+  // ({ setting: value }) with optional `for` seconds, and `repeat` (true: every time, every `at` s for time). #51: a forced `slot` or
+  // `swap` is refused (the planner decides slots, decision 2026-11-09-51-opening-stance-traces-and-set-trigger).
+  const TRIGGER_ON = ['start', 'hp', 'faint', 'sendIn', 'time', 'exploit'];
+  const TRIGGER_KEYS = ['on', 'below', 'side', 'at', 'repeat', 'line', 'slot', 'swap', 'set', 'for'];
   // Entity model slice 5: `playerEntity` true makes the gym's leader a G.GymLeader; `hpMult` then multiplies the player HP formula, keyed by
   // loop (a loop with no entry keeps the last earlier one). `restrictions` starts small: default allow, each key turns one thing down.
   // Slice 6 (Q1 to Q3): enrage (off unless true on a switched gym), statusCut, ccWindow, autoShake (on unless false), hitIframes.
-  // With none authored a switched leader follows your rule.
-  const RESTRICTION_KEYS = ['tells', 'healLimit', 'enrage', 'statusCut', 'ccWindow', 'autoShake', 'hitIframes'];
+  // With none authored a switched leader follows your rule. #40: firstWait, seconds before the first attack (0 when absent, as yours).
+  // #41: wildStatusDivisor, true divides a status-category hit on the leader by the wild neutral 50 (off when absent, as yours).
+  const RESTRICTION_KEYS = [
+    'tells',
+    'healLimit',
+    'enrage',
+    'statusCut',
+    'ccWindow',
+    'autoShake',
+    'hitIframes',
+    'firstWait',
+    'wildStatusDivisor',
+  ];
   const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'sets', 'ivs', 'evs', 'nature', 'item'];
   // bond (slice 8, Q5): the marked lines of a set share one slot on a Player-entity leader and fire together
   const MOVE_KEYS = ['id', 'hpBelow', 'bond'];
@@ -71,7 +127,7 @@ G.Gyms = (() => {
    *  hazards behind the mon while it moves, as the player's does: Toxic). Import batch (Jess 2026-11-02): 'delayed' (your spot, locked
    *  at the cast, hit when the move's delay ends: Future Sight). A chain move takes its shape's form; its hops search the
    *  caster's foes (G.MoveSim). Other emitters, delays, persistent moves and caster commitments have no gym form; validate() rejects
-   *  them instead of letting them misfire. Read by the GymBrain too. */
+   *  them instead of letting them misfire. Read by the leader SimPass (G.GymLeader.SimPass) and the GymBrain too. */
   function formOf(d) {
     if (!d) return null;
     const v = d.delivery || {},
@@ -180,9 +236,30 @@ G.Gyms = (() => {
       playerEntity: true,
       hpMult: { 1: 16, 2: 12 },
       restrictions: { hitIframes: 0, autoShake: true, ccWindow: 5, statusCut: 0.5 },
+      // LEADER-AI slice 3 (#32, Jess 2026-11-08): the defensive wall, low aggression (his ceiling stays under the gap-closing line).
+      // Lines are drafts (Jess: ok for now). Half HP: he gets serious, aggression 0.5 for 10 s.
+      // Slice 4 (#33): he keeps the baseline learnRate (3 fights to read your usual lead); the exploit line is a draft.
+      ai: {
+        aggression: 0.35,
+        // 39a (#39, decision 2026-11-14-39-opening-split-and-profile-test): the wall. Patient, mid range,
+        // buffs early, rarely backs off or swaps, a little slow to react, sharper each loop. TUNE (BALANCE.md "Leader AI")
+        goalWeights: { endurance: 1.4, maintain: 1.2, pressure: 0.7, kite: 0.6, buff: 1.5 },
+        tagMultipliers: { retreat: 1.4, buff: 0.8 },
+        range: 150,
+        swapWill: 2,
+        risk: 0.8,
+        stubbornness: 1.5,
+        intelligence: { base: 0.4, growth: 0.08 },
+        triggers: [
+          { on: 'start', line: "Rock holds its ground. Let's see you move it." },
+          { on: 'hp', below: 0.5, line: 'Time to get serious.', set: { aggression: 0.5 }, for: 10 },
+          { on: 'exploit', line: 'Same partner as last time? I came prepared.' },
+        ],
+        lines: { up: "That's what solid defense looks like!", down: "You're chipping through. Not bad." },
+      },
       // Brock's cards gained per loop (Jess 2026-11-05: per leader, cumulative). Loop 1 (Jess 2026-10-31, the pilot): Tackle Power 52, reach 70;
       // Rock Throw Power 58.5, 3 rocks of size 11.7 at 377 px/s; Harden takes none. Loops 2 to 6 gain nothing yet (TUNE).
-      cards: { 1: { damage: 3, count: 2, velocity: 3, area: 2 } },
+      cards: { 1: { damage: 6, count: 2, velocity: 3, area: 2 } }, // damage 6: All Damage Up is +5% since #84, so Brock keeps +30%
       signatures: [
         // power: damage multiplier on the ratio path; tempo: attack-rate multiplier (cooldowns, tell and recovery divided by it). Both TUNE, default 1.
         // Slot 1: Geodude -> Graveler -> Golem (the pilot; hand-tuned).
@@ -251,6 +328,27 @@ G.Gyms = (() => {
       // Slice 6 (Q1, Q3): her authored differences from your rules, the old fixed leader values (half-length freeze and sleep, a 5 s
       // hard CC gap, auto shake, no hit i-frames). No enrage (Q1): absent means off on a switched gym.
       restrictions: { statusCut: 0.5, ccWindow: 5, autoShake: true, hitIframes: 0 },
+      // LEADER-AI slice 3 (#32, Jess 2026-11-08): hit and run, high aggression (fast mons, status). Lines are drafts (Jess: ok for now).
+      // Slice 4 (#33, Jess 2026-11-08): the sharper reader, learnRate 2 (your usual lead from her third fight); the line is a draft.
+      ai: {
+        aggression: 0.68,
+        learnRate: 2,
+        // 39a (#39): tempo. Kites at Water Pulse range (its reach is about 420 px), pushes when ahead, swaps readily,
+        // reads you fast, sharper each loop (intelligence 1.0 at loop 6). TUNE (BALANCE.md "Leader AI")
+        goalWeights: { endurance: 0.7, pressure: 1.3, kite: 1.5, buff: 0.6 },
+        tagMultipliers: { retreat: 0.8, position: 0.8, approach: 1.2 },
+        range: 260,
+        swapWill: 0.6,
+        risk: 1.1,
+        stubbornness: 0.7,
+        intelligence: { base: 0.6, growth: 0.08 },
+        triggers: [
+          { on: 'start', line: 'Think you can keep your head above water?' },
+          { on: 'hp', below: 0.5, line: "Okay, now I'm annoyed!" },
+          { on: 'exploit', line: "I know who you lean on. Let's see them handle this!" },
+        ],
+        lines: { up: 'Go with the flow, or get swept away!', down: 'Hmph. Lucky shot.' },
+      },
       // Misty's cards (Jess 2026-11-05): a special and status gym. Loop 1 (about level 12 to 15 at 8 min): Water Damage 4 and Count 2 and Velocity 3
       // on Water Pulse (96 power, 3 pulses, 40% confusion with Ailment 2), Area 2 on Tackle and Pulse. Zinc 3 (the Vitamins card on Sp. Def,
       // +15%) since slice 6 (D2, Jess 2026-11-07). 16 stacks in all.
@@ -807,6 +905,18 @@ G.Gyms = (() => {
   }
 
   const unknownKeys = (o, allowed) => Object.keys(o).filter((k) => !allowed.includes(k));
+  /** 39a: the problems with one personality table (`key` goalWeights or tagMultipliers): an object of numbers within
+   *  PERSONALITY_LIMITS, keyed by known names when `names` is a list (no name check otherwise). Pure. */
+  function personalityTableProblems(table, key, names) {
+    if (table == null) return [];
+    if (typeof table !== 'object' || Array.isArray(table)) return ['ai ' + key + ' is { name: number }'];
+    const { min, max } = PERSONALITY_LIMITS[key],
+      unknown = Array.isArray(names) ? unknownKeys(table, names) : [],
+      problems = unknown.map((name) => 'ai ' + key + ': unknown name ' + name);
+    if (Object.values(table).some((value) => !(typeof value === 'number' && value >= min && value <= max)))
+      problems.push('ai ' + key + ' values are from ' + min + ' to ' + max);
+    return problems;
+  }
   const sigName = (s) => (s && s.line && s.line[0] && G.DEX_BY[s.line[0].dex] ? G.DEX_BY[s.line[0].dex].name : '?');
 
   /** Checks an entry against the catalog; returns a list of problems (empty = valid). */
@@ -893,6 +1003,10 @@ G.Gyms = (() => {
         bad.push((g.leader || '?') + ': tells is true or false');
       if (rules.healLimit != null && !(Number.isInteger(rules.healLimit) && rules.healLimit >= 0))
         bad.push((g.leader || '?') + ': healLimit is a whole number from 0');
+      if (rules.firstWait != null && !(typeof rules.firstWait === 'number' && rules.firstWait >= 0))
+        bad.push((g.leader || '?') + ': firstWait is a number of seconds from 0');
+      if (rules.wildStatusDivisor != null && typeof rules.wildStatusDivisor !== 'boolean')
+        bad.push((g.leader || '?') + ': wildStatusDivisor is true or false');
     }
     // slice 6 (Q1 to Q4): the new restrictions, power on a switched gym, the build keys and the items
     if (rules != null) {
@@ -909,6 +1023,93 @@ G.Gyms = (() => {
           bad.push((g.leader || '?') + ': ' + k + ' is seconds from 0 to 10');
     }
     const loopKey = (k) => Number.isInteger(Number(k)) && Number(k) >= 1 && Number(k) <= LOOPS;
+    if (g.ai != null) {
+      const L = g.leader || '?',
+        num = (v) => typeof v === 'number' && v >= 0,
+        // a setting's values: one number, or each loop's
+        valuesOf = (v) => (v == null ? [] : typeof v === 'object' ? Object.values(v) : [v]);
+      if (!g.playerEntity) bad.push(L + ': ai needs playerEntity (the wild body has no AI player)');
+      for (const k of unknownKeys(g.ai, AI_KEYS.concat(AI_OWN_SHAPE))) bad.push(L + ': unknown ai setting ' + k);
+      for (const k of AI_KEYS) {
+        const v = g.ai[k];
+        if (v == null || num(v)) continue;
+        if (typeof v !== 'object' || Array.isArray(v) || !Object.keys(v).every((n) => loopKey(n) && num(v[n])))
+          bad.push(L + ': ai ' + k + ' is a number from 0, or keyed by loop');
+      }
+      for (const k of AI_UNIT) {
+        const vals = valuesOf(g.ai[k]);
+        if (vals.some((x) => typeof x === 'number' && x > 1)) bad.push(L + ': ai ' + k + ' is from 0 to 1');
+      }
+      // per 10: predictCap acts per 10 chances, dodgeRead reads per 10 threats (#53: the bag meets a fraction exactly)
+      for (const k of ['predictCap', 'dodgeRead']) {
+        const vals = valuesOf(g.ai[k]);
+        if (vals.some((x) => typeof x === 'number' && x > 10)) bad.push(L + ': ai ' + k + ' is from 0 to 10 (per 10)');
+      }
+      // #53: intelligence is a number from 0 to 1, or { base 0 to 1, growth from 0 to the growth limit (D2) }, and
+      // an authored reflex keeps the fairness floor. Both limits live in G.LeaderAI, read when it is loaded (every
+      // harness that authors ai loads it). 39a: a limit is read only when it is a number, since a harness without
+      // the module may stand a placeholder in for G.LeaderAI; that check is skipped there
+      const LA = G.LeaderAI,
+        limitOr = (value, fallback) => (typeof value === 'number' ? value : fallback),
+        growthMax = limitOr(LA && LA.INTELLIGENCE_GROWTH_MAX, Infinity),
+        floor = limitOr(LA && LA.REFLEX_FLOOR_SECONDS, 0),
+        unit = (x) => typeof x === 'number' && x >= 0 && x <= 1,
+        intel = g.ai.intelligence;
+      if (intel != null && !unit(intel)) {
+        const isObject = !!intel && typeof intel === 'object' && !Array.isArray(intel),
+          shaped = isObject && !unknownKeys(intel, ['base', 'growth']).length,
+          baseOk = !shaped || intel.base == null || unit(intel.base),
+          growthOk = !shaped || intel.growth == null || (num(intel.growth) && intel.growth <= growthMax);
+        if (!shaped || !baseOk || !growthOk)
+          bad.push(L + ': ai intelligence is from 0 to 1, or { base 0 to 1, growth 0 to ' + growthMax + ' }');
+      }
+      if (valuesOf(g.ai.reflex).some((x) => typeof x === 'number' && x < floor))
+        bad.push(L + ': ai reflex is at least ' + floor + ' s (the fairness floor)');
+      // 39a: goalWeights and tagMultipliers, flat per leader (not keyed by loop). Their names come from
+      // G.LeaderPlanner, read when it is loaded (every harness that authors ai loads it), as #53's limits come
+      // from G.LeaderAI
+      const LP = G.LeaderPlanner,
+        names = { goalWeights: LP && LP.GOALS, tagMultipliers: LP && LP.TAG_NAMES };
+      for (const key of Object.keys(PERSONALITY_LIMITS))
+        for (const problem of personalityTableProblems(g.ai[key], key, names[key])) bad.push(L + ': ' + problem);
+      const str = (s) => typeof s === 'string' && s.length > 0;
+      const tr = g.ai.triggers;
+      if (tr != null && !Array.isArray(tr)) bad.push(L + ': ai triggers is a list');
+      (Array.isArray(tr) ? tr : []).forEach((t, i) => {
+        const T = L + ': trigger ' + (i + 1);
+        if (!t || typeof t !== 'object') return bad.push(T + ' is an object');
+        for (const k of unknownKeys(t, TRIGGER_KEYS)) bad.push(T + ': unknown key ' + k);
+        if (!TRIGGER_ON.includes(t.on)) bad.push(T + ': unknown trigger on ' + t.on);
+        if (t.on === 'hp' && !(typeof t.below === 'number' && t.below > 0 && t.below < 1))
+          bad.push(T + ': hp needs below in (0, 1)');
+        if (t.on === 'faint' && t.side !== 'yours' && t.side !== 'own')
+          bad.push(T + ": faint needs side 'yours' or 'own'");
+        if (t.on === 'time' && !(typeof t.at === 'number' && t.at > 0))
+          bad.push(T + ': time needs at, seconds above 0');
+        if (t.line != null && !str(t.line)) bad.push(T + ': line is text');
+        for (const k of ['slot', 'swap'])
+          if (t[k] != null)
+            bad.push(T + ': ' + k + ' is gone (#51: a trigger forces no slot or swap; the planner decides)');
+        // #53: intelligence resolves once, at fight start (T1); a set reflex keeps the fairness floor (T2)
+        if (t.set != null)
+          for (const k of Object.keys(t.set)) {
+            if (k === 'intelligence') bad.push(T + ': set intelligence does nothing (it resolves at fight start)');
+            else if (!AI_KEYS.includes(k) || !num(t.set[k]))
+              bad.push(T + ': set ' + k + ' is a known setting with a number from 0');
+            else if (k === 'reflex' && t.set[k] < floor) bad.push(T + ': set reflex is at least ' + floor + ' s');
+          }
+        if (t.for != null && !(typeof t.for === 'number' && t.for > 0)) bad.push(T + ': for is seconds above 0');
+        if (t.line == null && t.set == null) bad.push(T + ' does nothing');
+      });
+      const ln = g.ai.lines;
+      if (ln != null) {
+        if (typeof ln !== 'object' || Array.isArray(ln)) bad.push(L + ': ai lines is { up, down }');
+        else {
+          for (const k of unknownKeys(ln, ['up', 'down'])) bad.push(L + ': unknown ai line ' + k);
+          for (const k of ['up', 'down']) if (ln[k] != null && !str(ln[k])) bad.push(L + ': ai line ' + k + ' is text');
+        }
+      }
+    }
     const itemBan = (id, tier, L) => {
       const it = G.Items && G.Items.BY ? G.Items.BY[id] : null;
       if (!it) return L + ': unknown item ' + id;

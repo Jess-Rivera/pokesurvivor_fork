@@ -1,0 +1,192 @@
+GYM LEADER AI - REFRESHER MAP  (Quick, 2026-11-13; branch feature/gym-leader-ai)
+Spec: docs/LEADER-AI.md (wins over every older leader-AI text). Branch rules: docs/branch-rules/feature-gym-leader-ai.md.
+Read-only summary: nothing here is a new rule.
+
+=====================================================================================
+1. WHERE THE BRANCH SITS
+=====================================================================================
+
+  main
+   |
+   +-- feature/gym-leader-ai  <- the main line until it merges (leader AI work lives here)
+         |
+         +-- feature/leader-roster-ui     merged back (#35)
+         +-- feature/pause-menu-rework    merged back today (#82, 78d69120)
+         (rule: side features branch off HERE and merge back HERE; main gets it all at the end)
+
+  WHO IS ON THE NEW AI:  Misty, Brock (Player-entity leaders, G.LeaderAI)
+  WHO IS NOT:            gyms 3 to 8 keep the old G.Boss.GymBrain until they switch (not this branch)
+
+=====================================================================================
+2. THE BIG IDEA: A LEADER IS A PLAYER, DRIVEN BY AN AI THROUGH YOUR CONTROLS
+=====================================================================================
+
+  you:     keyboard  --+                              +--> same 7 calls (G.PlayerEntity.IDLE):
+                       +--> Controller --> Body ...   |    axis  dodge  shake  swapSlot  swapDir  slots  cycles
+  leader:  G.LeaderAI -+                              |
+                                                      +--> no hidden powers: anything a player can't do is an
+                                                           AUTHORED difference in gyms.js (tells, firstWait, ...)
+
+  It sees only the SCREEN (positions, shots, tells, HP bars, types, statuses, rosters, moves once cast).
+  Never: live cooldown timers, cards, IVs, EVs, nature, exact stats, RNG, your next input.
+
+=====================================================================================
+3. ONE FRAME, FOUR ROLES (yours and the leader's run the same order)  [#40, #41, #43]
+=====================================================================================
+
+  +-----------+     +------------+     +--------------+     +-----------------------------+
+  |  DECIDER  | --> | CONTROLLER | --> |     BODY     | --> |           SIMPASS           |
+  | decides,  |     | carries,   |     | holds state, |     | resolves what was accepted  |
+  | no rules  |     | no filter  |     | accept or    |     | + timers, DoT, commitments, |
+  |           |     |            |     | refuse only  |     |   other entities' hits      |
+  +-----------+     +------------+     +--------------+     +-----------------------------+
+   you: your head    your hands         the mon on field     G.MoveRoute.tick (yours)
+   AI:  G.LeaderAI   AI's controller    G.GymLeader          G.GymLeader.SimPass
+        .think                          acceptsAttack:       the tell (authored), every cast
+                                        stun, flinch hold,   through YOUR cast gate (#47a,
+                                        firstWait            G.MoveSim.gateOpen, 0.05 s retry)
+
+  A refused request passes NOTHING on.  A stun refuses move/dodge/new attack only; slot presses,
+  swaps and timers keep running; a stun mid wind-up cancels it.
+  Order checked step by step: docs/proposals/player-move-trace-harness.js
+
+=====================================================================================
+4. INSIDE THE DECIDER (#49 = "47b", the utility AI)
+=====================================================================================
+
+   the screen
+      |
+      v
+  +---------------+   observations    +---------------+
+  | G.LeaderInfo  | ----------------> | G.LeaderMemory|  run-scoped store, per leader (gym id),
+  | perception:   |                   | (raw counts)  |  per mon of yours: moves, bonds, item,
+  | reveals,      |                   +-------+-------+  swap tags; team: your usual lead.
+  | threats, fight|                           |          Created at startRun, dropped at endRun.
+  | events, rolling windows (2 s, 10 s)       |          NEVER saved.
+  +-------+-------+                           |
+          |                                   v
+          +---------------------------> +--------------+
+                                        | G.LeaderBelief|  #50: derives only. Cooldown WINDOWS
+                                        | (per fight)   |  (learned from clean gaps, memoryUse),
+                                        +-------+------+  readiness, matchup, danger, opportunity,
+                                                |          your extrapolated position (+aimError)
+                                                v
+                                   +-------------------------+
+                                   | G.LeaderPlanner (#51)   |  every think tick (0.25 s):
+                                   | 9 goals x plans of <=4  |  plan for EVERY goal, rank by
+                                   | actions (tree walk)     |  value - cost (+ commitment bonus,
+                                   +------------+------------+  randomness draws from the ranking)
+                                                |
+                                                v
+                                   +-------------------------+       +---------------------------+
+                                   | executor (G.LeaderAI)   | <---- | REFLEX layer              |
+                                   | steering answers every  |       | threats noticed any frame,|
+                                   | frame to the Controller |       | answered `reflex` later,  |
+                                   +-------------------------+       | through the DODGE READ BAG|
+                                                                     | (dodgeRead of 10, seeded) |
+                                                                     +---------------------------+
+  Principle: EMERGENT, not scripted. Every behavior is a score; no forced actions, hold times or caps on top.
+
+=====================================================================================
+5. GOALS (9, fixed in code; leaders only weight them)       ACTIONS (10 verbs, fixed in code)
+=====================================================================================
+
+  goal        target (an outcome)            profile          verb               tag
+  ----------  -----------------------------  ---------------  -----------------  --------
+  Endurance   land a hit                     patient          Close to reach X   approach
+  Maintain    land a hit from `range`        neutral          Hold at range R    position
+  Pressure    land a hit                     rushes           Back off           retreat
+  Setback     land a status / lower a stage  neutral          Dash in (X)        dash
+  Kite        hit from outside your reach    very safe        Wait for a window  wait
+  Buff        gain +1 stage                  safe             Draw your shot M   approach
+  Bait        hit while your best move cools very safe, PARKED Dodge your shot M dodge
+  Finish      KO your active mon             all in           Use slot X         from data
+  Conserve    recover heal / cd / dodge      safest           Swap to mon Y      swap
+                                                              Recover            wait
+  ONE CURRENCY: HP traded, as a fraction of the other side's max HP.
+  cost = damage taken (danger x time, x risk) - damage dealt (opportunity x hit chance) + time, x tag multiplier
+
+=====================================================================================
+6. SETTINGS (G.LeaderAI.BASE, the "default leader")  authored per gym as `ai` in js/data/gyms.js
+=====================================================================================
+
+  reaction   think 0.25 s   reflex 0.15 s   threatWindow 0.6 s   aimError 0
+  dodge      dodgeRead 6 (of 10)   dodgeReserve 0
+  swaps      minField 8 s   swapLimit none   swapWill 1
+  style      aggression 0.5   range 220 px   risk 1   stubbornness 1   lean 45 deg   randomness 0
+  memory     memoryUse 0.5   learnRate 3   predictCap 7 (of 10)
+  confidence confStart 0.5   confSwing 1   confMin 0.2   confMax 0.9
+  NOT YET    misjudge, per-loop sharpness growth (#53); goal weights, tag multipliers, signatures (#39)
+
+  authored today:  Brock  aggression 0.35, triggers (start / half HP / exploit), lines   -> "the wall"
+                   Misty  aggression 0.68, learnRate 2, triggers, lines                  -> "tempo"
+  any setting may already be keyed per loop ({ 1: x, 4: y }, G.Gyms.perLoop)
+
+=====================================================================================
+7. FAIRNESS (smart, not oppressive)
+=====================================================================================
+
+  human limits   reflex delay, think tick, aimError, dodge only after reflex + with a charge
+  prediction cap a believed pattern acts at most predictCap in 10 (default ~70%)  -> you can bait it
+  stall guards   minField before a voluntary swap, swapLimit per fight
+  tells          on by default (authored `tells`)
+  NO RUBBER BAND never touches stats, HP, damage, tempo, cooldowns; confidence changes behavior only
+  deterministic  rates are counters/bags, randomness seeded per fight; harness fixes the seed
+
+=====================================================================================
+8. WHAT IS BUILT  (timeline, all shipped and feel-tested unless noted)
+=====================================================================================
+
+  11-08  #22  slice 1   controls layer + information model (rosters, reveals)
+  11-08  #31  slice 2   swap + dodge decisions, dodge read bag
+  11-08  #32  slice 3   confidence, pacing, triggers + lines, dodge lean
+  11-08  #33  slice 4   run memory, behavior tracking, first exploit (your usual lead)
+  11-08  #34  slice 5a  GymBrain out of Player-entity leaders (behavior-neutral)
+  11-09  #40  frame takes your flow     #41 four roles split     #42 rulings     #43 movement split
+  11-09  #45  strongHost out            #47 (47a) attacks wait on your cast gate
+  11-09  #49  Decider design session  ->  #50 Belief  ->  #51 planner core, executor, overlay
+                                       ->  #52 swap, dash in, draw, dodge
+  11-09  #59  reflex weighs the plan; Bait parked (#60)
+  other: #35 leader roster UI (side branch, merged)
+
+=====================================================================================
+9. WHAT IS LEFT BEFORE THE BRANCH MERGES TO MAIN
+=====================================================================================
+
+     #53  #49 slice 4: misjudge noise + per-loop sharpness plumbing     <- NEXT (3 rulings asked: D1-D3)
+      |
+      v
+     #39  slice 5b: personalities on the Decider (Brock a wall, Misty tempo)   done = your feel test
+      |
+      v
+     #30  re-baseline the 2 red harnesses (gym-harness: Misty pool 13 stacks;
+          leader-stats-harness: Misty Zinc)  ->  check.js "all passed"   = the merge gate
+      |
+      v
+     merge feature/gym-leader-ai -> main;  move lasting rules out of the branch rules file
+
+  any time (not blocking):   #57 circling lowers your hit chance   #58 your shots along the path
+                             #46 explicit sides (leaders off the enemy list)   #48 game.js player rules study
+  parked / blocked:          #60 Bait (no window at 0-2.5 s cooldowns)   #36 held-item reveals
+  open spec question:        bench cooldowns (belief mirrors the live rule until your bench-recharge call)
+  NOT this branch:           gyms 3-8 switching (#20 Sabrina, #21 Koga blocked), regional forms (#9)
+
+=====================================================================================
+10. TESTS AND DEV TOOLS
+=====================================================================================
+
+  docs/proposals/leader-ai-harness.js (2,611 lines) + leader-ai-mutate.js (139 mutants)
+     15j  determinism duel (one seed, one trace)
+     16e  the duels vs your Charmander: Bait (blocked on #60), counter-play (cycling > staying, PASS),
+          learning (fight 3 > fight 1, PASS), sharpness (#53's)
+  leader-cast-gate-harness.js, player-move-trace-harness.js, leader-stats / leader-team / leader-slots /
+  leader-items harnesses each with a -mutate.js
+  RED ON PURPOSE until #30: gym-harness, leader-stats-harness
+
+  ?dev:  G.Debug.leaderAI({ swaps, dodges, confidence, pacing, triggers, memory })
+         G.Debug.leaderMemory()   G.Debug.leaderLead(leader, slot, n)
+         G.Debug.hitbox()  -> overlay: goal, plan steps + costs, top 3 alternatives, your cooldown windows
+
+  FILES:  js/entities/leader-ai.js (Decider, 1,015 lines)   js/entities/gym-leader.js (Body + SimPass)
+          js/systems/leader-info.js   leader-memory.js   leader-belief.js   leader-planner.js
+          js/systems/gym-arena.js (spawn, swap point)   js/data/gyms.js (`ai`, validator)

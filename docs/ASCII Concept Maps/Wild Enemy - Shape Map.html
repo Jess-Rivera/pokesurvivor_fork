@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wild Enemy - Shape Map</title>
+</head>
+<body>
+<main>
+<h1>Wild Enemy: shape map <span class="tag">js/entities/enemy.js</span> <span class="tag">feature/gym-leader-ai</span> <span class="pill info">Reading aid, 2026-11-14</span></h1>
+<p class="lede">What G.WildEntity and G.EnemyMgr hold, the order of one frame, what a hit and a faint do, who calls in, and where the tangles are. No code changes. enemy.js wins wherever this differs.</p>
+<style>
+  /* Standalone page (opened from file://): theme tokens are set here because the app does not inject them. */
+  :root {
+    color-scheme: dark;
+    --color-bg: #121218; --color-bg-secondary: #1b1b23; --color-surface: #23232d; --color-surface-hover: #2b2b37;
+    --color-border: rgba(255,255,255,0.13); --color-border-light: rgba(255,255,255,0.07);
+    --color-text: #ececf1; --color-text-secondary: #b0b0bc; --color-text-muted: #7a7a86;
+    --color-primary: #c084fc; --color-primary-bg: rgba(168,85,247,0.16); --color-primary-border: rgba(192,132,252,0.45);
+    --color-success-bg: rgba(34,197,94,0.14); --color-success-border: rgba(74,222,128,0.4); --color-success-dark: #4ade80;
+    --color-warning-bg: rgba(245,158,11,0.14); --color-warning-border: rgba(251,191,36,0.45); --color-warning-text: #fbbf24;
+    --color-info-bg: rgba(59,130,246,0.16); --color-info-border: rgba(96,165,250,0.45); --color-info-text: #93c5fd;
+    --color-error-bg: rgba(239,68,68,0.14); --color-error-border: rgba(248,113,113,0.45); --color-error-dark: #f87171;
+    --font-sans: 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    --radius-sm: 6px; --radius-md: 10px; --radius-pill: 17px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.45);
+    --c-build: #60a5fa; --c-dmg: #f87171; --c-death: #fb7185; --c-coop: #a78bfa; --c-frame: #fbbf24;
+    --c-beh: #34d399; --c-draw: #f472b6; --c-mgr: #22d3ee; --c-head: #7a7a86;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 28px 40px; background: var(--color-bg); color: var(--color-text);
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.55; }
+  main { max-width: 1120px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; font-weight: 650; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  h2 { font-size: 17px; margin: 0 0 10px; font-weight: 650; }
+  h3 { font-size: 13px; margin: 14px 0 6px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .lede { color: var(--color-text-secondary); margin: 0 0 18px; }
+  .pill { font-size: 12px; font-weight: 600; border-radius: var(--radius-pill); padding: 2px 10px; border: 1px solid; white-space: nowrap; }
+  .ok { background: var(--color-success-bg); border-color: var(--color-success-border); color: var(--color-success-dark); }
+  .wait { background: var(--color-warning-bg); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .info { background: var(--color-info-bg); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .no { background: var(--color-error-bg); border-color: var(--color-error-border); color: var(--color-error-dark); }
+  .pri { background: var(--color-primary-bg); border-color: var(--color-primary-border); color: var(--color-primary); }
+  .tag { font-family: var(--font-mono); font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-pill); padding: 1px 8px; color: var(--color-text-secondary); font-weight: 500; }
+  code { font-family: var(--font-mono); font-size: 13px; background: var(--color-surface); padding: 1px 5px; border-radius: 4px; }
+  .card { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .tile { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md); padding: 12px 14px; }
+  .tile .v { font-family: var(--font-mono); font-size: 26px; font-weight: 650; }
+  .tile .l { font-size: 12px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .tile .s { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } .tiles { grid-template-columns: 1fr 1fr; } }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--color-text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+  td.n { font-family: var(--font-mono); white-space: nowrap; font-size: 13px; }
+  td.f { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); }
+  td.c { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
+  tr:hover td { background: var(--color-surface-hover); }
+  tr.grp td { background: var(--color-surface); color: var(--color-text-muted); font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; padding: 5px 10px; }
+  .bar { display: inline-block; height: 8px; border-radius: 4px; background: var(--color-primary); vertical-align: middle; margin-left: 6px; opacity: 0.8; }
+  /* file strip */
+  .strip { display: flex; height: 46px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--color-border); }
+  .seg { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #121218;
+    white-space: nowrap; overflow: hidden; border-right: 1px solid rgba(0,0,0,0.35); cursor: default; }
+  .seg:hover { filter: brightness(1.15); }
+  .keys { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 12px; color: var(--color-text-secondary); }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  /* ladders */
+  .ladder { display: flex; flex-direction: column; }
+  .step { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; background: var(--color-surface);
+    border: 1px solid var(--color-border-light); border-radius: var(--radius-sm); padding: 8px 12px; }
+  .step .k { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-muted); }
+  .step .q { font-size: 14px; }
+  .step .q small { display: block; color: var(--color-text-muted); font-size: 12px; margin-top: 1px; }
+  .step .r { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .down { text-align: center; color: var(--color-text-muted); font-size: 12px; line-height: 15px; height: 15px; }
+  .step.present { border-left: 3px solid #f472b6; }
+  .step.dmg { border-left: 3px solid #f87171; }
+  .step.coop { border-left: 3px solid #a78bfa; }
+  .step.exit { border-left: 3px solid #fbbf24; }
+  .step.view { border-left: 3px solid #22d3ee; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--color-text-secondary); margin-top: 10px; }
+  .fork { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin: 4px 0 0; }
+  .fork div { background: var(--color-bg); border: 1px solid var(--color-border-light); border-radius: var(--radius-sm);
+    padding: 6px 8px; font-size: 12px; }
+  .fork b { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--color-text); }
+  .fork span { color: var(--color-text-muted); }
+  @media (max-width: 860px) { .fork { grid-template-columns: 1fr 1fr; } }
+  .chips span { display: inline-block; font-family: var(--font-mono); font-size: 12px; background: var(--color-surface);
+    border: 1px solid var(--color-border-light); border-radius: 4px; padding: 1px 6px; margin: 2px 3px 2px 0; color: var(--color-text-secondary); }
+  .chips span.out { border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  ul { margin: 6px 0 0; padding-left: 20px; } li { margin: 4px 0; }
+  .muted { color: var(--color-text-muted); font-size: 13px; }
+  .rank { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--color-text-muted); }
+</style>
+
+<div class="tiles">
+  <div class="tile"><div class="l">Size</div><div class="v">1941</div><div class="s">lines, 2 objects in one file</div></div>
+  <div class="tile"><div class="l">Fields</div><div class="v">~109</div><div class="s">on one wild mon</div></div>
+  <div class="tile"><div class="l">Methods</div><div class="v">61 + 22</div><div class="s">wild mon + manager</div></div>
+  <div class="tile"><div class="l">Calls in</div><div class="v">109</div><div class="s">75 manager, 34 direct, from 17+ files</div></div>
+  <div class="tile"><div class="l">update()</div><div class="v">329</div><div class="s">lines, 9 early exits</div></div>
+</div>
+
+<!-- ============ 1. FILE STRIP ============ -->
+<div class="card">
+  <h2>1. The file, to scale</h2>
+  <div class="strip">
+    <div class="seg" style="flex:33;background:var(--c-head)" title="1-33: helpers, bossScale">·</div>
+    <div class="seg" style="flex:200;background:var(--c-build)" title="34-233: constructor, size, HP, loot, shiny, golden">Build</div>
+    <div class="seg" style="flex:190;background:var(--c-dmg)" title="234-423: hurt, showHurt, dot, burn, poison, flinch, slow">Damage + status</div>
+    <div class="seg" style="flex:57;background:var(--c-death)" title="424-480: die">Die</div>
+    <div class="seg" style="flex:45;background:var(--c-coop)" title="481-525: netUpdate, the co-op copy">Co</div>
+    <div class="seg" style="flex:329;background:var(--c-frame)" title="526-854: update(), one frame">update()</div>
+    <div class="seg" style="flex:646;background:var(--c-beh)" title="855-1500: behavior helpers">Behaviors (8 groups)</div>
+    <div class="seg" style="flex:86;background:var(--c-draw)" title="1501-1586: draw">Draw</div>
+    <div class="seg" style="flex:348;background:var(--c-mgr)" title="1592-1939: G.EnemyMgr">Manager</div>
+  </div>
+  <div class="keys">
+    <span><span class="sw" style="background:var(--c-build)"></span>34-233 build</span>
+    <span><span class="sw" style="background:var(--c-dmg)"></span>234-423 damage + status</span>
+    <span><span class="sw" style="background:var(--c-death)"></span>424-480 die</span>
+    <span><span class="sw" style="background:var(--c-coop)"></span>481-525 co-op copy</span>
+    <span><span class="sw" style="background:var(--c-frame)"></span>526-854 update</span>
+    <span><span class="sw" style="background:var(--c-beh)"></span>855-1500 behaviors</span>
+    <span><span class="sw" style="background:var(--c-draw)"></span>1501-1586 draw</span>
+    <span><span class="sw" style="background:var(--c-mgr)"></span>1592-1939 manager</span>
+  </div>
+  <h3>Inside "Behaviors"</h3>
+  <table>
+    <tr><th>Lines</th><th>Group</th><th>Methods</th></tr>
+    <tr><td class="n">855-941</td><td>Leaving, shots, carriers</td><td class="f">leaveMove keepsDistance shotGap carrierCheck ailKind secAil carrierCast</td></tr>
+    <tr><td class="n">942-1021</td><td>Morale and spacing bands</td><td class="f">hasteNova spreadFear moraleNow bandOf screenDist shotDmg shotLife isSeeker meleeWalker contactMul bandPx</td></tr>
+    <tr><td class="n">1022-1120</td><td>Crowd seekers (shielder, healer)</td><td class="f">seekPick seekMove</td></tr>
+    <tr><td class="n">1121-1251</td><td>Flankers</td><td class="f">flankCheck flankSector flankPick flankStruck flankMove</td></tr>
+    <tr><td class="n">1252-1342</td><td>Attacks</td><td class="f">shoot special</td></tr>
+    <tr><td class="n">1343-1429</td><td>Crowd skills</td><td class="f">healAround castShields summon</td></tr>
+    <tr><td class="n">1430-1500</td><td>Bomber, jumper</td><td class="f">startFuse startJump updateJump strike</td></tr>
+  </table>
+</div>
+
+<!-- ============ 2. ONE FRAME ============ -->
+<div class="card">
+  <h2>2. <code>update(dt, pl)</code>: one frame, top to bottom</h2>
+  <p class="muted">Yellow-edged steps leave the frame early. Movement is picked in step 15; the rest feeds it or finishes it.</p>
+  <div class="ladder">
+    <div class="step present"><div class="k">1</div><div class="q">Animate if on screen · flash and i-frame timers<small>dead → fade out and leave</small></div><div class="r"><span class="pill wait">exit</span><span class="pill no">present</span></div></div>
+    <div class="down">↓</div>
+    <div class="step present"><div class="k">2</div><div class="q">Shiny twinkle (on screen) · contact timer · bob</div><div class="r"><span class="pill no">present</span></div></div>
+    <div class="down">↓</div>
+    <div class="step dmg"><div class="k">3</div><div class="q">Old status ticks: slow timer, burn, poison<small>slice A fields, ticked here, not in G.Status</small></div><div class="r"><span class="pill no">damage</span></div></div>
+    <div class="down">↓</div>
+    <div class="step exit"><div class="k">4</div><div class="q"><code>G.Status.tick</code> · <code>G.Stages.tick</code><small>fainted from a tick → leave</small></div><div class="r"><span class="pill wait">exit</span></div></div>
+    <div class="down">↓</div>
+    <div class="step exit"><div class="k">5</div><div class="q">Leaving for an elite → walk away</div><div class="r"><span class="pill wait">exit</span></div></div>
+    <div class="down">↓</div>
+    <div class="step exit"><div class="k">6</div><div class="q">Frozen or asleep → only knockback slides it, Idle</div><div class="r"><span class="pill wait">exit</span></div></div>
+    <div class="down">↓</div>
+    <div class="step exit"><div class="k">7</div><div class="q">Terrain: liquid hurts or slows<small>fainted in lava → leave</small></div><div class="r"><span class="pill wait">exit</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">8</div><div class="q">Speed = spd × slow × terrain × weather × status × stages</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step view"><div class="k">9</div><div class="q">Heading to you · confusion wander · distance · spacing band<small>band distance is measured in SCREEN units (camera width and height)</small></div><div class="r"><span class="pill info">reads camera</span></div></div>
+    <div class="down">↓</div>
+    <div class="step exit"><div class="k">10</div><div class="q">Thief → zigzag flee</div><div class="r"><span class="pill wait">exit</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">11</div><div class="q">Flanker check · carrier check</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step exit"><div class="k">12</div><div class="q">Personality: shield expiry · jumping → <code>updateJump</code> · bomber fuse or start fuse · shielder/jumper skill timer</div><div class="r"><span class="pill wait">3 exits</span></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">13</div><div class="q">Stuck → side-step · path around obstacles (<code>G.Path</code>)</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">14</div><div class="q">Pick how to move: the first that applies</div><div class="r"></div></div>
+    <div class="fork">
+      <div><b>brain</b><span>boss AI steps it</span></div>
+      <div><b>flanker</b><span>flankMove</span></div>
+      <div><b>seeker</b><span>seekMove</span></div>
+      <div><b>charger</b><span>walk, aim, dash phases</span></div>
+      <div><b>band</b><span>approach, hold, back off; morale decays; shoots here</span></div>
+      <div><b>else</b><span>straight at you</span></div>
+    </div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">15</div><div class="q">Contact gap: melee walkers stop just short of you</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">16</div><div class="q">Flinch replaces the velocity (back, then still)</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step"><div class="k">17</div><div class="q">Integrate: knockback + velocity · world collide · stuck detection</div><div class="r"></div></div>
+    <div class="down">↓</div>
+    <div class="step present"><div class="k">18</div><div class="q">Facing and Walk/Idle animation</div><div class="r"><span class="pill no">present</span></div></div>
+  </div>
+  <div class="legend">
+    <span><span class="sw" style="background:#fbbf24"></span>early exit</span>
+    <span><span class="sw" style="background:#f472b6"></span>presentation inside the sim</span>
+    <span><span class="sw" style="background:#f87171"></span>deals damage</span>
+    <span><span class="sw" style="background:#22d3ee"></span>game logic reading the camera</span>
+  </div>
+</div>
+
+<!-- ============ 3. HURT / DIE ============ -->
+<div class="grid2">
+  <div class="card">
+    <h2>3a. <code>hurt(amount, color, dir, knock, eff)</code></h2>
+    <div class="ladder">
+      <div class="step exit"><div class="k">1</div><div class="q">Dead, no damage, or i-frames → nothing</div><div class="r"><span class="pill wait">exit</span></div></div>
+      <div class="down">↓</div>
+      <div class="step"><div class="k">2</div><div class="q">Gym boss: first hit starts its enrage clock</div><div class="r"></div></div>
+      <div class="down">↓</div>
+      <div class="step coop"><div class="k">3</div><div class="q">Co-op copy → send to host, fake HP, show</div><div class="r"><span class="pill wait">exit</span><span class="pill pri">co-op</span></div></div>
+      <div class="down">↓</div>
+      <div class="step present"><div class="k">4</div><div class="q">Shield absorbs first<small>fully absorbed → blue number</small></div><div class="r"><span class="pill wait">exit</span><span class="pill no">present</span></div></div>
+      <div class="down">↓</div>
+      <div class="step dmg"><div class="k">5</div><div class="q">HP down · morale pain up</div><div class="r"><span class="pill ok">sim</span></div></div>
+      <div class="down">↓</div>
+      <div class="step present"><div class="k">6</div><div class="q"><code>showHurt</code>: number, spark, Hurt anim, hit sound</div><div class="r"><span class="pill no">present</span></div></div>
+      <div class="down">↓</div>
+      <div class="step"><div class="k">7</div><div class="q">Knockback (not bosses, not immovable)</div><div class="r"><span class="pill ok">sim</span></div></div>
+      <div class="down">↓</div>
+      <div class="step coop"><div class="k">8</div><div class="q">Co-op host broadcasts the hit</div><div class="r"><span class="pill pri">co-op</span></div></div>
+      <div class="down">↓</div>
+      <div class="step"><div class="k">9</div><div class="q">HP ≤ 0 → <code>die()</code></div><div class="r"></div></div>
+    </div>
+    <p class="muted" style="margin-top:8px">Entry points that all end here: <code>takeDot</code> → <code>dot</code> → <code>hurt</code>, and <code>takeFlat</code> → <code>hurt</code>.</p>
+  </div>
+  <div class="card">
+    <h2>3b. <code>die()</code></h2>
+    <div class="ladder">
+      <div class="step"><div class="k">1</div><div class="q">Mark dead, start fade</div><div class="r"><span class="pill ok">sim</span></div></div>
+      <div class="down">↓</div>
+      <div class="step"><div class="k">2</div><div class="q">Snowball Badge<small>reaches into <code>G.Game.player</code> and <code>G.Items</code></small></div><div class="r"><span class="pill ok">sim</span></div></div>
+      <div class="down">↓</div>
+      <div class="step"><div class="k">3</div><div class="q">Spread fear to nearby wild mons</div><div class="r"><span class="pill ok">sim</span></div></div>
+      <div class="down">↓</div>
+      <div class="step present"><div class="k">4</div><div class="q">Faint anim · burst · ring</div><div class="r"><span class="pill no">present</span></div></div>
+      <div class="down">↓</div>
+      <div class="step coop"><div class="k">5</div><div class="q">Co-op copy → camera kick, sound, shiny burst<small>the host hands out the loot</small></div><div class="r"><span class="pill wait">exit</span><span class="pill pri">co-op</span></div></div>
+      <div class="down">↓</div>
+      <div class="step"><div class="k">6</div><div class="q">Boss: camera kick + boss drops</div><div class="r"><span class="pill ok">sim</span><span class="pill no">present</span></div></div>
+      <div class="down">↓</div>
+      <div class="step"><div class="k">7</div><div class="q">XP yield<small>reads <code>G.Game.everyone()</code>, <code>G.Spawner.xpBoost()</code></small></div><div class="r"><span class="pill ok">sim</span></div></div>
+      <div class="down">↓</div>
+      <div class="step"><div class="k">8</div><div class="q">Loot · golden drops · thief drops (+ ring)</div><div class="r"><span class="pill ok">sim</span><span class="pill no">present</span></div></div>
+      <div class="down">↓</div>
+      <div class="step present"><div class="k">9</div><div class="q">Faint sound · shiny burst · <code>G.onShinyCaught</code></div><div class="r"><span class="pill no">present</span></div></div>
+    </div>
+    <p class="muted" style="margin-top:8px">The kill itself (counts, silver, progress) is paid later by the manager's <code>payKill</code>, not here.</p>
+  </div>
+</div>
+
+<!-- ============ 4. FIELDS ============ -->
+<div class="card">
+  <h2>4. The ~109 fields, by job</h2>
+  <p class="muted">Each row is roughly one component in <code>docs/rust-ideas/ecs-codebase-map.html</code>. Amber chips are set from OUTSIDE enemy.js.</p>
+  <table>
+    <tr><th style="width:170px">Job</th><th>Fields</th></tr>
+    <tr><td>Identity</td><td class="chips"><span>id</span><span>def</span><span>dex</span><span>name</span><span>cls</span><span>types</span><span>shiny</span><span>golden</span><span>boss</span><span>elite</span><span>gym</span></td></tr>
+    <tr><td>Position, motion</td><td class="chips"><span>x</span><span>y</span><span>dx</span><span>dy</span><span>kx</span><span>ky</span><span>fdx</span><span>fdy</span><span>fsp</span><span>bob</span><span>zig</span><span>side</span><span>sideT</span><span>stuckT</span><span>jump</span><span>jumpLift</span><span>lagT</span><span class="out">leaving</span><span class="out">life</span></td></tr>
+    <tr><td>Body</td><td class="chips"><span>r</span><span>bodyH</span><span>scale</span><span>sc</span><span>flying</span><span>ignoresLiquid</span><span>immovable</span></td></tr>
+    <tr><td>Health</td><td class="chips"><span>hp</span><span>maxHp</span><span>shield</span><span>shieldT</span><span>dead</span><span>fade</span><span class="out">invuln</span></td></tr>
+    <tr><td>Offense</td><td class="chips"><span>dmg</span><span>atkBase</span><span>atkCat</span><span>atkFactor</span><span>atkFactor0</span><span>atkLvl</span><span>atkType</span><span>spaBase</span><span>touchCd</span><span>shotCd</span><span>skillCd</span><span>secCd</span><span>weakCd</span></td></tr>
+    <tr><td>Old status (slice A)</td><td class="chips"><span>burn</span><span>burnBy</span><span>burnLeft</span><span>burnMul</span><span>burnTick</span><span>poison</span><span>poisonBy</span><span>poisonLeft</span><span>poisonMul</span><span>poisonN</span><span>poisonTick</span><span>slow</span><span>slowT</span><span>_ail</span><span>lavaTick</span><span>strongStatus</span><span>koImmune</span></td></tr>
+    <tr><td>New status (G.Status owns)</td><td class="chips"><span>stMajor</span><span>stCnf</span><span>stFl</span><span>stTrap</span><span>stWin</span></td></tr>
+    <tr><td>Behavior, AI</td><td class="chips"><span>behavior</span><span>brain</span><span>phase</span><span>pt</span><span>seekT</span><span>seekTarget</span><span>fl</span><span>flT</span><span>carrier</span><span>carrierOn</span><span>carrierSec</span><span>carrierT</span><span>minions</span><span>pulseT</span></td></tr>
+    <tr><td>Spacing, morale</td><td class="chips"><span>_band</span><span>_bandSrc</span><span>bandK</span><span>bandMode</span><span>bandT</span><span>pain</span><span>fear</span><span>panic</span><span>noMorale</span></td></tr>
+    <tr><td>XP, loot</td><td class="chips"><span>xp</span><span>xpMul</span><span>bx</span></td></tr>
+    <tr><td>Presentation</td><td class="chips"><span>anim</span><span>flash</span><span>sparkT</span><span>barColor</span><span>bigFx</span></td></tr>
+    <tr><td>Co-op</td><td class="chips"><span>lastNetAnim</span><span class="out">remote</span></td></tr>
+  </table>
+</div>
+
+<!-- ============ 5. WHO CALLS IN ============ -->
+<div class="grid2">
+  <div class="card">
+    <h2>5a. Manager API (75 calls)</h2>
+    <table>
+      <tr><th>Call</th><th style="text-align:right">Sites</th><th>From</th></tr>
+      <tr><td class="n">all</td><td class="c">18<span class="bar" style="width:54px"></span></td><td class="f">13 files: game, player, spawner, elites, events, weather, move-sim, hud...</td></tr>
+      <tr><td class="n">add</td><td class="c">14<span class="bar" style="width:42px"></span></td><td class="f">spawner, events, gym-arena, debug</td></tr>
+      <tr><td class="n">queryCircle(Each)</td><td class="c">10<span class="bar" style="width:30px"></span></td><td class="f">combat, events, interact, move-sim, debug</td></tr>
+      <tr><td class="n">count</td><td class="c">7<span class="bar" style="width:21px"></span></td><td class="f">spawner, elites, log</td></tr>
+      <tr><td class="n">get, clear, bossAlive</td><td class="c">12<span class="bar" style="width:36px"></span></td><td class="f">game, gym-arena, coop, events, debug</td></tr>
+      <tr><td class="n">update, rebuildGrid, drawables</td><td class="c">4<span class="bar" style="width:12px"></span></td><td class="f">game.js only</td></tr>
+      <tr><td class="n">stash, restore, replace, payKill, clearRemote</td><td class="c">5<span class="bar" style="width:15px"></span></td><td class="f">gym-arena only</td></tr>
+      <tr><td class="n">addRemote, removeRemote</td><td class="c">3<span class="bar" style="width:9px"></span></td><td class="f">coop (deferred)</td></tr>
+      <tr><td class="n">newId, shinies</td><td class="c">2<span class="bar" style="width:6px"></span></td><td class="f">gym-leader, hud</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h2>5b. Straight onto a wild mon (34 calls)</h2>
+    <table>
+      <tr><th>Call</th><th style="text-align:right">Sites</th><th>From</th></tr>
+      <tr><td class="n">hurt</td><td class="c">6<span class="bar" style="width:36px"></span></td><td class="f">move-effects, combat, player-sim-pass, coop</td></tr>
+      <tr><td class="n">takeFlat</td><td class="c">5<span class="bar" style="width:30px"></span></td><td class="f">move-effects, interact, game</td></tr>
+      <tr><td class="n">applyPoison, applyBurn</td><td class="c">8<span class="bar" style="width:48px"></span></td><td class="f">move-effects, interact, debug, coop</td></tr>
+      <tr><td class="n">applyFlinch, applySlow, applyStatus</td><td class="c">5<span class="bar" style="width:30px"></span></td><td class="f">move-effects, interact, debug, coop</td></tr>
+      <tr><td class="n">makeShiny, makeGolden</td><td class="c">4<span class="bar" style="width:24px"></span></td><td class="f">spawner, events</td></tr>
+      <tr><td class="n">die</td><td class="c">2<span class="bar" style="width:12px"></span></td><td class="f">items, weather</td></tr>
+      <tr><td class="n">contactMul, secAil, flankStruck, cy</td><td class="c">4<span class="bar" style="width:24px"></span></td><td class="f">combat (3), projectile</td></tr>
+    </table>
+    <p class="muted" style="margin-top:8px">Plus direct field writes from outside (hp, x, y, kx, ky, the burn and poison fields, invuln...). I counted by variable name, so that number mixes in player objects; not exact.</p>
+  </div>
+</div>
+
+<!-- ============ 6. TANGLES ============ -->
+<div class="card">
+  <h2>6. Where the spaghetti is</h2>
+  <table>
+    <tr><th style="width:36px">#</th><th>Tangle</th><th>Where</th><th>Untangle by</th></tr>
+    <tr><td class="rank">1</td><td><b>Two status systems in one mon.</b> Burn and poison tick in <code>update()</code> on slice A fields; everything else ticks in <code>G.Status</code>.</td><td class="f">update 551-578, applyBurn, applyPoison</td><td>wild mons on <code>stDot</code> like the player</td></tr>
+    <tr><td class="rank">2</td><td><b>Visuals inside the rules.</b> About 27 G.FX, 35 animator, 16 camera and 6 audio calls spread over 20+ methods.</td><td class="f">hurt, showHurt, die, update, healAround, summon, shoot</td><td><code>hit</code>, <code>die</code>, <code>cast</code> events on SimBus</td></tr>
+    <tr><td class="rank">3</td><td><b>Co-op woven through.</b> 34 <code>G.Coop</code> and 19 <code>remote</code> references; hurt and die each fork for a copy.</td><td class="f">hurt, die, netUpdate, manager add/remove/replace</td><td>one replication layer that reads state (multiplayer phase)</td></tr>
+    <tr><td class="rank">4</td><td><b>One 329-line frame.</b> 9 early exits, then a 6-way movement choice, keyed on 9 behavior strings checked 23 times.</td><td class="f">update 526-854</td><td>split think / move / animate; a behavior table instead of string checks</td></tr>
+    <tr><td class="rank">5</td><td><b>Game logic reads the camera.</b> Spacing bands are measured in screen units, and stragglers teleport based on what is on screen.</td><td class="f">screenDist, bandPx, manager update 1870-1881</td><td>world-unit bands; a "view" value passed in</td></tr>
+    <tr><td class="rank">6</td><td><b>Hitbox from sprite art.</b> Collision radius and body height come from sprite metadata.</td><td class="f">constructor (4 sprite reads)</td><td>a body-size data table (already a TODO)</td></tr>
+    <tr><td class="rank">7</td><td><b>die() reaches out.</b> Pulls the player, every player, items, spawner and a global shiny hook.</td><td class="f">die 429-473</td><td>die emits; listeners pay the snowball, XP and shiny</td></tr>
+    <tr><td class="rank">8</td><td><b>Fields appear from outside.</b> invuln, remote, leaving and life are set by other files and never declared here.</td><td class="f">move-sim, coop, elites, spawner</td><td>declare them in the constructor</td></tr>
+  </table>
+</div>
+
+<!-- ============ 7. WORTH CHECKING ============ -->
+<div class="card">
+  <h2>7. Worth checking <span class="pill wait">not verified</span></h2>
+  <table>
+    <tr><th>What</th><th>Why it might matter</th></tr>
+    <tr><td><code>hurt()</code> line 236 says i-frames let damage over time through, but <code>dot()</code> calls <code>hurt()</code>, which returns while <code>invuln &gt; 0</code></td><td>the comment and the code disagree. Possibly moot if only leaders get i-frames and leaders no longer use this body.</td></tr>
+    <tr><td>Morale <code>pain</code> and <code>fear</code> only decay inside the band movement branch</td><td>a mon without a band keeps whatever pain it collected. Fine if only band mons ever read morale.</td></tr>
+    <tr><td>Band mons shoot from inside the movement branch</td><td>a stunned-then-freed or flinching band mon's shot timing is tied to movement code; easy to break when splitting update()</td></tr>
+    <tr><td>Wild burn/poison (slice A) vs <code>G.Status</code> DoT</td><td>the same numbers in two code paths; a balance change has to be made in both</td></tr>
+  </table>
+</div>
+
+</main>
+</body>
+</html>

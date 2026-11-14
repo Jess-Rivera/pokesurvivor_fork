@@ -112,13 +112,14 @@ in English. Do not add those new English strings to `lang-en.js`.
 - `moves.js` (`G.Moves`) since slice 7b: the learn pools per type, `RETIRED` (retired id to replacement, Bubble and Hail), the starting move per type and a slim slot instance (id, name, type, cd, timer) read from `G.MoveDefs`. It holds no move data; display reads `G.MoveInfo`. The old legacy table is archived at docs/move_rework_holding/legacy-moves.js for the tools.
 - The new move system's data chain (load order): `move-attributes.js` (`G.MoveAttrs`, the grammar and validator rules, docs/MOVE-AXIS-SCHEMA.md), `moves-generated.js` (`G.MoveData`, generated from docs/move_rework_holding/move-conversions-described.json by `tools/export_moves.js`, never hand-edited), `move-overrides.js` (hand-set fields with a `why`), `move-handler.js` (special handlers), `move-resolver.js` (`G.MoveDefs`, the resolved and deep-frozen definitions).
 - `enemies.js` enemy roster and tiers. `starters.js` the 29 starters + personality test.
+- `leader-ai-settings.js` (`G.LeaderSettings`) the leader AI's baseline settings, tuning tables and per-gym `ai` resolution (LEADER-AI "Authoring a leader"); each name is also on `G.LeaderAI`. Loads after gyms.js.
 - `upgrades.js` permanent upgrades. `items.js` equippable run items. `ground-items.js` (`G.Grounds`) items used on touch. `drops.js` (`G.Drops`) every drop chance, one table per source; docs/ITEMS.md is generated from these by tools/items_report.js.
 - `achievements.js`, `missions.js` quests/achievements. `changelog.js` news (bilingual).
 - `types.js` the type chart. `music.js` the song scores. `lang-en.js` the i18n dictionary.
 - `funding.js` support/funding config.
 
 ### `js/entities/`
-- `player.js`, `enemy.js` (`G.WildEntity`, also named `G.Enemy`, plus the `EnemyMgr` manager), `elite.js` (`G.Elite`, a `WildEntity` holding only its mods), `gym-leader.js` (`G.GymLeader`, a `PlayerEntity` driven by the GymBrain, for a gym with `playerEntity` in gyms.js; loads after player.js), `boss-ai.js` (`G.Boss`: `G.Boss.make` spawns a boss as an
+- `player.js`, `enemy.js` (`G.WildEntity`, also named `G.Enemy`, plus the `EnemyMgr` manager), `elite.js` (`G.Elite`, a `WildEntity` holding only its mods), `gym-leader.js` (`G.GymLeader`, a `PlayerEntity` driven through your controls by its AI player, for a gym with `playerEntity` in gyms.js; loads after player.js), `leader-ai.js` (`G.LeaderAI`, the AI player, one per leader team: it wraps the GymBrain's heading and slot choice as controller answers, docs/LEADER-AI.md; loads after gym-leader.js), `boss-ai.js` (`G.Boss`: `G.Boss.make` spawns a boss as an
   enemy.js body plus a brain; the GymBrain makes every gym leader decision), `projectile.js` (enemy shots in flight; player moves live in G.MoveSim),
   `pickup.js`, `fx.js` and `vfx.js` (the 23 pixel-art attack shapes).
 
@@ -127,7 +128,7 @@ in English. Do not add those new English strings to `lang-en.js`.
   card draft (team cards; moves come from the shops, `shops.js`), `gacha.js` pulls/rarity/pity, `gym-arena.js` (`G.GymArena`, the gym gate and the leader's type arena),
   `weather.js`, `events.js` (mid-run events), `hazards.js` (traps/altars/springs),
   `interact.js`, `pathing.js` (BFS distance-field pathfinding), `progress.js`
-  (coins/tickets/profile), `status.js` and `stages.js` (ailments and stat stages),
+  (coins/tickets/profile), `status.js` and `stages.js` (ailments and stat stages), `leader-memory.js` (`G.LeaderMemory`, what each leader remembers of you for the run, started and dropped by startRun and endRun, written only by leader-info.js; loads just before it), `leader-info.js` (`G.LeaderInfo`, what a leader's AI player can see: both rosters and your reveals, fed by the SimBus; loads after team.js), `leader-belief.js` (`G.LeaderBelief`, #50: what it believes, derived from leader-info.js and the run memory: cooldown windows, matchup, danger, opportunity; the Decider's only door; loads right after leader-info.js), `leader-planner.js` (`G.LeaderPlanner`, #51: the Decider's goal choice and plans, pure, read only from Belief's snapshot; loads right after leader-belief.js),
   `elites.js`, `gym.js` (run progression, BOSS-REWORK.md), `log.js` (dev logger).
 - The move system (every move, player and gym leader, since slice 7b): `move-route.js` (`G.MoveRoute`, the per-frame entry and `routed(id)`: a resolved def that is not retired), `move-sim.js` (`G.MoveSim`, headless casts, instances, motion, collision, persistent upkeep; `castAt` for an enemy owner), `move-geom.js` (shapes and containment), `move-effects.js` (payload appliers, hits on the player too), `move-render.js` (drawing only), `team-cards.js` (`G.TeamCards`, the team card store, the fold onto a def and `STATS`, the Vitamins card's six stats). Rules: docs/current feature planning/combat-architecture.md.
 
@@ -142,7 +143,8 @@ in English. Do not add those new English strings to `lang-en.js`.
 
 ### `js/ui/`
 - `move-info.js` (`G.MoveInfo`: a move's display name, type, icon badge and generated card text, read from `G.MoveDefs`; loads
-  before icons.js), `icons.js` pixel-art icons drawn in code, then `ui.js`, `hud.js`, `sheet.js` (the team sheet), `gym-present.js`, `login.js`,
+  before icons.js), `icons.js` pixel-art icons drawn in code, `status-fx.js` (`G.StatusFx`: the on-sprite status and stat
+  change animations, drawn by every Pokemon from `G.STATUS_ANIMS` in `js/data/status-anims.js`), then `ui.js`, `hud.js`, `sheet.js` (the team sheet), `gym-present.js`, `login.js`,
   `menu.js`, `test.js` (personality test), and the per-screen UIs: `gacha-ui.js`,
   `run-ui.js`, `social-ui.js`, `ranking-ui.js`, `settings-ui.js`, `goals-ui.js`,
   `layout-ui.js`, `mod-ui.js`, `news-ui.js`, `slots.js` (gacha slot machine),
@@ -158,7 +160,7 @@ in English. Do not add those new English strings to `lang-en.js`.
   `validate_moves.js` (grammar and validator rules; `--resolved` checks the resolver output), `move_parity.js` (new vs legacy cd and power),
   `move_report.js` (the per-move report; `--report` writes docs/current feature planning/move-report.md), `smoke-newcombat.js` (headless browser smoke of the move path),
   `export_learnsets.js` (bakes pokeapi-master learnsets into js/data/learnsets.js, run by check.js with --check), `smoke-ui.js` (headless: every move in the menus, level-up cards, pause sheet and icons), `kind-guard.js` (the legacy move guard, run by check.js).
-- `docs/proposals/` the offline harnesses (`*-harness.js`, run by check.js) and mutation runners (`*-mutate.js`, run by hand).
+- `docs/proposals/` the offline harnesses (`*-harness.js`, run by check.js) and mutation checks (`*-mutate.js`, run by hand through `tools/mutate-runner.js`).
 
 ## 6. Deferred server/ops facts
 

@@ -1,0 +1,3 @@
+## 2026-11-09, #42 item 11: a leader's attacks wait on your cast gate (Jess)
+The leader's reach filter (a Body check before the tell) is removed. A leader's due attack goes through your cast gate in the SimPass, as yours does (a due move with no target in range retries every 0.05 s and fires when one is), so it fires when yours would; the tell starts the moment your gate would let it fire. The AI never holds an attack back: it can only move and pick a slot. Out of reach, an attack slot scores nothing, so switching to a ranged slot or moving in scores higher; a new "move in" utility makes a melee-only mon a chaser. Build: #47, after #43.
+Canonical: docs/LEADER-AI.md (FRAME)

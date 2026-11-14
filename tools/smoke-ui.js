@@ -474,6 +474,14 @@ async function loginFlow(browser, query, tag) {
       shown: !s.classList.contains('hidden'),
       title: t1 && t1.textContent.trim(),
       font: t1 && getComputedStyle(t1).fontFamily,
+      michromaLoaded: !!document.fonts && document.fonts.check('16px Michroma'),
+      korataki: [...document.styleSheets].some((sh) => {
+        try {
+          return [...sh.cssRules].some((r) => /korataki/i.test(r.cssText));
+        } catch (e) {
+          return false; // a sheet the page may not read
+        }
+      }),
       oldName: /pok[eé]\s?survivor/i.test(s.textContent),
       sub: !!s.querySelector('.logo .t2'),
       official: !!s.querySelector('.login-official'),
@@ -483,7 +491,9 @@ async function loginFlow(browser, query, tag) {
   ok(scr.fits, tag + ': the PokeSwarm title fits inside the login box');
   ok(scr.shown, tag + ': the login screen shows on a first launch');
   ok(scr.title === 'PokeSwarm', tag + ': the login title reads PokeSwarm (' + scr.title + ')');
-  ok(/korataki/i.test(scr.font || ''), tag + ': the login title uses the menu title font (' + scr.font + ')');
+  ok(/michroma/i.test(scr.font || ''), tag + ': the login title uses the menu title font, Michroma (' + scr.font + ')');
+  ok(scr.michromaLoaded, tag + ': the Michroma face is loaded (#37)');
+  ok(!scr.korataki, tag + ': no stylesheet names Korataki (#37, personal-use licence)');
   ok(!scr.oldName && !scr.sub && !scr.official, tag + ': no PokeSurvivor name, subtitle or official-site line');
   await page.focus('#f-user');
   await page.keyboard.type('Ash Ketchu');

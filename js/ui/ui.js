@@ -21,7 +21,6 @@ G.UI = (() => {
     'scr-team',
     'scr-roster',
     'scr-over',
-    'scr-evs',
     'scr-nick',
     'scr-friends',
     'scr-lobby',
@@ -140,10 +139,13 @@ G.UI = (() => {
     }, ms);
   }
 
+  /** One type chip (#81, HUD-STYLE "Type chips"): the SV Base fill, the SV Dark rim, the type's name. */
+  function typeChip(type) {
+    return `<span class="type" style="background:${G.U.TYPE_COLOR[type]};--type-rim:${G.U.TYPE_COLOR_DARK[type]}">${G.U.TYPE_NAME[type]}</span>`;
+  }
+
   function typeChips(types) {
-    return types
-      .map((t) => `<span class="type" style="background:${G.U.TYPE_COLOR[t]}">${G.U.TYPE_NAME[t]}</span>`)
-      .join('');
+    return types.map(typeChip).join('');
   }
 
   /** Rarity: the corresponding Poke Ball (see G.Icons.rarity). */
@@ -462,6 +464,7 @@ G.UI = (() => {
     refreshCoins,
     toast,
     ask,
+    typeChip,
     typeChips,
     stars,
     confirmDelete,

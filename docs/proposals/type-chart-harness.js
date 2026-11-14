@@ -255,7 +255,6 @@ const mkLeader = (A = 3000, o = {}) =>
       critChance: 0,
       stgTeam: {},
       types: ['water'],
-      strongHost: true,
       foes: () => (curPl ? [curPl] : []),
       moveFactor: () => A,
       stabFor(m) {

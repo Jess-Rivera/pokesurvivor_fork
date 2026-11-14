@@ -1,0 +1,46 @@
+PERF: Firefox 153 laptop, HUD and vignette (2026-11-12, Quick)  [Proposed]
+=======================================================================
+
+Symptom: play ~60 fps with HUD, ~100 fps without. Pause menu swings 22..74 fps.
+Source: Firefox Profiler, 9.9 s of play, "Script" filter, 4149 samples.
+
+WHERE THE MAIN THREAD GOES
+--------------------------------------------------------------------
+ RefreshDriver tick ............................ 98%
+ |-- rAF: loop > frame ......................... 54%
+ |   |-- render (canvas) ....................... 49%
+ |   |   |-- drawVignette  fillRect ............ 18%   <== ONE full-screen
+ |   |   |                                             radial gradient,
+ |   |   |                                             rebuilt every frame
+ |   |   |-- drawScene (map, props) ............ 13%
+ |   |   |-- enemy draw ........................  8%
+ |   |   '-- canvas HUD (hud.js) ...............  2%
+ |   |-- update (sim) ..........................  3%
+ |   '-- HudOverlay.sync (Preact + signals) ....  1.3% <== NOT the problem
+ '-- "Update the rendering: Paint" ............. 37%   <== browser painting,
+                                                         mostly the HTML HUD
+                                                         (many tiny SVG rects)
+
+VERDICT
+--------------------------------------------------------------------
+ Preact?            No. 1.3% of samples.
+ Per-frame sync?    No. The keyed reads touch almost nothing.
+ Real costs:        (A) Firefox painting the HUD's DOM (37%)
+                    (B) the vignette gradient fill (18%)
+ Laptop vs desktop: canvas + paint run on a weaker CPU/GPU here.
+
+FIX OPTIONS (prose plan in chat, no code until Jess approves)
+--------------------------------------------------------------------
+ F1 vignette cache    world.js drawVignette: paint the gradient once
+                      into an offscreen canvas per window size, then
+                      stamp it each frame. Same pixels. Cheap, safe.
+ F2 pause freeze      game.js frame(): while the pause menu is fully
+                      open, stop world render + quarter-speed FX, keep
+                      the last frame; skip HudOverlay.sync; hide HUD
+                      (visibility, not opacity) so its loops stop.
+ F3 HUD paint diet    pending the Paint breakdown: bake static pixel
+                      SVGs (bar frames, slot rims, bag squares) into
+                      images so Firefox paints one item, not hundreds
+                      of rects. Bigger change, needs data first.
+
+ORDER:  F1 -> F2 -> (profile again) -> F3 only if still needed

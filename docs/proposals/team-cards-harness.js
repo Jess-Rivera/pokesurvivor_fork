@@ -76,12 +76,12 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   ok(TC.add(s, 'damage') === 1 && s.n === 1 && TC.add(s, 'damage', 2) === 3 && s.n === 3 && TC.stacks(s, 'damage') === 3, 'add counts stacks and the cards-picked count');
   ok(s.cache.size === 0, 'lazy: a pick rebuilds nothing');
   const a = TC.defOf(o, 'ember');
-  ok(a !== REAL.ember && near(a.basePower, 40 * 1.3) && s.cache.size === 1, 'the first read after a pick folds (40 x 1.3 = 52)');
+  ok(a !== REAL.ember && near(a.basePower, 40 * 1.15) && s.cache.size === 1, 'the first read after a pick folds (3 All Damage Up at +5%: 40 x 1.15 = 46)');
   ok(TC.defOf(o, 'ember') === a, 'a second read with no new pick is the same object');
   ok(Object.isFrozen(a) && Object.isFrozen(a.space) && Object.isFrozen(a.payload[1]), 'the folded copy is deep-frozen');
   TC.add(s, 'velocity');
-  ok(TC.defOf(o, 'tackle').basePower !== undefined && near(TC.defOf(o, 'tackle').basePower, 40 * 1.3), 'a move first read after 4 picks folds with all of them (learned later)');
-  const b = TC.defOf(o, 'ember'); ok(b !== a && near(b.delivery.moveSpeed, 310 * 1.15) && near(b.basePower, 52), 'a pick that touches the move refolds it from scratch');
+  ok(TC.defOf(o, 'tackle').basePower !== undefined && near(TC.defOf(o, 'tackle').basePower, 40 * 1.15), 'a move first read after 4 picks folds with all of them (learned later)');
+  const b = TC.defOf(o, 'ember'); ok(b !== a && near(b.delivery.moveSpeed, 310 * 1.15) && near(b.basePower, 46), 'a pick that touches the move refolds it from scratch');
   const t1 = TC.defOf(o, 'tackle'); TC.add(s, 'type:water'); ok(TC.defOf(o, 'tackle') === t1, 'a pick that changes nothing for a move keeps its object (Water Damage on Tackle)');
   const q = { teamCards: s }; ok(TC.defOf(q, 'ember') === TC.defOf(o, 'ember'), 'two Pokemon on one store share one copy per move id');
   ok(F('water-gun', [['type:fire', 3]]) === REAL['water-gun'], 'a card no field of the move takes returns the frozen def (Fire Damage on Water Gun)');
@@ -146,8 +146,8 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   d = F('toxic', [['cooldown']]); ok(near(kid(d).move.rehit, 0.25 / 1.15) && near(kid(d).every, 0.1), 'Cooldown: a trail ticks faster but keeps its spacing');
   d = F('will-o-wisp', [['cooldown']]); ok(near(kid(d).every, 0.8 / 1.15) && near(d.cd, 3.5 / 1.15), 'Cooldown: a turret fires faster (absorbs Fire Rate)');
   ok(!can('cooldown', 'swords-dance') && !can('cooldown', 'agility') && !can('cooldown', 'aqua-ring'), 'Cooldown: never a pure buff (Gate Reduction is theirs)');
-  // Damage Up +10%, Type +15%, one pool
-  ok(near(F('ember', [['damage']]).basePower, 44) && near(F('ember', [['damage'], ['type:fire']]).basePower, 40 * 1.25), 'Damage: 40 to 44; with Fire Damage 40 x 1.25 = 50');
+  // All Damage Up +5% (#84, Jess 2026-11-11), Type +15%, one pool
+  ok(near(F('ember', [['damage']]).basePower, 42) && near(F('ember', [['damage'], ['type:fire']]).basePower, 40 * 1.2), 'Damage: 40 to 42; with Fire Damage 40 x 1.20 = 48');
   ok(!can('damage', 'night-shade') && !can('damage', 'swords-dance') && !can('type:fire', 'water-gun'), 'Damage: power > 0; Type: that type only');
   // Knockback Up +20%
   ok(near(F('tackle', [['knockback']]).payload[1].distance, 108) && near(kid(F('gust', [['knockback']])).move.payload[1].distance, 84), 'Knockback: Tackle 90 to 108, Gust shots 70 to 84');
@@ -184,7 +184,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   const picks = [['damage', 2], ['type:fire'], ['area'], ['count'], ['cooldown', 3], ['reach'], ['velocity'], ['ailment']];
   const a = F('ember', picks), b = F('ember', picks.slice().reverse()), c = F('ember', [...picks.slice(3), ...picks.slice(0, 3)]);
   ok(TC.same(a, b) && TC.same(a, c) && a.basePower === b.basePower, 'same stacks in any order give the same def');
-  ok(near(F('ember', [['damage'], ['damage']]).basePower, 48), 'from scratch: two Damage Up stacks give 40 x 1.2 = 48');
+  ok(near(F('ember', [['damage'], ['damage']]).basePower, 44), 'from scratch: two All Damage Up stacks give 40 x 1.1 = 44');
   console.log('3 cardLock, counts, order'); }
 
 // ===== 4. readers use the folded def =====
@@ -368,11 +368,19 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
 // ===== 8. the team sheet summary (part F) =====
 { const rows = TC.summary(storeWith([['area', 2], ['cooldown', 1], ['vitamins:atk', 1], ['count', 5], ['regen', 1]])), by = id => rows.find(r => r.id === id) || {};
   ok(rows.length === 5, 'summary: one row per picked card');
-  ok(by('area').label === 'Area Up' && by('area').stacks === 2 && by('area').total === '+30%', 'summary: Area Up x2 is +30%');
-  ok(by('cooldown').total === '-13%', 'summary: a rate card shows its real cut (1 - 1/1.15 = 13%)');
+  ok(by('area').label === 'Size Up' && by('area').stacks === 2 && by('area').total === '+30%', 'summary: Size Up x2 is +30%');
+  ok(by('cooldown').label === 'Attack Speed Up' && by('cooldown').total === '+15%', 'summary: a speed card shows its speed (#84: cd / 1.15 is 15% more casts)');
   ok(by('count').total === '+3 (max)', 'summary: Count Up x5 shows its cap (+3)');
   ok(by('vitamins:atk').label === 'Vitamins: Attack' && by('vitamins:atk').total === '+5%', 'summary: Vitamins names its stat');
   ok(by('regen').total === '+0.5% max HP/s, benched only', 'summary: HP Regen');
+  // #84 (Jess 2026-11-11): Impact Speed stops at twice as fast (delay floor 0.5); Recoil Reduction keeps its real cut; card text
+  const more = TC.summary(storeWith([['delay', 10], ['recoil', 1], ['gate', 2]])), by2 = id => more.find(r => r.id === id) || {};
+  ok(by2('delay').total === '+100%', 'summary: Impact Speed Up x10 is +100% (1.5 capped at the floor\'s 1.0)');
+  ok(by2('recoil').label === 'Recoil Reduction' && by2('recoil').total === '-13%', 'summary: Recoil Reduction shows its real cut (1 - 1/1.15)');
+  ok(by2('gate').label === 'Stat Climb Speed Up' && by2('gate').total === '+20%', 'summary: Stat Climb Speed Up x2 is +20%');
+  ok(TC.stepText(card('cooldown')) === '+15%' && TC.stepText(card('gate')) === '+10%' && TC.stepText(card('recoil')) === '-15%' && TC.stepText(card('damage')) === '+5%', 'card text: speed cards +, Recoil -, All Damage +5%');
+  ok(TC.hintText(card('count')) === 'One more projectile. Can be taken 3 times per run.' && TC.hintText(card('pierce')).endsWith('Can be taken 4 times per run.'), 'hint: capped cards say how many times');
+  ok(TC.hintText(card('presence')) === 'Attacks get wider, never longer: cones open, beams thicken.' && TC.hintText(card('recoil')) === '', 'hint: Width Up; Recoil Reduction has none (levelup builds it)');
   ok(rows[0].family === 'General' && rows[rows.length - 1].family === 'Delivery' && TC.summary(TC.store()).length === 0 && TC.summary(null).length === 0, 'summary: General first; no rows for an empty store');
   const sh = fs.readFileSync(R + '/js/ui/sheet.js', 'utf8');
   ok(sh.includes("[['cards', 'Run Cards']]") && sh.includes('G.TeamCards.summary(pl.teamCards)') && !sh.includes('G.MoveRoute.on'), 'sheet: a Run Cards tab whenever the run has a card store, fed by G.TeamCards.summary');
@@ -384,6 +392,57 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   ok(ids.join(' ') === 'ember razor-leaf rock-slide substitute' && ids.every(id => G.MoveDefs[id]), 'debug: the cards set is Ember, Razor Leaf, Rock Slide and Substitute, all with a def (routed)');
   ok(/\|\|\s*set === 'cards'\s*\) \{/.test(dbg) && dbg.includes('function cards(id, n = 1)') && /newcombat,\s*cards,\s*movechecker,?\s*\};/.test(dbg), 'debug: the cards set gets dummy rings and G.Debug.cards is exported');     // export list retargeted 2026-10-31 (movechecker added)
   console.log('9 debug set'); }
+
+// ===== 10. #83 (Jess 2026-11-12): what the cards changed on a move, and the pause menu's Cards Taken rows =====
+// Expected values are hand-derived from the step table (docs/UPGRADE-CARDS.md) and the synthetic moves below.
+{ const own = picks => ({ teamCards: storeWith(picks) });
+  const texts = (picks, id) => TC.changes(own(picks), id).map(c => c.text);
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  syn('c83-burn', { payload: [{ t: 'damage' }, { t: 'ailment', id: 'burn', chance: 10 }] });
+  syn('c83-toxic', { payload: [{ t: 'damage' }, { t: 'ailment', id: 'toxic', chance: 30 }] });
+  syn('c83-cone', { space: { shape: 'radial', radRadius: 50, radArc: Math.PI / 2 }, payload: [{ t: 'damage' }] });
+  syn('c83-delay', { delivery: { delay: 1 }, payload: [{ t: 'damage' }] });
+  syn('c83-fire', { type: 'fire', cd: 1.2, payload: [{ t: 'damage' }] });
+  syn('c83-fan', { space: { shape: 'radial', radRadius: 10, count: 3, spread: 0.3 }, payload: [{ t: 'damage' }] });
+  syn('c83-stat', { basePower: 0, power: 0, payload: [{ t: 'stat', side: 'self', stat: 'atk', stages: 1 }] });
+  let t;
+  ok(same(t = texts([['ailment', 5]], 'c83-burn'), ['burn 10% to 60%']), 'changes: Ailment x5 on a 10% burn is 60% (' + t + ')');
+  ok(same(t = texts([['ailment', 25]], 'c83-burn'), ['burn 10% to 100% (max)']), 'changes: Ailment x25 stops at 100% and says so (' + t + ')');
+  const capped = TC.changes(own([['ailment', 25]]), 'c83-burn')[0] || {};
+  ok(capped.capped === true && capped.to === 100 && capped.from === 10, 'changes: the capped entry carries from 10, to 100, capped');
+  ok(same(t = texts([['ailment', 1]], 'c83-toxic'), ['bad poison 30% to 40%']), 'changes: toxic reads "bad poison" (' + t + ')');
+  ok(same(t = texts([['presence', 2]], 'c83-cone'), ['arc 90° to 117°']), 'changes: Width x2 opens a 90° cone to 117° (' + t + ')');
+  // x20: 90 x 4 lands on 2 pi, a hair under the cap's 6.2832, still a full circle (presence's own 0.01 slack);
+  // x25: 90 x 4.75 = 427.5 is clamped to the cap
+  ok(same(t = texts([['presence', 20]], 'c83-cone'), ['arc 90° to 360° (max)']), 'changes: Width x20 reaches a full circle (' + t + ')');
+  ok(same(t = texts([['presence', 25]], 'c83-cone'), ['arc 90° to 360° (max)']), 'changes: Width x25 stops at a full circle (' + t + ')');
+  ok(same(t = texts([['area', 1]], 'c83-cone'), ['radius 50 to 53.6']), 'changes: Size x1 grows the radius by the square root of 1.15 (' + t + ')');
+  ok(same(t = texts([['delay', 2]], 'c83-delay'), ['delay 1.0 s to 0.77 s']), 'changes: Impact Speed x2 is 1 / 1.3 (' + t + ')');
+  ok(same(t = texts([['delay', 10]], 'c83-delay'), ['delay 1.0 s to 0.5 s (max)']), 'changes: Impact Speed x10 stops at the half floor (' + t + ')');
+  ok(same(t = texts([['damage', 2], ['type:fire', 2], ['type:water', 3]], 'c83-fire'), ['power 40 to 56']),
+    'changes: All Damage x2 and Fire Damage x2 share one pool, one line, 40 x 1.4; Water Damage does nothing (' + t + ')');
+  ok(same(t = texts([['cooldown', 2]], 'c83-fire'), ['cd 1.2 s to 0.92 s']), 'changes: Attack Speed x2 is cd / 1.3 (' + t + ')');
+  ok(same(t = texts([['count', 5]], 'c83-fan'), ['projectiles 3 to 6 (max)']), 'changes: Count x5 counts to its cap of 3 and says so (' + t + ')');
+  ok(TC.changes(own([]), 'c83-burn').length === 0 && TC.changes(own([['chain', 3]]), 'c83-burn').length === 0 &&
+    TC.changes({}, 'c83-burn').length === 0 && TC.changes(own([['ailment', 1]]), 'no-such-move').length === 0,
+    'changes: nothing for no store, no cards, a card the move cannot take, or an unknown move');
+  const store = storeWith([['damage', 2], ['chain', 1], ['type:water', 1], ['type:fire', 1], ['vitamins:atk', 2], ['regen', 1], ['gate', 2], ['duration', 1]]);
+  const ids = rows => rows.map(r => r.id).join('|');
+  const solo = TC.takenBy(store, ['c83-fire'], 1);
+  ok(ids(solo) === 'type:fire|vitamins:atk|damage', 'takenBy: a fire attacker alone sees Fire Damage, Vitamins and All Damage only (' + ids(solo) + ')');
+  const vit = solo.find(r => r.id === 'vitamins:atk') || {};
+  ok(vit.label === 'Protein' && vit.picks === 2 && vit.tip === null, 'takenBy: Vitamins by the vitamin\'s name, its pick count, no tip');
+  const duo = TC.takenBy(store, ['c83-fire', 'c83-stat'], 2), by = id => duo.find(r => r.id === id) || {};
+  ok(ids(duo) === 'regen|type:fire|duration|gate|vitamins:atk|damage', 'takenBy: a stat move adds Gate and Duration, a team of 2 adds Bench Regeneration (' + ids(duo) + ')');
+  ok(by('gate').tip === 'Stat stage Gate 6.0 s to 5.0 s', 'takenBy: the Gate tip, 6.0 / 1.2 (' + by('gate').tip + ')');
+  ok(by('duration').tip === 'Stat stage Duration 6.1 s to 6.71 s', 'takenBy: the Duration tip, 6.1 x 1.1 (' + by('duration').tip + ')');
+  ok(by('regen').tip === 'Benched Pokemon regain 0.5% of max HP per second (empty to full in 200 s)', 'takenBy: the Bench Regeneration tip (' + by('regen').tip + ')');
+  ok(by('damage').tip === null && by('damage').label === 'All Damage Up' && by('damage').picks === 2, 'takenBy: a move card has no tip (its moves show it)');
+  ok(TC.takenBy(TC.store(), ['c83-fire'], 2).length === 0 && TC.takenBy(null, ['c83-fire'], 2).length === 0, 'takenBy: no rows with no cards');
+  const pp = fs.readFileSync(R + '/js/ui/pause-pokemon.js', 'utf8'), sh2 = fs.readFileSync(R + '/js/ui/sheet.js', 'utf8');
+  ok(pp.includes('G.TeamCards.takenBy(member.teamCards, moveIds, team().length)') && pp.includes('lines.cards'), 'pause menu: Cards Taken reads takenBy, the move tooltip shows the cards line');
+  ok(sh2.includes('G.TeamCards.changes(pl, m.id)') && sh2.includes("'Cards: '"), 'sheet: detailOf builds the cards line from G.TeamCards.changes');
+  console.log('10 #83 changes and Cards Taken'); }
 
 console.log(fail ? '\nteam-cards harness: ' + fail + ' FAILED of ' + n : '\nteam-cards harness: ' + n + '/' + n + ' checks passed');
 process.exit(fail ? 1 : 0);

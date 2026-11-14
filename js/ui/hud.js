@@ -2,7 +2,36 @@
  * Drawn in SCREEN coordinates (without the camera transform).
  */
 G.HUD = (() => {
+  const ENRAGE_LINE_BELOW_OVERLAY = 178; // px from the top: below the overlay's name line, bar and circles (#64)
   const F = (w, s) => `${w} ${s}px GameFont,"Segoe UI",system-ui,sans-serif`;
+  // #62: the character info panel (portrait and EXP ring, life meter, status chips, Shake Off, move slots, held item, Lv,
+  // Silver, run timer) is on the HTML overlay (js/ui/hud-player-panel.js). Set each frame in draw(); while false (the
+  // overlay's libraries failed to load) the canvas keeps drawing its old pieces.
+  let overlayDrawsPlayer = false;
+  // #63: the team roster, held items and berry bag (js/ui/hud-roster-panel.js) and the run item column
+  // (js/ui/hud-run-items-panel.js) are on the overlay too; the same fallback applies.
+  let overlayDrawsRoster = false,
+    overlayDrawsRunItems = false;
+  // #65: World Level, Region, Map, the weather card (top right) and the kills line (top centre) are on the overlay
+  // (js/ui/hud-map-panel.js); the old biome, kills and coins line, ENEMY LV and the weather chip are the fallback only.
+  let overlayDrawsMap = false;
+
+  /**
+   * How much of a move's cooldown is left, 0 (ready) to 1, for its icon's shade. Shared with the overlay's move slots.
+   * A move that is ready but has no target (or the caster is frozen) re-arms m.t to 0.05 every frame (combat.js tickMove):
+   * that sawtooth is not a cooldown, so <= 0.05 s reads as ready. simCd: the resolver cd, set on a slot routed through the
+   * new move system; absent otherwise. An always-on move (a persistent def: orbits, auras, trails) has no cooldown to show
+   * (slice 7a). Fly's icon shows the flight left while up, then the recharge from landing.
+   */
+  function moveCooldownFraction(pl, m) {
+    if (G.MoveEffects.skillOf(G.MoveDefs[m.id]) === 'fly') {
+      const flyFx = pl.skillFx('fly');
+      return pl.flyT > 0 ? G.U.clamp(pl.flyT / flyFx.duration, 0, 1) : G.U.clamp(pl.flyCd / flyFx.cooldown, 0, 1);
+    }
+    return (G.MoveDefs[m.id] && G.MoveDefs[m.id].persistent) || m.t <= 0.05
+      ? 0
+      : G.U.clamp(m.t / ((m.simCd || m.cd) * pl.cdMul), 0, 1);
+  }
 
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
@@ -365,9 +394,9 @@ G.HUD = (() => {
   const stMax = {};
   /** Statuses on the player (slice E1), stacked above the buffs in the same lower-left column: red border, timer bar, and a "Tap H!" prompt while Shake off can help. */
   function drawDebuffs(ctx, pl, x0, y, CH, GAPV) {
-    const L = G.Status.list(pl);
+    // #62: with the overlay up, its chips show the major statuses, poison and burn, and it shows the Shake Off prompt
+    const L = G.Status.list(pl).filter((s) => !(overlayDrawsPlayer && G.HudPlayerPanel.hasChip(s.k)));
     for (const k in stMax) if (!L.some((s) => s.k === k)) delete stMax[k];
-    if (!L.length) return;
     ctx.textAlign = 'left';
     for (const s of L) {
       if (s.t != null) stMax[s.k] = Math.max(stMax[s.k] || 0, s.t);
@@ -392,7 +421,7 @@ G.HUD = (() => {
       }
       y = top - GAPV;
     }
-    if (G.Status.shakeable(pl)) {
+    if (!overlayDrawsPlayer && G.Status.shakeable(pl)) {
       const key = G.Input.keyLabel('shake_off') || '?';
       const txt = G.Settings.get('autoShake') ? 'SHAKING OFF...' : 'TAP ' + key + ' TO SHAKE OFF!';
       ctx.font = F(800, 16);
@@ -454,7 +483,7 @@ G.HUD = (() => {
     silver.t = st.time;
     if (silver.shown < target) silver.shown = Math.min(target, silver.shown + silver.rate * dt);
     silver.pop = Math.max(0, silver.pop - dt / SILVER_POP);
-    const k = 1 + 0.3 * silver.pop * silver.pop,
+    const k = 1 + 0.5 * silver.pop * silver.pop, // up to 1.5x, as the overlay's counter (#62)
       img = silverImg(),
       S = G.PickupSprites && G.PickupSprites.silver;
     ctx.save();
@@ -491,50 +520,165 @@ G.HUD = (() => {
     ctx.restore();
   }
 
-  // ---------- floating arrows (Move Shop step 3) ----------
+  // ---------- floating arrows (Move Shop step 3, chevrons #67) ----------
   // An off-screen target gets an arrow that floats ARROW_R world px from the character's middle, pointing at it, with its
-  // label beyond the tip (world px, so the gap is the same at any window size). Used by the gym gate (purple, Jess
-  // 2026-11-05, it used to sit at the screen edge) and the Move Shop buildings (red).
+  // label beyond the tip. Used by the gym gate (Jess 2026-11-05, it used to sit at the screen edge) and the Move Shop
+  // buildings. #67 (Jess, 2026-11-10): three chevrons that snap apart toward the target with a stop-bounce and a shine,
+  // hold open trembling as if straining, then slide back closed. Colours: HUD-STYLE "Wayfinding arrows" (the Attacks set
+  // of UI-PALETTES: Special for gyms, Physical for shops; Base fill, Dark outline, Light for the shine).
+  // A target on screen gets no arrow, only its label over the roof (wayfindingLabel).
   const ARROW_R = 60;
-  const GYM_ARROW = { halo: '#b48aff', edge: '#1a0b33', main: '#a06bff', lite: '#e2d0ff', text: '#e2d0ff' },
-    SHOP_ARROW = { halo: '#ff5f6d', edge: '#3a0a10', main: '#ff5f6d', lite: '#ffd0d5', text: '#ffd0d5' };
-  function floatArrow(ctx, cam, pl, tx, ty, s, label, beat, textA = 1) {
+  // The gym building's roof above the gate point, world px (gym-arena.js: 248 px art at GATE_ART_SCALE 0.5, drawn 4 px low).
+  const GATE_ROOF_WORLD_PX = 120;
+  const GYM_WAYFINDER = { light: '#7D94CD', base: '#375AB2', dark: '#243B74' }, // Attacks / Special
+    SHOP_WAYFINDER = { light: '#F29173', base: '#EB5628', dark: '#99381A' }; // Attacks / Physical
+  const TEXT_WHITE = '#ffffff',
+    TEXT_OUTLINE = '#101010'; // HUD-STYLE Text
+  // HUD-STYLE Fonts: Truth And Ideals (HudText, css/hud-overlay.css) at 20 px, outline one font pixel (2 px) of hard shadows.
+  const WAYFINDING_FONT = '20px HudText, monospace',
+    WAYFINDING_OUTLINE_PX = 2;
+  const OUTLINE_OFFSETS = [
+    [-1, -1],
+    [0, -1],
+    [1, -1],
+    [-1, 0],
+    [1, 0],
+    [-1, 1],
+    [0, 1],
+    [1, 1],
+  ];
+
+  /** Standard HUD text on the canvas: white over eight hard #101010 shadows, at whole pixels so the font stays crisp. */
+  function wayfindingLabel(ctx, text, x, y, align) {
+    const left = Math.round(x),
+      baseline = Math.round(y);
+    ctx.font = WAYFINDING_FONT;
+    ctx.textAlign = align;
+    ctx.fillStyle = TEXT_OUTLINE;
+    for (const [dx, dy] of OUTLINE_OFFSETS)
+      ctx.fillText(text, left + dx * WAYFINDING_OUTLINE_PX, baseline + dy * WAYFINDING_OUTLINE_PX);
+    ctx.fillStyle = TEXT_WHITE;
+    ctx.fillText(text, left, baseline);
+  }
+  // Chevron loop timing, seconds. One loop: snap out, stop-bounce, strained hold, slide back, rest.
+  const CHEVRON_SNAP_SECONDS = 0.15,
+    CHEVRON_BOUNCE_SECONDS = 0.15,
+    CHEVRON_STAGGER_SECONDS = 0.03, // each chevron starts its snap this long after the one behind it
+    CHEVRON_HOLD_SECONDS = 1.4,
+    CHEVRON_SLIDE_SECONDS = 0.45,
+    CHEVRON_REST_SECONDS = 0.25;
+  const CHEVRON_COUNT = 3;
+  const CHEVRON_HOLD_START =
+      CHEVRON_SNAP_SECONDS + CHEVRON_BOUNCE_SECONDS + (CHEVRON_COUNT - 1) * CHEVRON_STAGGER_SECONDS,
+    CHEVRON_SLIDE_START = CHEVRON_HOLD_START + CHEVRON_HOLD_SECONDS,
+    CHEVRON_REST_START = CHEVRON_SLIDE_START + CHEVRON_SLIDE_SECONDS,
+    CHEVRON_LOOP_SECONDS = CHEVRON_REST_START + CHEVRON_REST_SECONDS;
+  // Chevron geometry, screen px, along the arrow's direction from the anchor ARROW_R out.
+  const CHEVRON_HALF_HEIGHT = 14, // 28 px tall
+    CHEVRON_DEPTH = 12, // apex to the arms' back ends
+    CHEVRON_BACK_OFFSET = -6, // where the back chevron's apex sits
+    CHEVRON_GAP_CLOSED = 20,
+    CHEVRON_GAP_OPEN = 36,
+    CHEVRON_OVERSHOOT_PX = 5, // how far past its open spot the front chevron flies before springing back
+    CHEVRON_HOLD_CREEP_PX = 1, // how far the front chevron sags back by the end of the hold
+    CHEVRON_TREMBLE_PX = 1, // the strained shake during the hold
+    CHEVRON_OUTLINE_WIDTH = 9, // the #101010 edge
+    CHEVRON_DARK_WIDTH = 7,
+    CHEVRON_BASE_WIDTH = 4,
+    CHEVRON_LABEL_GAP = 10; // label start beyond the furthest the front chevron's apex reaches
+  const CHEVRON_SPAN_OPEN = (CHEVRON_COUNT - 1) * CHEVRON_GAP_OPEN,
+    CHEVRON_SPAN_TRAVEL = CHEVRON_SPAN_OPEN - (CHEVRON_COUNT - 1) * CHEVRON_GAP_CLOSED,
+    CHEVRON_OVERSHOOT_FRACTION = CHEVRON_OVERSHOOT_PX / CHEVRON_SPAN_TRAVEL,
+    CHEVRON_CREEP_FRACTION = CHEVRON_HOLD_CREEP_PX / CHEVRON_SPAN_TRAVEL;
+  const CHEVRON_LABEL_DISTANCE = CHEVRON_BACK_OFFSET + CHEVRON_SPAN_OPEN + CHEVRON_OVERSHOOT_PX + CHEVRON_LABEL_GAP;
+  const easeOutCubic = (u) => 1 - (1 - u) * (1 - u) * (1 - u),
+    easeInOutQuad = (u) => (u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u));
+
+  /** How open one chevron's gap is at loopTime: 0 closed, 1 open (a little past 1 during the overshoot). */
+  function chevronOpenAmount(loopTime, chevronIndex) {
+    const ownTime = loopTime - chevronIndex * CHEVRON_STAGGER_SECONDS;
+    if (ownTime < 0) return 0;
+    if (ownTime < CHEVRON_SNAP_SECONDS)
+      return easeOutCubic(ownTime / CHEVRON_SNAP_SECONDS) * (1 + CHEVRON_OVERSHOOT_FRACTION);
+    if (ownTime < CHEVRON_SNAP_SECONDS + CHEVRON_BOUNCE_SECONDS) {
+      // One spring back from the overshoot: past 1, a small dip under it, settled at 1.
+      const bounceProgress = (ownTime - CHEVRON_SNAP_SECONDS) / CHEVRON_BOUNCE_SECONDS;
+      return 1 + CHEVRON_OVERSHOOT_FRACTION * Math.cos(bounceProgress * Math.PI) * (1 - bounceProgress);
+    }
+    if (loopTime < CHEVRON_SLIDE_START) {
+      const holdProgress = Math.max(0, (loopTime - CHEVRON_HOLD_START) / CHEVRON_HOLD_SECONDS);
+      return 1 - CHEVRON_CREEP_FRACTION * holdProgress * holdProgress;
+    }
+    if (loopTime < CHEVRON_REST_START)
+      return (
+        (1 - CHEVRON_CREEP_FRACTION) * (1 - easeInOutQuad((loopTime - CHEVRON_SLIDE_START) / CHEVRON_SLIDE_SECONDS))
+      );
+    return 0;
+  }
+
+  /** The strained shake while held open: quick and irregular (two unrelated sines), up to CHEVRON_TREMBLE_PX. */
+  function chevronTremble(loopTime, chevronIndex, seconds) {
+    if (loopTime < CHEVRON_HOLD_START || loopTime >= CHEVRON_SLIDE_START) return 0;
+    const wobble =
+      Math.sin(seconds * 61 + chevronIndex * 2.1) * 0.6 + Math.sin(seconds * 37 + chevronIndex * 4.3) * 0.4;
+    return wobble * CHEVRON_TREMBLE_PX;
+  }
+
+  /** The shine's brightness on one chevron: a band sweeping back to front across the snap and bounce. */
+  function chevronShine(loopTime, chevronIndex) {
+    if (loopTime >= CHEVRON_HOLD_START) return 0;
+    const shinePosition = -0.5 + (loopTime / CHEVRON_HOLD_START) * (CHEVRON_COUNT + 0.5);
+    return Math.max(0, 1 - Math.abs(chevronIndex - shinePosition));
+  }
+
+  /** One open chevron, apex at (apexX, 0), pointing along +x. Black outline, Dark, Base, then the shine in Light. */
+  function strokeChevron(ctx, apexX, palette, shine) {
+    ctx.beginPath();
+    ctx.moveTo(apexX - CHEVRON_DEPTH, -CHEVRON_HALF_HEIGHT);
+    ctx.lineTo(apexX, 0);
+    ctx.lineTo(apexX - CHEVRON_DEPTH, CHEVRON_HALF_HEIGHT);
+    ctx.lineJoin = 'miter';
+    ctx.lineCap = 'square'; // every layer squared off, so the ends carry the same border as the sides
+    ctx.lineWidth = CHEVRON_OUTLINE_WIDTH;
+    ctx.strokeStyle = TEXT_OUTLINE;
+    ctx.stroke();
+    ctx.lineWidth = CHEVRON_DARK_WIDTH;
+    ctx.strokeStyle = palette.dark;
+    ctx.stroke();
+    ctx.lineWidth = CHEVRON_BASE_WIDTH;
+    ctx.strokeStyle = palette.base;
+    ctx.stroke();
+    if (shine > 0) {
+      ctx.globalAlpha = shine;
+      ctx.strokeStyle = palette.light;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function floatArrow(ctx, cam, pl, tx, ty, palette, label, textA = 1) {
     const ox = pl.x,
       oy = pl.y - (pl.bodyH || 32) / 2;
     const a = Math.atan2(ty - oy, tx - ox),
       ca = Math.cos(a),
       sa = Math.sin(a);
+    const seconds = performance.now() / 1000,
+      loopTime = seconds % CHEVRON_LOOP_SECONDS;
     ctx.save();
     ctx.translate((ox + ca * ARROW_R - cam.left()) * cam.scale, (oy + sa * ARROW_R - cam.top()) * cam.scale);
-    ctx.globalAlpha = 0.14 + beat * 0.16;
-    ctx.fillStyle = s.halo;
-    ctx.beginPath();
-    ctx.arc(0, 0, 18 + beat * 5, 0, 6.2832);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    const tri = (k) => {
-      ctx.beginPath();
-      ctx.moveTo(ca * 22 * k, sa * 22 * k);
-      ctx.lineTo(Math.cos(a + 2.45) * 12 * k, Math.sin(a + 2.45) * 12 * k);
-      ctx.lineTo(Math.cos(a - 2.45) * 12 * k, Math.sin(a - 2.45) * 12 * k);
-      ctx.closePath();
-    };
-    tri(1.15);
-    ctx.fillStyle = s.edge;
-    ctx.fill();
-    tri(1);
-    ctx.fillStyle = beat > 0.5 ? s.lite : s.main;
-    ctx.fill();
+    ctx.save();
+    ctx.rotate(a);
+    for (let chevronIndex = 0; chevronIndex < CHEVRON_COUNT; chevronIndex++) {
+      const gap =
+        CHEVRON_GAP_CLOSED + (CHEVRON_GAP_OPEN - CHEVRON_GAP_CLOSED) * chevronOpenAmount(loopTime, chevronIndex);
+      const apexX = CHEVRON_BACK_OFFSET + chevronIndex * gap + chevronTremble(loopTime, chevronIndex, seconds);
+      strokeChevron(ctx, apexX, palette, chevronShine(loopTime, chevronIndex));
+    }
+    ctx.restore();
     ctx.globalAlpha = textA;
-    ctx.font = F(800, 11);
-    ctx.textAlign = ca > 0.3 ? 'left' : ca < -0.3 ? 'right' : 'center';
-    const lx = ca * 30,
-      ly = sa * 30 + (sa > 0.3 ? 10 : sa < -0.3 ? -2 : 4);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(0,0,0,.85)';
-    ctx.strokeText(label, lx, ly);
-    ctx.fillStyle = s.text;
-    ctx.fillText(label, lx, ly);
+    const lx = ca * CHEVRON_LABEL_DISTANCE,
+      ly = sa * CHEVRON_LABEL_DISTANCE + (sa > 0.3 ? 16 : sa < -0.3 ? -4 : 7);
+    wayfindingLabel(ctx, label, lx, ly, ca > 0.3 ? 'left' : ca < -0.3 ? 'right' : 'center');
     ctx.restore();
   }
 
@@ -544,29 +688,41 @@ G.HUD = (() => {
     G.Touch.clearButtons();
     const touch = G.Touch.active;
 
-    // ---------- barra de experiencia (borde superior) ----------
-    const xpF = pl.xp / pl.xpNext;
-    ctx.fillStyle = 'rgba(0,0,0,.5)';
-    ctx.fillRect(0, 0, w, 7);
-    const g = ctx.createLinearGradient(0, 0, w, 0);
-    g.addColorStop(0, '#4fd1ff');
-    g.addColorStop(1, '#a98bff');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w * G.U.clamp(xpF, 0, 1), 7);
+    overlayDrawsPlayer = !!(G.HudPlayerPanel && G.HudPlayerPanel.ready);
+    overlayDrawsRoster = !!(G.HudRosterPanel && G.HudRosterPanel.ready);
+    overlayDrawsRunItems = !!(G.HudRunItemsPanel && G.HudRunItemsPanel.ready);
+    overlayDrawsMap = !!(G.HudMapPanel && G.HudMapPanel.ready);
+
+    // ---------- barra de experiencia (borde superior; #62: the overlay's portrait ring replaces it) ----------
+    if (!overlayDrawsPlayer) {
+      const xpF = pl.xp / pl.xpNext;
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      ctx.fillRect(0, 0, w, 7);
+      const g = ctx.createLinearGradient(0, 0, w, 0);
+      g.addColorStop(0, '#4fd1ff');
+      g.addColorStop(1, '#a98bff');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w * G.U.clamp(xpF, 0, 1), 7);
+    }
 
     // Name / HP / level now live in the bottom strip (drawn below); top-left is free.
     const px = 16,
       py = 22;
     const safeB = touch ? Math.min(28, G.Touch.safeArea().bottom) : 0;
-    drawHpStrip(ctx, w, h, pl, safeB);
+    if (!overlayDrawsPlayer) drawHpStrip(ctx, w, h, pl, safeB);
 
     // ---------- team strip (lower-left, only with a real team) ----------
-    const teamRight = drawTeam(ctx, w, h);
-    const bagRight = drawBerryBag(ctx, w, h, !!teamRight);
-    drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : bagRight ? bagRight + 12 : 16);
+    // #76: with the character panel up, its chip bands show the buffs, berries, altar power and stat drops
+    if (overlayDrawsRoster) {
+      if (!overlayDrawsPlayer) drawBuffs(ctx, h, pl, G.HudRosterPanel.buffsLeft());
+    } else {
+      const teamRight = drawTeam(ctx, w, h);
+      const bagRight = drawBerryBag(ctx, w, h, !!teamRight);
+      drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : bagRight ? bagRight + 12 : 16);
+    }
 
     // ---------- Silver (top-left; hidden in co-op until co-op shops exist, the co-op panel uses this corner) ----------
-    if (!G.Coop.active) {
+    if (!G.Coop.active && !overlayDrawsPlayer) {
       const sa = touch ? G.Touch.safeArea() : null;
       drawSilver(ctx, px + (sa ? Math.min(44, sa.left) : 0), 46 + (sa ? Math.min(20, sa.top) : 0), st);
     }
@@ -575,28 +731,32 @@ G.HUD = (() => {
     ctx.textAlign = 'center';
     ctx.font = F(800, 26);
     ctx.fillStyle = 'rgba(255,255,255,.95)';
-    ctx.fillText(G.U.mmss(st.time), w / 2, 42);
-    ctx.font = F(600, 10);
-    ctx.fillStyle = '#8fa3c4';
-    ctx.fillText(
-      G.World.biomeName().toUpperCase() + '  ·  ' + pl.kills + ' DERROTADOS  ·  ' + pl.coins + ' MONEDAS',
-      w / 2,
-      58
-    );
+    if (!overlayDrawsPlayer) ctx.fillText(G.U.mmss(st.time), w / 2, 42); // #62: the overlay shows it under the moves
+    if (!overlayDrawsMap) {
+      ctx.font = F(600, 10);
+      ctx.fillStyle = '#8fa3c4';
+      ctx.fillText(
+        G.World.biomeName().toUpperCase() + '  ·  ' + pl.kills + ' DERROTADOS  ·  ' + pl.coins + ' MONEDAS',
+        w / 2,
+        58
+      );
+    }
 
     // Enemy level (top-right): same size/color as the run timer, with an "ENEMY LV"
     // subtitle. Shows the level enemies currently spawn at (see G.Enemies.levelForTime).
-    ctx.textAlign = 'right';
-    ctx.font = F(800, 26);
-    ctx.fillStyle = 'rgba(255,255,255,.95)';
-    ctx.fillText(Math.floor(G.Enemies.levelForTime(st.time)), w - 16, 42);
-    ctx.font = F(600, 10);
-    ctx.fillStyle = '#8fa3c4';
-    ctx.fillText('ENEMY LV', w - 16, 58);
-    ctx.textAlign = 'left';
+    if (!overlayDrawsMap) {
+      ctx.textAlign = 'right';
+      ctx.font = F(800, 26);
+      ctx.fillStyle = 'rgba(255,255,255,.95)';
+      ctx.fillText(Math.floor(G.Enemies.levelForTime(st.time)), w - 16, 42);
+      ctx.font = F(600, 10);
+      ctx.fillStyle = '#8fa3c4';
+      ctx.fillText('ENEMY LV', w - 16, 58);
+      ctx.textAlign = 'left';
+    }
 
     // ---------- clima (arriba a la derecha) ----------
-    const wx = G.Weather.current;
+    const wx = overlayDrawsMap ? null : G.Weather.current;
     if (wx) {
       ctx.font = F(800, 11);
       ctx.textAlign = 'left';
@@ -614,18 +774,23 @@ G.HUD = (() => {
 
     // ---------- boss bar ----------
     const boss = G.EnemyMgr.all().find((e) => e.boss && !e.dead);
+    // #64: a gym leader's name bar and team circles are on the HTML overlay (js/ui/hud-overlay.js); the canvas keeps the
+    // bar for other bosses, and for gyms too if the overlay's libraries failed to load
+    const overlayDrawsGym = !!(G.HudOverlay && G.HudOverlay.ready);
     if (boss) {
-      const bw = Math.min(420, w - 80);
-      bar(ctx, (w - bw) / 2, 70, bw, 12, boss.hp / boss.maxHp, '#ffcb3d');
-      ctx.font = F(800, 10);
-      ctx.fillStyle = '#20160a';
-      ctx.fillText(
-        boss.gym
-          ? (boss.gym.leader + "'S " + boss.name + ' · LV ' + boss.gym.level).toUpperCase()
-          : boss.name.toUpperCase(),
-        w / 2,
-        80
-      );
+      if (!(boss.gym && overlayDrawsGym)) {
+        const bw = Math.min(420, w - 80);
+        bar(ctx, (w - bw) / 2, 70, bw, 12, boss.hp / boss.maxHp, '#ffcb3d');
+        ctx.font = F(800, 10);
+        ctx.fillStyle = '#20160a';
+        ctx.fillText(
+          boss.gym
+            ? (boss.gym.leader + "'S " + boss.name + ' · LV ' + boss.gym.level).toUpperCase()
+            : boss.name.toUpperCase(),
+          w / 2,
+          80
+        );
+      }
       if (boss.gym && G.Gym.enrages(boss)) {
         // slice 6 (Q1): no enrage line for a switched gym that does not author one
         const left = G.Gym.enrageIn(boss);
@@ -634,14 +799,15 @@ G.HUD = (() => {
         ctx.fillText(
           left === 0 ? 'ENRAGED' : left != null ? 'ENRAGE IN ' + Math.ceil(left) + ' s' : 'HIT IT TO ENGAGE',
           w / 2,
-          98
+          overlayDrawsGym ? ENRAGE_LINE_BELOW_OVERLAY : 98 // under the overlay's circles until it gets its own HUD design
         );
       }
     }
 
     // ---------- leader team pips (slice 7): one per mon, gold standing, grey fainted; teams of 2+ only ----------
+    // #64: replaced by the overlay's portrait circles; drawn only if the overlay is not running
     const lt = G.GymArena && G.GymArena.leaderTeam;
-    if (lt && Array.isArray(lt.members) && lt.members.length > 1) {
+    if (!overlayDrawsGym && lt && Array.isArray(lt.members) && lt.members.length > 1) {
       const n = lt.members.length,
         gap = 14;
       lt.members.forEach((m, i) => {
@@ -656,21 +822,25 @@ G.HUD = (() => {
     }
 
     // ---------- elite bar (an overworld elite; the boss bar wins if both are up) ----------
+    // The HTML HUD's enemy name bar draws it (hud-boss-panel.js, Jess 2026-11-11); this canvas bar is the fallback without the overlay.
+    // The enrage line stays here, under the overlay's bar like a gym's.
     const elite = !boss && G.Elites.current();
     if (elite) {
-      const bw = Math.min(380, w - 80),
-        left = G.Elites.enrageIn(elite),
+      const left = G.Elites.enrageIn(elite),
         enr = left === 0;
-      bar(ctx, (w - bw) / 2, 70, bw, 12, elite.hp / elite.maxHp, enr ? '#ff5050' : '#ff9f43');
-      ctx.font = F(800, 10);
-      ctx.fillStyle = '#20160a';
-      ctx.fillText('ELITE ' + elite.name.toUpperCase(), w / 2, 80);
+      if (!overlayDrawsGym) {
+        const bw = Math.min(380, w - 80);
+        bar(ctx, (w - bw) / 2, 70, bw, 12, elite.hp / elite.maxHp, enr ? '#ff5050' : '#ff9f43');
+        ctx.font = F(800, 10);
+        ctx.fillStyle = '#20160a';
+        ctx.fillText('ELITE ' + elite.name.toUpperCase(), w / 2, 80);
+      }
       ctx.font = F(700, 10);
       ctx.fillStyle = enr ? '#ff7070' : '#ffd9a8';
       ctx.fillText(
         enr ? 'ENRAGED' : left != null ? 'ENRAGE IN ' + Math.ceil(left) + ' s' : 'HIT IT TO ENGAGE',
         w / 2,
-        98
+        overlayDrawsGym ? ENRAGE_LINE_BELOW_OVERLAY : 98
       );
     }
 
@@ -729,100 +899,63 @@ G.HUD = (() => {
 
     if (G.Coop.active) drawCoop(ctx, w, h, pl, px, py + 4);
 
-    // Gym gate: off screen, an arrow floating off the character (floatArrow); on screen, an arrow bouncing above;
+    // Gym gate: off screen, chevrons floating off the character (floatArrow); on screen, a "Gym Leader <name>" label
+    // over the roof (#67, Jess 2026-11-10; an Elite Four gate will read "Elite Four <name>" once those gates exist);
     // in the arena, a GYM tag.
     const gate = G.GymArena.gate;
     if (gate) {
       const gym = gate.gym;
       const sx = (gate.x - cam.left()) * cam.scale,
         sy = (gate.y - 40 - cam.top()) * cam.scale;
-      const now = performance.now() / 1000,
-        beat = 0.5 + Math.sin(now * 7) * 0.5;
-      const gymGauge = () => {
-        // grace countdown, then the escalation readout (+N and climbing)
-        const g = G.Gym.graceLeft(),
-          b = G.Gym.escBump();
-        if (b > 0) return ' · +' + b + ' ESCALATING';
-        if (g != null && g > 0) return ' · ' + Math.ceil(g) + ' s';
-        return '';
-      };
-      const label =
-        'GYM ' +
-        (gym.idx + 1) +
-        ' · ' +
-        gym.leader.toUpperCase() +
-        ' · LV ' +
-        (gym.level + G.Gym.escBump()) +
-        gymGauge() +
-        ' · ' +
-        Math.round(G.U.dist(pl.x, pl.y, gate.x, gate.y) / 32) +
-        ' m';
+      const escalationBump = G.Gym.escBump(),
+        levelText = 'Lv.' + (gym.level + escalationBump);
       const off = sx < 0 || sx > w || sy < 0 || sy > h;
       ctx.save();
-      if (off) floatArrow(ctx, cam, pl, gate.x, gate.y, GYM_ARROW, label, beat);
-      else {
-        // Above the gate: a bouncing down arrow.
-        const by = sy - 46 - Math.abs(Math.sin(now * 4)) * 10;
-        ctx.translate(sx, by);
-        ctx.beginPath();
-        ctx.moveTo(-15, -12);
-        ctx.lineTo(15, -12);
-        ctx.lineTo(0, 8);
-        ctx.closePath();
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#1a0b33';
-        ctx.stroke();
-        ctx.fillStyle = beat > 0.5 ? '#e2d0ff' : '#a06bff';
-        ctx.fill();
-        ctx.font = F(800, 11);
-        ctx.textAlign = 'center';
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = 'rgba(0,0,0,.85)';
-        const l2 = 'GYM · LV ' + (gym.level + G.Gym.escBump()) + (G.Gym.escBump() > 0 ? ' +' + G.Gym.escBump() : '');
-        ctx.strokeText(l2, 0, -18);
-        ctx.fillStyle = '#e2d0ff';
-        ctx.fillText(l2, 0, -18);
+      if (off) {
+        // "Gym·Lv.5·10m·29s" (Jess, 2026-11-10): seconds while the grace countdown runs; Lv includes any escalation.
+        const graceLeft = G.Gym.graceLeft(),
+          metres = Math.round(G.U.dist(pl.x, pl.y, gate.x, gate.y) / 32);
+        const label =
+          'Gym·' +
+          levelText +
+          '·' +
+          metres +
+          'm' +
+          (graceLeft != null && graceLeft > 0 ? '·' + Math.ceil(graceLeft) + 's' : '');
+        floatArrow(ctx, cam, pl, gate.x, gate.y, GYM_WAYFINDER, label);
+      } else {
+        // Over the roof: the leader's name, then the level and the escalation readout under it.
+        const roofY = (gate.y - GATE_ROOF_WORLD_PX - cam.top()) * cam.scale;
+        wayfindingLabel(ctx, 'Gym Leader ' + gym.leader, sx, roofY - 32, 'center');
+        wayfindingLabel(
+          ctx,
+          levelText + (escalationBump > 0 ? ' +' + escalationBump + ' Escalating' : ''),
+          sx,
+          roofY - 10,
+          'center'
+        );
       }
       ctx.restore();
     }
 
-    // Move Shop buildings (js/systems/shops.js, step 3): off screen, a red arrow floating off the character; on screen,
-    // a red arrow bouncing above the roof. Label: name, seconds left (blinks for the last G.Shops.BLINK s), metres.
+    // Move Shop buildings (js/systems/shops.js, step 3): off screen, chevrons floating off the character; on screen, a
+    // label over the roof. Label: name, seconds left (blinks for the last G.Shops.BLINK s), metres when off screen.
     {
       const now = performance.now() / 1000,
-        beat = 0.5 + Math.sin(now * 7) * 0.5,
         blinkOff = Math.floor(now * 4) % 2 === 0;
       for (const s of G.Shops.list) {
         const sx = (s.x - cam.left()) * cam.scale,
           sy = (s.y - cam.top()) * cam.scale,
           ta = (s.left <= G.Shops.BLINK && blinkOff ? 0.35 : 1) * s.alpha,
-          secs = Math.ceil(s.left) + ' s';
+          secs = Math.ceil(s.left) + 's';
         if (sx < 0 || sx > w || sy < 0 || sy > h) {
-          const m = Math.round(G.U.dist(pl.x, pl.y, s.x, s.y) / 32) + ' m';
-          floatArrow(ctx, cam, pl, s.x, s.y, SHOP_ARROW, s.name.toUpperCase() + ' · ' + secs + ' · ' + m, beat, ta);
+          // "TM Mart·11m·34s" (Jess, 2026-11-10)
+          const m = Math.round(G.U.dist(pl.x, pl.y, s.x, s.y) / 32) + 'm';
+          floatArrow(ctx, cam, pl, s.x, s.y, SHOP_WAYFINDER, s.name + '·' + m + '·' + secs, ta);
         } else {
-          const by = (s.y - s.h - cam.top()) * cam.scale - 16 - Math.abs(Math.sin(now * 4)) * 10;
           ctx.save();
-          ctx.globalAlpha = s.alpha;
-          ctx.translate(sx, by);
-          ctx.beginPath();
-          ctx.moveTo(-15, -12);
-          ctx.lineTo(15, -12);
-          ctx.lineTo(0, 8);
-          ctx.closePath();
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = SHOP_ARROW.edge;
-          ctx.stroke();
-          ctx.fillStyle = beat > 0.5 ? SHOP_ARROW.lite : SHOP_ARROW.main;
-          ctx.fill();
           ctx.globalAlpha = ta;
-          ctx.font = F(800, 11);
-          ctx.textAlign = 'center';
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = 'rgba(0,0,0,.85)';
-          ctx.strokeText(s.name.toUpperCase() + ' · ' + secs, 0, -18);
-          ctx.fillStyle = SHOP_ARROW.text;
-          ctx.fillText(s.name.toUpperCase() + ' · ' + secs, 0, -18);
+          wayfindingLabel(ctx, s.name + '·' + secs, sx, (s.y - s.h - cam.top()) * cam.scale - 10, 'center');
           ctx.restore();
         }
       }
@@ -911,20 +1044,9 @@ G.HUD = (() => {
       sy = G.U.clamp(pb[1] * h - S / 2, 24, h - S - 6 - BAR_LIFT); // never covers the HP strip
     }
     const BOND = '#ff8ad8';
-    // A move that is ready but has no target (or the caster is frozen) re-arms m.t to 0.05 every frame (combat.js tickMove): that sawtooth is not a cooldown, so <= 0.05 s reads as ready.
-    // simCd: the resolver cd, set on a slot routed through the new move system (?dev&newcombat, slice 3d); absent otherwise.
-    // An always-on move (a persistent def: orbits, auras, trails) has no cooldown to show (slice 7a).
-    const flyFx = pl.skillFx('fly'); // Fly's icon: the flight left while up, then the recharge from landing
-    const cdOf = (m) =>
-      G.MoveEffects.skillOf(G.MoveDefs[m.id]) === 'fly'
-        ? pl.flyT > 0
-          ? G.U.clamp(pl.flyT / flyFx.duration, 0, 1)
-          : G.U.clamp(pl.flyCd / flyFx.cooldown, 0, 1)
-        : (G.MoveDefs[m.id] && G.MoveDefs[m.id].persistent) || m.t <= 0.05
-          ? 0
-          : G.U.clamp(m.t / ((m.simCd || m.cd) * pl.cdMul), 0, 1);
+    const cdOf = (m) => moveCooldownFraction(pl, m);
 
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < n && !overlayDrawsPlayer; i++) {
       const g = pl.slots[i] || [];
       const m = g[0];
       const fused = g.length > 1;
@@ -1008,7 +1130,7 @@ G.HUD = (() => {
     }
 
     // ---------- held link (there are not yet two loose moves) ----------
-    if (pl.bonds > 0) {
+    if (pl.bonds > 0 && !overlayDrawsPlayer) {
       const bx = sx + totalW + 12,
         by = sy + S / 2 - 12;
       G.Icons.draw(ctx, 'bond', bx, by, 24);
@@ -1021,7 +1143,7 @@ G.HUD = (() => {
     }
 
     // ---------- equipped item (to the left of the moves) ----------
-    {
+    if (!overlayDrawsPlayer) {
       const ix = sx - S - 18,
         iy = sy;
       roundRect(ctx, ix, iy, S, S, 12);
@@ -1041,7 +1163,7 @@ G.HUD = (() => {
 
     // ---------- run items (team-wide): a 1-wide column, bottom-right, mirroring the team column. ONLY unlocked slots are drawn
     // (G.Items.runSlots: 1 by default, up to 4). Slot 1 sits at the bottom and each unlocked slot stacks above it. ----------
-    {
+    if (!overlayDrawsRunItems) {
       const nSlots = G.Items.runSlots(G.DB.save),
         GAPR = 10,
         list = pl.runItems || [];
@@ -1256,5 +1378,5 @@ G.HUD = (() => {
     }
   }
 
-  return { draw, roundRect, bar, BAR_LIFT };
+  return { draw, roundRect, bar, BAR_LIFT, moveCooldownFraction };
 })();

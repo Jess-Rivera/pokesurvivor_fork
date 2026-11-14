@@ -100,7 +100,6 @@ G.Boss = (() => {
       this.tells = rules.tells !== false;
       this.healsLeft = rules.healLimit != null ? rules.healLimit : Math.max(1, Math.floor(g.loop) || 1); // self heals this mon may cast this fight: by default the loop number (Jess 2026-11-05)
       e.aim = 0;
-      e.strongHost = true;
       e.foes = () => {
         const p = G.Game.player;
         return p && !p.dead ? [p] : [];
@@ -139,8 +138,10 @@ G.Boss = (() => {
       return G.TeamCards.defOf(this.e, id);
     }
 
-    /** One frame of movement and casting; returns [vx, vy, anim] for the body's integration. */
-    step(dt, pl, dist, dx, dy, spd) {
+    /** One frame of movement and casting; returns [vx, vy, anim] for the body's integration. `onPick(i)` (a Player-entity leader,
+     *  LEADER-AI slice 1): the slot pickSlot chose, or -1, handed to the AI player, which presses it through your controls here,
+     *  before the casts, so the frame runs as when the brain switched by itself. */
+    step(dt, pl, dist, dx, dy, spd, onPick = null) {
       if (!this.on) this.init();
       const e = this.e,
         now = G.Gym.now();
@@ -148,20 +149,24 @@ G.Boss = (() => {
       // every move recharges, inactive slots too, as the player's do
       for (const g of e.slots) for (const s of g) if (s.t > 0) s.t = Math.max(0, s.t - dt);
       if (this.wait > 0) this.wait -= dt;
-      if (e.isPlayer) this.pickSlot(pl, now); // slice 8: the slot choice, before the casts, under your slot hold
+      if (e.isPlayer && onPick) onPick(this.pickSlot(pl, now)); // slice 8: the slot choice, before the casts, under your slot hold
       this.buffs(now);
       this.heals(now);
       G.MoveSim.persist(e, now); // a persistent slot (Toxic's trail) lives while it is in the active group, as the player's does
       G.MoveEffects.upkeep(dt, e); // heal over time ticks (a self heal lands on its first tick), as the sim does for the player
       if (e.mvRoot) return [0, 0, 'Walk']; // a live dash (Quick Attack) carries the body; the brain does not steer until it is back
       if (this.tell) return this.telling(dt, now);
-      this.modeT -= dt;
       if (!this.low && e.hp < e.maxHp * LOW_HP) {
         this.low = true;
         this.farLike = 0.8;
       }
+      // LEADER-AI slice 3 (#32): the AI player's pacing holds a stance ('close' a push, 'far' a breather) and pauses the alternation; a
+      // push with no melee move walks to the inner edge of its far band instead (tight)
+      const tight = this.hold === 'close' && !this.melee;
+      if (this.hold) this.mode = tight ? 'far' : this.hold;
+      else this.modeT -= dt;
       // It always alternates: at its favorite range it stays longer (7-9 s) than at the other (4-5 s). A mon with no melee move stays far.
-      if (this.modeT <= 0) {
+      if (!this.hold && this.modeT <= 0) {
         this.mode = this.mode === 'far' && this.melee ? 'close' : 'far';
         this.modeT = (this.mode === 'far') === this.farLike > 0.5 ? G.U.rand(7, 9) : G.U.rand(4, 5);
         this.side = -this.side;
@@ -175,8 +180,9 @@ G.Boss = (() => {
         vy = ux * spd * this.side;
       };
       if (this.mode === 'far') {
-        const out = Math.min(FAR, this.ranged() - SHOT_IN),
+        let out = Math.min(FAR, this.ranged() - SHOT_IN),
           inn = Math.min(NEAR, out - BAND);
+        if (tight) [out, inn] = [inn, inn - BAND];
         if (dist < inn) {
           vx = -ux * spd;
           vy = -uy * spd;
@@ -264,12 +270,13 @@ G.Boss = (() => {
     /** Slice 8 (Q2 to Q4, Jess 2026-11-07): a leader's slot choice, under your 0.4 s slot hold and never inside a tell. In order:
      *  1 a self heal slot that can cast while hurt (the heal cap still counts); 2 stay on the active slot while it has a ready move in
      *  reach that no other slot beats by SWITCH_MARGIN; 3 else the slot with the best attack score; 4 with nothing ready in reach, a
-     *  buff slot whose Gate is open. A switch is your setActive: the hold and the type ring, no sound (Q8). */
+     *  buff slot whose Gate is open. A switch is your setActive: the hold and the type ring, no sound (Q8).
+     *  LEADER-AI slice 1: it only chooses. It returns the slot to switch to, or -1 to stay, and the AI player presses it. */
     pickSlot(pl, now) {
       const e = this.e;
-      if (e.slots.length < 2 || this.tell || e.mvRoot || e.stFl || e.swapT > 0) return;
+      if (e.slots.length < 2 || this.tell || e.mvRoot || e.stFl || e.swapT > 0) return -1;
       const S = sense(e, pl),
-        go = (i) => i !== e.active && e.setActive(i),
+        go = (i) => (i !== e.active ? i : -1),
         slotWith = (form, ok) =>
           e.slots.findIndex((g) =>
             g.some((s) => open(e, s) && s.t <= 0 && G.Gyms.formOf(this.def(s.id)) === form && ok(s))
@@ -296,12 +303,9 @@ G.Boss = (() => {
           at = i;
         }
       });
-      if (top) {
-        if (!cur || top.score >= SWITCH_MARGIN * cur.score) go(at);
-        return;
-      }
+      if (top) return !cur || top.score >= SWITCH_MARGIN * cur.score ? go(at) : -1;
       const b = slotWith('buff', (s) => G.MoveEffects.statReady(this.def(s.id), e));
-      if (b >= 0) go(b);
+      return b >= 0 ? go(b) : -1;
     }
 
     /** Slice 8 (Q5): the other attack moves of the active slot that are ready now (a bonded slot holds 2 to 4), marked as cast now. */
@@ -535,5 +539,26 @@ G.Boss = (() => {
     return e;
   }
 
-  return { make, GymBrain, TELL, RECOVER, sense, SWITCH_MARGIN };
+  // Leader AI slice 5a (#34): the tuning a Player-entity leader shares with GymBrain (G.GymLeader.SimPass, G.LeaderAI read it), one
+  // copy until gyms 3 to 8 switch (slice 12)
+  const TUNE = Object.freeze({
+    TELL,
+    RECOVER,
+    CLOSE,
+    RANGED,
+    ORDER,
+    SPOT,
+    POINT_BLANK,
+    OPP_HEX,
+    OPP_BLOCKED,
+    OPP_DROP,
+    MAJOR,
+    LOW_HP,
+    NEAR,
+    FAR,
+    SHOT_IN,
+    BAND,
+    SWITCH_MARGIN,
+  });
+  return { make, GymBrain, TELL, RECOVER, sense, SWITCH_MARGIN, TUNE, slotsOf, open };
 })();

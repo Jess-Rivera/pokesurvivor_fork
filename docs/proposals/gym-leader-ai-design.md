@@ -1,5 +1,8 @@
 # GymLeaderAI design (Director-style trainer AI)   [Proposed]
 
+**HISTORY since 2026-11-08 (Jess).** Replaced by docs/LEADER-AI.md, designed fresh and then compared with this file;
+the parts adopted from it are there. G1 to G11 are not answered here. Do not build on this file.
+
 2026-11-07, Quick, branch feature/gym-leader-ai. Awaiting Jess on G1 to G11 (section 10). No code until signed off.
 Sources: host-model-plan.md slices 9 to 12; docs/ASCII Concept Maps/Entity Model Slice 9 - Leader Voluntary Swaps.txt
 (v2: structure A1 to A5, swap rules Q1 to Q10, carried forward here); docs/Director AI Proposal.md (architecture borrowed);

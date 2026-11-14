@@ -3,10 +3,7 @@
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs leader-stats-harness.js against it
 // (LS_<FILE>). The harness must fail every time; a miss is a gap, a stale pattern is reported as STALE.
 // Plan: docs/ASCII Concept Maps/Entity Model Slice 6 - Leader Stats and Cards.txt.
-const fs = require('fs'),
-  os = require('os'),
-  path = require('path'),
-  cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const LD = 'js/entities/gym-leader.js',
   BR = 'js/entities/boss-ai.js',
@@ -16,10 +13,11 @@ const LD = 'js/entities/gym-leader.js',
 const ENV = { [LD]: 'LS_LEADER', [BR]: 'LS_BRAIN', [ST]: 'LS_STATUS', [GY]: 'LS_GYMS', [GM]: 'LS_GYM' };
 const M = [
   // D1: your attack formula
-  ['the brain factor is put back on the leader', BR, '      // A G.GymLeader inherits these four', '      e.moveFactor = (m) => this.factor(m);\n      // A G.GymLeader inherits these four'],
+  // #30 (2026-11-14): 'the brain factor is put back on the leader' is retired: it edited boss-ai.js, which a leader no longer
+  // runs (#41). Your attack formula on a leader is covered by section a's parity and 'enrage never reaches her factor'.
   // finding C: the order
-  ['max HP is set before the cards', LD, '    this.brain = new G.Boss.GymBrain(this); // first (slice 6, finding C): its card store holds the Vitamins that max HP reads\n    this.maxHp = this.maxHpAt(this.level);\n    this.hp = this.maxHp;\n', '    this.maxHp = this.maxHpAt(this.level);\n    this.hp = this.maxHp;\n    this.brain = new G.Boss.GymBrain(this);\n'],
-  ['the items go on before the brain', LD, '    this.brain = new G.Boss.GymBrain(this); // first', '    this.arm();\n    this.brain = new G.Boss.GymBrain(this); // first'],
+  ['max HP is set before the cards', LD, '    this.becomeSimOwner(); // first (slice 6, finding C): its card store holds the Vitamins that max HP reads\n    this.maxHp = this.maxHpAt(this.level);\n    this.hp = this.maxHp;\n', '    this.maxHp = this.maxHpAt(this.level);\n    this.hp = this.maxHp;\n    this.becomeSimOwner();\n'], // #41 retarget
+  ['the items go on before the sim owner setup', LD, '    this.becomeSimOwner(); // first', '    this.arm();\n    this.becomeSimOwner(); // first'], // #41 retarget
   // D3: the profile
   ['the profile is not passed', LD, 'def.gym.profile ? G.Stats.profile(def.gym.profile) : null', 'null'],
   ['profileFor drops the nature', GY, 'natureUp: N ? N[1] : 0,\n      natureDown: N ? N[2] : 0,', 'natureUp: 0,\n      natureDown: 0,'],
@@ -39,14 +37,16 @@ const M = [
   ['the run item cap is gone', GY, 'if (held.length > RUN_ITEM_MAX)', 'if (false)'],
   ['the def drops the held item', GM, "        item: G.Gyms.perLoop(sig.item, loop) || null,", '        item: null,'],
   ['the def drops the run items', GM, '        runItems: G.Gyms.runItemsFor(entry, loop),', '        runItems: [],'],
-  ['the brain skips the Life Orb cost', BR, '          this.orbCost(this.def(c.id));\n', ''],
-  ['Life Orb has no floor', BR, 'e.hp = Math.max(1, e.hp - Math.max(1, e.maxHp * 0.01));', 'e.hp = e.hp - Math.max(1, e.maxHp * 0.01);'],
-  ['Life Orb costs with no Life Orb', BR, "if (e.isPlayer && e.hasItem('lifeorb') &&", 'if (e.isPlayer &&'],
+  // #30 (2026-11-14): the Life Orb mutants retargeted from boss-ai.js (the old brain, which a leader no longer runs since #41)
+  // to the leader's own SimPass in gym-leader.js
+  ['the leader skips the Life Orb cost', LD, '        this.orbCost(e, e.moveDef(c.id));\n', ''],
+  ['Life Orb has no floor', LD, 'e.hp = Math.max(1, e.hp - Math.max(1, e.maxHp * 0.01));', 'e.hp = e.hp - Math.max(1, e.maxHp * 0.01);'],
+  ['Life Orb costs with no Life Orb', LD, "if (e.hasItem('lifeorb') && !(d && d.persistent))", 'if (!(d && d.persistent))'],
   // Q3, N3: restrictions
   ['the status cut defaults to half', LD, '    return v != null ? v : 1;', '    return v != null ? v : 0.5;'],
   ['the hard CC gap defaults to 5 s', LD, '    return v != null ? v : G.Status.GRACE;', '    return v != null ? v : 5;'],
   ['hit i-frames default to none', LD, '    return v != null ? v : super.hitIframes;', '    return v != null ? v : 0;'],
-  ['auto shake is off by default', LD, "if (this.rule('autoShake') !== false)", "if (this.rule('autoShake') === true)"],
+  ['auto shake is off by default', LD, "return this.rule('autoShake') !== false;", "return this.rule('autoShake') === true;"],
   ['status ignores the authored cut', ST, "if (h.statusCut != null && (kind === 'freeze' || kind === 'sleep')) return base * h.statusCut;", ''],
   ['status ignores the authored gap', ST, 'h.ccWindow != null ? h.ccWindow : GRACE', 'GRACE'],
   ['restriction values are not checked', GY, "rules.statusCut != null &&\n        !(typeof rules.statusCut === 'number'", "false &&\n        !(typeof rules.statusCut === 'number'"],
@@ -63,29 +63,10 @@ const M = [
   ['the budget never warns', GY, 'return n > level - 1\n', 'return false\n'],
   ['makeDef never warns', GM, "    if (warn) console.warn('[Gym] ' + warn);\n", ''],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'leader-stats-mut-'));
-let caught = 0,
-  bad = 0;
-for (const [name, file, a, b] of M) {
-  const s = fs.readFileSync(path.join(root, file), 'utf8');
-  if (!s.includes(a)) {
-    console.log('STALE mutation (pattern not found): ' + name);
-    bad++;
-    continue;
-  }
-  const out = path.join(tmp, path.basename(file));
-  fs.writeFileSync(out, s.replace(a, b));
-  const env = Object.assign({}, process.env, { [ENV[file]]: out });
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/leader-stats-harness.js')], { env, encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n');
-  if (r.status !== 0) {
-    caught++;
-    console.log('caught  ' + name + '  (' + (lines.find((l) => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')');
-  } else {
-    bad++;
-    console.log('MISSED  ' + name);
-  }
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log(caught + '/' + M.length + ' mutations caught');
-process.exit(bad ? 1 : 0);
+
+require('../../tools/mutate-runner.js')({
+  label: 'leader-stats-mutate',
+  root,
+  harnesses: ['docs/proposals/leader-stats-harness.js'],
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { [ENV[file]]: '<out>' } })),
+});

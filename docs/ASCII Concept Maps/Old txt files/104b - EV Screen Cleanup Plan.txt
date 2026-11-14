@@ -1,0 +1,132 @@
+104b - EV SCREEN CLEANUP PLAN  (Quick, 2026-11-13, branch feature/pause-menu-rework)
+Follow-up to 104 (built today). Structure only: NOTHING the player sees or does changes. No save fields.
+Status: APPROVED (D1 default: the pause menu keeps its own keys) and BUILT 2026-11-13.
+As built, two small differences from the text below:
+  - D went one step further: the EV screen's `asking` flag is gone too, not just the 150 ms guard. The shared
+    dialog is a full-screen layer (z-index 62) over the EV screen (15), so no click reaches it, and the row's
+    keys() already skips while the dialog is open. The `ask` wrapper went with it (Learn / Go Home call G.UI.ask).
+  - The pause menu's scale check reuses the smoke's existing 1600 x 900 resize (reads 0.833, then 1) instead of a
+    second resize; End Run and the EV screen get the 1280 x 720 check.
+
+=====================================================================================
+WHAT IS DUPLICATED TODAY
+=====================================================================================
+
+                      scale-to-fit    button row (L/R focus,    EV clamp 252/510
+                      (--pm-scale)    Enter, ask/settings guard)
+  pause-menu.js          copy 1            own (Up/Down + answers,       -
+                                           different, stays)
+  end-run.js             copy 2            copy 1                        -
+  ev-screen.js           copy 3            copy 2                        -
+  copies.js clean()        -                 -                      copy 1
+  debug.js evset           -                 -                      copy 2 (writes save record by hand)
+  smoke (#104 block)       -                 -                      writes save record by hand
+
+  ev-screen.js also has a 150 ms "answer guard" nobody needs (see D below).
+  smoke's 2nd-run block calls seedEvs AND evSeedTeam; the second overwrites the first.
+
+=====================================================================================
+AFTER
+=====================================================================================
+
+  hud-overlay.js kit  ---+--> fitToStage(root)  ------> pause-menu.js, end-run.js, ev-screen.js
+                         |
+                         +--> createButtonRow(...) ---> end-run.js, ev-screen.js
+                                                        (pause menu keeps its own: Up/Down, in-ball answers)
+
+  copies.js  cappedEvs(six) --+--> clean()            (same result as today)
+                              +--> setEvs(save, id, six)  NEW, returns the saved six or null
+                                         |
+                                         +--> debug.js evset (no hand-written record)
+                                         +--> smoke #104 block (no hand-written record)
+
+=====================================================================================
+PARTS (files, spot, change)
+=====================================================================================
+
+  A  scale-to-fit, one copy
+     hud-overlay.js  kit, beside SlotButton: fitToStage(root) sets --pm-scale to
+                     min(1, window / 1920x1080) now and on every resize. Kit also exports the
+                     stage size.
+     pause-menu.js   line ~68 STAGE_WIDTH/HEIGHT and ~268 fitStage + resize listener go;
+                     the open step (~314) calls the kit's instead.
+     end-run.js      fitStage + listener go; show() calls the kit's.
+     ev-screen.js    same.
+
+  B  the button row, one copy (End Run + EV screen only)
+     hud-overlay.js  kit: createButtonRow(isOpen, onPress) gives a focus signal, keys() and
+                     press(index). keys(): Move_Left / Move_Right with the hover sound,
+                     either Enter key, and it does nothing while scr-ask or Settings is up.
+     end-run.js      its focus signal, press guard and keys() go; uses the row.
+     ev-screen.js    same.
+     NOT the pause menu: Up/Down and the End/No answers are a different shape; forcing it in
+     would bend the helper for one caller.
+
+  C  the EV clamp, one copy
+     copies.js       the 252-a-stat / 510-in-all loop inside clean() becomes cappedEvs(six);
+                     clean() calls it (same output). NEW setEvs(save, id, six): finds the copy,
+                     stores cappedEvs(six), drops the field when all zero (as clean() does).
+                     Exported beside addEvs.
+     debug.js        evset: finds the slot's uid, calls setEvs, commits, logs. ~10 lines shorter.
+
+  D  drop the guessed 150 ms answer guard
+     ev-screen.js    ANSWER_GUARD_MS and its setTimeout go; asking clears as soon as the ask
+                     resolves.
+     Why it is safe (checked, not guessed): G.UI.ask listens for Enter on the window in the
+     CAPTURE phase and stops it there (ui.js ~122); G.Input listens on the window in the
+     bubble phase (input.js ~136), so the answering Enter never reaches G.Input. A click
+     answer is not a key at all.
+
+  E  tests tidy (tools/, free edit)
+     smoke-pause-menu.js  2nd run: drop the seedEvs call + its check (evSeedTeam covers it,
+                          its slot check stays). evSeedTeam uses G.Copies.setEvs instead of
+                          writing record.e.
+
+  NOT IN THIS CLEANUP
+     + / - look (plain CSS boxes)   feel-test call; if you want pixel art, its own change
+     hard-coded colours             pause-menu.css only has scale/red/slate vars and uses
+                                    literals elsewhere; matching the file as it is
+     120-column check               run npm run format before the mutation runner (below)
+
+=====================================================================================
+DECISIONS
+=====================================================================================
+  None that change the game. One structural choice, default taken unless you edit:
+  D1  the pause menu keeps its own key handling (B skips it). Alternative: widen the
+      button row to cover Up/Down and the in-ball answers too (bigger, riskier change to a
+      feel-tested screen).
+
+=====================================================================================
+TESTS (no new test files)
+=====================================================================================
+
+  tools/smoke-pause-menu.js  (existing; all its pause menu, End Run, Run Review and #104
+                              checks must pass UNCHANGED, that is the proof B and A changed
+                              nothing)
+     + NEW check: resize the window to 1280 x 720 with each screen open; the pause menu,
+       End Run and EV screen stages all read --pm-scale 0.667, and back to 1 at 1920 x 1080.
+       Why: A moves the code all three rely on; no check covers the scaling today.
+     edits from E above.
+  docs/proposals/pokebox-evs-harness.js  (existing; it loads the REAL copies.js)
+     + NEW checks on setEvs, numbers by hand: [300, 300, 0, 0, 0, 0] saves 252 252 0 0 0 0;
+       [252, 252, 252, 0, 0, 0] saves 252 252 6 0 0 0 (later stats cut); all zero removes the
+       field; an unknown id returns null and changes nothing.
+     + clean() keeps today's checks unchanged (proves C kept its output).
+     Why: C adds a save writer; the harness already owns the EV caps.
+  docs/proposals/pokebox-evs-mutate.js  (existing)
+     ~ REPOINT "clean() lets EVs pass 510": its text moves into cappedEvs (else STALE).
+     + ADD "setEvs ignores 252", "setEvs ignores 510", "setEvs keeps an all-zero field".
+       Each must fail the harness.
+  docs/proposals/run-info-harness.js / run-info-mutate.js  (existing, read pause-menu.js)
+     no change: checked, neither touches the scaling or key code.
+  tools/check.js   no change.
+  Intent scenarios: none (no moves). Debug sets: none.
+
+  ORDER FOR YOU:  node tools/check.js  ->  npm run format  ->  node docs/proposals/pokebox-evs-mutate.js
+                  ->  node tools/smoke-pause-menu.js  ->  20 s feel check: open and close the pause
+                  menu, End Run focus with Left/Right, EV screen Learn / Go Home, resize the window.
+
+  RISKS
+     - A and B touch two feel-tested screens (pause menu scaling, End Run keys). The smoke
+       guards both; the feel check is the backstop.
+     - One commit for 104 + 104b is fine if 104 is not committed yet; else a second commit.

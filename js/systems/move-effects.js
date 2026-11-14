@@ -158,21 +158,30 @@ G.MoveEffects = (() => {
     const kn = knockOf(inst, e, kfx);
     e.hurt(dmg, col, kn[0], kn[1], kn[2], b.crit ? 'crit' : G.Types.label(hit.typeMult)); // D33
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
-    if (o.onDealt) o.onDealt(dmg);
+    if (o.onDealt) o.onDealt(dmg, { target: e, typeMult: hit.typeMult, moveId: def.id }); // #91: the run record
     hit.dmg = dmg;
     hit.crit = b.crit;
     hit.dealt = Math.max(0, hp0 - Math.max(0, e.hp)) + Math.max(0, sh0 - (e.shield || 0)); // D34: shield counted, overkill excluded
   }
 
-  /** D32: burn and poison through their Enemy entry points, control statuses through G.Status (immunity, 'blocked' and windows live there). */
+  /** D32: burn and poison through their Enemy entry points, control statuses through G.Status (immunity, 'blocked' and windows live there).
+   *  #91 (PAUSE-MENU 4 and 6): a status that newly lands is the caster's (onInflicted); a burn or poison also remembers its caster,
+   *  whose ticks it then is. A refresh, an immune, a blocked major or a window lands nothing. */
   function ailment(inst, e, rng, fx, hop) {
     if (fx.side !== 'foe' || !foe(e) || !rolls(fx, hop, rng)) return;
+    const o = inst.cast ? inst.cast.owner : null;
+    let landed;
     if (fx.id === 'burn') {
       const B = fx.duration != null && G.Enemies.STATUS.burn; // a stated length becomes the turn multiplier
-      e.applyBurn(1, false, 1, B ? fx.duration / (B.turns * B.turn) : 1);
-    } else if (fx.id === 'poison')
-      e.applyPoison(1, 1); // applyPoison takes no length; no move states a poison duration
-    else G.Status.apply(e, fx.id, 1, 1, fx.duration);
+      const was = e.burn > 0;
+      e.applyBurn(1, false, 1, B ? fx.duration / (B.turns * B.turn) : 1, o);
+      landed = !was && e.burn > 0;
+    } else if (fx.id === 'poison') {
+      const was = e.poison > 0;
+      e.applyPoison(1, 1, o); // applyPoison takes no length; no move states a poison duration
+      landed = !was && e.poison > 0;
+    } else landed = G.Status.apply(e, fx.id, 1, 1, fx.duration) === 'ok';
+    if (landed && o && o.onInflicted) o.onInflicted(fx.id);
   }
 
   function flinch(inst, e, rng, fx, hop) {
@@ -211,9 +220,8 @@ G.MoveEffects = (() => {
   /** Slice 7a: a team-scope raise lands on the team tracker only when the owner has a team store; a gym leader's mon has none, so its
    *  Harden raises itself (TODO: whether a gym's mons share raises in loop 2+). */
   const teamOf = (fx, o) => fx.scope === 'team' && !!o.stgTeam;
-  /** The Gate multiplier on every stat change `o` causes: its team's Gate card (SS10), times STRONG_HOST_GATE_MUL for a strong host (SS13). */
-  const gateMulOf = (o) =>
-    (o.teamCards ? G.TeamCards.gateMul(o) : 1) * (o.strongHost ? G.Stages.STRONG_HOST_GATE_MUL : 1);
+  /** The Gate multiplier on every stat change `o` causes: its team's Gate card (SS10), as yours (SS13; the strong-host Gate is gone, #45). */
+  const gateMulOf = (o) => (o.teamCards ? G.TeamCards.gateMul(o) : 1);
 
   // SS8 (slice 5a): a pure buff move has no damage and no shape: its payload is only self stat changes (Swords Dance, Agility, Harden,
   // Dragon Dance). It casts when its Gate opens instead of on a cooldown.
@@ -268,7 +276,7 @@ G.MoveEffects = (() => {
     if (e.takeFlat) e.takeFlat(dmg, col, kn[0], kn[1], kn[2]);
     else e.hurt(dmg, col, kn[0], kn[1], kn[2], null); // hosts without takeFlat (older test hosts)
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
-    if (o.onDealt) o.onDealt(dmg);
+    if (o.onDealt) o.onDealt(dmg, { target: e, moveId: def.id }); // #91: flat damage, never super effective
     hit.dmg = dmg;
     hit.crit = false;
     hit.typeMult = 1;
@@ -333,7 +341,8 @@ G.MoveEffects = (() => {
     const def = inst.spec,
       b = blowOf(inst, pl, rng),
       hp0 = pl.hp;
-    b.neutral = !!pl.isRival && def.category === 'status'; // slice 5: on a gym leader a status-category hit divides by the neutral 50, as on a wild entity
+    // #41: a status-category hit takes your rule on a leader too, unless its gym authors wildStatusDivisor (the wild neutral 50)
+    b.neutral = !!pl.isRival && def.category === 'status' && pl.rule('wildStatusDivisor') === true;
     b.cat = def.category === 'special' ? 'special' : 'physical'; // a Player entity's defense knows physical and special only
     b.who = G.Log.on ? G.Log.who(b.owner, def.id) : null;
     b.itemMul = G.Stats.itemDmgMul(b.owner, def.type, typeK(b.owner, def.type, pl)); // slice 5: the attacker's Expert Belt and type items (a leader has none yet)
@@ -343,15 +352,21 @@ G.MoveEffects = (() => {
     hit.crit = b.crit;
     hit.dmg = hit.dealt = Math.max(0, hp0 - Math.max(0, pl.hp));
     b.owner.dmgDealt = (b.owner.dmgDealt || 0) + hit.dealt; // slice 5: your damage on a gym leader counts, Shell Bell included
-    if (b.owner.onDealt) b.owner.onDealt(hit.dealt);
+    if (b.owner.onDealt) b.owner.onDealt(hit.dealt, { target: pl, typeMult: hit.typeMult, moveId: def.id }); // #91
   }
   const DOT = new Set(['burn', 'poison', 'toxic']);
+  /** #91: as ailment, on a Player entity (a gym leader's mon, or you): G.Status answers 'ok' only for a status that newly lands,
+   *  and a burn or poison keeps its caster on the state (stDot.by), so statusDot credits the ticks and the record goes with it. */
   function ailPlayer(inst, pl, rng, fx, hop) {
     if (fx.side !== 'foe' || !foe(pl) || !rolls(fx, hop, rng)) return;
+    const o = inst.cast ? inst.cast.owner : null;
+    let landed;
     if (DOT.has(fx.id)) {
       const S = fx.duration != null && G.Enemies.STATUS[fx.id]; // a stated length becomes the turn multiplier, as on an enemy
-      G.Status.applyDot(pl, fx.id, 1, S ? fx.duration / (S.turns * S.turn) : 1);
-    } else G.Status.apply(pl, fx.id, 1, 1, fx.duration);
+      landed = G.Status.applyDot(pl, fx.id, 1, S ? fx.duration / (S.turns * S.turn) : 1) === 'ok';
+      if (landed) pl.stDot.by = o;
+    } else landed = G.Status.apply(pl, fx.id, 1, 1, fx.duration) === 'ok';
+    if (landed && o && o.onInflicted) o.onInflicted(fx.id);
   }
   function flinchPlayer(inst, pl, rng, fx, hop) {
     if (!foe(pl) || !pl.applyFlinch) return;

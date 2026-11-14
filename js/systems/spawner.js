@@ -96,6 +96,12 @@ G.Spawner = (() => {
     return G.Sprites.hovers(def.dex);
   }
 
+  /** #91: a shiny spawned, for the run's record (Run Info "Shinies seen"). */
+  function shinySeen() {
+    const stats = G.Game && G.Game.runStats;
+    if (stats) G.RunStats.shiny(stats);
+  }
+
   function rollShiny(dex) {
     if (!G.Sprites.hasShiny(dex)) return false;
     if (forceShiny > 0) {
@@ -139,7 +145,8 @@ G.Spawner = (() => {
     if (G.Events.golden) e.makeGolden();
     G.EnemyMgr.add(e);
     if (shiny) {
-      say('¡Un ' + e.name + ' shiny anda cerca!', 3.4);
+      shinySeen();
+      say('A shiny ' + e.name + ' is nearby!', 3.4); // English in code, no lang-en entry (Jess, 2026-11-11)
       G.Audio.sfx('shiny');
     }
     return e;
@@ -152,9 +159,12 @@ G.Spawner = (() => {
     for (let i = 0; i < 6 && !pt; i++) pt = freePoint(pl, Math.random() * 6.2832, isFlyer(def));
     if (!pt) pt = ringPoint(pl, Math.random() * 6.2832);
     const e = new G.Elite(def, pt[0], pt[1], G.Enemies.scale(t));
-    if (rollShiny(def.dex)) e.makeShiny();
+    if (rollShiny(def.dex)) {
+      e.makeShiny();
+      shinySeen();
+    }
     G.EnemyMgr.add(e);
-    say('¡Un ' + e.name + ' élite apareció!', 3.2);
+    say('An elite ' + e.name + ' appeared!', 3.2); // English in code (#85, Jess 2026-11-11)
     G.Camera.kick(0.8);
     G.Audio.sfx('boss');
     return e;
@@ -204,7 +214,7 @@ G.Spawner = (() => {
         Math.round((14 + Math.floor(t / 22)) * G.Coop.scaleRate(players.length) * 0.4)
       );
       for (let i = 0; i < n; i++) spawnOne(target, t, base + G.U.rand(-0.55, 0.55));
-      say('¡Marea de Pokémon!', 2.2);
+      say('Pokémon swarm!', 2.2); // English in code, no lang-en entry (Jess, 2026-11-11)
       G.Audio.sfx('surge');
     }
   }

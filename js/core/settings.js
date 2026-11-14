@@ -6,7 +6,10 @@
  *   dmgNumbers  true/false                        damage numbers
  *   calm        true/false                        less shake and flashing
  *   fps         true/false                        FPS counter
+ *   vignette    true/false                        darkened screen edges, run and menu world (default off, 2026-11-12)
  *   autoShake   true/false                        accessibility: Shake off taps itself at 3 taps/s (status slice E2e)
+ *   showDpsPanel true/false                       the HUD's DPS-Upgrades panel, top left during a run (#66; default on)
+ *   dpsPanelOpacity 0.2 .. 1                      that whole panel's opacity, box, text and graph together (default 0.6)
  *   stick       0.8 | 1 | 1.25                    touch joystick size
  *   stickMode   'float' | 'fixed'                 joystick where you put your finger, or always in place
  *   pad         { bar, pause, stick } | null      where the buttons go on mobile (centered, in
@@ -22,7 +25,10 @@ G.Settings = (() => {
     dmgNumbers: true,
     calm: false,
     fps: false,
+    vignette: false,
     autoShake: false,
+    showDpsPanel: true,
+    dpsPanelOpacity: 0.6,
     stick: 1,
     stickMode: 'float',
     pad: null,

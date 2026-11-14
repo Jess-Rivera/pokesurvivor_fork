@@ -108,6 +108,8 @@ G.GymArena = (() => {
     gate = null;
     arena = null;
     asked = false;
+    G.LeaderInfo.end();
+    G.LeaderBelief.end();
   }
 
   // ---------------- the gate on the map ----------------
@@ -180,10 +182,15 @@ G.GymArena = (() => {
         members = [G.Boss.make(first, x, y)];
       for (let i = 1; i < n; i++) members.push(G.Boss.make(G.Gym.makeDef(g, i), x, y));
       arena.team = G.GymLeader.team(members);
+      arena.info = G.LeaderInfo.create(arena.team, g.id); // what its AI player can see (LEADER-AI slice 1), its run memory (slice 4)
+      arena.belief = G.LeaderBelief.create(arena.info); // #50: what it believes, the Decider's only door
       e = arena.team.active;
       // slice 7b (Q2): Brass Knuckles or Sharp Scissors on fewer than 3 mons do nothing; a dev warning, never a block
       const warn = G.Gyms.teamItemWarn(first.gym.leader, first.gym.runItems, n);
       if (warn) console.warn('[Gym] ' + warn);
+      // #53: a leader that authors 3 or more of the five intelligence settings directly; a dev warning, never a block
+      const overrideWarn = G.LeaderAI.intelligenceOverrideWarning(first.gym);
+      if (overrideWarn) console.warn('[Gym] ' + overrideWarn);
     } else e = G.Boss.make(first, x, y); // the old body: one mon, as before (slice 12 moves it)
     e.flying = false; // collides with walls like you, so your shots can reach it
     G.EnemyMgr.add(e);
@@ -207,6 +214,8 @@ G.GymArena = (() => {
       endT: 0,
       bossId: 0,
       team: null, // slice 7: a switched gym's G.Team
+      info: null, // LEADER-AI slice 1: its AI player's information layer (G.LeaderInfo)
+      belief: null, // #50: what its AI player believes (G.LeaderBelief)
       sendT: null, // seconds left of the send-out beat, null when none is running
     });
     gate = null;
@@ -270,8 +279,9 @@ G.GymArena = (() => {
    *  beat, and the lowest living slot takes the fainted spot (G.Team.sendIn: 0.5 s i-frames, the lock cleared). Wipe: the win. */
   function teamTick(dt) {
     const t = arena.team;
-    t.benchTick(dt);
-    if (!t.active.dead) return;
+    t.benchTick(dt, benchFaint);
+    if (!t.active.dead) return; // the lock and the voluntary swap run in the leader's own frame (swapStep, #43)
+    t.tickLock(dt);
     const redo = !t.living().length && G.GymLeader.redoReady(t); // slice 7b (Q3): the wipe waits for Re-Do
     if (!t.living().length && !redo) {
       G.Coop.isHost && G.Coop.broadcast(['aw']);
@@ -285,10 +295,49 @@ G.GymArena = (() => {
     next.flying = false;
     G.EnemyMgr.add(next);
     arena.bossId = next.id;
+    t.ai.arrived(false); // a faint send-in and Re-Do start the minField clock too (LEADER-AI STALL GUARDS)
     const line = redo ? ' used Re-Do! The whole team is back!' : ' sends out ' + next.name + '!';
     G.Spawner.say(arena.gym.leader + line, 2.4);
     G.Camera.kick(0.7);
     G.Audio.sfx('boss');
+  }
+
+  /** The swap point of the leader's frame, as your handleSwap in game.js (#43 step B, decision
+   *  2026-11-09-42-one-swap-clock-and-one-swap-point): the team's swap lock runs down, then its AI player's swap answer is read. Called
+   *  by the active leader mon after its slot keys, before its body. Returns the incoming mon when a swap landed (it runs the rest of the
+   *  frame), else null. */
+  function swapStep(t, dt) {
+    if (!arena || arena.team !== t || arena.phase !== 'fight' || t.active.dead) return null;
+    t.tickLock(dt);
+    let next = null;
+    t.ai.swapFrame((c) => (next = voluntary(t, t.requested(c)) || null));
+    return next;
+  }
+
+  /** LEADER-AI slice 1: the AI player's swap request for member j (-1 none), checked by your rules (G.Team.canSwap: the 5 s lock,
+   *  trap, Fly). The outgoing mon's shapes end and it leaves the enemy list for the bench, standing; the incoming one takes its spot
+   *  in the list and on the field with the 0.5 s i-frames (G.Team.swap). The spec's look: the ring and the line, no camera kick, no
+   *  boss sound. Returns the incoming mon. */
+  function voluntary(t, j) {
+    if (j < 0 || t.canSwap(j) !== 'ok') return null;
+    const out = t.active;
+    G.MoveSim.clear(out); // as your swap (move-route.js): the benched one's shapes, commitments, heal over time and shield end
+    out.tell = null;
+    const next = t.swap(j);
+    next.flying = false;
+    G.EnemyMgr.replace(out, next); // in place: the swap lands inside the enemy list's update, which must skip no one
+    arena.bossId = next.id;
+    G.FX.ring(next.x, next.y, 6, 70, G.U.TYPE_COLOR[next.types[0]] || '#ffd95e', 0.4, 4);
+    G.Spawner.say(arena.gym.leader + ' switches to ' + next.name + '!', 2.4);
+    t.ai.arrived(true);
+    return next;
+  }
+
+  /** LEADER-AI slice 2 (COMBAT-RULES "LEADER VOLUNTARY SWAPS"): a leader mon that faints on the bench pays you like any kill, once and
+   *  silently (no burst, sound or line), with no gym drop; it is not the boss kill, which stays with the last to fall. */
+  function benchFaint(f) {
+    f.boss = false;
+    G.EnemyMgr.payKill(f, G.Game.player);
   }
 
   function won() {
@@ -313,6 +362,8 @@ G.GymArena = (() => {
     const pl = G.Game.player;
     const a = arena;
     arena = null;
+    G.LeaderInfo.end();
+    G.LeaderBelief.end();
     G.Gym.onReturn(a.gym);
     G.World.setBiome(a.biome, true);
     G.Weather.clear();
@@ -379,6 +430,7 @@ G.GymArena = (() => {
   return {
     reset,
     update,
+    swapStep,
     drawable,
     onEvent,
     openGate,
@@ -397,6 +449,17 @@ G.GymArena = (() => {
     /** Slice 7: the leader's G.Team in a switched gym's arena (the HUD pips read it), else null. */
     get leaderTeam() {
       return arena ? arena.team || null : null;
+    },
+    /** LEADER-AI slice 1: the leader team's AI player and its information layer in a switched gym's arena, else null. */
+    get leaderAI() {
+      return arena && arena.team ? arena.team.ai : null;
+    },
+    get leaderInfo() {
+      return arena ? arena.info || null : null;
+    },
+    /** #50: the leader's Belief in a switched gym's arena, else null. */
+    get leaderBelief() {
+      return arena ? arena.belief || null : null;
     },
   };
 })();

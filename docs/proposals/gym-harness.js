@@ -25,6 +25,11 @@ try { load('js/core/util.js'); } catch (e) { }
  'js/systems/team-cards.js', 'js/systems/move-geom.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/elites.js', 'js/systems/gym.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
+// Only failures print (Jess, 2026-11-14): the section summaries are dropped, and the game's own warnings ('[Gym] ...') are
+// counted and named once in the last line. console.error is untouched.
+const print = console.log.bind(console), gameWarnings = new Map();
+console.log = (...a) => { if (a[0] === 'FAIL') print(...a); };
+console.warn = (...a) => { const m = String(a[0]); gameWarnings.set(m, (gameWarnings.get(m) || 0) + 1); };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 G.Enemy.prototype.die = function () { this.dead = true; };
 
@@ -183,7 +188,7 @@ const castsOf = fn => { const tape = G.SimBus.record(); fn(); G.SimBus.stopRecor
   // Velocity +15% x3 (350 to 507.5), Area +15% x2 (the radius grows by the square root of 1.3); Tackle is Normal, so Water Damage leaves it alone
   { const m = G.Gyms.KANTO[1], pool = G.Gyms.cardsFor(m, 1), wp = G.TeamCards.fold(G.MoveDefs['water-pulse'], pool), tk = G.TeamCards.fold(G.MoveDefs.tackle, pool);
     const ail = wp.payload.find(p => p.t === 'ailment');
-    if (m.leader !== 'Misty' || Object.values(pool).reduce((a, b) => a + b, 0) !== 13) bad('Misty loop 1 pool is 13 stacks ' + JSON.stringify(pool));
+    if (m.leader !== 'Misty') bad('KANTO[1] should be Misty, is ' + m.leader); // no card count: how many she holds is tuning data, not a rule (Jess, 2026-11-14)
     if (!near(wp.basePower, 96) || wp.space.count !== 3 || ail.chance !== 40 || !near(wp.delivery.moveSpeed, 350 * 1.45) || !near(wp.space.radRadius, 6 * Math.sqrt(1.3))) bad('Misty Water Pulse folded ' + JSON.stringify([wp.basePower, wp.space.count, ail.chance, wp.delivery.moveSpeed, wp.space.radRadius]));
     if (!near(tk.basePower, 40) || !near(tk.space.radRadius, 54 * Math.sqrt(1.3))) bad('Misty Tackle folded ' + JSON.stringify([tk.basePower, tk.space.radRadius]));
     const rec = m.signatures[0].sets[1].find(x => x.id === 'recover'); if (!rec || rec.hpBelow !== 0.35) bad('Misty loop 1 Recover joins only below 35%'); }
@@ -313,5 +318,6 @@ const gate2 = G.Gym.gate;
   if (said.join('|') !== want.join('|')) bad('gym-present text: ' + JSON.stringify(said)); if (sfx.join() !== 'gate') bad('gym-present sound ' + sfx);
   console.log('12 gym-present: escalate, calm and badge events render the exact toasts and the escalation sound'); }
 
-console.log(fail ? fail + ' FAILED' : 'ALL OK');
+const warned = [...gameWarnings].map(([m, k]) => m + ' (x' + k + ')');
+print('gym-harness: ' + (fail ? fail + ' FAILED' : 'ALL OK') + (warned.length ? '; game warnings: ' + warned.join('; ') : ''));
 process.exit(fail ? 1 : 0);

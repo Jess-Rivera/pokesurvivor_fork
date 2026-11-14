@@ -162,7 +162,7 @@ G.I18n.add({
 
   // ---------------- in-game notices ----------------
   '¡{x} salvaje apareció!': 'A wild {x} appeared!', '¡{x} shiny salvaje apareció!': 'A wild shiny {x} appeared!',
-  '¡Un {x} shiny anda cerca!': 'A shiny {x} is nearby!', '¡Marea de Pokémon!': 'Pokémon swarm!',
+  
   '¡Has conseguido a {x} shiny!': 'You got a shiny {x}!', '¡Otro {x} shiny! (+300 monedas)': 'Another shiny {x}! (+300 coins)',
   '¡{x} te esperaba en la grieta!': '{x} was waiting in the rift!', '¡{x} shiny te esperaba en la grieta!': 'A shiny {x} was waiting in the rift!',
   '¡Has vencido a {x}! Recoge el premio…': 'You defeated {x}! Grab your reward…',
@@ -473,7 +473,7 @@ G.I18n.add({
   'Juego de fans {x}: sin anuncios ni compras. Pokémon y sus personajes son propiedad de Nintendo, Creatures y GAME FREAK; este proyecto no está afiliado a ellos.': 'Fan game {x}: no ads or purchases. Pokémon and its characters are owned by Nintendo, Creatures and GAME FREAK; this project is not affiliated with them.',
   ': sin anuncios ni compras. Pokémon y sus personajes son propiedad de Nintendo, Creatures y GAME FREAK; este proyecto no está afiliado a ellos.': ': no ads or purchases. Pokémon and its characters are owned by Nintendo, Creatures and GAME FREAK; this project is not affiliated with them.',
   '. No tiene anuncios ni compras. Se puede apoyar con donaciones voluntarias, que se usan sólo para pagar los servidores y el dominio, y que no dan ninguna ventaja en el juego.': '. It has no ads or purchases. You can support it with voluntary donations, which are used only to pay for the servers and the domain and give no advantage in the game.', 'Compañero': 'Partner', 'tickets y': 'tickets and', 'directamente': 'directly', 'Tienes': 'You have', 'Movimientos que puede aprender': 'Moves it can learn',
-  'Juego de fans {x} — sin anuncios ni pagos.': 'Fan game {x} — no ads or payments.', 'Código Cero': 'Type: Null', 'Pokédex: todos los Pokémon jugables': 'Pokédex: every playable Pokémon',
+  'Juego de fans {x} — sin anuncios ni pagos.': 'Fan game {x} — no ads or payments.', 'Pokédex: todos los Pokémon jugables': 'Pokédex: every playable Pokémon',
 
   // ---------------- 2026-10-10: rifts, bosses, start screen, new moves ----------------
   '¡SE HA ABIERTO UNA GRIETA!': 'A RIFT HAS OPENED!', 'Sigue la flecha morada: dentro te espera un legendario': 'Follow the purple arrow: a legendary awaits inside',

@@ -3,7 +3,7 @@
 // Each mutation breaks boss-ai.js, move-sim.js, move-effects.js, gyms.js, move-route.js, move-render.js, enemy.js or player.js in one deliberate way,
 // writes the copy to a temp folder, and runs docs/proposals/boss-owner-harness.js against it (OWNER_<FILE> env vars). The harness must fail
 // every time.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { brain: ['js/entities/boss-ai.js', 'OWNER_BRAIN'], sim: ['js/systems/move-sim.js', 'OWNER_SIM'], fx: ['js/systems/move-effects.js', 'OWNER_FX'],
   gyms: ['js/data/gyms.js', 'OWNER_GYMS'], route: ['js/systems/move-route.js', 'OWNER_ROUTE'], render: ['js/systems/move-render.js', 'OWNER_RENDER'], enemy: ['js/entities/enemy.js', 'OWNER_ENEMY'],
@@ -31,7 +31,6 @@ const M = [
   ['a hit on the player names it as an enemy', 'sim', [['enemyId: o.foes ? null : e.id', 'enemyId: e.id']]],
   ['the player takes the knockback', 'fx', [['hp0 = pl.hp;', 'hp0 = pl.hp; pl.x += 20;']]],
   ['a team raise with no team store is lost', 'fx', [["const teamOf = (fx, o) => fx.scope === 'team' && !!o.stgTeam;", "const teamOf = (fx, o) => fx.scope === 'team';"]]],
-  ['the strong-host Gate multiplier is dropped', 'fx', [['* (o.strongHost ? G.Stages.STRONG_HOST_GATE_MUL : 1)', '* (o.strongHost ? 2 : 1)']]],
   ['ailments skip the player', 'fx', [['    ailment: ailPlayer,', '    ailment: inDamage,']]],
   ['burn and poison go through the control table', 'fx', [['if (DOT.has(fx.id)) {', 'if (false) {']]],
   ['foe drops skip the player', 'fx', [['    flinch: flinchPlayer,\n    stat,', '    flinch: flinchPlayer,\n    stat: inDamage,']]],
@@ -55,14 +54,14 @@ const M = [
   ['the nova reach is its starting radius', 'gyms', [["if (form === 'nova') return d.delivery.grow.max;", "if (form === 'nova') return d.space.radRadius;"]]],
   ['a shot reaches its range, not its flight', 'gyms', [["if (form !== 'shot') return range;", 'return range;']]],
   ['a long shot is not capped at its range', 'gyms', [['return life ? Math.min(range, ', 'return life ? (']]],
-  ['far mode ignores a short ready shot', 'brain', [['const out = Math.min(FAR, this.ranged() - SHOT_IN)', 'const out = FAR']]],
+  ['far mode ignores a short ready shot', 'brain', [['let out = Math.min(FAR, this.ranged() - SHOT_IN)', 'let out = FAR']]],
   ['far mode closes in to the shot reach with no band', 'brain', [['inn = Math.min(NEAR, out - BAND);', 'inn = NEAR;']]],
   ['the brain never picks a nova', 'brain', [["const ORDER = ['melee', 'nova', 'multi',", "const ORDER = ['melee', 'multi',"]]],
   ['the strike follows the player instead of the locked spot', 'brain', [["form === 'delayed' ? { x: pl.x, y: pl.y } : null;", "form === 'delayed' ? pl : null;"]]],
   ['the strike spot never reaches the sim', 'sim', [['castSlot(o, slot, def, now, target ? { aim, target, point: { x: target.x, y: target.y } } : { aim, target });', 'castSlot(o, slot, def, now, { aim, target: null });']]],
   ['chain hops search the enemy grid', 'sim', [['eachFoe(o, prev.x, prev.y, R, (e) => {', 'G.EnemyMgr.queryCircleEach(prev.x, prev.y, R, (e) => {']]],
   ['homing ignores the caster foes', 'sim', [['inst.steer = nearest(inst.cast.owner,', 'inst.steer = nearest(null,']]],
-  ['Brock loop 1 cards changed', 'gyms', [['cards: { 1: { damage: 3, count: 2, velocity: 3, area: 2 } }', 'cards: { 1: { damage: 3, count: 2, velocity: 1, area: 2 } }']]],
+  ['Brock loop 1 cards changed', 'gyms', [['cards: { 1: { damage: 6, count: 2, velocity: 3, area: 2 } }', 'cards: { 1: { damage: 6, count: 2, velocity: 1, area: 2 } }']]],
   ['the card pool does not accumulate across loops', 'gyms', [['if (Number(k) > want) continue;', 'if (Number(k) !== want) continue;']]],
   ['the card cap ignores earlier loops', 'gyms', [['total[id] = (total[id] || 0) + n;', 'total[id] = n;']]],
   ['freshness ignores the cooldown', 'brain', [['/ Math.max(0.05, d.cd * this.e.cdMul)', '/ 1']]],
@@ -73,23 +72,11 @@ const M = [
   ['the render plays your cast for Brock', 'render', [['|| ev.enemy ||', '||']]],
   ['gym leaders keep the boss scale', 'enemy', [['return def.gym ? 1 : boss ? bossScale(def.dex) : 1;', 'return boss ? bossScale(def.dex) : 1;']]]
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bossowner-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/boss-owner-harness.js'), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-  const hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name);
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught !== M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'boss-owner-mutate',
+  root,
+  harnesses: ['docs/proposals/boss-owner-harness.js'],
+  args: [root],
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

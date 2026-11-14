@@ -22,6 +22,11 @@ The session is done when the frontier is empty: every branch of the design tree 
 
 These rules win over the text above wherever they differ.
 
+**Opening (before round 1, Jess 2026-11-09).** Every grilling session starts from the user's high-level overview of the topic, never from questions.
+1. Get the overview. If the user sent one with the grilling prompt, use it. Otherwise ask for it in one short message and wait, unless the conversation already gives you a good grasp of the topic (then say so and go to step 2).
+2. Play it back: give your understanding of the high-level overview in a few lines (the goal, what is in and out of scope, the constraints you see), then the biggest frontiers, meaning the top branches of the design tree, each in one line with why it matters. Flag anything in the overview you read as ambiguous.
+3. Then start round 1 from that overview and those frontiers. If the user corrects the play-back, take the correction first and recompute the frontiers before asking.
+
 **Format.** Ask each round as plain text in chat, never as emoji-marked text, and do not use the AskUserQuestion tool for rounds of more than 4 questions (it needs one call per 4 questions, which costs more turns). A round looks like:
 
 Round N

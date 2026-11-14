@@ -7,6 +7,202 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-14',
+    title: ['Gym leader styles', 'Gym leader styles'],
+    chg: [
+      [
+        'Brock and Misty now fight in their own styles. Brock stands his ground, hardens up early and rarely backs off or switches. Misty keeps her distance, backs away when you close in, switches Pokemon more readily and reacts faster to your shots. Both get a little sharper every loop.',
+        'Brock and Misty now fight in their own styles. Brock stands his ground, hardens up early and rarely backs off or switches. Misty keeps her distance, backs away when you close in, switches Pokemon more readily and reacts faster to your shots. Both get a little sharper every loop.',
+      ],
+      [
+        'Gym leaders no longer try to bait out your strongest move and punish its cooldown. That tactic is set aside until it is reworked.',
+        'Gym leaders no longer try to bait out your strongest move and punish its cooldown. That tactic is set aside until it is reworked.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-13',
+    title: ['EV screen', 'EV screen'],
+    new: [
+      [
+        "New EV screen after Learn from the Loss, in the pause menu's style: your team's portraits across the top, every stat in its own row, each Pokemon's EVs in white and what you add in yellow. Click + for 1 EV, Shift-click for 10, or hold it to keep adding. Learn saves them; Go Home discards them.",
+        "New EV screen after Learn from the Loss, in the pause menu's style: your team's portraits across the top, every stat in its own row, each Pokemon's EVs in white and what you add in yellow. Click + for 1 EV, Shift-click for 10, or hold it to keep adding. Learn saves them; Go Home discards them.",
+      ],
+    ],
+    chg: [
+      [
+        "Messages that pop up at the bottom of the screen use the main menu's look now: a dark panel with the teal edge of the menu's top and bottom bars, red for bad news. After Learn, the EV screen says Lessons Learned, Returning Home for a moment before taking you back.",
+        "Messages that pop up at the bottom of the screen use the main menu's look now: a dark panel with the teal edge of the menu's top and bottom bars, red for bad news. After Learn, the EV screen says Lessons Learned, Returning Home for a moment before taking you back.",
+      ],
+      [
+        'Misty and Brock sometimes misjudge a plan now, and are a little less sure their own shots will land, so they play a touch more carefully.',
+        'Misty and Brock sometimes misjudge a plan now, and are a little less sure their own shots will land, so they play a touch more carefully.',
+      ],
+    ],
+    fix: [
+      [
+        'Pop-up messages no longer slide in from the right and jump to the middle: they appear centred.',
+        'Pop-up messages no longer slide in from the right and jump to the middle: they appear centred.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-12',
+    title: ['Vignette setting', 'Vignette setting'],
+    new: [
+      [
+        "New End Run screen: EXPEDITION OVER with Run Review and Learn from the Loss (or Return Home when there are no EVs to give). Run Review opens the pause menu one last time, read only: Run Info, every Pokemon's page and the team.",
+        "New End Run screen: EXPEDITION OVER with Run Review and Learn from the Loss (or Return Home when there are no EVs to give). Run Review opens the pause menu one last time, read only: Run Info, every Pokemon's page and the team.",
+      ],
+      [
+        'New Graphics setting: Vignette (on or off). It darkens the screen edges in a run and on the menu. It now starts off, which keeps the edges clear and can raise the frame rate on slower machines. Fog still dims the edges either way.',
+        'New Graphics setting: Vignette (on or off). It darkens the screen edges in a run and on the menu. It now starts off, which keeps the edges clear and can raise the frame rate on slower machines. Fog still dims the edges either way.',
+      ],
+      [
+        'New in the pause menu: the Run Info panel on the left. It shows your progress, combat numbers, faints, the statuses you inflicted, loot, EVs earned and your Region Best.',
+        'New in the pause menu: the Run Info panel on the left. It shows your progress, combat numbers, faints, the statuses you inflicted, loot, EVs earned and your Region Best.',
+      ],
+      [
+        'Region Best: your furthest run in each region is kept, and Run Info shows your pace against it, ahead or behind, gym by gym.',
+        'Region Best: your furthest run in each region is kept, and Run Info shows your pace against it, ahead or behind, gym by gym.',
+      ],
+      [
+        "New in the pause menu: each Pokemon's page has a Run Stats box with its kills, time on the field, damage and share of the team's, best hit, super effective share, damage taken and healed, faints, time fainted, statuses inflicted and burn or poison damage. Hover Statuses to see each kind.",
+        "New in the pause menu: each Pokemon's page has a Run Stats box with its kills, time on the field, damage and share of the team's, best hit, super effective share, damage taken and healed, faints, time fainted, statuses inflicted and burn or poison damage. Hover Statuses to see each kind.",
+      ],
+      [
+        'New in the pause menu: each Pokemon\'s page has a Cards Taken box listing the upgrade cards that work on that Pokemon and how many times you picked each. Hover a move to see exactly what your cards changed on it, for example "cd 1.2 s to 0.92 s", with (max) where a card has hit its limit. Hover Stat Climb Speed, Stat Change Duration or Bench Regeneration to see their real numbers.',
+        'New in the pause menu: each Pokemon\'s page has a Cards Taken box listing the upgrade cards that work on that Pokemon and how many times you picked each. Hover a move to see exactly what your cards changed on it, for example "cd 1.2 s to 0.92 s", with (max) where a card has hit its limit. Hover Stat Climb Speed, Stat Change Duration or Bench Regeneration to see their real numbers.',
+      ],
+    ],
+    chg: [
+      [
+        'Quitting a run (End Run in the pause menu) no longer gives EVs. Only a run that ends with your team down lets you Learn from the Loss.',
+        'Quitting a run (End Run in the pause menu) no longer gives EVs. Only a run that ends with your team down lets you Learn from the Loss.',
+      ],
+      ['The vignette is cheaper to draw when it is on.', 'The vignette is cheaper to draw when it is on.'],
+      ["The pause menu's scroll bars can now be dragged.", "The pause menu's scroll bars can now be dragged."],
+      [
+        "The pause menu's move tooltip is wider, so long lines wrap less.",
+        "The pause menu's move tooltip is wider, so long lines wrap less.",
+      ],
+      [
+        'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
+        'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
+      ],
+      [
+        "The pause menu's team panel is just the six cards now, with no box behind them.",
+        "The pause menu's team panel is just the six cards now, with no box behind them.",
+      ],
+      [
+        'Burn and poison damage on enemies now counts for the Pokemon that inflicted it: it shows in the DPS panel and in your team damage, so status teams read higher than before.',
+        'Burn and poison damage on enemies now counts for the Pokemon that inflicted it: it shows in the DPS panel and in your team damage, so status teams read higher than before.',
+      ],
+    ],
+    fix: [
+      [
+        "The pause menu's grids (the pockets and the team cards) show again.",
+        "The pause menu's grids (the pockets and the team cards) show again.",
+      ],
+      [
+        'Pause menu tooltips are always on top now: a move near the bottom of the list no longer shows its tooltip under the team cards.',
+        'Pause menu tooltips are always on top now: a move near the bottom of the list no longer shows its tooltip under the team cards.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-11',
+    title: ['Buffs join your status chips', 'Buffs join your status chips'],
+    chg: [
+      [
+        'Upgrade cards have clearer names, and each card now says what it does in one line. Cooldown Down is now Attack Speed Up, Gate Reduction is Stat Climb Speed Up and Delay Down is Impact Speed Up, so their numbers are exactly true. Other renames: Size Up, Width Up, Range Up, Lifetime Up, Projectile Count Up, Projectile Speed Up, Chain Hops Up, Bench Regeneration Up, Stat Change Duration Up, Recoil Reduction and Pick a Vitamin. Capped cards say how many times you can take them.',
+        'Upgrade cards have clearer names, and each card now says what it does in one line. Cooldown Down is now Attack Speed Up, Gate Reduction is Stat Climb Speed Up and Delay Down is Impact Speed Up, so their numbers are exactly true. Other renames: Size Up, Width Up, Range Up, Lifetime Up, Projectile Count Up, Projectile Speed Up, Chain Hops Up, Bench Regeneration Up, Stat Change Duration Up, Recoil Reduction and Pick a Vitamin. Capped cards say how many times you can take them.',
+      ],
+      [
+        'Damage Up is now All Damage Up at +5% per pick (was +10%). The type Damage cards stay at +15% and still add with it. Brock keeps the same damage as before.',
+        'Damage Up is now All Damage Up at +5% per pick (was +10%). The type Damage cards stay at +15% and still add with it. Brock keeps the same damage as before.',
+      ],
+      [
+        'The DPS panel now lists each upgrade card with how many times you picked it ("Attack Speed Up x3"), and Vitamins by name ("Protein x2").',
+        'The DPS panel now lists each upgrade card with how many times you picked it ("Attack Speed Up x3"), and Vitamins by name ("Protein x2").',
+      ],
+      [
+        'The coloured rings around your feet for team stat boosts are gone: the rising stat effect on your Pokémon and the new chips already show them, and regeneration shows as its REG chip.',
+        'The coloured rings around your feet for team stat boosts are gone: the rising stat effect on your Pokémon and the new chips already show them, and regeneration shows as its REG chip.',
+      ],
+      [
+        'Your status chips above the HP bar now show everything timed on your team in two bands. The lower band is what is hurting you: your status, then any lowered stats (ATK, DEF, SPA, SPD, SPE). The band above it is what is helping: raised stats, REG for regeneration, the berries by name (KEE, MAR, LAN, PIN, and one chip per type-guard berry in its type colour) and the altar power (FRY, THN, MAG, HST). Each has a timer bar. The Shake Off prompt moved up above them.',
+        'Your status chips above the HP bar now show everything timed on your team in two bands. The lower band is what is hurting you: your status, then any lowered stats (ATK, DEF, SPA, SPD, SPE). The band above it is what is helping: raised stats, REG for regeneration, the berries by name (KEE, MAR, LAN, PIN, and one chip per type-guard berry in its type colour) and the altar power (FRY, THN, MAG, HST). Each has a timer bar. The Shake Off prompt moved up above them.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-10',
+    title: ['A new gym leader bar', 'A new gym leader bar'],
+    new: [
+      [
+        'The arrows pointing you to the gym gate (blue) and the Move Trainer and TM Mart (orange) are now big chevrons that snap apart toward the target, strain to hold, and slide back together. Once the building is on screen, a name label over its roof replaces the bouncing arrow ("Gym Leader Brock").',
+        'The arrows pointing you to the gym gate (blue) and the Move Trainer and TM Mart (orange) are now big chevrons that snap apart toward the target, strain to hold, and slide back together. Once the building is on screen, a name label over its roof replaces the bouncing arrow ("Gym Leader Brock").',
+      ],
+      [
+        "Top left of the screen: a new DPS panel. It names the Pokémon on the field, shows your team's damage per second over the last 5 seconds, and draws a 30 second graph in each Pokémon's type colour, with a tick where you swapped. Below it, every upgrade card you have picked this run. Settings > DPS Panel turns it off, and DPS Panel Opacity makes it fainter or stronger.",
+        "Top left of the screen: a new DPS panel. It names the Pokémon on the field, shows your team's damage per second over the last 5 seconds, and draws a 30 second graph in each Pokémon's type colour, with a tick where you swapped. Below it, every upgrade card you have picked this run. Settings > DPS Panel turns it off, and DPS Panel Opacity makes it fainter or stronger.",
+      ],
+      [
+        'Top right of the screen: the World Level, your region and the map you are on. When weather rolls in, a card slides in with its icon and what it does, and a Clear Sky card follows when it passes. Your kill count sits at the top centre and hides during gym fights.',
+        'Top right of the screen: the World Level, your region and the map you are on. When weather rolls in, a card slides in with its icon and what it does, and a Clear Sky card follows when it passes. Your kill count sits at the top centre and hides during gym fights.',
+      ],
+      [
+        'Levelling up now rattles your level number while you keep playing; a moment later the upgrade cards pop up with a burst of confetti.',
+        'Levelling up now rattles your level number while you keep playing; a moment later the upgrade cards pop up with a burst of confetti.',
+      ],
+      [
+        "Gym fights have a new leader bar at the top: \"Brock's Geodude\" and its level above a Black 2 style HP bar, and the leader's team as portrait circles below it. The Pokémon on the field has a ring in the gym's colour.",
+        "Gym fights have a new leader bar at the top: \"Brock's Geodude\" and its level above a Black 2 style HP bar, and the leader's team as portrait circles below it. The Pokémon on the field has a ring in the gym's colour.",
+      ],
+      [
+        'Each hit cuts the lost HP off the bar: the piece hangs for a moment so you can see how much you took, then falls away. Heals grow the bar back.',
+        'Each hit cuts the lost HP off the bar: the piece hangs for a moment so you can see how much you took, then falls away. Heals grow the bar back.',
+      ],
+      [
+        "A new panel at the bottom of the screen: your Pokemon's portrait inside its experience ring, a Black 2 style HP bar with your HP, your level, your held item and your Silver.",
+        "A new panel at the bottom of the screen: your Pokemon's portrait inside its experience ring, a Black 2 style HP bar with your HP, your level, your held item and your Silver.",
+      ],
+      [
+        "Your four moves sit in Black 2 style move buttons with their type's colour, bonded moves side by side in one button; your status shows as a Black 2 tag, and the Shake Off prompt flashes above your HP bar.",
+        "Your four moves sit in Black 2 style move buttons with their type's colour, bonded moves side by side in one button; your status shows as a Black 2 tag, and the Shake Off prompt flashes above your HP bar.",
+      ],
+    ],
+  },
+  {
+    d: '2026-11-09',
+    title: ['A new title font', 'A new title font'],
+    chg: [
+      [
+        'The menu and login titles now use the Michroma font, which the game is free to share.',
+        'The menu and login titles now use the Michroma font, which the game is free to share.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-08',
+    title: ['Leaders that think', 'Leaders that think'],
+    new: [
+      [
+        'Misty and Brock now dodge your attacks, the same dodge you have: two charges, and a short moment to react, so they will not dodge everything. They dodge sideways, toward open floor.',
+        'Misty and Brock now dodge your attacks, the same dodge you have: two charges, and a short moment to react, so they will not dodge everything. They dodge sideways, toward open floor.',
+      ],
+      [
+        'From loop 2 they also switch Pokémon on their own, with your swap rules: when the matchup turns against them, when their Pokémon is asleep or frozen, or to save one at low health. Each Pokémon stays out at least 8 seconds first, and you see the ring and "Misty switches to Seel!".',
+        'From loop 2 they also switch Pokémon on their own, with your swap rules: when the matchup turns against them, when their Pokémon is asleep or frozen, or to save one at low health. Each Pokémon stays out at least 8 seconds first, and you see the ring and "Misty switches to Seel!".',
+      ],
+      [
+        'A leader Pokémon that faints on the bench (to a burn or poison) now counts as your kill.',
+        'A leader Pokémon that faints on the bench (to a burn or poison) now counts as your kill.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-07',
     title: ['Misty, rebuilt', 'Misty, rebuilt'],
     chg: [

@@ -1,0 +1,61 @@
+82 - PAUSE PANELS IN NEED  (Quick, 2026-11-13, branch feature/pause-menu-rework)
+Loose end of #82 (TODO "Next" item 10). Status: APPROVED and BUILT 2026-11-13 (defaults A, B taken).
+
+=====================================================================================
+TODAY
+=====================================================================================
+
+  dev.html loads             js/main.js NEED lists
+  ------------------         ---------------------
+  pause-inventory.js         -                      <- missing
+  pause-pokemon.js           -                      <- missing
+  pause-run-info.js          PauseRunInfo
+  pause-menu.js              PauseMenu
+  end-run.js                 EndRun
+  ev-screen.js               EvScreen
+
+  NEED only checks that G.<name> exists after load. Every pause file sets G.<name> even when the
+  HUD libraries fail (it returns { ready: false }), so NEED fires only when a file is missing or
+  throws while loading.
+
+  pause-pokemon.js missing or broken, today:   game boots, pause menu opens with no detail panel
+                                                and no team panel, no error anywhere
+  with it in NEED:                              the "failed to load" screen names it at boot
+
+  Rule it closes: a script goes in BOTH the dev.html script list and NEED (agent rules, ONBOARDING).
+
+=====================================================================================
+CHANGE
+=====================================================================================
+
+  js/main.js   NEED: 'PauseInventory', 'PausePokemon' go after 'HudRunItemsPanel' and before
+               'PauseMenu' (the dev.html load order). 'PauseMenu', 'PauseRunInfo' stay side by
+               side, so the run-info harness's existing NEED check still matches.
+  Nothing else. When everything loads, nothing a player sees changes. No save fields.
+
+=====================================================================================
+DEFAULTS (proceed unless Jess edits)
+=====================================================================================
+
+  A  no changelog line: a player sees a difference only when a file is broken
+  B  the pause menu's ready-guards stay: they cover the HUD-library failure, NEED does not
+
+=====================================================================================
+TESTS (no new test files)
+=====================================================================================
+
+  docs/proposals/run-info-harness.js  (existing; it already checks the pause files' dev.html order
+                                       and NEED for PauseRunInfo, so it owns this)
+     + NEW check: NEED lists PauseInventory and PausePokemon, both before PauseMenu.
+  docs/proposals/run-info-mutate.js   (existing)
+     + "the NEED array misses PausePokemon", "the NEED array misses PauseInventory".
+       Each must fail the harness.
+  tools/check.js            no change (it runs the harness)
+  tools/smoke-pause-menu.js no change (it boots dev.html, so a misspelled name would already fail it
+                            on the "failed to load" screen)
+  Intent scenarios, debug sets: none.
+
+  YOU RUN:  node tools/check.js  ->  node docs/proposals/run-info-mutate.js  ->  dev.html?dev, pause once
+
+  RISK: a misspelled name would block boot with "failed to load"; the new harness check and the
+        smoke's boot both catch it before you play.

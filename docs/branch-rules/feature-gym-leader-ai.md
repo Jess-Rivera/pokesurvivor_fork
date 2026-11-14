@@ -1,0 +1,30 @@
+# Branch rules: feature/gym-leader-ai (HISTORY)
+
+**History since 2026-11-14:** the branch merged to main. Slice shape moved to CLAUDE.md "Slice shape" (repo-wide);
+the bar and the four roles live in LEADER-AI "FRAME" and COMBAT-RULES "Host model"; gyms 3 to 8 are decision
+2026-11-14-gyms-3-to-8-migrate-after-merge. Nothing below is a live rule.
+
+Rules that hold only while this branch is open. Read at session start when STATE.md names this branch. General agent rules stay in CLAUDE.md; where the two differ for work on this branch, this file wins.
+
+## What this branch builds
+The leader AI: the AI player that drives Player-entity leaders. Spec: docs/LEADER-AI.md (it wins over every older leader-AI text). The old proposal (docs/proposals/gym-leader-ai-design.md) and the slice 9 v2 map are history; do not build on them.
+Slices, in order: #22 (slice 1), #31, #32, #33, #34 (5a, GymBrain out), then #40, #41, #42 (the GymBrain shape out, all before 5b; #42 ruled and closed 2026-11-09), #43 (movement split, takes #42 item 13; shipped 2026-11-09), #47 (47a: leader attacks go through your cast gate, after #43), #49 (47b: the Decider becomes a full utility AI, opens with a design session; decision 2026-11-09-47-split-and-utility-ai-overhaul), #49's build in four slices (Belief; planner core, executor and overlay; swap, dash, draw and dodge; misjudge and sharpness plumbing; LEADER-AI "Build order"), then #39 (5b, personalities, on #49's Decider). Any time: #45 (strongHost out, behavior-neutral). After #43, not needed before #39: #46 (explicit sides, leaders off the enemy list). Roster UI: #35 (independent).
+
+## Slice shape (Jess, 2026-11-08)
+Every slice opens with three things, agreed with Jess before any build: its goal, how we know it is done, and the test that validates it (written at the slice's start, as the end-goal test). Then the prose plan (CLAUDE.md "Edit boundary and workflow") and the build. A slice closes by updating every doc, issue and plan it touched. The slice's issue carries the three opening items as its done-condition.
+
+## Why #40 to #42 exist (Jess, 2026-11-09)
+Slice 5a had to change no behavior, so it moved GymBrain's one step (move, choose, cast, all skipped while stunned) into the AI player whole. The old brain's shape survived inside a Player-entity leader, and nobody compared it to your frame. #40 to #42 remove that shape. They come before #39, because personalities would be built on top of it.
+- **The bar:** a Player entity that is not HumanPlayer is your frame plus authored differences, from the authoring layers (the class's list, then the instance's: COMBAT-RULES "Host model", LEADER PRINCIPLE). When it differs from HumanPlayer and `game.js` and no layer authors the difference, it is a bug.
+- **How to check:** compare against your code, never against GymBrain's. Parity with GymBrain proves only that nothing changed, not that it's right.
+- **How to fix:** each fix keeps the four roles (LEADER-AI "FRAME"): input goes through the Controller, acceptance rules stay in the Body, resolution in the SimPass, decisions in the Decider. A fixed difference becomes an authored setting; Jess rules its baseline per item (so far always yours: firstWait 0, #41 items 5 and 6).
+- **The roles:** Decider, Controller, Body, SimPass, each blind to the others' jobs. Rule text: LEADER-AI "FRAME" and the GLOSSARY entries; this file holds none of it. #40 built the order for the frame; #41 and #43 closed the code gaps (both shipped).
+
+## Standing rulings on this branch
+- `node tools/check.js` must end with "check: all passed". Any failure is a regression. (#30 closed 2026-11-14: gym-harness and leader-stats-harness, the two harnesses it held red, are green.)
+- Gyms 3 to 8 stay on the old GymBrain; only Misty and Brock get the AI player.
+- Side branches (Jess, 2026-11-11): other features (UI work and the like) branch off feature/gym-leader-ai, not main, and merge back into it when done (as feature/leader-roster-ui did). Each finished feature brings the work back here, so the leader AI stays the main line. Main gets everything when this branch merges.
+
+## Before this branch merges
+- `node tools/check.js` ends with "check: all passed" (met 2026-11-14 when #30 closed; keep it green).
+- Move any rule here that should outlive the branch to its permanent home, then mark this file history.

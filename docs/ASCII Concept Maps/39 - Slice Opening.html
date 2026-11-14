@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>#39 Slice opening</title>
+</head>
+<body>
+<main>
+<h1>#39 Slice opening <span class="pill ok">Approved</span> <span class="tag">feature/gym-leader-ai</span></h1>
+<p class="lede">Leader AI slice 5b, per-leader personalities. Decision <code>2026-11-14-39-opening-split-and-profile-test</code>. Spec: docs/LEADER-AI.md "Authoring a leader" and Build order 5b.</p>
+<style>
+  /* Standalone page (opened from file://): theme tokens are set here because the app does not inject them. */
+  :root {
+    color-scheme: dark;
+    --color-bg: #121218; --color-bg-secondary: #1b1b23; --color-surface: #23232d; --color-surface-hover: #2b2b37;
+    --color-border: rgba(255,255,255,0.13); --color-border-light: rgba(255,255,255,0.07);
+    --color-text: #ececf1; --color-text-secondary: #b0b0bc; --color-text-muted: #7a7a86;
+    --color-primary: #c084fc; --color-primary-bg: rgba(168,85,247,0.16); --color-primary-border: rgba(192,132,252,0.45);
+    --color-success-bg: rgba(34,197,94,0.14); --color-success-border: rgba(74,222,128,0.4); --color-success-dark: #4ade80;
+    --color-warning-bg: rgba(245,158,11,0.14); --color-warning-border: rgba(251,191,36,0.45); --color-warning-text: #fbbf24;
+    --color-info-bg: rgba(59,130,246,0.16); --color-info-border: rgba(96,165,250,0.45); --color-info-text: #93c5fd;
+    --color-error-bg: rgba(239,68,68,0.14); --color-error-border: rgba(248,113,113,0.45); --color-error-dark: #f87171;
+    --font-sans: 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    --radius-sm: 6px; --radius-md: 10px; --radius-pill: 17px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.45);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 28px 40px; background: var(--color-bg); color: var(--color-text);
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.55; }
+  main { max-width: 1040px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; font-weight: 650; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  h2 { font-size: 17px; margin: 0 0 10px; font-weight: 650; }
+  h3 { font-size: 14px; margin: 14px 0 6px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .lede { color: var(--color-text-secondary); margin: 0 0 18px; }
+  .pill { font-size: 12px; font-weight: 600; border-radius: var(--radius-pill); padding: 2px 10px; border: 1px solid; }
+  .ok { background: var(--color-success-bg); border-color: var(--color-success-border); color: var(--color-success-dark); }
+  .wait { background: var(--color-warning-bg); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .info { background: var(--color-info-bg); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .no { background: var(--color-error-bg); border-color: var(--color-error-border); color: var(--color-error-dark); }
+  .tag { font-family: var(--font-mono); font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-pill); padding: 1px 8px; color: var(--color-text-secondary); }
+  code { font-family: var(--font-mono); font-size: 13px; background: var(--color-surface); padding: 1px 5px; border-radius: 4px; }
+  .card { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .leader { border-top: 4px solid var(--color-border); }
+  .leader.brock { border-top-color: #f59e0b; } .leader.misty { border-top-color: #38bdf8; }
+  .leader .who { font-size: 20px; font-weight: 700; } .leader .style { color: var(--color-text-secondary); margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--color-text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+  td.n { font-family: var(--font-mono); white-space: nowrap; }
+  tr:hover td { background: var(--color-surface-hover); }
+  .up { color: var(--color-success-dark); font-weight: 600; } .down { color: var(--color-error-dark); font-weight: 600; }
+  .same { color: var(--color-text-muted); }
+  ol, ul { margin: 6px 0 0; padding-left: 22px; } li { margin: 4px 0; }
+  .flow { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .node { flex: 1 1 140px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-size: 13px; }
+  .node b { display: block; font-size: 14px; } .node.new { background: var(--color-primary-bg); border-color: var(--color-primary-border); }
+  .node.same { opacity: 0.75; }
+  .arrow { align-self: center; color: var(--color-text-muted); font-size: 20px; }
+  .dec { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: start; padding: 10px 0;
+    border-bottom: 1px solid var(--color-border-light); }
+  .dec:last-child { border-bottom: none; } .dec .id { font-family: var(--font-mono); font-weight: 700; color: var(--color-primary); }
+  .dec .why { color: var(--color-text-secondary); font-size: 13px; margin-top: 2px; }
+  .callout { border-left: 4px solid var(--color-warning-border); background: var(--color-warning-bg); padding: 10px 14px;
+    border-radius: var(--radius-sm); margin: 8px 0; color: var(--color-warning-text); }
+  .muted { color: var(--color-text-muted); font-size: 13px; }
+  .copybox { position: relative; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: 12px 14px; white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; }
+  .copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 12px; cursor: pointer; border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary); border-radius: var(--radius-pill); padding: 2px 10px; transition: all 0.15s ease; }
+  .copy:hover { background: var(--color-surface-hover); }
+  .field { display: grid; grid-template-columns: 110px 1fr; gap: 8px; margin: 4px 0; }
+  .field .k { color: var(--color-text-muted); font-size: 13px; }
+  footer { color: var(--color-text-muted); font-size: 12px; margin-top: 24px; }
+</style>
+
+<div class="card"><h2>What exists today</h2>
+<table><thead><tr><th>Setting</th><th>Can a leader author it?</th><th>Does the Decider read it?</th></tr></thead><tbody><tr><td><code>range</code>, <code>risk</code>, <code>stubbornness</code>, <code>swapWill</code>, <code>randomness</code></td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td></tr><tr><td><code>intelligence</code> (#53)</td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span> drives misjudge, reflex, dodgeRead, memoryUse, aimError</td></tr><tr><td>Goal weights (9 goals)</td><td><span class="pill no">no</span></td><td><span class="pill wait">planner reads them, nothing fills them</span></td></tr><tr><td>Tag multipliers</td><td><span class="pill no">no</span></td><td><span class="pill wait">planner reads them, nothing fills them</span></td></tr><tr><td>Per-action overrides</td><td><span class="pill no">no</span></td><td><span class="pill no">no</span></td></tr><tr><td>Signature actions</td><td><span class="pill no">no</span></td><td><span class="pill no">no</span>, and <code>signatures</code> is already the roster key</td></tr><tr><td><code>buffBias</code>, <code>exploit</code></td><td><span class="pill no">no</span></td><td>stale names in the old #39 body</td></tr></tbody></table>
+<p class="muted">Today Brock authors aggression 0.35 plus triggers and lines; Misty aggression 0.68, learnRate 2 plus triggers and lines. Both run the default leader Decider (every weight 1, intelligence 0.5).</p></div>
+
+<div class="card"><h2>Goal</h2>
+<p>Brock and Misty each get an authored personality on the Decider, so each plays unlike the default leader and unlike the other, readable on screen.</p>
+<div class="grid2">
+ <div class="card leader brock"><div class="who">Brock</div><div class="style">The wall</div>Patient, mid range, buffs early, rarely swaps, a little slow to react.</div>
+ <div class="card leader misty"><div class="who">Misty</div><div class="style">Tempo</div>Kites at Water Pulse range, pushes when ahead, swaps for matchups, reads you fast.</div>
+</div></div>
+
+<div class="card"><h2>Done when</h2><ol>
+<li>The validator accepts every new key within its limits and refuses unknown goals, unknown tags and out-of-range values.</li>
+<li>The seeded duel profile (below) shows each leader leaning away from the default.</li>
+<li>Harness 16e (learning, counter-play, determinism; Bait stays parked on #60) and the #53 sharpness test still pass.</li>
+<li>Your feel test: the two read as distinct, and both spend more time attacking than the default did in the #52 feel test.</li>
+</ol></div>
+
+<div class="card"><h2>The test <span class="pill wait">superseded 2026-11-14</span></h2><div class="callout">Replaced by planner input and output checks (see the 39a plan page, "Test rework"): the duel opponent stood still, so this profile measured nothing a player does.</div>
+<p>Seeded headless duels, 5 seeds, the 16e player script (Fire Blast), three leaders: default, Brock, Misty. The default is recorded first. Each check is a direction only, so it survives retuning.</p>
+<table><thead><tr><th>Measure</th><th>Brock vs default</th><th>Misty vs default</th></tr></thead><tbody><tr><td>Time spent attacking (Use slot)</td><td><span class="up">higher</span></td><td><span class="up">higher</span></td></tr><tr><td>Time spent closing, backing off or dodging</td><td><span class="down">lower</span></td><td><span class="same">about the same</span></td></tr><tr><td>Buff picked in the first 10 s</td><td><span class="up">more</span></td><td><span class="down">fewer</span></td></tr><tr><td>Endurance + Maintain share</td><td><span class="up">higher</span></td><td><span class="same">-</span></td></tr><tr><td>Kite + Pressure share</td><td><span class="same">-</span></td><td><span class="up">higher</span></td></tr><tr><td>Average distance from you</td><td>near his range</td><td>near her range (farther)</td></tr><tr><td>Reaction time (resolved reflex)</td><td><span class="down">slower</span></td><td><span class="up">faster</span></td></tr></tbody></table>
+<p class="muted">The swaps row was dropped in the 39a plan (P5): the duel fields one mon.</p></div>
+
+<div class="card"><h2>Decisions <span class="pill ok">all approved 2026-11-14</span></h2>
+<div><div class="dec"><div class="id">D1</div><div>Drop <code>buffBias</code>, <code>exploit</code>, <code>aimError</code> and <code>memoryUse</code> from #39's list and rewrite its body.<div class="why">The Buff goal weight, the exploit trigger and intelligence cover them.</div></div><span class="pill ok">approved</span></div><div class="dec"><div class="id">D2</div><div>Split: 39a makes goal weights and tag multipliers authorable and authors both leaders. 39b (signature actions) is its own issue.<div class="why">39b is built only if the 39a feel test needs it.</div></div><span class="pill ok">approved</span></div><div class="dec"><div class="id">D3</div><div>The signature-action key name is decided in 39b.</div><span class="pill ok">approved</span></div><div class="dec"><div class="id">D4</div><div>Measure the default leader first and author against it.<div class="why">Separates reflex dodging from the weights (the #52 comment).</div></div><span class="pill ok">approved</span></div><div class="dec"><div class="id">D5</div><div>A trigger may not set goal weights or tag multipliers in 39a.<div class="why">Ties into #107.</div></div><span class="pill ok">approved</span></div><div class="dec"><div class="id">D6</div><div>"Distinct" gets the measured profile check beside the feel test.</div><span class="pill ok">approved</span></div></div></div>
+
+<div class="card"><h2>Risks</h2><ul>
+<li>leader-ai.js is 1086 lines; nothing new should land there beyond wiring.</li>
+<li>Goal weights stack with confidence, so "pushes when ahead" may come from confidence alone.</li>
+<li>Aggression is still authored; the plan says what it still drives.</li>
+</ul></div>
+
+<footer>docs/LEADER-AI.md wins wherever this page differs. Written by the PokeSurvivor agent in Quick.</footer>
+</main>
+
+</body>
+</html>

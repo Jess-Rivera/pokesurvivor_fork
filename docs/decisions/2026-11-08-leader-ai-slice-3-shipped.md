@@ -1,0 +1,3 @@
+## 2026-11-08, Leader AI slice 3 shipped (Jess)
+Jess feel-tested slice 3 (#32: confidence, pacing, the dodge lean, the gap-closing dodge, triggers and lines) and approved it ("feel test is great"). Approved with it, the two calls made during the build: a leader's line waits up to 4 s for the banner (the send-out banner shows 3.2 s, so 3 s would drop every fight-start line), and a trigger's swap skips the AI's own stall guards (minField, swapLimit) while still obeying your swap rules and counting as a voluntary swap. The drafted lines for Misty and Brock stay for now. Next: slice 4 (#33).
+Canonical: docs/LEADER-AI.md

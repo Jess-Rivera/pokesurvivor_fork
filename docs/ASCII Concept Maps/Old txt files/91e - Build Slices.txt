@@ -1,0 +1,32 @@
+#91e: BUILD SLICES for #91 (2026-11-12, Quick)  [Approved] (91-1 built 2026-11-12; 91-2 plan: map 91-2)
+=====================================================================================
+Design is settled in 91c (Run Info) and 91d (Run Stats box). This only orders the build so each slice
+lands with its own tests green and something Jess can feel-test.
+
+ 91-1 COUNTERS (sim side, no UI)              91-2 RUN INFO PANEL            91-3 RUN STATS BOX
+ ------------------------------------         ----------------------         ---------------------
+ NEW js/systems/run-stats.js                  NEW js/ui/pause-run-info.js    js/ui/pause-pokemon.js
+ hit hooks: move-effects.js damage(),         pause-menu.js mounts it        box rows, 360 / 240 split
+   flat(), hurtPlayer() -> onDealt carries    css/pause-menu.css (scroll,    Statuses hover
+   move id, crit, type mult; last hitter      pinned header, slate bar)      compact numbers
+ enemy.js payKill (D1), applyBurn /           debug.js: runinfo,             smoke: box checks
+   applyPoison inflicter, takeDot credit (P5)   regionbest, recordcheck
+ player.js faint path, heal, taken            db.js regionBest field
+ spawner.js shiny seen                        game.js endRun record check
+ gym.js onWin split stamp                     smoke: panel checks
+ game.js startRun / onCollect
+ dev.html + main.js NEED (new file)
+ NEW run-stats-harness.js + run-stats-mutate.js
+ dps-history-harness.js: P5 check
+ STALE scan on every touched pattern
+ changelog: P5 DPS change + per-mon tracking
+
+ feel test: DPS panel reads higher with a     feel test: the 7-step debug    feel test: flip through the
+ burner on the team; nothing else looks       session in 91c                 team, numbers per Pokemon
+ different (no UI yet)
+
+ORDER  91-1 -> 91-2 -> 91-3   (2 and 3 both need 1; 2 before 3 since its debug tools seed 3's data)
+
+WHY SPLIT
+ 91-1 touches the hit path (move-effects.js) and enemy DoT: the riskiest part, with the most existing
+ mutants pointing at it. Landing it alone keeps a red check.js easy to trace.

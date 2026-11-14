@@ -1,6 +1,6 @@
 /* ============ gacha-ui.js — per-generation banners and pull animation ============
  * The logic (probabilities, pity, shiny, repeats) is in systems/gacha.js.
- * F3d-3: this is the SHOP screen now. Tabs: Pokemon (the gacha, regions down the left) | Team Items (100k unlocks) | Team Upgrades (team item slots).
+ * F3d-3: this is the SHOP screen now. Tabs: Pokemon (the gacha, regions down the left) | Team Items (100k unlocks) | Team Upgrades (team item slots, berry slots).
  */
 G.GachaUI = (() => {
   const $ = G.UI.$;
@@ -156,10 +156,48 @@ G.GachaUI = (() => {
         <div class="shop-price"><span class="coin"></span> ${fmt(price)}</div>
         <button class="btn gold shop-up-b" data-slot="${k}"${owned || !next || !afford ? ' disabled' : ''}>${owned ? 'Owned' : !next ? 'Locked' : afford ? 'Buy' : 'Not enough PokéCoins'}</button></div>`;
     }
+    // Berry slots (#96, temporary): bought in order at the team item slot prices, cap 4.
+    const berriesOwned = G.Grounds.berrySlots(s),
+      berryMax = G.Grounds.BERRY_SLOTS_MAX;
+    html += `<p class="sub" style="margin:16px 0 10px">You have <b>${berriesOwned}</b> of ${berryMax} berry slots. Each slot holds one status berry in the team berry bag during a run. Slots are bought in order.</p>`;
+    for (let slotNumber = 2; slotNumber <= berryMax; slotNumber++) {
+      const price = G.Grounds.berrySlotPrice(slotNumber),
+        owned = berriesOwned >= slotNumber,
+        next = slotNumber === berriesOwned + 1,
+        afford = s.coins >= price;
+      html += `<div class="panel shop-up${owned ? ' owned' : ''}"><div class="shop-up-t"><b>Berry slot ${slotNumber}</b>
+        <span class="ds">${owned ? 'Unlocked' : next ? 'Carry one more berry in every run.' : `Buy berry slot ${slotNumber - 1} first.`}</span></div>
+        <div class="shop-price"><span class="coin"></span> ${fmt(price)}</div>
+        <button class="btn gold shop-berry-b" data-slot="${slotNumber}"${owned || !next || !afford ? ' disabled' : ''}>${owned ? 'Owned' : !next ? 'Locked' : afford ? 'Buy' : 'Not enough PokéCoins'}</button></div>`;
+    }
     box.innerHTML = html;
     box.querySelectorAll('.shop-up-b').forEach((b) => {
       b.onclick = () => buySlot(+b.dataset.slot);
     });
+    box.querySelectorAll('.shop-berry-b').forEach((button) => {
+      button.onclick = () => buyBerrySlot(+button.dataset.slot);
+    });
+  }
+
+  async function buyBerrySlot(slotNumber) {
+    const price = G.Grounds.berrySlotPrice(slotNumber);
+    const yes = await G.UI.ask(`Spend ${fmt(price)} PokéCoins on berry slot ${slotNumber}?`, {
+      title: 'Buy berry slot',
+      ok: 'Buy',
+      note: `You will have ${fmt(Math.max(0, G.DB.save.coins - price))} left.`,
+    });
+    if (!yes) return;
+    const result = G.Grounds.buyBerrySlot(G.DB.save);
+    if (!result.ok) {
+      G.Audio.sfx('error');
+      G.UI.toast(result.error === 'poor' ? 'Not enough PokéCoins' : 'You cannot buy that');
+      refresh();
+      return;
+    }
+    G.Audio.sfx('confirm');
+    G.DB.commit(true);
+    G.UI.toast(`Berry slot ${result.slots} unlocked!`);
+    refresh();
   }
 
   async function buySlot(k) {

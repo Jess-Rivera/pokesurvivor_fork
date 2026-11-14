@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>#39a Feel Test Retune</title>
+</head>
+<body>
+<main>
+<h1>#39a Feel test retune <span class="pill info">Notes for the balance issue, not approved</span> <span class="tag">feature/gym-leader-ai</span></h1>
+<p class="lede">From your 2026-11-14 feel test. Not part of #39: these are starting notes for the Brock and Misty balance issue (decision 2026-11-14-39-closes-on-feel-test-no-39b). Nothing here is approved or built.</p>
+<style>
+  /* Standalone page (opened from file://): theme tokens are set here because the app does not inject them. */
+  :root {
+    color-scheme: dark;
+    --color-bg: #121218; --color-bg-secondary: #1b1b23; --color-surface: #23232d; --color-surface-hover: #2b2b37;
+    --color-border: rgba(255,255,255,0.13); --color-border-light: rgba(255,255,255,0.07);
+    --color-text: #ececf1; --color-text-secondary: #b0b0bc; --color-text-muted: #7a7a86;
+    --color-primary: #c084fc; --color-primary-bg: rgba(168,85,247,0.16); --color-primary-border: rgba(192,132,252,0.45);
+    --color-success-bg: rgba(34,197,94,0.14); --color-success-border: rgba(74,222,128,0.4); --color-success-dark: #4ade80;
+    --color-warning-bg: rgba(245,158,11,0.14); --color-warning-border: rgba(251,191,36,0.45); --color-warning-text: #fbbf24;
+    --color-info-bg: rgba(59,130,246,0.16); --color-info-border: rgba(96,165,250,0.45); --color-info-text: #93c5fd;
+    --color-error-bg: rgba(239,68,68,0.14); --color-error-border: rgba(248,113,113,0.45); --color-error-dark: #f87171;
+    --font-sans: 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    --radius-sm: 6px; --radius-md: 10px; --radius-pill: 17px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.45);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 28px 40px; background: var(--color-bg); color: var(--color-text);
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.55; }
+  main { max-width: 1040px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; font-weight: 650; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  h2 { font-size: 17px; margin: 0 0 10px; font-weight: 650; }
+  h3 { font-size: 14px; margin: 14px 0 6px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .lede { color: var(--color-text-secondary); margin: 0 0 18px; }
+  .pill { font-size: 12px; font-weight: 600; border-radius: var(--radius-pill); padding: 2px 10px; border: 1px solid; }
+  .ok { background: var(--color-success-bg); border-color: var(--color-success-border); color: var(--color-success-dark); }
+  .wait { background: var(--color-warning-bg); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .info { background: var(--color-info-bg); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .no { background: var(--color-error-bg); border-color: var(--color-error-border); color: var(--color-error-dark); }
+  .tag { font-family: var(--font-mono); font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-pill); padding: 1px 8px; color: var(--color-text-secondary); }
+  code { font-family: var(--font-mono); font-size: 13px; background: var(--color-surface); padding: 1px 5px; border-radius: 4px; }
+  .card { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .leader { border-top: 4px solid var(--color-border); }
+  .leader.brock { border-top-color: #f59e0b; } .leader.misty { border-top-color: #38bdf8; }
+  .leader .who { font-size: 20px; font-weight: 700; } .leader .style { color: var(--color-text-secondary); margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--color-text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+  td.n { font-family: var(--font-mono); white-space: nowrap; }
+  tr:hover td { background: var(--color-surface-hover); }
+  .up { color: var(--color-success-dark); font-weight: 600; } .down { color: var(--color-error-dark); font-weight: 600; }
+  .same { color: var(--color-text-muted); }
+  ol, ul { margin: 6px 0 0; padding-left: 22px; } li { margin: 4px 0; }
+  .flow { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .node { flex: 1 1 140px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-size: 13px; }
+  .node b { display: block; font-size: 14px; } .node.new { background: var(--color-primary-bg); border-color: var(--color-primary-border); }
+  .node.same { opacity: 0.75; }
+  .arrow { align-self: center; color: var(--color-text-muted); font-size: 20px; }
+  .dec { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: start; padding: 10px 0;
+    border-bottom: 1px solid var(--color-border-light); }
+  .dec:last-child { border-bottom: none; } .dec .id { font-family: var(--font-mono); font-weight: 700; color: var(--color-primary); }
+  .dec .why { color: var(--color-text-secondary); font-size: 13px; margin-top: 2px; }
+  .callout { border-left: 4px solid var(--color-warning-border); background: var(--color-warning-bg); padding: 10px 14px;
+    border-radius: var(--radius-sm); margin: 8px 0; color: var(--color-warning-text); }
+  .muted { color: var(--color-text-muted); font-size: 13px; }
+  .copybox { position: relative; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: 12px 14px; white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; }
+  .copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 12px; cursor: pointer; border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary); border-radius: var(--radius-pill); padding: 2px 10px; transition: all 0.15s ease; }
+  .copy:hover { background: var(--color-surface-hover); }
+  .field { display: grid; grid-template-columns: 110px 1fr; gap: 8px; margin: 4px 0; }
+  .field .k { color: var(--color-text-muted); font-size: 13px; }
+  footer { color: var(--color-text-muted); font-size: 12px; margin-top: 24px; }
+</style>
+<div class="grid2">
+ <div class="card leader brock"><div class="who">Brock</div><div class="style">You: "closing the distance too much for his identity"</div>
+ <h3>Why he walks in</h3><ul>
+ <li>His <code>range</code> is <b>150 px</b>. Maintain (his top goal) means "land a hit <i>from 150 px</i>", so whenever you stand farther off, Maintain's plan starts with walking in to 150.</li>
+ <li>Walking in costs him the normal amount (approach x1), and so does Dash in.</li>
+ <li>Rock Throw reaches about 370 px (before his velocity cards), so he never needs to come that close to hit you.</li></ul></div>
+ <div class="card leader misty"><div class="who">Misty</div><div class="style">You: "bopping around and not fighting"</div>
+ <h3>Why she keeps moving</h3><ul>
+ <li>Kite weight <b>1.5</b>: Kite means "land a hit from outside <i>your</i> reach", so whenever you step in, her best plan starts by backing out again.</li>
+ <li>Backing off is discounted (retreat x0.8), so the move away is cheap.</li>
+ <li><code>risk</code> 1.1 makes every hit she might take count 10% more, which pushes her further toward running.</li></ul></div>
+</div>
+<div class="card"><h2>Proposed retune <span class="pill wait">ideas, not approved</span></h2><table><thead><tr><th>Leader</th><th>Setting</th><th>Now</th><th>Proposed</th><th>What it does</th></tr></thead><tbody><tr><td>Brock</td><td><code>range</code></td><td>150 px</td><td><b>250 px</b></td><td>Maintain is satisfied from much farther out, so it stops pulling him in; still well inside Rock Throw</td></tr><tr><td>Brock</td><td>tag: approach (Close in)</td><td>1</td><td><b>1.5</b></td><td>walking toward you costs half again as much, so Endurance and Maintain prefer to wait and throw</td></tr><tr><td>Brock</td><td>tag: dash (Dash in)</td><td>1</td><td><b>2</b></td><td>a wall does not lunge</td></tr><tr><td>Misty</td><td>goal: Kite</td><td>1.5</td><td><b>1.2</b></td><td>still her top lean, but a straight shot from where she stands now often scores higher</td></tr><tr><td>Misty</td><td>tag: retreat (Back off)</td><td>0.8</td><td><b>1</b></td><td>backing off costs normal again</td></tr><tr><td>Misty</td><td><code>risk</code></td><td>1.1</td><td><b>1.0</b></td><td>she takes a trade like the default does, instead of running from it</td></tr></tbody></table>
+<p class="muted">Everything else stays: Brock's goals, retreat x1.4, buff x0.8, swapWill, stubbornness, intelligence; Misty's Pressure 1.3, range 260, position x0.8, approach x1.2, swapWill, intelligence. Numbers are TUNE, so they go in BALANCE.md.</p></div>
+<div class="card"><h2>Tests: expected values re-worked by hand</h2>
+<p>16f-a, 16f-b and 16f-c read the real Brock and Misty settings, so their expected numbers change with the retune. Same section 15 worlds, same method:</p><table><thead><tr><th>Check</th><th>Now expects</th><th>After retune</th><th>Working</th></tr></thead><tbody><tr><td>16f-a Brock, 15b world</td><td>Endurance 0.2381 over Pressure 0.215</td><td>Endurance <b>0.2377</b> over Pressure <b>0.2105</b></td><td>the Close in step (0.45 s) costs x1.5: Endurance +0.00045, Pressure +0.0045. Endurance still wins</td></tr><tr><td>16f-b Misty, 15e world</td><td>Kite 0.1775, Pressure 0.141, Endurance 0.111</td><td>Kite <b>0.1475</b>, Pressure 0.141, Endurance 0.111</td><td>0.1 x 1.2 + 0.0275. Kite still wins, by 0.0065</td></tr><tr><td>16f-c Brock on 15b's Pressure plan</td><td>-0.131</td><td><b>-0.1265</b></td><td>0.009 x 1.5 for the close step, -0.14 for the hit</td></tr></tbody></table>
+<p class="muted">Useful threshold from 16f-b: on that world Misty kites while her Kite weight is above 1.135; below it she presses instead. So 1.2 keeps Kite as her lean without making it automatic.</p>
+<p class="muted">No new tests, harnesses, mutants or debug sets. The validator, wiring and reflex checks are unaffected.</p></div>
+<div class="card"><h2>Files</h2><table><thead><tr><th>File</th><th>Change</th></tr></thead><tbody><tr><td>js/data/gyms.js</td><td>Brock: range, two tag multipliers. Misty: Kite weight, retreat multiplier, risk. Six numbers.</td></tr><tr><td>docs/proposals/leader-ai-harness.js</td><td>16f-a, 16f-b, 16f-c expected numbers and their comments, as above</td></tr><tr><td>BALANCE.md</td><td>the 39a line gets the new numbers and "retuned after the 2026-11-14 feel test"</td></tr><tr><td>js/data/changelog.js</td><td>today's line: Brock holds his spot and throws from range; Misty kites, but stands and trades more</td></tr></tbody></table></div>
+<div class="card"><h2>Decisions</h2><div class="dec"><div class="id">R1</div><div>Brock range 150 to 250 px.<div class="why">The main cause of him walking in.</div></div><span class="pill info">idea</span></div><div class="dec"><div class="id">R2</div><div>Brock approach x1.5 and dash x2.<div class="why">Makes closing in the expensive choice, not the default.</div></div><span class="pill info">idea</span></div><div class="dec"><div class="id">R3</div><div>Misty Kite weight 1.5 to 1.2.<div class="why">Your "touch tune on kiting".</div></div><span class="pill info">idea</span></div><div class="dec"><div class="id">R4</div><div>Misty retreat x0.8 to x1.<div class="why">Backing off stops being discounted.</div></div><span class="pill info">idea</span></div><div class="dec"><div class="id">R5</div><div>Misty risk 1.1 to 1.0.<div class="why">She stops treating every trade as worse than it is.</div></div><span class="pill info">idea</span></div></div>
+<div class="card"><h2>When you re-test</h2>
+<p>With the hitbox overlay on, the top line shows the goal and the current step. If Brock still walks in, note whether the step says <code>close</code> or <code>dash</code>, and under which goal. If Misty still bops around, note whether it is <code>backOff</code> under Kite or <code>hold</code> under Maintain. That tells me which number to move next, instead of guessing.</p></div>
+
+<footer>docs/LEADER-AI.md wins wherever this page differs. Written by the PokeSurvivor agent in Quick.</footer>
+</main>
+</body>
+</html>

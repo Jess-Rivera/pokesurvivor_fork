@@ -62,6 +62,19 @@ const code = src => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''
   S.set(-5);
   ok(S.amount === 0, 'the balance never goes below zero'); }
 
+// 4b. #91-2 run totals (DS1, Jess 2026-11-12): earned is kill pay only (not the starting 100, not set()), spent is successful
+// spends only, reset() zeroes both. A kill at 15:00 pays 2.55 (section 2).
+{ S.reset();
+  ok(S.earned === 0 && S.spent === 0, 'a run starts with 0 earned and 0 spent: the starting 100 is not earned');
+  S.kill(900); S.kill(900);
+  ok(near(S.earned, 5.1) && near(S.amount, 105.1), 'two kills at 15:00: 5.1 earned, 105.1 held: ' + S.earned + ' / ' + S.amount);
+  S.set(50);
+  ok(near(S.earned, 5.1) && S.spent === 0, 'set() (G.Debug.silver) is neither earned nor spent');
+  ok(S.spend(60) === false && S.spent === 0, 'a refused spend counts nothing as spent');
+  ok(S.spend(20) === true && S.spend(5) === true && S.spent === 25, 'successful spends add what they took (20 + 5): ' + S.spent);
+  S.reset();
+  ok(S.earned === 0 && S.spent === 0 && S.whole === 100, 'reset() zeroes both totals'); }
+
 // 5. run-only: the run start resets it, the end of a run and the save never see it
 { const game = read('js/game.js'), silver = code(read('js/systems/silver.js'));
   ok(/G\.Silver\.reset\(\)/.test(body(game, 'function startRun(')), 'game.js: startRun resets Silver');
@@ -72,12 +85,16 @@ const code = src => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''
 // 6. the kill loop pays every dead enemy once, never a remote enemy or a thief that escapes
 { const e = code(read('js/entities/enemy.js'));
   ok((e.match(/G\.Silver/g) || []).length === 1, 'enemy.js reads Silver in exactly one place');
-  ok(/if \(e\.remote\) continue;\s*if \(e\.dead\) \{[^}]*G\.Silver\.kill\(G\.Game\.st\.time\);[^}]*continue;/.test(e),
+  // Leader AI slice 2: the pay lives in payKill (a leader's bench faint is paid through it too), called from the dead-enemy branch
+  ok(/if \(e\.remote\) continue;\s*if \(e\.dead\) \{\s*payKill\(e, pl\);[^}]*continue;/.test(e) && /function payKill\(e, pl\) \{[^}]*G\.Silver\.kill\(G\.Game\.st\.time\);/.test(e),
     'enemy.js: the pay sits in the dead-enemy branch, after remote enemies are skipped, on the run clock'); }
 
 // 7. the HUD: whole coins, hidden in co-op
 { const h = code(read('js/ui/hud.js')), calls = (h.match(/(?<!function )drawSilver\(/g) || []).length;
-  ok(calls === 1 && /if \(!G\.Coop\.active\) \{[^}]*drawSilver\(ctx/.test(h), 'hud.js draws Silver once, only outside co-op (' + calls + ' call(s))');
+  // #62: the canvas counter is the fallback when the HTML overlay is down; the overlay's player panel draws it otherwise
+  ok(calls === 1 && /if \(!G\.Coop\.active && !overlayDrawsPlayer\) \{[^}]*drawSilver\(ctx/.test(h), 'hud.js draws Silver once, only outside co-op and only without the overlay (' + calls + ' call(s))');
+  const panel = code(read('js/ui/hud-player-panel.js'));
+  ok(/silverShown\.value = !G\.Coop\.active;/.test(panel) && /Math\.floor\(silverState\.shown\)/.test(panel), 'hud-player-panel.js: Silver hidden in co-op, whole coins');
   ok(/const target = G\.Silver\.whole|target = G\.Silver\.whole/.test(h), 'hud.js shows the whole count'); }
 
 // 8. loading: the script tag sits after stats.js and before game.js, and the NEED array lists it

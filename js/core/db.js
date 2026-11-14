@@ -128,6 +128,7 @@ G.DB = (() => {
         groupRuns: 0,
         bestGroupTime: 0,
       },
+      regionBest: {}, // #91-2: region key ('1' to '9', 'all') -> the furthest solo, clean run there (map 91-2C)
       teamItems: {}, // F3d-2: id -> { at, from }: unlocked team items (run tier). Old saves get this (with the starters) from migrate
       teamLoadout: [], // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
       box: [], // every Pokemon owned, as compact copies (only G.Copies reads them)

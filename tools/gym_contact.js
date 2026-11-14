@@ -61,7 +61,12 @@ function readPng(file) {
       px[row + i] = v & 255;
     }
   }
-  return { w, h, alpha: (x, y) => px[y * stride + x * bpp + 3] };
+  return {
+    w,
+    h,
+    alpha: (x, y) => px[y * stride + x * bpp + 3],
+    rgba: (x, y) => Array.from(px.subarray(y * stride + x * bpp, y * stride + x * bpp + 4)),
+  };
 }
 
 // Each row is its solid runs "x0-x1" (x1 exclusive), comma separated; rows are joined by "/".
@@ -121,11 +126,15 @@ function buildShops() {
   return s + '};\n';
 }
 
-const outs = [
+module.exports = { readPng }; // tools/gym_colors.js reads the gym art with it
+
+const outs = require.main === module && [
   [OUT, build(), 'gym-contact.js'],
   [SHOP_OUT, buildShops(), 'shop-contact.js'],
 ];
-if (process.argv.includes('--check')) {
+if (!outs) {
+  // required as a module: bake nothing
+} else if (process.argv.includes('--check')) {
   let bad = 0;
   for (const [file, text, name] of outs) {
     const cur = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n') : '';

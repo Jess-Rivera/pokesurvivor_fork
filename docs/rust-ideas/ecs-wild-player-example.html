@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WildMon and PlayerMon in Rust + Shipyard</title>
+<style>
+:root{
+  --bg:#faf9fc; --card:#ffffff; --soft:#f3f4f6; --text:#1a1a1a; --text2:#5e5e5e; --muted:#9ca3af;
+  --border:rgba(0,0,0,.12); --borderl:rgba(0,0,0,.06);
+  --code-bg:#1e1e2e; --code-text:#e4e4ef; --c-kw:#c792ea; --c-ty:#82aaff; --c-str:#c3e88d; --c-num:#f78c6c;
+  --c-com:#7a7f99; --c-attr:#ffcb6b; --c-mac:#89ddff; --c-fn:#82e0aa;
+  --tag-bg:#fef3c7; --tag:#92400e; --shared:#dbeafe; --sharedt:#1e40af; --wild:#dcfce7; --wildt:#166534; --play:#f3e8ff; --playt:#6b21a8;
+  --sans:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; --mono:Consolas,'SF Mono',Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#16151a; --card:#1f1e24; --soft:#2a2930; --text:#ececf1; --text2:#b4b4bd; --muted:#7c7c87;
+    --border:rgba(255,255,255,.14); --borderl:rgba(255,255,255,.07);
+    --tag-bg:#3d2f10; --tag:#fcd34d; --shared:#1e3a66; --sharedt:#bfdbfe; --wild:#163a22; --wildt:#bbf7d0; --play:#3b2463; --playt:#e9d5ff; }
+}
+*{box-sizing:border-box}
+body{margin:0;padding:28px;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.55;max-width:1280px}
+h1{font-size:24px;margin:0 0 4px}
+h2{font-size:17px;margin:34px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+p{margin:6px 0}
+.sub{color:var(--text2)}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;background:var(--tag-bg);color:var(--tag);margin-right:6px}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:100px;margin-left:6px;vertical-align:middle}
+.p-shared{background:var(--shared);color:var(--sharedt)} .p-wild{background:var(--wild);color:var(--wildt)} .p-play{background:var(--play);color:var(--playt)}
+pre{margin:0;background:var(--code-bg);color:var(--code-text);border-radius:10px;padding:14px 16px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.5;tab-size:4}
+.kw{color:var(--c-kw)} .ty{color:var(--c-ty)} .str{color:var(--c-str)} .num{color:var(--c-num)} .com{color:var(--c-com);font-style:italic} .attr{color:var(--c-attr)} .mac{color:var(--c-mac)} .fn{color:var(--c-fn)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.lbl{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:.04em}
+.why{background:var(--card);border:1px solid var(--borderl);border-radius:10px;padding:10px 14px;margin:10px 0 0;font-size:13px;color:var(--text2)}
+.why b{color:var(--text)}
+code{font-family:var(--mono);font-size:12px;background:var(--soft);padding:1px 5px;border-radius:4px}
+ul{margin:4px 0;padding-left:20px} li{margin:3px 0}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.toc a{font-size:12px;text-decoration:none;color:var(--text2);background:var(--card);border:1px solid var(--borderl);padding:3px 10px;border-radius:100px}
+.toc a:hover{color:var(--text);border-color:var(--border)}
+@media (max-width:900px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<h1>WildMon and PlayerMon in Rust + Shipyard</h1>
+<p class="sub"><span class="tag">[Proposed]</span>Illustrative only, not compiled. Shows what the components would look like and how the two entity types get built, next to today's JS. Written 2026-11-14 against enemy.js, player.js and stats.js on feature/gym-leader-ai. Companion to <code>ecs-codebase-map.html</code>.</p>
+<p class="sub">Crates assumed: <code>shipyard</code> (ECS), <code>glam</code> (Vec2), <code>serde</code> (snapshots). API shapes follow current Shipyard docs; check exact signatures against the pinned version before writing real code.</p>
+<div class="toc">
+  <a href="#s1">1. Shared components</a><a href="#s2">2. WildMon components</a><a href="#s3">3. PlayerMon components</a>
+  <a href="#s4">4. Resources</a><a href="#s5">5. G.Stats as a module</a><a href="#s6">6. Building a WildMon</a>
+  <a href="#s7">7. Building a PlayerMon</a><a href="#s8">8. Systems that use them</a><a href="#s9">9. Elite and Leader for free</a><a href="#s10">10. What changed</a>
+</div>
+
+<!-- ======================= 1 ======================= -->
+<h2 id="s1">1. Shared components <span class="pill p-shared">both</span></h2>
+<p>Every mon on the field carries these, wild or yours. Each one is a small plain struct; a system only borrows the ones it needs.</p>
+<script type="text/x-rust">
+use glam::Vec2;
+use serde::{Deserialize, Serialize};
+use shipyard::Component;
+
+/// Where the mon's FEET are (same convention as today: (x, y) are the feet).
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct Transform { pub pos: Vec2, pub facing: Vec2 }
+
+/// Today: dx, dy on Enemy; moveAngle + walking on Player.
+#[derive(Component, Clone, Copy, Debug, Default, Serialize, Deserialize)]
+pub struct Velocity(pub Vec2);
+
+/// Collision body. Today: this.r and this.bodyH read from sprite metadata.
+/// Here they come from a data table, so the headless sim never needs a sprite.
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct Body { pub radius: f32, pub height: f32, pub scale: f32 }
+
+/// Who this is. Godot reads `dex` + `shiny` to pick the sprite sheet.
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
+pub struct Species { pub dex: u16, pub types: TypePair, pub shiny: bool }
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct TypePair { pub primary: PokeType, pub secondary: Option<PokeType> }
+
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct Health { pub hp: f32, pub max: f32 }
+
+/// The six mainline base stats, in stat order (HP, Atk, Def, SpA, SpD, Spe).
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct BaseStats { pub base: [u16; 6], pub level: u8 }
+
+/// One status engine for every host (today: status.js).
+/// Today these are loose fields: burnLeft, burnTick, burnBy, poisonN, stMajor, stCnf, stFl, stTrap...
+#[derive(Component, Clone, Debug, Default, Serialize, Deserialize)]
+pub struct Status {
+    pub major: Option<MajorStatus>,
+    pub confused: f32,          // seconds left, 0 = none (stCnf)
+    pub flinch: f32,            // stFl
+    pub trapped_by: Option<EntityRef>, // stTrap
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub enum MajorStatus {
+    Burn      { left: f32, tick: f32, by: EntityRef },
+    Poison    { left: f32, tick: f32, stacks: u8, by: EntityRef },
+    Paralysis { left: f32 },
+    Sleep     { left: f32 },
+    Freeze    { left: f32 },
+}
+
+/// Mainline stat stages, -6 to +6 (today: stages.js, the tracker model).
+#[derive(Component, Clone, Copy, Debug, Default, Serialize, Deserialize)]
+pub struct StatStages { pub atk: i8, pub def: i8, pub spa: i8, pub spd: i8, pub spe: i8 }
+
+/// Which side it fights for. Replaces checks like "does the caster have foes()".
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Faction { Wild, Player, Leader { gym: u8 } }
+</script>
+<div class="why"><b>Note on <code>MajorStatus</code>:</b> today a mon can technically have <code>burnLeft</code> and <code>poisonN</code> set at once, and status.js has to keep them exclusive. As one enum, "only one major status" is a type the compiler enforces. Adding a new status means the compiler lists every match that hasn't handled it yet.</div>
+
+<!-- ======================= 2 ======================= -->
+<h2 id="s2">2. WildMon-only components <span class="pill p-wild">wild</span></h2>
+<p>The ~109 fields on Enemy, minus the shared ones above, split by job.</p>
+<script type="text/x-rust">
+/// How the wild AI decides where to go. Today: behavior, cls, seekTarget, seekT, panic, fear.
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
+pub struct WildBrain {
+    pub behavior: Behavior,          // from the enemy-class table
+    pub seek_target: Option<EntityRef>,
+    pub seek_timer: f32,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub enum Behavior { Chase, Ranged, Charger, Flanker, Swarm /* ...one per enemy class */ }
+
+/// Pain / fear / panic. Elites get `enabled: false` (today: noMorale).
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct Morale { pub pain: f32, pub fear: f32, pub panic: f32, pub enabled: bool }
+
+/// Today: touchCd, shotCd, skillCd, secCd.
+#[derive(Component, Clone, Copy, Debug, Default, Serialize, Deserialize)]
+pub struct AttackTimers { pub touch: f32, pub shot: f32, pub skill: f32, pub secondary: f32 }
+
+/// The wild offensive profile. Today: dmg, atkType, atkCat, atkBase, atkFactor.
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct WildAttack { pub contact_dmg: f32, pub kind: PokeType, pub category: Category, pub factor: f32 }
+
+/// Today: kx, ky, plus `immovable` (elites ignore knockback).
+#[derive(Component, Clone, Copy, Debug, Default, Serialize, Deserialize)]
+pub struct Knockback { pub impulse: Vec2, pub immune: bool }
+
+/// Today: flying, ignoresLiquid.
+#[derive(Component, Clone, Copy, Debug, Default, Serialize, Deserialize)]
+pub struct TerrainFlags { pub flying: bool, pub ignores_liquid: bool }
+
+/// What it drops on faint. Today: bx (base experience), xpMul, and `xp` for bosses.
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct XpDrop { pub base_exp: Option<u16>, pub flat: u32, pub mul: f32 }
+</script>
+<div class="why"><b>Not mapped here on purpose:</b> the band*, carrier*, jump*, zig, golden and shield fields. They each become a small component too, but the point of this page is the shape, not a full port.</div>
+
+<!-- ======================= 3 ======================= -->
+<h2 id="s3">3. PlayerMon-only components <span class="pill p-play">player</span></h2>
+<script type="text/x-rust">
+/// The one input surface for a body. Your keys AND a leader's AI both write this.
+/// The Move systems never know which one drove it (today: the controller in player-sim-pass.js).
+#[derive(Component, Clone, Copy, Debug, Default, Serialize, Deserialize)]
+pub struct Controller {
+    pub source: ControlSource,
+    pub heading: Vec2,          // desired direction, normalised or zero
+    pub cast_slot: Option<u8>,  // 0..4, "use this move"
+    pub dodge: bool,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ControlSource { #[default] Local, Ai }
+
+/// Four move slots and which one is active (today: moves, active, slots, maxMoves).
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
+pub struct Moveset { pub slots: [Option<MoveSlot>; 4], pub active: u8 }
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct MoveSlot { pub id: MoveId, pub cooldown: f32 }
+
+/// Today: dodgeT, dodgeVx, dodgeVy, dodgeEl, invuln.
+#[derive(Component, Clone, Copy, Debug, Default, Serialize, Deserialize)]
+pub struct Dodge { pub timer: f32, pub vel: Vec2, pub invuln: f32 }
+
+/// Per-copy identity from the Pokebox (today: statProf from G.Stats.profile).
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct StatProfile { pub iv: [u8; 6], pub ev: [u16; 6], pub nature: [f32; 6] }
+
+/// Today: level, xp, xpNext, xpMul.
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct Leveling { pub level: u8, pub xp: u32, pub next: u32, pub xp_mul: f32 }
+
+/// Stat cards and badges (today: inc, badge, both keyed hp/atk/def/spa/spd/spe).
+#[derive(Component, Clone, Copy, Debug, Default, Serialize, Deserialize)]
+pub struct StatBonuses { pub cards: [f32; 6], pub badges: [f32; 6] }
+
+/// Held item multipliers (today: atkMul, physMul, specMul, defItemMul, cdMul, dmgReduce, typeBoost...).
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct ItemMods {
+    pub atk_mul: f32, pub phys_mul: f32, pub spec_mul: f32, pub def_mul: f32,
+    pub cd_mul: f32, pub dmg_reduce: f32, pub type_boost: Option<PokeType>, pub move_radius_mul: f32,
+}
+
+/// Pickup radius (today: magnet, itemMagnet).
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct Magnet { pub radius: f32 }
+
+/// Which roster slot this copy is, and the copy's UUID in the box.
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct TeamMember { pub slot: u8, pub copy: CopyId }
+
+/// Tag: on the bench. A benched mon has no Transform, so no movement or
+/// collision system ever sees it. No `if (benched) continue;` anywhere.
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct Benched;
+
+/// Tag: the mon the camera follows.
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct LocalPlayer;
+</script>
+<div class="why"><b>Team-wide run items</b> (sharpScissors, brassKnuckles, redo, pikaTear, snowball) are flags on Player today but they're team-wide. In ECS they belong on the <code>TeamStore</code> resource, not on each mon. That's one of the places the port forces a cleaner model.</div>
+
+<!-- ======================= 4 ======================= -->
+<h2 id="s4">4. Resources the constructors read</h2>
+<script type="text/x-rust">
+use shipyard::Unique;
+
+/// Read-only game tables, loaded once (today: js/data/*.js).
+#[derive(Unique)]
+pub struct GameData {
+    pub dex: Vec<DexEntry>,            // pokedex.js: stats, types, base_experience
+    pub enemy_defs: Vec<EnemyDef>,     // enemies.js + enemy-classes.js
+    pub body: Vec<BodySize>,           // NEW: per-species radius + height, measured offline
+    pub moves: Vec<MoveSpec>,
+}
+
+/// One seeded stream for the whole sim. Same seed, same run.
+#[derive(Unique)]
+pub struct Rng(pub rand_pcg::Pcg32);
+
+/// Fixed-step clock (today: rAF + performance.now in game.js).
+#[derive(Unique)]
+pub struct SimClock { pub dt: f32, pub run_time: f32, pub speed_k: f32 }
+
+/// Gym escalation, read once at spawn (today: G.Gym.escBump via spawnBump).
+#[derive(Unique)]
+pub struct GymSchedule { pub esc_bump: u8 /* ... */ }
+
+/// Damage is never applied in place. Attack systems push here, ApplyDamage drains it.
+#[derive(Unique, Default)]
+pub struct DamageQueue(pub Vec<DamageEvent>);
+
+#[derive(Clone, Copy, Debug)]
+pub struct DamageEvent { pub target: EntityId, pub source: Option<EntityId>, pub amount: f32, pub kind: PokeType }
+</script>
+
+<!-- ======================= 5 ======================= -->
+<h2 id="s5">5. G.Stats becomes a pure module</h2>
+<div class="cols">
+<div>
+<div class="lbl">Today, core/stats.js</div>
+<script type="text/x-js">
+function hpForLevel(baseHp, level, iv = 0, ev = 0) {
+  return Math.round(
+    (Math.floor(((2 * baseHp + iv + Math.floor(ev / 4)) * level) / 100)
+      + level + 10) * HP_SCALAR);
+}
+
+function speedToPx(baseSpe, iv = 0, nature = 1, ev = 0) {
+  const r = statValue(baseSpe, 50, iv, ev, nature)
+          / statValue(SPEED_MEDIAN, 50);
+  return BASE_PX * moveTransfer(r);
+}
+</script>
+</div>
+<div>
+<div class="lbl">Rust, sim/src/stats.rs</div>
+<script type="text/x-rust">
+pub const HP_SCALAR: f32 = 2.0;
+pub const SPEED_MEDIAN: u16 = 65;
+pub const BASE_PX: f32 = 107.0;
+
+pub fn hp_for_level(base_hp: u16, level: u8, iv: u8, ev: u16) -> f32 {
+    let (b, l) = (base_hp as u32, level as u32);
+    let core = (2 * b + iv as u32 + ev as u32 / 4) * l / 100;
+    ((core + l + 10) as f32 * HP_SCALAR).round()
+}
+
+pub fn speed_to_px(base_spe: u16, iv: u8, nature: f32, ev: u16) -> f32 {
+    let r = stat_value(base_spe, 50, iv, ev, nature) as f32
+          / stat_value(SPEED_MEDIAN, 50, 0, 0, 1.0) as f32;
+    BASE_PX * move_transfer(r)
+}
+</script>
+</div>
+</div>
+<div class="why"><b>Integer division does the flooring.</b> <code>u32 / 100</code> already rounds down, so the <code>Math.floor</code> calls disappear and the mainline math stays exact. A parity test can then assert <code>hp_for_level</code> gives the same number as the JS for every species at levels 1 to 100.</div>
+
+<!-- ======================= 6 ======================= -->
+<h2 id="s6">6. Building a WildMon</h2>
+<p>The Rust version of <code>new Enemy(def, x, y, sc)</code>. Same steps in the same order, but the sim parts and the presentation parts come apart.</p>
+<div class="cols">
+<div>
+<div class="lbl">Today, entities/enemy.js constructor (trimmed)</div>
+<script type="text/x-js">
+constructor(def, x, y, sc, boss = false) {
+  this.id = nextId++;
+  this.dex = def.dex;
+  this.x = x; this.y = y;
+  this.immovable = false;
+  this.noMorale = false;
+  this.ignoresLiquid = false;
+  this.scale = this.sizeFor(def, boss);
+  this.anim = new G.Sprites.Animator(def.dex, this.scale); // presentation
+  this.r = G.Sprites.bodyRadius(def.dex, this.scale);      // from sprite meta
+  this.bodyH = G.Sprites.bodyHeight(def.dex, this.scale);
+  const wildBump = this.spawnBump(def, boss);
+  this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1))
+                    : this.spawnHp(def, sc, wildBump);
+  this.hp = this.maxHp;
+  this.spd = boss ? def.spd * (sc.spd || 1) : def.spd;
+  this.dmg = def.dmg * sc.dmg;
+  this.bx = def.bx != null ? def.bx : null;
+  this.xpMul = def.xpMul || 1;
+  this.behavior = def.behavior;
+  this.types = types.length ? types : ['normal'];
+  this.atkType = this.types[0];
+  // ...about 80 more fields
+}
+</script>
+</div>
+<div>
+<div class="lbl">Rust, sim/src/spawn.rs</div>
+<script type="text/x-rust">
+use shipyard::{EntityId, UniqueView, UniqueViewMut, World};
+
+pub fn spawn_wild(world: &mut World, def_id: EnemyDefId, at: Vec2) -> EntityId {
+    // Step 1: read the tables and roll numbers. `world.run` borrows the
+    // world immutably, builds every component, and returns them.
+    let (core, wild) = world.run(
+        |data: UniqueView<GameData>, clock: UniqueView<SimClock>,
+         gym: UniqueView<GymSchedule>, mut rng: UniqueViewMut<Rng>| {
+            let def   = &data.enemy_defs[def_id.0];
+            let entry = &data.dex[def.dex as usize];
+            let size  = data.body[def.dex as usize];
+            let scale = size_for(def, &mut rng);
+
+            // spawnHp + spawnBump: level from run time, plus gym escalation
+            let level = stats::wild_level(clock.run_time) + gym.esc_bump;
+            let max_hp = stats::hp_for_level(entry.base[0], level, 0, 0);
+
+            let core = (
+                Transform { pos: at, facing: Vec2::X },
+                Velocity::default(),
+                Body { radius: size.radius * scale, height: size.height * scale, scale },
+                Species { dex: def.dex, types: entry.types, shiny: roll_shiny(&mut rng) },
+                Health { hp: max_hp, max: max_hp },
+                BaseStats { base: entry.base, level },
+                Status::default(),
+                StatStages::default(),
+                Faction::Wild,
+            );
+            let wild = (
+                WildBrain { behavior: def.behavior, seek_target: None, seek_timer: 0.0 },
+                Morale { pain: 0.0, fear: 0.0, panic: 0.0, enabled: true },
+                AttackTimers::default(),
+                WildAttack::from_stats(entry, def, &clock),
+                Knockback::default(),
+                TerrainFlags { flying: def.flying, ignores_liquid: false },
+                XpDrop { base_exp: entry.base_exp, flat: def.xp, mul: def.xp_mul },
+            );
+            (core, wild)
+        },
+    );
+
+    // Step 2: the borrow above has ended, so now we may mutate the world.
+    let id = world.add_entity(core);
+    world.add_component(id, wild);
+    id
+}
+</script>
+</div>
+</div>
+<div class="why">
+<b>What moved out:</b> <code>new G.Sprites.Animator(...)</code> is gone from the sim. Godot sees a new entity with a <code>Species</code> and <code>Body.scale</code> in the next frame's buffer and builds its own animated sprite. <code>bodyRadius</code> comes from the <code>GameData.body</code> table, not the sprite sheet.<br>
+<b>Why two steps:</b> Rust won't let you hold a read borrow on the world (the tables) while you add to it. So you build everything first, the borrow ends, then you insert. JS lets you mix those freely, which is how presentation calls crept into constructors.<br>
+<b>Why two tuples:</b> readability, and Shipyard's tuple impls have a size limit. Each group is a "bundle" you could reuse (the core tuple is exactly what an elite and a leader also need).
+</div>
+
+<!-- ======================= 7 ======================= -->
+<h2 id="s7">7. Building a PlayerMon</h2>
+<div class="cols">
+<div>
+<div class="lbl">Today, entities/player.js constructor (trimmed)</div>
+<script type="text/x-js">
+constructor(mon, perks = {}, shiny = false, statProf = null) {
+  this.mon = mon;
+  this.dex = mon.dex;
+  this.shiny = shiny && G.Sprites.hasShiny(mon.dex);
+  this.anim = new G.Sprites.Animator(mon.dex, 1, this.shiny);
+  this.x = 0; this.y = 0;
+  this.r = G.Sprites.bodyRadius(mon.dex);
+  this.bodyH = G.Sprites.bodyHeight(mon.dex);
+  this.atkMul = perks.atkMul || 1;
+  this.physMul = 1; this.specMul = 1; this.defItemMul = 1;
+  this.cdMul = perks.cdMul || 1;
+  this.dmgReduce = perks.dmgReduce || 0;
+  this.sharpScissors = false; this.brassKnuckles = false;
+  this.perksHp = perks.hp || 0;
+  this.statProf = statProf || G.Stats.NEUTRAL_PROFILE;
+  this.inc = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+  this.badge = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+  const hp1 = G.Stats.hpForLevel(this.baseHpStat, 1,
+                this.statIv(0), this.statEv(0));
+  this.maxHp = hp1 + this.perksHp;
+  this.hp = this.maxHp;
+  this.baseSpd = G.Stats.speedToPx(mon.stats[5],
+                this.statIv(5), this.statNat(5), this.statEv(5));
+  this.moves = [];
+  // ...about 70 more fields
+}
+</script>
+</div>
+<div>
+<div class="lbl">Rust, sim/src/spawn.rs</div>
+<script type="text/x-rust">
+pub struct PlayerSpawn {
+    pub copy: CopyId, pub dex: u16, pub shiny: bool,
+    pub profile: StatProfile, pub perks: Perks,
+    pub slot: u8, pub moves: [Option<MoveId>; 4],
+}
+
+pub fn spawn_player(world: &mut World, s: PlayerSpawn, on_field: bool) -> EntityId {
+    let (core, player) = world.run(|data: UniqueView<GameData>| {
+        let entry = &data.dex[s.dex as usize];
+        let size  = data.body[s.dex as usize];
+        let p     = s.profile;
+        let max_hp = stats::hp_for_level(entry.base[0], 1, p.iv[0], p.ev[0]) + s.perks.hp;
+
+        let core = (
+            Velocity::default(),
+            Body { radius: size.radius, height: size.height, scale: 1.0 },
+            Species { dex: s.dex, types: entry.types, shiny: s.shiny && entry.has_shiny },
+            Health { hp: max_hp, max: max_hp },
+            BaseStats { base: entry.base, level: 1 },
+            Status::default(),
+            StatStages::default(),
+            Faction::Player,
+        );
+        let player = (
+            Controller::default(),               // source: Local
+            Moveset::from_ids(s.moves),
+            Dodge::default(),
+            p,                                   // StatProfile
+            Leveling { level: 1, xp: 0, next: stats::xp_for_level(2), xp_mul: 1.0 },
+            StatBonuses::default(),              // inc + badge, all zero
+            ItemMods::from_perks(&s.perks),
+            Magnet { radius: s.perks.magnet },
+            TeamMember { slot: s.slot, copy: s.copy },
+        );
+        (core, player)
+    });
+
+    let id = world.add_entity(core);
+    world.add_component(id, player);
+    if on_field {
+        world.add_component(id, (Transform { pos: Vec2::ZERO, facing: Vec2::Y }, LocalPlayer));
+    } else {
+        world.add_component(id, Benched);
+    }
+    id
+}
+
+/// Swap: the 5 s lock lives in TeamStore; the swap itself is just tags moving.
+pub fn swap_in(world: &mut World, out: EntityId, inn: EntityId) {
+    let t = world.get::<&Transform>(out).map(|t| *t).unwrap();
+    world.remove::<(Transform, LocalPlayer)>(out);
+    world.add_component(out, Benched);
+    world.remove::<Benched>(inn);
+    world.add_component(inn, (t, LocalPlayer));
+}
+</script>
+</div>
+</div>
+<div class="why">
+<b>Note the shared core.</b> Health, BaseStats, Status, StatStages, Body and Species are built the same way in both constructors. A real port would pull them into one <code>mon_core(entry, size, level, max_hp)</code> helper. Today that sharing lives in G.Stats plus copy-pasted field setup.<br>
+<b>Bench as data:</b> a benched mon keeps its HP, moves, cards and status. It just has no <code>Transform</code>, so movement, collision and targeting skip it automatically. Swapping moves two tags.
+</div>
+
+<!-- ======================= 8 ======================= -->
+<h2 id="s8">8. Systems that use them</h2>
+<p>A system is a plain function. Its arguments say which components it reads (<code>View</code>) and writes (<code>ViewMut</code>), and it runs on every entity that has all of them.</p>
+<script type="text/x-rust">
+use shipyard::{IntoIter, IntoWorkload, View, ViewMut, Workload};
+
+/// Wild AI. Only entities WITH a WildBrain match, so players never enter this loop.
+fn wild_think(brains: View<WildBrain>, xf: View<Transform>, mut vel: ViewMut<Velocity>,
+              locals: View<LocalPlayer>, data: UniqueView<GameData>) {
+    let Some((_, target)) = (&locals, &xf).iter().next() else { return };
+    let target = target.pos;
+    for (brain, me, v) in (&brains, &xf, &mut vel).iter() {
+        v.0 = match brain.behavior {
+            Behavior::Chase => (target - me.pos).normalize_or_zero() * data.speed_of(brain),
+            _ => v.0, // ...one arm per behavior; a missing arm is a compile error
+        };
+    }
+}
+
+/// Your keys AND a leader's AI both end up here. One body, one rule (LEADER-AI "FRAME").
+fn apply_controller(ctl: View<Controller>, stats: View<BaseStats>, prof: View<StatProfile>,
+                    mut vel: ViewMut<Velocity>) {
+    for (c, s, p, v) in (&ctl, &stats, &prof, &mut vel).iter() {
+        v.0 = c.heading * stats::speed_to_px(s.base[5], p.iv[5], p.nature[5], p.ev[5]);
+    }
+}
+
+/// Movement for EVERYTHING with a position and velocity: wild, player, leader. Benched has no Transform.
+fn integrate(clock: UniqueView<SimClock>, mut xf: ViewMut<Transform>, vel: View<Velocity>) {
+    let dt = clock.dt * clock.speed_k;
+    for (t, v) in (&mut xf, &vel).iter() {
+        t.pos += v.0 * dt;
+        if v.0 != Vec2::ZERO { t.facing = v.0.normalize(); }
+    }
+}
+
+/// Status ticking for every host. It does not touch HP; it queues damage.
+fn status_tick(clock: UniqueView<SimClock>, mut st: ViewMut<Status>,
+               mut queue: UniqueViewMut<DamageQueue>) {
+    for (id, s) in (&mut st).iter().with_id() {
+        if let Some(MajorStatus::Burn { left, tick, by }) = &mut s.major {
+            *left -= clock.dt;
+            *tick -= clock.dt;
+            if *tick <= 0.0 {
+                *tick += 1.0;
+                queue.0.push(DamageEvent { target: id, source: by.id(), amount: 1.0, kind: PokeType::Fire });
+            }
+        }
+        // ...poison, sleep, freeze, confusion, flinch
+    }
+}
+
+/// The ONE place HP changes. Emits a `hit` event for Godot (number, spark, Hurt anim, sound).
+fn apply_damage(mut queue: UniqueViewMut<DamageQueue>, mut hp: ViewMut<Health>,
+                mut out: UniqueViewMut<SimEvents>) {
+    for ev in queue.0.drain(..) {
+        if let Ok(mut h) = (&mut hp).get(ev.target) {
+            h.hp = (h.hp - ev.amount).max(0.0);
+            out.push(SimEvent::Hit { target: ev.target, amount: ev.amount, kind: ev.kind });
+        }
+    }
+}
+
+/// The tick, in order (see ecs-codebase-map.html section 3).
+pub fn tick() -> Workload {
+    (wild_think, apply_controller, integrate, status_tick, apply_damage).into_workload()
+}
+
+// Headless test, no Godot, no browser:
+#[test]
+fn burn_ticks_through_the_real_damage_path() {
+    let mut world = test_world(seed = 42);
+    let id = spawn_wild(&mut world, EnemyDefId(0), Vec2::ZERO);
+    world.run(|mut st: ViewMut<Status>| {
+        (&mut st).get(id).unwrap().major = Some(MajorStatus::Burn { left: 3.0, tick: 1.0, by: EntityRef::NONE });
+    });
+    for _ in 0..60 { world.run_workload(tick).unwrap(); }   // 1 s at 60 Hz
+    assert_eq!(hp_of(&world, id), max_hp_of(&world, id) - 1.0);
+}
+</script>
+<div class="why"><b>The thing you've been working around:</b> that test runs the actual damage path with nothing stubbed, because <code>apply_damage</code> can't call FX or Audio. It doesn't know they exist. Today's harnesses stub them or skip the real hit path. (The <code>seed = 42</code> line is pseudo-syntax for "build a test world with this seed".)</div>
+
+<!-- ======================= 9 ======================= -->
+<h2 id="s9">9. Elite and Leader come almost for free</h2>
+<script type="text/x-rust">
+/// Today: G.Elite = wild entity + mods. Here: spawn a wild, then add and adjust.
+pub fn spawn_elite(world: &mut World, def_id: EnemyDefId, at: Vec2, mods: EliteMods) -> EntityId {
+    let id = spawn_wild(world, def_id, at);
+    world.run(|mut hp: ViewMut<Health>, mut morale: ViewMut<Morale>, mut kb: ViewMut<Knockback>| {
+        let mut h = (&mut hp).get(id).unwrap();
+        h.max *= mods.hp_mul;
+        h.hp = h.max;
+        (&mut morale).get(id).unwrap().enabled = false;   // noMorale
+        (&mut kb).get(id).unwrap().immune = true;         // immovable
+    });
+    world.add_component(id, mods);
+    id
+}
+
+/// Today: a gym leader's mon is a Player entity driven by leader-ai.js.
+/// Here: the SAME constructor, a different controller source, a faction, and a brain.
+pub fn spawn_leader_mon(world: &mut World, s: PlayerSpawn, gym: u8, brain: LeaderBrain) -> EntityId {
+    let id = spawn_player(world, s, true);
+    world.remove::<LocalPlayer>(id);
+    world.run(|mut ctl: ViewMut<Controller>, mut fac: ViewMut<Faction>| {
+        (&mut ctl).get(id).unwrap().source = ControlSource::Ai;
+        *(&mut fac).get(id).unwrap() = Faction::Leader { gym };
+    });
+    world.add_component(id, (brain, BossTag));
+    id
+}
+
+/// leader-belief.js + leader-memory.js + leader-planner.js state, as one component.
+/// A `leader_think` system reads it and writes Controller, exactly like your keys do.
+#[derive(Component)]
+pub struct LeaderBrain {
+    pub intelligence: f32,      // #53: drives misjudge, reflex, dodgeRead, memoryUse, aimError
+    pub belief: Belief,
+    pub memory: RunMemory,
+    pub plan: Option<Plan>,
+}
+</script>
+
+<!-- ======================= 10 ======================= -->
+<h2 id="s10">10. What changed versus the JS</h2>
+<ul>
+  <li><b>No presentation in constructors.</b> No Animator, no sprite reads. Godot builds visuals from <code>Species</code> + <code>Body.scale</code>.</li>
+  <li><b>Fields become types.</b> Today's 105 to 109 loose fields per class become about 15 named structs, each with one job. A system's argument list documents exactly what it touches.</li>
+  <li><b>"Is this a player?" disappears.</b> Systems match on components, so a wild-only rule can't accidentally hit a leader, and a player rule hits leaders automatically.</li>
+  <li><b>HP has one writer.</b> Everything queues a <code>DamageEvent</code>; only <code>apply_damage</code> subtracts, and it emits the <code>hit</code> event. That's the hurt() split from SIM-PRESENT-BOUNDARY, enforced by the borrow checker.</li>
+  <li><b>Save migration gets mechanical.</b> Adding <code>#[serde(default)]</code> to a new field means old snapshots load with the default value, which replaces the hand-written null checks.</li>
+  <li><b>The cost:</b> more ceremony up front (two-step spawn, explicit borrows, a queue instead of a direct call), and anything that wants to touch two entities at once has to go through an event.</li>
+</ul>
+
+<script>
+(function(){
+  var KW = {
+    rs: 'as break const continue crate else enum false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while Some None Ok Err'.split(' '),
+    js: 'const let var function return if else new this class constructor null true false for of in typeof'.split(' ')
+  };
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function hl(src, lang){
+    var kw = {}; KW[lang].forEach(function(k){ kw[k] = 1; });
+    var re = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(#\[[^\]]*\])|(\b\d[\d_]*(?:\.\d+)?(?:f32|u8|u16|u32)?\b)|([A-Za-z_]\w*)(!?)(\s*\()?/g;
+    var out = '', last = 0, m;
+    while ((m = re.exec(src))) {
+      out += esc(src.slice(last, m.index));
+      if (m[1]) out += '<span class="com">' + esc(m[1]) + '</span>';
+      else if (m[2]) out += '<span class="str">' + esc(m[2]) + '</span>';
+      else if (m[3]) out += '<span class="attr">' + esc(m[3]) + '</span>';
+      else if (m[4]) out += '<span class="num">' + m[4] + '</span>';
+      else {
+        var w = m[5], bang = m[6], paren = m[7] || '';
+        if (kw[w]) out += '<span class="kw">' + w + '</span>';
+        else if (bang && lang === 'rs') out += '<span class="mac">' + w + '!</span>', bang = '';
+        else if (paren) out += '<span class="fn">' + w + '</span>';
+        else if (/^[A-Z]/.test(w)) out += '<span class="ty">' + w + '</span>';
+        else out += w;
+        out += bang + esc(paren);
+      }
+      last = re.lastIndex;
+    }
+    return out + esc(src.slice(last));
+  }
+  [].slice.call(document.querySelectorAll('script[type="text/x-rust"], script[type="text/x-js"]')).forEach(function(s){
+    var lang = s.type === 'text/x-rust' ? 'rs' : 'js';
+    var src = s.textContent.replace(/^\n/, '').replace(/\s+$/, '');
+    var pre = document.createElement('pre');
+    pre.innerHTML = '<code>' + hl(src, lang) + '</code>';
+    s.parentNode.insertBefore(pre, s);
+  });
+})();
+</script>
+</body>
+</html>

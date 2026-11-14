@@ -1,0 +1,70 @@
+VIGNETTE SETTING, Graphics menu (2026-11-12, Quick)  [Approved, BUILT]
+Jess's calls: V1 = Off, V2 = run and menu, V3 = cache it too (world.js drawVignette now stamps a cached canvas).
+=================================================================
+
+Why: Jess's Firefox laptop test, vignette off = ~100 fps (+-10) vs ~60.
+Profile: drawVignette fillRect was 18% of main-thread samples.
+
+FILES TOUCHED
+-----------------------------------------------------------------
+ js/core/settings.js     header comment: one new line for "vignette"
+                         DEF: new key  vignette  (default: V1 below)
+                         Old saves lack the key; DEF fills it on load,
+                         so no save migration and no wipe.
+
+ js/ui/settings-ui.js    gfxHtml(): one new On/Off row, placed right
+                         after "Shake & Flash" (both are look/comfort):
+                           Label  "Vignette"
+                           Help   "Darkens the screen's edges. Off
+                                   keeps the edges clear and runs
+                                   faster on slower machines."
+                           Btns   "On" / "Off"
+                         Uses the existing boolRow, English only.
+
+ js/game.js              render() line ~1252: draw the vignette only
+                         when the setting is on.
+                         Backdrop render() line ~1384 (menu world):
+                         same check (V2 below).
+                         Fog weather's own gradient: UNCHANGED, still
+                         draws with the setting off.
+
+ js/data/changelog.js    chg, today: "New Graphics setting: Vignette
+                         (on/off). Turning it off can raise the frame
+                         rate on slower machines."  (free edit, parse
+                         check after)
+
+ NOT touched: world.js drawVignette itself, HUD, pause menu, fog.
+
+FLOW
+-----------------------------------------------------------------
+ Settings > Graphics > Vignette [On|Off]
+        |
+        v
+ G.Settings.set('vignette', bool) --> localStorage ps.settings
+        |
+        v  (read every frame, no listener needed)
+ render():  world > weather > [vignette if on] > fog > canvas HUD
+
+DECISIONS FOR JESS
+-----------------------------------------------------------------
+ V1 default      (a) On   current look kept for everyone
+                 (b) Off  clearer edges + faster  <- recommended
+                          (readability: threats walk in from edges;
+                           new HUD panels sit there anyway)
+ V2 menu world   (a) setting covers run AND menu backdrop <- rec.
+                 (b) run only, menu backdrop always vignetted
+ V3 cache (F1)   (a) also cache the gradient, so "On" is cheap too
+                 (b) skip for now                          <- rec.
+                          (off already solves the laptop)
+
+TESTS
+-----------------------------------------------------------------
+ Harness / mutation runner: none (draw-only, no game logic).
+ Smoke: none existing covers settings or the vignette.
+ check.js: unchanged; Jess runs node tools/check.js (no node here).
+ Feel test (~1 min, Firefox laptop, dev.html?dev, FPS on):
+   1. Settings > Graphics: Vignette row shows, toggles, survives a
+      reload (no save clear needed).
+   2. Run with it Off: ~100 fps, edges clear.  On: old look.
+   3. Fog weather still dims the edges with Vignette Off.
+   4. Menu backdrop follows the setting (if V2a).

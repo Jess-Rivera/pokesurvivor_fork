@@ -67,7 +67,7 @@ try {
 } catch (e) {
   /* it reads the DOM at the end; G.U is set before that */
 }
-for (const p of ['js/core/stats.js', 'js/data/species-traits.js', 'js/data/items.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js']) {
+for (const p of ['js/core/stats.js', 'js/data/species-traits.js', 'js/data/items.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/systems/leader-planner.js', 'js/data/leader-ai-settings.js', 'js/entities/leader-ai.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js']) {
   try {
     load(p);
   } catch (e) {
@@ -76,6 +76,8 @@ for (const p of ['js/core/stats.js', 'js/data/species-traits.js', 'js/data/items
   }
 }
 
+// Leader AI slice 2 (#31): this harness predates the AI player's own swap and dodge decisions; they stay off here (leader-ai-harness.js tests them)
+if (G.LeaderAI && G.LeaderAI.off) Object.assign(G.LeaderAI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true }); // and slice 3's (#32)
 let fail = 0,
   n = 0;
 const ok = (c, m) => {
@@ -87,6 +89,7 @@ const ok = (c, m) => {
 };
 const near = (a, b, e = 1e-6) => typeof a === 'number' && Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const DT = 1 / 60;
+require(path.join(R, 'tools/test-leaders.js'))(G); // 39a part G: Brock and Misty without their personality
 const K = G.Gyms.listFor(null),
   MISTY = K.find((g) => g.leader === 'Misty');
 /** A fixture gym: a clone of Misty under another name, with these run items at loop 1. */

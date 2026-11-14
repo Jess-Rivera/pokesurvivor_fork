@@ -1,0 +1,158 @@
+104 - EV SCREEN BUILD PLAN  (Quick, 2026-11-13, branch feature/pause-menu-rework)
+Spec: docs/PAUSE-MENU.md section 7 "EV screen" + "EV buttons". Mock: assets/excalidraw/End Run EV.png.
+Last child of #82. Status: APPROVED and BUILT 2026-11-13 (Jess): D2 retire the old screen, D3 the shared dialog
+(restyle it later, own issue), D6 BOTH hold-to-repeat and Shift-click 10. Defaults A to E taken.
+Decision: docs/decisions/2026-11-13-104-ev-screen-giving-and-old-screen-retired.md.
+
+=====================================================================================
+FLOW
+=====================================================================================
+
+  run ends by a FALL with whole EVs (a quit never has any, #103)
+        |
+        v
+  End Run screen  "EXPEDITION OVER"   [Run Review]  [Learn from the Loss]
+        |                                                   |
+        |  (Run Review -> pause menu read-only -> Back)     v
+        |                                     NEW EV SCREEN (this slice)
+        |                                       |                 |
+        |                                    [Learn]          [Go Home]
+        |                                       |                 |
+        |                          leftover EVs? ---no--+     always asks
+        |                               |yes            |   "Discard all EVs
+        |                               v               |     and return?"
+        |                    ask: leftovers discarded   |   [Yes]   [Cancel]
+        |                       [Yes]   [Cancel]        |     |        |
+        |                         |        |            |     |     stay here
+        |                         |     stay here       |     |
+        |                         v                     v     v
+        |                   save what was given      save NOTHING
+        |                   (applyEvPlan + commit)         |
+        |                         |                        |
+        +-------------------------+------> main menu <-----+
+
+  No way back to End Run or Run Review from the EV screen (spec).
+  Co-op: never reaches it (co-op runs carry no EVs today; deferred).
+
+=====================================================================================
+LAYOUT  (1920 x 1080 pause-menu stage, scaled down to fit, never up, like End Run)
+=====================================================================================
+
+  dim world (same dim as End Run)
+  +---------------------------- panel 1520 x 700, centred -----------------------------+
+  |  back #181818, 1 px #212121 frame (the detail panel's look)                        |
+  |                         (O)     (O)     (O)     ( )     (O)     ( )   96 px circles|
+  |                        12/510  40/510  0/510           510/510         18 px text  |
+  |                                                                                    |
+  |  HP              3     - 12 +  - 4 +2 +  - 0 +           - 0 +                     |
+  |  Attack          0     - 0 +   - 36 +   - 0 +            - 252 +                   |
+  |  Defense         1     - 0 +   - 0 +    - 0 +            - 6 +                     |
+  |  Speed           0     ...                                                         |
+  |  Special Defense 0     ...                       64 px rows, 24 px text            |
+  |  Special Attack  2     ...                                                         |
+  |                                                                                    |
+  |                         [   Learn   ]    [  Go Home  ]   SlotButtons, 40 px apart  |
+  +------------------------------------------------------------------------------------+
+
+  Columns:  label 300 px (stat name + "left to give")  |  6 team columns x 190 px
+  Column order = team slot 1..6. A slot with no copy = empty circle, its cells blank.
+  Rows: HP, Attack, Defense, Speed, Special Defense, Special Attack (the hex's clockwise order),
+        ALL SIX ALWAYS, even a stat with 0 to give (its + buttons are simply grey).
+  Left column number = what is still left to give in that stat (bank minus this screen's adds).
+
+  Cell  "- N +N +"
+        N    white   = the copy's EVs in that stat before this screen
+        +N   yellow  = what this screen added (hidden at 0); the hex's yellow band colour
+        -    grey when this screen added nothing to that cell (old EVs cannot be lowered here;
+             lowering is the parked 5b berries)
+        +    grey when: that stat has 0 left, OR the cell is at 252, OR the copy is at 510
+  "x / 510" under each circle counts the copy's total INCLUDING this screen's adds (live).
+
+=====================================================================================
+FILES AND WHAT CHANGES
+=====================================================================================
+
+  js/ui/ev-screen.js  (NEW, G.EvScreen, built like end-run.js on the HUD overlay kit)
+     - draws the panel, circles (kit portraitSource / portraitFallback), rows, cells
+     - the giving rules move here from run-ui.js showEvs, unchanged in meaning:
+       + needs left > 0, cell < 252 (Copies EV_MAX), copy total < 510 (Copies EV_TOTAL)
+     - Learn: if anything is left, ask; on Yes (or nothing left) give through
+       G.Copies.applyEvPlan, then G.DB.commit, then home
+     - Go Home: always ask "Discard all EVs and return?" Yes / Cancel; Yes = home, no save
+     - keys: Move_Left / Move_Right move the green focus between Learn and Go Home,
+       either Enter presses, Learn focused first. Esc does nothing (End Run's rule:
+       a stray key cannot skip the EVs).
+     - show(evs, home) / hide() / isOpen() / keys()
+  js/ui/run-ui.js  showOver: "learn" opens G.EvScreen instead of showEvs.
+                   Old showEvs and its EV text helpers retired (see decision D2).
+  js/game.js       the per-frame call that runs G.EndRun.keys() while the run is over also
+                   runs G.EvScreen.keys().
+  dev.html         script tag for js/ui/ev-screen.js after end-run.js; old scr-evs section
+                   removed (D2).
+  js/main.js       'EvScreen' added to NEED (after 'EndRun').
+  js/ui/ui.js      'scr-evs' dropped from the screen list (D2).
+  css/pause-menu.css   new ev-* rules beside the er-* (End Run) rules.
+  js/core/debug.js  NEW G.Debug.evset(slot, hp, atk, def, spa, spd, spe): sets that team slot
+                   copy's current EVs (save order), so the 252 and 510 greying can be
+                   feel-tested without grinding. Dev only, like evbank.
+  js/data/changelog.js  "chg" entry: new EV screen (free edit, parse-checked).
+  docs/PAUSE-MENU.md   section 7 gets the defaults below once approved.
+
+  Save data: NO new fields. Same applyEvPlan path, so old saves are unaffected.
+
+=====================================================================================
+DEFAULTS (proceed unless Jess edits)          DECISIONS (Jess picks)
+=====================================================================================
+
+  A  new file ev-screen.js, not grown       D2  old EV screen (scr-evs, showEvs):
+     into end-run.js (it would triple it)       retire now, or keep for later co-op?
+  B  "x / 510" counts this screen's adds    D3  the two asks: the shared G.UI.ask
+     live                                       dialog (CLAUDE.md rule, End Run uses
+  C  - only takes back this screen's adds       it), or ask inside the panel like the
+  D  Learn focused first; Esc does nothing      pause menu's ball does?
+  E  Learn's ask: title "Discard leftover   D6  NEW RULE: faster giving. Today one
+     EVs?", text "N EVs you did not give        click = 1 EV (up to 252 clicks). Hold
+     will be lost.", Yes / Cancel               + or - to repeat (after 0.35 s, about
+                                                12 per second), or Shift-click = 10,
+                                                or keep one per click?
+
+=====================================================================================
+TESTS (named before approval)
+=====================================================================================
+
+  tools/smoke-pause-menu.js  (existing check; extended, NOT a new file, because its #103
+  block already ends a run by a fall with EVs seeded and stops on Learn from the Loss)
+     - the "Learn from the Loss opens the EV screen" check reads G.EvScreen.isOpen()
+     - NEW #104 block after it:
+       six circles, three empty (as built: every fighter gets a copy, slots 0, 1, 3; the team has gaps
+       at slots 2, 4, 5)
+       all six rows even with a 0 bank in a stat; left numbers match the seeded bank
+       + adds: white N unchanged, yellow +N shows, left drops, "x / 510" rises
+       + greys at 0 left, at 252 (G.Debug.evset near the cap), at 510
+       - greys with no adds
+       Esc does nothing; Left / Right move focus; no route back to End Run
+       Learn with leftovers asks; Cancel stays; Yes saves exactly the adds and goes home
+       a second run: Go Home asks; Cancel stays; Yes saves nothing and goes home
+  docs/proposals/pokebox-evs-harness.js  (existing, offline)
+     - checks 146 to 151 read run-ui.js's old showEvs; they move to ev-screen.js:
+       the + rule (bank, 252, 510), Learn asks once with leftovers, Learn gives through
+       applyEvPlan and commits, Go Home never calls applyEvPlan, the file is in dev.html
+       and NEED. New env var PE_EVSCREEN so mutants can point at an altered copy.
+     - why: the rules leave run-ui.js, so the old text checks would fail or check dead code
+  docs/proposals/pokebox-evs-mutate.js  (existing)
+     - repoint the three run-ui mutants (no leftover ask, Done does not save, + ignores 510)
+       to ev-screen.js; ADD "+ ignores 252", "+ ignores the bank", "Go Home saves".
+       Each must make the harness fail.
+  tools/check.js: no change (it already runs the harness and syntax-checks both files).
+  No intent scenarios (no move changes). No new debug set; feel test uses evbank + evset.
+
+  FEEL TEST (Jess, dev.html?dev, about a minute):
+     G.Debug.evbank(5, 3, 0, 2, 0, 4) then faint -> Learn from the Loss
+     G.Debug.evset(1, 250, 0, 0, 0, 0, 0) before fainting to see 252 grey out
+     check readability of white vs yellow, the button focus, both asks, and that the
+     Pokebox shows the EVs after Learn and none after Go Home.
+
+  RISKS
+     - smoke "Cards Taken keeps its 400 px box" already fails at 401 (since #83); unrelated.
+     - Quick cannot run node or a browser: check.js and the smoke run on Jess's machine.
+     - Closing #104 closes #82, then the merge back into feature/gym-leader-ai (Jess runs).

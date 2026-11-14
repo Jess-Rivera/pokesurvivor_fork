@@ -1,6 +1,7 @@
 /* ============ gym-leader.js: a gym leader as a Player entity (G.GymLeader) ============
  * Entity model slice 5 (docs/proposals/host-model-plan.md, Jess 2026-11-06): a leader's mon follows the rules you follow (G.PlayerEntity:
- * HP formula, hit defense, statuses, stages, walls), driven by the same G.Boss.GymBrain the old body uses. G.Boss.make builds one for a
+ * HP formula, hit defense, statuses, stages, walls), driven by the AI player (G.LeaderAI) with its cast rules in its SimPass, G.GymLeader.SimPass
+ * (below; leader AI slice 5a, #34: GymBrain is the old body's only). G.Boss.make builds one for a
  * gym with `playerEntity` in js/data/gyms.js; the other gyms stay on the wild body until slice 12. It lives in the enemy list, so your
  * aim, your moves and the HUD find it as before. One mon with all its moves in one group, as before: teams are slice 7, one active
  * slot slice 8. Slice 6: your attack formula (x the enrage, only when the gym authors
@@ -10,7 +11,9 @@
  * Slice 7 (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Slice 7 - Leader Team and Faint Swaps.txt): a switched gym
  * fields its loop lineup as one G.Team (G.GymLeader.team, below; the arena sends them out). Only the last to fall is the boss kill.
  * Slice 8 (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt): one slot per authored move
- * line and one active slot under your slot hold (the brain picks it), your melee cushion and your flinch rule.
+ * line and one active slot under your slot hold (the AI player picks it), your melee cushion and your flinch rule.
+ * Leader AI slice 1 (#22, docs/LEADER-AI.md): the AI player (G.LeaderAI, js/entities/leader-ai.js) drives it through your controller;
+ * its heading and slot choice reach the body only as its answers.
  */
 G.GymLeader = class GymLeader extends G.PlayerEntity {
   /** @param def the leader's def from G.Gym.makeDef; def.gym holds its level, hpMult, moves, cards and restrictions */
@@ -25,22 +28,18 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     this.gym = def.gym;
     this.flying = false;
     this.types = this.mon.types || [];
-    this.atkBase = this.baseAtkStat; // the brain's attack factor reads these two
-    this.spaBase = this.baseSpAStat;
     this.fade = 0; // seconds of the faint fade left; the enemy list drops a corpse at 0
     this.level = this.gym.level;
     this.hpMult = this.gym.hpMult;
-    this.brain = new G.Boss.GymBrain(this); // first (slice 6, finding C): its card store holds the Vitamins that max HP reads
+    this.becomeSimOwner(); // first (slice 6, finding C): its card store holds the Vitamins that max HP reads
     this.maxHp = this.maxHpAt(this.level);
     this.hp = this.maxHp;
     this.moves = this.slots.flat(); // every slot's moves (slice 8: one slot per authored line, bonded lines share one)
     for (const s of this.moves) s.type = G.MoveDefs[s.id].type;
     this.arm();
-    this.heading = [0, 0];
-    this.controller = Object.assign({}, G.PlayerEntity.IDLE, { axis: () => this.heading });
-    this.stuckT = 0; // edge unstick (Jess 2026-11-07): seconds of moving far less than the heading meant
-    this.sideT = 0; // seconds left of the side-step
-    this.side = 1; // which way the side-step turns the heading (+1 is the brain's circling sense)
+    this.heading = [0, 0]; // the AI player's last heading for this mon (G.LeaderAI.think), the answer its Controller carries
+    this.ai = new G.LeaderAI([this]); // its own AI player until G.GymLeader.team gives the team one (LEADER-AI "One module")
+    this.controller = this.ai.controller;
   }
 
   /** A Player entity the human fights: the hit paths and the dev log tell it from you by this. */
@@ -76,6 +75,46 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
   moveFactor(m) {
     return super.moveFactor(m) * G.Gym.enrageMul(this);
   }
+  /** The Body becomes a sim owner (#41: once the Caster's setup): one slot per authored move line (bonded lines share one), its card
+   *  store, tempo as the cooldown multiplier, the player as its only foe; your sim scheduler hands each due slot to the leader's
+   *  SimPass. The fight state it holds: the wind-up (`tell`), the self heals left this fight (by default the loop number, Jess
+   *  2026-11-05) and the first-attack wait left (`firstWait`, 0 when absent, #40). */
+  becomeSimOwner() {
+    const g = this.gym,
+      rules = g.restrictions || {};
+    this.atkLvl = g.level;
+    this.slots = G.Boss.slotsOf(g.moves); // its `active` starts at 0 (G.PlayerEntity)
+    this.teamCards = G.TeamCards.store();
+    for (const id of Object.keys(g.cards || {})) G.TeamCards.add(this.teamCards, id, g.cards[id]);
+    this.cdMul = 1 / g.tempo;
+    this.aim = 0;
+    this.tell = null;
+    this.healsLeft = rules.healLimit != null ? rules.healLimit : Math.max(1, Math.floor(g.loop) || 1);
+    this.firstWaitLeft = rules.firstWait != null ? rules.firstWait : 0;
+    this.foes = () => {
+      const p = G.Game.player;
+      return p && !p.dead ? [p] : [];
+    };
+    this.activeGroup = () => (this.slots[this.active] || []).filter((s) => G.Boss.open(this, s)); // the open moves of the active slot
+    this.castDue = (slot, def, now) => G.GymLeader.SimPass.due(this, slot, def, now); // your sim scheduler hands it each due slot
+  }
+  /** The def this mon casts: the frozen move data with its cards folded in (G.TeamCards). */
+  moveDef(id) {
+    return G.TeamCards.defOf(this, id);
+  }
+  /** Attacks are telegraphed unless the gym authors `tells: false` (the SimPass reads it). */
+  get tellsOn() {
+    return this.rule('tells') !== false;
+  }
+  /** The Body's acceptance of an attack (LEADER-AI FRAME): your cast refusal (a stun, acceptsCast), plus a flinch hold and the
+   *  authored first wait. A refusal passes nothing on. */
+  acceptsAttack() {
+    return this.acceptsCast() && !this.stFl && !(this.firstWaitLeft > 0);
+  }
+  /** True while the body is held: a live dash carries it, or a wind-up runs. The AI player reads it as you see your own wind-up. */
+  isHeld() {
+    return !!(this.mvRoot || this.tell);
+  }
   /** Equips the authored held item and run items through the same on / off code as yours (slice 6, Q4). Runs after the brain (Quick
    *  Claw multiplies its tempo cooldown) and after max HP (Leftovers and Black Sludge read it). */
   arm() {
@@ -90,96 +129,38 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     return Math.round(super.maxHpAt(level) * this.hpMult);
   }
 
-  /** One frame: the AI shakes off at the auto rate, the brain picks the heading (not while frozen or asleep, when it does not step at
-   *  all), and the Player entity rules do the rest. The enemy list passes the nearest player, and keeps updating a corpse for its fade. */
+  /** One frame, the four roles in your order (LEADER-AI "FRAME", #43 step B): the Decider (G.LeaderAI.think: its heading, slot presses,
+   *  dodge and swap answers wait in the Controller), the slot keys (yours: game.js handleKeys), then the swap point (the team's lock and
+   *  mon swap, G.GymArena.swapStep, as your handleSwap), then fieldFrame on whoever is on the field now. The enemy list passes the nearest
+   *  player, and keeps updating a corpse for its fade. */
   update(dt, pl) {
     if (this.dead) {
       this.anim.update(dt);
       this.fade -= dt;
       return;
     }
-    if (this.swapT > 0) this.swapT = Math.max(0, this.swapT - dt); // slice 8: the slot hold (yours ticks in game.js)
-    if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt); // N3: on unless the gym turns it off (an AI has no hands)
-    this.heading = G.Status.stunned(this) ? [0, 0] : this.unstick(dt, this.steer(dt, pl));
+    this.ai.think(this, dt, pl);
+    this.takeSlotInput();
+    const next = this.team ? G.GymArena.swapStep(this.team, dt) : null;
+    (next || this).fieldFrame(dt); // a swap: the incoming mon runs the rest of this frame, as yours does after swapTo
+  }
+  /** The frame from the swap point on, in your order (game.js): shake, the body (the Player entity rules under its statuses), the slot
+   *  hold, then the leader's SimPass (G.GymLeader.SimPass.frame). */
+  fieldFrame(dt) {
+    this.shakeStep(dt);
     const ox = this.x,
       oy = this.y;
     super.update(dt);
-    this.noteStuck(dt, ox, oy);
+    this.lastStep = { moved: Math.hypot(this.x - ox, this.y - oy), dt }; // state the Decider reads (its edge unstick, #41)
+    this.tickSlotLock(dt);
+    if (!this.dead) G.GymLeader.SimPass.frame(this, dt, G.Gym.now());
   }
-  /** Asks the brain where to go: the way to you (around walls, G.Path) and speed 1, so its answer is a heading for the controller. */
-  steer(dt, pl) {
-    let [dx, dy] = G.U.norm(pl.x - this.x, pl.y - this.y);
-    const pd = G.Path.dirFor(this, pl);
-    if (pd) [dx, dy] = pd;
-    const [vx, vy] = this.brain.step(dt, pl, G.U.dist(this.x, this.y, pl.x, pl.y), dx, dy, 1);
-    return [vx, vy];
+  /** Your auto shake setting, on for a leader unless its gym turns it off (N3; an AI has no hands). */
+  autoShakeOn() {
+    return this.rule('autoShake') !== false;
   }
   aimTargets() {
     return this.foes();
-  }
-
-  // Edge unstick (Jess 2026-11-07, map: docs/ASCII Concept Maps/Gym Leader - Edge Unstick.txt). The wild body's side-step
-  // (enemy.js) on the Player entity, plus a smart side. Walls already slide her (G.World.collide); this frees her on corners.
-  /** While a side-step lasts, the heading turns UNSTICK.turn rad toward this.side. */
-  unstick(dt, h) {
-    if (this.sideT <= 0) return h;
-    this.sideT -= dt;
-    if (!h[0] && !h[1]) return h;
-    const a = Math.atan2(h[1], h[0]) + this.side * GymLeader.UNSTICK.turn,
-      m = Math.hypot(h[0], h[1]);
-    return [Math.cos(a) * m, Math.sin(a) * m];
-  }
-  /** After the step: moving under UNSTICK.slip of what the heading meant, for over UNSTICK.stuck s, starts a side-step. */
-  noteStuck(dt, ox, oy) {
-    const U = GymLeader.UNSTICK,
-      [hx, hy] = this.heading;
-    if (this.dead || this.stuckFree(hx, hy)) {
-      this.stuckT = 0;
-      return;
-    }
-    const want = Math.hypot(hx, hy) * this.spd * dt,
-      got = Math.hypot(this.x - ox, this.y - oy);
-    if (want <= 0.5 || got >= want * U.slip) {
-      this.stuckT = 0;
-      return;
-    }
-    this.stuckT += dt;
-    if (this.stuckT > U.stuck && this.sideT <= 0) {
-      this.sideT = U.side;
-      this.stuckT = 0;
-      this.side = this.pickSide();
-    }
-  }
-  /** Frames that never count as stuck: no heading (attacking, stunned), or something else moves her (dash, flinch, push,
-   *  dodge, Fly), a root holds her, or ice is sliding her. */
-  stuckFree(hx, hy) {
-    if (!hx && !hy) return true;
-    if (this.mvRoot || this.stFl || this.stPush || this.dodgeT > 0 || this.flyT > 0 || this.frozen) return true;
-    if (G.Status.stunned(this) || G.Status.rooted(this)) return true;
-    return this.inLiquid && !!G.World.liquidEffect(this.mon.types).slide;
-  }
-  /** The side with more room one probe ahead; about even, the side she circles (the brain's); both shut, random. */
-  pickSide() {
-    const U = GymLeader.UNSTICK,
-      l = this.probeSide(-1),
-      r = this.probeSide(1);
-    if (Math.max(l, r) < U.shut) return Math.random() < 0.5 ? -1 : 1;
-    if (Math.abs(l - r) < U.tie) return this.brain.side < 0 ? -1 : 1;
-    return l > r ? -1 : 1;
-  }
-  /** How far a test circle of her radius gets in UNSTICK.probe px along the turned heading, sliding on walls in 8 px steps. */
-  probeSide(s) {
-    const U = GymLeader.UNSTICK,
-      [hx, hy] = this.heading,
-      a = Math.atan2(hy, hx) + s * U.turn,
-      b = { x: this.x, y: this.y, r: this.r },
-      n = Math.ceil(U.probe / 8);
-    for (let k = 0; k < n; k++) {
-      b.x += (Math.cos(a) * U.probe) / n;
-      b.y += (Math.sin(a) * U.probe) / n;
-      G.World.collide(b);
-    }
-    return Math.hypot(b.x - this.x, b.y - this.y);
   }
 
   /** The first hit that lands on the field starts the enrage clock, damage over time included; an immune hit does not, and
@@ -195,7 +176,7 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
    *  (G.MoveSim.flinch); the other slots are untouched and no extra recovery wait follows. */
   applyFlinch() {
     if (this.dead || G.Status.stunned(this)) return false;
-    this.brain.tell = null;
+    this.tell = null;
     G.MoveSim.flinch(this);
     return this.flinchRecoil();
   }
@@ -211,6 +192,7 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
   }
   /** The boss faint: the fade, the burst, its coins and item (a level is paid by the badge, not orbs), and the Snowball Badge's feed. */
   onFaint() {
+    if (this.benched) return; // a faint on the bench is silent: no burst, sound or drop (the arena pays the kill, LEADER-AI slice 2)
     this.fade = 0.9;
     const q = G.Game.player;
     if (q && q.runItems && q.runItems.includes('snowballbadge') && G.Items.snowballAdd) G.Items.snowballAdd(this.maxHp);
@@ -271,9 +253,181 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     ctx.fillRect(this.x - 45, y, 90 * Math.max(0, this.hp / this.maxHp), 3.4);
   }
 };
-/** Edge unstick numbers (Jess 2026-11-07). slip, stuck, side, turn: the wild body's (enemy.js). probe, tie, shut (px): the
- *  smart side's look-ahead, the gap that counts as even, and the room below which a side counts as shut. */
-G.GymLeader.UNSTICK = { slip: 0.35, stuck: 0.35, side: 0.7, turn: 1.25, probe: 24, tie: 4, shut: 4 };
+/** The leader's SimPass (#41, decision 2026-11-09-41-the-caster-splits-into-body-and-sim-pass; LEADER-AI "FRAME"): the end of its frame,
+ *  after the Body. It resolves and decides nothing: the state lives on the Body (G.GymLeader: tell, healsLeft, firstWaitLeft), the
+ *  choices are the Decider's (G.LeaderAI picks the slot; nothing below the slot is chosen). What differs from yours is authored
+ *  (COMBAT-RULES "Host model"): an attack is telegraphed under the `tells` restriction (a wind-up with the aim locked at its start,
+ *  then a recovery, one at a time, standing still) that starts when your cast gate would let the move fire (#47a, decision
+ *  2026-11-09-42-leader-attacks-wait-on-your-cast-gate), and self heals are capped per fight (`healLimit`, else the loop number). Pure
+ *  buffs and self heals cast with no tell. The tuning is G.Boss.TUNE, shared with the wild bodies of gyms 3 to 8 until they switch. */
+G.GymLeader.SimPass = {
+  /** One pass: the first wait runs; a stun cancels an unfired wind-up; then your own sim pass runs for it (G.MoveSim.turn: commitments,
+   *  heal over time, every move recharging, inactive slots too, the persistent upkeep), handing each due slot to `due`. A live dash
+   *  (Quick Attack) carries the body; else a wind-up already running advances (its release fires here). One started by `due` this
+   *  frame first advances next frame. */
+  frame(e, dt, now) {
+    if (e.firstWaitLeft > 0) e.firstWaitLeft -= dt;
+    if (e.tell && !e.tell.fired && G.Status.stunned(e)) this.cancel(e);
+    const running = e.tell;
+    G.MoveSim.turn(dt, e, now);
+    if (e.mvRoot) return;
+    if (running && e.tell === running) this.telling(e, dt, now);
+  },
+  /** A due slot of the active group, handed over by your sim scheduler (G.MoveSim.turn: a cooldown run out, a pure buff's Gate open).
+   *  A pure buff casts now, with no tell, even during a wind-up; a self heal casts now while a heal is left (full HP too, as yours); an
+   *  attack starts its wind-up when no wind-up runs, no dash carries the body, the Body accepts it (LEADER-AI FRAME: awake, no flinch
+   *  hold, the first wait over) and your cast gate would let it fire (G.MoveSim.gateOpen: the same targeting, cost and dash rules as
+   *  yours, #47a). Refused by the Body or the gate, it waits your 0.05 s retry, as yours; while a wind-up or dash runs, it is handed
+   *  over again next frame (one at a time, the authored tell). */
+  due(e, s, d, now) {
+    const form = G.Gyms.formOf(d);
+    if (form === 'buff') return this.buff(e, s, d, now);
+    if (form === 'heal') return this.heal(e, s, d, now);
+    if (G.Boss.TUNE.ORDER.indexOf(form) < 0 || e.tell || e.mvRoot) return;
+    const pl = e.foes()[0];
+    if (!pl || !e.acceptsAttack() || !G.MoveSim.gateOpen(e, d)) {
+      s.t = G.MoveSim.RETRY;
+      return;
+    }
+    const prev = s.last;
+    s.last = now;
+    this.start(e, s, d, form, pl);
+    e.tell.prevLast = prev; // a stun mid wind-up gives it back (cancel)
+  },
+  /** A stun mid wind-up (Jess 2026-11-09, option A): the wind-up is dropped, the move and its bonded members keep their cooldown (still
+   *  ready) and get back the freshness mark they had before it started, so a cancelled attack does not count as cast. Its warning
+   *  visuals fade on their own, as after a flinch. */
+  cancel(e) {
+    const c = e.tell;
+    c.slot.last = c.prevLast;
+    for (const b of c.bond || []) b.s.last = b.prev;
+    e.tell = null;
+  },
+  /** The other attack moves of the active slot that are ready now (a bonded slot holds 2 to 4), marked as cast now: a bonded group
+   *  fires together, as yours. */
+  bondOf(e, slot) {
+    const now = G.Gym.now(),
+      out = [];
+    for (const s of e.activeGroup()) {
+      const form = G.Gyms.formOf(e.moveDef(s.id));
+      if (s === slot || s.t > 0 || G.Boss.TUNE.ORDER.indexOf(form) < 0) continue;
+      out.push({ s, form, prev: s.last });
+      s.last = now;
+    }
+    return out;
+  },
+  /** The tell: the aim is locked now; the move fires along it when the tell ends, whether or not you are still there. A strike locks
+   *  your spot instead and marks it on the ground; a nova's ring shows its full reach. A dash locks your spot too and shows the wild
+   *  charger's warning line to it (capped at its range) plus its hit circle there (Jess 2026-11-02). */
+  start(e, slot, d, form, pl) {
+    const T = G.Boss.TUNE,
+      tempo = e.gym.tempo,
+      ang = Math.atan2(pl.y - e.y, pl.x - e.x),
+      col = G.U.TYPE_COLOR[d.type] || '#ff7a9e';
+    // the other ready attacks of a bonded slot fire with this one
+    const bond = this.bondOf(e, slot),
+      // a gym with tells off fires on the next frame, with no warning shown; a bonded tell lasts its longest member's
+      wind = e.tellsOn ? bond.reduce((w, b) => Math.max(w, T.TELL[b.form]), T.TELL[form]) / tempo : 0,
+      spot = form === 'strike' || form === 'dash' || form === 'delayed' ? { x: pl.x, y: pl.y } : null;
+    e.tell = { slot, id: d.id, form, t: 0, wind, after: T.RECOVER / tempo, ang, spot, fired: false };
+    if (bond.length) Object.assign(e.tell, { bond, lock: { x: pl.x, y: pl.y } });
+    e.aim = ang;
+    if (!e.tellsOn) return;
+    e.anim.play('Charge', { speed: 1.4 });
+    if (form === 'dash') {
+      const len = Math.min(Math.hypot(spot.x - e.x, spot.y - e.y), G.Gyms.reachOf(d, form)),
+        end = { x: e.x + Math.cos(ang) * len, y: e.y + Math.sin(ang) * len },
+        w = {
+          kind: 'beam',
+          warn: true,
+          src: e,
+          x: e.x,
+          y: e.y,
+          angle: ang,
+          len,
+          w: d.space.radRadius * 2,
+          delay: wind,
+          dmg: 0,
+          type: d.type,
+          color: col,
+        };
+      G.Hazards.add(w);
+      G.Hazards.add(Object.assign({}, w, { kind: 'zone', x: end.x, y: end.y, r: d.space.radRadius }));
+    } else if (form === 'beam')
+      // the warning line along the locked aim, the beam's full length and width (Jess 2026-11-02)
+      G.Hazards.add({
+        kind: 'beam',
+        warn: true,
+        src: e,
+        x: e.x,
+        y: e.y,
+        angle: ang,
+        len: d.space.linLength,
+        w: d.space.linWidth,
+        delay: wind,
+        dmg: 0,
+        type: d.type,
+        color: col,
+      });
+    else if (form === 'delayed')
+      return; // the marker is the move's own instance, drawn through its delay (move-render.js)
+    else if (spot) G.FX.ring(spot.x, spot.y, d.space.radRadius * 3, d.space.radRadius, col, wind, 2);
+    else G.FX.ring(e.x, e.y, e.r, form === 'nova' ? G.Gyms.reachOf(d, form) : e.r * 2.4, col, wind, 2);
+  },
+  telling(e, dt, now) {
+    const c = e.tell;
+    c.t += dt;
+    if (!c.fired && c.t >= c.wind) {
+      c.fired = true;
+      e.aim = c.ang;
+      if (G.MoveSim.castAt(e, c.slot, e.moveDef(c.id), now, c.ang, c.spot)) {
+        G.Gym.noteCast(c.id);
+        this.orbCost(e, e.moveDef(c.id));
+        e.anim.play(G.Boss.TUNE.CLOSE.includes(c.form) || c.form === 'dash' ? 'Attack' : 'Shoot', { speed: 1.4 });
+      }
+      if (c.bond) for (const b of c.bond) this.fireBond(e, b, c, now);
+    }
+    if (c.t >= c.wind + c.after) e.tell = null;
+  },
+  /** A bonded member's cast on the tell's release: the same aim; a spot form takes your spot locked at the tell's start. */
+  fireBond(e, b, c, now) {
+    const d = e.moveDef(b.s.id);
+    if (!G.MoveSim.castAt(e, b.s, d, now, c.ang, G.Boss.TUNE.SPOT.includes(b.form) ? c.lock : null)) return;
+    G.Gym.noteCast(b.s.id);
+    this.orbCost(e, d);
+  },
+
+  /** A pure buff (SS8) from the active slot, so the slot choice visits it. A fizzle waits one Gate (the sim). Your buff look: a ring
+   *  and rising sprites. */
+  buff(e, s, d, now) {
+    if (!G.MoveSim.castAt(e, s, d, now, e.aim)) return;
+    G.Gym.noteCast(s.id);
+    this.orbCost(e, d);
+    const col = G.U.TYPE_COLOR[d.type] || '#ff7a9e',
+      vis = G.VFX.forMove(d);
+    G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, col, 0.35, 2.5);
+    for (let i = 0; i < 3; i++)
+      G.FX.sp(vis.buff || 'arrow', vis.pal, e.x + G.U.rand(-e.r * 1.4, e.r * 1.4), e.y - G.U.rand(0, e.bodyH * 0.8), {
+        vy: -70,
+        life: 0.6,
+      });
+  },
+  /** A self heal (Recover, Synthesis, Moonlight; Jess 2026-11-02, mainline strength) whenever due, as yours (#41: whether to heal
+   *  is the Decider's choice, by the slot it presses), at most healsLeft times this fight. A drain move (Giga Drain) is not a self heal. */
+  heal(e, s, d, now) {
+    if (e.healsLeft <= 0) return;
+    if (!G.MoveSim.castAt(e, s, d, now, e.aim)) return;
+    e.healsLeft--;
+    G.Gym.noteCast(s.id);
+    this.orbCost(e, d);
+    G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, '#5fe08a', 0.35, 2.5);
+  },
+  /** Life Orb (slice 6, N6): each cast costs 1% of max HP (at least 1), never below 1 HP, the rule Player.cast applies to you. An
+   *  always-on move (a persistent def) is not an attack. */
+  orbCost(e, d) {
+    if (e.hasItem('lifeorb') && !(d && d.persistent)) e.hp = Math.max(1, e.hp - Math.max(1, e.maxHp * 0.01));
+  },
+};
 
 /** Slice 7: the members (G.GymLeader, slot order) as one G.Team, the module your team uses, so the same stores are shared: team
  *  stages, team cards, run items, dodges, berries, links. Team.link hands every member fresh shared stores, so the gym's cards
@@ -283,6 +437,7 @@ G.GymLeader.team = function (members) {
     cards = members[0].gym.cards || {};
   members.forEach((m, i) => (m.teamSlot = i));
   const t = G.Team.create(members, null);
+  t.ai = new G.LeaderAI(members, t); // one AI player for the team (LEADER-AI): every member presses through its one controller
   for (const id of Object.keys(cards)) G.TeamCards.add(t.cards, id, cards[id]);
   t.runItems.push(...ids);
   for (const m of members) {

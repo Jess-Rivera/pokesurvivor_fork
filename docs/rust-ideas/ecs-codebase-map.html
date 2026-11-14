@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PokeSurvivor in ECS terms</title>
+<style>
+:root{
+  --bg:#faf9fc; --card:#ffffff; --soft:#f3f4f6; --text:#1a1a1a; --text2:#5e5e5e; --muted:#9ca3af;
+  --border:rgba(0,0,0,.12); --borderl:rgba(0,0,0,.06);
+  --ent:#7c3aed; --entbg:#f3e8ff;
+  --comp:#2563eb; --compbg:#dbeafe;
+  --res:#0f766e; --resbg:#ccfbf1;
+  --sys:#b45309; --sysbg:#fef3c7;
+  --evt:#be185d; --evtbg:#fce7f3;
+  --pres:#4b5563; --presbg:#e5e7eb;
+  --warn:#92400e; --warnbg:#fef3c7; --good:#166534; --goodbg:#dcfce7;
+  --sans:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; --mono:Consolas,'SF Mono',monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#16151a; --card:#1f1e24; --soft:#2a2930; --text:#ececf1; --text2:#b4b4bd; --muted:#7c7c87;
+    --border:rgba(255,255,255,.14); --borderl:rgba(255,255,255,.07);
+    --entbg:#3b2463; --compbg:#1e3a66; --resbg:#123f3a; --sysbg:#4a3410; --evtbg:#4f1a35; --presbg:#33343a;
+    --ent:#c4a5ff; --comp:#93c5fd; --res:#5eead4; --sys:#fcd34d; --evt:#f9a8d4; --pres:#d1d5db;
+    --warn:#fcd34d; --warnbg:#3d2f10; --good:#86efac; --goodbg:#163a22;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;padding:28px;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5}
+h1{font-size:24px;margin:0 0 4px}
+h2{font-size:17px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+h3{font-size:14px;margin:0 0 8px}
+.sub{color:var(--text2);margin:0 0 6px}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;background:var(--warnbg);color:var(--warn);margin-right:6px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+.chip{display:inline-block;font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:6px;margin:2px 3px 2px 0;border:1px solid transparent;cursor:default;transition:all .12s ease}
+.k-ent{background:var(--entbg);color:var(--ent)}
+.k-comp{background:var(--compbg);color:var(--comp)}
+.k-res{background:var(--resbg);color:var(--res)}
+.k-sys{background:var(--sysbg);color:var(--sys)}
+.k-evt{background:var(--evtbg);color:var(--evt)}
+.k-pres{background:var(--presbg);color:var(--pres)}
+.chip.hl{border-color:currentColor;transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.chip.dim{opacity:.28}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--borderl);border-radius:10px;padding:14px 16px}
+.from{font-family:var(--mono);font-size:12px;color:var(--muted);margin:-4px 0 8px}
+.note{font-size:12px;color:var(--text2);margin-top:8px}
+.hint{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border-radius:10px;overflow:hidden}
+th{text-align:left;color:var(--muted);font-weight:600;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px}
+td{padding:7px 12px;border-bottom:1px solid var(--borderl);vertical-align:top}
+td.f{font-family:var(--mono);font-size:12px;color:var(--text2);white-space:nowrap}
+.pipe{display:flex;flex-direction:column;gap:0}
+.stage{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:start;background:var(--card);border:1px solid var(--borderl);border-radius:10px;padding:10px 14px}
+.stage .name{font-weight:600;font-size:13px}
+.stage .num{font-family:var(--mono);color:var(--muted);font-size:11px}
+.arrow{text-align:center;color:var(--muted);font-size:14px;line-height:18px;height:18px}
+.split{display:grid;grid-template-columns:1fr 70px 1fr;gap:10px;align-items:stretch}
+.bridge{display:flex;flex-direction:column;justify-content:center;align-items:center;color:var(--muted);font-size:12px;text-align:center}
+.bridge .bar{font-family:var(--mono);font-size:20px;color:var(--evt)}
+.fit{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.good h3{color:var(--good)} .bad h3{color:var(--warn)}
+ul{margin:0;padding-left:18px} li{margin:3px 0}
+code{font-family:var(--mono);font-size:12px;background:var(--soft);padding:1px 5px;border-radius:4px}
+@media (max-width:820px){.split,.fit{grid-template-columns:1fr}.bridge{flex-direction:row;gap:8px}}
+</style>
+</head>
+<body>
+
+<h1>PokeSurvivor in ECS terms</h1>
+<p class="sub"><span class="tag">[Proposed]</span>Idea doc, not a plan. Today's JS modules re-read as Entities, Components, Resources, Systems and Events, for a possible Rust (Shipyard) sim with Godot drawing. Written 2026-11-14 from the code on feature/gym-leader-ai.</p>
+<p class="hint">Hover any chip to highlight everywhere it appears.</p>
+<div class="legend">
+  <span class="chip k-ent">Entity archetype</span>
+  <span class="chip k-comp">Component (per-entity data)</span>
+  <span class="chip k-res">Resource (one per world)</span>
+  <span class="chip k-sys">System (runs each tick)</span>
+  <span class="chip k-evt">Event (sim to presentation)</span>
+  <span class="chip k-pres">Presentation (Godot side)</span>
+</div>
+
+<!-- ============ 1. ARCHETYPES ============ -->
+<h2>1. Entities: today's classes as component bundles</h2>
+<div class="grid">
+
+  <div class="card">
+    <h3><span class="chip k-ent">WildMon</span></h3>
+    <div class="from">enemy.js Enemy / G.WildEntity, ~109 fields</div>
+    <span class="chip k-comp" data-c="Transform">Transform</span><span class="chip k-comp" data-c="Velocity">Velocity</span><span class="chip k-comp" data-c="Body">Body</span><span class="chip k-comp" data-c="Species">Species</span><span class="chip k-comp" data-c="Health">Health</span><span class="chip k-comp" data-c="BaseStats">BaseStats</span><span class="chip k-comp" data-c="Status">Status</span><span class="chip k-comp" data-c="StatStages">StatStages</span><span class="chip k-comp" data-c="Faction">Faction</span><span class="chip k-comp" data-c="WildBrain">WildBrain</span><span class="chip k-comp" data-c="Morale">Morale</span><span class="chip k-comp" data-c="Knockback">Knockback</span><span class="chip k-comp" data-c="AttackTimers">AttackTimers</span><span class="chip k-comp" data-c="TerrainFlags">TerrainFlags</span><span class="chip k-comp" data-c="XpDrop">XpDrop</span>
+    <div class="note">behavior, cls, seekTarget, zig, panic, fear go to WildBrain. pain, noMorale go to Morale. touchCd, shotCd, skillCd, secCd go to AttackTimers. flying, ignoresLiquid, immovable go to TerrainFlags.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="chip k-ent">EliteMon</span></h3>
+    <div class="from">elite.js G.Elite, wild + 10 fields</div>
+    <span class="chip k-comp" data-c="WildMonBundle">all of WildMon</span><span class="chip k-comp" data-c="EliteMods">EliteMods</span>
+    <div class="note">Already "a wild entity with mods on top", so in ECS it is literally the WildMon bundle plus one extra component. Clean fit.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="chip k-ent">PlayerMon</span></h3>
+    <div class="from">player.js + player-sim-pass.js, ~105 fields</div>
+    <span class="chip k-comp" data-c="Transform">Transform</span><span class="chip k-comp" data-c="Velocity">Velocity</span><span class="chip k-comp" data-c="Body">Body</span><span class="chip k-comp" data-c="Species">Species</span><span class="chip k-comp" data-c="Health">Health</span><span class="chip k-comp" data-c="BaseStats">BaseStats</span><span class="chip k-comp" data-c="Status">Status</span><span class="chip k-comp" data-c="StatStages">StatStages</span><span class="chip k-comp" data-c="Faction">Faction</span><span class="chip k-comp" data-c="Controller">Controller(Input)</span><span class="chip k-comp" data-c="Moveset">Moveset</span><span class="chip k-comp" data-c="Dodge">Dodge</span><span class="chip k-comp" data-c="TeamMember">TeamMember</span><span class="chip k-comp" data-c="Leveling">Leveling</span><span class="chip k-comp" data-c="ItemMods">ItemMods</span><span class="chip k-comp" data-c="Magnet">Magnet</span>
+    <div class="note">moves, active, slots go to Moveset. dodgeT, dodgeVx/Vy go to Dodge. brassKnuckles, sharpScissors, bellHeal, sashT go to ItemMods. Benched mons are the same entity with a <code>Benched</code> tag and no Transform.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="chip k-ent">LeaderMon</span></h3>
+    <div class="from">gym-leader.js + leader-ai.js + leader-belief/memory/planner/info.js</div>
+    <span class="chip k-comp" data-c="Transform">Transform</span><span class="chip k-comp" data-c="Velocity">Velocity</span><span class="chip k-comp" data-c="Body">Body</span><span class="chip k-comp" data-c="Species">Species</span><span class="chip k-comp" data-c="Health">Health</span><span class="chip k-comp" data-c="BaseStats">BaseStats</span><span class="chip k-comp" data-c="Status">Status</span><span class="chip k-comp" data-c="StatStages">StatStages</span><span class="chip k-comp" data-c="Faction">Faction</span><span class="chip k-comp" data-c="Controller">Controller(AI)</span><span class="chip k-comp" data-c="Moveset">Moveset</span><span class="chip k-comp" data-c="Dodge">Dodge</span><span class="chip k-comp" data-c="TeamMember">TeamMember</span><span class="chip k-comp" data-c="LeaderBrain">LeaderBrain</span><span class="chip k-comp" data-c="BossTag">BossTag</span>
+    <div class="note">The best fit in the codebase: a leader already "follows the rules you follow" through the same body. ECS swaps Controller(Input) for Controller(AI) and adds a brain. Nothing else differs.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="chip k-ent">MoveInstance</span></h3>
+    <div class="from">move-sim.js inst object</div>
+    <span class="chip k-comp" data-c="Transform">Transform</span><span class="chip k-comp" data-c="PrevPosition">PrevPosition</span><span class="chip k-comp" data-c="MoveSpecRef">MoveSpecRef</span><span class="chip k-comp" data-c="Motion">Motion</span><span class="chip k-comp" data-c="Lifetime">Lifetime</span><span class="chip k-comp" data-c="Pierce">Pierce</span><span class="chip k-comp" data-c="HitLedger">HitLedger</span><span class="chip k-comp" data-c="Owner">Owner</span>
+    <div class="note">heading, steer, track, leg go to Motion. age, dist, wait go to Lifetime. <code>hits: new Map()</code> becomes HitLedger. The spec is a reference into the move table, not copied.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="chip k-ent">EnemyShot</span></h3>
+    <div class="from">projectile.js (enemy shots only since 7b-2a)</div>
+    <span class="chip k-comp" data-c="Transform">Transform</span><span class="chip k-comp" data-c="Velocity">Velocity</span><span class="chip k-comp" data-c="Lifetime">Lifetime</span><span class="chip k-comp" data-c="Damage">Damage</span><span class="chip k-comp" data-c="Owner">Owner</span><span class="chip k-comp" data-c="Faction">Faction</span>
+  </div>
+
+  <div class="card">
+    <h3><span class="chip k-ent">Pickup</span></h3>
+    <div class="from">pickup.js (XP orbs, items, merge past MAX)</div>
+    <span class="chip k-comp" data-c="Transform">Transform</span><span class="chip k-comp" data-c="PickupKind">PickupKind</span><span class="chip k-comp" data-c="Magnetized">Magnetized</span>
+    <div class="note">Magnetized is a tag added when a player enters the radius, so idle orbs cost nothing.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="chip k-ent">Hazard</span></h3>
+    <div class="from">hazards.js (warned zone attacks)</div>
+    <span class="chip k-comp" data-c="Transform">Transform</span><span class="chip k-comp" data-c="HazardZone">HazardZone</span><span class="chip k-comp" data-c="Lifetime">Lifetime</span><span class="chip k-comp" data-c="Owner">Owner</span>
+  </div>
+
+  <div class="card">
+    <h3><span class="chip k-ent">MapObject</span></h3>
+    <div class="from">interact.js, shops.js, gym-arena.js gate</div>
+    <span class="chip k-comp" data-c="Transform">Transform</span><span class="chip k-comp" data-c="Interactable">Interactable</span>
+    <div class="note">Altars, springs, locked chests, traps, Move Shop buildings and the gym gate differ only by Interactable kind.</div>
+  </div>
+</div>
+
+<!-- ============ 2. RESOURCES ============ -->
+<h2>2. Resources: one per world, not per entity</h2>
+<table>
+<tr><th>Resource</th><th>Today</th><th>Holds</th></tr>
+<tr><td><span class="chip k-res" data-c="SimClock">SimClock</span></td><td class="f">game.js loop / frame</td><td>Fixed dt, speedK, run time. Replaces rAF + performance.now inside the sim.</td></tr>
+<tr><td><span class="chip k-res" data-c="Rng">Rng</span></td><td class="f">~68 Math.random calls</td><td>One seeded stream. Makes runs and bugs reproducible.</td></tr>
+<tr><td><span class="chip k-res" data-c="SpatialGrid">SpatialGrid</span></td><td class="f">enemy.js rebuildGrid / queryCircle</td><td>Same uniform grid; buckets reused (FG1/FG2 for free).</td></tr>
+<tr><td><span class="chip k-res" data-c="Terrain">Terrain</span></td><td class="f">world.js, tiles.js</td><td>Collision cells, liquid, lava, biome, props layout.</td></tr>
+<tr><td><span class="chip k-res" data-c="DistanceField">DistanceField</span></td><td class="f">pathing.js</td><td>BFS field per player for going around rocks and lakes.</td></tr>
+<tr><td><span class="chip k-res" data-c="TeamStore">TeamStore</span></td><td class="f">team.js, team-cards.js</td><td>Swap lock, team stages, the one team card store.</td></tr>
+<tr><td><span class="chip k-res" data-c="RunEconomy">RunEconomy</span></td><td class="f">silver.js, player coins</td><td>Silver and coins for the run.</td></tr>
+<tr><td><span class="chip k-res" data-c="Director">Director</span></td><td class="f">spawner.js, events.js, weather.js</td><td>Wave and tide timers, mid-run event timer, current weather.</td></tr>
+<tr><td><span class="chip k-res" data-c="GymSchedule">GymSchedule</span></td><td class="f">gym.js, gym-arena.js</td><td>Gate timing, escalation, badge package, arena state.</td></tr>
+<tr><td><span class="chip k-res" data-c="RunRecord">RunRecord</span></td><td class="f">run-stats.js, dps-history.js, log.js</td><td>Counters, per-second damage buckets, dev log (already typed arrays).</td></tr>
+<tr><td><span class="chip k-res" data-c="GameData">GameData</span></td><td class="f">js/data/*.js</td><td>Read-only tables: pokedex, moves, learnsets, enemy classes, gyms, items, type chart, plus a new collision-radius table.</td></tr>
+</table>
+
+<!-- ============ 3. SYSTEM SCHEDULE ============ -->
+<h2>3. Systems: one fixed tick, in order</h2>
+<p class="hint">Order follows today's game.js update(). Where EnemyMgr.update sits in that frame needs confirming; it is shown where ECS would put it.</p>
+<div class="pipe">
+  <div class="stage"><div><div class="num">01</div><div class="name">Think</div></div><div><span class="chip k-sys" data-c="ReadInput">ReadInput</span><span class="chip k-sys" data-c="LeaderThink">LeaderThink</span><span class="chip k-sys" data-c="WildThink">WildThink</span><div class="hint">input.js to Controller(Input). leader-ai + belief/memory/planner write Controller(AI). Wild AI half of Enemy.update.</div></div></div>
+  <div class="arrow">↓</div>
+  <div class="stage"><div><div class="num">02</div><div class="name">World</div></div><div><span class="chip k-sys" data-c="BiomeUpdate">BiomeUpdate</span><span class="chip k-sys" data-c="PathField">PathField</span><span class="chip k-sys" data-c="Spawn">Spawn</span><div class="hint">World.update, Path.update, Spawner.update.</div></div></div>
+  <div class="arrow">↓</div>
+  <div class="stage"><div><div class="num">03</div><div class="name">Move</div></div><div><span class="chip k-sys" data-c="ApplyController">ApplyController</span><span class="chip k-sys" data-c="Integrate">Integrate</span><span class="chip k-sys" data-c="Separate">Separate</span><span class="chip k-sys" data-c="TerrainCollide">TerrainCollide</span><div class="hint">player-sim-pass.js, movement half of Enemy.update, separate(), world collisions.</div></div></div>
+  <div class="arrow">↓</div>
+  <div class="stage"><div><div class="num">04</div><div class="name">Index</div></div><div><span class="chip k-sys" data-c="RebuildGrid">RebuildGrid</span><div class="hint">EnemyMgr.rebuildGrid into the SpatialGrid resource.</div></div></div>
+  <div class="arrow">↓</div>
+  <div class="stage"><div><div class="num">05</div><div class="name">Attack</div></div><div><span class="chip k-sys" data-c="CastMoves">CastMoves</span><span class="chip k-sys" data-c="MoveMotion">MoveMotion</span><span class="chip k-sys" data-c="MoveHits">MoveHits</span><span class="chip k-sys" data-c="EnemyShots">EnemyShots</span><span class="chip k-sys" data-c="ContactDamage">ContactDamage</span><div class="hint">MoveRoute.tick into move-sim.js (geometry from move-geom.js), Projectiles.update, Combat.resolve. These only WRITE DamageEvents, they do not touch HP.</div></div></div>
+  <div class="arrow">↓</div>
+  <div class="stage"><div><div class="num">06</div><div class="name">Resolve</div></div><div><span class="chip k-sys" data-c="ApplyDamage">ApplyDamage</span><span class="chip k-sys" data-c="ApplyRiders">ApplyRiders</span><span class="chip k-sys" data-c="StatusTick">StatusTick</span><div class="hint">move-effects.js through G.Stats; riders into status.js and stages.js; DoT and durations. The hurt() sim half lives here.</div></div></div>
+  <div class="arrow">↓</div>
+  <div class="stage"><div><div class="num">07</div><div class="name">Lifecycle</div></div><div><span class="chip k-sys" data-c="Deaths">Deaths</span><span class="chip k-sys" data-c="Faint">Faint</span><span class="chip k-sys" data-c="Expire">Expire</span><span class="chip k-sys" data-c="PickupCollect">PickupCollect</span><div class="hint">die() sim half (loot, XP drop), team faint and swap rules, Lifetime expiry, Pickups.update magnet and merge.</div></div></div>
+  <div class="arrow">↓</div>
+  <div class="stage"><div><div class="num">08</div><div class="name">Run director</div></div><div><span class="chip k-sys" data-c="Hazards">Hazards</span><span class="chip k-sys" data-c="Interact">Interact</span><span class="chip k-sys" data-c="GymFlow">GymFlow</span><span class="chip k-sys" data-c="Shops">Shops</span><span class="chip k-sys" data-c="MidRunEvents">MidRunEvents</span><span class="chip k-sys" data-c="Weather">Weather</span><span class="chip k-sys" data-c="LevelUpDraft">LevelUpDraft</span><div class="hint">Hazards, Interact, GymArena + Gym, Shops, Events, Weather updates; levelup.js card draw when XP crosses xpNext.</div></div></div>
+  <div class="arrow">↓</div>
+  <div class="stage"><div><div class="num">09</div><div class="name">Record</div></div><div><span class="chip k-sys" data-c="RunStats">RunStats</span><span class="chip k-sys" data-c="Snapshot">Snapshot</span><div class="hint">DpsHistory.advance, run-stats, dev log. Snapshot is new: Serde state for replays, dev interface and the future server.</div></div></div>
+</div>
+
+<!-- ============ 4. BOUNDARY ============ -->
+<h2>4. The boundary: what crosses from Rust to Godot</h2>
+<div class="split">
+  <div class="card">
+    <h3>Rust sim (headless)</h3>
+    Sections 1 to 3 above, plus <span class="chip k-res" data-c="GameData">GameData</span>.
+    <div class="note">Already sim-only today: move-sim.js, move-geom.js, status.js, stages.js, stats.js, gym.js, gacha.js logic, log.js.</div>
+  </div>
+  <div class="bridge"><div class="bar">⇄</div>gdext<br>events + bulk transforms</div>
+  <div class="card">
+    <h3>Godot (presentation)</h3>
+    <span class="chip k-pres">fx.js</span><span class="chip k-pres">vfx.js</span><span class="chip k-pres">move-render.js</span><span class="chip k-pres">audio.js</span><span class="chip k-pres">sprites.js Animator</span><span class="chip k-pres">camera.js</span><span class="chip k-pres">hud.js, hud-overlay.js</span><span class="chip k-pres">37 ui/ files</span><span class="chip k-pres">input.js, touch.js devices</span><span class="chip k-pres">world draw</span><span class="chip k-pres">gym-present.js</span><span class="chip k-pres">i18n</span>
+  </div>
+</div>
+<p style="margin-top:12px"><b>Events</b> (today's SimBus, carried over):
+<span class="chip k-evt" data-c="ev">gym:escalate</span><span class="chip k-evt" data-c="ev">gym:calm</span><span class="chip k-evt" data-c="ev">gym:badge</span>
+and the ones still inline today:
+<span class="chip k-evt" data-c="ev2">hit</span><span class="chip k-evt" data-c="ev2">die</span><span class="chip k-evt" data-c="ev2">cast</span><span class="chip k-evt" data-c="ev2">gym:tell</span><span class="chip k-evt" data-c="ev2">status:applied</span><span class="chip k-evt" data-c="ev2">pickup</span><span class="chip k-evt" data-c="ev2">levelup:offer</span><span class="chip k-evt" data-c="ev2">swap</span></p>
+<p class="hint">Plus a per-tick bulk buffer of (id, x, y, facing, anim state) for every visible entity, so Godot draws in batches instead of one call per node.</p>
+<p style="margin-top:12px"><b>Outside the sim entirely</b> (shell and meta, stays app code):
+<span class="chip k-pres">db.js save</span><span class="chip k-pres">copies.js box</span><span class="chip k-pres">progress.js achievements</span><span class="chip k-pres">settings.js</span><span class="chip k-pres">updater.js (gone on desktop)</span><span class="chip k-pres">debug.js (becomes the dev interface)</span><span class="chip k-pres">js/net (deferred)</span></p>
+
+<!-- ============ 5. FIT ============ -->
+<h2>5. How well it fits</h2>
+<div class="fit">
+  <div class="card good">
+    <h3>Already ECS-shaped</h3>
+    <ul>
+      <li>Player and leaders share one body with swappable control: a direct Controller component.</li>
+      <li>status.js is "one engine for every host": already a component plus a system.</li>
+      <li>move-sim.js bans canvas, clock and Math.random; move-geom.js is pure math.</li>
+      <li>Elite = wild + mods: one extra component.</li>
+      <li>SimBus already is the event channel; gym.js already uses it.</li>
+      <li>G.Stats is the single formula home: becomes one pure Rust module.</li>
+      <li>log.js already uses preallocated typed arrays.</li>
+    </ul>
+  </div>
+  <div class="card bad">
+    <h3>Needs real design work</h3>
+    <ul>
+      <li>Enemy's ~109 fields must be split by hand into ~15 components; a lazy port gives one giant component.</li>
+      <li>hurt() and die() mix sim and presentation; the split is the Resolve and Lifecycle stages above.</li>
+      <li>A hit changes attacker and defender at once: Rust forces the DamageEvent queue (Attack writes, Resolve applies).</li>
+      <li>LeaderBrain (belief, memory, planner) is big per-fight state; keep it one component, not many.</li>
+      <li>Collision radius comes from sprite metadata; needs a data table first.</li>
+      <li>~134 G.Coop branches in sim code disappear; replication reads components instead.</li>
+      <li>Boss brain tells (boss-ai.js) still call FX and the animator directly.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>6. Seams worth adding in JS now (useful whatever is decided)</h2>
+<table>
+<tr><th>Seam</th><th>Becomes</th></tr>
+<tr><td>Seeded RNG instead of Math.random in sim code</td><td><span class="chip k-res" data-c="Rng">Rng</span></td></tr>
+<tr><td>Injected fixed-step clock in game.js</td><td><span class="chip k-res" data-c="SimClock">SimClock</span></td></tr>
+<tr><td>hurt() / die() emit on SimBus</td><td><span class="chip k-sys" data-c="ApplyDamage">ApplyDamage</span> + <span class="chip k-evt" data-c="ev2">hit</span> <span class="chip k-evt" data-c="ev2">die</span></td></tr>
+<tr><td>Collision radius in a data file</td><td><span class="chip k-comp" data-c="Body">Body</span> from <span class="chip k-res" data-c="GameData">GameData</span></td></tr>
+<tr><td>Split Enemy.update into think, move, animate</td><td><span class="chip k-sys" data-c="WildThink">WildThink</span> <span class="chip k-sys" data-c="Integrate">Integrate</span> + Godot animator</td></tr>
+</table>
+
+<script>
+(function(){
+  var chips=[].slice.call(document.querySelectorAll('.chip[data-c]'));
+  chips.forEach(function(c){
+    c.addEventListener('mouseenter',function(){
+      var key=c.getAttribute('data-c');
+      chips.forEach(function(o){
+        if(o.getAttribute('data-c')===key){o.classList.add('hl');o.classList.remove('dim');}
+        else{o.classList.add('dim');}
+      });
+    });
+    c.addEventListener('mouseleave',function(){
+      chips.forEach(function(o){o.classList.remove('hl','dim');});
+    });
+  });
+})();
+</script>
+</body>
+</html>

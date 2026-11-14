@@ -123,7 +123,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: Misty loop 2.
 
 **8. Leader AI, slot choice (M).**
-- Detail approved 2026-11-07 (Jess), Q1 to Q10 as recommended; BUILT 2026-11-07 (Quick), awaiting Jess's checks and the DPS report. Map and AS BUILT: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt. Also closed the leader melee cushion (now yours) and the leader flinch rule (yours, replacing D5).
+- Detail approved 2026-11-07 (Jess), Q1 to Q10 as recommended; BUILT 2026-11-07 (Quick), awaiting Jess's checks and the DPS report (Q10 closed as superseded 2026-11-09, decision 2026-11-09-slice-8-dps-report-q10-closed-as-superseded). Map and AS BUILT: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt. Also closed the leader melee cushion (now yours) and the leader flinch rule (yours, replacing D5).
 - Files: boss-ai.js, gyms.js (authored bonds). One active slot under the player's hold; the utility score now chooses a slot. Pure buffs only cast while their slot is active, so the AI must visit them. The sensing part (distance, your status, your recent damage) is kept separate from gym rules so it can be reused later, with nothing built for the Director now.
 - Tests: scripted scenarios for slot pick, the hold, buff visits and bonded casts; damage output compared with slice 7.
 - Balance: leader damage drops, so `power` or `tempo` may need a raise.
@@ -149,7 +149,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: move-lab with new shapes on a leader.
 
 **12. Migrate gyms 3 to 8, delete the old brain (L, one gym per session).**
-- Brock moved early, 2026-11-07 (entity model close-out, Jess: Brock and Misty are the gyms he playtests): docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt. Slices 9 to 12 move to the feature/gym-leader-ai branch.
+- Brock moved early, 2026-11-07 (entity model close-out, Jess: Brock and Misty are the gyms he playtests): docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt. Slices 9 to 11 moved to the feature/gym-leader-ai branch. Slice 12 runs on its own branch off main after feature/gym-leader-ai merges, starting after the Brock and Misty tuning (decision 2026-11-14-gyms-3-to-8-migrate-after-merge).
 - Files: gyms.js (switch on, cards, `hpMult` and restrictions per gym), then remove the switch, the old brain, `formOf`, `STRONG_HOST_GATE_MUL` and the gym branches left in the wild class. BOSS-AUTHORING, GYM-ROSTERS and the gyms sheet updated.
 - Tests: hpMult tuned by feel per gym (the fight-time report was scrapped in slice 6, D5); smoke-ui fights one gym per session; the old-model harnesses retire here.
 - Feel test: each gym as it moves over, and this is the natural point to bring in playtesters.

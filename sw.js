@@ -32,7 +32,7 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
-  const art = /\/assets\/(pokemon|icons|fonts)\//.test(url.pathname);
+  const art = /\/assets\/(pokemon|icons|fonts|status)\//.test(url.pathname);
   if (art) {
     e.respondWith(
       caches.open(ART).then(async (c) => {

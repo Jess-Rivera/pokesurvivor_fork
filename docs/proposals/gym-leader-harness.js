@@ -18,6 +18,7 @@ const SRC = {
   'js/data/gyms.js': 'GL_GYMS',
   'js/systems/gym.js': 'GL_GYM',
   'js/entities/enemy.js': 'GL_ENEMY',
+  'js/entities/leader-ai.js': 'GL_AI', // LEADER-AI slice 1: the heading and the edge unstick call moved to the AI player
 };
 const read = (p) => fs.readFileSync(process.env[SRC[p]] || path.join(R, p), 'utf8');
 const load = (p) => vm.runInThisContext(read(p), { filename: p });
@@ -72,7 +73,7 @@ try {
 } catch (e) {
   /* it reads the DOM at the end; G.U is set before that */
 }
-for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
+for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/systems/leader-planner.js', 'js/data/leader-ai-settings.js', 'js/entities/leader-ai.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
   try {
     load(p);
   } catch (e) {
@@ -81,6 +82,8 @@ for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', '
   }
 }
 
+// Leader AI slice 2 (#31): this harness predates the AI player's own swap and dodge decisions; they stay off here (leader-ai-harness.js tests them)
+if (G.LeaderAI && G.LeaderAI.off) Object.assign(G.LeaderAI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true }); // and slice 3's (#32)
 let fail = 0,
   n = 0;
 const ok = (c, m) => {
@@ -182,7 +185,18 @@ parity('Expert Belt on a super-effective hit', spec({ type: 'grass' }), D * 2 * 
 parity('Expert Belt does nothing on a neutral hit', spec({ type: 'normal' }), D, { expertBelt: true });
 parity('a matching type item', spec({ type: 'normal' }), D * 1.2, { typeBoost: 'normal' });
 parity('Power Stone floors a resisted hit at x1', spec({ type: 'fire' }), D, { stoneType: 'fire' });
-parity('a status-category hit divides by the neutral 50, no STAB', spec({ type: 'normal', category: 'status' }), 1000 / 50 + 2, { stabFor: () => true });
+// #41 (decision 2026-11-09-the-leader-ai-chooses-its-attacks): a status-category hit, no STAB. The old body divides by the neutral
+// 50 (1000 / 50 + 2 = 22); a leader takes your rule, its Def 27 (D); a gym authoring wildStatusDivisor gets the neutral 50 back.
+{
+  texts = [];
+  const st = spec({ type: 'normal', category: 'status' }),
+    a = hit(oldBody(), st, owner({ stabFor: () => true })),
+    b = hit(leader(), st, owner({ stabFor: () => true })),
+    c = hit(leader(STARYU, gymOf({ restrictions: Object.assign({}, MISTY_A, { wildStatusDivisor: true }) })), st, owner({ stabFor: () => true }));
+  ok(near(a.took, 1000 / 50 + 2), 'a status-category hit: the old body divides by the neutral 50, no STAB: ' + a.took + ' want 22');
+  ok(near(b.took, D), 'a status-category hit: the leader takes your rule (its Def), no STAB: ' + b.took + ' want ' + D);
+  ok(near(c.took, 1000 / 50 + 2), 'a status-category hit: with wildStatusDivisor the leader divides by the neutral 50: ' + c.took + ' want 22');
+}
 W.water = 1.5;
 parity('weather on the type', spec({ type: 'water' }), D * 0.5 * 1.5);
 W = {};
@@ -316,8 +330,8 @@ reset();
   for (let i = 0; i < 240 && !tell; i++) {
     clock += DT;
     e.update(DT, human);
-    if (e.brain.tell) {
-      tell = e.brain.tell;
+    if (e.tell) {
+      tell = e.tell;
       aim0 = tell.ang;
     }
   }
@@ -325,7 +339,7 @@ reset();
   human.x = -300; // you move: the aim stays locked
   human.y = 200;
   e.update(DT, human);
-  ok(e.brain.tell && e.brain.tell.ang === aim0, 'the tell keeps its locked aim while the Player entity update re-aims each frame');
+  ok(e.tell && e.tell.ang === aim0, 'the tell keeps its locked aim while the Player entity update re-aims each frame');
   for (let i = 0; i < 60; i++) {
     clock += DT;
     e.update(DT, human);
@@ -337,28 +351,30 @@ reset();
   const e = leader();
   human.x = 1000;
   human.y = 0;
+  // #51: outside an arena there is no Belief, so its planner has nothing to plan on; the Decider's heading is set here, east
+  e.ai.execute = () => [1, 0];
   for (let i = 0; i < 100; i++) {
     clock += DT;
     e.update(DT, human);
   }
   ok(e.x > 10, 'the heading moves it with the Player entity movement: x ' + e.x);
-  // frozen: no step, no movement
+  // frozen: no movement, but its timers keep running as yours do (#40, decision 2026-11-09-a-stunned-leader-keeps-its-timers-running-like-you)
   const x0 = e.x;
   e.stMajor = { k: 'freeze', t: 5, age: 0 };
   e.slots[0][0].t = 3;
   for (let i = 0; i < 10; i++) e.update(DT, human);
-  ok(e.x === x0 && e.slots[0][0].t === 3, 'frozen: it does not move and the brain does not step (no recharge, as before)');
+  ok(e.x === x0 && Math.abs(e.slots[0][0].t - (3 - 10 * DT)) < 1e-9, 'frozen: it does not move, and its move recharges for the 10 frames: ' + e.slots[0][0].t);
   ok(e.moves.length === e.slots.flat().length && e.moves.every((s) => s.type) && e.activeGroup().every((s) => s.type), 'its slots carry the move type (the halo)');
 }
 // heal cap and tells from restrictions
 {
   reset();
   const eLoop = leader(STARYU, gymOf({ loop: 2 }));
-  ok(eLoop.brain.healsLeft === 2, 'with no restriction the heal cap is the loop number');
+  ok(eLoop.healsLeft === 2, 'with no restriction the heal cap is the loop number');
   const eNone = leader(STARYU, gymOf({ restrictions: { healLimit: 0 } }));
-  ok(eNone.brain.healsLeft === 0, 'healLimit 0 allows none');
+  ok(eNone.healsLeft === 0, 'healLimit 0 allows none');
   const eTwo = leader(STARYU, gymOf({ restrictions: { healLimit: 3 } }));
-  ok(eTwo.brain.healsLeft === 3, 'healLimit overrides the loop number');
+  ok(eTwo.healsLeft === 3, 'healLimit overrides the loop number');
   const noTell = leader(STARYU, gymOf({ restrictions: { tells: false }, moves: [{ id: 'water-pulse' }] }));
   human.x = 100;
   human.y = 0;
@@ -366,10 +382,10 @@ reset();
   for (let i = 0; i < 240 && wind == null; i++) {
     clock += DT;
     noTell.update(DT, human);
-    if (noTell.brain.tell) wind = noTell.brain.tell.wind;
+    if (noTell.tell) wind = noTell.tell.wind;
   }
   ok(wind === 0, 'tells off: no wind-up, got ' + wind);
-  ok(leader().brain.tells === true, 'tells are on by default');
+  ok(leader().tellsOn === true, 'tells are on by default');
 }
 // recoil and heal come from the Player entity
 {
@@ -385,23 +401,33 @@ reset();
 // flinch: your rule since slice 8 (Q7, replacing D5): the tell is lost, the active slot restarts (cd + the 0.3 s hold), the others do not
 {
   const e = leader();
-  e.brain.init();
-  e.brain.wait = 0;
+  e.firstWaitLeft = 0;
   const act = e.activeGroup()[0], // Water Pulse, the starting slot
     other = e.slots[0][0]; // Tackle
   act.t = 0;
   other.t = 0;
-  e.brain.tell = { slot: act, id: 'water-pulse', form: 'shot', t: 0, wind: 0.5, after: 0.3, ang: 0, spot: null, fired: false };
+  e.tell = { slot: act, id: 'water-pulse', form: 'shot', t: 0, wind: 0.5, after: 0.3, ang: 0, spot: null, fired: false };
   ok(e.applyFlinch() === true, 'a leader can flinch');
-  ok(e.brain.tell === null, 'a flinch loses the tell');
+  ok(e.tell === null, 'a flinch loses the tell');
   ok(near(act.t, G.MoveDefs['water-pulse'].cd * e.cdMul + 0.3), 'the active slot restarts with the 0.3 s hold: ' + act.t);
-  ok(other.t === 0 && e.brain.wait === 0, 'another slot is untouched and no extra wait follows');
+  ok(other.t === 0 && e.firstWaitLeft === 0, 'another slot is untouched and no extra wait follows');
   ok(!!e.stFl, 'the recoil runs');
   const a = leader();
   a.stMajor = { k: 'sleep', t: 2, age: 0 };
   ok(a.applyFlinch() === false, 'an asleep leader cannot flinch');
 }
 
+// #51: outside an arena a leader has no Belief, so its planner has nothing to plan on. Tests about the Body (every move casting)
+// press each slot in turn through the controller instead, one second each, as a key would.
+function cycleSlots(e) {
+  let t = 0;
+  e.ai.execute = function (m, dt) {
+    t += dt;
+    const want = Math.floor(t) % m.slots.length;
+    if (want !== m.active) this.pressSlot(m, want);
+    return [0, 0];
+  };
+}
 // every move of Misty's loop 1 set fires through the real G.GymLeader, her real cards folded (moved here from gym-harness, which keeps the old body)
 {
   reset();
@@ -409,6 +435,7 @@ reset();
     sig = misty.signatures[0],
     want = G.Gyms.movesFor(sig, 0, 1).map((m) => m.id);
   const e = leader(STARYU, gymOf({ cards: G.Gyms.cardsFor(misty, 1), stance: sig.stance, moves: G.Gyms.movesFor(sig, 0, 1).map((m) => Object.assign({}, m)) }));
+  cycleSlots(e);
   const hold = (secs, hx) => {
     for (let i = 0, N = Math.round(secs / DT); i < N; i++) {
       clock += DT;
@@ -536,7 +563,7 @@ reset();
 }
 
 // 11. edge unstick (Jess 2026-11-07, docs/ASCII Concept Maps/Gym Leader - Edge Unstick.txt). Hand-derived from the map:
-// stuck = moved under 35% of the heading's step for over 0.35 s; side-step 0.7 s at 1.25 rad; smart side by look-ahead.
+// #41: the Decider's (G.LeaderAI), its state per mon in legsOf. stuck = moved under 35% of the heading's step for over 0.35 s; side-step 0.7 s at 1.25 rad; smart side by look-ahead.
 {
   reset();
   human.x = 0;
@@ -555,53 +582,56 @@ reset();
     }
     return hit;
   };
+  const L = (e) => e.ai.legsOf(e),
+    stepping = (e) => L(e).sideStepT > 0,
+    stuck = (e) => L(e).stuckT || 0;
   const run = (e, secs) => {
     for (let i = 0; i < Math.round(secs / DT); i++) e.update(DT, human);
   };
   // a. pinned on the north wall, both sides open: after 0.35 s she side-steps to the side she circles, and slides along
   G.World.collide = wall(false);
   const a = leader();
-  a.steer = () => [0, -1];
-  a.brain.side = -1;
+  a.ai.execute = () => [0, -1];
+  a.ai.legsOf(a).side = -1;
   run(a, 0.3);
-  ok(a.sideT <= 0, 'unstick: no side-step after 0.3 s pinned');
+  ok(!stepping(a), 'unstick: no side-step after 0.3 s pinned');
   run(a, 0.1);
-  ok(a.sideT > 0, 'unstick: pinned 0.4 s, she side-steps');
-  ok(a.side === -1, 'unstick: both sides open, she takes the side she circles: ' + a.side);
+  ok(stepping(a), 'unstick: pinned 0.4 s, she side-steps');
+  ok(L(a).sideStepWay === -1, 'unstick: both sides open, she takes the side she circles: ' + L(a).sideStepWay);
   const x0 = a.x;
   run(a, 0.2);
   ok(a.x < x0 - 5, 'unstick: the side-step slides her west along the wall: ' + (a.x - x0).toFixed(1));
   // b. a corner (north and east walls): the west side has room, the east has none, so she goes west over her circling side
   G.World.collide = wall(true);
   const b = leader();
-  b.steer = () => [0, -1];
-  b.brain.side = 1;
+  b.ai.execute = () => [0, -1];
+  b.ai.legsOf(b).side = 1;
   run(b, 0.4);
-  ok(b.sideT > 0 && b.side === -1, 'unstick: in a corner she takes the open side, not her circling side: ' + b.side);
+  ok(stepping(b) && L(b).sideStepWay === -1, 'unstick: in a corner she takes the open side, not her circling side: ' + L(b).sideStepWay);
   // c. moving freely she never side-steps
   G.World.collide = () => false;
   const c = leader();
-  c.steer = () => [1, 0];
+  c.ai.execute = () => [1, 0];
   let stepped = false;
   for (let i = 0; i < 120; i++) {
     c.update(DT, human);
-    if (c.sideT > 0) stepped = true;
+    if (stepping(c)) stepped = true;
   }
   ok(!stepped && c.x > 10, 'unstick: moving freely she never side-steps (moved ' + Math.round(c.x) + ')');
   // d. frames that do not count: no heading (attacking or stunned), and a flinch moving her
   G.World.collide = wall(false);
   const d = leader();
-  d.steer = () => [0, 0];
+  d.ai.execute = () => [0, 0];
   run(d, 1);
-  ok(d.stuckT === 0 && d.sideT <= 0, 'unstick: standing still (attacking, stunned) is never stuck');
+  ok(stuck(d) === 0 && !stepping(d), 'unstick: standing still (attacking, stunned) is never stuck');
   const f = leader();
   f.heading = [0, -1];
   f.stFl = { t: 1 };
-  for (let i = 0; i < 60; i++) f.noteStuck(DT, f.x, f.y);
-  ok(f.stuckT === 0 && f.sideT <= 0, 'unstick: a flinch frame is never stuck');
+  for (let i = 0; i < 60; i++) f.ai.noteStuck(f, DT, 0);
+  ok(stuck(f) === 0 && !stepping(f), 'unstick: a flinch frame is never stuck');
   f.stFl = null;
-  for (let i = 0; i < 30; i++) f.noteStuck(DT, f.x, f.y);
-  ok(f.sideT > 0, 'unstick: the same frames with no flinch are stuck (so the check above is not vacuous)');
+  for (let i = 0; i < 30; i++) f.ai.noteStuck(f, DT, 0);
+  ok(stepping(f), 'unstick: the same frames with no flinch are stuck (so the check above is not vacuous)');
   G.World.collide = collide0;
 }
 
@@ -615,6 +645,7 @@ reset();
   ok(want.join() === 'tackle,defense-curl,rock-throw', 'Brock loop 1 set by hand: ' + want.join());
   const e = leader(74, gymOf({ leader: 'Brock', species: 'Geodude', cards: G.Gyms.cardsFor(brock, 1), stance: sig.stance, moves: G.Gyms.movesFor(sig, 0, 1).map((m) => Object.assign({}, m)) }));
   ok(e instanceof G.GymLeader && e.slots.length === 3, 'Brock builds as a G.GymLeader with one slot per move');
+  cycleSlots(e);
   const hold = (secs, hx) => {
     for (let i = 0, N = Math.round(secs / DT); i < N; i++) {
       clock += DT;

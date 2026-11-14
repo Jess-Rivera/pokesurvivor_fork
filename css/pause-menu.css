@@ -1,0 +1,908 @@
+/* ============ pause-menu.css: the in-run pause menu (#82, slice 1 #88), built by js/ui/pause-menu.js ============
+ * Spec: docs/PAUSE-MENU.md. Places are 1080p pixels on a 1920x1080 stage that shrinks to fit a smaller window
+ * (--pm-scale, never above 1). The ball sits at the screen's centre, Run Info and the Pokemon detail panel are the same
+ * size at the same distance either side, team and Run Inventory are centred under and over it (Jess's feel test,
+ * 2026-11-11).
+ * Steps: .pm-step1 dim and closed ball in; .pm-step2 the ball opens and the panels slide in, together.
+ * Each rule's transition is the OPENING length (OPEN_MS in pause-menu.js); the base rule's is the CLOSING length
+ * (CLOSE_MS, about twice as fast), since a transition takes its length from the state it goes to.
+ * Colours: docs/HUD-STYLE.md palette ("Pause menu").
+ */
+.pause-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 15; /* above the HUD overlay (5), below every screen (.scr is 20: Settings and the confirm dialog) */
+  user-select: none;
+  --pm-scale: 1;
+  --pm-red: #c8141c;
+  --pm-slate: #313a46;
+}
+.pause-menu.pm-hidden {
+  display: none;
+}
+/* The run HUD steps aside while the menu is up (the menu's panels take its places). Once its fade ends it is also
+ * hidden, so the browser stops painting it and its looping animations stop (F2, 2026-11-12: on a Firefox laptop the
+ * HUD's paint was the pause menu's frame drops). On close it is visible at once and fades back in. */
+.hud-overlay {
+  transition:
+    opacity 0.075s linear,
+    visibility 0s linear 0s;
+}
+body.pm-open .hud-overlay,
+body.er-open .hud-overlay {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.075s linear,
+    visibility 0s linear 0.075s;
+}
+
+/* ---------- step 1: dim and the closed ball (open 55 ms, close 38 ms) ---------- */
+.pm-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.038s linear;
+}
+.pm-step1 .pm-dim {
+  opacity: 1;
+  transition-duration: 0.055s;
+}
+.pm-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  transform: translate(-50%, -50%) scale(var(--pm-scale));
+}
+.pm-centre {
+  position: absolute;
+  left: 705px; /* circle centre at (960, 530) */
+  top: 275px;
+  width: 510px;
+  height: 510px;
+  opacity: 0;
+  transform: scale(0.94);
+  transition:
+    opacity 0.038s linear,
+    transform 0.038s ease-in;
+}
+.pm-step1 .pm-centre {
+  opacity: 1;
+  transform: none;
+  transition-duration: 0.055s;
+  transition-timing-function: linear, ease-out;
+}
+
+/* ---------- the ball: back layer (ring, black inside), the buttons, then the caps on top ---------- */
+.pm-ball {
+  position: absolute;
+  inset: 0;
+}
+.pm-ball-caps {
+  pointer-events: none; /* the buttons under it take the clicks */
+}
+.pm-ring-outer {
+  fill: #747474;
+}
+.pm-ring {
+  fill: #575757;
+}
+.pm-ring-inner {
+  fill: #101010;
+}
+.pm-inside {
+  fill: #000000;
+}
+.pm-cap-red {
+  fill: var(--pm-red);
+}
+.pm-cap-slate {
+  fill: var(--pm-slate);
+}
+.pm-cap-edge {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 4;
+  stroke-linejoin: miter;
+}
+.pm-cap-button {
+  fill: #ffffff;
+  stroke: #101010;
+  stroke-width: 5;
+}
+
+/* ---------- step 2: the ball opens and the panels slide in (open 175 ms, close 118 ms) ---------- */
+.pm-cap {
+  transition: transform 0.118s ease-in-out;
+}
+.pm-step2 .pm-cap {
+  transition-duration: 0.175s;
+}
+.pm-step2 .pm-cap-top {
+  transform: translateY(-150px); /* clear of the top button: the centre button ends at 134 */
+}
+.pm-step2 .pm-cap-bottom {
+  transform: translateY(150px);
+}
+/* the closed ball's black band: gone as the caps part, back as they meet */
+.pm-band {
+  fill: #101010;
+  transition: opacity 0.025s linear 0.093s;
+}
+.pm-step2 .pm-band {
+  opacity: 0;
+  transition: opacity 0.045s linear;
+}
+
+/* ---------- the buttons: the run screen's move slot, white rim, green when focused ---------- */
+.pm-buttons {
+  position: absolute;
+  left: 0;
+  top: 148px; /* three 66 px buttons and two 8 px gaps, centred on the ball's middle (255) */
+  width: 510px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.pm-step2 .pm-buttons {
+  pointer-events: auto;
+}
+/* #92 Run Review: one button, Back, on the ball's middle; the held item is not a place to move items from */
+.pm-review .pm-buttons {
+  justify-content: center;
+}
+.pm-review .pm-held-slot.is-filled {
+  cursor: default;
+}
+/* the button layer stops at the ball's inner edge: buttons sliding off vanish there (centre 255,255 in ball pixels) */
+.pm-buttons {
+  height: 214px;
+  clip-path: circle(214px at 255px 107px);
+}
+
+/* ---------- End Run asks inside the ball (Jess, 2026-11-11): snappy slides, 0.15 s, the chasers 0.05 s behind ---------- */
+.pm-buttons .pm-button {
+  transition: transform 0.15s ease-out 0.05s; /* coming back after No: a beat behind the answers leaving */
+}
+.pm-buttons.pm-asking .pm-button {
+  transition: transform 0.15s ease-in; /* leaving at once */
+}
+.pm-settings-right.pm-asking [data-action='resume'],
+.pm-settings-left.pm-asking [data-action='settings'] {
+  transform: translateX(-420px);
+}
+.pm-settings-right.pm-asking [data-action='settings'],
+.pm-settings-left.pm-asking [data-action='resume'] {
+  transform: translateX(420px);
+}
+/* End and No share Settings' row; they wait off the side Resume leaves by and chase Settings in */
+.pm-answers {
+  position: absolute;
+  left: 0;
+  top: 148px;
+  width: 510px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  transform: translateX(-420px);
+  transition: transform 0.15s ease-in;
+}
+.pm-settings-left .pm-answers {
+  transform: translateX(420px);
+}
+.pm-buttons.pm-asking .pm-answers {
+  transform: none;
+  transition: transform 0.15s ease-out 0.05s;
+}
+.pm-answers .pm-button {
+  width: 168px;
+}
+.pm-buttons.pm-asking .pm-answers .pm-button {
+  transform: none;
+}
+/* ---------- the Temporary Pocket asks inside the ball (#90, Jess 2026-11-11): all three buttons slide out to one side,
+   chased in from the other by "Destroy Items in Pocket?" (where End Run sits) over red Destroy and grey No ---------- */
+.pm-pocket-left.pm-asking-pocket > .pm-button {
+  transform: translateX(-420px);
+}
+.pm-pocket-right.pm-asking-pocket > .pm-button {
+  transform: translateX(420px);
+}
+.pm-asking-pocket > .pm-button {
+  transition: transform 0.15s ease-in;
+}
+.pm-pocket-ask {
+  position: absolute;
+  left: 0;
+  top: 74px;
+  width: 510px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(420px);
+  transition: transform 0.15s ease-in;
+}
+.pm-pocket-right .pm-pocket-ask {
+  transform: translateX(-420px);
+}
+.pm-buttons.pm-asking-pocket .pm-pocket-ask {
+  transform: none;
+  transition: transform 0.15s ease-out 0.05s;
+}
+.pm-pocket-ask-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+.pm-pocket-ask .pm-pocket-ask-row .pm-button {
+  width: 168px;
+  transform: none;
+}
+.pm-pocket-header {
+  position: relative;
+  height: 66px;
+}
+.pm-pocket-header svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.pm-pocket-header .hud-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'HudText', monospace;
+  font-size: 24px;
+  line-height: 24px;
+  color: #ffffff;
+}
+.pm-no-slide,
+.pm-no-slide .pm-button,
+.pm-no-slide .pm-answers,
+.pm-no-slide .pm-pocket-ask {
+  transition: none !important;
+}
+.pm-button {
+  position: relative;
+  width: 315px;
+  height: 66px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+.pm-button svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.pm-button .hud-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'HudText', monospace;
+  color: #ffffff;
+}
+
+/* ---------- the four panels (Run Info and the Run Inventory are empty frames until #91 and #90) ---------- */
+.pm-panel {
+  position: absolute;
+  background: #181818;
+  border: 1px solid #212121;
+  box-shadow: 0 0 0 2px #101010;
+  opacity: 0;
+  transition:
+    transform 0.118s ease-in,
+    opacity 0.118s linear;
+}
+.pm-step2 .pm-panel {
+  opacity: 1;
+  transform: none;
+  transition-duration: 0.175s;
+  transition-timing-function: ease-out, linear;
+}
+/* Run Info and the detail panel: the same size, 40 px either side of the ball (Jess, 2026-11-11) */
+.pm-panel-info {
+  left: 30px;
+  top: 25px;
+  width: 635px;
+  height: 1028px;
+  transform: translateX(-700px);
+}
+.pm-panel-detail {
+  left: 1255px;
+  top: 25px;
+  width: 635px;
+  height: 1028px;
+  transform: translateX(700px);
+}
+/* the team panel: 548 px holds three of the narrowed roster cards (#89), about 21 px clear of the side panels.
+ * No frame: just the six cards (Jess, 2026-11-12; the frame was a placeholder until the cards existed). */
+.pm-panel-team {
+  left: 686px;
+  top: 855px;
+  width: 548px;
+  height: 160px;
+  transform: translateY(260px);
+}
+/* the Run Inventory (#90): no frame, three tight 2x2 grids (100 x 100 each) 60 px apart, centred over the ball */
+.pm-panel-inventory {
+  left: 750px;
+  top: 60px;
+  width: 420px;
+  height: 100px;
+  transform: translateY(-260px);
+}
+.pm-panel.pm-panel-inventory,
+.pm-panel.pm-panel-team {
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.pm-inventory {
+  display: flex;
+  gap: 60px;
+}
+
+/* ---------- moving held items (#90, js/ui/pause-inventory.js): click or drag, the ghost follows the pointer ---------- */
+.pm-pocket-slot.is-filled,
+.pm-held-slot.is-filled,
+.pm-store-slot.is-filled {
+  cursor: grab;
+}
+.hud-grid-slot.is-lifted .hud-item-icon {
+  opacity: 0.25;
+}
+.pm-carry-ghost {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  transform: translate(-50%, -50%) scale(var(--pm-scale));
+  pointer-events: none;
+  z-index: 30;
+}
+/* while the in-ball prompt asks, the pocket slots holding items pulse white */
+/* on the square only: a filter on the whole slot would trap its tooltip under the next slot */
+.pm-pocket-asking .pm-pocket-slot.is-filled .hud-item-square {
+  animation: pm-pocket-pulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes pm-pocket-pulse {
+  from {
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+  to {
+    filter: drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
+  }
+}
+/* ---------- the Pokemon detail panel and the team panel (#89, js/ui/pause-pokemon.js; PAUSE-MENU sections 4 and 5) ---------- */
+.pm-panel-detail,
+.pm-panel-team {
+  font-family: 'HudText', monospace;
+  font-synthesis: none;
+  color: #ffffff;
+}
+.pm-detail,
+.pm-team {
+  position: absolute;
+  inset: 0;
+}
+.pm-detail > *,
+.pm-team > * {
+  position: absolute;
+}
+.pm-fit {
+  display: inline-block;
+  white-space: nowrap;
+}
+/* the two-tier bars: type colours with a 1 px frame */
+.pm-detail-bars {
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+.pm-detail-bars polygon {
+  stroke: #212121;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+.pm-detail-name {
+  left: 16px;
+  top: 12px;
+  font-size: 40px;
+  line-height: 40px;
+  text-shadow:
+    4px 0 0 #101010,
+    -4px 0 0 #101010,
+    0 4px 0 #101010,
+    0 -4px 0 #101010,
+    4px 4px 0 #101010,
+    -4px 4px 0 #101010,
+    4px -4px 0 #101010,
+    -4px -4px 0 #101010;
+}
+.pm-detail-lv-label {
+  right: 82px;
+  top: 12px;
+  color: #f3b200;
+}
+.pm-detail-lv {
+  right: 16px;
+  top: 44px;
+}
+.pm-detail-fainted {
+  left: 16px;
+  top: 108px;
+  color: #fb3041;
+}
+/* boxes: the roster card's box with a flat body, rimmed in the first type */
+.pm-box > svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.pm-box > * {
+  position: absolute;
+}
+.pm-box-title {
+  left: 16px;
+  top: 16px;
+  color: #7f7f7f;
+}
+/* the stat hex: type colour 60% = level 1, white = growth to its level now, yellow = what cards and run effects add */
+.pm-hex svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.pm-hex-ring {
+  fill: none;
+  stroke: rgba(244, 248, 255, 0.16);
+  stroke-width: 1px;
+}
+.pm-hex-ring.is-edge {
+  stroke: rgba(244, 248, 255, 0.4);
+}
+.pm-hex-spoke {
+  stroke: rgba(244, 248, 255, 0.16);
+  stroke-width: 1px;
+}
+/* three bands growing out from each other: each band is the ring between its shape and the one inside it */
+.pm-hex-start {
+  fill-opacity: 0.6; /* fill and stroke: the first type's colour, set by pause-pokemon.js */
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+.pm-hex-now {
+  fill: rgba(244, 248, 255, 0.6);
+  fill-rule: evenodd;
+  stroke: #f4f8ff;
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+.pm-hex-run {
+  fill: rgba(255, 210, 63, 0.75);
+  fill-rule: evenodd; /* no outline: it would trace the white edge where nothing is added */
+}
+.pm-hex-label {
+  position: absolute;
+}
+.pm-hex-label.is-middle {
+  transform: translateX(-50%);
+  text-align: center;
+}
+.pm-hex-label.is-left {
+  text-align: right;
+}
+.pm-hex-name {
+  color: #b9cbf0;
+  margin-bottom: 4px;
+}
+.pm-hex-bonus {
+  color: #ffd23f;
+}
+/* the side corners' +X% on its own line under the number (#98) */
+.pm-hex-bonus-line {
+  height: 20px; /* HEX.bonusLine in js/ui/pause-pokemon.js */
+  line-height: 20px;
+}
+/* the edge's number, in a break of the outer line between HP and Atk (Jess, 2026-11-11: blue, along the line) */
+.pm-hex-edge {
+  position: absolute;
+  color: #3d8ee0;
+  pointer-events: none;
+}
+/* hovering a corner: the copy's make-up, "Base: N, IV: N, EV: N" */
+.pm-hex-label {
+  cursor: default;
+}
+/* its tooltip opens below it in the shared tooltip layer (css/hud-overlay.css .hud-tip); the side corners' tips
+   grow toward the hex's middle (js/ui/pause-pokemon.js Hex) */
+/* the move list: bonded groups framed in the bond pink, a type coloured scroll bar (css/hud-overlay.css .hud-scroll-*) */
+.pm-move-group {
+  margin-bottom: 8px;
+}
+.pm-move-group.is-bonded {
+  border: 2px solid #ff8ad8;
+  padding: 4px;
+}
+.pm-bond-caption {
+  margin: 2px 0 6px 4px;
+}
+.pm-move {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 4px;
+  cursor: default;
+}
+.pm-move:hover {
+  background: #212121;
+}
+.pm-move-icon {
+  flex: none;
+  image-rendering: pixelated;
+}
+.pm-move-text {
+  min-width: 0;
+}
+.pm-move-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.pm-type-pill {
+  padding: 2px 6px;
+  border: 2px solid;
+}
+.pm-move-summary {
+  color: #b9cbf0;
+  white-space: normal;
+}
+.pm-empty-note {
+  color: #7f7f7f;
+}
+/* the detail panel's hover tooltips (moves, Run Stats, Cards Taken) are drawn in the shared tooltip layer:
+   css/hud-overlay.css .hud-tip.is-detail */
+/* previous and next: dimmed at rest, bright on hover */
+.pm-arrow {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0.55;
+}
+.pm-arrow:hover {
+  opacity: 1;
+}
+/* the team panel: the run screen's roster cards, narrowed */
+.pm-team-card {
+  cursor: pointer;
+}
+.pm-team-card .hud-roster-key {
+  z-index: 1;
+}
+/* the shown Pokemon: a green stroke on its portrait and a shimmer sliding top left to bottom right */
+.hud-roster-face.pm-face-shown {
+  border-color: #38d030;
+}
+.hud-roster-face.pm-face-shown::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  z-index: 1;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  animation: pm-shimmer 1.5s linear infinite;
+  pointer-events: none;
+}
+@keyframes pm-shimmer {
+  0% {
+    transform: translate(-60%, -60%);
+  }
+  50%,
+  100% {
+    transform: translate(60%, 60%);
+  }
+}
+
+/* ---------- the Run Info panel (#91-2, js/ui/pause-run-info.js; PAUSE-MENU section 6, map 91c) ----------
+ * The DPS-Upgrades panel's family (css/hud-overlay.css .hud-dps-*): Michroma, a soft dark shadow, slate dividers, title
+ * yellow and secondary cyan, at 24 px text on 36 px rows (91c R1). The header stays put; the body is the kit ScrollBox. */
+.pm-info {
+  position: absolute;
+  inset: 0;
+  font-family: 'HudModule', sans-serif;
+  font-size: 24px;
+  line-height: 36px;
+  color: #ffffff;
+  text-shadow:
+    0 0 2px #101010,
+    1px 1px 0 #101010,
+    0 1px 2px #101010;
+}
+.pm-info-header {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #495151; /* Slate divider */
+}
+.pm-info-run,
+.pm-info-clock {
+  color: #fff000; /* Title yellow */
+}
+.pm-info-title {
+  margin-top: 4px;
+  font-size: 20px;
+  line-height: 30px;
+  color: #fff000;
+  text-transform: uppercase;
+}
+.pm-info-divider {
+  height: 2px;
+  margin: 8px 0 4px;
+  background: #495151;
+}
+.pm-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  min-height: 36px;
+}
+.pm-info-row.is-indent {
+  padding-left: 24px;
+}
+.pm-info-label {
+  flex: none;
+}
+.pm-info-value {
+  color: #8cfff7; /* Secondary text */
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.pm-info-value.is-ahead {
+  color: #38d030;
+}
+.pm-info-value.is-behind {
+  color: #e8202a;
+}
+.pm-info-value.is-gold {
+  color: #ffd23f;
+}
+/* Statuses inflicted: two columns */
+.pm-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 32px;
+}
+/* EVs earned: one six column row, name over number (91c R4) */
+.pm-info-evs {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  text-align: center;
+}
+.pm-info-ev {
+  display: flex;
+  flex-direction: column;
+}
+
+/* the Run Stats box (#91-3, js/ui/pause-pokemon.js RunStatsBox): label left, number right, 26 px rows scrolling in the
+   box (Jess, 2026-11-12); the Statuses row's kinds show in the move tooltip on hover */
+.pm-stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  white-space: nowrap;
+}
+.pm-stats-value {
+  color: #b9cbf0;
+}
+
+/* the Cards Taken box (#83, js/ui/pause-pokemon.js CardsTakenBox): the card's name left, "xN" right, rows at least
+   26 px; a long name wraps to a second line instead of squeezing (Jess, 2026-11-12) */
+.pm-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.pm-card-label {
+  white-space: normal;
+  line-height: 22px;
+}
+.pm-card-picks {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* ---------- the End Run screen (#103, js/ui/end-run.js; PAUSE-MENU section 7): the pause menu's stage and buttons ---------- */
+.end-run {
+  position: fixed;
+  inset: 0;
+  z-index: 15; /* as the pause menu: above the HUD overlay (5), below every screen (.scr is 20) */
+  user-select: none;
+  --pm-scale: 1;
+}
+.end-run.er-hidden {
+  display: none;
+}
+.er-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  animation: er-fade 0.2s linear;
+}
+.er-stage {
+  animation: er-fade 0.2s linear;
+}
+@keyframes er-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* the title: Michroma in the pause menu's red cap colour (Jess, 2026-11-12) */
+.er-title {
+  position: absolute;
+  left: 0;
+  top: 300px;
+  width: 1920px;
+  text-align: center;
+  font-family: 'HudModule', 'Michroma', sans-serif;
+  font-size: 88px;
+  line-height: 100px;
+  color: #c8141c;
+  text-shadow:
+    0 4px 0 #101010,
+    0 0 18px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+}
+.er-buttons {
+  position: absolute;
+  left: 0;
+  top: 480px;
+  width: 1920px;
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+}
+
+/* ---------- the EV screen (#104, js/ui/ev-screen.js; PAUSE-MENU section 7): End Run's stage and dim ---------- */
+.ev-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 15; /* as End Run: above the HUD overlay (5), below every screen, the shared ask dialog included (.scr is 20) */
+  user-select: none;
+  --pm-scale: 1;
+}
+.ev-screen.ev-hidden {
+  display: none;
+}
+.ev-panel {
+  position: absolute;
+  left: 200px;
+  top: 150px;
+  width: 1520px;
+  box-sizing: border-box;
+  padding: 24px 40px 32px;
+  background: #181818; /* the detail panel's back and frame */
+  border: 1px solid #212121;
+}
+.ev-head,
+.ev-row {
+  display: flex;
+  align-items: center;
+}
+.ev-head {
+  height: 170px;
+  align-items: flex-start;
+}
+.ev-row {
+  height: 64px;
+  border-top: 1px solid #303030;
+}
+.ev-label-column {
+  width: 300px;
+  flex: none;
+  box-sizing: border-box;
+  padding-right: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ev-column-head,
+.ev-cell {
+  width: 190px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ev-column-head {
+  flex-direction: column;
+  gap: 12px;
+}
+.ev-circle {
+  position: relative;
+}
+.ev-empty {
+  box-shadow: inset 0 0 0 4px #495151; /* an empty slot: the circle's ring in slate */
+}
+.ev-total {
+  font-size: 18px;
+  line-height: 18px;
+  color: #e7e7e7;
+}
+.ev-stat-name,
+.ev-left,
+.ev-now,
+.ev-add {
+  font-size: 24px;
+  line-height: 24px;
+}
+.ev-left {
+  color: #e7e7e7;
+}
+.ev-now {
+  min-width: 48px;
+  text-align: right;
+  color: #ffffff;
+}
+.ev-add {
+  min-width: 52px;
+  margin-left: 6px;
+  color: #ffd23f; /* the hex's yellow: what this screen adds */
+}
+.ev-step {
+  width: 32px;
+  height: 32px;
+  margin: 0 6px;
+  padding: 0;
+  font-size: 24px;
+  line-height: 24px;
+  color: #ffffff;
+  background: #181818;
+  border: 2px solid #e7e7e7;
+  box-shadow: 0 0 0 2px #101010;
+  cursor: pointer;
+}
+.ev-step:hover:not(:disabled) {
+  border-color: #38d030; /* the menu's focus green */
+}
+.ev-step:disabled {
+  color: #495151;
+  border-color: #495151;
+  cursor: default;
+}
+.ev-buttons {
+  position: absolute;
+  left: 0;
+  top: 820px;
+  width: 1920px;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}

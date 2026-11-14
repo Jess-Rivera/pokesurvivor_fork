@@ -1,0 +1,238 @@
+Time
+
+    Colorscheme is derived from Pokémon Pokopia.
+
+Morning color light 	A2DFEB 	{{Morning color light}}
+Morning color 	70CEE0 	{{Morning color}}
+Morning color dark 	498692 	{{Morning color dark}}
+Day color light 	AAD6FC 	{{Day color light}}
+Day color 	7CC0FA 	{{Day color}}
+Day color dark 	517DA3 	{{Day color dark}}
+Evening color light 	EFBFA4 	{{Evening color light}}
+Evening color 	E79D73 	{{Evening color}}
+Evening color dark 	96664B 	{{Evening color dark}}
+Night color light 	CFC2EF 	{{Night color light}}
+Night color 	B5A1E6 	{{Night color}}
+Night color dark 	766996 	{{Night color dark}}
+
+
+Seasons
+Spring color light 	C7FA89 	{{Spring color light}}
+Spring color 	B0F858 	{{Spring color}}
+Spring color dark 	7BAE3D 	{{Spring color dark}}
+Summer color light 	A0DEFA 	{{Summer color light}}
+Summer color 	78D0F8 	{{Summer color}}
+Summer color dark 	5492AE 	{{Summer color dark}}
+Autumn color light 	FAB189 	{{Autumn color light}}
+Autumn color 	F89058 	{{Autumn color}}
+Autumn color dark 	AE653D 	{{Autumn color dark}}
+Winter color light 	F4E3FA 	{{Winter color light}}
+Winter color 	F0D8F8 	{{Winter color}}
+Winter color dark 	A897AE 	{{Winter color dark}}
+
+Regions
+Kanto color light 	ACD36C 	{{Kanto color light}}
+Kanto color 	80BB1D 	{{Kanto color}}
+Kanto color dark 	537A13 	{{Kanto color dark}}
+Johto color light 	DCD677 	{{Johto color light}}
+Johto color 	CAC02E 	{{Johto color}}
+Johto color dark 	837D1E 	{{Johto color dark}}
+Hoenn color light 	9CD7C8 	{{Hoenn color light}}
+Hoenn color 	67C1AB 	{{Hoenn color}}
+Hoenn color dark 	437E6F 	{{Hoenn color dark}}
+Sinnoh color light 	B7A3C3 	{{Sinnoh color light}}
+Sinnoh color 	9072A3 	{{Sinnoh color}}
+Sinnoh color dark 	5E4A6A 	{{Sinnoh color dark}}
+Unova color light 	9FCADF 	{{Unova color light}}
+Unova color 	6BAECE 	{{Unova color}}
+Unova color dark 	467186 	{{Unova color dark}}
+Kalos color light 	DD608C 	{{Kalos color light}}
+Kalos color 	CB0B4F 	{{Kalos color}}
+Kalos color dark 	840733 	{{Kalos color dark}}
+Alola color light 	E89483 	{{Alola color light}}
+Alola color 	DC5A40 	{{Alola color}}
+Alola color dark 	8F3B2A 	{{Alola color dark}}
+Galar color light 	C97DC0 	{{Galar color light}}
+Galar color 	AC379E 	{{Galar color}}
+Galar color dark 	702467 	{{Galar color dark}}
+Isle of Armor color light 	FDE060 	{{Isle of Armor color light}}
+Isle of Armor color 	FCD00B 	{{Isle of Armor color}}
+Isle of Armor color dark 	A48707 	{{Isle of Armor color dark}}
+Crown Tundra color light 	66CA9C 	{{Crown Tundra color light}}
+Crown Tundra color 	15AE68 	{{Crown Tundra color}}
+Crown Tundra color dark 	0D7143 	{{Crown Tundra color dark}}
+Redirects of {{Legends Arceus color}}:
+Hisui color light 	7C93A9 	{{Hisui color light}}
+Hisui color 	36597B 	{{Hisui color}}
+Hisui color dark 	233A50 	{{Hisui color dark}}
+Paldea color light 	E8CC59 	{{Paldea color light}}
+Paldea color 	DCB000 	{{Paldea color}}
+Paldea color dark 	8F7200 	{{Paldea color dark}}
+Redirects of {{Teal Mask color}}:
+Kitakami color light 	59C3BB 	{{Kitakami color light}}
+Kitakami color 	00A398 	{{Kitakami color}}
+Kitakami color dark 	006A62 	{{Kitakami color dark}}
+Redirects of {{Indigo Disk color}}:
+Blueberry color light 	5987A7 	{{Blueberry color light}}
+Blueberry color 	004878 	{{Blueberry color}}
+Blueberry color dark 	002E4E 	{{Blueberry color dark}}
+Redirects of {{Frontier color}}:
+Lumiose color light 	82C7E0 	{{Lumiose color light}}
+Lumiose color 	3FA9D0 	{{Lumiose color}}
+Lumiose color dark 	296E87 	{{Lumiose color dark}}
+Redirects of {{Black color}}:
+Hyperspace color light 	858585 	{{Hyperspace color light}}
+Hyperspace color 	444444 	{{Hyperspace color}}
+Hyperspace color dark 	2C2C2C 	{{Hyperspace color dark}}
+Orange color light 	FFAC59 	{{Orange color light}}
+Orange color 	FF7F00 	{{Orange color}}
+Orange color dark 	A65300 	{{Orange color dark}}
+Orre color light 	ADA588 	{{Orre color light}}
+Orre color 	817548 	{{Orre color}}
+Orre color dark 	544C2F 	{{Orre color dark}}
+PokéPark color light 	A7DB8D 	{{PokéPark color light}}
+PokéPark color 	78C850 	{{PokéPark color}}
+PokéPark color dark 	4E8234 	{{PokéPark color dark}}
+Sevii color light 	8FDEB8 	{{Sevii color light}}
+Sevii color 	52CC91 	{{Sevii color}}
+Sevii color dark 	35855E 	{{Sevii color dark}}
+
+Attacks
+
+    These colors are pulled from the icons in Masters EX. The text color is white to symbolize how the icons have appeared in Generations VIII and IX.
+        Special color is darkened to differentiate it from the Dragon-type color.
+
+Physical color light: 	F29173 	{{Physical color light}}
+Physical color: 	EB5628 	{{Physical color}}
+Physical color dark: 	99381A 	{{Physical color dark}}
+Physical text color: 	FFFFFF 	{{Physical textcolor}}
+Special color light: 	7D94CD 	{{Special color light}}
+Special color: 	375AB2 	{{Special color}}
+Special color dark: 	243B74 	{{special color dark}}
+Special text color: 	FFFFFF 	{{Special textcolor}}
+Status color light: 	AEAEAE 	{{Status color light}}
+Status color: 	828282 	{{Status color}}
+Status color dark: 	555555 	{{Status color dark}}
+Status text color: 	FFFFFF 	{{Status textcolor}}
+
+Bag
+
+    Apricorn uses the Apricorn Box from HeartGold and SoulSilver as a color base.
+    The Cologne color is a custom color as the Scent case has no color to use as a base.
+    Items, Key Items, Berries, Battle Items, Mail, Medicine, Poké Balls, TMs and HMs; use Generation IV bag pockets as a color base.
+    Z-Crystals use Generation VII core series game bag pockets as a color base.
+    Treasures uses Sword and Shield's Treasures bag pocket as a color base.
+
+Apricorn color light: 	F5C169 	{{Apricorn color light}}
+Apricorn color: 	F0A018 	{{Apricorn color}}
+Apricorn color dark: 	9C6810 	{{Apricorn color dark}}
+Battle items pocket color light: 	78A2EB 	{{Battle items color light}}
+Battle items pocket color: 	3070E0 	{{Battle items color}}
+Battle items pocket color dark: 	1F4992 	{{Battle items color dark}}
+Berries pocket color light: 	6EC188 	{{Berries color light}}
+Berries pocket color: 	20A048 	{{Berries color}}
+Berries pocket color dark: 	15682F 	{{Berries color dark}}
+Cologne color light: 	D2CCDC 	{{Cologne color light}}
+Cologne color: 	BAB1C9 	{{Cologne color}}
+Cologne color dark: 	797383 	{{Cologne color dark}}
+Ingredients Pocket color light: 	CA8263 	{{Ingredients color light}}
+Ingredients Pocket color: 	AD3F0F 	{{Ingredients color}}
+Ingredients Pocket color dark: 	70290A 	{{Ingredients color dark}}
+Items pocket color light: 	D89DB7 	{{Items color light}}
+Items pocket color: 	C86890 	{{Items color}}
+Items pocket color dark: 	82445E 	{{Items color dark}}
+Key items pocket color light: 	B788E6 	{{Key items color light}}
+Key items pocket color: 	9048D8 	{{Key items color}}
+Key items pocket color dark: 	5E2F8C 	{{Key items color dark}}
+Mail pocket color light: 	69B7CC 	{{Mail color light}}
+Mail pocket color: 	1890B0 	{{Mail color}}
+Mail pocket color dark: 	105E72 	{{Mail color dark}}
+Medicine pocket color light: 	EBA27E 	{{Medicine color light}}
+Medicine pocket color: 	E07038 	{{Medicine color}}
+Medicine pocket color dark: 	924924 	{{medicine color dark}}
+Poké Balls pocket color light: 	DBB26E 	{{Poké Balls color light}}
+Poké Balls pocket color: 	C88820 	{{Poké Balls color}}
+Poké Balls pocket color dark: 	825815 	{{Poké Balls color dark}}
+TMs and HMs pocket color light: 	ACC66E 	{{TMs and HMs color light}}
+TMs and HMs pocket color: 	80A820 	{{TMs and HMs color}}
+TMs and HMs pocket color dark: 	536D15 	{{TMs and HMs color dark}}
+Treasures Pocket color light: 	F7DB8C 	{{Treasures color light}}
+Treasures Pocket color: 	F2C74E 	{{Treasures color}}
+Treasures Pocket color dark: 	9D8133 	{{Treasures color dark}}
+Z-Crystals pocket color light: 	CEB38A 	{{Z-Crystals color light}}
+Z-Crystals pocket color: 	B48A4B 	{{Z-Crystals color}}
+Z-Crystals pocket color dark: 	755A31 	{{Z-Crystals color dark}}
+
+Pokémon Stats
+
+    These colors are derived from those used on the level up screen in Sun, Moon, Ultra Sun and Ultra Moon.
+    The "Special" stat from Generation I has no template but the following colors should be used to represent it:
+        78BBF0 is the light color
+        2F97E8 is the midtone color
+        1F6297 is the dark color
+
+Attack color light: 	F5DE69 	{{Attack color light}}
+Attack color: 	EFCC18 	{{Attack color}}
+Attack color dark: 	9B8510 	{{Attack color dark}}
+Defense color light: 	F09A65 	{{Defense color light}}
+Defense color: 	E86412 	{{Defense color}}
+Defense color dark: 	97410C 	{{Defense color dark}}
+HP color light: 	9EE865 	{{HP color light}}
+HP color: 	69DC12 	{{HP color}}
+HP color dark: 	448F0C 	{{HP color dark}}
+Special Attack color light: 	66D8F6 	{{Special Attack color light}}
+Special Attack color: 	14C3F1 	{{Special Attack color}}
+Special Attack color dark: 	0D7F9D 	{{Special Attack color dark}}
+Special Defense color light: 	899EEA 	{{Special Defense color light}}
+Special Defense color: 	4A6ADF 	{{Special Defense color}}
+Special Defense color dark: 	304591 	{{Special Defense color dark}}
+Speed color light: 	E46CCA 	{{Speed color light}}
+Speed color: 	D51DAD 	{{Speed color}}
+Speed color dark: 	8B1370 	{{Speed color dark}}
+
+Egg Groups
+Monster egg color light 	BBA38B 	{{Monster egg color light}}
+Monster egg color 	97724C 	{{Monster egg color}}
+Monster egg color dark 	624A31 	{{Monster egg color dark}}
+Water 1 egg color light 	9FE1FB 	{{Water 1 egg color light}}
+Water 1 egg color 	6BD1F9 	{{Water 1 egg color}}
+Water 1 egg color dark 	4688A2 	{{Water 1 egg color dark}}
+Bug egg color light 	C8D775 	{{Bug egg color light}}
+Bug egg color 	AAC22A 	{{Bug egg color}}
+Bug egg color dark 	6F7E1B 	{{Bug egg color dark}}
+Flying egg color light 	B7CBF6 	{{Flying egg color light}}
+Flying egg color 	90AFF1 	{{Flying egg color}}
+Flying egg color dark 	5E7290 	{{Flying egg color dark}}
+Field egg color light 	EED29B 	{{Field egg color light}}
+Field egg color 	E5BA65 	{{Field egg color}}
+Field egg color dark 	957942 	{{Field egg color dark}}
+Fairy egg color light 	FFC0D2 	{{Fairy egg color light}}
+Fairy egg color 	FF9EB9 	{{Fairy egg color}}
+Fairy egg color dark 	A66778 	{{Fairy egg color dark}}
+Grass egg color light 	AEE294 	{{Grass egg color light}}
+Grass egg color 	82D25A 	{{Grass egg color}}
+Grass egg color dark 	55893B 	{{Grass egg color dark}}
+Human-Like egg color light 	87D0CA 	{{Human-Like egg color light}}
+Human-Like egg color 	47B7AE 	{{Human-Like egg color}}
+Human-Like egg color dark 	2E7771 	{{Human-Like egg color dark}}
+Water 3 egg color light 	6FA3CE 	{{Water 3 egg color light}}
+Water 3 egg color 	2271B4 	{{Water 3 egg color}}
+Water 3 egg color dark 	164975 	{{Water 3 egg color dark}}
+Mineral egg color light 	BBB79C 	{{Mineral egg color light}}
+Mineral egg color 	979067 	{{Mineral egg color}}
+Mineral egg color dark 	625E43 	{{Mineral egg color dark}}
+Amorphous egg color light 	C1AEDE 	{{Amorphous egg color light}}
+Amorphous egg color 	9F82CC 	{{Amorphous egg color}}
+Amorphous egg color dark 	675585 	{{Amorphous egg color dark}}
+Water 2 egg color light 	8AB9F3 	{{Water 2 egg color light}}
+Water 2 egg color 	4B94ED 	{{Water 2 egg color}}
+Water 2 egg color dark 	31609A 	{{Water 2 egg color dark}}
+Ditto egg color light 	D0C8E4 	{{Ditto egg color light}}
+Ditto egg color 	B6AAD5 	{{Ditto egg color}}
+Ditto egg color dark 	766F8A 	{{Ditto egg color dark}}
+Dragon egg color light 	9692D5 	{{Dragon egg color light}}
+Dragon egg color 	5E57BF 	{{Dragon egg color}}
+Dragon egg color dark 	3D397C 	{{Dragon egg color dark}}
+No Eggs Discovered egg color light 	F5E059 	{{No Eggs Discovered egg color light}}
+No Eggs Discovered egg color 	EFCF00 	{{No Eggs Discovered egg color}}
+No Eggs Discovered egg color dark 	9B8700 	{{No Eggs Discovered egg color dark}}

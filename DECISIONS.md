@@ -6,6 +6,72 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-14, slice shape (goal, done-condition, end-goal test before any build) is repo-wide; the gym-leader-ai branch rules become history (Jess)](docs/decisions/2026-11-14-slice-shape-is-repo-wide.md)
+- [2026-11-14, structural review: files new on a branch count against the 1000-line rule; F2, F4, F7 before the merge, F1, F3, F5, F6 as issues (Jess)](docs/decisions/2026-11-14-structural-review-new-files-count.md)
+- [2026-11-14, gyms 3 to 8 migrate after feature/gym-leader-ai merges, on their own branch off main, after the Brock and Misty tuning (Jess)](docs/decisions/2026-11-14-gyms-3-to-8-migrate-after-merge.md)
+- [2026-11-14, tests check relations (parity, does what it says, wiring, shape), never a hard number or tuning data (Jess)](docs/decisions/2026-11-14-tests-check-relations-not-values.md)
+- [2026-11-14, #39 closes on the feel test (distinct, overtuned); 39b is not filed; Brock and Misty tuning moves to a balance issue (Jess)](docs/decisions/2026-11-14-39-closes-on-feel-test-no-39b.md)
+- [2026-11-14, 39a: planner input and output checks replace the duel profile; the counter-play, learning and sharpness duels are retired, since their scripted you stood still (Jess)](docs/decisions/2026-11-14-39-planner-checks-replace-duels.md)
+- [2026-11-14, Bait parked in code: the goal choice skips it until #60 rules; it ran 97 to 98% of the time (Jess)](docs/decisions/2026-11-14-bait-parked-in-code.md)
+- [2026-11-14, #39 opening: 39a authors goal weights and tag multipliers for Brock and Misty, signature actions split to 39b, a seeded duel profile checks "distinct" (Jess)](docs/decisions/2026-11-14-39-opening-split-and-profile-test.md)
+- [2026-11-13, #53: a trigger's set may not name intelligence; a set reflex keeps the 0.1 s floor (Jess)](docs/decisions/2026-11-13-53-trigger-sets-refuse-intelligence-keep-reflex-floor.md), built in #53
+- [2026-11-13, #53: the gyms-only search guard allows misjudge (Jess)](docs/decisions/2026-11-13-53-judgment-guard-allows-misjudge.md), built in #53
+- [2026-11-13, #53: one intelligence score per leader (base + per-loop growth) drives misjudge, reflex, dodgeRead, memoryUse and aimError through two-line curves that never reach perfect, with overrides; misjudge about 0.1 by default (Jess)](docs/decisions/2026-11-13-53-leader-intelligence-one-score-with-overrides.md), to build in #53
+- [2026-11-13, #104c: Learn says "Lessons Learned, Returning Home" for 2 s; every toast takes the main menu bars' charcoal and teal look (Jess)](docs/decisions/2026-11-13-104c-learn-toast-and-shared-toast-look.md), built in #104
+- [2026-11-13, #104 EV screen: click 1, Shift-click 10, hold to repeat; the old allocation screen retired; the shared dialog for now (Jess)](docs/decisions/2026-11-13-104-ev-screen-giving-and-old-screen-retired.md), built in #104
+- [2026-11-12, End of run: End Run screen, Run Review, EV screen redesign; quitting gives no EVs (Jess)](docs/decisions/2026-11-12-end-of-run-screens-and-no-evs-on-quit.md), to build in #92, #103, #104
+- [2026-11-12, Every hover tooltip is the topmost layer; the pause menu draws all of its tooltips in one shared layer (Jess)](docs/decisions/2026-11-12-every-tooltip-is-the-topmost-layer.md), built in the pause menu, the rest in an issue
+- [2026-11-12, #83: Cards Taken is the DPS panel's count list, filtered to the cards that touch this Pokemon; the move tooltip shows what the cards changed, before and after (Jess)](docs/decisions/2026-11-12-83-cards-taken-counts-and-move-tooltip-changes.md), built in #83
+- [2026-11-12, Acquisition: no gacha; catch Stage 1s in runs (UberElite, Pokeball Belt, Flee meter), evolve by Gym Leader candy, legendaries by loop clear (Jess)](docs/decisions/2026-11-12-acquisition-no-gacha-catch-candy-legendaries.md), direction only, A1 to A15 open
+- [2026-11-12, Region type maps: 8 type maps (all 18 types, 2-3 each) + a Stage 3 map per region, on-type first then off-type fill, own gen first (Jess)](docs/decisions/2026-11-12-region-type-maps-fill-rules.md), design only, D4 to D16 open
+- [2026-11-12, #90, #94, #98: the Temporary Pocket takes berries and run items, hex +X% under the number on the side corners, run item name inside its card (Jess)](docs/decisions/2026-11-12-90-pocket-takes-berries-and-run-items.md), built in #90, #94, #98
+- [2026-11-11, #90 and #96: Run Inventory grids, Temporary Pocket, click and drag held item moves, the pocket prompt in the ball, berry slots in the Shop (Jess)](docs/decisions/2026-11-11-90-run-inventory-pocket-and-item-moves.md), built in #90 and #96
+- [2026-11-11, #89: the pause menu's detail and team panels, and the stat hex in real stats with growing bands (Jess)](docs/decisions/2026-11-11-89-pause-menu-detail-panel-and-stat-hex.md), built in #89
+- [2026-11-11, #82 and #88: the Poke Ball pause menu, its timings and the End Run question inside the ball (Jess)](docs/decisions/2026-11-11-88-pause-menu-shell.md), built in #88
+- [2026-11-11, side features branch off feature/gym-leader-ai and merge back (Jess)](docs/decisions/2026-11-11-side-branches-off-gym-leader-ai.md), in the branch rules
+- [2026-11-11, #84: upgrade card renames, speed framing for the dividing cards, All Damage Up at +5% (Jess)](docs/decisions/2026-11-11-84-upgrade-card-names-and-speed-framing.md), build in #84
+- [2026-11-11, #68 and #81: type-coloured text on the map uses Light; type chips in the reference-sheet style (Jess)](docs/decisions/2026-11-11-81-type-chips-and-type-text-on-the-map.md), built in #68 and #81
+- [2026-11-11, #76: timed effects join the status chips in a good band and a bad band (Jess)](docs/decisions/2026-11-11-76-effect-chips-in-good-and-bad-bands.md), build #76
+- [2026-11-10, Level up: the number rattles while you play, then the cards open with confetti (Jess)](docs/decisions/2026-11-10-level-up-rattle-then-cards-with-confetti.md), build #62
+- [2026-11-10, Character info panel look (#62), and #61 as a soft dependency (Jess)](docs/decisions/2026-11-10-character-panel-look.md), build #62
+- [2026-11-10, HUD pilot look: enemy name bar and leader circles (Jess)](docs/decisions/2026-11-10-hud-pilot-name-bar-and-leader-circles.md), build #64
+- [2026-11-10, HUD portraits are SpriteCollab's Normal face, normal and shiny only (Jess)](docs/decisions/2026-11-10-hud-portraits-spritecollab-normal-face.md), build #62 to #64
+- [2026-11-10, The HUD palette is a working palette, every colour labelled with a job (Jess)](docs/decisions/2026-11-10-hud-palette-is-a-working-palette.md), build #61 to #67
+- [2026-11-10, The Bulbapedia SV type palette is canonical for the HUD and all UI (Jess)](docs/decisions/2026-11-10-sv-type-palette-canonical-for-ui.md), build #68 and #69
+- [2026-11-10, The HUD is a Preact overlay; PNGs are a design basis, not shipped art (Jess)](docs/decisions/2026-11-10-hud-on-preact-and-pngs-as-design-basis.md), build #61 to #67
+- [2026-11-10, HUD sizes are fixed pixels, taken from the mockup at 1080p (Jess)](docs/decisions/2026-11-10-hud-fixed-sizes-from-the-1080p-mockup.md), build #35 and later HUD slices
+- [2026-11-09, #59: a reflex dodge weighs the plan it would break; duels count shots avoided; Bait parked (Jess)](docs/decisions/2026-11-09-59-reflex-weighs-the-plan-bait-parked.md), build #59
+- [2026-11-09, #52 build: a swap's matchup over the long window, the duels' shape, planner cost (Jess)](docs/decisions/2026-11-09-52-swap-matchup-window-and-duels.md), build #52
+- [2026-11-09, #52 opening: stall guards stay gates, the planned dodge's cost, what a swap is worth (Jess)](docs/decisions/2026-11-09-52-opening-stall-guards-dodge-cost-swap-value.md), build #52
+- [2026-11-09, #51 build calls (a) to (d) approved; the two planner gaps filed (Jess)](docs/decisions/2026-11-09-51-build-calls-approved.md), built in #51, gaps #57 #58
+- [2026-11-09, #51 opening: slot stance ignored, parity traces retired, the `set` trigger kept (Jess)](docs/decisions/2026-11-09-51-opening-stance-traces-and-set-trigger.md), build #51
+- [2026-11-09, #50 opening: the cooldown window's `memoryUse` reading and its code baseline (Jess)](docs/decisions/2026-11-09-50-cooldown-window-memoryuse-and-baseline.md), build #50
+- [2026-11-09, #49: misjudgment, and leader sharpness grows with the loop (Jess)](docs/decisions/2026-11-09-49-leader-sharpness-base-plus-loop-growth.md), build #49, authored in #39
+- [2026-11-09, #49: the Decider is utility goals plus a GOAP planner (Jess)](docs/decisions/2026-11-09-49-decider-is-utility-goals-plus-goap-planner.md), build #49
+- [2026-11-09, #47 splits; the Decider becomes a full utility AI (Jess)](docs/decisions/2026-11-09-47-split-and-utility-ai-overhaul.md), build #47 (47a) and #49 (47b)
+- [2026-11-09, #43 opening: the movement split in two steps (Jess)](docs/decisions/2026-11-09-43-movement-split-opening.md), build #43
+- [2026-11-09, #42 item 11: a leader's attacks wait on your cast gate (Jess)](docs/decisions/2026-11-09-42-leader-attacks-wait-on-your-cast-gate.md), build #47
+- [2026-11-09, #42 item 14: two sides, HumanPlayers and everyone else (Jess)](docs/decisions/2026-11-09-42-sides-humanplayer-and-everyone-else.md), build #46
+- [2026-11-09, #42 item 15: a leader's autoShake is your accessibility setting, on (Jess)](docs/decisions/2026-11-09-42-leader-auto-shake-is-your-accessibility-setting.md)
+- [2026-11-09, #42 item 13: one swap clock and one swap point, in your order (Jess)](docs/decisions/2026-11-09-42-one-swap-clock-and-one-swap-point.md), folded into #43
+- [2026-11-09, #42 item 12: the strongHost flag is removed (Jess)](docs/decisions/2026-11-09-42-strong-host-flag-removed.md), build #45
+- [2026-11-09, Slice 8 DPS report (Q10) closed as superseded (Jess)](docs/decisions/2026-11-09-slice-8-dps-report-q10-closed-as-superseded.md)
+- [2026-11-09, #41: the Caster splits into Body and SimPass; a bonded group fires as yours (Jess)](docs/decisions/2026-11-09-41-the-caster-splits-into-body-and-sim-pass.md), built in #41
+- [2026-11-09, The leader's AI chooses its attacks; fixed differences take your baseline (Jess)](docs/decisions/2026-11-09-the-leader-ai-chooses-its-attacks.md), rules #42 item 10 and #41 items 5, 6; built in #41
+- [2026-11-09, Authoring layers: Player, then class, then instance (Jess)](docs/decisions/2026-11-09-authoring-layers-player-class-instance.md)
+- [2026-11-09, Four roles: Decider, Controller, Body, SimPass (Jess)](docs/decisions/2026-11-09-four-roles-decider-controller-body-sim-pass.md), code gap in #43
+- [2026-11-09, Every Player entity runs one flow: decide, hands, body, sim pass (Jess)](docs/decisions/2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim.md), shapes #40
+- [2026-11-09, A leader's first-attack wait defaults to 0, like you (Jess)](docs/decisions/2026-11-09-leader-first-attack-wait-defaults-to-0.md), built in #40
+- [2026-11-09, A stunned leader keeps its timers running, like you (Jess)](docs/decisions/2026-11-09-a-stunned-leader-keeps-its-timers-running-like-you.md), fix in #40 (widened: leader frame takes your shape), follow-ups #41 #42
+- [2026-11-08, Leader AI slice 5a shipped (Jess)](docs/decisions/2026-11-08-leader-ai-slice-5a-shipped.md)
+- [2026-11-08, Leader AI slice 5 split: GymBrain out first, then personalities (Jess)](docs/decisions/2026-11-08-leader-ai-slice-5-split-gymbrain-out-first-then-personalities.md)
+- [2026-11-08, Leader AI slice 4 shipped (Jess)](docs/decisions/2026-11-08-leader-ai-slice-4-shipped.md)
+- [2026-11-08, Leader AI slice 4 opened; the usual lead is the first exploit (Jess)](docs/decisions/2026-11-08-leader-ai-slice-4-opened-the-usual-lead-is-the-first-exploit.md)
+- [2026-11-08, Leader AI slice 3 shipped (Jess)](docs/decisions/2026-11-08-leader-ai-slice-3-shipped.md)
+- [2026-11-08, Leader AI slice 3 opened; a breather is back off plus slot choice (Jess)](docs/decisions/2026-11-08-leader-ai-slice-3-opened-breather-is-back-off-plus-slot-choice.md)
+- [2026-11-08, Leader AI slice 2 shipped; tell reading approved (Jess)](docs/decisions/2026-11-08-leader-ai-slice-2-shipped-tell-reading-approved.md)
+- [2026-11-08, Korataki is personal-use only; Michroma replaces it (Jess)](docs/decisions/2026-11-08-korataki-is-personal-use-only-michroma-replaces-it.md)
+- [2026-11-08, Leader AI: an AI player through your controls (Jess)](docs/decisions/2026-11-08-leader-ai-an-ai-player-through-your-controls.md)
 - [2026-11-07, Slice 7b: team items and Regen on leaders (Jess)](docs/decisions/2026-11-07-slice-7b-team-items-and-regen-on-leaders.md)
 - [2026-11-07, Slice 7a: a leader fields its team, one mon at a time (Jess)](docs/decisions/2026-11-07-slice-7a-a-leader-fields-its-team-one-mon-at-a-time.md)
 - [2026-11-07, Slice 6 built: leader stats, cards, items and restrictions (Jess)](docs/decisions/2026-11-07-slice-6-built-leader-stats-cards-items-and-restrictions.md)
