@@ -149,6 +149,11 @@ in English. Do not add those new English strings to `lang-en.js`.
   `run-ui.js`, `social-ui.js`, `ranking-ui.js`, `settings-ui.js`, `goals-ui.js`,
   `layout-ui.js`, `mod-ui.js`, `news-ui.js`, `slots.js` (gacha slot machine),
   `support-ui.js`.
+- The HTML HUD: the kit `hud-kit.js` (`G.HudKit`: library check, palette, shapes, buttons, cursor, portraits),
+  `hud-kit-items.js` (tooltip layer, scroll box, item pieces), `hud-kit-hp-bars.js` (roster card, dark HP bar) and
+  `hud-kit-chips.js` (status and effect chips), each reading only `G.HudKit`; then `hud-overlay.js` (`G.HudOverlay`:
+  mounts the layer, joins the four into `G.HudOverlay.kit`, the per-frame read), then the `hud-*-panel.js` panels and
+  the pause, End Run and EV screens, which read only `G.HudOverlay.kit` (docs/HUD-STYLE.md).
 
 ### Top level
 - `game.js` the main flow and game loop (`G.Game` / `G.Flow`).
