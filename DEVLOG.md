@@ -294,3 +294,14 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - check.js: only the two #30 harnesses red; the mutant result was not reported here. Feel test passed; #53 closed.
 - Filed #107 (trigger set limits). Context steering for leaders considered and skipped (movement feels fine).
 - Stopped at: #39 next (open the slice: goal, done-condition, test).
+
+## 2026-11-14 morning (Quick, work), 39a built and closed; Bait parked; #30 green; tests check relations
+- 39a: goal weights and tag multipliers authorable and wired to the planner; Brock (wall) and Misty (tempo) authored.
+  Feel test: distinct, overtuned (Brock closes in too much, Misty runs too much); tuning moves to a balance issue.
+  #39 closed; 39b not to be filed (#108 was filed from the first draft: close it).
+- Decided: Bait parked in code (it won 97 to 98% of think ticks for every leader); fight-simulation tests dropped
+  (their scripted player stood still); tests check relations, not values (TEST-FIRST step 3, CLAUDE.md move rule).
+- Broke and fixed: the validator read #53's limits from a placeholder G.LeaderAI; two #59 mutants lost their only
+  catchers when the duels went (section 9 checks added); 4 leader-stats mutants targeted the old brain (retargeted).
+- #30: check.js all passed. Tools: test leaders, MUTATE_ONLY, failure-only harness output. Plan pages now dark HTML.
+- Stopped at: gyms 3 to 8 (merge first or migrate first), then the structural review and the merge.

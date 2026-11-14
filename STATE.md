@@ -1,40 +1,40 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-13 evening, Quick (work). Branch: feature/gym-leader-ai (rules:
+Last updated: 2026-11-14 morning, Quick (work). Branch: feature/gym-leader-ai (rules:
 docs/branch-rules/feature-gym-leader-ai.md).
 
 ## START HERE (next session, either tool)
-1. #39 personalities (5b): open the slice first (goal, how we know it is done, the test; branch rules "Slice shape"),
-   then a plan with the coding-principles plan check. It builds on #53's intelligence, overrides and growth.
-2. Then #30 (the two red harnesses), then a structural review of the branch against main, then gym-leader-ai
-   merges to main.
-3. #49: all four build slices shipped (#50 to #53); its Bait end-goal is blocked on #60. Close it, or keep it on #60.
-4. Acquisition parent issue (TODO Next 4). Triage (TODO Next 5).
+1. GitHub: run cards B (balance issue), C (#60 comment) and F (test sweep issue) in
+   docs/ASCII Concept Maps/39 - Issue Drafts.html; close #30 (check.js passes); close #108 (39b) as not planned,
+   since the ruling is not to file it (decision 2026-11-14-39-closes-on-feel-test-no-39b). #39 is closed.
+2. Gyms 3 to 8: merge first and migrate after, or migrate on this branch first. #30 went green without migrating,
+   so "merge first" is open. Then fix docs/proposals/host-model-plan.md line 152, which disagrees with the branch rules.
+3. Full leader-ai-mutate run (--full; not rerun since 16f was rewritten), then the structural review against main,
+   then the merge.
+4. Brock and Misty tuning (the balance issue); starting notes: 39a - Feel Test Retune Plan.html (not approved).
 
 ## Where we are
-- #53 built and closed 2026-11-13: one intelligence per leader drives misjudge, reflex, dodgeRead, memoryUse and
-  aimError; misjudge 0.1 and aimError 10 px at the default. Maps "53 - Intelligence and Misjudge Build Plan", "53 - Plan
-  Check". Rulings: decisions 2026-11-13-53-trigger-sets-refuse-intelligence-keep-reflex-floor and
-  2026-11-13-53-judgment-guard-allows-misjudge.
-- New agent skills in .claude/skills: coding-principles (every plan and approved change), structural-review (the
-  pre-merge gate), writing-check (human-facing prose), review-feedback (acting on review findings).
-- Leader AI refresher: docs/gym-leader-ai-map.html, map "Gym Leader AI - Refresher Map".
+- 39a built and closed: goal weights and tag multipliers authorable; Brock a wall, Misty tempo; feel test: distinct,
+  overtuned. Bait parked in code (decision 2026-11-14-bait-parked-in-code; it won 97 to 98% of think ticks).
+- Tests check relations, not values (docs/TEST-FIRST.md step 3, decision 2026-11-14-tests-check-relations-not-values;
+  the Move review rule follows it). Mechanics harnesses fight test leaders (tools/test-leaders.js). 16e counter-play,
+  learning and sharpness duels retired (their scripted player stood still).
+- #30 met: check.js all passed; gym-harness's card count removed; the Zinc check sat on Tackle (melee cushion).
+- Tools: MUTATE_ONLY=word,word in tools/mutate-runner.js; harnesses print only failures.
+- Plan and map pages are now dark HTML in docs/ASCII Concept Maps/ (not .txt).
 
 ## Watch
-- leader-ai.js is 1086 lines (over 1000 before #53); the structural review flags a branch adding about 100 to it.
-- #53's mutant run result was not reported to Quick; if unsure, rerun leader-ai-mutate.js.
-- smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83. Unfiled.
-- Quick has no node or browser; check.js on the machine is truth.
-- Jess's Git Bash: noclobber is on (use >|), and node output cannot be piped or redirected (winpty).
-  For mutate results use MUTATE_JSON=<file>, or Jess reads the summary lines.
-- Quick writing to the device: use `with open` and read it back.
-- Keep new code within 120 columns and run npm run format before the mutate runners.
+- Brock 13 and Misty 16 card stacks at level 12, over the 11 a player could hold; warns every run, not filed.
+- leader-ai.js 1090 lines, gyms.js about 1254: the structural review flags both.
+- A full leader-ai-mutate run takes about 22 min; inside a slice use MUTATE_ONLY.
+- Quick writing to the device: read the file back in a separate call (a write once failed to land).
+- Jess's Git Bash: noclobber is on (use >|); node output cannot be piped or redirected (winpty).
 - GitHub from Quick: api.github.com/search/issues?q=repo:Jess-Rivera/pokesurvivor_fork+is:issue+is:open.
 
 ## Open owner decisions
-- Acquisition: Accelgor route, Kingambit rule, Gholdengo source, R1 Shedinja, R4 Alcremie N, ball tiers,
-  UberElite time limit. #86; #93; #99 menu font (buttons); #97 (blocks #95); #60 Bait; #107 (refuse or rebuild the
-  bag); #49 close or keep.
+- Gyms 3 to 8 timing (above). #107 (refuse or rebuild the bag); #86; #99; #93; #97 (blocks #95); #60 Bait.
+- Acquisition: Accelgor route, Kingambit rule, Gholdengo source, R1 Shedinja, R4 Alcremie N, ball tiers, UberElite
+  time limit.
 
-Rules: CLAUDE.md. Maps today: docs/ASCII Concept Maps/ (53 x4, 104, 104b, 104c, 82, Gym Leader AI).
+Rules: CLAUDE.md. Today's pages: docs/ASCII Concept Maps/ (39 x2, 39a x2, 39 - Issue Drafts).
