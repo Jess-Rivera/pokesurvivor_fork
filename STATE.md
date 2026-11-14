@@ -1,42 +1,35 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-14 afternoon, Quick (work). Branch: balance/109-template-check. No branch rules file is live.
+Last updated: 2026-11-14 evening, Quick (work). Branch: balance/109-template-check (off main). No branch rules file.
 
 ## START HERE (next session, either tool)
-1. #109 template check, on balance/109-template-check. Target feel agreed (decision 2026-11-14-109-brock-and-misty-target-feel).
-   Round 1 numbers and T3 (a trigger may set goal weights) built, check.js green. The decision trace
-   (js/core/debug-leader-trace.js, G.Debug.leaderTrace and leaderMark) is written. Round 1 traced: both leaders walk in
-   to Tackle because the planner scores a multi-projectile shot as one projectile ("109 - Round 1 Trace Findings.md").
-   Feel: Brock stable, Misty clings. "109 - Leader Reads Its Whole Kit Plan.md" approved (K1 to K4) and written, check.js
-   pending (harness 16i, six mutants). Next: check.js, then rerun round 1's numbers unchanged with the trace.
-   Maps: "109 - ..." in docs/ASCII Concept Maps/.
-2. #49 (utility-AI Decider): close it or keep it as the umbrella. Jess rules.
-3. Any time: #121 (move-system dev tools out of debug.js, 1346 lines), #120 (planner verb test gap), #110, #57, #58.
-4. #111 host-model slice 12 (gyms 3 to 8) after #109, one gym per session, its own branch. Then #122, the tuning pass.
+1. #109: rule the Decider scale fix before any round 2 numbers. Finish wins on cost, so goal weights cannot move it
+   (Brock Finish 81%, Misty 60% at the natural gate). Options: (1) weights scale the whole score (recommended),
+   (2) per-leader cost profiles, (3) raise base values. A rule change: prose plan first. Evidence: docs/ASCII Concept
+   Maps/109 - Round 1 Trace Findings.md (top section).
+2. Then rerun round 1's numbers with the trace (natural 4:00 gate, Misty's 4 min later), then round 2 if needed.
+3. #111 after #109, then #122. Any time: #121, #120, #110, #57, #58.
 
-## Where we are
-- Merged 2026-11-14: feature/gym-leader-ai (Brock wall, Misty tempo, on the utility-AI Decider; the HUD and pause
-  work; the relations test rule). Then the structural review follow-ups: F1 HUD kit split (hud-overlay.js 137 lines
-  plus four hud-kit files), F3 planner STEP_BY_VERB table, F6 dev tools into debug-run-screens.js and
-  debug-leader.js. F2, F4, F7 landed before the merge; F5 ruled not done.
-- check.js all passed on main; full leader-ai-mutate passed; feel tests clean (Jess).
-- Rulings: gyms 3 to 8 after the merge; new files count against the 1000-line rule; slice shape repo-wide; non-code
-  outputs are Mermaid .md (CLAUDE.md "Output format"); the split debug files stay out of NEED.
+## Where we are on the branch
+- Target feel agreed: Brock a ranged wall, Misty a fast aggressor (decision 2026-11-14-109-brock-and-misty-target-feel).
+- Built: round 1 numbers; T3 (a trigger may set goal weights, merged); the dev decision trace (G.Debug.leaderTrace,
+  leaderMark; js/core/debug-leader-trace.js); the whole-kit read (Belief sizes its own hit from the real hit contract,
+  every projectile of a fan, its own defense; K1 to K4). leader-ai-harness 682 passed; check.js reported clean.
+- Traces in tools/cache/ (git-ignored). Ranged moves now win and Brock holds; the scale problem above remains.
 
 ## Watch
-- Brock 13 and Misty 16 card stacks at level 12, over the 11 a player could hold (#122 checks it).
-- GymBrain and the AI player both live on main until slice 12: no features on the old brain.
-- smoke-status-fx's frame check failed once on the work machine (28 ms vs 16.7 bare); trust it with a real GPU.
-- Merge messages go in tools/cache/merge-msg.txt with -F <file>; git merge -F - does not read stdin.
-- Refactor parity: copy the old file to tools/cache first, as tools/planner-step-parity.js does.
-- Quick writing to the device: read the file back. Git Bash: noclobber is on (use >|); node output cannot be piped.
-- GitHub from Quick: the REST API comes back excerpted; for the board, Jess runs the catch-up gh block into
-  tools/cache/catchup.txt.
+- G.Debug.gym(n) at 0:00 makes a level 5 leader with its full loop 1 card pool. Test at the natural gate.
+- The trace does not record the leader's level; add it with the next trace change.
+- 16i has no parity check of the leader's hit estimate against a real hit on a plain player (planned, not built).
+- buffValue still sizes an attack buff visible-only (follow-up).
+- Brock 13 and Misty 16 card stacks over the 11 a player holds at 12 (#122).
+- smoke-status-fx frame check flaky on the work machine. Quick writes to the device: read the file back.
+- Merge messages: -F <file>, not stdin. GitHub from Quick: one issue per REST call (lists come back excerpted).
 
 ## Open owner decisions
-- #49. #107 (refuse or rebuild the bag); #86; #99; #93; #97 (blocks #95); #60 Bait.
-- Acquisition: Accelgor route, Kingambit rule, Gholdengo source, R1 Shedinja, R4 Alcremie N, ball tiers, UberElite
-  time limit.
+- The #109 scale fix (above). #49. #107 (trigger limits; T3 used the authored limits for goal weights only). #86; #99;
+  #93; #97 (blocks #95); #60 Bait. Acquisition: Accelgor, Kingambit, Gholdengo, R1 Shedinja, R4 Alcremie N, ball tiers,
+  UberElite time limit.
 
 Rules: CLAUDE.md.

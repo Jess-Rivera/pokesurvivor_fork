@@ -318,3 +318,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Broke: the first merge never ran (git merge -F - does not read stdin), so check.js showed old main's Misty fails.
   smoke-status-fx's frame check failed once on the work machine (GPU). Every check.js run passed after.
 - Stopped at: main clean. Next: open the Brock and Misty tuning slice; rule #49.
+
+## 2026-11-14 evening (Quick, work), #109 template check on balance/109-template-check
+- Ordering ruled: template check, gyms 3 to 8, then one eight-gym tuning pass (#122 filed). Target feel ruled from canon:
+  Brock a ranged wall, Misty a fast aggressor. Board drift fixed (#112 to #115 closed, blocked-by links set).
+- Built (js/ touched): round 1 numbers; a trigger may set goal weights (T3, merged); the dev decision trace; the leader
+  reads its whole kit (attackTerms shared with the real hit, fan projectiles, its own defense). 16f-g, 16h, 16i, 13 mutants.
+- Broke and fixed: 16f-g read before its trigger fired. My trace misreads (a level 12 Brock, a 4% hit) were wrong.
+- Found: Finish wins on cost, so goal weights cannot move it. Stopped at: Jess to rule the Decider scale fix.
