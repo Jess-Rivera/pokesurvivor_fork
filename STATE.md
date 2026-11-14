@@ -9,8 +9,7 @@ its branch rules file is history. No branch rules file is live.
 2. Brock and Misty tuning (the balance issue) on its own branch off main. Starting notes, not approved:
    docs/ASCII Concept Maps/39a - Feel Test Retune Plan.html. It opens with goal, done-check and test (CLAUDE.md
    "Slice shape").
-3. F3 built 2026-11-14 on refactor/planner-verb-table (F3 - Planner Verb Table Plan.md): Jess runs format, check.js,
-   tools/planner-step-parity.js, the swap mutants, a feel test; then merge. F5, F6 any time.
+3. Review follow-up F6 (debug.js split), any time; F5 ruled not done. The planner verb test gap issue is filed.
 4. Host-model slice 12 (gyms 3 to 8, parent issue) after the tuning, one gym per session, its own branch.
 
 ## Where we are
@@ -20,6 +19,8 @@ its branch rules file is history. No branch rules file is live.
 - check.js all passed, full leader-ai-mutate passed, the moved mutants caught, feel test clean (Jess, 2026-11-14).
 - F1 merged 2026-11-14: hud-overlay.js (137 lines) plus hud-kit.js, hud-kit-items.js, hud-kit-hp-bars.js and
   hud-kit-chips.js; the kit holds the 38 names its readers take; smoke-hud-overlay checks the wiring.
+- F3 merged 2026-11-14: leader-planner.js applyAction is a STEP_BY_VERB lookup (one handler per verb);
+  tools/planner-step-parity.js compares a planner before and after a refactor (copy the old one to tools/cache).
 - GitHub cleanup 2026-11-14: #30 and #108 closed; balance, test sweep, slice 12 and F1/F3/F5/F6 issues filed.
 - Rulings today: gyms 3 to 8 after the merge; new files count against the 1000-line rule; slice shape repo-wide;
   non-code outputs are Mermaid .md in docs/ASCII Concept Maps/ (CLAUDE.md "Output format").
