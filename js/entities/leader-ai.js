@@ -264,6 +264,8 @@ G.LeaderAI = class LeaderAI {
       );
     this.world = world;
     this.choice = choice;
+    // #109, dev only: the decision trace (js/core/debug-leader-trace.js) keeps this choice and its inputs
+    if (LeaderAI.recorder) LeaderAI.recorder(this, why);
     const pick = choice.pick;
     if (!pick) {
       this.plan = null;
@@ -284,6 +286,7 @@ G.LeaderAI = class LeaderAI {
       lastT: keep ? was.lastT : this.timersOf(e, pick.steps[0]),
       pressed: keep && was.pressed === was.at ? 0 : -1, // #52: a kept action's one press is not made twice
       value: pick.value,
+      weight: pick.weight,
       cost: pick.cost,
     };
     // #52: a kept dash or planned dodge follows its action into the new plan; a dropped one is abandoned
@@ -662,8 +665,9 @@ G.LeaderAI = class LeaderAI {
     this.dodgeAnswer = true;
     this.note('dodge', (planned ? 'planned, ' : '') + 'pressed against ' + th.moveId, { serial: th.serial });
   }
-  /** #59 REFLEX: what the running plan is worth (its value minus its cost) while it still has a Dodge your shot step ahead that has
-   *  not been answered; 0 when it has none, or when the plan is worth nothing. */
+  /** #59 REFLEX: what the running plan is worth (its value minus its cost, scaled by its goal's utility as the planner scores it,
+   *  #109) while it still has a Dodge your shot step ahead that has not been answered; 0 when it has none, or when the plan is
+   *  worth nothing. */
   plannedDodgeWorth() {
     const plan = this.plan,
       x = this.expect;
@@ -671,7 +675,9 @@ G.LeaderAI = class LeaderAI {
     const ahead = plan.steps.some(
       (s, i) => i >= plan.at && s.verb === 'dodge' && !(x && x.plan === plan && x.at === i && x.done)
     );
-    return ahead ? Math.max(0, (plan.value || 0) - (plan.cost || 0)) : 0;
+    if (!ahead) return 0;
+    const net = (plan.value || 0) - (plan.cost || 0);
+    return Math.max(0, G.LeaderPlanner.weightedScore(net, plan.weight != null ? plan.weight : 1));
   }
   /** #52 REFLEX: a dodge that would spend down to dodgeReserve, as a score: your hit (its size on the planner's last world, your
    *  best hit when it is not there) x the current goal's damage-taken weight x risk, against the charge kept back (your best hit x
@@ -756,11 +762,14 @@ G.LeaderAI = class LeaderAI {
       }
     }
   }
-  /** One line for the ?dev overlay: confidence, effective aggression and the goal it runs (#51). */
+  /** One line for the ?dev overlay: the fight clock (#109, so a moment matches the decision trace), confidence,
+   *  effective aggression and the goal it runs (#51). */
   status() {
     const p = this.plan;
     return (
-      'conf ' +
+      't ' +
+      this.clock.toFixed(1) +
+      ' s  conf ' +
       this.conf.toFixed(2) +
       '  aggr ' +
       this.aggr().toFixed(2) +
@@ -867,7 +876,9 @@ G.LeaderAI = class LeaderAI {
           until = d.for != null ? this.clock + d.for : Infinity;
         if (had) had.until = until;
         else this.temp.push({ k, old: this.set[k], until });
-        this.set[k] = d.set[k];
+        // #109 T3: a trigger's goal weights change only the goals it names, merged into the table in force (a new
+        // object, so the gym's own table is never written); the restore above puts the old table back whole
+        this.set[k] = k === 'goalWeights' ? Object.assign({}, this.set[k], d.set[k]) : d.set[k];
       }
     }
   }

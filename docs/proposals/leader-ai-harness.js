@@ -2117,13 +2117,14 @@ if (G.LeaderPlanner) {
     ok(!of(c, 'kite') && !of(c, 'maintain') && !of(c, 'bait'), '15b: a lone jab cannot outreach you, hold your range or bait: no Kite, Maintain or Bait');
   }
 
-  // 15c. Finish: you at 8%: the jab's 0.1 KOs. Value 0.08 + 0.3 = 0.38; cost 0.3 x 0 - 1.5 x 0.1 + 0.01 x 0.95 = -0.1405; 0.5205.
+  // 15c. Finish: you at 8%: the jab's 0.1 KOs. Value 0.08 + 0.3 = 0.38; cost 0.3 x 0 - 1.5 x 0.08 + 0.01 x 0.95 = -0.1105 (only your
+  // 0.08 is dealt, #109 overkill cap; it was 0.1 before); 0.4905.
   // You at 80%: no 4-step plan deals 0.8. Its best partial plan: close, then three jabs (each recast waits its 2 s): 0.3 dealt in
   // 0.95 + 2.5 + 2.5 = 5.95 s; value 0.3 (the KO bonus) x 0.3 / 0.8 = 0.1125, cost (dealt left out, flagged) 0.01 x 5.95 = 0.0595.
   {
     let c = P.choose(world({ you: { hpFraction: 0.08 } }));
     const fi = of(c, 'finish');
-    ok(c.pick.goal === 'finish' && near(fi.value, 0.38) && near(fi.score, 0.5205), '15c: you at 8%: Finish wins, value 0.38, score 0.5205: ' + c.pick.goal + ' ' + fi.score);
+    ok(c.pick.goal === 'finish' && near(fi.value, 0.38) && near(fi.score, 0.4905), '15c: you at 8%: Finish wins, value 0.38, score 0.4905: ' + c.pick.goal + ' ' + fi.score);
     c = P.choose(world({ you: { hpFraction: 0.8 } }));
     const part = of(c, 'finish');
     ok(part && part.partial && near(part.value, 0.1125) && near(part.cost, 0.0595) && part.steps.length === 4, '15c: you at 80%: partial credit, value 0.1125, cost 0.0595, 4 steps: ' + (part && [part.value, part.cost, text(part)].join(' ')));
@@ -2625,9 +2626,14 @@ if (G.LeaderPlanner) {
       blocked(completed >= 1, '16e: Bait emerges: Brock completes a draw (or wait for your Ember), dodge, use plan (' + completed + ' times; Ember cast ' + r.mainCasts + ' times)', 60);
       ok(r.punish >= 1, '16e: and lands hits while Ember cools: ' + r.punish + ' of ' + r.hits + ' hits');
       // the planned dodge goes through the bag and reflex: every dodge press follows a read threat by reflex or more
+      // The AI log keeps only its last LOG_N notes, so a dodge before the window's first threat note may have lost its threat note to
+      // the cap; only dodges after it are judged (#123: the new speeds moved the window's edge onto one)
       const notes = r.ai.log,
-        early = notes.filter((d) => d.act === 'dodge' && d.serial != null && !notes.some((x) => x.act === 'threat' && x.serial === d.serial && x.read));
-      ok(early.length === 0, '16e: every dodge answers a threat the bag read: ' + early.length + ' did not');
+        firstThreat = notes.findIndex((x) => x.act === 'threat'),
+        early = notes.filter((d, index) => index > firstThreat && firstThreat >= 0 && d.act === 'dodge' && d.serial != null &&
+          !notes.some((x) => x.act === 'threat' && x.serial === d.serial && x.read)),
+        judged = notes.filter((d, index) => index > firstThreat && firstThreat >= 0 && d.act === 'dodge').length;
+      ok(judged > 0 && early.length === 0, '16e: every dodge answers a threat the bag read: ' + early.length + ' of ' + judged + ' did not');
       // RETIRED 2026-11-14 (decision 2026-11-14-39-planner-checks-replace-duels): the counter-play, learning and #53 sharpness
       // duels. Their scripted you stands still and never dodges, so their numbers said nothing about how a player fights.
       // What they aimed at keeps direct checks: the cooldown window and its run memory (#50), the intelligence curves (17).
@@ -2650,31 +2656,62 @@ if (G.LeaderPlanner) {
           ['15e', () => D()],
           ['a buff against a physical shot', () => world({ moves: [jab(), defenseBuff], you: physical })],
         ];
-      // 16f-a. A goal weight of 2 raises its own goal by at least that goal's value at weight 1 (its old best plan is worth
-      // twice as much, at the same cost), never drops its rank, and leaves every other goal's score where it was.
-      const weightProblems = [];
+      // 16f-a. #109 (decision 2026-11-15-109-goal-weights-scale-the-whole-score): a goal weight scales the goal's whole score
+      // (value minus cost) when that is above 0. Weight 2 on a goal whose best plan nets above 0 makes its score exactly twice the
+      // weight 1 score, never drops its rank, and leaves every other goal's score where it was.
+      // 16f-a2. A goal whose best plan nets 0 or less keeps its score at any weight above 0 (a liked goal is never pushed down).
+      const weightProblems = [],
+        negativeProblems = [];
       for (const [label, make] of WORLDS) {
         const base = P.choose(make());
         for (const entry of base.ranking) {
           const raised = P.choose(Object.assign(make(), { goalWeights: { [entry.goal]: 2 } })),
-            up = of(raised, entry.goal);
-          if (!up || up.score < entry.score + entry.value - 1e-9 || rankOf(raised, entry.goal) > rankOf(base, entry.goal))
-            weightProblems.push(label + ', ' + entry.goal + ': ' + entry.score.toFixed(4) + ' rank ' + rankOf(base, entry.goal) +
+            up = of(raised, entry.goal),
+            expected = entry.score > 0 ? 2 * entry.score : entry.score,
+            problems = entry.score > 0 ? weightProblems : negativeProblems;
+          if (!up || !near(up.score, expected) || rankOf(raised, entry.goal) > rankOf(base, entry.goal))
+            problems.push(label + ', ' + entry.goal + ': ' + entry.score.toFixed(4) + ' rank ' + rankOf(base, entry.goal) +
               ' became ' + (up ? up.score.toFixed(4) + ' rank ' + rankOf(raised, entry.goal) : 'no plan'));
           for (const other of base.ranking)
             if (other.goal !== entry.goal && !(of(raised, other.goal) && near(of(raised, other.goal).score, other.score)))
               weightProblems.push(label + ', a weight on ' + entry.goal + ' moved ' + other.goal);
         }
       }
-      ok(!weightProblems.length, '16f-a: a goal weight raises only its own goal and never drops its rank: ' + weightProblems.join('; '));
-      // 16f-b. A goal weight of 0 leaves that goal worth nothing.
+      ok(!weightProblems.length, '16f-a: a goal weight scales its own goal\'s whole score and nothing else: ' + weightProblems.join('; '));
+      // the worlds above must hold a goal netting 0 or less, or 16f-a2 checks nothing
+      const anyNegative = WORLDS.some(([, make]) => P.choose(make()).ranking.some((entry) => entry.score <= 0));
+      ok(anyNegative && !negativeProblems.length, '16f-a2: a weight leaves a goal netting 0 or less where it was: ' +
+        (anyNegative ? negativeProblems.join('; ') : 'no world has such a goal'));
+      // 16f-b. A goal weight of 0 takes that goal out of the ranking.
       const zeroProblems = [];
       for (const [label, make] of WORLDS)
-        for (const entry of P.choose(make()).ranking) {
-          const zeroed = of(P.choose(Object.assign(make(), { goalWeights: { [entry.goal]: 0 } })), entry.goal);
-          if (zeroed && Math.abs(zeroed.value) > 1e-12) zeroProblems.push(label + ', ' + entry.goal + ' still worth ' + zeroed.value);
-        }
-      ok(!zeroProblems.length, '16f-b: a goal weight of 0 makes its goal worth nothing: ' + zeroProblems.join('; '));
+        for (const entry of P.choose(make()).ranking)
+          if (of(P.choose(Object.assign(make(), { goalWeights: { [entry.goal]: 0 } })), entry.goal))
+            zeroProblems.push(label + ', ' + entry.goal + ' still ranked');
+      ok(!zeroProblems.length, '16f-b: a goal weight of 0 takes its goal out of the ranking: ' + zeroProblems.join('; '));
+      // 16f-e. The dial is alive: in a world where Finish leads on its cost alone (a 0.3 hit KOs your 0.3 HP, so the damage it
+      // deals is most of its score), Endurance at the validator's top weight overtakes it. Under the old rule (weight on the
+      // value only) Endurance's 0.1 value at x3 could not close the gap.
+      {
+        const koWorld = () => world({ top: { distance: 40 }, moves: [jab({ hitFraction: 0.3 })], you: { hpFraction: 0.3 } }),
+          plain = P.choose(koWorld()),
+          maxWeight = 3, // the validator's top goal weight (gyms.js PERSONALITY_LIMITS)
+          walled = P.choose(Object.assign(koWorld(), { goalWeights: { endurance: maxWeight } }));
+        ok(plain.pick && plain.pick.goal === 'finish' && !!of(plain, 'endurance') && of(plain, 'endurance').score > 0,
+          '16f-e: the KO world starts with Finish on top and Endurance netting above 0: ' + (plain.pick && plain.pick.goal));
+        ok(walled.pick && walled.pick.goal === 'endurance', '16f-e: Endurance at weight ' + maxWeight + ' overtakes Finish: ' +
+          (walled.pick && walled.pick.goal) + ' ' + walled.ranking.map((c) => c.goal + ' ' + c.score.toFixed(3)).join(', '));
+      }
+      // 16f-g. #109 (trace findings 2026-11-15, "overkill counts as damage dealt"): a plan never counts more damage dealt than the
+      // HP you have left, so near a KO a long multi-hit plan of another goal cannot outscore Finish on overkill.
+      {
+        const nearKo = () => world({ top: { distance: 40 }, moves: [jab({ hitFraction: 0.3, cooldown: 0.5 })], you: { hpFraction: 0.05 } }),
+          choice = P.choose(nearKo()),
+          over = choice.ranking.filter((c) => c.steps.reduce((sum, step) => sum + step.dealt, 0) > 0.05 + 1e-9);
+        ok(!over.length, '16f-g: no plan counts more dealt than your HP left: ' + over.map((c) => c.goal + ' ' + text(c)).join('; '));
+        ok(choice.pick && choice.pick.goal === 'finish', '16f-g: near a KO, Finish is picked: ' +
+          choice.ranking.map((c) => c.goal + ' ' + c.score.toFixed(3)).join(', '));
+      }
       // 16f-c. Every tag a plan's steps carry at x2 doubles that plan's cost; x2 on a tag none of its steps carry changes nothing.
       const costProblems = [];
       for (const [label, make] of WORLDS)
@@ -2745,6 +2782,209 @@ if (G.LeaderPlanner) {
           !!plainWorld && plainWorld.goalWeights == null && plainWorld.tagMultipliers == null && plainWorld.preferredRange === AI.BASE.range,
           '16f-f: ' + name + "'s test leader carries no personality (range " + (plainWorld && plainWorld.preferredRange) + ')'
         );
+      }
+      // 16f-g (#109 T3, decision 2026-11-14-109-brock-and-misty-target-feel). A trigger's goal weights change only the goals
+      // it names, and the table in force before it comes back when its `for` runs out. Made-up tables on a test leader, so
+      // no tuning data is read; the gym's ai is put back whatever happens. A trigger waits out a tell or commitment, so the
+      // fight steps until it has fired (not to a fixed time), and the weights are read from a fresh snapshot of the settings.
+      const brockEntry = K[gymIdx('Brock')],
+        testAi = brockEntry.ai,
+        ownWeights = { endurance: 1.3, pressure: 0.9 },
+        triggerWeights = { kite: 2 },
+        triggerFor = 1,
+        weightsNow = () => {
+          const ai = G.GymArena.leaderAI,
+            world = ai && G.GymArena.leaderBelief.snapshot(ai.active, ai.set, ai.conf);
+          return world && world.goalWeights;
+        };
+      let during = null,
+        after = null,
+        firedAt = null;
+      brockEntry.ai = Object.assign({}, testAi, {
+        goalWeights: ownWeights,
+        triggers: [{ on: 'start', set: { goalWeights: triggerWeights }, for: triggerFor }],
+      });
+      try {
+        open('Brock', 1, 200);
+        const ai = G.GymArena.leaderAI,
+          fired = () => ai.log.find((d) => d.act === 'trigger' && d.text === 'start');
+        for (let frames = 0; frames < 5 / DT && !fired(); frames++) frame();
+        firedAt = fired() ? fired().t : null;
+        during = weightsNow();
+        run(triggerFor + 0.5);
+        after = weightsNow();
+      } finally {
+        brockEntry.ai = testAi;
+      }
+      ok(firedAt != null, '16f-g: the start trigger fires within 5 s');
+      ok(!!during && during.kite === triggerWeights.kite && Object.keys(ownWeights).every((goal) => during[goal] === ownWeights[goal]),
+        '16f-g: a trigger sets the goal weights it names and keeps the rest (fired at ' + firedAt + ' s): ' + JSON.stringify(during));
+      ok(same(after, ownWeights), "16f-g: the leader's own goal weights come back when the trigger's time runs out: " + JSON.stringify(after));
+      // 16h (#109, plan "109 - Leader Decision Trace Plan.md"): the dev decision trace. The trace file loads here with the
+      // dev flag on, as dev.html loads it after the leader AI. Wiring: a record holds what the AI chose and read at that
+      // choice. Parity: attached or not, a seeded fight makes the same choices. Made-up goal weights on a test leader.
+      const traceFile = 'js/core/debug-leader-trace.js',
+        traceWeights = { endurance: 1.2, pressure: 0.8 },
+        seedBeforeTrace = AI.seed;
+      G.Debug = { on: true };
+      vm.runInThisContext(fs.readFileSync(process.env.LA_TRACE || path.join(R, traceFile), 'utf8'), { filename: traceFile });
+      const recorder = G.LeaderAI.recorder;
+      ok(typeof recorder === 'function' && Array.isArray(recorder.fights), '16h: under ?dev the trace attaches its recorder');
+      const tracedFight = (attached) => {
+        G.LeaderAI.recorder = attached ? recorder : null;
+        brockEntry.ai = Object.assign({}, testAi, { goalWeights: traceWeights });
+        try {
+          open('Brock', 1, 200);
+          run(3);
+          const ai = G.GymArena.leaderAI;
+          return { ai, goals: ai.log.filter((d) => d.act === 'goal').map((d) => d.t + ' ' + d.text) };
+        } finally {
+          brockEntry.ai = testAi;
+        }
+      };
+      AI.seed = 7;
+      try {
+        const fightsBefore = recorder.fights.length,
+          plain = tracedFight(false);
+        ok(recorder.fights.length === fightsBefore, '16h: with no recorder attached nothing is kept');
+        const traced = tracedFight(true),
+          fight = recorder.fights[recorder.fights.length - 1],
+          records = fight ? fight.records : [],
+          last = records[records.length - 1],
+          liveRanking = traced.ai.choice ? traced.ai.choice.ranking : [];
+        ok(records.length > 0 && records.every((rec, i) => i === 0 || rec.t >= records[i - 1].t),
+          '16h: the trace keeps one record per choice, in clock order (' + records.length + ')');
+        ok(!!last && last.pick === (traced.ai.choice.pick ? traced.ai.choice.pick.goal : null) &&
+            last.ranking.length === liveRanking.length &&
+            last.ranking.every((entry, i) => entry.goal === liveRanking[i].goal && near(entry.total, liveRanking[i].total, 1e-3)),
+          "16h: the last record holds the AI's last choice and its whole ranking");
+        ok(!!last && same(last.inputs.goalWeights, traced.ai.world.goalWeights), '16h: a record holds the goal weights the planner read');
+        ok(same(plain.goals, traced.goals), '16h: the trace changes no choice: ' + plain.goals.length + ' vs ' + traced.goals.length + ' goal changes');
+        const mark = G.Debug.leaderMark('16h');
+        ok(!!mark && near(mark.t, traced.ai.clock, 1e-3) && fight.events.includes(mark), '16h: a mark lands at the fight clock');
+        for (let more = 0; more < recorder.TRACE.fightsKept; more++) tracedFight(true);
+        ok(recorder.fights.length === recorder.TRACE.fightsKept, '16h: the trace keeps only the last fightsKept fights');
+      } finally {
+        G.LeaderAI.recorder = null;
+        AI.seed = seedBeforeTrace;
+        delete base.Debug;
+      }
+      // 16i (#109, plan "109 - Leader Reads Its Whole Kit Plan.md", decisions K1 and K3): the leader reads its own whole kit
+      // and your side as seen. Relations only: a made-up change to Misty's test-leader mon moves Belief's numbers the way the
+      // real hit moves; made-up shots for the fan. No tuning data is read and no expected number is written here.
+      const kitArena = open('Misty', 1, 200);
+      run(0.5);
+      const kitMon = kitArena.team.active,
+        kitAI = G.GymArena.leaderAI,
+        kitBelief = G.GymArena.leaderBelief,
+        viewsNow = () => {
+          const world = kitBelief.snapshot(kitMon, kitAI.set, kitAI.conf);
+          return world ? world.slots.flatMap((slot) => slot.moves) : [];
+        },
+        firstAttack = viewsNow().find((view) => view.tag === 'attack');
+      ok(!!firstAttack, "16i: Misty's mon has an attack in Belief's snapshot");
+      if (firstAttack) {
+        const hisHit = () => (viewsNow().find((view) => view.id === firstAttack.id) || { hitFraction: NaN }).hitFraction,
+          hitWith = (field, value) => {
+            const own = Object.prototype.hasOwnProperty.call(kitMon, field),
+              before = kitMon[field];
+            kitMon[field] = value;
+            try {
+              return hisHit();
+            } finally {
+              if (own) kitMon[field] = before;
+              else delete kitMon[field];
+            }
+          },
+          attackDef = kitMon.moveDef(firstAttack.id),
+          plainHit = hisHit(),
+          realFactor = kitMon.moveFactor;
+        // its own attack half: the factor its cards, items and stages give (moveFactor), the crit at its expectation, its item
+        const doubledFactor = hitWith('moveFactor', (m) => realFactor.call(kitMon, m) * 2);
+        ok(plainHit > 0 && doubledFactor > plainHit,
+          "16i: its hit on you reads its own attack factor (moveFactor): " + plainHit + ' then ' + doubledFactor);
+        const critMul = G.MoveEffects.attackTerms(attackDef, kitMon, human).critMul,
+          noCrit = hitWith('critChance', 0);
+        ok(near(hitWith('critChance', 1) / noCrit, critMul, 1e-9) &&
+            near(hitWith('critChance', 0.5) / noCrit, 1 + 0.5 * (critMul - 1), 1e-9),
+          "16i: a crit chance raises its hit by chance x (the hit contract's crit multiplier - 1)");
+        const itemMul = G.Stats.itemDmgMul({ typeBoost: attackDef.type }, attackDef.type, 1);
+        ok(itemMul > 1 && near(hitWith('typeBoost', attackDef.type) / plainHit, itemMul, 1e-9),
+          "16i: a held type item raises its hit by the hit contract's item multiplier");
+        // the fan: the snapshot's count is the folded move's (wiring); then made-up shots through Belief's own fan reader
+        const countProblems = viewsNow()
+          .filter((view) => view.count !== ((kitMon.moveDef(view.id).space || {}).count || 1))
+          .map((view) => view.id);
+        ok(!countProblems.length, "16i: each move's projectile count reaches the snapshot as folded: " + countProblems.join(', '));
+        const fanOf = G.LeaderBelief.fanSidewaysOf,
+          stillYou = { radius: 10, sidewaysSpeed: 0 },
+          strafingYou = { radius: 10, sidewaysSpeed: 60 },
+          landed = (count, spread, distance, who) => P.hitChance(gun({ fanSideways: fanOf(count, spread) }), distance, who),
+          oneStill = landed(1, 0.3, 200, stillYou),
+          threeStill = landed(3, 0.3, 200, stillYou);
+        ok(landed(1, 0.3, 200, strafingYou) === P.hitChance(gun(), 200, strafingYou), '16i: one projectile lands as before');
+        ok(near(landed(3, 0.3, 0, stillYou), 3, 1e-9), '16i: standing still at point blank, every projectile of a fan lands');
+        ok(threeStill > oneStill && threeStill <= 3, '16i: three projectiles land more than one and never more than three: ' +
+          oneStill + ' and ' + threeStill);
+        ok(landed(3, 0.6, 200, stillYou) < threeStill, '16i: standing still at range, a wider fan lands less');
+        ok(landed(3, 0.3, 200, strafingYou) >= landed(1, 0.3, 200, strafingYou), '16i: strafing, a fan lands at least one shot');
+        // your hit on it: Belief's size equals what its own hurt() takes (parity), and reads its own defense (wiring)
+        const yourStats = G.DEX_BY[you[0].dex].stats,
+          takenFrom = (category, type, power) => {
+            const factor = G.Stats.attackFactor(yourStats[1], yourStats[3], human.level, { dmg: power, cat: category });
+            Object.assign(kitMon, { hp: kitMon.maxHp, invuln: 0, shield: null });
+            kitMon.hurt(factor, type, false, { factor, cat: category, mul: 1, stab: 1 });
+            return (kitMon.maxHp - kitMon.hp) / kitMon.maxHp;
+          },
+          hpBefore = kitMon.hp;
+        const parity = ['physical', 'special'].map((category) => [category,
+          G.LeaderBelief.hitOnLeader(you[0], kitMon, 45, category, 'normal'), takenFrom(category, 'normal', 45)]);
+        Object.assign(kitMon, { hp: hpBefore, invuln: 0 });
+        ok(parity.every(([, seen, taken]) => seen > 0 && near(seen, taken, 1e-9)),
+          '16i: your hit on it as Belief sizes it is what its hurt() takes: ' + JSON.stringify(parity));
+        const plainThreats = kitBelief.yourThreats(kitMon).map((threat) => threat.hitFraction),
+          realDefense = kitMon.defenseMul;
+        kitMon.defenseMul = (cat) => realDefense.call(kitMon, cat) * 2;
+        let sturdier = [];
+        try {
+          sturdier = kitBelief.yourThreats(kitMon).map((threat) => threat.hitFraction);
+        } finally {
+          delete kitMon.defenseMul;
+        }
+        ok(plainThreats.length > 0 && plainThreats.every((hit, i) => hit > 0 && sturdier[i] < hit),
+          '16i: your hit on it reads its own defense (defenseMul): ' + plainThreats.join(', ') + ' then ' + sturdier.join(', '));
+      }
+      // 16j (#123, decision 2026-11-15-123-speed-band-and-dodge-recharge): the leader's read of when its next charge returns
+      // matches the time its own tick really takes, at its species' recharge rate and with Bright Powder on top.
+      {
+        const secondsBack = () => {
+            let seconds = 0;
+            const step = 0.001;
+            while (kitMon.dodges.cd[0] > 0 && seconds < 60) {
+              kitMon.tickDodges(step);
+              seconds += step;
+            }
+            return seconds;
+          },
+          readThenRun = () => {
+            kitMon.dodges.cd = [3, 0];
+            kitMon.dodgeT = 0;
+            const world = kitBelief.snapshot(kitMon, kitAI.set, kitAI.conf),
+              read = world ? world.own.dodgeCharges.nextBackIn : NaN;
+            return { read, real: secondsBack() };
+          },
+          savedCharges = kitMon.dodges.cd.slice(),
+          plainRun = readThenRun();
+        kitMon.hasItem = (id) => id === 'brightpowder';
+        let powderRun;
+        try {
+          powderRun = readThenRun();
+        } finally {
+          delete kitMon.hasItem;
+          kitMon.dodges.cd = savedCharges;
+        }
+        ok(near(plainRun.read, plainRun.real, 2e-3) && near(powderRun.read, powderRun.real, 2e-3) && powderRun.real < plainRun.real,
+          '16j: the leader reads when its charge returns as it really does: ' + [plainRun, powderRun].map((r) => r.read.toFixed(3) + ' vs ' + r.real.toFixed(3)).join(', '));
       }
     }
   }
@@ -2869,15 +3109,22 @@ if (G.LeaderPlanner) {
         notFine = fine.filter((ai) => errs(ai).length !== n0);
       ok(!notFine.length, '17f: and accepts the shapes above' + (notFine.length ? ': refused ' + JSON.stringify(notFine) : ''));
       // 17f (39a): the personality tables (names from G.LeaderPlanner, limits PERSONALITY_LIMITS: goal weights 0 to 3, tag
-      // multipliers 0.25 to 4, decision P3). A trigger may not set them (D5): they are not numeric settings.
+      // multipliers 0.25 to 4, decision P3). A trigger may set goal weights within the same names and limits (#109 T3,
+      // decision 2026-11-14-109-brock-and-misty-target-feel, replacing 39a D5 for them); never tag multipliers.
       ok(refused({ goalWeights: { greed: 1 } }, /ai goalWeights: unknown name greed/), '17f (39a): an unknown goal is refused');
       ok(refused({ tagMultipliers: { sprint: 1 } }, /ai tagMultipliers: unknown name sprint/), '17f (39a): an unknown tag is refused');
       ok(refused({ goalWeights: { kite: 3.5 } }, /ai goalWeights values are from 0 to 3/), '17f (39a): a goal weight of 3.5 is refused');
       ok(refused({ tagMultipliers: { retreat: 0.2 } }, /ai tagMultipliers values are from 0\.25 to 4/),
         '17f (39a): a tag multiplier of 0.2 is refused');
       ok(refused({ goalWeights: [1, 2] }, /ai goalWeights is \{ name: number \}/), '17f (39a): a list is not a goal table');
-      ok(refused({ triggers: [{ on: 'start', set: { goalWeights: 1 } }] }, /set goalWeights is a known setting/),
-        '17f (39a, D5): a trigger may not set goalWeights');
+      const triggerSets = (set) => ({ triggers: [{ on: 'start', set }] });
+      ok(errs(triggerSets({ goalWeights: { pressure: 2 } })).length === n0, '17f (#109 T3): a trigger goal weight inside 0 to 3 is accepted');
+      ok(refused(triggerSets({ goalWeights: { pressure: 3.5 } }), /set ai goalWeights values are from 0 to 3/),
+        '17f (#109 T3): a trigger goal weight of 3.5 is refused');
+      ok(refused(triggerSets({ goalWeights: { greed: 1 } }), /set ai goalWeights: unknown name greed/),
+        '17f (#109 T3): an unknown goal in a trigger is refused');
+      ok(refused(triggerSets({ tagMultipliers: { retreat: 2 } }), /set tagMultipliers is a known setting/),
+        '17f (#109 T3): a trigger may not set tagMultipliers');
       ok(errs({ goalWeights: { endurance: 0, conserve: 3 }, tagMultipliers: { retreat: 0.25, heal: 4 } }).length === n0,
         '17f (39a): the limits themselves are accepted');
       const problemsOf = (name) => G.Gyms.validate(K[gymIdx(name)]).join('; ');

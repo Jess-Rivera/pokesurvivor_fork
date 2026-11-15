@@ -1161,6 +1161,7 @@ G.MoveSim = (() => {
     castAt,
     gateOpen,
     RETRY, // a refused cast's wait, seconds: a Player-entity leader's refusals wait it too (#47a)
+    fanAngle, // #109: the leader's Belief reads a fan's angles from the same rule its shots fly by
     persist: upkeepPersistent,
     flinch,
     setRng: (fn) => {

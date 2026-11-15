@@ -85,6 +85,8 @@ G.Gyms = (() => {
   // with `at` seconds; slice 4: 'exploit' (it starts acting on a pattern it believes: your usual lead). Then any of: line, set
   // ({ setting: value }) with optional `for` seconds, and `repeat` (true: every time, every `at` s for time). #51: a forced `slot` or
   // `swap` is refused (the planner decides slots, decision 2026-11-09-51-opening-stance-traces-and-set-trigger).
+  // #109 T3 (decision 2026-11-14-109-brock-and-misty-target-feel): a set may name goalWeights, checked like the authored table
+  // and merged into the leader's own (only the named goals change); tagMultipliers stay unsettable from a trigger.
   const TRIGGER_ON = ['start', 'hp', 'faint', 'sendIn', 'time', 'exploit'];
   const TRIGGER_KEYS = ['on', 'below', 'side', 'at', 'repeat', 'line', 'slot', 'swap', 'set', 'for'];
   // Entity model slice 5: `playerEntity` true makes the gym's leader a G.GymLeader; `hpMult` then multiplies the player HP formula, keyed by
@@ -237,22 +239,31 @@ G.Gyms = (() => {
       hpMult: { 1: 16, 2: 12 },
       restrictions: { hitIframes: 0, autoShake: true, ccWindow: 5, statusCut: 0.5 },
       // LEADER-AI slice 3 (#32, Jess 2026-11-08): the defensive wall, low aggression (his ceiling stays under the gap-closing line).
-      // Lines are drafts (Jess: ok for now). Half HP: he gets serious, aggression 0.5 for 10 s.
+      // Lines are drafts (Jess: ok for now). Half HP: he gets serious for 10 s, aggression 0.5 and (#109 T3) Pressure on top.
       // Slice 4 (#33): he keeps the baseline learnRate (3 fights to read your usual lead); the exploit line is a draft.
       ai: {
         aggression: 0.35,
-        // 39a (#39, decision 2026-11-14-39-opening-split-and-profile-test): the wall. Patient, mid range,
-        // buffs early, rarely backs off or swaps, a little slow to react, sharper each loop. TUNE (BALANCE.md "Leader AI")
-        goalWeights: { endurance: 1.4, maintain: 1.2, pressure: 0.7, kite: 0.6, buff: 1.5 },
-        tagMultipliers: { retreat: 1.4, buff: 0.8 },
-        range: 150,
+        // 39a (#39, decision 2026-11-14-39-opening-split-and-profile-test): the wall. Patient, buffs early, rarely backs off
+        // or swaps, a little slow to react, sharper each loop. #109 round 1 (decision
+        // 2026-11-14-109-brock-and-misty-target-feel): a ranged wall, he closes only to throwing distance (range 250) and
+        // walking in or dashing costs more. Provisional, TUNE (BALANCE.md "Leader AI")
+        // finish 0.35 (#109, 2026-11-15): from the replay of his trace, so he holds instead of opening in Finish at full HP
+        goalWeights: { endurance: 1.4, maintain: 1.2, pressure: 0.7, kite: 0.6, buff: 1.5, finish: 0.35 },
+        tagMultipliers: { retreat: 1.4, buff: 0.8, approach: 1.5, dash: 2 },
+        range: 250,
         swapWill: 2,
         risk: 0.8,
         stubbornness: 1.5,
         intelligence: { base: 0.4, growth: 0.08 },
         triggers: [
           { on: 'start', line: "Rock holds its ground. Let's see you move it." },
-          { on: 'hp', below: 0.5, line: 'Time to get serious.', set: { aggression: 0.5 }, for: 10 },
+          {
+            on: 'hp',
+            below: 0.5,
+            line: 'Time to get serious.',
+            set: { aggression: 0.5, goalWeights: { pressure: 1.6 } },
+            for: 10,
+          },
           { on: 'exploit', line: 'Same partner as last time? I came prepared.' },
         ],
         lines: { up: "That's what solid defense looks like!", down: "You're chipping through. Not bad." },
@@ -333,13 +344,14 @@ G.Gyms = (() => {
       ai: {
         aggression: 0.68,
         learnRate: 2,
-        // 39a (#39): tempo. Kites at Water Pulse range (its reach is about 420 px), pushes when ahead, swaps readily,
-        // reads you fast, sharper each loop (intelligence 1.0 at loop 6). TUNE (BALANCE.md "Leader AI")
-        goalWeights: { endurance: 0.7, pressure: 1.3, kite: 1.5, buff: 0.6 },
-        tagMultipliers: { retreat: 0.8, position: 0.8, approach: 1.2 },
+        // 39a (#39): swaps readily, reads you fast, sharper each loop (intelligence 1.0 at loop 6). #109 round 1 (decision
+        // 2026-11-14-109-brock-and-misty-target-feel): a fast aggressor, Pressure on top, keeps firing at Water Pulse range
+        // (its reach is about 420 px) and backs off only between shots. Provisional, TUNE (BALANCE.md "Leader AI")
+        goalWeights: { endurance: 0.7, pressure: 1.5, kite: 1, buff: 0.6 },
+        tagMultipliers: { retreat: 1, position: 0.8, approach: 1 },
         range: 260,
         swapWill: 0.6,
-        risk: 1.1,
+        risk: 0.9,
         stubbornness: 0.7,
         intelligence: { base: 0.6, growth: 0.08 },
         triggers: [
@@ -1094,6 +1106,9 @@ G.Gyms = (() => {
         if (t.set != null)
           for (const k of Object.keys(t.set)) {
             if (k === 'intelligence') bad.push(T + ': set intelligence does nothing (it resolves at fight start)');
+            // #109 T3: a trigger's goal weights take the authored table's names and limits
+            else if (k === 'goalWeights')
+              for (const problem of personalityTableProblems(t.set[k], k, names[k])) bad.push(T + ': set ' + problem);
             else if (!AI_KEYS.includes(k) || !num(t.set[k]))
               bad.push(T + ': set ' + k + ' is a known setting with a number from 0');
             else if (k === 'reflex' && t.set[k] < floor) bad.push(T + ': set reflex is at least ' + floor + ' s');

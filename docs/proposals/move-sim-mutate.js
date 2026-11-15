@@ -11,7 +11,7 @@ const M = [
   ['crit applied after the 1 HP floor', 'fx', [['Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k) * (b.crit ? b.critMul : 1))', 'Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k)) * (b.crit ? b.critMul : 1)']]],
   ['crit rolled even when it cannot crit', 'fx', [['crit: c > 0 && rng() < c', 'crit: rng() < c']]],
   ['crit rolled with Math.random', 'fx', [['crit: c > 0 && rng() < c', 'crit: c > 0 && Math.random() < c']]],
-  ['attacker half frozen at cast', 'fx', [['A: o.moveFactor(m), // D6', 'A: inst.cast.A || (inst.cast.A = o.moveFactor(m)), // D6']]],
+  ['attacker half frozen at cast', 'fx', [['      A: terms.A,', '      A: inst.cast.A || (inst.cast.A = terms.A),']]], // #109: blowOf reads attackTerms
   ['root instances deferred a frame', 'sim', [['(later ? pending : insts).push(inst);', '(later ? pending : (G.__q = G.__q || [])).push(inst);'], ['insts = insts.filter((i) => !i.done);', 'insts = insts.filter((i) => !i.done); if (G.__q) { insts.push(...G.__q); G.__q = null; }']]],
   ['growth ignored', 'sim', [['inst.spec.delivery.grow || null, // growth', 'null, // growth']]],
   ['full-circle fan spaced 2 pi / (count - 1)', 'sim', [['aim + (i * TAU) / n', 'aim + (i * TAU) / (n - 1)']]],

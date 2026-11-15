@@ -7,16 +7,34 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-15',
+    title: ['Speed and dodges', 'Speed and dodges'],
+    chg: [
+      [
+        'Every Pokemon now moves at nearly the same speed, so slow starters like Turtwig and Bulbasaur can get away from early chasers. Speed now shows in your dodge instead: faster Pokemon get their dodge charges back sooner (about 6 s for the fastest, 9 s for the slowest).',
+        'Every Pokemon now moves at nearly the same speed, so slow starters like Turtwig and Bulbasaur can get away from early chasers. Speed now shows in your dodge instead: faster Pokemon get their dodge charges back sooner (about 6 s for the fastest, 9 s for the slowest).',
+      ],
+      [
+        'Each gym leader style now counts for more in what the leader chooses to do, so Brock and Misty play closer to their personalities.',
+        'Each gym leader style now counts for more in what the leader chooses to do, so Brock and Misty play closer to their personalities.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-14',
     title: ['Gym leader styles', 'Gym leader styles'],
     chg: [
       [
-        'Brock and Misty now fight in their own styles. Brock stands his ground, hardens up early and rarely backs off or switches. Misty keeps her distance, backs away when you close in, switches Pokemon more readily and reacts faster to your shots. Both get a little sharper every loop.',
-        'Brock and Misty now fight in their own styles. Brock stands his ground, hardens up early and rarely backs off or switches. Misty keeps her distance, backs away when you close in, switches Pokemon more readily and reacts faster to your shots. Both get a little sharper every loop.',
+        'Brock and Misty now fight in their own styles. Brock stands his ground and throws rocks from range, hardens up early, rarely backs off or switches, and pushes harder for a moment when he drops to half health before digging back in. Misty presses the attack: she keeps firing, uses her speed to pick her angle and only backs off between shots, switches Pokemon more readily and reacts faster to your shots. Both get a little sharper every loop.',
+        'Brock and Misty now fight in their own styles. Brock stands his ground and throws rocks from range, hardens up early, rarely backs off or switches, and pushes harder for a moment when he drops to half health before digging back in. Misty presses the attack: she keeps firing, uses her speed to pick her angle and only backs off between shots, switches Pokemon more readily and reacts faster to your shots. Both get a little sharper every loop.',
       ],
       [
         'Gym leaders no longer try to bait out your strongest move and punish its cooldown. That tactic is set aside until it is reworked.',
         'Gym leaders no longer try to bait out your strongest move and punish its cooldown. That tactic is set aside until it is reworked.',
+      ],
+      [
+        'Brock and Misty now weigh their whole kit when they pick what to do: every rock or pulse of a spread shot, their upgrades and held items, their crits and their own defenses. They lean on their ranged moves more instead of walking in to tackle you.',
+        'Brock and Misty now weigh their whole kit when they pick what to do: every rock or pulse of a spread shot, their upgrades and held items, their crits and their own defenses. They lean on their ranged moves more instead of walking in to tackle you.',
       ],
     ],
   },

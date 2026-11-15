@@ -39,11 +39,12 @@ let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 80
 const near = (a, b, e = 1e-9) => typeof a === 'number' && Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const SNOR_ID = '7f3c2a9e-4b1d-4e8a-9c21-5d0e8f6a1b34', B_ID = '0b9d6f1e-2c3a-4d5b-8e7f-a1b2c3d4e5f6', SPE_ID = '22222222-3333-4444-8555-666666666666',
-  LOW_ID = '11111111-2222-4333-8444-555555555555', GONE_ID = '99999999-9999-4999-8999-999999999999';
+  LOW_ID = '11111111-2222-4333-8444-555555555555', MEDSPE_ID = '33333333-4444-4555-8666-777777777777', GONE_ID = '99999999-9999-4999-8999-999999999999';
 const rec = (id, d, n, i, e) => { const c = { u: C.shortId(id), d, t: 1793736000, m: 'g', n, i, g: 0, x: 142, y: 97, a: 1 }; if (e) c.e = e; return c; };
-// The plan's Snorlax (Adamant, IVs 28 31 12 5 22 9, EVs 180 252 78 0 0 0); a plain Snorlax; a plain Snorlax with 252 Speed EVs; a base 40 HP mon with 252 HP EVs.
+// The plan's Snorlax (Adamant, IVs 28 31 12 5 22 9, EVs 180 252 78 0 0 0); a plain Snorlax; a plain Snorlax with 252 Speed EVs; a base 40 HP mon with 252 HP EVs; the same mon with 252 Speed EVs (#123: a median Speed, off the band's flat ends).
 const mkSave = () => ({ trainerId: 't', box: [rec(SNOR_ID, 143, 11, '47MFWJ', [180, 252, 78, 0, 0, 0]), rec(B_ID, 143, 1, 'AAAAAA'),
-  rec(SPE_ID, 143, 1, 'AAAAAA', [0, 0, 0, 0, 0, 252]), rec(LOW_ID, 40, 1, 'AAAAAA', [252, 0, 0, 0, 0, 0])], team: [] });
+  rec(SPE_ID, 143, 1, 'AAAAAA', [0, 0, 0, 0, 0, 252]), rec(LOW_ID, 40, 1, 'AAAAAA', [252, 0, 0, 0, 0, 0]),
+  rec(MEDSPE_ID, 40, 1, 'AAAAAA', [0, 0, 0, 0, 0, 252])], team: [] });
 const mon = d => DEX_BY[d];
 const evOf = (s, id) => C.get(s, id).ev;
 
@@ -53,8 +54,8 @@ const evOf = (s, id) => C.get(s, id).ev;
   ok(S.hpForLevel(st[0], 50, p.iv[0], p.ev[0]) === W[0], 'Snorlax HP 440 -> 468 (IV) -> 512 (EV 180)');
   for (let i = 1; i <= 5; i++) ok(S.statValue(st[i], 50, p.iv[i], p.ev[i], p.nat[i]) === W[i], 'Snorlax stat ' + i + ' = ' + W[i]);
   ok(S.statValue(100, 100, 0, 3) === 205 && S.statValue(100, 100, 0, 4) === 206, 'floor(EV / 4): 3 EVs change nothing (205), 4 add a point at L100 (206)');
-  ok(near(S.speedToPx(30, 0, 1, 252), 100.93899933570495) && near(S.speedToPx(65, 0, 1, 252), 134.95820358432826) && near(S.speedToPx(100, 0, 1, 252), 138.64183210363015), '252 Speed EVs: base 30 100.9, base 65 135.0, base 100 138.6 px/s');
-  ok(near(S.speedToPx(30, 9, 1, 0), 76.8629887151295), 'no Speed EVs: Snorlax stays 76.9 px/s');
+  ok([30, 65, 100].every((b) => S.speedToPx(b, 0, 1, 252) >= S.speedToPx(b)) && S.speedToPx(65, 0, 1, 252) > S.speedToPx(65), '252 Speed EVs never move you slower, and move the median faster (#123: relations)');
+  ok(near(S.speedToPx(30, 9, 1, 0), S.speedToPx(30, 9)), 'no Speed EVs: Snorlax moves as with no EV argument');
   const q = S.profile({ iv: [0, 0, 0, 0, 0, 0], natureUp: 1, natureDown: 1, ev: [300, -5, 'x', 4.9, null, 252] });
   ok(same(q.ev, [252, 0, 0, 4, 0, 252]), 'the profile clamps EVs to whole 0 to 252');
   ok(same(S.profile({ iv: [0, 0, 0, 0, 0, 0], natureUp: 1, natureDown: 1 }).ev, [0, 0, 0, 0, 0, 0]), 'a copy with no EVs: six zeros');
@@ -134,12 +135,16 @@ const evOf = (s, id) => C.get(s, id).ev;
   const hit = (p, cat) => { p.maxHp = p.hp = 1e7; p.invuln = 0; const h0 = p.hp; p.hurt(50000, null, false, { factor: 50000, cat }); return h0 - p.hp; };
   ok(near(hit(a, 'physical'), 295.11764705882354) && near(hit(b, 'physical'), 358.14285714285717), 'a physical hit: Def 85 (IV 12, EV 78) vs 70');
   ok(near(hit(a, 'special'), 199.4126984126984), 'a special hit: SpD 126 (no SpD EVs)');
-  ok(near(mk(SPE_ID, 143).baseSpd, 100.93899933570495) && near(b.baseSpd, 75.98169257208211), 'movement: 252 Speed EVs take Snorlax from 76.0 to 100.9 px/s');
+  { const fast = mk(SPE_ID, 143); // #123: movement saturates in its band; the dodge recharge rate shows the EVs get through
+    ok(fast.baseSpd >= b.baseSpd && fast.speciesDodgeRate > b.speciesDodgeRate, 'Speed: 252 Speed EVs never move Snorlax slower and recharge its dodge faster');
+    // a median-Speed species is off the band's flat ends, so its movement shows the EVs directly
+    const median = mk(MEDSPE_ID, 40), plainMedian = new P(mon(40), {}, false);
+    ok(median.statEv(5) > 0 && median.baseSpd > plainMedian.baseSpd, 'movement: Speed EVs move a median species faster: ' + median.baseSpd + ' vs ' + plainMedian.baseSpd); }
 }
 
 // ===== 8. enemies (no profile) are unchanged =====
 { ok(near(S.attackFactor(110, 65, 50, { dmg: 60, cat: 'physical' }), 3036.0), 'attackFactor with no profile: 3036');
-  ok(near(S.applyPlayerDefense(50000, 65, 110, 'physical', 50), 358.14285714285717) && near(S.speedToPx(30), 75.98169257208211) && S.hpForLevel(160, 50) === 440, 'applyPlayerDefense, speedToPx, hpForLevel with no profile: plain');
+  ok(near(S.applyPlayerDefense(50000, 65, 110, 'physical', 50), 358.14285714285717) && near(S.speedToPx(30), S.speedToPx(30, 0, 1, 0)) && S.hpForLevel(160, 50) === 440, 'applyPlayerDefense, speedToPx, hpForLevel with no profile: plain');
 }
 
 // ===== 9. wiring (text): the kill banks, the run resets, endRun hands over, the screen gives and saves =====

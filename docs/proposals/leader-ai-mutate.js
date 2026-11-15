@@ -16,8 +16,9 @@ const AI = 'js/entities/leader-ai.js',
   BR = 'js/entities/boss-ai.js',
   GY = 'js/data/gyms.js',
   SM = 'js/systems/move-sim.js',
-  EF = 'js/systems/move-effects.js';
-const ENV = { [AI]: 'LA_AI', [ST]: 'LA_SETTINGS', [IN]: 'LA_INFO', [BE]: 'LA_BELIEF', [PL]: 'LA_PLANNER', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS', [SM]: 'LA_SIM', [EF]: 'LA_EFFECTS' };
+  EF = 'js/systems/move-effects.js',
+  TR = 'js/core/debug-leader-trace.js';
+const ENV = { [AI]: 'LA_AI', [ST]: 'LA_SETTINGS', [IN]: 'LA_INFO', [BE]: 'LA_BELIEF', [PL]: 'LA_PLANNER', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS', [SM]: 'LA_SIM', [EF]: 'LA_EFFECTS', [TR]: 'LA_TRACE' };
 const M = [
   // #50 (#49 slice 1): Belief, the cooldown window and the gaps it is derived from
   ['the window never narrows', BE, '    lo += (gap - lo) * memoryUse;\n', ''],
@@ -211,6 +212,22 @@ const M = [
   ['the validator skips the goal names', GY, 'names = { goalWeights: LP && LP.GOALS,', 'names = { goalWeights: null,'],
   ['the goal weights go through the per-loop step', ST, 'if (a.goalWeights) out.goalWeights = a.goalWeights;', 'if (a.goalWeights) out.goalWeights = G.Gyms.perLoop(a.goalWeights, loop);'],
   ['Bait is not parked', PL, "const PARKED_GOALS = Object.freeze(new Set(['bait']));", 'const PARKED_GOALS = Object.freeze(new Set([]));'],
+  // #109 T3 (decision 2026-11-14-109-brock-and-misty-target-feel): a trigger may set goal weights, merged and within limits
+  ['a trigger replaces the whole goal table (#109 T3)', AI, 'Object.assign({}, this.set[k], d.set[k])', 'd.set[k]'],
+  ["a trigger's set never wears off (#109 T3)", AI, '      S[t.k] = t.old;\n', ''],
+  ["a trigger's goal weights skip the limits (#109 T3)", GY, "for (const problem of personalityTableProblems(t.set[k], k, names[k])) bad.push(T + ': set ' + problem);", 'null;'],
+  ['a trigger may set tagMultipliers (#109 T3)', GY, "else if (k === 'goalWeights')", "else if (k === 'goalWeights' || k === 'tagMultipliers')"],
+  // #109: the dev decision trace (16h)
+  ['the AI never calls the trace (#109 trace)', AI, '    if (LeaderAI.recorder) LeaderAI.recorder(this, why);\n', ''],
+  ['the trace keeps every fight (#109 trace)', TR, '    if (fights.length > TRACE.fightsKept) fights.shift();\n', ''],
+  ['the trace keeps only the pick, not the ranking (#109 trace)', TR, 'ranking: choice.ranking.map((entry) => rankedGoal(ai, entry)),', 'ranking: choice.pick ? [rankedGoal(ai, choice.pick)] : [],'],
+  // #109: the leader reads its whole kit (16i)
+  ['Belief sizes its own hit from species stats (#109 kit)', BE, 'G.Stats.visibleDefenseFrac(\n      terms.A,', 'G.Stats.visibleDefenseFrac(\n      G.Stats.attackFactor(statsOf(e)[1], statsOf(e)[3], levelOf(e), terms.m),'],
+  ['the expected crit is dropped (#109 kit)', BE, 'expectedCrit = 1 + Math.min(1, terms.critChance) * (terms.critMul - 1),', 'expectedCrit = 1,'],
+  ['the held type item is dropped (#109 kit)', BE, 'return bar * seen * expectedCrit * terms.itemMul;', 'return bar * seen * expectedCrit;'],
+  ['a fan counts one projectile (#109 kit)', BE, 'for (let i = 0; i < count; i++) {', 'for (let i = 0; i < 1; i++) {'],
+  ["a fan's spread is ignored (#109 kit)", PL, 'const offset = share * distance;', 'const offset = 0;'],
+  ["Belief ignores the leader's defense (#109 kit)", BE, '      m.defenseMul(cat),', '      1,'],
 ];
 
 require('../../tools/mutate-runner.js')({
