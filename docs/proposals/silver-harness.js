@@ -3,9 +3,8 @@
 // Under test: js/systems/silver.js (G.Silver) over the real js/core/stats.js, and the lines that wire it in: the run start
 // (js/game.js startRun), the kill loop (js/entities/enemy.js), the end of a run (js/game.js endRun), the HUD (js/ui/hud.js), the
 // load order (dev.html, js/main.js NEED) and the coin sheet (assets/items/pickups/silver16.png). Plan: docs/ASCII Concept Maps/
-// Move Shop step 2 - Silver.txt sections 2 and 5; spec docs/proposals/move-shop-plan.md "Silver". Expected numbers are hand-derived
-// from the spec (a kill pays world level / 10, minimum 1; world level runs linearly from 1 at 0:00 to 50 at 30:00, then holds),
-// never read from the code under test.
+// Move Shop step 2 - Silver.txt sections 2 and 5; spec docs/proposals/move-shop-plan.md "Silver", changed by #124 (start 0, a
+// kill pays 1). Expected numbers are hand-derived from the spec, never read from the code under test.
 // The mutation runner (silver-mutate.js) points the SV_* variables (SRC below) at altered copies; every mutation must make this fail.
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
@@ -24,35 +23,25 @@ const S = G.Silver;
 const body = (src, head) => { const i = src.indexOf(head); if (i < 0) return ''; const j = src.indexOf('\n  function ', i + head.length); return src.slice(i, j < 0 ? undefined : j); };
 const code = src => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''); // comments off, so a note never trips a guard
 
-// 1. a run starts with 100, and a second run starts with 100 again
+// #124 (decision 2026-11-15-124-move-price-by-slots-filled, Jess): a run starts with 0 and each defeated Pokemon pays 1,
+// whatever the run time. The relations: the start is 0 and the same every run; every kill adds the same amount, at any time.
+
+// 1. a run starts with 0, and a second run starts with 0 again
 { S.reset();
-  ok(S.whole === 100 && near(S.amount, 100), 'a run starts with 100 Silver: ' + S.amount);
-  S.kill(900); S.kill(1800);
+  ok(S.whole === 0 && near(S.amount, 0), 'a run starts with 0 Silver: ' + S.amount);
+  S.kill(); S.kill();
   S.reset();
-  ok(S.whole === 100 && near(S.amount, 100), 'a second run starts with 100 again, nothing carries over: ' + S.amount); }
+  ok(S.whole === 0 && near(S.amount, 0), 'a second run starts with 0 again, nothing carries over: ' + S.amount); }
 
-// 2. pay per kill: world level / 10, minimum 1 (world level = 1 + 49 x t / 1800, held at 50 past 30:00)
-{ const rows = [
-    [0, 1, '0:00, level 1, the minimum'],
-    [120, 1, '2:00, level 4.27, the minimum'],
-    [300, 1, '5:00, level 9.17, still the minimum'],
-    [331, 1.0010556, '5:31, level 10.01, the formula takes over'],
-    [600, 1.7333333, '10:00, level 17.33'],
-    [900, 2.55, '15:00, level 25.5'],
-    [1200, 3.3666667, '20:00, level 33.67'],
-    [1800, 5, '30:00, level 50'],
-    [2700, 5, '45:00, level held at 50'] ];
-  for (const [t, want, why] of rows) ok(near(S.payFor(t), want), 'a kill at ' + why + ' pays ' + want + ': ' + S.payFor(t)); }
+// 2. pay per kill: one defeated Pokemon is one Silver, at any run time (the world level plays no part)
+{ ok(S.KILL_PAY === 1, 'one kill pays 1 Silver: ' + S.KILL_PAY);
+  ok(S.kill.length === 0 && !/levelForTime/.test(code(read('js/systems/silver.js'))), 'the pay reads no run time and no world level');
+  S.set(0); for (let i = 0; i < 25; i++) S.kill();
+  ok(S.whole === 25 && near(S.amount, 25), '25 kills pay 25: ' + S.amount); }
 
-// 3. the fraction is kept inside, the count shows whole coins
-{ S.set(0); S.kill(900); S.kill(900);
-  ok(near(S.amount, 5.1) && S.whole === 5, 'two kills at 15:00 keep 5.1 inside and show 5: ' + S.amount + ' / ' + S.whole);
-  S.set(0); for (let i = 0; i < 10; i++) S.kill(900);
-  ok(near(S.amount, 25.5) && S.whole === 25, 'ten kills at 15:00 make 25.5, shown 25: ' + S.amount + ' / ' + S.whole);
-  S.set(0); S.kill(600);
-  ok(S.whole === 1, 'one kill at 10:00 (1.73) shows 1, rounded down: ' + S.whole);
-  S.set(0); S.kill(0); S.kill(0); S.kill(0);
-  ok(S.whole === 3, 'three early kills pay 1 each: ' + S.whole); }
+// 3. a fraction (only set() can make one) is kept inside, the count shows whole coins
+{ S.set(4.5); S.kill();
+  ok(near(S.amount, 5.5) && S.whole === 5, 'a kill on 4.5 keeps 5.5 inside and shows 5: ' + S.amount + ' / ' + S.whole); }
 
 // 4. spending (for the shop screens, step 4): whole coins only, never below zero
 { S.set(10.9);
@@ -62,18 +51,18 @@ const code = src => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''
   S.set(-5);
   ok(S.amount === 0, 'the balance never goes below zero'); }
 
-// 4b. #91-2 run totals (DS1, Jess 2026-11-12): earned is kill pay only (not the starting 100, not set()), spent is successful
-// spends only, reset() zeroes both. A kill at 15:00 pays 2.55 (section 2).
+// 4b. #91-2 run totals (DS1, Jess 2026-11-12): earned is kill pay only (not set()), spent is successful spends only, reset()
+// zeroes both.
 { S.reset();
-  ok(S.earned === 0 && S.spent === 0, 'a run starts with 0 earned and 0 spent: the starting 100 is not earned');
-  S.kill(900); S.kill(900);
-  ok(near(S.earned, 5.1) && near(S.amount, 105.1), 'two kills at 15:00: 5.1 earned, 105.1 held: ' + S.earned + ' / ' + S.amount);
+  ok(S.earned === 0 && S.spent === 0, 'a run starts with 0 earned and 0 spent');
+  S.kill(); S.kill();
+  ok(S.earned === 2 && S.amount === 2, 'two kills: 2 earned, 2 held: ' + S.earned + ' / ' + S.amount);
   S.set(50);
-  ok(near(S.earned, 5.1) && S.spent === 0, 'set() (G.Debug.silver) is neither earned nor spent');
+  ok(S.earned === 2 && S.spent === 0, 'set() (G.Debug.silver) is neither earned nor spent');
   ok(S.spend(60) === false && S.spent === 0, 'a refused spend counts nothing as spent');
   ok(S.spend(20) === true && S.spend(5) === true && S.spent === 25, 'successful spends add what they took (20 + 5): ' + S.spent);
   S.reset();
-  ok(S.earned === 0 && S.spent === 0 && S.whole === 100, 'reset() zeroes both totals'); }
+  ok(S.earned === 0 && S.spent === 0 && S.whole === 0, 'reset() zeroes both totals'); }
 
 // 5. run-only: the run start resets it, the end of a run and the save never see it
 { const game = read('js/game.js'), silver = code(read('js/systems/silver.js'));
@@ -86,8 +75,8 @@ const code = src => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''
 { const e = code(read('js/entities/enemy.js'));
   ok((e.match(/G\.Silver/g) || []).length === 1, 'enemy.js reads Silver in exactly one place');
   // Leader AI slice 2: the pay lives in payKill (a leader's bench faint is paid through it too), called from the dead-enemy branch
-  ok(/if \(e\.remote\) continue;\s*if \(e\.dead\) \{\s*payKill\(e, pl\);[^}]*continue;/.test(e) && /function payKill\(e, pl\) \{[^}]*G\.Silver\.kill\(G\.Game\.st\.time\);/.test(e),
-    'enemy.js: the pay sits in the dead-enemy branch, after remote enemies are skipped, on the run clock'); }
+  ok(/if \(e\.remote\) continue;\s*if \(e\.dead\) \{\s*payKill\(e, pl\);[^}]*continue;/.test(e) && /function payKill\(e, pl\) \{[^}]*G\.Silver\.kill\(\);/.test(e),
+    'enemy.js: the pay sits in the dead-enemy branch, after remote enemies are skipped'); }
 
 // 7. the HUD: whole coins, hidden in co-op
 { const h = code(read('js/ui/hud.js')), calls = (h.match(/(?<!function )drawSilver\(/g) || []).length;

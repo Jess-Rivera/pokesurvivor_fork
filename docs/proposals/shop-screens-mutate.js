@@ -12,7 +12,12 @@ const SRC = { shops: ['js/systems/shops.js', 'SS_SHOPS'], player: ['js/entities/
   levelup: ['js/systems/levelup.js', 'SS_LEVELUP'] };
 const M = [
   // ---- price and paying ----
-  ['the price drops the run level', 'shops', [['return 5 * Math.floor(G.Stats.levelForTime(t)) * lvl;', 'return 5 * Math.floor(G.Stats.levelForTime(t));']]],
+  ['the price follows your level again', 'shops', [['cost = price(shop.kind, f.slots.length, replacing);', 'cost = price(shop.kind, f.slots.length, replacing) * Math.max(1, (G.Game.player && G.Game.player.level) || 1);']]],
+  ['the price follows the run time again', 'shops', [['cost = price(shop.kind, f.slots.length, replacing);', 'cost = price(shop.kind, f.slots.length, replacing) + Math.floor(G.Game.st.time / 60);']]],
+  ['a replacement gets the discount', 'shops', [['discount = replacing ? 0 : rule.', 'discount = rule.']]],
+  ['the Mart is priced as the Trainer', 'shops', [['const rule = PRICES[kind] || PRICES.trainer,', 'const rule = PRICES.trainer,']]],
+  ['the discount counts one slot too few', 'shops', [['[Math.max(1, slotsFilled) - 1]', '[Math.max(1, slotsFilled - 1) - 1]']]],
+  ['the Trainer base is 250', 'shops', [['trainer: Object.freeze({ base: 300,', 'trainer: Object.freeze({ base: 250,']]],
   ['a buy is free', 'shops', [['    G.Silver.spend(c.cost);\n', '']]],
   ['a forgotten move is refunded', 'shops', [['if (!f.replaceMove(f.slots[slot][0].id, id)) return false;', 'if (!f.replaceMove(f.slots[slot][0].id, id)) return false;\n      G.Silver.set(G.Silver.amount + c.cost);']]],
   ['a refused or cancelled pick still charges', 'shops', [['const c = check(shop, f, id);\n    if (!c.ok) return false;', 'const c = check(shop, f, id);\n    if (c.ok) G.Silver.spend(c.cost);\n    if (!c.ok) return false;']]],
@@ -21,8 +26,8 @@ const M = [
   ['the stock rerolls on reopen', 'shops', [['if (!ids)\n      shop.stock.set(\n        f,', 'shop.stock.set(\n        f,']]],
   // ---- the rules ----
   ['a purchase switches the active slot', 'shops', [['} else if (!f.addMove(id, true)) return false;', '} else if (!f.addMove(id)) return false;']]],
-  ['the 2-buff limit is gone', 'shops', [['capped = isBuff(id) && f.moves.filter((m) => isBuff(m.id)).length >= 2;', 'capped = false;']]],
-  ['a fainted member can buy', 'shops', [["if (!f || f.dead) return { ok: false, why: 'Fainted', cost };", "if (!f) return { ok: false, why: 'Fainted', cost };"]]],
+  ['the 2-buff limit is gone', 'shops', [['capped = isBuff(id) && f.moves.filter((m) => isBuff(m.id)).length >= 2,', 'capped = false,']]],
+  ['a fainted member can buy', 'shops', [["if (!f || f.dead) return { ok: false, why: 'Fainted', cost: price(shop.kind, 0, true) };", "if (!f) return { ok: false, why: 'Fainted', cost: price(shop.kind, 0, true) };"]]],
   ['a bond slot is on the forget list', 'shops', [['if (g.length === 1 && (!capped || isBuff(g[0].id))) allowed.push(i);', 'if (!capped || isBuff(g[0].id)) allowed.push(i);']]],
   ['a TM anyone can learn', 'shops', [["if (shop.kind === 'mart' && !G.Moves.canUseTm(f.mon, id)) return { ok: false, why: \"Can't learn\", cost };", '']]],
   // ---- the player ----

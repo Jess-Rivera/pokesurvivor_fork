@@ -9,8 +9,8 @@
  * another screen: the game refuses, and the visit is not used up (it tries again next frame while you stand on it).
  * Step 4, stock and buying (plan: docs/ASCII Concept Maps/Move Shop step 4 - Shop screens.txt): the Trainer offers each member 4
  * random moves from its level-up and egg pool it does not know, rolled the first time you look at that member and kept for this
- * building; the Mart offers 4 random TMs, once per building, never sold out. Price: 5 x the whole ENEMY LV x the run level, paid on
- * confirm. Full slots (or a third buff) go through a forget step: only LOOSE moves can be forgotten, since bonds are fixed (Jess
+ * building; the Mart offers 4 random TMs, once per building, never sold out. Price (#124): the shop's base less a discount set by
+ * the member's slots filled (PRICES below), paid on confirm. Full slots (or a third buff) go through a forget step: only LOOSE moves can be forgotten, since bonds are fixed (Jess
  * 2026-11-05); with 2 buffs already, a buff may only replace a buff. No refund for a forgotten move. A purchase never changes the
  * active slot. Fainted members cannot shop.
  * In a gym arena the shops are hidden and their clock stops (cannot happen in the normal schedule, a guard). Co-op: no
@@ -112,7 +112,9 @@ G.Shops = (() => {
 
   /** Walking in (once per visit): the game opens the shop screen. False when it cannot now (another screen is open). */
   function enter(s) {
-    return G.Game.openShop(s);
+    const opened = G.Game.openShop(s);
+    if (opened && G.Shops.recorder) G.Shops.recorder('enter', s.kind); // #124: the run pace trace, dev only
+    return opened;
   }
 
   /** Every map frame (solo). t = run time. */
@@ -122,8 +124,10 @@ G.Shops = (() => {
     for (const s of shops) s.t += dt;
     shops = shops.filter((s) => s.t < LIFE);
     if (nextAt != null && t >= nextAt && !shops.length && !pl.dead) {
-      if (place(pl)) nextAt = null;
-      else nextAt = t + RETRY; // no free ground yet: both try again shortly
+      if (place(pl)) {
+        nextAt = null;
+        if (G.Shops.recorder) G.Shops.recorder('pair', t); // #124: the run pace trace, dev only (js/core/debug-run-trace.js)
+      } else nextAt = t + RETRY; // no free ground yet: both try again shortly
     }
     for (const s of shops) {
       const on = !pl.dead && onBuilding(s.kind, s.x, s.y, pl.x, pl.y);
@@ -145,11 +149,21 @@ G.Shops = (() => {
     return { kind, x, y, t: 0, on: false, stock: new Map(), tms: null, rerolls: FREE_REROLLS + rerollRank() };
   }
 
-  /** Silver for one move: 5 x the whole world level (the HUD's ENEMY LV) x the run level. */
-  function price(t, lvl) {
-    return 5 * Math.floor(G.Stats.levelForTime(t)) * lvl;
+  // #124 (decision 2026-11-15-124-move-price-by-slots-filled, Jess): a move's price is its shop's base less a discount set by
+  // how many slots the member has filled, so a team's first moves are cheap and breadth comes before depth. The discount for
+  // the purchase that fills slot n + 1 is discountBySlotsFilled[n - 1]; a purchase that replaces a move (the forget step) pays
+  // the full base. Run time and your level play no part. The TM Mart's 66 / 33 / 11 percent are thirds and ninths.
+  const PRICES = Object.freeze({
+    trainer: Object.freeze({ base: 300, discountBySlotsFilled: Object.freeze([0.8, 0.6, 0.2]) }),
+    mart: Object.freeze({ base: 450, discountBySlotsFilled: Object.freeze([2 / 3, 1 / 3, 1 / 9]) }),
+  });
+
+  /** Silver for one move from a `kind` shop, for a member with `slotsFilled` slots; `replacing` = it goes through the forget step. */
+  function price(kind, slotsFilled, replacing) {
+    const rule = PRICES[kind] || PRICES.trainer,
+      discount = replacing ? 0 : rule.discountBySlotsFilled[Math.max(1, slotsFilled) - 1] || 0;
+    return Math.round(rule.base * (1 - discount));
   }
-  const priceNow = () => price(G.Game.st.time, G.Game.player ? G.Game.player.level : 1);
 
   /** What this shop offers member f now. Trainer: f's 4, rolled once per building, known moves left out. Mart: the 4 TMs. */
   function offers(shop, f) {
@@ -198,16 +212,17 @@ G.Shops = (() => {
    * the slot indexes that may be forgotten (loose moves only; with 2 buffs already and a buff bought, buffs only).
    */
   function check(shop, f, id) {
-    const cost = priceNow();
-    if (!f || f.dead) return { ok: false, why: 'Fainted', cost };
+    if (!f || f.dead) return { ok: false, why: 'Fainted', cost: price(shop.kind, 0, true) };
+    const isBuff = G.MoveInfo.isBuff,
+      capped = isBuff(id) && f.moves.filter((m) => isBuff(m.id)).length >= 2,
+      replacing = f.slots.length >= f.maxMoves || capped,
+      cost = price(shop.kind, f.slots.length, replacing);
     if (f.hasMove(id)) return { ok: false, why: 'Knows it', cost };
     if (shop.kind === 'mart' ? !(shop.tms || []).includes(id) : !offers(shop, f).includes(id))
       return { ok: false, why: 'Not sold here', cost };
     if (shop.kind === 'mart' && !G.Moves.canUseTm(f.mon, id)) return { ok: false, why: "Can't learn", cost };
     if (G.Silver.whole < cost) return { ok: false, why: "Can't afford", cost };
-    const isBuff = G.MoveInfo.isBuff,
-      capped = isBuff(id) && f.moves.filter((m) => isBuff(m.id)).length >= 2;
-    if (f.slots.length < f.maxMoves && !capped) return { ok: true, cost, forget: false };
+    if (!replacing) return { ok: true, cost, forget: false };
     const allowed = [];
     f.slots.forEach((g, i) => {
       if (g.length === 1 && (!capped || isBuff(g[0].id))) allowed.push(i);
@@ -226,6 +241,7 @@ G.Shops = (() => {
       if (!f.replaceMove(f.slots[slot][0].id, id)) return false;
     } else if (!f.addMove(id, true)) return false; // a purchase never changes the active slot
     G.Silver.spend(c.cost);
+    if (G.Shops.recorder) G.Shops.recorder('buy', shop.kind, c.cost); // #124: the run pace trace, dev only
     if (shop.kind === 'trainer') {
       const ids = shop.stock.get(f),
         k = ids ? ids.indexOf(id) : -1;
@@ -296,11 +312,14 @@ G.Shops = (() => {
   }
 
   return {
+    /** #124: the run pace trace's recorder (js/core/debug-run-trace.js attaches it under ?dev); null otherwise. */
+    recorder: null,
     BLINK,
     reset,
     update,
     drawables,
     onBuilding,
+    PRICES,
     price,
     offers,
     check,

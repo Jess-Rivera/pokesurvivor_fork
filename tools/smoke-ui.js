@@ -193,9 +193,12 @@ async function check(browser, query, tag) {
   // ---- a run: level-up cards and the pause sheet for every move ----
   await page.evaluate(() => G.Game.startRun());
   await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 20000 });
-  // Move Shop step 2: Silver is loaded (dev.html tag and NEED entry) and a run starts with 100 (a quick kill may add some).
+  // Move Shop step 2: Silver is loaded (dev.html tag and NEED entry); #124: a run starts with 0 (a quick kill may add some).
   const silver = await page.evaluate(() => (G.Silver ? G.Silver.whole : null));
-  ok(silver >= 100, tag + ': a run starts with 100 Silver (' + silver + ')');
+  ok(
+    silver != null && silver >= 0 && silver < 50,
+    tag + ': a run starts with 0 Silver, a few kills at most (' + silver + ')'
+  );
   // Move Shop step 3: the debug command places both buildings; the frames after it draw them and their red arrows (any draw error lands in errs).
   const shopN = await page.evaluate(() => (G.Debug.shops() ? G.Shops.list.length : 0));
   ok(shopN === 2, tag + ': G.Debug.shops() places a Move Trainer and a TM Mart (' + shopN + ')');

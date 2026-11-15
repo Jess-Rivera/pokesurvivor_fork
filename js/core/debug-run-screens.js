@@ -186,7 +186,7 @@
     for (let item = 0; item < 14; item++) G.RunStats.item(stats);
     G.RunStats.shiny(stats);
     G.RunStats.shiny(stats);
-    for (let kill = 0; kill < 160; kill++) G.Silver.kill(900); // 2.55 Silver each: 408 earned
+    for (let kill = 0; kill < 408; kill++) G.Silver.kill(); // 1 Silver each: 408 earned
     G.Silver.spend(240);
     game.evBank = [2, 11, 4, 0, 1, 6].map((whole) => whole * G.Copies.EV_UNIT);
     player.coins = 312;

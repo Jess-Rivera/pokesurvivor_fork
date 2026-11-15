@@ -17,7 +17,7 @@ const M = [
   ['the retry never comes', 'shops', [['else nextAt = t + RETRY;', 'else nextAt = null;']]],
   // ---- life and schedule ----
   ['the minute never ends', 'shops', [['shops = shops.filter((s) => s.t < LIFE);', '']]],
-  ['the 2:00 pair repeats', 'shops', [['if (place(pl)) nextAt = null;', 'if (place(pl)) nextAt = t + LIFE;']]],
+  ['the 2:00 pair repeats', 'shops', [['        nextAt = null;\n        if (G.Shops.recorder)', '        nextAt = t + LIFE;\n        if (G.Shops.recorder)']]],
   ['shops spawn and age in an arena', 'shops', [['if (G.GymArena.inArena) return; // hidden in an arena, and their minute stops', '']]],
   ['shops spawn in co-op', 'shops', [['if (G.Coop.active) return; // no shops in co-op until co-op shops exist', '']]],
   // ---- entering ----
