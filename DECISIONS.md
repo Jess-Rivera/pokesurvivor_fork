@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-15, #132: the new save goes live with S1 (version 4); settings are kept; no new harness (Jess)](docs/decisions/2026-11-15-132-new-save-live-settings-kept.md)
 - [2026-11-15, #128: Exp Candy drops unparked; the #97 upgrade redesign ships with the new save (Jess)](docs/decisions/2026-11-15-128-exp-candy-unparked-97-ships-with-new-save.md)
 - [2026-11-15, #125: the opening XP boost is off by default; only G.Debug.xpBoost(true) turns it on (Jess)](docs/decisions/2026-11-15-125-opening-xp-boost-off-by-default.md)
 - [2026-11-15, #124: Silver is 1 per kill from 0; move prices fall by slots filled, Trainer below the TM Mart (Jess)](docs/decisions/2026-11-15-124-move-price-by-slots-filled.md)

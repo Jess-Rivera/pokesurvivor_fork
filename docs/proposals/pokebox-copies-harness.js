@@ -106,10 +106,11 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
 // 7. real db.js: the clean save checkpoint, fresh saves, team links through commit and reload
 (async () => {
   load('js/core/db.js', 'PB_DB');
-  const D = G.DB, K = 'tester', SAVE = 'ps.save.' + K, BACK = 'ps.backup.prebox.' + K;
+  const D = G.DB, K = 'tester', SAVE = 'ps.save.' + K, BACK = 'ps.backup.preacq.' + K;
   const acc = { [K]: { name: 'Tester', salt: 'x', hash: 'y', created: 1 } };
   const put = (k, v) => store.set(k, JSON.stringify(v)), getj = k => JSON.parse(store.get(k) || 'null');
-  const OLD = { v: 3, name: 'Tester', coins: 4242, owned: { 7: { at: 5000, from: 'starter' } }, shiny: {}, partner: 7, team: [{ dex: 7, shiny: false }, null, null, null, null, null], stats: { runs: 9 }, tickets: { t1: 1, t10: 0 } };
+  // #132: today's real old shape, a v3 save that already has a Pokebox, so the version (not the missing box) triggers the reset.
+  const OLD = { v: 3, name: 'Tester', coins: 4242, box: [{ d: 7, u: 'old-copy' }], owned: { 7: { at: 5000, from: 'starter' } }, shiny: {}, partner: 7, team: [{ dex: 7, shiny: false }, null, null, null, null, null], stats: { runs: 9 }, tickets: { t1: 1, t10: 0 } };
   put('ps.accounts', acc); put('ps.session', K); put(SAVE, OLD);
   await D.ready();
   let s = D.save;

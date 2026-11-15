@@ -11,6 +11,10 @@ Last updated: 2026-11-15 evening, Claude Code (home). Branch: balance/124-econom
    #97 purpose (review: docs/ASCII Concept Maps/97 - Upgrade System Review.md) is answered along the way.
 3. Rulings 2026-11-15: Exp Candy drops unparked (#139); #97 ships with the new save.
 
+## Landed on feature/128-acquisition
+- #132 (S1) built: save version 4; v3 and pre-Pokebox saves back up to ps.backup.preacq.<key> and reset, notice once, settings kept.
+  Your dev.html save resets on first load (backup kept). Next after your feel test: #133 (S2) and #134 (S3).
+
 ## What just landed on balance/124-economy-xp
 - Silver: 0 at the start, 1 per kill. Move price by slots filled: Trainer 60 / 120 / 240 / 300, TM Mart 150 / 300 / 400 / 450;
   a replacement pays the base; no run time or level in it. Decision 2026-11-15-124-move-price-by-slots-filled.

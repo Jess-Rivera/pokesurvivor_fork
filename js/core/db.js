@@ -30,8 +30,11 @@ G.DB = (() => {
     K_SAVE = 'ps.save.';
   const K_CLOUD = 'ps.cloud.',
     K_MIGRATED = 'ps.migrated.',
-    K_PREBOX = 'ps.backup.prebox.'; // a save from before the Pokebox, kept when it is replaced by a clean one
-  const VERSION = 3;
+    // #132: a save from before the acquisition rework (below VERSION 4, pre-Pokebox saves included), kept whole when a
+    // clean one replaces it. Backups an earlier build wrote under ps.backup.prebox. stay where they are.
+    K_BACKUP_PRE_ACQUISITION = 'ps.backup.preacq.';
+  // 4: the acquisition rework's new save (#128, #132). Settings (ps.settings) are a separate key and are kept.
+  const VERSION = 4;
   const START_COINS = 500;
   const SDK = 'https://www.gstatic.com/firebasejs/13.0.0/';
   const NAME_DOMAIN = 'jugadores.pokesurvivor.net'; // only for the internal email
@@ -43,7 +46,7 @@ G.DB = (() => {
   let guest = false;
   let save = null;
   let storageOk = true;
-  let resetNotice = false; // this load replaced a pre-Pokebox save; the game says so once
+  let resetNotice = false; // this load replaced a save from before the acquisition rework; the game says so once
 
   // ---------------- safe local storage ----------------
 
@@ -383,9 +386,10 @@ G.DB = (() => {
   function loadLocal(k, name) {
     const s = read(K_SAVE + k);
     if (!s) return newSave(name);
-    if (Array.isArray(s.box)) return migrate(s, name);
-    // Clean save checkpoint (Jess, 2026-11-03): a save from before the Pokebox is not migrated. It is kept aside and the player starts over.
-    if (!read(K_PREBOX + k)) write(K_PREBOX + k, s);
+    if (Array.isArray(s.box) && s.v >= VERSION) return migrate(s, name);
+    // Clean save checkpoints: a save from before the Pokebox (Jess, 2026-11-03) or from before the acquisition rework
+    // (#132, decision 2026-11-15-132-new-save-live-settings-kept) is not migrated. It is kept aside once and the player starts over.
+    if (!read(K_BACKUP_PRE_ACQUISITION + k)) write(K_BACKUP_PRE_ACQUISITION + k, s);
     resetNotice = true;
     const fresh = newSave(name);
     write(K_SAVE + k, fresh);
@@ -1132,7 +1136,7 @@ G.DB = (() => {
     setName,
     upgradesOf,
     normalizeTeam,
-    /** True once if this load replaced a pre-Pokebox save with a clean one. */
+    /** True once if this load replaced a save from before the acquisition rework with a clean one. */
     takeResetNotice() {
       const v = resetNotice;
       resetNotice = false;
