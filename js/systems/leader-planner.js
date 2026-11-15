@@ -534,7 +534,9 @@ G.LeaderPlanner = (() => {
       next.hpFraction = Math.min(1, state.hpFraction + effect.healed);
       step.taken -= effect.healed; // a heal is negative damage taken, usable by any goal (LEADER-AI COST)
     }
-    step.dealt = effect.dealt;
+    // #109: damage past your HP is not dealt, so overkill never makes a plan look better near a KO (the plan's dealt so far
+    // counts against your HP)
+    step.dealt = Math.min(effect.dealt, Math.max(0, world.you.hpFraction - state.dealt));
     effect.atRange = Math.abs(state.distance - world.preferredRange) <= TUNE.rangeBand + EPS;
     effect.outsideYourReach = state.distance > world.you.bestReach + monOf(world, state).own.radius + EPS;
     effect.yourMoveCooling = yourMoveCooling(world, state, fireAt);
@@ -550,7 +552,7 @@ G.LeaderPlanner = (() => {
             : first
               ? first.tag
               : 'attack';
-    next.dealt += effect.dealt;
+    next.dealt += step.dealt;
     advance(next, step.duration);
     return { state: next, step };
   }

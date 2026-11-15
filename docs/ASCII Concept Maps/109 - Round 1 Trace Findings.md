@@ -1,5 +1,43 @@
 # #109 round 1: what the traces show
 
+## After the score rule and #123 (2026-11-15, home)
+
+Traces: leader-trace-Brock-2026-11-15T11-40-59-194Z.json (33.3 s, you won at 2% HP) and
+leader-trace-Misty-2026-11-15T11-42-54-398Z.json (83.3 s, you won at 27%). Not the natural gate: Jess forced the gyms and
+used a debug level-up, and the trace does not record the leader's level. Round 1 numbers, whole-score rule, new speeds.
+
+| Target row | Trace says |
+|---|---|
+| Brock throws Rock Throw from where he stands, Tackle when you come close | yes: Rock Throw 316 uses in chosen plans, Tackle 18 |
+| Brock half-HP push, then holding | first time it shows: trigger at 20.5 s, then Maintain ("use 3, use 3, hold 250, use 3") to the end |
+| Brock closes only to throwing distance | unclear: median distance 97 px against a 250 px range, but you were in melee (reach 68) the whole fight; 11 plans opened with a close, 6 with a dash |
+| Brock in Finish | 57% (was 81%), all of it in the first 20 s while your HP was 1.0 to 0.24 |
+| Misty keeps firing, backs off only between shots | yes: Water Pulse 687 uses, a back-off as the first step in 10 of 271 choices, median distance 83 px (close in) |
+| Misty's goal label | Kite 41%, Finish 25%, Maintain 19%, Pressure 11%. Kite's target is "a hit from outside your reach", so with your reach at 68 px her Water Pulse shots count as Kite. The behavior is the aggressor's, the label is not |
+
+```mermaid
+flowchart LR
+  A["Brock at Finish weight 1<br/>Finish 57%, Maintain 40%"] --> B["replay Finish 0.5<br/>Maintain 59%, Finish 37%"]
+  B --> C["replay Finish 0.35<br/>Maintain 73%, Finish 22%"]
+  C --> D["replay Finish 0.25<br/>Maintain 92%, Finish 2%"]
+```
+
+Misty at Finish 0.35 goes to Kite 58% and Finish 3%: her Finish stays at 1 (an aggressor should close out).
+
+### Found: overkill counts as damage dealt (FIXED 2026-11-15, with Brock Finish 0.35)
+
+At 29.4 s you had 0.024 HP. Brock's Maintain plan (three Rock Throws) was costed at -1.40, so it counted about 1.0 of your HP
+dealt when only 0.024 was left, and it beat Finish (1.86 against 1.05). A planned hit's dealt damage is not capped at the HP
+you have left, so long multi-hit plans of any goal look better than they are near a KO, and Finish loses exactly when it
+should win. Not new, but the whole-score rule scales it up. Fix is a COST rule change (cap each step's dealt at your HP not
+yet dealt in the plan): owner decision, then a plan.
+
+### Dodges
+
+Brock pressed 1 dodge in 33 s, Misty 3 in 83 s. Most dodge notes are "the threat is gone" (Brock 13, Misty 52): your melee
+hits land at once (hits in 0.00 s), so there is nothing to react to. Charges were not the limit (no charge to spare: Brock
+1, Misty 7).
+
 ## Natural-gate rerun (2026-11-14, 17:59 EST; same round 1 numbers, whole-kit fix in)
 
 Traces: leader-trace-Brock-2026-11-14T22-58-55-963Z.json (21.0 s, you won) and

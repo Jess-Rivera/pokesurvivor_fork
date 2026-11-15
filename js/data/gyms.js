@@ -247,7 +247,8 @@ G.Gyms = (() => {
         // or swaps, a little slow to react, sharper each loop. #109 round 1 (decision
         // 2026-11-14-109-brock-and-misty-target-feel): a ranged wall, he closes only to throwing distance (range 250) and
         // walking in or dashing costs more. Provisional, TUNE (BALANCE.md "Leader AI")
-        goalWeights: { endurance: 1.4, maintain: 1.2, pressure: 0.7, kite: 0.6, buff: 1.5 },
+        // finish 0.35 (#109, 2026-11-15): from the replay of his trace, so he holds instead of opening in Finish at full HP
+        goalWeights: { endurance: 1.4, maintain: 1.2, pressure: 0.7, kite: 0.6, buff: 1.5, finish: 0.35 },
         tagMultipliers: { retreat: 1.4, buff: 0.8, approach: 1.5, dash: 2 },
         range: 250,
         swapWill: 2,

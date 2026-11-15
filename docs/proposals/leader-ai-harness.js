@@ -2117,13 +2117,14 @@ if (G.LeaderPlanner) {
     ok(!of(c, 'kite') && !of(c, 'maintain') && !of(c, 'bait'), '15b: a lone jab cannot outreach you, hold your range or bait: no Kite, Maintain or Bait');
   }
 
-  // 15c. Finish: you at 8%: the jab's 0.1 KOs. Value 0.08 + 0.3 = 0.38; cost 0.3 x 0 - 1.5 x 0.1 + 0.01 x 0.95 = -0.1405; 0.5205.
+  // 15c. Finish: you at 8%: the jab's 0.1 KOs. Value 0.08 + 0.3 = 0.38; cost 0.3 x 0 - 1.5 x 0.08 + 0.01 x 0.95 = -0.1105 (only your
+  // 0.08 is dealt, #109 overkill cap; it was 0.1 before); 0.4905.
   // You at 80%: no 4-step plan deals 0.8. Its best partial plan: close, then three jabs (each recast waits its 2 s): 0.3 dealt in
   // 0.95 + 2.5 + 2.5 = 5.95 s; value 0.3 (the KO bonus) x 0.3 / 0.8 = 0.1125, cost (dealt left out, flagged) 0.01 x 5.95 = 0.0595.
   {
     let c = P.choose(world({ you: { hpFraction: 0.08 } }));
     const fi = of(c, 'finish');
-    ok(c.pick.goal === 'finish' && near(fi.value, 0.38) && near(fi.score, 0.5205), '15c: you at 8%: Finish wins, value 0.38, score 0.5205: ' + c.pick.goal + ' ' + fi.score);
+    ok(c.pick.goal === 'finish' && near(fi.value, 0.38) && near(fi.score, 0.4905), '15c: you at 8%: Finish wins, value 0.38, score 0.4905: ' + c.pick.goal + ' ' + fi.score);
     c = P.choose(world({ you: { hpFraction: 0.8 } }));
     const part = of(c, 'finish');
     ok(part && part.partial && near(part.value, 0.1125) && near(part.cost, 0.0595) && part.steps.length === 4, '15c: you at 80%: partial credit, value 0.1125, cost 0.0595, 4 steps: ' + (part && [part.value, part.cost, text(part)].join(' ')));
@@ -2700,6 +2701,16 @@ if (G.LeaderPlanner) {
           '16f-e: the KO world starts with Finish on top and Endurance netting above 0: ' + (plain.pick && plain.pick.goal));
         ok(walled.pick && walled.pick.goal === 'endurance', '16f-e: Endurance at weight ' + maxWeight + ' overtakes Finish: ' +
           (walled.pick && walled.pick.goal) + ' ' + walled.ranking.map((c) => c.goal + ' ' + c.score.toFixed(3)).join(', '));
+      }
+      // 16f-g. #109 (trace findings 2026-11-15, "overkill counts as damage dealt"): a plan never counts more damage dealt than the
+      // HP you have left, so near a KO a long multi-hit plan of another goal cannot outscore Finish on overkill.
+      {
+        const nearKo = () => world({ top: { distance: 40 }, moves: [jab({ hitFraction: 0.3, cooldown: 0.5 })], you: { hpFraction: 0.05 } }),
+          choice = P.choose(nearKo()),
+          over = choice.ranking.filter((c) => c.steps.reduce((sum, step) => sum + step.dealt, 0) > 0.05 + 1e-9);
+        ok(!over.length, '16f-g: no plan counts more dealt than your HP left: ' + over.map((c) => c.goal + ' ' + text(c)).join('; '));
+        ok(choice.pick && choice.pick.goal === 'finish', '16f-g: near a KO, Finish is picked: ' +
+          choice.ranking.map((c) => c.goal + ' ' + c.score.toFixed(3)).join(', '));
       }
       // 16f-c. Every tag a plan's steps carry at x2 doubles that plan's cost; x2 on a tag none of its steps carry changes nothing.
       const costProblems = [];
