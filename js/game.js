@@ -180,6 +180,7 @@ G.Game = (() => {
     G.Gym.reset();
     G.Shops.reset(); // Move Shop step 3: the first pair is due at 2:00 again
     G.Events.reset();
+    G.Rescue.reset(); // #135: the rescue event's roll and any rescue up
     G.Weather.reset();
     G.Path.clear();
     G.Hazards.clear();
@@ -1185,6 +1186,7 @@ G.Game = (() => {
     if (G.Game.runRecorder) G.Game.runRecorder('tick', time); // #124: the run pace trace, dev only
     if (!coop || G.Coop.isHost) G.Gym.update(dt, pl, time);
     G.Events.update(dt, all, time);
+    G.Rescue.update(dt, pl, time); // #135: the per-minute rescue roll, and the rescue's clocks
     G.Weather.update(dt, time, pl);
     G.FX.update(dt);
 
@@ -1237,6 +1239,7 @@ G.Game = (() => {
     if (gate) items.push({ y: gate.y, ent: gate });
     for (const s of G.Shops.drawables()) items.push({ y: s.y, ent: s });
     if (pl && state !== 'ui') for (const d of G.Events.drawables()) items.push({ y: d.y, ent: d });
+    if (pl && state !== 'ui') for (const d of G.Rescue.drawables()) items.push({ y: d.y, ent: d });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) {
       if (it.prop) G.World.drawProp(ctx, it.prop, t);

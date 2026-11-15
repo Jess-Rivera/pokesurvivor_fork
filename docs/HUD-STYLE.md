@@ -350,7 +350,9 @@ The chevrons floating off the character toward an off-screen target. Adopted fro
 | ------------------------ | -------- | ----------- | -------------- | ------------- |
 | Gym gate                 | Special  | `#375AB2`   | `#243B74`      | `#7D94CD`     |
 | Move Trainer and TM Mart | Physical | `#EB5628`   | `#99381A`      | `#F29173`     |
+| Rescue (#135)            | Green    | `#3FAE5A`   | `#22703A`      | `#8FDDA5`     |
 
+- `[Proposed]` The Rescue green is a first pick by eye (#135), until Jess's feel test.
 - A `#101010` line outside the Dark one keeps the blue readable over water.
 - No halo or aura behind the chevrons (Jess, 2026-11-10).
 - The border runs all the way around each chevron, ends included (square caps on every layer).

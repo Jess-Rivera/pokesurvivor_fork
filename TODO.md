@@ -12,7 +12,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 
 ## Next (queue set by Jess 2026-11-15; gym leader AI parked)
 1. Merge balance/124-economy-xp into main (#124 and #125 closed 2026-11-15; XP boost now off by default).
-2. #128 acquisition on feature/128-acquisition: #132 and #134 closed, #133 awaits your feel test, then #135 (S4 rescue event); slice order in
+2. #128 acquisition on feature/128-acquisition: #132 and #134 closed, #133 and #135 await your feel tests, then #136 (S5 catch phase and belt); slice order in
    docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
    97 - Upgrade System Review.md). #131 Silver bonuses later, after a traced run reaches gym 1. 4. #126 UI unify (#61 first), then #127 Main Menu v3.0.

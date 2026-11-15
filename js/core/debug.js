@@ -13,6 +13,7 @@
  *   G.Debug.loadout(id, id, ...) set the pre-run loadout directly (cleaned: unlocked only, one Stone, within your slots). No ids: logs it. Saved.
  *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
  *   G.Debug.silver(n)  set this run's Silver to n (no arg: logs it). In a run only, not saved (Silver is run-only). For the Move Shop.
+ *   G.Debug.rescue()   #135: start a rescue event now (the toast, the arrow, the UberElite). False when one is up or you are in a gym arena.
  *   G.Debug.xpBoost(on)  #125: turn the opening 3-minute XP boost on (true) or off (false, the default); no arg: logs it. Until reload, not saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.berryslots(n) set how many berry slots this save has (1 to 4; no arg: logs the current count). Saved.
@@ -257,6 +258,21 @@ G.Debug = (() => {
     if (n != null) G.Silver.set(n);
     console.log('[Debug] Silver: ' + G.Silver.whole + ' (' + G.Silver.amount.toFixed(2) + ' inside)');
     return G.Silver.whole;
+  }
+
+  /** #135: start a rescue event now, whatever the roll says. In a run only. */
+  function rescue() {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first.');
+      return false;
+    }
+    const started = G.Rescue.debugFire();
+    console.log('[Debug] rescue: ' + (started ? 'started' : 'not started (one is up, or you are in a gym arena)'));
+    return started;
   }
 
   /** #125: turn the opening 3-minute XP boost on (true) or off (false, the game's default); no argument logs it. ?dev only. Takes effect at once and
@@ -1302,6 +1318,7 @@ G.Debug = (() => {
     coins,
     silver,
     xpBoost,
+    rescue,
     unlockitem,
     loadout,
     ignite,

@@ -126,6 +126,7 @@ for (const [name, args, show] of [
   ['species_names.js', [], /current/],
   ['items_report.js', ['--check'], /current/],
   ['evolvable_data.js', ['--check'], /current/],
+  ['stage_one_data.js', ['--check'], /current/],
   ['species_traits.js', ['--check'], /current/],
   ['status_anims.js', ['--check'], /current/],
 ]) {
