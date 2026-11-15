@@ -1805,7 +1805,7 @@
       if (e.boss || e.elite) pl.bosses++;
       G.Progress.kill(e);
       G.Game.evKill(e); // pokebox step 5: the run's EV banks
-      G.Silver.kill(G.Game.st.time); // Move Shop step 2: every kill pays Silver, the same for every enemy
+      G.Silver.kill(); // Move Shop step 2, #124: every kill pays 1 Silver, the same for every enemy
       // #91 (PAUSE-MENU 4): the kill is its last hitter's when that is on your team (a move still flying after a swap, a burn
       // tick), else the Pokemon on the field. The team count above is unchanged.
       const stats = pl.team && pl.team.runStats,

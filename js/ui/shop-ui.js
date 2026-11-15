@@ -78,10 +78,10 @@ G.ShopUI = (() => {
   function render() {
     if (!cur) return;
     const { shop } = cur,
-      mart = shop.kind === 'mart',
-      cost = G.Shops.price(G.Game.st.time, G.Game.player ? G.Game.player.level : 1);
+      mart = shop.kind === 'mart';
     $('mshop-title').textContent = G.Shops.nameOf(shop.kind);
-    $('mshop-silver').innerHTML = coin + ' ' + fmt(G.Silver.whole) + ' Silver · ' + fmt(cost) + ' a move';
+    // #124: the price depends on the member (its slots filled), so the header shows the balance only
+    $('mshop-silver').innerHTML = coin + ' ' + fmt(G.Silver.whole) + ' Silver';
     $('mshop-hint').textContent = mart
       ? 'Pick a TM, then the Pokemon to teach it. R rerolls the TMs. A new move gets its own slot: press its number key in a run to use it.'
       : 'R rerolls the offers. A new move gets its own slot: press its number key in a run to use it. Bonds are fixed.';
@@ -108,10 +108,23 @@ G.ShopUI = (() => {
         na = true;
       } else if (mart) {
         const c = tm ? G.Shops.check(cur.shop, f, tm) : null;
-        ds = !c ? '' : c.ok ? 'Can learn' : c.why;
+        ds = !c
+          ? ''
+          : c.ok
+            ? 'Can learn · ' + fmt(c.cost) + ' Silver'
+            : c.why === "Can't afford"
+              ? c.why + ' · ' + fmt(c.cost)
+              : c.why;
         na = !c || !c.ok;
       } else {
-        ds = f.slots.length + ' / ' + f.maxMoves + ' slots';
+        const full = f.slots.length >= f.maxMoves;
+        ds =
+          f.slots.length +
+          ' / ' +
+          f.maxMoves +
+          ' slots · next ' +
+          fmt(G.Shops.price(cur.shop.kind, f.slots.length, full)) +
+          (full ? ' (replaces)' : '');
         na = false;
       }
       const sel = !mart && i === cur.f;
@@ -145,26 +158,25 @@ G.ShopUI = (() => {
       box.innerHTML = '<div class="ds mshop-empty">Nothing left to learn here.</div>';
       return;
     }
+    // #124: a TM's price depends on who learns it, so a TM card shows the Mart's range; a Trainer card shows this member's price
+    const martRange = fmt(G.Shops.price('mart', 1, false)) + ' to ' + fmt(G.Shops.price('mart', 1, true));
     ids.forEach((id, i) => {
-      let tail, na;
+      let tail, na, cost;
       if (mart) {
         tail = '';
         na = false;
+        cost = martRange;
       } else {
         const c = G.Shops.check(cur.shop, f, id);
         na = !c.ok;
         tail = c.ok ? (c.forget ? ' · replaces a move' : '') : ' · ' + c.why;
+        cost = fmt(c.cost);
       }
       const ic = moveIco(id),
         el = card(
           (mart && i === cur.tm ? 'mshop-sel' : '') + (na ? ' mshop-na' : ''),
           ic.html,
-          esc(mname(id)) +
-            '<span class="mshop-price">' +
-            coin +
-            ' ' +
-            fmt(G.Shops.price(G.Game.st.time, G.Game.player.level)) +
-            '</span>',
+          esc(mname(id)) + '<span class="mshop-price">' + coin + ' ' + cost + '</span>',
           esc(G.MoveInfo.desc(id) + tail),
           G.Input.keyLabel('attack_' + (i + 1)),
           () => pickOffer(i)

@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['Speed and dodges', 'Speed and dodges'],
     chg: [
       [
+        "Silver is simpler: every Pokemon you defeat pays 1 Silver, and a run starts with none. Move prices no longer climb with your level or the clock. Instead each Pokemon's next move costs more the more slots it has filled, so filling out the whole team comes first: at the Move Trainer 60, 120, then 240, and 300 to replace a move. TMs cost more: 150, 300, 400, then 450.",
+        "Silver is simpler: every Pokemon you defeat pays 1 Silver, and a run starts with none. Move prices no longer climb with your level or the clock. Instead each Pokemon's next move costs more the more slots it has filled, so filling out the whole team comes first: at the Move Trainer 60, 120, then 240, and 300 to replace a move. TMs cost more: 150, 300, 400, then 450.",
+      ],
+      [
         'Every Pokemon now moves at nearly the same speed, so slow starters like Turtwig and Bulbasaur can get away from early chasers. Speed now shows in your dodge instead: faster Pokemon get their dodge charges back sooner (about 6 s for the fastest, 9 s for the slowest).',
         'Every Pokemon now moves at nearly the same speed, so slow starters like Turtwig and Bulbasaur can get away from early chasers. Speed now shows in your dodge instead: faster Pokemon get their dodge charges back sooner (about 6 s for the fastest, 9 s for the slowest).',
       ],

@@ -96,7 +96,7 @@ flowchart LR
   E --> F[Kills per move the same all run]
 ```
 
-## Proposed rule
+## Proposed rule (superseded the same day by Jess's rule: decision 2026-11-15-124-move-price-by-slots-filled)
 
 - A Trainer move costs a fixed number of kills' worth of Silver: that count times what one kill pays now. Your level is
   out. Before 5:30 that is a flat price, since a kill pays 1 there.

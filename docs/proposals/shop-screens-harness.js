@@ -7,8 +7,10 @@
 // tools/smoke-ui.js and feel-tested.
 // Plan: docs/ASCII Concept Maps/Move Shop step 4 - Shop screens.txt sections 1 to 3 and 6 (v3: bonds are FIXED, Jess 2026-11-05),
 // step 4b - Purchase confirm and Ban.txt (the confirm) and step 4c - Shop Reroll.txt (rerolls, old bans no longer read);
-// spec docs/proposals/move-shop-plan.md. Expected values are hand-derived from the plan and the spec (price = 5 x the whole ENEMY LV x
-// the run level; 4 offers; loose moves only in the forget step; 2 buffs at most), never read from the code under test.
+// spec docs/proposals/move-shop-plan.md. Expected values are hand-derived from the plan and the spec (#124 price: the shop's base,
+// Trainer 300 / Mart 450, less a discount set by the member's slots filled, Trainer 80 / 60 / 20 percent, Mart two thirds / one third /
+// one ninth, full base for a replacement; 4 offers; loose moves only in the forget step; 2 buffs at most), never read from the code
+// under test.
 // The mutation runner (shop-screens-mutate.js) points the SS_* variables (SRC below) at altered copies; every mutation must make this fail.
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
@@ -64,11 +66,22 @@ game.player = lead; game.roster = [lead];
   ok(isBuff('swords-dance') && isBuff('agility') && isBuff('harden'), 'Swords Dance, Agility and Harden are buffs (the 2-buff cases)');
   ok(!isBuff('thunderbolt') && !isBuff('thunder-shock'), 'Thunderbolt and Thunder Shock are not buffs'); }
 
-// 1. price: 5 x the whole ENEMY LV (1 + 49 t / 1800, rounded down) x the run level
-{ ok(S.price(120, 5) === 100, '2:00, ENEMY LV 4, level 5: 100 (' + S.price(120, 5) + ')');
-  ok(S.price(120, 8) === 160, '2:00, ENEMY LV 4, level 8: 160 (' + S.price(120, 8) + ')');
-  ok(S.price(390, 12) === 660, '6:30, ENEMY LV 11, level 12: 660 (' + S.price(390, 12) + ')');
-  ok(S.price(600, 18) === 1530, '10:00, ENEMY LV 17, level 18: 1,530 (' + S.price(600, 18) + ')'); }
+// 1. price (#124, decision 2026-11-15-124-move-price-by-slots-filled): base less a discount by slots filled; a replacement pays the
+// base; run time and your level play no part; a Trainer move costs less than a TM at every step
+{ const ladder = kind => [1, 2, 3].map(filled => S.price(kind, filled, false)).concat(S.price(kind, 4, true));
+  const tr = ladder('trainer'), tm = ladder('mart');
+  ok(tr.join() === '60,120,240,300', 'Trainer: 300 less 80, 60, 20 and 0 percent is 60, 120, 240, 300 (' + tr + ')');
+  ok(tm.join() === '150,300,400,450', 'Mart: 450 less two thirds, one third, one ninth and 0 is 150, 300, 400, 450 (' + tm + ')');
+  ok(tr.every((v, i) => i === 0 || v > tr[i - 1]) && tm.every((v, i) => i === 0 || v > tm[i - 1]), 'each slot filled makes the next move dearer');
+  ok(tr.every((v, i) => v < tm[i]), 'a Trainer move costs less than a TM at every step');
+  ok(S.price('trainer', 1, true) === 300 && S.price('mart', 2, true) === 450, 'a replacement pays the full base, whatever is filled');
+  Sv.set(100000);
+  const two = mkF(25, [['thunder-shock'], ['quick-attack']]), shop = trainer(); shop.stock.set(two, ['thunderbolt']);
+  ok(S.check(shop, two, 'thunderbolt').cost === 120, 'a member starting with 2 moves skips the 80 percent step: 120');
+  const costAt = (time, level) => { game.st.time = time; two.level = level; game.player = Object.assign(Object.create(lead), { level }); return S.check(shop, two, 'thunderbolt').cost; };
+  ok(costAt(120, 5) === costAt(1700, 45), 'the price is the same at 2:00 and level 5 as at 28:20 and level 45');
+  game.player = lead; game.st.time = 390; two.level = 12;
+  ok(!/levelForTime|\.level\b|st\.time/.test(code(body(read('js/systems/shops.js'), 'function price('))), 'the price reads no run time and no level'); }
 
 // 2. Trainer stock: 4 from the member's pool, none it knows, the same 4 on reopen, a bought move leaves it
 { Sv.set(100000);
@@ -103,16 +116,16 @@ game.player = lead; game.roster = [lead];
   shop.stock.set(p, ['thunderbolt', 'volt-tackle', 'swift', 'growl']);
   const was = p.slots[1];
   ok(S.buy(shop, p, 'thunderbolt'), 'buys Thunderbolt');
-  ok(near(Sv.amount, 9340), 'Silver down by the price, 10,000 - 660 = 9,340: ' + Sv.amount);
+  ok(near(Sv.amount, 9880), 'Silver down by the price, 2 slots filled: 10,000 - 120 = 9,880: ' + Sv.amount);
   ok(p.hasMove('thunderbolt') && p.slots.length === 3 && p.slots[2][0].id === 'thunderbolt', 'learned into a new slot');
   ok(p.active === 1 && p.slots[1] === was, 'the active slot did not change (index and group)');
   ok(S.offers(shop, p).join() === 'volt-tackle,swift,growl', 'the stock lost it: ' + S.offers(shop, p)); }
 
 // 5. short of Silver: refused, nothing changes
-{ Sv.set(659); game.st.time = 390;
+{ Sv.set(59); game.st.time = 390;
   const p = mkF(25, [['thunder-shock']]), shop = trainer(); shop.stock.set(p, ['thunderbolt']);
-  ok(S.check(shop, p, 'thunderbolt').why === "Can't afford", "659 Silver for a 660 move: can't afford");
-  ok(!S.buy(shop, p, 'thunderbolt') && near(Sv.amount, 659) && ids(p) === 'thunder-shock', 'the buy is refused and nothing changes'); }
+  ok(S.check(shop, p, 'thunderbolt').why === "Can't afford", "59 Silver for a 60 move (1 slot filled): can't afford");
+  ok(!S.buy(shop, p, 'thunderbolt') && near(Sv.amount, 59) && ids(p) === 'thunder-shock', 'the buy is refused and nothing changes'); }
 
 // 6. full slots: the forget step, loose moves only (bonds are fixed)
 { Sv.set(10000); game.st.time = 390;
@@ -124,12 +137,12 @@ game.player = lead; game.roster = [lead];
   ok(!S.buy(shop, p, 'thunderbolt') && ids(p) === before && near(Sv.amount, 10000), 'no slot picked (Cancel): nothing bought, nothing paid');
   ok(S.buy(shop, p, 'thunderbolt', 2), 'forget Fly (a skill is a loose move) for Thunderbolt');
   ok(ids(p) === 'thunder-shock,quick-attack,thunderbolt,tackle' && !p.hasMove('fly') && p.moves.length === 4, 'Thunderbolt takes slot 3 exactly: ' + ids(p));
-  ok(p.active === 0 && near(Sv.amount, 9340), 'the active slot stays, the price is paid, no refund for the forgotten move: ' + Sv.amount);
+  ok(p.active === 0 && near(Sv.amount, 9700), 'the active slot stays, the full 300 is paid, no refund for the forgotten move: ' + Sv.amount);
   const b = mkF(25, [['thunder-shock'], ['quick-attack', 'tackle'], ['swift'], ['growl']]), sb = trainer(); sb.stock.set(b, ['thunderbolt']);
   const cb = S.check(sb, b, 'thunderbolt');
   ok(cb.ok && cb.forget && cb.allowed.join() === '0,2,3', 'a bond slot is not on the forget list (bonds are fixed): ' + cb.allowed);
   const bb = ids(b);
-  ok(!S.buy(sb, b, 'thunderbolt', 1) && ids(b) === bb && near(Sv.amount, 9340), 'picking the bond slot is refused, nothing changes');
+  ok(!S.buy(sb, b, 'thunderbolt', 1) && ids(b) === bb && near(Sv.amount, 9700), 'picking the bond slot is refused, nothing changes');
   ok(!b.replaceMove('tackle', 'thunderbolt') && !b.replaceMove('quick-attack', 'thunderbolt') && ids(b) === bb, 'replaceMove never touches a bonded move');
   const all = mkF(25, [['thunder-shock', 'quick-attack'], ['tackle', 'swift'], ['growl', 'tail-whip'], ['leer', 'ember']]), sa = trainer();
   sa.stock.set(all, ['thunderbolt']);
