@@ -77,3 +77,31 @@ run time. That table is the reference average. The price numbers are then set so
 | O1 | Record the Run Info table (2 or 3 runs) | E3, E4, E6, the price numbers |
 | O2 | How much cheaper is a Trainer move than a TM: half, two thirds, or another ratio? | E5's number |
 | O3 | Is your team usually six by shop 1, or does the "per visit" count only members you have then? | E3 |
+
+## First trace (Jess, 2 runs, 2026-11-15)
+
+| Reading | Value |
+|---|---|
+| Kills per minute, minutes 1 to 4 | about 30, 74, 60, 104 (one run reached minute 4) |
+| Silver earned | equals kills: each kill pays 1 until world level 10 (about 5:30), the floor in silver.js |
+| Shop pair 1 (2:00) | 112 earned + 100 start = 212 to spend, your level 6, world level 4, team 3 |
+| Price there today | 5 x 4 x 6 = 120: one move, which is what Jess bought |
+| Run length | 4.3 and 1.9 minutes, both fainted; no run reached gym 1, so only shop pair 1 has data |
+
+```mermaid
+flowchart LR
+  A[Kill pays 1 Silver until 5:30] --> B[Then world level / 10]
+  C[Price today grows with world level from 0:00] --> D[Early prices climb while pay is flat]
+  B --> E[Price as a fixed number of kills' worth of pay]
+  E --> F[Kills per move the same all run]
+```
+
+## Proposed rule
+
+- A Trainer move costs a fixed number of kills' worth of Silver: that count times what one kill pays now. Your level is
+  out. Before 5:30 that is a flat price, since a kill pays 1 there.
+- From the trace: 212 at shop 1 and 4 to 6 moves gives about 35 to 50 kills per move. Proposed: 40 (5 moves at shop 1).
+- At half Jess's kill rate, shop 1 holds 156, so 3 moves: fewer, and every extra kill closes the gap (E6).
+- A TM costs the Trainer price times a ratio above 1 (O2).
+- Later shops (2 to 4) have no data yet, since runs end before gym 1. At about 70 kills a minute, 40 per move is close to
+  2 moves a minute of play. Recheck E3 and E4 once a traced run reaches gym 1.
