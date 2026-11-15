@@ -39,7 +39,7 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const NAT = ['', 'Atk', 'Def', 'SpA', 'SpD', 'Spe'];
 // Snorlax from docs/proposals/pokebox-plan.md "Worked example": Adamant (+Atk -SpA), IVs 28 31 12 5 22 9.
 const SNOR_ID = '7f3c2a9e-4b1d-4e8a-9c21-5d0e8f6a1b34', PLAIN_ID = '0b9d6f1e-2c3a-4d5b-8e7f-a1b2c3d4e5f6', LOW_ID = '11111111-2222-4333-8444-555555555555';
-const rec = (id, d, n, i) => ({ u: C.shortId(id), d, t: 1793736000, m: 'g', n, i, g: 0, x: 142, y: 97, a: 1 });
+const rec = (id, d, n, i) => ({ u: C.shortId(id), d, t: 1793736000, m: 'w', n, i, g: 0, x: 142, y: 97, a: 1 });
 const mkSave = () => ({ trainerId: 't', box: [rec(SNOR_ID, 143, 11, '47MFWJ'), rec(PLAIN_ID, 143, 1, 'AAAAAA'), rec(LOW_ID, 40, 1, '777777')], team: [] });
 const mon = d => DEX_BY[d];
 

@@ -36,7 +36,7 @@ G.Copies = (() => {
   const IV_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // position = the IV, so a saved IV can never pass 31
   const GENDERS = ['male', 'female', 'none'];
   const titled = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  const METHODS = { starter: 's', gacha: 'g', wild: 'w', rescue: 'r', debug: 'd', other: 'o' };
+  const METHODS = { starter: 's', wild: 'w', rescue: 'r', debug: 'd', other: 'o' };
   const METHOD_NAME = {};
   for (const name in METHODS) METHOD_NAME[METHODS[name]] = name;
 
@@ -383,7 +383,7 @@ G.Copies = (() => {
     return true;
   }
 
-  /** Locked: never sold (box, gacha card, bulk). It still moves between boxes and goes on the team. */
+  /** Locked: never sold (box, bulk). It still moves between boxes and goes on the team. */
   const setLocked = (save, id, on) => setFlag(save, id, 'l', on);
   /** Favorite: a mark that bulk sell skips (3b-3); a single sale still works. */
   const setFavorite = (save, id, on) => setFlag(save, id, 'f', on);

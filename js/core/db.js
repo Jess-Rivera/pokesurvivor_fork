@@ -98,7 +98,7 @@ G.DB = (() => {
       created: Date.now(),
       updated: Date.now(), // last change (for merging)
       coins: START_COINS,
-      owned: {}, // dex -> { at, from: 'starter'|'gacha'|'wild' }
+      owned: {}, // dex -> { at, from: 'starter'|'wild'|'rescue' }
       shiny: {}, // dex -> { at, from } — shiny variants obtained
       partner: null, // dex of the Pokemon you play with
       partnerShiny: false, // play with its shiny version (if you have it)
@@ -1083,10 +1083,10 @@ G.DB = (() => {
   }
 
   /**
-   * A Pokemon the player just got (gacha, rescue, wild shiny, starter, debug): the Pokedex record, then one new copy, every time.
+   * A Pokemon the player just got (rescue, wild shiny, starter, debug): the Pokedex record, then one new copy, every time.
    * A repeat is a copy too. A shiny gives only the shiny copy; the record still marks the species owned (pokebox 3a-2, D4).
    * With every box full there is no copy: it is sold on arrival and the coins go to this save (pokebox 3a-4, D3 and D4).
-   * @param s  the save to write (default: the loaded one; the gacha passes its own)
+   * @param s  the save to write (default: the loaded one)
    * @returns { isNew, uid, box, sold }  isNew: new to the Pokedex, or a first shiny. uid, box (from 0): the new copy, null if none.
    *   sold: the PokeCoins paid when it was sold on arrival (absent otherwise).
    */

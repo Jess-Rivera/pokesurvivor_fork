@@ -989,8 +989,7 @@ G.Game = (() => {
       if (
         G.Input.tap('escape') &&
         !G.UI.isOpen('scr-profile') &&
-        ['scr-dex', 'scr-inventory', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen) &&
-        document.getElementById('pull-fx').classList.contains('hidden')
+        ['scr-dex', 'scr-inventory', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
       )
         G.MenuUI.open();
       return;

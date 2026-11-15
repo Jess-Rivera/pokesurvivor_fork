@@ -1,7 +1,7 @@
 /* ============ ui.js — common interface utilities ============
  * - Mostrar / ocultar pantallas.
  * - Animated PMD sprites inside DOM <canvas> (menu, collection,
- *   gacha...). They are registered here and the main loop animates them with tick().
+ *   shop...). They are registered here and the main loop animates them with tick().
  * - Interface sounds (by delegation: any button plays on its own).
  * - Sound panel, notices (toast), coins, type chips, stars.
  */

@@ -40,7 +40,7 @@ const near = (a, b, e = 1e-9) => typeof a === 'number' && Math.abs(a - b) <= e *
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const SNOR_ID = '7f3c2a9e-4b1d-4e8a-9c21-5d0e8f6a1b34', B_ID = '0b9d6f1e-2c3a-4d5b-8e7f-a1b2c3d4e5f6', SPE_ID = '22222222-3333-4444-8555-666666666666',
   LOW_ID = '11111111-2222-4333-8444-555555555555', MEDSPE_ID = '33333333-4444-4555-8666-777777777777', GONE_ID = '99999999-9999-4999-8999-999999999999';
-const rec = (id, d, n, i, e) => { const c = { u: C.shortId(id), d, t: 1793736000, m: 'g', n, i, g: 0, x: 142, y: 97, a: 1 }; if (e) c.e = e; return c; };
+const rec = (id, d, n, i, e) => { const c = { u: C.shortId(id), d, t: 1793736000, m: 'w', n, i, g: 0, x: 142, y: 97, a: 1 }; if (e) c.e = e; return c; };
 // The plan's Snorlax (Adamant, IVs 28 31 12 5 22 9, EVs 180 252 78 0 0 0); a plain Snorlax; a plain Snorlax with 252 Speed EVs; a base 40 HP mon with 252 HP EVs; the same mon with 252 Speed EVs (#123: a median Speed, off the band's flat ends).
 const mkSave = () => ({ trainerId: 't', box: [rec(SNOR_ID, 143, 11, '47MFWJ', [180, 252, 78, 0, 0, 0]), rec(B_ID, 143, 1, 'AAAAAA'),
   rec(SPE_ID, 143, 1, 'AAAAAA', [0, 0, 0, 0, 0, 252]), rec(LOW_ID, 40, 1, 'AAAAAA', [252, 0, 0, 0, 0, 0]),

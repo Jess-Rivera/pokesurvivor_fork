@@ -595,7 +595,7 @@ G.Icons = (() => {
         '............',
       ],
     },
-    // Balls of the gacha slot machine (one per rarity). Pixel art cut from assets/icons/pokeball/<rarity>.png:
+    // Balls for the star tiers (one per rarity). Pixel art cut from assets/icons/pokeball/<rarity>.png:
     // ball = Common, ball2 = Uncommon (Premier), ball3 = Rare, ballLux = Epic, ball4 = Legendary.
     ball2: {
       pal: { k: '#000000', a: '#ffffff', b: '#e0e0e0', c: '#ff0000' },

@@ -20,10 +20,10 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 let seed = 12345; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
 
 // 1. the plan's Snorlax, from its exact saved line
-const LINE = '{"u":"fzwqnksdToqcIV0Oj2obNA","d":143,"t":1793736000,"m":"g","n":11,"i":"47MFWJ","g":0,"x":142,"y":97,"a":2,"s":1,"e":[180,252,78,0,0,0],"k":"Mochi","h":120,"p":{"dmg":3,"hp":2},"f":1,"l":1}';
+const LINE = '{"u":"fzwqnksdToqcIV0Oj2obNA","d":143,"t":1793736000,"m":"w","n":11,"i":"47MFWJ","g":0,"x":142,"y":97,"a":2,"s":1,"e":[180,252,78,0,0,0],"k":"Mochi","h":120,"p":{"dmg":3,"hp":2},"f":1,"l":1}';
 { if (LINE.length !== 190) bad('the plan says 190 bytes, the line has ' + LINE.length);
   const c = C.read(JSON.parse(LINE), { trainerId: 'me' });
-  const WANT = { abilityName: 'Thick Fat', abilityHidden: false, natureName: 'Adamant', box: 0, pokemonUUID: '7f3c2a9e-4b1d-4e8a-9c21-5d0e8f6a1b34', speciesID: 143, form: 'base', originalTrainerID: 'me', nickname: 'Mochi', dateObtained: 1793736000000, obtainedMethod: 'gacha', nature: 'adamant', natureUp: 1, natureDown: 3, gender: 'male', heightScale: 142, weightScale: 97, abilitySlot: 2, ability: 'thick-fat', isShiny: true, friendship: 120, startingMove: null, isFavorite: true, isLocked: true };
+  const WANT = { abilityName: 'Thick Fat', abilityHidden: false, natureName: 'Adamant', box: 0, pokemonUUID: '7f3c2a9e-4b1d-4e8a-9c21-5d0e8f6a1b34', speciesID: 143, form: 'base', originalTrainerID: 'me', nickname: 'Mochi', dateObtained: 1793736000000, obtainedMethod: 'wild', nature: 'adamant', natureUp: 1, natureDown: 3, gender: 'male', heightScale: 142, weightScale: 97, abilitySlot: 2, ability: 'thick-fat', isShiny: true, friendship: 120, startingMove: null, isFavorite: true, isLocked: true };
   for (const k in WANT) if (c[k] !== WANT[k]) bad('Snorlax ' + k + ' is ' + c[k]);
   if (!same(c.iv, [28, 31, 12, 5, 22, 9])) bad('Snorlax IVs in game stat order ' + c.iv);
   if (!same(c.ev, [180, 252, 78, 0, 0, 0])) bad('Snorlax EVs ' + c.ev);
@@ -47,7 +47,7 @@ const LINE = '{"u":"fzwqnksdToqcIV0Oj2obNA","d":143,"t":1793736000,"m":"g","n":1
 
 // 4. rolls, against the approved rates
 const N = 200000;
-const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const k = read(C.roll({ dex, from: 'gacha' }, rnd)); c[k] = (c[k] || 0) + 1 / N; } return c; };
+const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const k = read(C.roll({ dex, from: 'wild' }, rnd)); c[k] = (c[k] || 0) + 1 / N; } return c; };
 { const a = rate(143, r => r.a); if (!near(a[1], 0.475, 0.004) || !near(a[2], 0.475, 0.004) || !near(a[3], 0.05, 0.003)) bad('two normal + hidden ' + JSON.stringify(a));
   const b = rate(1, r => r.a); if (!near(b[1], 0.95, 0.004) || !near(b[3], 0.05, 0.003) || b[2]) bad('one normal + hidden ' + JSON.stringify(b));
   const m = rate(151, r => r.a); if (m[1] !== undefined && !near(m[1], 1, 1e-6) || m[2] || m[3]) bad('one normal ' + JSON.stringify(m));
@@ -56,24 +56,24 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
   if (rate(32, r => r.g)[1]) bad('Nidoran male is never female');
   if (rate(113, r => r.g)[0]) bad('Chansey is never male');
   const ivs = new Array(32).fill(0), nats = new Array(26).fill(0); let sum = 0, tails = 0, lo = 999, hi = -1;
-  for (let i = 0; i < N; i++) { const r = C.roll({ dex: 143, from: 'gacha' }, rnd), f = C.read(r, {}); f.iv.forEach(v => ivs[v]++); nats[r.n]++; sum += r.x; lo = Math.min(lo, r.x); hi = Math.max(hi, r.x); if (r.x < 26 || r.x > 229) tails++; }
+  for (let i = 0; i < N; i++) { const r = C.roll({ dex: 143, from: 'wild' }, rnd), f = C.read(r, {}); f.iv.forEach(v => ivs[v]++); nats[r.n]++; sum += r.x; lo = Math.min(lo, r.x); hi = Math.max(hi, r.x); if (r.x < 26 || r.x > 229) tails++; }
   ivs.forEach((n, v) => { if (!near(n / (N * 6), 1 / 32, 0.002)) bad('IV ' + v + ' rate ' + n / (N * 6)); });
   for (let n = 1; n <= 25; n++) if (!near(nats[n] / N, 1 / 25, 0.003)) bad('nature ' + n + ' rate ' + nats[n] / N);
   if (nats[0]) bad('nature id 0 does not exist');
   if (!near(sum / N, 127.5, 0.6) || lo < 0 || hi > 255) bad('scale mean ' + sum / N + ' range ' + lo + ' to ' + hi);
   if (!near(tails / N, 0.042, 0.004)) bad('about 4% outside 84% to 116%, got ' + tails / N);
-  for (const dex in T.SPECIES) { const a = T.SPECIES[dex][1]; for (let i = 0; i < 40; i++) { const f = C.read(C.roll({ dex: +dex, from: 'gacha' }, rnd), {}); if (!f.ability || f.ability !== a[f.abilitySlot - 1]) bad(dex + ' rolled an ability it does not have'); } }
-  const fresh = JSON.stringify({ ...C.roll({ dex: 143, from: 'gacha', at: 1793736000000 }, rnd), n: 11, x: 142, y: 97 }).length; if (fresh > 109) bad('a fresh copy is about 108 bytes, got ' + fresh);
+  for (const dex in T.SPECIES) { const a = T.SPECIES[dex][1]; for (let i = 0; i < 40; i++) { const f = C.read(C.roll({ dex: +dex, from: 'wild' }, rnd), {}); if (!f.ability || f.ability !== a[f.abilitySlot - 1]) bad(dex + ' rolled an ability it does not have'); } }
+  const fresh = JSON.stringify({ ...C.roll({ dex: 143, from: 'wild', at: 1793736000000 }, rnd), n: 11, x: 142, y: 97 }).length; if (fresh > 109) bad('a fresh copy is about 108 bytes, got ' + fresh);
   console.log('4 rolls: 47.5 / 47.5 / 5, 95 / 5, 100; real gender ratios; even IVs and natures; bell scale; about 108 bytes'); }
 
 // 5. linkTeam (copies made directly here; the sources are section 12). fill is gone since step 3a-2.
 { const s = { owned: { 143: {}, 25: {} }, shiny: { 25: {} }, box: [], team: [{ dex: 143, shiny: false }, { dex: 25, shiny: true }, null, null, null, null], trainerId: 'me' };
-  C.add(s, { dex: 143, at: 1793736000000, from: 'gacha' }, rnd);
+  C.add(s, { dex: 143, at: 1793736000000, from: 'wild' }, rnd);
   C.add(s, { dex: 25, at: 1000000, from: 'legend' }, rnd);
   C.add(s, { dex: 25, shiny: true, at: 2000000, from: 'wild' }, rnd);
   C.linkTeam(s);
   const list = C.all(s), sn = list.find(c => c.speciesID === 143), sh = list.find(c => c.speciesID === 25 && c.isShiny), nm = list.find(c => c.speciesID === 25 && !c.isShiny);
-  if (sn.dateObtained !== 1793736000000 || sn.obtainedMethod !== 'gacha') bad('a copy keeps the date and origin it was made with');
+  if (sn.dateObtained !== 1793736000000 || sn.obtainedMethod !== 'wild') bad('a copy keeps the date and origin it was made with');
   if (nm.obtainedMethod !== 'other' || nm.dateObtained !== 1000000) bad('an origin not on the list becomes other');
   if (sh.obtainedMethod !== 'wild' || sh.dateObtained !== 2000000 || !sh.isShiny) bad('a shiny copy keeps its date and origin');
   if (s.team[0].uid !== sn.pokemonUUID || s.team[1].uid !== sh.pokemonUUID) bad('team slots link to the matching copy');
@@ -91,7 +91,7 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
 { const good = JSON.parse(LINE);
   const s = { box: [JSON.parse(LINE), JSON.parse(LINE), { u: 'short', d: 143 }, null, { ...good, u: 'AAAAAAAAAAAAAAAAAAAAAA', d: 99999 },
     { u: 'BBBBBBBBBBBBBBBBBBBBBB', d: 143, t: -5, m: '?', n: 99, i: 'x!', g: 7, x: 999, y: -1, a: 9, s: 'yes', e: [999, 999, 999, 999, 999, 999], k: 'A name that is much too long', h: 9999, p: { dmg: 77 }, f: 'x', l: 0 },
-    { u: 'CCCCCCCCCCCCCCCCCCCCCC', d: 81, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 3 }] };
+    { u: 'CCCCCCCCCCCCCCCCCCCCCC', d: 81, t: 1, m: 'w', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 3 }] };
   C.clean(s);
   if (s.box.length !== 3) bad('repeat, short id, null and unknown species go: ' + s.box.length);
   if (!same(s.box[0], good)) bad('a valid copy is unchanged');
@@ -151,7 +151,7 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
   console.log('7 clean save checkpoint: backup, one notice, accounts kept; copies come only from obtain; a removed copy stays gone');
 
   // 8. display values, by hand from pokeapi
-  { const hard = C.read({ u: 'fzwqnksdToqcIV0Oj2obNA', d: 143, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 0, y: 0, a: 3 }, {});
+  { const hard = C.read({ u: 'fzwqnksdToqcIV0Oj2obNA', d: 143, t: 1, m: 'w', n: 1, i: 'AAAAAA', g: 0, x: 0, y: 0, a: 3 }, {});
     if (hard.abilityName !== 'Gluttony' || !hard.abilityHidden || hard.natureName !== 'Hardy') bad('hidden ability and nature names ' + hard.abilityName + ' ' + hard.natureName);
     const sp = C.species(143); if (!same(sp.abilities, [{ name: 'Immunity', hidden: false }, { name: 'Thick Fat', hidden: false }, { name: 'Gluttony', hidden: true }]) || sp.heightM !== 2.1 || sp.weightKg !== 460) bad('species view ' + JSON.stringify(sp));
     if (!same(C.species(151).abilities, [{ name: 'Synchronize', hidden: false }])) bad('Mew has one ability'); }
@@ -168,7 +168,7 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     const first = C.read(b.box[0], b);
     if (C.move(b, first.pokemonUUID, 1) !== 'ok' || C.get(b, first.pokemonUUID).box !== 1 || C.inBox(b, 0) !== 499) bad('a move');
     if (C.move(b, c.pokemonUUID, 0) !== 'ok' || 'b' in b.box[b.box.length - 1]) bad('back to box 1 drops the field');
-    const j = { boxCount: 3, box: [{ u: 'AAAAAAAAAAAAAAAAAAAAAA', d: 143, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, b: 9 }] }; C.clean(j); if (j.box[0].b !== 2) bad('a box past your count is clamped');
+    const j = { boxCount: 3, box: [{ u: 'AAAAAAAAAAAAAAAAAAAAAA', d: 143, t: 1, m: 'w', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, b: 9 }] }; C.clean(j); if (j.box[0].b !== 2) bad('a box past your count is clamped');
     console.log('8 display labels and species view; 9 boxes: 500 each, overflow to the next, moves, clean'); }
 
   // 10. real normalizeTeam: copies on a team
@@ -220,10 +220,10 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
   // 12. G.DB.obtain, the one path every source uses (step 3a-2). Expected from the 3a-2 map, D1 to D7, by hand.
   { const D3 = G.DB; D3.playAsGuest(); const g = D3.save;
     const copiesOf = (dex, shiny) => C.all(g).filter(c => c.speciesID === dex && c.isShiny === !!shiny);
-    let r = D3.obtain(143, false, 'gacha');
+    let r = D3.obtain(143, false, 'wild');
     const first = g.owned[143] && g.owned[143].at;
     if (!r.isNew || !first || copiesOf(143).length !== 1 || r.uid !== copiesOf(143)[0].pokemonUUID || r.box !== 0) bad('a new species: the record and one copy ' + JSON.stringify(r));
-    r = D3.obtain(143, false, 'gacha');
+    r = D3.obtain(143, false, 'wild');
     if (r.isNew || copiesOf(143).length !== 2 || g.owned[143].at !== first) bad('a repeat: one more copy, the record keeps its first date ' + JSON.stringify(r));
     r = D3.obtain(25, true, 'wild');
     if (!r.isNew || !g.owned[25] || !g.shiny[25] || copiesOf(25, true).length !== 1 || copiesOf(25).length !== 0) bad('a shiny of a species you lack: both records, one shiny copy only (D4)');
@@ -231,11 +231,11 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     if (r.isNew || copiesOf(25, true).length !== 2) bad('a repeat shiny is a second shiny copy');
     r = D3.obtain(25, false, 'rescue');
     if (r.isNew || copiesOf(25).length !== 1) bad('a normal after its shiny: a repeat for the Pokedex, and a copy');
-    const BY = { starter: 1, gacha: 4, wild: 7, rescue: 39, debug: 52 };
+    const BY = { starter: 1, wild: 7, rescue: 39, debug: 52 };
     for (const from in BY) { const u = D3.obtain(BY[from], false, from).uid, c = u && C.get(g, u); if (!c || c.obtainedMethod !== from) bad('method ' + from + ' is kept on the copy'); }
     const before = g.box.length, o = { owned: {}, shiny: {}, box: [] };
-    D3.obtain(150, true, 'gacha', o);
-    if (o.box.length !== 1 || !o.shiny[150] || !o.owned[150] || g.box.length !== before || g.owned[150]) bad('obtain writes the save it is given (the gacha path)');
+    D3.obtain(150, true, 'wild', o);
+    if (o.box.length !== 1 || !o.shiny[150] || !o.owned[150] || g.box.length !== before || g.owned[150]) bad('obtain writes the save it is given');
     r = D3.obtain(0, false, 'debug');
     if (r.uid !== null || g.box.length !== before) bad('a species with no data: a record, no copy, no crash');
     D3.grant(16, 'debug'); D3.normalizeTeam(g); if (copiesOf(16).length) bad('normalizeTeam makes no copy');
@@ -338,7 +338,7 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     for (let k = 0; k < 1100 && C.freePlaces(t) > 0; k++) C.add(t, { dex: 10, from: 'debug' }, rnd);
     delete t.owned[150]; delete t.shiny[150]; t.owned[10] = { at: 1, from: 'debug' };
     const n = t.box.length, c0 = Math.floor(+t.coins) || 0;
-    let r = D6.obtain(150, true, 'gacha');
+    let r = D6.obtain(150, true, 'wild');
     if (r.uid !== null || r.box !== null || r.sold !== 900 || !r.isNew || t.box.length !== n) bad('a new shiny Mewtwo with full boxes is sold for 900, no copy, still new ' + JSON.stringify(r));
     if (!t.owned[150] || !t.shiny[150]) bad('a Pokemon sold on arrival is still in the Pokedex (D4)');
     if (t.coins !== c0 + 900) bad('the 900 goes to the save, coins ' + t.coins + ' from ' + c0);
@@ -395,9 +395,9 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     if (C.setNickname(s, u, '\u65e5\u672c') !== '' || 'k' in rec() || C.get(s, u).nickname !== '') bad('a name that cleans to nothing clears it: no k key, the species name shows');
     const before = JSON.stringify(s.box);
     if (C.setNickname(s, C.uuid(), 'X') !== null || C.setNickname(s, 'junk', 'X') !== null || JSON.stringify(s.box) !== before) bad('an unknown id renames nothing and returns null');
-    const h = { box: [{ u: 'DDDDDDDDDDDDDDDDDDDDDD', d: 25, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, k: '<img onerror=x>' },
-      { u: 'EEEEEEEEEEEEEEEEEEEEEE', d: 25, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, k: '\u202e\u200b' },
-      { u: 'FFFFFFFFFFFFFFFFFFFFFF', d: 25, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, k: 'Twelve chars' }] };
+    const h = { box: [{ u: 'DDDDDDDDDDDDDDDDDDDDDD', d: 25, t: 1, m: 'w', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, k: '<img onerror=x>' },
+      { u: 'EEEEEEEEEEEEEEEEEEEEEE', d: 25, t: 1, m: 'w', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, k: '\u202e\u200b' },
+      { u: 'FFFFFFFFFFFFFFFFFFFFFF', d: 25, t: 1, m: 'w', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, k: 'Twelve chars' }] };
     C.clean(h);
     if (h.box[0].k !== 'img onerrorx' || 'k' in h.box[1] || h.box[2].k !== 'Twelve chars') bad('clean() cleans a hand-edited save the same way, old names untouched ' + JSON.stringify(h.box.map(c => c.k)));
     console.log('20 nicknames: the font set only, markup characters dropped, spaces squeezed, 16 max; setNickname and clean() share the rule'); }
