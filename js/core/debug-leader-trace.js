@@ -53,6 +53,7 @@
       goal: entry.goal,
       plan: ai.planText(entry),
       value: round(entry.value),
+      weight: round(entry.weight),
       cost: round(entry.cost),
       noise: round(entry.noise),
       score: round(entry.score),

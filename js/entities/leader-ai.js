@@ -286,6 +286,7 @@ G.LeaderAI = class LeaderAI {
       lastT: keep ? was.lastT : this.timersOf(e, pick.steps[0]),
       pressed: keep && was.pressed === was.at ? 0 : -1, // #52: a kept action's one press is not made twice
       value: pick.value,
+      weight: pick.weight,
       cost: pick.cost,
     };
     // #52: a kept dash or planned dodge follows its action into the new plan; a dropped one is abandoned
@@ -664,8 +665,9 @@ G.LeaderAI = class LeaderAI {
     this.dodgeAnswer = true;
     this.note('dodge', (planned ? 'planned, ' : '') + 'pressed against ' + th.moveId, { serial: th.serial });
   }
-  /** #59 REFLEX: what the running plan is worth (its value minus its cost) while it still has a Dodge your shot step ahead that has
-   *  not been answered; 0 when it has none, or when the plan is worth nothing. */
+  /** #59 REFLEX: what the running plan is worth (its value minus its cost, scaled by its goal's utility as the planner scores it,
+   *  #109) while it still has a Dodge your shot step ahead that has not been answered; 0 when it has none, or when the plan is
+   *  worth nothing. */
   plannedDodgeWorth() {
     const plan = this.plan,
       x = this.expect;
@@ -673,7 +675,9 @@ G.LeaderAI = class LeaderAI {
     const ahead = plan.steps.some(
       (s, i) => i >= plan.at && s.verb === 'dodge' && !(x && x.plan === plan && x.at === i && x.done)
     );
-    return ahead ? Math.max(0, (plan.value || 0) - (plan.cost || 0)) : 0;
+    if (!ahead) return 0;
+    const net = (plan.value || 0) - (plan.cost || 0);
+    return Math.max(0, G.LeaderPlanner.weightedScore(net, plan.weight != null ? plan.weight : 1));
   }
   /** #52 REFLEX: a dodge that would spend down to dodgeReserve, as a score: your hit (its size on the planner's last world, your
    *  best hit when it is not there) x the current goal's damage-taken weight x risk, against the charge kept back (your best hit x

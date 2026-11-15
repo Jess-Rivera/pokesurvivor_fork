@@ -13,8 +13,10 @@
  *   SEARCH   every plan of at most TUNE.maxSteps actions, in full (a small tree), and for each goal the best scoring plan whose last
  *            step reaches its target. Costs can be negative (damage dealt is subtracted), which A* cannot search, so the tree is
  *            walked whole; the result is the same cheapest plan per goal.
- *   CHOICE   score = goal value - plan cost, both in HP fractions (a fraction of its own max HP counts one to one with a fraction of
- *            yours, decision 2026-11-09-51-opening-stance-traces-and-set-trigger and the #51 plan); with no plan reaching a goal,
+ *   CHOICE   net = goal value - plan cost, both in HP fractions (a fraction of its own max HP counts one to one with a fraction of
+ *            yours, decision 2026-11-09-51-opening-stance-traces-and-set-trigger and the #51 plan); score = net x the goal's
+ *            utility when the net is above 0, else the net alone, and a goal of utility 0 is never ranked (#109, decision
+ *            2026-11-15-109-goal-weights-scale-the-whole-score); with no plan reaching a goal,
  *            its best plan counts at value x the fraction of the gap it closes. The running plan adds its commitment bonus;
  *            `randomness` draws from the ranking with its own seeded source. A parked goal (PARKED_GOALS: Bait,
  *            #60) is never ranked. #53: `misjudge` reads each plan's cost
@@ -119,7 +121,8 @@ G.LeaderPlanner = (() => {
     return inReach * landed;
   }
 
-  /** The utility multiplier of a goal: its weight, with confidence raising Pressure and Finish and lowering Conserve and Endurance. */
+  /** The utility multiplier of a goal: its weight, with confidence raising Pressure and Finish and lowering Conserve and Endurance.
+   *  It scales the goal's whole score (weightedScore). */
   function utility(goal, world) {
     const weight = world.goalWeights && world.goalWeights[goal] != null ? world.goalWeights[goal] : 1,
       conf = world.confidence;
@@ -127,6 +130,9 @@ G.LeaderPlanner = (() => {
     if (goal === 'conserve' || goal === 'endurance') return weight * (1.5 - conf);
     return weight;
   }
+  /** #109: a plan's score from its net (value - cost) and its goal's utility. The utility scales a net above 0 only, so a liked
+   *  goal is never pushed further down when its best plan is bad (decision 2026-11-15-109-goal-weights-scale-the-whole-score). */
+  const weightedScore = (net, goalUtility) => (net > 0 ? net * goalUtility : net);
   const tagMultiplier = (world, tag) => (world.tagMultipliers && world.tagMultipliers[tag]) || 1;
 
   /** The mon a plan state has on the field, as the planner reads it: its own state, slots and your shots sized against it. The
@@ -633,18 +639,18 @@ G.LeaderPlanner = (() => {
   /** Every plan of at most maxSteps actions from now, each goal's best: { goal: { steps, value, cost, score, partial } }.
    *  #53: with `misjudgeSource` (a seeded 0 to 1 source) and world.misjudge above 0, each plan path draws one noise in
    *  -1 to 1 and is ranked by value - misreadCost; `cost` stays the true cost (the overlay and the harness), `noise` is
-   *  the draw. */
+   *  the draw. `value` is the goal's own value (unweighted) and `weight` the utility its score was scaled by. */
   function search(world, misjudgeSource = null) {
     const best = {},
       partial = {},
       misjudge = misjudgeSource ? world.misjudge || 0 : 0,
-      consider = (goal, steps, value, cost, isPartial, noiseDraw) => {
+      consider = (goal, steps, value, weight, cost, isPartial, noiseDraw) => {
         const misreadCost = cost * (1 + misjudge * noiseDraw),
-          score = value - misreadCost,
+          score = weightedScore(value - misreadCost, weight),
           into = isPartial ? partial : best,
           had = into[goal];
         if (!had || score > had.score + EPS)
-          into[goal] = { goal, steps, value, cost, misreadCost, noise: noiseDraw, score, partial: isPartial };
+          into[goal] = { goal, steps, value, weight, cost, misreadCost, noise: noiseDraw, score, partial: isPartial };
       };
     let nodes = 0;
     const utilities = GOALS.map((goal) => utility(goal, world)),
@@ -662,20 +668,13 @@ G.LeaderPlanner = (() => {
           if (done.has(goal)) continue;
           const full = reachedValue(world, goal, steps, state);
           if (full != null) {
-            consider(goal, steps, full * utilities[g], costOf(world, goal, steps), false, noiseDraw);
+            consider(goal, steps, full, utilities[g], costOf(world, goal, steps), false, noiseDraw);
             if (now === done) now = new Set(done);
             now.add(goal);
           } else if (!best[goal]) {
             const part = partialValue(world, goal, steps, state, gaps0[g]);
             if (part != null)
-              consider(
-                goal,
-                steps,
-                part * utilities[g],
-                costOf(world, goal, steps, goal !== 'finish'),
-                true,
-                noiseDraw
-              );
+              consider(goal, steps, part, utilities[g], costOf(world, goal, steps, goal !== 'finish'), true, noiseDraw);
           }
         }
       }
@@ -714,7 +713,8 @@ G.LeaderPlanner = (() => {
       ranking = [];
     for (const goal of GOALS) {
       const c = found[goal];
-      if (!c || PARKED_GOALS.has(goal)) continue;
+      // #109: a goal weight of 0 means the leader never picks that goal
+      if (!c || PARKED_GOALS.has(goal) || !(utility(goal, world) > 0)) continue;
       let bonus = 0;
       if (running && running.goal === goal && sameAction(c.steps[0], running.step))
         bonus = running.invested * TUNE.commitPerSecond * world.stubbornness * utility(goal, world);
@@ -749,6 +749,7 @@ G.LeaderPlanner = (() => {
     TUNE,
     hitChance,
     utility,
+    weightedScore,
     actionsIn,
     apply,
     costOf,

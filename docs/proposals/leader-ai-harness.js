@@ -2650,31 +2650,52 @@ if (G.LeaderPlanner) {
           ['15e', () => D()],
           ['a buff against a physical shot', () => world({ moves: [jab(), defenseBuff], you: physical })],
         ];
-      // 16f-a. A goal weight of 2 raises its own goal by at least that goal's value at weight 1 (its old best plan is worth
-      // twice as much, at the same cost), never drops its rank, and leaves every other goal's score where it was.
-      const weightProblems = [];
+      // 16f-a. #109 (decision 2026-11-15-109-goal-weights-scale-the-whole-score): a goal weight scales the goal's whole score
+      // (value minus cost) when that is above 0. Weight 2 on a goal whose best plan nets above 0 makes its score exactly twice the
+      // weight 1 score, never drops its rank, and leaves every other goal's score where it was.
+      // 16f-a2. A goal whose best plan nets 0 or less keeps its score at any weight above 0 (a liked goal is never pushed down).
+      const weightProblems = [],
+        negativeProblems = [];
       for (const [label, make] of WORLDS) {
         const base = P.choose(make());
         for (const entry of base.ranking) {
           const raised = P.choose(Object.assign(make(), { goalWeights: { [entry.goal]: 2 } })),
-            up = of(raised, entry.goal);
-          if (!up || up.score < entry.score + entry.value - 1e-9 || rankOf(raised, entry.goal) > rankOf(base, entry.goal))
-            weightProblems.push(label + ', ' + entry.goal + ': ' + entry.score.toFixed(4) + ' rank ' + rankOf(base, entry.goal) +
+            up = of(raised, entry.goal),
+            expected = entry.score > 0 ? 2 * entry.score : entry.score,
+            problems = entry.score > 0 ? weightProblems : negativeProblems;
+          if (!up || !near(up.score, expected) || rankOf(raised, entry.goal) > rankOf(base, entry.goal))
+            problems.push(label + ', ' + entry.goal + ': ' + entry.score.toFixed(4) + ' rank ' + rankOf(base, entry.goal) +
               ' became ' + (up ? up.score.toFixed(4) + ' rank ' + rankOf(raised, entry.goal) : 'no plan'));
           for (const other of base.ranking)
             if (other.goal !== entry.goal && !(of(raised, other.goal) && near(of(raised, other.goal).score, other.score)))
               weightProblems.push(label + ', a weight on ' + entry.goal + ' moved ' + other.goal);
         }
       }
-      ok(!weightProblems.length, '16f-a: a goal weight raises only its own goal and never drops its rank: ' + weightProblems.join('; '));
-      // 16f-b. A goal weight of 0 leaves that goal worth nothing.
+      ok(!weightProblems.length, '16f-a: a goal weight scales its own goal\'s whole score and nothing else: ' + weightProblems.join('; '));
+      // the worlds above must hold a goal netting 0 or less, or 16f-a2 checks nothing
+      const anyNegative = WORLDS.some(([, make]) => P.choose(make()).ranking.some((entry) => entry.score <= 0));
+      ok(anyNegative && !negativeProblems.length, '16f-a2: a weight leaves a goal netting 0 or less where it was: ' +
+        (anyNegative ? negativeProblems.join('; ') : 'no world has such a goal'));
+      // 16f-b. A goal weight of 0 takes that goal out of the ranking.
       const zeroProblems = [];
       for (const [label, make] of WORLDS)
-        for (const entry of P.choose(make()).ranking) {
-          const zeroed = of(P.choose(Object.assign(make(), { goalWeights: { [entry.goal]: 0 } })), entry.goal);
-          if (zeroed && Math.abs(zeroed.value) > 1e-12) zeroProblems.push(label + ', ' + entry.goal + ' still worth ' + zeroed.value);
-        }
-      ok(!zeroProblems.length, '16f-b: a goal weight of 0 makes its goal worth nothing: ' + zeroProblems.join('; '));
+        for (const entry of P.choose(make()).ranking)
+          if (of(P.choose(Object.assign(make(), { goalWeights: { [entry.goal]: 0 } })), entry.goal))
+            zeroProblems.push(label + ', ' + entry.goal + ' still ranked');
+      ok(!zeroProblems.length, '16f-b: a goal weight of 0 takes its goal out of the ranking: ' + zeroProblems.join('; '));
+      // 16f-e. The dial is alive: in a world where Finish leads on its cost alone (a 0.3 hit KOs your 0.3 HP, so the damage it
+      // deals is most of its score), Endurance at the validator's top weight overtakes it. Under the old rule (weight on the
+      // value only) Endurance's 0.1 value at x3 could not close the gap.
+      {
+        const koWorld = () => world({ top: { distance: 40 }, moves: [jab({ hitFraction: 0.3 })], you: { hpFraction: 0.3 } }),
+          plain = P.choose(koWorld()),
+          maxWeight = 3, // the validator's top goal weight (gyms.js PERSONALITY_LIMITS)
+          walled = P.choose(Object.assign(koWorld(), { goalWeights: { endurance: maxWeight } }));
+        ok(plain.pick && plain.pick.goal === 'finish' && !!of(plain, 'endurance') && of(plain, 'endurance').score > 0,
+          '16f-e: the KO world starts with Finish on top and Endurance netting above 0: ' + (plain.pick && plain.pick.goal));
+        ok(walled.pick && walled.pick.goal === 'endurance', '16f-e: Endurance at weight ' + maxWeight + ' overtakes Finish: ' +
+          (walled.pick && walled.pick.goal) + ' ' + walled.ranking.map((c) => c.goal + ' ' + c.score.toFixed(3)).join(', '));
+      }
       // 16f-c. Every tag a plan's steps carry at x2 doubles that plan's cost; x2 on a tag none of its steps carry changes nothing.
       const costProblems = [];
       for (const [label, make] of WORLDS)
