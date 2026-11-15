@@ -1,5 +1,27 @@
 # #109 round 1: what the traces show
 
+## Round 2 check (2026-11-15, home, after the overkill cap and Brock Finish 0.35)
+
+Traces: leader-trace-Brock-2026-11-15T12-19-52-892Z.json (27.1 s, you won at 61%) and
+leader-trace-Misty-2026-11-15T12-20-56-028Z.json (83.8 s, you won at 32%). Your reach 160 (a ranged starter). Not the
+natural gate.
+
+| Target row | Trace says |
+|---|---|
+| Brock a ranged wall that holds | yes: Maintain 35%, Endurance 33%, Pressure 18%, Finish 7%, Conserve 6% |
+| Brock closes only to throwing distance | better: median 158 px (was 97), upper quartile 210, range 250; 11 plans open with a back-off |
+| Brock Rock Throw from range, Tackle up close | yes: Rock Throw 148, Tackle 11 |
+| Brock half-HP push, then holding | yes: trigger at 12.9 s, Pressure from about 19 to 22 s, then Endurance |
+| Misty fast aggressor | yes: Water Pulse 555 uses, median distance 81 px; Finish 45% once your HP fell under about half, Pressure 24% |
+
+### Found: Brock heals instead of finishing a mon at 1% HP
+
+While your HP was under 15%, Brock picked Conserve 9 times and Endurance 2, never Finish. At 14.3 s (you at 0.011,
+Rock Throw cooling) Recover scored 0.42 against Finish 0.09. Replaying Finish at 0.5, 0.7 and 1 changes nothing there:
+at weight 1 Finish is still 0.26. Cause: the KO bonus (TUNE.koBonus 0.3) is worth less than healing 36% of his own HP, and
+confidence (0.31) lifts Conserve and lowers Finish. Not the 0.35. A shared TUNE number, so it belongs to the eight-gym
+tuning pass (#122), not this template check.
+
 ## After the score rule and #123 (2026-11-15, home)
 
 Traces: leader-trace-Brock-2026-11-15T11-40-59-194Z.json (33.3 s, you won at 2% HP) and
