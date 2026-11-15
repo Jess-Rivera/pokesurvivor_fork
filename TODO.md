@@ -4,14 +4,14 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-15 afternoon home session
-1. `git status` must be clean. `git fetch origin`, then `git checkout balance/124-economy-xp`
-   (first time on a machine: `git checkout -b balance/124-economy-xp origin/balance/124-economy-xp`), then `git pull --ff-only`.
+## Getting up to date (either machine), from the 2026-11-15 night home session
+1. `git status` must be clean. `git fetch origin`, then `git checkout feature/128-acquisition`
+   (first time on a machine: `git checkout -b feature/128-acquisition origin/feature/128-acquisition`), then `git pull --ff-only`.
 2. `node tools/check.js` must end with "check: all passed". Say "catch me up".
 3. Before leaving a machine: commit and push (the branch and main).
 
 ## Next (queue set by Jess 2026-11-15; gym leader AI parked)
-1. Merge balance/124-economy-xp into main (#124 and #125 closed 2026-11-15; XP boost now off by default).
+1. Feel tests owed: #133 (Shop, a run, a mission claim) and #135 (?dev, G.Debug.rescue()).
 2. #128 acquisition on feature/128-acquisition: #132 and #134 closed, #133 and #135 await your feel tests, then #136 (S5 catch phase and belt); slice order in
    docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
