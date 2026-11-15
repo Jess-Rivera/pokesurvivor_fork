@@ -38,19 +38,42 @@ Your level drops out of the price, so a move costs the same number of kills from
 | Done when | Price at a given time is the same at any run level; an average-pace run affords at least one move per shop visit; a slow run affords fewer but can catch up by grinding; Jess feel test |
 | End-goal test | New relations in the Silver harness, below |
 
+## Jess's answers (2026-11-15)
+
+- Horizon: over the first 3 to 4 shop visits an average player fills all 4 slots on a team of six (bonds not counted),
+  so 3 x 6 = 18 bought moves, about 4 to 6 per visit.
+- The Move Trainer (level-up and egg moves) is cheaper than the TM Mart.
+- Jess is the average player. An average player needs a couple of runs plus meta upgrades to reach gym 1 or 2.
+
+```mermaid
+flowchart LR
+  S1[Shop 1 at 2:00] --> G1[Gym 1] --> S2[Shop 2] --> G2[Gym 2] --> S3[Shop 3] --> G3[Gym 3] --> S4[Shop 4]
+  S1 -. early runs end around here .-> X[Run over, meta upgrades]
+```
+
+Silver resets every run, so the 18-move target is for a run that gets to shop 3 or 4, which is a run after some meta
+upgrades. Early runs that end near gym 1 fill part of the team, which fits the restart loop in #125.
+
+## Kill rate: measure it, do not guess
+
+No new code. Jess plays 2 or 3 normal runs; at each shop visit, open the pause menu Run Info and note "Silver earned" and the
+run time. That table is the reference average. The price numbers are then set so that table buys 4 to 6 moves per visit.
+
 ## End-goal test (relations, written first)
 
 | # | Relation |
 |---|---|
 | E1 | Same run time, different run levels: the price is equal |
 | E2 | Price divided by Silver per kill is the same at every world level |
-| E3 | Silver earned between two shop visits at the reference average kill rate is at least one price |
-| E4 | At half that rate it is less than one price, and grinding longer always closes the gap (nothing grows faster than income) |
+| E3 | At each shop visit in Jess's recorded runs, Silver earned since the last visit buys 4 to 6 Trainer moves |
+| E4 | Cumulative over visits 1 to 4 of those runs, at least 18 Trainer moves are affordable |
+| E5 | A Trainer move always costs less than a TM Mart move at the same time |
+| E6 | At half the recorded kill rate, fewer moves per visit, and grinding longer always closes the gap |
 
 ## Open, needs Jess
 
 | # | Question | Blocks |
 |---|---|---|
-| O1 | How many kills should one move cost (or: how many moves should an average player afford per shop visit)? | E3, E4, the number in the price |
-| O2 | The reference "average kill rate" for E3: from a recorded run of yours, or a figure you name? | E3 |
-| O3 | Are other Silver sinks (Mart TMs, future items) priced on the same rule? | scope |
+| O1 | Record the Run Info table (2 or 3 runs) | E3, E4, E6, the price numbers |
+| O2 | How much cheaper is a Trainer move than a TM: half, two thirds, or another ratio? | E5's number |
+| O3 | Is your team usually six by shop 1, or does the "per visit" count only members you have then? | E3 |
