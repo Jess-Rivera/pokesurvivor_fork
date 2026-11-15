@@ -19,10 +19,10 @@ const rate = (c, k) => (c[k] || 0) / N;
 const near = (got, want, tol) => Math.abs(got - want) <= tol;
 const chk = (name, got, want, tol) => { if (!near(got, want, tol)) bad(name + ' ' + got.toFixed(5) + ' want ' + want); };
 
-// wild (playtest cut, Jess 2026-11-04): ticket 1/400, then ONE shared roll: Oran 0.2%, Sitrus 0.1%, magnet 0.4%, bomb 0.1%; ground pool 0.4% + Pinap bonus.
+// wild (playtest cut, Jess 2026-11-04; tickets gone, #133): then ONE shared roll: Oran 0.2%, Sitrus 0.1%, magnet 0.4%, bomb 0.1%; ground pool 0.4% + Pinap bonus.
 // Direct berries: 0.2% x 30% + 0.1% x 50% = 0.11% of max HP per kill (0.365% before the cut).
 { const c = sample('wild');
-  chk('wild ticket', rate(c, 'ticket'), 1 / 400, 0.0006);
+  if (c.ticket) bad('a wild kill drops no ticket');
   chk('wild oran', rate(c, 'ground:oran'), 0.002, 0.0006);
   chk('wild sitrus', rate(c, 'ground:sitrus'), 0.001, 0.0005);
   chk('wild magnet', rate(c, 'magnet'), 0.004, 0.0008);
@@ -35,7 +35,7 @@ const chk = (name, got, want, tol) => { if (!near(got, want, tol)) bad(name + ' 
   // berry, magnet and bomb never drop together (one shared roll)
   let both = 0; for (let i = 0; i < N; i++) { const k = G.Drops.roll('wild', 0, 0, { rnd, place() {} }).map(key).filter(k => k === 'ground:oran' || k === 'ground:sitrus' || k === 'magnet' || k === 'bomb'); if (k.length > 1) both++; }
   if (both) bad('berry/magnet/bomb dropped together ' + both);
-  console.log('wild: ticket 1/400, Oran 0.2%, Sitrus 0.1%, magnet 0.4%, bomb 0.1%, ground pool 0.4% + Pinap, exclusive extras'); }
+  console.log('wild: no ticket, Oran 0.2%, Sitrus 0.1%, magnet 0.4%, bomb 0.1%, ground pool 0.4% + Pinap, exclusive extras'); }
 
 // guaranteed and fixed-count sources
 const once = (src, want) => { const out = G.Drops.roll(src, 0, 0, { rnd, place() {} }); const c = {}; out.forEach(d => (c[d.pickup] = (c[d.pickup] || 0) + 1));
@@ -43,11 +43,16 @@ const once = (src, want) => { const out = G.Drops.roll(src, 0, 0, { rnd, place()
 once('boss', { coin: 10, item: 1 });
 once('gym', { coin: 10, item: 1 }); // exactly one item (Jess 2026-11-03)
 once('thief', { coin: 20 });
-once('thiefTicket', { coin: 6, ticket10: 1 });
-once('rescue', { coin: 12, ticket: 1 });
+// #133 (decision 2026-11-15-133-tickets-pay-coins): where a ticket dropped, one coin pickup worth the ticket's exchange rate drops.
+const coinsWorth = (out, v) => out.filter(d => d.pickup === 'coin' && d.value === v).length;
+{ const o = once('thiefJackpot', { coin: 7 }); if (coinsWorth(o, G.Drops.ticketCoins(0, 1)) !== 1) bad('the Gholdengo drop holds one coin worth an x10 ticket'); }
+{ const o = once('rescue', { coin: 13 }); if (coinsWorth(o, G.Drops.ticketCoins(1)) !== 1) bad('the rescue drop holds one coin worth an x1 ticket'); }
+// no table can drop a ticket, and the x10 rate is ten pulls of the x1 rate (an x10 ticket was ten pulls)
+for (const src in G.Drops.TABLES) { const walk = es => es.forEach(e => { if (e.oneOf) walk(e.oneOf); else if (/ticket/.test(e.pickup)) bad(src + ' still drops ' + e.pickup); }); walk(G.Drops.TABLES[src]); }
+if (G.Drops.ticketCoins(0, 1) !== 10 * G.Drops.ticketCoins(1)) bad('an x10 ticket is worth ten x1 tickets');
 { const c = sample('elite'); chk('elite berry always', rate(c, 'ground:oran') + rate(c, 'ground:sitrus'), 1, 1e-9); chk('elite berry is 50/50 Oran', rate(c, 'ground:oran'), 0.5, 0.006); chk('elite ground pool roll always', rate(c, 'ground:pool'), 1, 1e-9); chk('elite item 50%', rate(c, 'item'), 0.5, 0.006); }
 { const c = sample('golden'); chk('golden coin 35%', rate(c, 'coin'), 0.35, 0.006); }
-console.log('boss 10 coins + item, gym 10 coins + one item, thief 20 coins, thief ticket 6 + x10, rescue 12 + ticket, elite berry + ground + 50% item, golden 35%');
+console.log('boss 10 coins + item, gym 10 coins + one item, thief 20 coins, Gholdengo 6 + a jackpot coin, rescue 12 + a ticket-worth coin, elite berry + ground + 50% item, golden 35%');
 
 // world props, hand-derived from the old world.js (the 'heal' pickup there became Oran at the same rate, both heal 30%)
 { const g = sample('grass'); chk('grass oran', rate(g, 'ground:oran'), 0.05, 0.002); chk('grass coin', rate(g, 'coin'), 0.06, 0.002);
@@ -57,7 +62,7 @@ console.log('boss 10 coins + item, gym 10 coins + one item, thief 20 coins, thie
   const x = G.Drops.roll('rock', 0, 0, { rnd: () => 0.1, place() {} }).find(d => d.pickup === 'xp'); if (!x || x.value !== 10) bad('rock xp is 1% of the next level');
   const c = sample('chest'); chk('chest coins average 5.5', rate(c, 'coin'), 5.5, 0.05); chk('chest oran', rate(c, 'ground:oran'), 0.5, 0.006); chk('chest magnet', rate(c, 'magnet'), 0.5, 0.006); chk('chest sitrus always', rate(c, 'ground:sitrus'), 1, 1e-9); chk('chest xp always', rate(c, 'xp'), 1, 1e-9); chk('chest item 8%', rate(c, 'item'), 0.08, 0.003);
   for (let i = 0; i < 2000; i++) { const n = G.Drops.roll('chest', 0, 0, { rnd, place() {} }).filter(d => d.pickup === 'coin').length; if (n < 4 || n > 7) { bad('chest coin count ' + n); break; } }
-  const b = sample('bigchest'); chk('big chest coins', rate(b, 'coin'), 9, 1e-9); chk('big chest tickets average 2', rate(b, 'ticket'), 2, 0.02); chk('big chest x10 15%', rate(b, 'ticket10'), 0.15, 0.004); chk('big chest item 50%', rate(b, 'item'), 0.5, 0.006); chk('big chest ground always', rate(b, 'ground:pool'), 1, 1e-9); chk('big chest xp always', rate(b, 'xp'), 1, 1e-9);
+  const b = sample('bigchest'); chk('big chest coins: 9, plus 1 to 3 x1-worth coins (average 2), plus 15% an x10-worth coin', rate(b, 'coin'), 9 + 2 + 0.15, 0.02); { let jackpots = 0; for (let i = 0; i < N; i++) jackpots += coinsWorth(G.Drops.roll('bigchest', 0, 0, { rnd, place() {} }), G.Drops.ticketCoins(0, 1)); chk('big chest x10-worth coin 15%', jackpots / N, 0.15, 0.004); } chk('big chest item 50%', rate(b, 'item'), 0.5, 0.006); chk('big chest ground always', rate(b, 'ground:pool'), 1, 1e-9); chk('big chest xp always', rate(b, 'xp'), 1, 1e-9);
   const y = G.Drops.roll('bigchest', 0, 0, { rnd, place() {} }).find(d => d.pickup === 'xp'); if (y.value !== 777) bad('big chest xp is one level');
   const z = G.Drops.roll('chest', 0, 0, { rnd, place() {} }).find(d => d.pickup === 'xp'); if (z.value !== 20) bad('chest xp is 20');
   // the default place sends xp through dropXp and everything else through drop
@@ -90,7 +95,7 @@ console.log('boss 10 coins + item, gym 10 coins + one item, thief 20 coins, thie
 // pickup radii (real pickup.js, Jess 2026-11-03): only XP orbs use pl.magnet, every other kind uses pl.itemMagnet; pullAll takes everything.
 { Object.assign(G.U, { rand: () => 0, dist2: (a, b, c, d) => (a - c) ** 2 + (b - d) ** 2, damp: (a, b) => b }); G.Coop = { active: false, isHost: false }; G.Grounds.canTake = () => true;
   load('js/entities/pickup.js'); const P = G.Pickups;
-  const KINDS = ['xp', 'xpBig', 'coin', 'ground', 'item', 'ticket', 'ticket10', 'magnet', 'bomb'], isXp = k => k === 'xp' || k === 'xpBig';
+  const KINDS = ['xp', 'xpBig', 'coin', 'ground', 'item', 'magnet', 'bomb'], isXp = k => k === 'xp' || k === 'xpBig';
   const pulledAt = (k, d, pl, all) => { P.clear(); P.drop(k, d, 0, 1); if (all) P.pullAll(); P.update(0.001, pl, () => {}); return P.all()[0].pulled; };
   const pl = { x: 0, y: 0, magnet: 120, itemMagnet: 78 };
   for (const k of KINDS) {

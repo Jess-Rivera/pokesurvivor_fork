@@ -217,8 +217,6 @@
     <div id="topbar" class="topbar hidden">
       <span id="guest-note" class="guest-note hidden">Guest mode: progress is not saved</span>
       <div class="pill"><span class="coin"></span><span id="coins">0</span></div>
-      <div class="pill" id="tickets-pill" title="Poke Balls"></div>
-      <div class="pill" id="master-pill" title="Master Balls"></div>
       <div class="pill" id="user-pill"></div>
       <button id="btn-news" class="btn small ghost news-btn" title="Novedades"></button>
       <button id="btn-support" class="btn small gold hidden" title="Apoyar el proyecto"></button>
@@ -681,35 +679,6 @@
         </div>
         <div class="gen-tabs" id="shop-tabs"></div>
 
-        <!-- Pokemon: the old Gacha, with the regions down the left side -->
-        <div id="shop-pokemon" class="shop-pane">
-          <div class="shop-split">
-            <div class="shop-regions" id="gacha-gens"></div>
-            <div class="split">
-              <div>
-                <div class="banner" id="banner">
-                  <h3 id="banner-title"></h3>
-                  <p id="banner-desc" style="margin: 4px 0 6px"></p>
-                  <p class="sub" id="gacha-owned" style="margin: 0"></p>
-                  <div class="feat" id="gacha-feat"></div>
-                </div>
-                <div class="row" style="margin-top: 14px">
-                  <button id="pull-1" class="btn grow" data-sfx="none">Tirar ×1 · <span id="cost-1"></span></button>
-                  <button id="pull-10" class="btn gold grow" data-sfx="none">
-                    Tirar ×10 · <span id="cost-10"></span>
-                  </button>
-                  <button id="pull-10b" class="btn gold grow" data-sfx="none">
-                    Tirar ×10 · <span id="cost-10b"></span>
-                  </button>
-                </div>
-                <p class="note tickets-line" id="gacha-tickets"></p>
-                <p class="note" id="gacha-pity"></p>
-              </div>
-              <div class="panel rates" id="gacha-rates"></div>
-            </div>
-          </div>
-        </div>
-
         <!-- Team Items: buy an unlock for the Inventory -->
         <div id="shop-items" class="shop-pane hidden">
           <p class="sub" style="margin: 4px 0 8px">
@@ -725,12 +694,6 @@
         <div id="shop-upgrades" class="shop-pane hidden"></div>
       </div>
     </section>
-
-    <div id="pull-fx" class="hidden">
-      <canvas id="slot" width="176" height="170" title="Clic para acelerar"></canvas>
-      <div class="pull-results" id="pull-results"></div>
-      <button id="pull-close" class="btn gold hidden">Continuar</button>
-    </div>
 
     <!-- ====== Durante la run ====== -->
     <section id="scr-levelup" class="scr dim hidden">
@@ -924,7 +887,6 @@
     <script defer src="js/systems/spawner.js"></script>
     <script defer src="js/systems/elites.js"></script>
     <script defer src="js/systems/levelup.js"></script>
-    <script defer src="js/systems/gacha.js"></script>
     <script defer src="js/systems/interact.js"></script>
     <script defer src="js/systems/gym-arena.js"></script>
     <script defer src="js/systems/gym.js"></script>
@@ -992,7 +954,6 @@
     <script defer src="js/ui/login.js"></script>
     <script defer src="js/ui/test.js"></script>
     <script defer src="js/ui/menu.js"></script>
-    <script defer src="js/ui/slots.js"></script>
     <script defer src="js/ui/gacha-ui.js"></script>
     <script defer src="js/ui/run-ui.js"></script>
     <script defer src="js/ui/shop-ui.js"></script>

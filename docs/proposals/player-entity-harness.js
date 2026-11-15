@@ -141,7 +141,7 @@ ok(PE.xpFor(1) === 7 && HP.xpFor(1) === 7 && PE.xpFor(5) === 91, 'xpFor: 7 to le
 ok(!['DODGE', 'SWAP_LOCK', 'BOND_MAX', 'REVIVE_TIME', 'xpFor'].some((k) => Object.getOwnPropertyNames(HP).includes(k)), 'the statics live on the base, the human inherits them');
 
 // 2. the human fields: on the human only, with the pre-slice values
-const HUMAN = ['magnet', 'itemMagnet', 'xpMul', 'coinMul', 'xp', 'xpNext', 'kills', 'bosses', 'rerollBonus', 'coins', 't1', 't10'];
+const HUMAN = ['magnet', 'itemMagnet', 'xpMul', 'coinMul', 'xp', 'xpNext', 'kills', 'bosses', 'rerollBonus', 'coins'];
 {
   const e = new PE(MON, { magnetMul: 2, xpMul: 1.5, coinMul: 2, rerolls: 1 }),
     h = new HP(MON),
@@ -149,7 +149,7 @@ const HUMAN = ['magnet', 'itemMagnet', 'xpMul', 'coinMul', 'xp', 'xpNext', 'kill
   const onBase = HUMAN.filter((k) => Object.prototype.hasOwnProperty.call(e, k));
   ok(!onBase.length, 'a bare Player entity has none of the human fields' + (onBase.length ? ' (has: ' + onBase.join(' ') + ')' : ''));
   const v = HUMAN.map((k) => h[k]).join();
-  ok(v === '120,78,1,1,0,7,0,0,0,0,0,0', 'human defaults: magnets 120 and 78, x1 XP and coins, 7 XP to level 2, all counts 0 (' + v + ')');
+  ok(v === '120,78,1,1,0,7,0,0,0,0', 'human defaults: magnets 120 and 78, x1 XP and coins, 7 XP to level 2, all counts 0 (' + v + ')');
   ok(hp.magnet === 240 && hp.xpMul === 1.5 && hp.coinMul === 2 && hp.rerollBonus === 1, 'human perks: magnet x2, XP x1.5, coins x2, 1 bought reroll');
   ok(e.level === 1 && h.level === 1 && e.rerolls === 0 && e.maxHp === h.maxHp && e.maxHp > 0, 'level, rerolls used and max HP stay on the base, equal on both');
   ok(e.bonds === 0 && h.bonds === 0, 'links start at 0 on both');

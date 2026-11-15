@@ -265,12 +265,6 @@ G.RunUI = (() => {
         <b class="gold"><span class="coin"></span> +${r.coins}</b>
         <div style="font-size:12px;color:var(--muted)">${r.breakdown}</div></div>
       ${
-        r.t1 || r.t10
-          ? `<div style="grid-column:1/-1"><span>Pokeballs and Master Balls</span><b>
-        ${r.t1 ? G.Icons.html('ball', 24) + ' +' + r.t1 + ' ' : ''}${r.t10 ? G.Icons.html('ball4', 24) + ' +' + r.t10 : ''}</b></div>`
-          : ''
-      }
-      ${
         r.caught && r.caught.length
           ? `<div style="grid-column:1/-1" class="caught"><span>${G.Icons.html('shiny', 12)} Shinies caught</span>
         <div class="caught-row" id="over-caught"></div></div>`

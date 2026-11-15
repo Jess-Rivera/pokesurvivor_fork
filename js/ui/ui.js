@@ -59,9 +59,6 @@ G.UI = (() => {
   function refreshCoins() {
     const s = G.DB.save;
     $('coins').textContent = s ? s.coins.toLocaleString('en-US') : '0'; // 12,000, like the Shop and the box tabs
-    const t = (s && s.tickets) || { t1: 0, t10: 0 };
-    $('tickets-pill').innerHTML = `${G.Icons.html('ball', 24)} ${t.t1}`;
-    $('master-pill').innerHTML = `${G.Icons.html('ball4', 24)} ${t.t10}`;
     // Sync dot: green = saved in the cloud, yellow = saving,
     // red = no connection (saved locally and uploaded on return).
     const st = G.DB.guest ? 'guest' : G.DB.syncState;

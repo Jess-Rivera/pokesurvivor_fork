@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['Speed and dodges', 'Speed and dodges'],
     chg: [
       [
+        'The Pokemon gacha and its Pokeball and Master Ball tickets are gone. Everything that paid tickets now pays PokeCoins instead, and the Shop keeps its Team Items and Team Upgrades tabs. New saves also start fresh with this update, and your old save stays in this browser as a backup.',
+        'The Pokemon gacha and its Pokeball and Master Ball tickets are gone. Everything that paid tickets now pays PokeCoins instead, and the Shop keeps its Team Items and Team Upgrades tabs. New saves also start fresh with this update, and your old save stays in this browser as a backup.',
+      ],
+      [
         "Silver is simpler: every Pokemon you defeat pays 1 Silver, and a run starts with none. Move prices no longer climb with your level or the clock. Instead each Pokemon's next move costs more the more slots it has filled, so filling out the whole team comes first: at the Move Trainer 60, 120, then 240, and 300 to replace a move. TMs cost more: 150, 300, 400, then 450.",
         "Silver is simpler: every Pokemon you defeat pays 1 Silver, and a run starts with none. Move prices no longer climb with your level or the clock. Instead each Pokemon's next move costs more the more slots it has filled, so filling out the whole team comes first: at the Move Trainer 60, 120, then 240, and 300 to replace a move. TMs cost more: 150, 300, 400, then 450.",
       ],

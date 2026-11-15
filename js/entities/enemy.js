@@ -460,9 +460,9 @@
       }
       this.dropLoot();
       if (this.golden) G.Drops.roll('golden', this.x, this.y);
-      // Treasure imp: Meowth drops coins; Gholdengo, an x10 ticket.
+      // Treasure imp: Meowth drops coins; Gholdengo, coins and a jackpot coin.
       if (this.behavior === 'thief') {
-        G.Drops.roll(this.def.loot === 'ticket10' ? 'thiefTicket' : 'thief', this.x, this.y);
+        G.Drops.roll(this.def.loot === 'jackpot' ? 'thiefJackpot' : 'thief', this.x, this.y);
         G.FX.ring(this.x, this.y, this.r, this.r * 5, '#ffd23f', 0.6, 4);
       }
       G.Audio.sfx(this.boss ? 'bossDown' : 'faint');

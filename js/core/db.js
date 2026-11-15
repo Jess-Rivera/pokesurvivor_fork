@@ -107,8 +107,6 @@ G.DB = (() => {
       personality: null, // { trait, scores }
       upgrades: {}, // (old) account upgrades; now they go per Pokemon
       pupg: {}, // dex -> { id -> level }: each Pokemon's upgrades
-      tickets: { t1: 0, t10: 0 }, // gacha tickets (x1 and x10)
-      pity: {}, // banner generation -> pulls without a 5-star
       legends: {}, // dex -> date (old saves only: no longer written since the gyms-only change, 2026-10-31)
       arenas: {}, // type -> date (old saves only: no longer written since the gyms-only change)
       itemsFound: {}, // id -> date: equippable items found
@@ -147,8 +145,6 @@ G.DB = (() => {
     const base = newSave(name || s.name);
     for (const k in base) if (s[k] == null) s[k] = base[k];
     for (const k in base.stats) if (s.stats[k] == null) s.stats[k] = base.stats[k];
-    // v1 -> v2: there was a single banner (Kanto) with pity as a number.
-    if (typeof s.pity === 'number') s.pity = { 1: s.pity };
     // v2 -> v3: upgrades belonged to the account; they pass to the companion of that time.
     if (!s.pupgDone) {
       if (s.partner && Object.values(s.upgrades || {}).some((v) => v > 0)) {
@@ -156,7 +152,6 @@ G.DB = (() => {
       }
       s.pupgDone = true;
     }
-    s.tickets = Object.assign({ t1: 0, t10: 0 }, s.tickets);
     sanitize(s);
     s.v = VERSION;
     return s;
@@ -171,8 +166,6 @@ G.DB = (() => {
   function sanitize(s) {
     const n = (v) => (Number.isFinite(+v) && +v > 0 ? Math.floor(+v) : 0);
     s.coins = n(s.coins);
-    s.tickets.t1 = n(s.tickets.t1);
-    s.tickets.t10 = n(s.tickets.t10);
     // F3d-2 team items: keep only real team-tier ids, then a clean loadout (unlocked, no duplicates, one per group, within the unlocked slots).
     if (G.Items) {
       if (!s.teamItems || typeof s.teamItems !== 'object') s.teamItems = {};

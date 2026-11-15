@@ -12,7 +12,9 @@ Last updated: 2026-11-15 evening, Claude Code (home). Branch: balance/124-econom
 3. Rulings 2026-11-15: Exp Candy drops unparked (#139); #97 ships with the new save.
 
 ## Landed on feature/128-acquisition
-- #132 (S1) built: save version 4; v3 and pre-Pokebox saves back up to ps.backup.preacq.<key> and reset, notice once, settings kept.
+- #133 (S2) built: gacha, slot machine and tickets removed; ticket payouts are coins (40 per x1, 400 per x10, K in js/data/drops.js);
+  Shop opens on Team Items; rarity names live in G.Copies. Needs your feel test: Shop, a run, a chest, a mission claim. #134 closed (pick already built).
+- #132 (S1, closed) built: save version 4; v3 and pre-Pokebox saves back up to ps.backup.preacq.<key> and reset, notice once, settings kept.
   Your dev.html save resets on first load (backup kept). Next after your feel test: #133 (S2) and #134 (S3).
 
 ## What just landed on balance/124-economy-xp
@@ -20,12 +22,10 @@ Last updated: 2026-11-15 evening, Claude Code (home). Branch: balance/124-econom
   a replacement pays the base; no run time or level in it. Decision 2026-11-15-124-move-price-by-slots-filled.
 - Opening XP boost OFF by default; only ?dev G.Debug.xpBoost(true) turns it on (decision 2026-11-15-125-opening-xp-boost-off-by-default).
 - Dev tools: G.Debug.runTrace (pace, shop pairs, visits), tools/run-pace-summary.js, G.Debug.xpBoost(on).
-- Docs: 124 - Economy Slice Opening, 124 - Run Pace Trace Plan, 124 - Economy Rule Built, 125 - XP Boost Comparison.
 - check.js clean (60 harnesses); silver 17/17, shop-screens 35/35, shops 15/15 mutations; smoke-ui and smoke-run-trace 22/22 pass.
 
 ## Watch
 - Boost finding: +2.1 levels over the world at 3:00 with it, +0.7 without (model fitted to 2 short traces, 4:15 max).
-- smoke-ui timed out once mid-run, then passed in full (flaky, not price related).
 - Untracked, not ours: assets/excalidraw/PMD style Main Menu.png, docs/ASCII Concept Maps/tactics-conversion-uplift.md.
 - From before: trace lacks the leader's level; Misty "Kite" label; 16i parity; Brock/Misty card stacks (#122).
 

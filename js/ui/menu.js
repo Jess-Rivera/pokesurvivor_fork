@@ -442,8 +442,8 @@ G.MenuUI = (() => {
       if (v.compact) {
         b.classList.add('icon');
         b.innerHTML = G.Icons.rarity(r, ICON_PX);
-        b.title = G.Gacha.RARITY_NAME[r];
-      } else b.innerHTML = G.Icons.rarity(r, 12) + ' ' + G.Gacha.RARITY_NAME[r];
+        b.title = G.Copies.RARITY_NAME[r];
+      } else b.innerHTML = G.Icons.rarity(r, 12) + ' ' + G.Copies.RARITY_NAME[r];
       b.onclick = () => {
         toggle(c.rarity, r);
         again();
@@ -706,7 +706,7 @@ G.MenuUI = (() => {
       <div class="center">
         <div style="color:var(--muted);font-size:13px">Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</div>
         <h3>${own ? p.name : '???'}</h3>
-        <div class="rarity-line" style="color:${G.Gacha.RARITY_COLOR[p.rarity]}">${G.UI.stars(p.rarity, 24)}<span>${G.Gacha.RARITY_NAME[p.rarity]}</span>${own ? G.Icons.bstStars(p.bst) : ''}</div>
+        <div class="rarity-line" style="color:${G.Copies.RARITY_COLOR[p.rarity]}">${G.UI.stars(p.rarity, 24)}<span>${G.Copies.RARITY_NAME[p.rarity]}</span>${own ? G.Icons.bstStars(p.bst) : ''}</div>
         <div style="margin:6px 0">${own ? G.UI.typeChips(p.types) : ''}</div>
       </div>
       ${
@@ -1463,7 +1463,7 @@ G.MenuUI = (() => {
     box.innerHTML =
       head +
       `<div class="ros-db">
-        <div class="ros-row"><span title="${G.Gacha.RARITY_NAME[p.rarity]}">${G.UI.stars(p.rarity, 24)}</span><span class="rtypes">${G.UI.typeChips(p.types)}</span></div>
+        <div class="ros-row"><span title="${G.Copies.RARITY_NAME[p.rarity]}">${G.UI.stars(p.rarity, 24)}</span><span class="rtypes">${G.UI.typeChips(p.types)}</span></div>
         <div class="ros-box ros-stats"><span class="ros-bst">${G.Icons.bstStars(p.bst)}</span>${p.stats ? '<div id="ros-hex" class="hex-wrap"></div>' : ''}</div>
         ${rosInfoRows(copy, dex)}
         <div class="ros-box ros-mbox"><div class="ros-mh">Moves</div><div class="ros-moves">${moves}</div></div>

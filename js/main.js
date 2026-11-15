@@ -46,7 +46,6 @@
     'Combat',
     'Spawner',
     'LevelUp',
-    'Gacha',
     'MoveAttrs',
     'MoveData',
     'MoveOverrides',

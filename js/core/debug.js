@@ -3,7 +3,7 @@
  * Without ?dev, every method is a no-op, so this is inert in the published
  * game unless a developer explicitly opts in.
  *
- *   G.Debug.maxAll()   unlock every Pokemon + shiny, max coins/tickets,
+ *   G.Debug.maxAll()   unlock every Pokemon + shiny, max coins,
  *                      and max every per-Pokemon upgrade. Writes to the
  *                      current save (local or guest).
  *   G.Debug.give(id)   give the active Pokemon a move
@@ -14,7 +14,6 @@
  *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
  *   G.Debug.silver(n)  set this run's Silver to n (no arg: logs it). In a run only, not saved (Silver is run-only). For the Move Shop.
  *   G.Debug.xpBoost(on)  #125: turn the opening 3-minute XP boost on (true) or off (false, the default); no arg: logs it. Until reload, not saved.
- *   G.Debug.tickets(n, m) set your Pokeballs (x1 tickets) to n and, if given, your Master Balls (x10 tickets) to m (no arg: logs both). Saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.berryslots(n) set how many berry slots this save has (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.runitem(id[, force]) give a run-tier item through the real pickup path, chooser included (force=true equips on the team directly, ignoring slot limits; no id: logs every run-tier id; e.g. 'snowballbadge', 'redo', 'firestone', 'sharpscissors')
@@ -75,7 +74,6 @@ G.Debug = (() => {
 
     // Currency.
     save.coins = 9999999;
-    save.tickets = { t1: 9999, t10: 9999 };
 
     // Max every per-Pokemon upgrade, for every owned Pokemon.
     for (const p of G.DEX) {
@@ -88,7 +86,7 @@ G.Debug = (() => {
 
     G.DB.commit(true);
     if (G.UI && G.UI.toast) G.UI.toast('Debug: everything unlocked and maxed', 3000);
-    console.log('[Debug] maxed:', dexN, 'Pokemon owned + shiny, coins/tickets maxed, all upgrades maxed.');
+    console.log('[Debug] maxed:', dexN, 'Pokemon owned + shiny, coins maxed, all upgrades maxed.');
     return true;
   }
 
@@ -157,17 +155,9 @@ G.Debug = (() => {
       return false;
     }
     if (!id) {
-      const ids = G.Grounds.LIST.map((i) => i.id).concat(['pokeball', 'masterball']);
+      const ids = G.Grounds.LIST.map((i) => i.id);
       console.log('[Debug] ground ids: ' + ids.join(', '));
       return ids;
-    }
-    const BALL = { pokeball: 'ticket', masterball: 'ticket10' }; // gacha tickets: drawn as a Great Ball (x1) and a Master Ball (x10)
-    if (BALL[id]) {
-      const p = G.Game.player;
-      if (!p) return false;
-      G.Game.debugMaxed();
-      G.Pickups.drop(BALL[id], p.x + G.U.rand(-160, 160), p.y - Math.min(260, (p.magnet || 80) + 90), 1);
-      return true;
     }
     if (!G.Grounds.BY[id]) {
       console.warn('[Debug] unknown ground item ' + id);
@@ -280,28 +270,6 @@ G.Debug = (() => {
     const now = G.Spawner.xpBoostEnabled;
     console.log('[Debug] opening XP boost: ' + (now ? 'on' : 'off') + (enabled != null ? ' (until reload)' : ''));
     return now;
-  }
-
-  /** Set the gacha tickets: n Pokeballs (x1), and m Master Balls (x10) when given. No arg: logs both. ?dev only. Saved. */
-  function tickets(n, m) {
-    if (!on) {
-      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
-      return false;
-    }
-    const s = G.DB && G.DB.save;
-    if (!s) {
-      console.warn('[Debug] no save loaded.');
-      return false;
-    }
-    s.tickets = s.tickets || { t1: 0, t10: 0 };
-    const whole = (v) => Math.max(0, Math.floor(+v) || 0);
-    if (n != null || m != null) {
-      if (n != null) s.tickets.t1 = whole(n);
-      if (m != null) s.tickets.t10 = whole(m);
-      G.DB.commit();
-    }
-    console.log('[Debug] Pokeballs: ' + s.tickets.t1 + ' · Master Balls: ' + s.tickets.t10);
-    return { pokeballs: s.tickets.t1, masterBalls: s.tickets.t10 };
   }
 
   /** Unlock `n` run-item slots (1 to 4) on this save, or log the current count. ?dev only. Saved (save.runSlots, absent in old saves = 1). */
@@ -1334,7 +1302,6 @@ G.Debug = (() => {
     coins,
     silver,
     xpBoost,
-    tickets,
     unlockitem,
     loadout,
     ignite,

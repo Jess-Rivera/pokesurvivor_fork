@@ -3,8 +3,7 @@
  *   login ──> personality test ──> menu ──> run ──> summary ──> menu
  *                (first time only)        │
  *                                          ├─ Pokemon (collection)
- *                                          ├─ Upgrades
- *                                          └─ Gacha
+ *                                          └─ Upgrades
  *
  * Loop states: 'ui' (menus, with the world in the background), 'playing',
  * 'levelup', 'paused', 'over'.
@@ -216,7 +215,6 @@ G.Game = (() => {
     runTeam.runStats = G.RunStats.create(); // #91: the run's other counters (kills, faints, statuses...), for the pause menu
     // F3d-2 pre-run loadout (Inventory screen): equip the team items you chose, in slot order, through the same path as a pickup.
     for (const id of G.Items.cleanLoadout(save)) if (id) equipRun(id);
-    banked = { t1: 0, t10: 0 };
     caught = [];
 
     if (coop) {
@@ -282,7 +280,7 @@ G.Game = (() => {
   }
 
   /**
-   * The run-shared progress the incoming member takes from the outgoing one (level/XP, kills, bosses, coins, tickets). The Team calls
+   * The run-shared progress the incoming member takes from the outgoing one (level/XP, kills, bosses, coins). The Team calls
    * it on every manual swap, faint swap and Re-Do. Unspent links are not copied: they are one Team store (slice 2, Jess 2026-11-06).
    */
   function carryRun(from, to) {
@@ -292,8 +290,6 @@ G.Game = (() => {
     to.kills = from.kills;
     to.bosses = from.bosses;
     to.coins = from.coins;
-    to.t1 = from.t1;
-    to.t10 = from.t10;
   }
 
   /**
@@ -369,34 +365,13 @@ G.Game = (() => {
       kills: pl.kills,
       bosses: pl.bosses,
       coins: pl.coins,
-      t1: pl.t1,
-      t10: pl.t10,
     };
   }
   function summary() {
-    return { t: time, ki: pl.kills, bo: pl.bosses, co: pl.coins, lv: pl.level, t1: pl.t1, t10: pl.t10 };
+    return { t: time, ki: pl.kills, bo: pl.bosses, co: pl.coins, lv: pl.level };
   }
 
   /** What co-op needs from the game. */
-  /**
-   * Collected tickets are saved as soon as you pick them up (like the shinies):
-   * before, only on finishing, and if the tab closed abruptly they were lost.
-   * `banked` = the ones from this game already in the saved game.
-   */
-  let banked = { t1: 0, t10: 0 };
-  function bankTickets(save_ = true) {
-    const sv = G.DB.save;
-    if (!sv || !pl) return;
-    sv.tickets = sv.tickets || { t1: 0, t10: 0 };
-    const d1 = Math.max(0, pl.t1 - banked.t1),
-      d10 = Math.max(0, pl.t10 - banked.t10);
-    if (!d1 && !d10) return;
-    sv.tickets.t1 += d1;
-    sv.tickets.t10 += d10;
-    banked = { t1: pl.t1, t10: pl.t10 };
-    if (save_) G.DB.commit('run');
-  }
-
   const coopApi = {
     team: teamState,
     summary,
@@ -410,10 +385,6 @@ G.Game = (() => {
       pl.kills = t.kills;
       pl.bosses = t.bosses;
       pl.coins = t.coins;
-      if (t.t1 > pl.t1 || t.t10 > pl.t10) G.Audio.sfx('shiny');
-      pl.t1 = t.t1 || 0;
-      pl.t10 = t.t10 || 0;
-      bankTickets();
     },
     levelStart(level) {
       // (If you had the item choice open, it returns on finishing: afterLevelUp.)
@@ -459,8 +430,6 @@ G.Game = (() => {
           bosses: d.bo,
           coins: d.co,
           level: Math.max(pl.level, d.lv || 1),
-          t1: d.t1 || pl.t1,
-          t10: d.t10 || pl.t10,
         });
       if (d && d.t) time = d.t;
       if (d && d.why === 'host') G.UI.toast('El anfitrión ha terminado la partida', 3200);
@@ -606,7 +575,6 @@ G.Game = (() => {
     const record = time > save.stats.bestTime;
 
     save.coins += coins;
-    bankTickets(false);
     save.stats.runs++;
     save.stats.totalKills += pl.kills;
     save.stats.bestTime = Math.max(save.stats.bestTime, Math.floor(time));
@@ -649,8 +617,6 @@ G.Game = (() => {
         bosses: pl.bosses,
         coins,
         record,
-        t1: pl.t1,
-        t10: pl.t10,
         moves: pl.moves,
         roster,
         coop, // #103: co-op keeps the old results card
@@ -788,8 +754,6 @@ G.Game = (() => {
     heal: 'heal',
     bomb: 'break',
     magnet: 'confirm',
-    ticket: 'shiny',
-    ticket10: 'legend',
     item: 'legend',
     ground: 'heal',
   };
@@ -960,20 +924,6 @@ G.Game = (() => {
     if (p.kind === 'ground') {
       // Ground item: applied to the team at once (the active Pokemon touched it); nothing is stored. Co-op copies are the host's call, as with heal.
       if (mine) G.Grounds.apply(pl, p.value);
-      return;
-    }
-    if (p.kind === 'ticket' || p.kind === 'ticket10') {
-      if (p.kind === 'ticket') pl.t1++;
-      else pl.t10++;
-      bankTickets();
-      G.FX.dmgText(
-        who.x,
-        who.y - who.bodyH - 8,
-        p.kind === 'ticket' ? '+1 Pokeball' : 'Master Ball!',
-        p.kind === 'ticket' ? '#ffd23f' : '#d9a6ff',
-        true
-      );
-      G.FX.ring(who.x, who.y, 6, 50, p.kind === 'ticket' ? '#ffd23f' : '#c47bff', 0.4, 3);
       return;
     }
     if (p.kind === 'heal') {

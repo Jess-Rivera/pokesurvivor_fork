@@ -24,6 +24,9 @@ G.Copies = (() => {
   const BOX_PRICES = { 3: 10000, 4: 25000, 5: 60000 }; // pokebox-plan "Rulings for step 3", bought in order
   const SELL_PRICE = { 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 }; // by the species' rarity, pokebox-plan "Rulings for step 3"
   const SHINY_SELL = 3; // a shiny sells for 3 times its rarity's price
+  // The star tier's name and colour (moved here from the retired gacha, #133). The Spanish names are G.T() keys.
+  const RARITY_NAME = { 1: 'Común', 2: 'Poco común', 3: 'Rara', 4: 'Épica', 5: 'Legendaria' };
+  const RARITY_COLOR = { 1: '#9fb1c9', 2: '#5fe08a', 3: '#4fb4ff', 4: '#c47bff', 5: '#ffcb3d' };
   // EVs (pokebox step 5, docs/proposals/ev-progression.md): a defeated enemy adds its species' typed EV yield x its class rate to
   // the run's six banks, counted in whole thousandths of an EV so the banks stay exact. TUNE (BALANCE.md "EVs").
   const EV_RATE = { wild: 1, elite: 2, gym: 1000 }; // thousandths per yield point: wild 1/1000, elite 1/500, gym the full yield
@@ -605,6 +608,8 @@ G.Copies = (() => {
     setNickname,
     NICK_MAX,
     SELL_PRICE,
+    RARITY_NAME,
+    RARITY_COLOR,
     linkTeam,
     clean,
     IV_MAX,

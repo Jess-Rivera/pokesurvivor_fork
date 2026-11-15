@@ -7,7 +7,7 @@
  * as G.Stats, shared with enemies. See docs/stat-model-design-notes.md, BALANCE.md. */
 /* Entity model slice 3 (docs/proposals/host-model-plan.md, Jess 2026-11-06): G.PlayerEntity holds the rules every Player entity
  * follows (stats, HP, moves, slots, links, dodge, Fly, statuses, hurt); it moves by this.controller and aims at this.aimTargets().
- * G.HumanPlayer (below) is you: the keyboard controller, XP, coins, kills, tickets, pickup magnets, the hurt sound and camera
+ * G.HumanPlayer (below) is you: the keyboard controller, XP, coins, kills, pickup magnets, the hurt sound and camera
  * kick, aiming at the enemy list. G.Player names the human class, as G.Enemy names the wild one. */
 G.PlayerEntity = class PlayerEntity {
   /**
@@ -1224,15 +1224,15 @@ G.PlayerEntity.IDLE = {
 G.PlayerEntity.prototype.controller = G.PlayerEntity.IDLE;
 
 /* ============ HumanPlayer: you (entity model slice 3) ============
- * Everything only the one at the keyboard has: the keyboard controller, XP and levels from orbs, coins, kills, bosses, gacha
- * tickets, the pickup magnets, rerolls bought in Upgrades, the hurt sound and camera kick, aiming at the enemy list (and at rocks
+ * Everything only the one at the keyboard has: the keyboard controller, XP and levels from orbs, coins, kills, bosses, the pickup
+ * magnets, rerolls bought in Upgrades, the hurt sound and camera kick, aiming at the enemy list (and at rocks
  * and chests when none is near), and the co-op follow. Set after the base constructor, which never reads them.
  */
 G.HumanPlayer = class HumanPlayer extends G.PlayerEntity {
   constructor(mon, perks = {}, shiny = false, statProf = null) {
     super(mon, perks, shiny, statProf);
     this.magnet = 120 * (perks.magnetMul || 1); // pull radius for XP orbs, the permanent upgrade scales it
-    this.itemMagnet = 78; // pull radius for every other pickup (coins, berries, items, tickets, magnet, bomb), fixed
+    this.itemMagnet = 78; // pull radius for every other pickup (coins, berries, items, magnet, bomb), fixed
     this.xpMul = perks.xpMul || 1;
     this.coinMul = perks.coinMul || 1;
     this.xp = 0;
@@ -1241,8 +1241,6 @@ G.HumanPlayer = class HumanPlayer extends G.PlayerEntity {
     this.bosses = 0;
     this.rerollBonus = perks.rerolls || 0; // rerolls bought in Upgrades (plus the free one)
     this.coins = 0; // coins picked up this run
-    this.t1 = 0;
-    this.t10 = 0; // gacha tickets picked up this run
   }
 
   aimTargets() {

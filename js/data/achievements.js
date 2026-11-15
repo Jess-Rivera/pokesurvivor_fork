@@ -40,7 +40,7 @@ G.AchDefs = (() => {
       desc: 'Ten 10 Pokémon.',
       value: own,
       goal: 10,
-      reward: { t1: 2 },
+      reward: { coins: G.Drops.ticketCoins(2) },
     },
     {
       id: 'own50',
@@ -50,7 +50,7 @@ G.AchDefs = (() => {
       desc: 'Ten 50 Pokémon.',
       value: own,
       goal: 50,
-      reward: { t1: 5 },
+      reward: { coins: G.Drops.ticketCoins(5) },
       title: 'Coleccionista',
     },
     {
@@ -61,7 +61,7 @@ G.AchDefs = (() => {
       desc: 'Ten 100 Pokémon.',
       value: own,
       goal: 100,
-      reward: { t10: 1 },
+      reward: { coins: G.Drops.ticketCoins(0, 1) },
     },
     {
       id: 'own250',
@@ -71,7 +71,7 @@ G.AchDefs = (() => {
       desc: 'Ten 250 Pokémon.',
       value: own,
       goal: 250,
-      reward: { t10: 2 },
+      reward: { coins: G.Drops.ticketCoins(0, 2) },
       title: 'Maestro Pokémon',
     },
     {
@@ -82,7 +82,7 @@ G.AchDefs = (() => {
       desc: 'Ten 500 Pokémon.',
       value: own,
       goal: 500,
-      reward: { t10: 3 },
+      reward: { coins: G.Drops.ticketCoins(0, 3) },
     },
     {
       id: 'ownAll',
@@ -92,7 +92,7 @@ G.AchDefs = (() => {
       desc: 'Ten todos los Pokémon del juego.',
       value: own,
       goal: 966,
-      reward: { t10: 10 },
+      reward: { coins: G.Drops.ticketCoins(0, 10) },
       title: 'Profesor Pokémon',
     },
     {
@@ -103,7 +103,7 @@ G.AchDefs = (() => {
       desc: 'Consigue 1 shiny.',
       value: shinies,
       goal: 1,
-      reward: { t1: 3 },
+      reward: { coins: G.Drops.ticketCoins(3) },
       title: 'Brillante',
     },
     {
@@ -114,7 +114,7 @@ G.AchDefs = (() => {
       desc: 'Consigue 5 shinies.',
       value: shinies,
       goal: 5,
-      reward: { t10: 1 },
+      reward: { coins: G.Drops.ticketCoins(0, 1) },
     },
     {
       id: 'shiny20',
@@ -124,19 +124,8 @@ G.AchDefs = (() => {
       desc: 'Consigue 20 shinies.',
       value: shinies,
       goal: 20,
-      reward: { t10: 2 },
+      reward: { coins: G.Drops.ticketCoins(0, 2) },
       title: 'Cazashinies',
-    },
-    {
-      id: 'pulls100',
-      cat: 'coleccion',
-      tier: 2,
-      name: 'Tragaperras',
-      desc: 'Haz 100 tiradas en el gacha.',
-      value: st('pulls'),
-      goal: 100,
-      reward: { t10: 1 },
-      title: 'Afortunado',
     },
 
     // ---------- supervivencia ----------
@@ -158,7 +147,7 @@ G.AchDefs = (() => {
       desc: 'Aguanta 10 minutos.',
       value: (s) => Math.floor(st('bestTime')(s) / 60),
       goal: 10,
-      reward: { t1: 4 },
+      reward: { coins: G.Drops.ticketCoins(4) },
     },
     {
       id: 'time15',
@@ -168,7 +157,7 @@ G.AchDefs = (() => {
       desc: 'Aguanta 15 minutos.',
       value: (s) => Math.floor(st('bestTime')(s) / 60),
       goal: 15,
-      reward: { t10: 1 },
+      reward: { coins: G.Drops.ticketCoins(0, 1) },
     },
     {
       id: 'time20',
@@ -178,7 +167,7 @@ G.AchDefs = (() => {
       desc: 'Aguanta 20 minutos.',
       value: (s) => Math.floor(st('bestTime')(s) / 60),
       goal: 20,
-      reward: { t10: 2 },
+      reward: { coins: G.Drops.ticketCoins(0, 2) },
       title: 'Superviviente',
     },
     {
@@ -189,7 +178,7 @@ G.AchDefs = (() => {
       desc: 'Llega al nivel 15 en una run.',
       value: st('bestLevel'),
       goal: 15,
-      reward: { t1: 2 },
+      reward: { coins: G.Drops.ticketCoins(2) },
     },
     {
       id: 'lvl40',
@@ -199,7 +188,7 @@ G.AchDefs = (() => {
       desc: 'Llega al nivel 30 en una run.',
       value: st('bestLevel'),
       goal: 30,
-      reward: { t10: 1 },
+      reward: { coins: G.Drops.ticketCoins(0, 1) },
       title: 'Imparable',
     },
     {
@@ -210,7 +199,7 @@ G.AchDefs = (() => {
       desc: 'Juega 50 runs.',
       value: st('runs'),
       goal: 50,
-      reward: { t10: 1 },
+      reward: { coins: G.Drops.ticketCoins(0, 1) },
       title: 'Explorador',
     },
 
@@ -223,7 +212,7 @@ G.AchDefs = (() => {
       desc: 'Derrota a 1.000 Pokémon.',
       value: st('totalKills'),
       goal: 1000,
-      reward: { t1: 2 },
+      reward: { coins: G.Drops.ticketCoins(2) },
     },
     {
       id: 'kills10k',
@@ -233,7 +222,7 @@ G.AchDefs = (() => {
       desc: 'Derrota a 10.000 Pokémon.',
       value: st('totalKills'),
       goal: 10000,
-      reward: { t10: 1 },
+      reward: { coins: G.Drops.ticketCoins(0, 1) },
       title: 'Veterano',
     },
     {
@@ -244,7 +233,7 @@ G.AchDefs = (() => {
       desc: 'Derrota a 100.000 Pokémon.',
       value: st('totalKills'),
       goal: 100000,
-      reward: { t10: 3 },
+      reward: { coins: G.Drops.ticketCoins(0, 3) },
       title: 'Leyenda viva',
     },
     {
@@ -255,7 +244,7 @@ G.AchDefs = (() => {
       desc: 'Derrota a un jefe.',
       value: st('bossesTotal'),
       goal: 1,
-      reward: { t1: 2 },
+      reward: { coins: G.Drops.ticketCoins(2) },
     },
     {
       id: 'boss25',
@@ -265,7 +254,7 @@ G.AchDefs = (() => {
       desc: 'Derrota a 25 jefes.',
       value: st('bossesTotal'),
       goal: 25,
-      reward: { t10: 1 },
+      reward: { coins: G.Drops.ticketCoins(0, 1) },
       title: 'Cazajefes',
     },
     {
@@ -276,7 +265,7 @@ G.AchDefs = (() => {
       desc: 'Derrota a 100 jefes.',
       value: st('bossesTotal'),
       goal: 100,
-      reward: { t10: 2 },
+      reward: { coins: G.Drops.ticketCoins(0, 2) },
     },
     {
       id: 'items5',
@@ -286,7 +275,7 @@ G.AchDefs = (() => {
       desc: 'Encuentra 5 objetos distintos.',
       value: count('itemsFound'),
       goal: 5,
-      reward: { t1: 3 },
+      reward: { coins: G.Drops.ticketCoins(3) },
     },
     {
       id: 'itemsAll',
@@ -296,7 +285,7 @@ G.AchDefs = (() => {
       desc: 'Encuentra los 11 objetos.',
       value: count('itemsFound'),
       goal: 11,
-      reward: { t10: 1 },
+      reward: { coins: G.Drops.ticketCoins(0, 1) },
       title: 'Anticuario',
     },
 
@@ -309,7 +298,7 @@ G.AchDefs = (() => {
       desc: 'Completa 10 misiones.',
       value: st('missionsDone'),
       goal: 10,
-      reward: { t1: 3 },
+      reward: { coins: G.Drops.ticketCoins(3) },
     },
     {
       id: 'mis50',
@@ -319,7 +308,7 @@ G.AchDefs = (() => {
       desc: 'Completa 50 misiones.',
       value: st('missionsDone'),
       goal: 50,
-      reward: { t10: 1 },
+      reward: { coins: G.Drops.ticketCoins(0, 1) },
       title: 'Constante',
     },
     {
@@ -330,7 +319,7 @@ G.AchDefs = (() => {
       desc: 'Completa 200 misiones.',
       value: st('missionsDone'),
       goal: 200,
-      reward: { t10: 3 },
+      reward: { coins: G.Drops.ticketCoins(0, 3) },
     },
     {
       id: 'group1',
@@ -340,7 +329,7 @@ G.AchDefs = (() => {
       desc: 'Juega una partida en grupo.',
       value: st('groupRuns'),
       goal: 1,
-      reward: { t1: 2 },
+      reward: { coins: G.Drops.ticketCoins(2) },
     },
     {
       id: 'group10',
@@ -350,7 +339,7 @@ G.AchDefs = (() => {
       desc: 'Juega 10 partidas en grupo.',
       value: st('groupRuns'),
       goal: 10,
-      reward: { t10: 1 },
+      reward: { coins: G.Drops.ticketCoins(0, 1) },
       title: 'Compañero fiel',
     },
   ];
