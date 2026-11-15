@@ -1,0 +1,162 @@
+/* ============ bw-catch.css: the catch screen (#136, js/ui/catch-ui.js) ============
+ * The Inventory window (bw-inventory.css: frame, title bar, sub line, detail boxes, bottom bar) holds it; only the catch's own
+ * parts are here. Left: the portrait, name, star, nature and the catch chance. Right: the Flee pips, the throw stage, the belt
+ * strip, the result line and the hint. The Throw and Let it go buttons are the Team screen's .bw-btn (bw-team.css).
+ */
+.inv.catch {
+  width: min(760px, 100%);
+}
+.catch-main {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 16px;
+}
+
+/* ---------- left: the Pokemon ---------- */
+.catch-mon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px;
+  background: rgba(0, 99, 140, 0.35);
+}
+.catch-face {
+  width: 128px;
+  height: 128px;
+  border: 3px solid var(--bw-line);
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(0, 33, 57, 0.8);
+}
+.catch-face img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.catch-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 22px;
+}
+.catch-nature {
+  font-size: 14px;
+  color: var(--bw-sub);
+}
+.catch-oddsbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 6px;
+  padding: 8px 18px;
+  background: rgba(0, 33, 57, 0.6);
+}
+.catch-odds {
+  font-size: 40px;
+  color: var(--bw-title);
+}
+.catch-odds-ball {
+  font-size: 13px;
+  color: var(--muted);
+}
+.catch-time {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- right: flee, stage, belt ---------- */
+.catch-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.catch-fleebox {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  font-size: 16px;
+}
+.catch-fleebox small {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--muted);
+}
+.catch-flee {
+  display: flex;
+  gap: 6px;
+}
+.catch-pip {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ff5f6d;
+  transform: rotate(45deg);
+}
+.catch-pip.on {
+  background: #ff5f6d;
+}
+.catch-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 64px;
+  background: rgba(0, 33, 57, 0.5);
+}
+.catch-stage.throwing #catch-stage-ball {
+  animation: catch-wobble 0.33s ease-in-out 3;
+}
+@keyframes catch-wobble {
+  25% {
+    transform: rotate(-22deg);
+  }
+  75% {
+    transform: rotate(22deg);
+  }
+}
+.catch-belt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.catch-cell {
+  appearance: none;
+  position: relative;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--bw-line);
+  background: rgba(0, 33, 57, 0.7);
+  cursor: pointer;
+}
+.catch-cell.on {
+  border-color: var(--bw-title);
+  background: rgba(0, 99, 140, 0.6);
+}
+.catch-cell.empty {
+  opacity: 0.35;
+  cursor: default;
+}
+.catch-cell small {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  font-size: 10px;
+  color: var(--bw-sub);
+}
+.catch-note {
+  min-height: 2.6em;
+}
+.catch-foot {
+  justify-content: space-between;
+}
+
+@media (max-width: 720px) {
+  .catch-main {
+    grid-template-columns: 1fr;
+  }
+}

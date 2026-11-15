@@ -73,8 +73,8 @@ Data facts are from pokedex.js, enemy-classes.js, sprites-meta.js and the pokeap
 3. CATCH PHASE
 --------------
     UberElite down in time ── time left locked in: t = time left / X (0 to 1)
-         │
-         ▼  the GAME PAUSES (no horde, no damage; run clock, rescue roll and timed effects stop)
+         │  (#136, Jess 2026-11-15) the Stage 1 waits 30 s with the arrow; you walk over and touch it
+         ▼  the GAME PAUSES on that touch (no horde, no damage; run clock, rescue roll and timed effects stop)
     belt strip: [P][P][P][G][G][U]
          pick a ball: click it in the strip, or press its number key (1 Poke, 2 Great, 3 Ultra)
          the BEST stocked ball starts selected (Ultra > Great > Poke)

@@ -963,22 +963,24 @@ G.HUD = (() => {
       }
     }
     // The rescue (js/systems/rescue.js, #135): the same arrow as the shops in green. Off screen: "Rescue·11m·34s" (the seconds left
-    // to reach it, then the fight clock); on screen the label floats over the guard, whose own tag shows the fight clock.
+    // to reach it, then the fight clock); on screen the label floats over the guard, whose own tag shows the fight clock. After a
+    // win (#136) it points at the waiting Stage 1 as "Catch".
     {
       const rescue = G.Rescue.hudTarget();
       if (rescue) {
-        const now = performance.now() / 1000,
+        const label = rescue.phase === 'catch' ? 'Catch' : 'Rescue',
+          now = performance.now() / 1000,
           sx = (rescue.x - cam.left()) * cam.scale,
           sy = (rescue.y - cam.top()) * cam.scale,
           ta = rescue.left <= RESCUE_BLINK && Math.floor(now * 4) % 2 === 0 ? 0.35 : 1,
           secs = Math.ceil(rescue.left) + 's';
         if (sx < 0 || sx > w || sy < 0 || sy > h) {
           const m = Math.round(G.U.dist(pl.x, pl.y, rescue.x, rescue.y) / 32) + 'm';
-          floatArrow(ctx, cam, pl, rescue.x, rescue.y, RESCUE_WAYFINDER, 'Rescue·' + m + '·' + secs, ta);
+          floatArrow(ctx, cam, pl, rescue.x, rescue.y, RESCUE_WAYFINDER, label + '·' + m + '·' + secs, ta);
         } else {
           ctx.save();
           ctx.globalAlpha = ta;
-          wayfindingLabel(ctx, 'Rescue·' + secs, sx, sy - 110, 'center');
+          wayfindingLabel(ctx, label + '·' + secs, sx, sy - (rescue.phase === 'catch' ? 70 : 110), 'center');
           ctx.restore();
         }
       }

@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-15, #136: the catch opens on touching the won Stage 1; held catches follow the EV flag; belt refills until #137 (Jess)](docs/decisions/2026-11-15-136-catch-on-contact-and-held-catch-rulings.md)
 - [2026-11-15, #135: the rescue event's first-build rulings: stops at a result, clock from the first hit, green shop-style arrow (Jess)](docs/decisions/2026-11-15-135-rescue-event-first-build-rulings.md)
 - [2026-11-15, #133: tickets are retired; every ticket payout becomes coins at 40 per x1 and 400 per x10 (Jess)](docs/decisions/2026-11-15-133-tickets-pay-coins.md)
 - [2026-11-15, #132: the new save goes live with S1 (version 4); settings are kept; no new harness (Jess)](docs/decisions/2026-11-15-132-new-save-live-settings-kept.md)

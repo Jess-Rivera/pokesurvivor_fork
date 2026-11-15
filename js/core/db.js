@@ -134,6 +134,7 @@ G.DB = (() => {
       teamLoadout: [], // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
       box: [], // every Pokemon owned, as compact copies (only G.Copies reads them)
       boxCount: 2, // boxes this player has
+      belt: { size: 6, poke: 6 }, // #136: the Poke Ball belt, one shared count (G.Catch reads and fixes it); old saves get it from migrate
       trainerId: G.Copies ? G.Copies.uuid() : null, // this save's original trainer id, never changes
     };
     if (G.Items) G.Items.grantStarters(save); // Lucky Egg + Amulet Coin
@@ -1087,10 +1088,11 @@ G.DB = (() => {
    * A repeat is a copy too. A shiny gives only the shiny copy; the record still marks the species owned (pokebox 3a-2, D4).
    * With every box full there is no copy: it is sold on arrival and the coins go to this save (pokebox 3a-4, D3 and D4).
    * @param s  the save to write (default: the loaded one)
+   * @param nature  the copy's nature as a pokeapi id (1 to 25), kept from a rescue (#136); absent: rolled
    * @returns { isNew, uid, box, sold }  isNew: new to the Pokedex, or a first shiny. uid, box (from 0): the new copy, null if none.
    *   sold: the PokeCoins paid when it was sold on arrival (absent otherwise).
    */
-  function obtain(dex, shiny, from, s = save) {
+  function obtain(dex, shiny, from, s = save, nature = null) {
     if (!s) return { isNew: false, uid: null, box: null };
     s.owned = s.owned || {};
     s.shiny = s.shiny || {};
@@ -1100,7 +1102,7 @@ G.DB = (() => {
     if (shiny && !s.shiny[dex]) s.shiny[dex] = { at: now, from };
     if (!G.Copies || !G.SpeciesTraits || !G.SpeciesTraits.SPECIES[dex]) return { isNew, uid: null, box: null };
     if (!Array.isArray(s.box)) s.box = [];
-    const c = G.Copies.add(s, { dex, shiny: !!shiny, from, at: now });
+    const c = G.Copies.add(s, { dex, shiny: !!shiny, from, at: now, nature });
     if (!c) {
       const sold = G.Copies.priceFor(dex, !!shiny);
       s.coins = (Math.floor(+s.coins) || 0) + sold;

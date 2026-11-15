@@ -10,6 +10,8 @@
 //   region flow: the real menu, Play and region card path, then Space dodges and neither Space nor Enter starts a new run;
 //   login: a first launch shows the PokeSwarm login, and Tab, Space and the arrows work in its text fields.
 //   onboarding: a new guest picks a region (9 cards of 3) and starts with its three starters, Grass leading; a save with a partner skips it.
+//   catch (#136): touching a won rescue opens the catch screen (portrait, a %, one belt cell per slot); a double click throws, the
+//          screen closes and the run plays on with the catch held; a quit places nothing, a team fall places it in the Pokebox.
 // Fails on any page or console error.
 const path = require('path'),
   cp = require('child_process');
@@ -518,6 +520,107 @@ async function loginFlow(browser, query, tag) {
   await ctx.close();
 }
 
+// #136: the catch screen in a real run. The won rescue is set up by hand (the UberElite fight is the harness's job): the rescue's
+// Stage 1 waits beside the player, who touches it on the next frame.
+async function catchFlow(browser, query, tag) {
+  const { page, errs } = await boot(browser, query);
+  // Headless Chrome cannot play sound, so "press to start" is still waiting and would take the clicks: pass it first.
+  await page.evaluate(() => {
+    if (!document.getElementById('tap-start').classList.contains('hidden'))
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  });
+  const run = async () => {
+    await page.evaluate(() => G.Game.startRun());
+    await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 20000 });
+  };
+  const winAndTouch = () =>
+    page.evaluate(() => {
+      const pl = G.Game.player;
+      G.Rescue.debugFire();
+      const e = G.Rescue.active;
+      e.x = pl.x - G.Rescue.K.monOffsetX; // the Stage 1 stands right on the player
+      e.y = pl.y;
+      G.Rescue.onUberHit(e.uber);
+      G.Rescue.onUberDown(e.uber);
+      return e.name;
+    });
+  await run();
+  // Rescue copies only (method r): other copies can join the box at a run end too (a wild shiny).
+  const rescued = () => page.evaluate(() => G.DB.save.box.filter((c) => c.m === 'r').length);
+  const box0 = await rescued();
+  const name = await winAndTouch();
+  await page.waitForFunction(() => G.UI.isOpen('scr-catch'), null, { timeout: 5000 }).catch(() => {});
+  const shown = await page.evaluate(() => ({
+    open: G.UI.isOpen('scr-catch'),
+    paused: G.Game.state === 'choice',
+    name: document.getElementById('catch-name').textContent,
+    portrait: document.getElementById('catch-portrait').getAttribute('src') || '',
+    odds: document.getElementById('catch-odds').textContent,
+    cells: document.querySelectorAll('#catch-belt .catch-cell').length,
+    balls: document.querySelectorAll('#catch-belt .catch-cell:not(.empty)').length,
+    size: G.Catch.belt().size,
+  }));
+  ok(shown.open && shown.paused, tag + ': touching the won Stage 1 opens the catch screen and pauses the run');
+  ok(
+    shown.name === name && /Portrait\.png$/.test(shown.portrait) && /^\d+%$/.test(shown.odds),
+    tag + ': it shows the name, the portrait and a catch % (' + shown.odds + ')'
+  );
+  ok(
+    shown.cells === shown.size && shown.balls === shown.size,
+    tag + ': one belt cell per slot, all full at the start (' + shown.balls + ' / ' + shown.cells + ')'
+  );
+  // A sure catch: the roll happens on the throw, so Math.random is forced only around it.
+  await page.evaluate(() => {
+    window.realRandom = Math.random;
+    Math.random = () => 0;
+  });
+  await page.dblclick('#catch-belt .catch-cell.on');
+  await page.evaluate(() => (Math.random = window.realRandom));
+  await page.waitForFunction(() => !G.UI.isOpen('scr-catch'), null, { timeout: 6000 }).catch(() => {});
+  const after = await page.evaluate(() => ({
+    open: G.UI.isOpen('scr-catch'),
+    state: G.Game.state,
+    held: G.Catch.held.length,
+    left: G.Catch.total(),
+    size: G.Catch.belt().size,
+    box: G.DB.save.box.filter((c) => c.m === 'r').length,
+  }));
+  ok(
+    !after.open && after.state === 'playing' && after.held === 1 && after.left === after.size - 1 && after.box === box0,
+    tag + ': a double click throws one ball, the catch is held (not boxed) and the run plays on'
+  );
+  await page.evaluate(() => G.Game.quit());
+  await page.waitForFunction(() => G.Game.state === 'over', null, { timeout: 5000 }).catch(() => {});
+  ok((await rescued()) === box0, tag + ': a quit loses the held catch');
+  await page.evaluate(() => G.UI.hideAll());
+  await run();
+  await winAndTouch();
+  await page.waitForFunction(() => G.UI.isOpen('scr-catch'), null, { timeout: 5000 }).catch(() => {});
+  await page.evaluate(() => {
+    const real = Math.random;
+    Math.random = () => 0;
+    G.CatchUI.throwNow();
+    Math.random = real;
+  });
+  await page
+    .waitForFunction(() => G.Game.state === 'playing' && G.Catch.held.length === 1, null, { timeout: 6000 })
+    .catch(() => {});
+  await page.evaluate(() => {
+    for (const f of G.Game.roster) {
+      f.runItems = [];
+      f.hp = 0;
+      f.dead = true;
+    }
+  });
+  await page.waitForFunction(() => G.Game.state === 'over', null, { timeout: 8000 }).catch(() => {});
+  ok((await rescued()) === box0 + 1, tag + ': a team fall places the held catch in the Pokebox');
+  ok(
+    errs.length === 0,
+    tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')
+  );
+  await page.close();
+}
+
 // Onboarding F3 (2026-11-05): a new guest goes straight to the region pick (9 cards of 3 sprites), picks Johto and lands in the
 // menu with Chikorita leading Cyndaquil and Totodile; a save that already has a partner skips the screen on the next load.
 async function onboardingFlow(browser, query, tag) {
@@ -615,6 +718,7 @@ async function onboardingFlow(browser, query, tag) {
     await regionFlow(browser, '?dev', 'region');
     await loginFlow(browser, '?dev', 'login');
     await onboardingFlow(browser, '?dev', 'onboarding');
+    await catchFlow(browser, '?dev', 'catch');
   } catch (e) {
     fail++;
     console.log('FAIL  crashed: ' + ((e && e.stack) || e));

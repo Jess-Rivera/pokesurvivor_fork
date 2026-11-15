@@ -14,6 +14,8 @@
  *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
  *   G.Debug.silver(n)  set this run's Silver to n (no arg: logs it). In a run only, not saved (Silver is run-only). For the Move Shop.
  *   G.Debug.rescue()   #135: start a rescue event now (the toast, the arrow, the UberElite). False when one is up or you are in a gym arena.
+ *   G.Debug.catch([dex])   #136: open the catch screen now for a won rescue of that species (default: a random rescue pick), as if
+ *                      its UberElite fell with half the clock left. False when another screen is open or the belt is empty.
  *   G.Debug.xpBoost(on)  #125: turn the opening 3-minute XP boost on (true) or off (false, the default); no arg: logs it. Until reload, not saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.berryslots(n) set how many berry slots this save has (1 to 4; no arg: logs the current count). Saved.
@@ -273,6 +275,37 @@ G.Debug = (() => {
     const started = G.Rescue.debugFire();
     console.log('[Debug] rescue: ' + (started ? 'started' : 'not started (one is up, or you are in a gym arena)'));
     return started;
+  }
+
+  /** #136: open the catch screen now, as if a rescue of dex was won with half its clock left. In a run only. */
+  function catchNow(dex) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first.');
+      return false;
+    }
+    const mon = dex ? G.DEX_BY[dex] : G.Rescue.pickSpecies(G.Enemies.region);
+    if (!mon) {
+      console.warn('[Debug] no such Pokemon: ' + dex);
+      return false;
+    }
+    const nature = G.Rescue.rollNature();
+    const natureName = G.SpeciesTraits.NATURES[nature - 1][0];
+    const opened = G.Game.openCatch({
+      outcome: 'won',
+      dex: mon.dex,
+      name: mon.name,
+      nature,
+      natureName: natureName.charAt(0).toUpperCase() + natureName.slice(1),
+      timeFraction: 0.5,
+    });
+    console.log(
+      '[Debug] catch: ' + (opened ? mon.name + ' opened' : 'not opened (another screen is open, or the belt is empty)')
+    );
+    return opened;
   }
 
   /** #125: turn the opening 3-minute XP boost on (true) or off (false, the game's default); no argument logs it. ?dev only. Takes effect at once and
@@ -1319,6 +1352,7 @@ G.Debug = (() => {
     silver,
     xpBoost,
     rescue,
+    catch: catchNow,
     unlockitem,
     loadout,
     ignite,

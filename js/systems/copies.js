@@ -97,7 +97,7 @@ G.Copies = (() => {
       d: o.dex,
       t: Math.floor((o.at || Date.now()) / 1000),
       m: METHODS[o.from] || METHODS.other,
-      n: 1 + pick(25, rnd),
+      n: o.nature >= 1 && o.nature <= 25 ? Math.floor(o.nature) : 1 + pick(25, rnd), // #136: a rescue keeps its nature
       i: Array.from({ length: 6 }, () => IV_CHARS[pick(IV_MAX + 1, rnd)]).join(''),
       g: rollGender(o.dex, rnd),
       x: rollScale(rnd),

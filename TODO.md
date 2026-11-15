@@ -11,9 +11,9 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 3. Before leaving a machine: commit and push (the branch and main).
 
 ## Next (queue set by Jess 2026-11-15; gym leader AI parked)
-1. Nothing owed. #132 to #135 closed. #145 (move tooltip class) is small and ready.
-2. #128 acquisition on feature/128-acquisition: #136 (S5 catch phase and belt) opens next, then #137 and #138; order in
-   docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
+1. Owed: feel test #136 (catch phase; G.Debug.rescue() or G.Debug.catch()). #145 (move tooltip class) is small and ready.
+2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill) next, then #138; #146 keep-or-sell list;
+   order in docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
    97 - Upgrade System Review.md). #131 Silver bonuses later, after a traced run reaches gym 1. 4. #126 UI unify (#61 first), then #127 Main Menu v3.0.
 5. #129 architecture review. 6. #130 regions and map selection. Parked: #111, then #122.

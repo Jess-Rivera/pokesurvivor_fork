@@ -10,9 +10,11 @@
  *   waiting  REACH_TIME s to reach it (the first hit on the UberElite ends the wait); untouched = gone, both leave
  *   fight    the first hit starts FIGHT_TIME s (X, set in playtest); beaten in time = won with the time left locked in
  *            (a fraction 0 to 1), too slow = the Stage 1 runs off and the UberElite leaves
+ *   catch    (#136) won with balls on the belt: the Stage 1 waits CATCH_WAIT s where it stood; touching it opens the catch screen
+ *            (G.Game.openCatch, js/systems/catch.js), refused over another screen and retried next frame, as a shop. Not
+ *            reached in time, it wanders off. Won with an empty belt: it runs off at once, the UberElite's drops only.
  * A roll that fires while you are in a gym arena, while a rescue is already up, or in co-op (deferred) is lost: it still resets the
- * chance. Entering a gym arena with a rescue up loses it. The result is kept in G.Rescue.lastResult; the catch phase (#136)
- * reads it. Until then a win pays the UberElite's drops and a toast.
+ * chance. Entering a gym arena with a rescue up loses it. The result is kept in G.Rescue.lastResult; the catch reads it.
  */
 G.Rescue = (() => {
   const K = {
@@ -28,12 +30,14 @@ G.Rescue = (() => {
     spotTries: 24,
     spotClear: 40, // free ground radius around the guard
     monOffsetX: 56, // where the rescued Stage 1 stands, beside the guard
+    catchWait: 30, // #136: s the won Stage 1 waits to be touched (run clock)
+    touch: 30, // #136: world px past the Stage 1's body radius that count as touching it
     spotGiveUp: 5, // s of retrying when no free ground is found, then it is lost
   };
 
   let rollClock = 0,
     failedRolls = 0;
-  let active = null; // { dex, name, nature, natureName, star, x, y, uber, phase, reachLeft, fightLeft, anim, r, spotWait }
+  let active = null; // { dex, name, nature, natureName, star, x, y, uber, phase, reachLeft, fightLeft, catchLeft, anim, r, spotWait }
   let lastResult = null; // { outcome: 'won'|'slow'|'gone'|'lost', dex, name, nature, natureName, timeFraction }
 
   const titled = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -208,13 +212,30 @@ G.Rescue = (() => {
     e.fightLeft = K.fightTime;
   }
 
-  /** The UberElite fell. */
+  /** The UberElite fell: won. With balls on the belt the Stage 1 waits to be caught (#136); with none it runs off. */
   function onUberDown(uber) {
     const e = active;
-    if (!e || e.uber !== uber) return;
+    if (!e || e.uber !== uber || e.phase === 'catch') return;
     if (e.phase === 'waiting') e.fightLeft = K.fightTime; // felled by its first hit: the whole clock is left
-    end('won', e.name + ' is safe! (' + Math.ceil(e.fightLeft) + 's left)');
+    record('won', e);
     G.Audio.sfx('legend');
+    if (G.Catch.total() <= 0) {
+      clear(e);
+      say('No Poke Balls left! ' + e.name + ' ran off.');
+      return;
+    }
+    e.phase = 'catch';
+    e.catchLeft = K.catchWait;
+    say('The ' + e.natureName + ' ' + e.name + ' is safe! Touch it to catch it.', 3.6);
+  }
+
+  /** Where the rescued Stage 1 stands. */
+  const monSpot = (e) => [e.x + K.monOffsetX, e.y];
+
+  /** True when the player touches the waiting Stage 1. */
+  function touching(e, pl) {
+    const [x, y] = monSpot(e);
+    return !!pl && !pl.dead && Math.hypot(pl.x - x, pl.y - y) <= e.r + K.touch;
   }
 
   /** Seconds left on the fight clock, or null when it is not running. */
@@ -241,6 +262,12 @@ G.Rescue = (() => {
         } else if (e.phase === 'fight') {
           e.fightLeft -= dt;
           if (e.fightLeft <= 0) end('slow', 'Too slow! ' + e.name + ' ran off.');
+        } else if (e.phase === 'catch') {
+          e.catchLeft -= dt;
+          if (e.catchLeft <= 0) {
+            clear(e);
+            say(e.name + ' wandered off.');
+          } else if (touching(e, pl) && G.Game.openCatch(lastResult)) clear(e); // refused: tried again next frame
         }
       }
       if (active) active.anim.update(dt);
@@ -254,8 +281,7 @@ G.Rescue = (() => {
   function drawables() {
     const e = active;
     if (!e || e.spotWait != null) return [];
-    const x = e.x + K.monOffsetX,
-      y = e.y;
+    const [x, y] = monSpot(e);
     return [
       {
         y,
@@ -286,10 +312,15 @@ G.Rescue = (() => {
     ];
   }
 
-  /** For the HUD arrow: where it is and the seconds on the clock (the wait before the first hit, the fight after it), or null. */
+  /** For the HUD arrow: where it is and the seconds on the clock (the wait before the first hit, the fight after it, then the
+   *  catch wait, pointing at the Stage 1), or null. */
   function hudTarget() {
     const e = active;
     if (!e || e.spotWait != null) return null;
+    if (e.phase === 'catch') {
+      const [x, y] = monSpot(e);
+      return { x, y, left: Math.max(0, e.catchLeft), phase: e.phase };
+    }
     return {
       x: e.x,
       y: e.y,

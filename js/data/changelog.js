@@ -9,6 +9,12 @@ G.CHANGELOG = [
   {
     d: '2026-11-15',
     title: ['Speed and dodges', 'Speed and dodges'],
+    new: [
+      [
+        'Catch Pokemon: beat the guard of a Pokemon that needs help, then walk up to it to open the catch screen. You start with 6 Poke Balls on your belt, refilled every run for now. Every throw uses a ball, and the more time you had left in the fight, the better your odds. Some natures run off after a single miss. Your catches join your Pokebox when the run ends, unless you end the run yourself.',
+        'Catch Pokemon: beat the guard of a Pokemon that needs help, then walk up to it to open the catch screen. You start with 6 Poke Balls on your belt, refilled every run for now. Every throw uses a ball, and the more time you had left in the fight, the better your odds. Some natures run off after a single miss. Your catches join your Pokebox when the run ends, unless you end the run yourself.',
+      ],
+    ],
     chg: [
       [
         'The Pokemon gacha and its Pokeball and Master Ball tickets are gone. Everything that paid tickets now pays PokeCoins instead, and the Shop keeps its Team Items and Team Upgrades tabs. New saves also start fresh with this update, and your old save stays in this browser as a backup.',

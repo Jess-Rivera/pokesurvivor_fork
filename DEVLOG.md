@@ -150,3 +150,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   rescue event (G.Rescue, G.UberElite, generated Stage 1 data, green arrow, rescue-harness with 7 deliberate breaks caught).
 - Broke and fixed: Escape on a menu screen read the removed pull overlay; a Co-Authored-By line against CLAUDE.md (dropped).
 - Stopped at: #145 filed (move tooltip lacks Physical/Special/Status). Next: #136 catch phase and belt, or #145 first.
+
+## 2026-11-15 late (Claude Code, home), #136 catch phase built
+- Opened #136 with goal, done and end-goal test; Jess took every recommendation (decision 2026-11-15-136). Filed #146 (keep-or-sell list).
+- Built: a won rescue leaves its Stage 1 30 s; touching it opens a BW catch screen (G.Catch, G.CatchUI); Poke Balls only, belt in the save,
+  refilled each run until #137; held catches placed at the run end on the EV flag. G.Debug.catch(). Run Info "Caught this run".
+- Tests: rescue-harness parts 5e and 6 (relations; two hand mutants caught), smoke-ui catch flow on a real run.
+- Broke and fixed: forcing Math.random for a sure catch also made wild shinies, so the smoke counts rescue copies only.
+- Stopped at: #136 in Needs Playtest. Next: Jess feel test, then #137.

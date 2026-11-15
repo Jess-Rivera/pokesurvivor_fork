@@ -1,8 +1,9 @@
-// Rescue event (#135, acquisition rework S4) offline checks (Node only). Usage from the repo root:  node docs/proposals/rescue-harness.js .
-// Real js/systems/rescue.js, js/data/stage-one.js, js/data/pokedex.js, js/data/sprites-meta.js and js/data/species-traits.js, with
-// stubbed engine globals. The expected values come from the acquisition spec section 2 (docs/ASCII Concept Maps/Old txt files/
-// Acquisition v2 - Spec.txt: the cadence figures, the pool table, the 8:4:2:1 weights) and from pokeapi's pokemon_species.csv read
-// here on its own, never from what rescue.js or stage-one.js print.
+// Rescue event (#135, S4) and catch phase (#136, S5) offline checks (Node only). Usage from the repo root:  node docs/proposals/rescue-harness.js .
+// Real js/systems/rescue.js, js/systems/catch.js, js/systems/copies.js, js/core/db.js (a guest save, never stored),
+// js/data/stage-one.js, js/data/pokedex.js, js/data/sprites-meta.js and js/data/species-traits.js, with stubbed engine globals.
+// The expected values come from the acquisition spec sections 2 to 4 (docs/ASCII Concept Maps/Old txt files/Acquisition v2 -
+// Spec.txt: the cadence figures, the pool table, the 8:4:2:1 weights, the nature buckets, a 6-ball start) and from pokeapi's
+// pokemon_species.csv read here on its own, never from what the modules print. Part 6 checks relations (docs/TEST-FIRST.md).
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });
@@ -22,10 +23,12 @@ global.G = {
   EnemyMgr: { add: e => guards.push(e) },
   Audio: { sfx() {} },
   UberElite: class { constructor(def, x, y) { this.def = def; this.x = x; this.y = y; this.dead = false; this.leaving = false; } },
-  Game: { player: { x: 0, y: 0, dead: false }, st: { time: 100 } },
+  Game: { player: { x: 0, y: 0, dead: false }, st: { time: 100 }, openCatch: () => false },
 };
 load('js/data/pokedex.js'); load('js/data/sprites-meta.js'); load('js/data/species-traits.js'); load('js/data/stage-one.js');
+load('js/systems/copies.js'); load('js/core/db.js'); load('js/systems/catch.js');
 load('js/systems/rescue.js');
+G.DB.playAsGuest(); // a fresh save in memory: the belt and the box the catch writes to
 const Rz = G.Rescue, K = Rz.K;
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -103,8 +106,8 @@ const fresh = () => { Rz.reset(); said.length = 0; guards.length = 0; G.GymArena
   const r = Rz.lastResult;
   if (!r || r.outcome !== 'won' || r.timeFraction == null || r.timeFraction <= 0 || r.timeFraction >= 1) bad('a win in time locks in a fraction between 0 and 1: ' + JSON.stringify(r));
   if (r && !near(r.timeFraction, 0.75, 0.02)) bad('a fight that used a quarter of the clock leaves about three quarters, got ' + r.timeFraction);
-  if (Rz.active) bad('a won rescue is over');
-  console.log('5b a win in time keeps the time left as a fraction'); }
+  if (!Rz.active || Rz.active.phase !== 'catch') bad('a won rescue with balls on the belt waits to be caught');
+  console.log('5b a win in time keeps the time left as a fraction, and the Stage 1 waits'); }
 { fresh(); Rz.debugFire(); const guard = guards[0];
   Rz.onUberHit(guard); Rz.update(K.fightTime + 1, player, 200);
   if (!Rz.lastResult || Rz.lastResult.outcome !== 'slow' || Rz.lastResult.timeFraction != null || !guard.leaving || Rz.active) bad('too slow: no catch, the guard leaves');
@@ -120,6 +123,98 @@ const fresh = () => { Rz.reset(); said.length = 0; guards.length = 0; G.GymArena
   Rz.update(K.spotGiveUp + 1, player, 100); G.World.isFree = free;
   if (Rz.active || !Rz.lastResult || Rz.lastResult.outcome !== 'lost') bad('no free ground for a few seconds: the rescue is lost');
   console.log('5d lost in a gym arena, in co-op not at all, lost when no ground is free'); }
+
+// 5e. the wait after a win (#136): touching it opens the catch, a refusal retries, untouched it wanders off, an empty belt skips it
+const win = () => { fresh(); Rz.debugFire(); const guard = guards[0]; Rz.onUberHit(guard); Rz.update(10, player, 110); Rz.onUberDown(guard); return Rz.active; };
+{ G.Catch.startRun(G.DB.save);
+  let asked = 0; G.Game.openCatch = () => (asked++, false);
+  const e = win(); player.x = 5000; player.y = 5000;
+  Rz.update(1, player, 120);
+  if (asked) bad('far from the Stage 1, no catch opens');
+  const at = Rz.hudTarget(); player.x = at.x; player.y = at.y;
+  if (at.phase !== 'catch') bad('the arrow points at the waiting Stage 1');
+  Rz.update(0.1, player, 120); Rz.update(0.1, player, 120);
+  if (asked < 2 || Rz.active !== e) bad('a refused catch (another screen open) is tried again next frame and the Stage 1 stays');
+  let given = null; G.Game.openCatch = (res) => ((given = res), true);
+  Rz.update(0.1, player, 120);
+  if (!given || given.dex !== e.dex || given.nature !== e.nature || given !== Rz.lastResult || Rz.active) bad('touching it opens the catch with the won result and the Stage 1 leaves the map');
+  G.Game.openCatch = () => false; player.x = 5000; player.y = 5000;
+  win(); Rz.update(K.catchWait + 1, player, 200);
+  if (Rz.active) bad('untouched, the Stage 1 wanders off after the catch wait');
+  G.DB.save.belt.poke = 0; win();
+  if (Rz.active || !said.some((t) => /ran off/.test(t))) bad('an empty belt at the win: it runs off at once');
+  G.Catch.startRun(G.DB.save); player.x = 0; player.y = 0;
+  console.log('5e after a win: touch opens the catch, refused retries, untouched it wanders off, empty belt it runs off'); }
+
+// 6. the catch (#136): odds, flee, the belt and the held catches
+const C = G.Catch, save = G.DB.save, CK = C.K;
+const result = (dex, nature, timeFraction) => ({ outcome: 'won', dex, name: G.DEX_BY[dex].name, nature, natureName: 'x', timeFraction });
+const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === name) + 1;
+{ // 6a odds: a relation of time left, BST inside a band, the drop between bands, and the ceiling
+  const all = Rz.pool(null);
+  for (const m of all) {
+    if (!(C.odds(m.dex, 'poke', 1) >= C.odds(m.dex, 'poke', 0.5) && C.odds(m.dex, 'poke', 0.5) >= C.odds(m.dex, 'poke', 0))) bad(m.name + ': more time left never lowers the odds');
+    if (C.odds(m.dex, 'poke', 1) > CK.ceiling + 1e-9) bad(m.name + ' passes the ceiling');
+  }
+  for (let r = 1; r <= 4; r++) {
+    const band = all.filter((m) => m.rarity === r).sort((a, b) => a.bst - b.bst);
+    for (let i = 1; i < band.length; i++) if (band[i].bst > band[i - 1].bst && !(C.baseOdds(band[i].dex) < C.baseOdds(band[i - 1].dex))) bad(r + ' star: ' + band[i].name + ' has a higher BST but no lower base than ' + band[i - 1].name);
+    const next = all.filter((m) => m.rarity === r + 1);
+    if (band.length && next.length && !(Math.min(...band.map((m) => C.baseOdds(m.dex))) > Math.max(...next.map((m) => C.baseOdds(m.dex))))) bad('every ' + r + ' star base is above every ' + (r + 1) + ' star base');
+  }
+  const top = all.filter((m) => m.rarity === 4);
+  if (top.length && !top.some((m) => C.odds(m.dex, 'poke', 0) < C.odds(m.dex, 'poke', 1))) bad('a 4 star catch gains from time left');
+  console.log('6a odds rise with time left, fall with BST inside a band, drop between bands, never pass the ceiling'); }
+{ // 6b flee: misses until it runs off follow the nature bucket (spec: easy above default above hard)
+  const misses = (name) => { C.startRun(save); C.begin(result(147, natureId(name), 0)); let n = 0, o;
+    do { o = C.throwBall('poke', () => 0.9999); n++; } while (o === 'miss' && n < 50); return o === 'fled' ? n : -1; };
+  const easy = ['bold', 'calm', 'lax', 'relaxed', 'docile', 'gentle', 'mild', 'quiet'].map(misses);
+  const def = ['hardy', 'lonely', 'brave', 'adamant', 'impish', 'serious', 'modest', 'bashful', 'sassy', 'quirky'].map(misses);
+  const hard = ['timid', 'careful', 'hasty', 'jolly', 'naive', 'rash', 'naughty'].map(misses);
+  for (const [nm, list] of [['easy', easy], ['default', def], ['hard', hard]]) if (new Set(list).size !== 1 || list[0] < 1) bad('every ' + nm + ' nature allows the same misses: ' + list.join());
+  if (!(easy[0] > def[0] && def[0] > hard[0])) bad('easy natures allow more misses than default, default more than hard: ' + [easy[0], def[0], hard[0]].join(' / '));
+  if (easy.length + def.length + hard.length !== 25) bad('the three buckets name all 25 natures');
+  console.log('6b flee by nature: easy ' + easy[0] + ' > default ' + def[0] + ' > hard ' + hard[0] + ' misses'); }
+{ // 6c the belt: a new save starts with 6 (spec), each throw uses exactly one, an empty belt opens nothing, an old save gets the start belt
+  C.startRun(save);
+  if (C.total() !== 6 || save.belt.size !== 6) bad('a new save starts with a 6-ball belt, got ' + C.total());
+  for (const roll of [0.9999, 0]) {
+    if (!C.session) C.begin(result(147, natureId('bold'), 0));
+    const before = C.total(); C.throwBall('poke', () => roll);
+    if (C.total() !== before - 1) bad('a throw uses exactly one ball (' + (roll ? 'miss' : 'catch') + ')');
+  }
+  save.belt.poke = 0;
+  if (C.begin(result(147, 1, 0)) !== null) bad('an empty belt opens no catch');
+  save.belt.poke = 1; C.begin(result(147, natureId('bold'), 0));
+  if (C.throwBall('poke', () => 0.9999) !== 'fled') bad('a miss that empties the belt: it runs off');
+  if (C.throwBall('poke') !== 'none') bad('no catch open: a throw does nothing');
+  const old = { coins: 0 }; C.belt(old);
+  if (!old.belt || old.belt.size !== save.belt.size || old.belt.poke !== old.belt.size) bad('an old save without a belt gets the start belt');
+  save.belt.poke = 2; C.startRun(save);
+  if (save.belt.poke !== save.belt.size) bad('[Legacy behavior until #137] a run start refills the belt');
+  console.log('6c belt: starts at 6, one ball per throw, empty opens nothing, old saves fixed, refilled at run start'); }
+{ // 6d held catches: nothing enters the box mid-run; a kept run end places each with its nature, a quit places none
+  C.startRun(save); const box0 = save.box.length, nat = natureId('timid');
+  C.begin(result(147, nat, 1)); if (C.throwBall('poke', () => 0) !== 'caught') bad('a sure throw catches');
+  C.begin(result(1, natureId('bold'), 1)); C.throwBall('poke', () => 0);
+  if (C.held.length !== 2 || save.box.length !== box0) bad('catches are held, never placed mid-run');
+  const lost = C.settle(false, save);
+  if (save.box.length !== box0 || lost.placed.length || C.held.length) bad('a quit places none and clears the held list');
+  C.begin(result(147, nat, 1)); C.throwBall('poke', () => 0);
+  const kept = C.settle(true, save), copy = save.box[save.box.length - 1];
+  if (save.box.length !== box0 + 1 || kept.placed.length !== 1 || C.held.length) bad('a kept run end places each held catch once');
+  if (!copy || copy.d !== 147 || copy.m !== 'r' || copy.n !== nat) bad('the copy is the species, method rescue, the nature of the rescue: ' + JSON.stringify(copy));
+  // a full box sells the overflow at the copy's price
+  const full = { coins: 0, belt: { size: 6, poke: 6 }, boxCount: save.boxCount, owned: {}, shiny: {},
+    box: Array.from({ length: 500 * save.boxCount }, (_, i) => (i >= 500 ? { u: 'x' + i, d: 1, b: Math.floor(i / 500) } : { u: 'x' + i, d: 1 })) };
+  const realSave = G.DB.save; C.startRun(full);
+  // begin and throwBall read the loaded save's belt; settle writes the save it is given
+  C.begin(result(147, nat, 1)); C.throwBall('poke', () => 0);
+  const sold = C.settle(true, full);
+  if (full.box.length !== 500 * save.boxCount || sold.sold.length !== 1 || !(full.coins > 0)) bad('a full box sells the overflow for coins');
+  if (realSave !== G.DB.save) bad('the test save stays loaded');
+  C.startRun(save);
+  console.log('6d held until the run ends: a quit loses them, a kept end places them with their nature, a full box sells'); }
 
 console.log(fail ? fail + ' FAILED' : 'rescue harness: all passed');
 process.exit(fail ? 1 : 0);

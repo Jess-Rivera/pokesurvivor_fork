@@ -181,6 +181,7 @@ G.Game = (() => {
     G.Shops.reset(); // Move Shop step 3: the first pair is due at 2:00 again
     G.Events.reset();
     G.Rescue.reset(); // #135: the rescue event's roll and any rescue up
+    G.Catch.startRun(G.DB.save); // #136: nothing held; the belt refills to its size until the Shop restock (#137)
     G.Weather.reset();
     G.Path.clear();
     G.Hazards.clear();
@@ -562,6 +563,8 @@ G.Game = (() => {
     state = 'over';
     if (G.Game.runRecorder) G.Game.runRecorder('end', time, dead); // #124: the run pace trace, dev only
     G.LeaderMemory.end(); // Leader AI slice 4: what the leaders remembered of you dies with the run, never saved
+    // #136: the run's catches become copies when the run keeps its EVs (a fall, a crash), all lost on a quit; saved by the commit below
+    const settled = G.Catch.settle(keepsEvs && !coop, G.DB.save);
     G.Audio.music(null);
     G.Audio.sfx(dead ? 'gameover' : 'back');
     const save = G.DB.save;
@@ -632,8 +635,18 @@ G.Game = (() => {
       () => {
         pl = null;
         G.Flow.afterRun();
+        catchNotice(settled);
       }
     );
+  }
+
+  /** #136: back at the menu, which catches joined the Pokebox and which a full box sold. */
+  function catchNotice(settled) {
+    const lines = [];
+    if (settled.placed.length) lines.push(settled.placed.join(', ') + ' joined your Pokebox!');
+    for (const sold of settled.sold)
+      lines.push('Your Pokebox is full: ' + sold.name + ' was sold for ' + sold.coins + ' PokeCoins.');
+    if (lines.length) G.UI.toast(lines.join(' '), 5000);
   }
 
   /*
@@ -704,7 +717,7 @@ G.Game = (() => {
    */
   function offerBond(quiet = false) {
     if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.GymArena.inArena) return;
-    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop'].some(G.UI.isOpen)) return; // a shop holds it back until you leave
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop', 'scr-catch'].some(G.UI.isOpen)) return; // a shop or a catch holds it back until you leave
     // The link belongs to the team: any living member that can bond now may take it (picked on the screen).
     const choices = roster.filter((f) => !f.dead).map((f) => ({ f, opt: f.bondOptions() }));
     if (!choices.some((c) => c.opt)) {
@@ -737,10 +750,25 @@ G.Game = (() => {
    */
   function openShop(shop) {
     if (!pl || pl.dead || state !== 'playing' || G.Coop.active) return false;
-    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop'].some(G.UI.isOpen)) return false;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop', 'scr-catch'].some(G.UI.isOpen)) return false;
     state = 'choice';
     G.Audio.sfx('confirm');
     G.ShopUI.open(shop, () => {
+      if (state === 'choice') state = 'playing';
+    });
+    return true;
+  }
+
+  /** #136: touching a won rescue's Stage 1 opens the catch screen (js/ui/catch-ui.js) with the run paused, as a shop does.
+   *  False when it cannot now (another screen is open, co-op): G.Rescue tries again next frame. */
+  function openCatch(result) {
+    if (!pl || pl.dead || state !== 'playing' || G.Coop.active) return false;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop', 'scr-catch'].some(G.UI.isOpen)) return false;
+    const session = G.Catch.begin(result);
+    if (!session) return false;
+    state = 'choice';
+    G.Audio.sfx('confirm');
+    G.CatchUI.open(session, () => {
       if (state === 'choice') state = 'playing';
     });
     return true;
@@ -970,6 +998,10 @@ G.Game = (() => {
     }
     if (G.UI.isOpen('scr-shop')) {
       G.ShopUI.keys();
+      return;
+    }
+    if (G.UI.isOpen('scr-catch')) {
+      G.CatchUI.keys();
       return;
     }
     if (G.UI.isOpen('scr-bond')) {
@@ -1422,6 +1454,7 @@ G.Game = (() => {
     flash,
     offerBond,
     openShop,
+    openCatch,
     /** Pokebox step 5: a defeated enemy adds its EV yield to the run's banks (enemy.js, the dead-enemy loop). */
     evKill(e) {
       const add = G.Copies.killEvs(e);
