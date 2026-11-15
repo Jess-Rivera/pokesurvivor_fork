@@ -4,12 +4,12 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-11-15 evening, Claude Code (home). Branch: balance/124-economy-xp (off main, not merged). No branch rules file.
 
 ## START HERE (next session, either tool)
-1. #124 and #125 closed 2026-11-15 (Jess). Queue: #97 upgrades (full redesign pass; review in docs/ASCII Concept Maps/
-   97 - Upgrade System Review.md), #128 acquisition, #126 UI, #127 menu, #129 architecture, #130 regions. #131 (Silver
-   bonuses and the shops 2 to 4 check, needs a gym 1 trace) later. #111 and #122 wait behind it.
-2. #97 next: Jess sets its purpose (catch-up power, sidegrades or unlocks; per species or account-wide), then the slice
-   opening (goal, done, end-goal test). Question 2 leans on #128.
-3. Branch balance/124-economy-xp is done: Jess merges it into main and pushes.
+1. #124 and #125 closed 2026-11-15 (Jess). Queue: #128 acquisition, built as children #132 (S1) to #143 (S12), with #97
+   (full upgrade redesign) shipping alongside the new save. Then #126 UI, #127 menu, #129 architecture, #130 regions.
+   #131 (Silver bonuses, needs a gym 1 trace) later. #111 and #122 wait behind it.
+2. Next: merge balance/124-economy-xp into main, branch feature/128-acquisition, then the #132 (S1, new save) slice opening.
+   #97 purpose (review: docs/ASCII Concept Maps/97 - Upgrade System Review.md) is answered along the way.
+3. Rulings 2026-11-15: Exp Candy drops unparked (#139); #97 ships with the new save.
 
 ## What just landed on balance/124-economy-xp
 - Silver: 0 at the start, 1 per kill. Move price by slots filled: Trainer 60 / 120 / 240 / 300, TM Mart 150 / 300 / 400 / 450;
