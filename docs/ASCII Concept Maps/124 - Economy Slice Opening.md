@@ -35,7 +35,7 @@ Your level drops out of the price, so a move costs the same number of kills from
 | Item | Draft |
 |---|---|
 | Goal | Shop prices stop depending on your level; what a move costs is a fixed number of kills all run |
-| Done when | Price at a given time is the same at any run level; an average-pace run affords at least one move per shop visit; a slow run affords fewer but can catch up by grinding; Jess feel test |
+| Done when | Price at a given time is the same at any run level; an average-pace run affords 4 to 6 Trainer moves per shop visit (18 by visit 3 or 4); Trainer moves cost less than TMs; a slow run affords fewer but can catch up by grinding; Jess feel test |
 | End-goal test | New relations in the Silver harness, below |
 
 ## Jess's answers (2026-11-15)
