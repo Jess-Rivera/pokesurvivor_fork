@@ -3,7 +3,8 @@
 // as in tools/smoke-gym.js). Usage from the repo root:  node tools/smoke-run-trace.js
 // Runs dev.html over file:// (how Jess plays). With ?dev: a run gets a start row, pace rows each minute with rising kills,
 // a shop row when the first pair appears, a visit row on walking into the Move Trainer that counts a purchase, and an
-// end row on quitting. Without ?dev: no recorder attaches and G.Debug.runTrace refuses.
+// end row on quitting; #125: G.Debug.xpBoost(false) removes the opening XP doubling and its banner for the next run, and the
+// start row records it. Without ?dev: no recorder attaches, G.Debug.runTrace and G.Debug.xpBoost refuse.
 const path = require('path'),
   url = require('url');
 const root = path.resolve(__dirname, '..');
@@ -127,7 +128,38 @@ async function main() {
   const end = rows[rows.length - 1];
   ok(end.row === 'end' && end.pairs === 1 && end.visits === 1, 'quitting adds an end row with 1 pair and 1 visit');
   ok((await page.evaluate(() => G.Debug.runTrace.runs.length)) === 1, 'one run kept');
-  await page.evaluate(() => clearInterval(window.__keep));
+  ok(rows[0].xpBoost === true, 'the start row records the XP boost as on by default');
+
+  // ---- #125: the XP boost switch ----
+  ok(
+    (await page.evaluate(() => G.Spawner.xpBoostEnabled && G.Debug.xpBoost())) === true,
+    'the XP boost is on by default'
+  );
+  ok((await page.evaluate(() => G.Debug.xpBoost(false))) === false, 'G.Debug.xpBoost(false) turns it off');
+  await page.evaluate(() => G.Game.startRun());
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
+  await sleep(500);
+  const off = await page.evaluate(() => ({
+    mul: G.Spawner.xpBoost(),
+    t: G.Game.st.time,
+    start: G.Debug.runTrace().rows[0],
+    banner: G.Spawner.banner ? JSON.stringify(G.Spawner.banner()) || '' : '',
+  }));
+  ok(
+    off.t < 180 && off.mul === 1,
+    'switched off: a kill before 3:00 gets no boost (x' + off.mul + ' at ' + off.t.toFixed(1) + ' s)'
+  );
+  ok(off.start.xpBoost === false, 'the next run is traced with the boost off');
+  ok(!/XP boost/.test(off.banner), 'no "XP boost" banner when it is off');
+  ok(
+    (await page.evaluate(() => G.Debug.xpBoost(true) && G.Spawner.xpBoost())) === 2,
+    'switched back on: x2 before 3:00 again'
+  );
+  await page.evaluate(() => {
+    G.UI.closeAll && G.UI.closeAll();
+    G.Game.quit();
+    clearInterval(window.__keep);
+  });
 
   // ---- without ?dev: nothing attaches ----
   const plain = await open(browser, '');
@@ -138,6 +170,10 @@ async function main() {
     'no ?dev: no recorder attached'
   );
   ok((await page.evaluate(() => G.Debug.runTrace())) === false, 'no ?dev: runTrace refuses');
+  ok(
+    (await page.evaluate(() => G.Debug.xpBoost(false) === false && G.Spawner.xpBoostEnabled)) === true,
+    'no ?dev: xpBoost refuses and the boost stays on'
+  );
   await page.evaluate(() => clearInterval(window.__keep));
 
   const errs = dev.errs.concat(plain.errs),

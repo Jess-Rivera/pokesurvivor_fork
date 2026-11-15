@@ -36,6 +36,7 @@ G.Spawner = (() => {
   let forceShiny = 0; // for testing: the next N spawn shiny
   let quietT = 0; // s left with no drip and no tides (a Bomb pickup, quiet())
   let debugMul = 1; // ?dev: scales the drip, the tides, bursts and the elite timer (0 = nothing spawns), see G.Debug.spawn
+  let xpBoostOn = true; // #125 ?dev: G.Debug.xpBoost(false) turns the opening XP boost off for test runs; kept across runs, not saved
 
   function reset() {
     acc = 0;
@@ -43,8 +44,8 @@ G.Spawner = (() => {
     surgeT = 32;
     preloadT = 0;
     runT = 0;
-    announce = Math.round(G.Stats.XP_BOOST_END / 60) + ' Min XP boost!';
-    announceT = 4;
+    announce = xpBoostOn ? Math.round(G.Stats.XP_BOOST_END / 60) + ' Min XP boost!' : null;
+    announceT = xpBoostOn ? 4 : 0;
     G.Enemies.rollRun();
     G.Elites.reset();
     G.Sprites.preload(G.Enemies.upcomingDex(0, 80));
@@ -270,9 +271,9 @@ G.Spawner = (() => {
     if (announceT > 0) announceT -= dt;
   }
 
-  /** XP multiplier for wild kills: XP_BOOST until the first boss slot, then 1. */
+  /** XP multiplier for wild kills: XP_BOOST until the first boss slot, then 1 (always 1 with the ?dev switch off). */
   function xpBoost() {
-    return runT < G.Stats.XP_BOOST_END ? XP_BOOST : 1;
+    return xpBoostOn && runT < G.Stats.XP_BOOST_END ? XP_BOOST : 1;
   }
   return {
     reset,
@@ -290,6 +291,15 @@ G.Spawner = (() => {
     CAP,
     debugForceShiny(n = 1) {
       forceShiny = n;
+    },
+    /** #125 ?dev (G.Debug.xpBoost): turn the opening XP boost on or off; returns the setting. Only the XP doubling and its
+     *  banner: the opening HP discount (js/data/enemies.js) keeps the same window. */
+    debugXpBoost(enabled) {
+      xpBoostOn = !!enabled;
+      return xpBoostOn;
+    },
+    get xpBoostEnabled() {
+      return xpBoostOn;
     },
     debugRate(k) {
       debugMul = Math.max(0, +k);

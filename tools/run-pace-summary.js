@@ -62,11 +62,13 @@ function main() {
   console.log('Per run');
   console.table(
     runs.map((run) => {
-      const end = run.rows.find((row) => row.row === 'end'),
+      const start = run.rows.find((row) => row.row === 'start') || {},
+        end = run.rows.find((row) => row.row === 'end'),
         last = run.rows[run.rows.length - 1] || {},
         visits = run.rows.filter((row) => row.row === 'visit');
       return {
         file: run.file,
+        xpBoost: start.xpBoost === false ? 'off' : 'on',
         minutes: shown((end || last).t / 60),
         ended: end ? (end.fainted ? 'fainted' : 'quit') : 'not saved at end',
         kills: (end || last).kills,

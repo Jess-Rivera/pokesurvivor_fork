@@ -49,7 +49,7 @@
       over: false,
     });
     if (runs.length > TRACE.runsKept) runs.shift();
-    current().rows.push(Object.assign({ row: 'start' }, snapshot(time)));
+    current().rows.push(Object.assign({ row: 'start', xpBoost: G.Spawner.xpBoostEnabled !== false }, snapshot(time)));
   }
 
   /** Every map frame: one pace row for each full run minute passed since the last one. */
