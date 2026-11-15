@@ -10,7 +10,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 3. Before leaving a machine: commit and push.
 
 ## Next (from the 2026-11-15 home session)
-1. #109 and #123 closed 2026-11-15. Merge balance/109-template-check to main.
+1. #109 and #123 closed and merged to main 2026-11-15. Create feature/111-gyms-3-to-8 off main.
 2. #111 (gyms 3 to 8) on a new branch off main, slice opening first.
    Then #122, the eight-gym tuning pass (blocked by #111).
 3. #49: close (Decider done) or keep as umbrella. Board by hand: #86 to Accepted, #29 out of Blocked, the Triage cards.

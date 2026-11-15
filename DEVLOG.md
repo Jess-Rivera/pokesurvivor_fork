@@ -333,4 +333,6 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
   0.95 to 1.05 for every Player and wild enemy, Speed sets dodge recharge (0.8 to 1.2); the leader reads it at that rate.
 - Tests: 16f rewritten, 16f-g, 16j, speed-band-harness (15); pokebox speed checks to relations; move trace re-recorded.
 - Broke and fixed: 16e read a dodge whose threat note fell out of the 40-note log; 15c's hand math counted overkill.
-- Stopped at: #109 and #123 in Needs Playtest. Next: Jess's feel test, then #111 (gyms 3 to 8).
+- Second trace: Brock holds (Maintain 35%, Endurance 33%, median 158 px), Misty presses; Brock heals over finishing a
+  1% mon (KO bonus 0.3 under a big heal), noted on #122. Jess's feel test passed; #109 and #123 closed.
+- Stopped at: merged to main (4eb7e1e9). Next: #111 (gyms 3 to 8) on feature/111-gyms-3-to-8.
