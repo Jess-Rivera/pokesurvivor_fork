@@ -61,6 +61,11 @@ G.PlayerEntity = class PlayerEntity {
       mon.stats && mon.stats[5] != null
         ? G.Stats.speedToPx(mon.stats[5], this.statIv(5), this.statNat(5), this.statEv(5))
         : mon.spd;
+    // #123: Speed's identity shows in how fast spent dodge charges come back (1 at the median, and with no stats)
+    this.speciesDodgeRate =
+      mon.stats && mon.stats[5] != null
+        ? G.Stats.dodgeRechargeRate(mon.stats[5], this.statIv(5), this.statNat(5), this.statEv(5))
+        : 1;
     this.baseAtk = mon.atk;
     // Real base Atk/SpA (stats[1]/stats[3]) for the A/D damage model; scale with run level
     // via G.Stats. Fallback 50 keeps a mon with no stats array working.
@@ -376,13 +381,19 @@ G.PlayerEntity = class PlayerEntity {
     G.World.collide(this);
     G.FX.burst(this.x, this.y, '#d8d0b8', 6, 60);
   }
+  /** #123: how fast the team's spent dodge charges tick back while this mon is on the field: its species' Speed rate
+   *  (G.Stats.dodgeRechargeRate), and Bright Powder 15% shorter on top, by ticking faster, since the charges are the team's
+   *  and only the holder has the item on the field. */
+  dodgeRechargeRate() {
+    const speciesRate = this.speciesDodgeRate != null ? this.speciesDodgeRate : 1;
+    return this.hasItem('brightpowder') ? speciesRate / 0.85 : speciesRate;
+  }
   /** Dodge charges recharge on their own, but every timer waits while a dodge runs. */
   tickDodges(dt) {
     if (this.dodgeT > 0) return;
     const c = this.dodges;
     if (c.gap > 0) c.gap = Math.max(0, c.gap - dt);
-    // Bright Powder: 15% shorter by ticking faster, since the charges are the team's and only the holder has the item on the field
-    const dc = this.hasItem('brightpowder') ? dt / 0.85 : dt;
+    const dc = dt * this.dodgeRechargeRate();
     for (let i = 0; i < c.cd.length; i++) if (c.cd[i] > 0) c.cd[i] = Math.max(0, c.cd[i] - dc);
   }
   /** The Body's acceptance of a heading (LEADER-AI FRAME): frozen, asleep, flinched or pushed, it refuses (null: nothing passes on to

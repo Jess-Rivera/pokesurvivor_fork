@@ -1,6 +1,7 @@
 # #123: move speed 0.95x to 1.05x, Speed sets dodge recharge (plan)
 
-Prose plan, no code. Ruling: decision 2026-11-15-123-speed-band-and-dodge-recharge. Branch: balance/109-template-check.
+Prose plan, no code. BUILT 2026-11-15 with dodge recharge bounds 0.8x to 1.2x (Jess; the table below shows the
+proposed 1.25x, the built numbers are in BALANCE.md: slowest 8.75 s, median 7.0 s, fastest 5.8 s). Ruling: decision 2026-11-15-123-speed-band-and-dodge-recharge. Branch: balance/109-template-check.
 
 ## Slice opening
 

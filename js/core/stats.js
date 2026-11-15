@@ -7,7 +7,8 @@
  *   HP variant:        HP = floor((2*base + IV + floor(EV/4)) * L / 100) + L + 10, then * HP_SCALAR
  *
  * SPEED is a FIXED species identity (constant within a run): r = Speed/SPEED_MEDIAN
- * (level cancels), soft-saturated by g(r) toward asymmetric bounds, * BASE_PX px/s.
+ * (level cancels), soft-saturated by g(r) toward asymmetric bounds. Movement is BASE_PX px/s x g(r) inside a narrow
+ * band (#123); the same g(r) with wider bounds is the dodge recharge rate, where Speed's identity now shows.
  * See docs/stat-model-design-notes.md, BALANCE.md, DECISIONS.md.
  *
  * IVs, EVs and the nature come from the copy of a Pokemon on the team (pokebox steps 4 and 5): G.Copies.profileOf builds a
@@ -20,8 +21,10 @@ G.Stats = (() => {
   const SPEED_MEDIAN = 65; // roster median base Speed (verified)
   const BASE_PX = 107; // px/s at movement r = 1.0 (median mon)
   const MOVE_K = 1.0,
-    MOVE_MAX = 1.3,
-    MOVE_MIN = 0.7; // movement transfer: slope + asymptotes
+    MOVE_MAX = 1.05,
+    MOVE_MIN = 0.95; // movement transfer: slope + asymptotes (#123, was 0.7 to 1.3)
+  const DODGE_RATE_MAX = 1.2,
+    DODGE_RATE_MIN = 0.8; // dodge recharge rate: same transfer, its own asymptotes (#123)
   const XP_SCALAR = 0.035; // turn-based -> survivor XP scalar (the one XP knob; tune by feel)
 
   // ---- per-copy stat profile (pokebox step 4) ----
@@ -63,17 +66,27 @@ G.Stats = (() => {
   }
 
   // ---- Speed -> movement px/s (fixed species identity, level cancels) ----
-  function moveTransfer(r) {
-    if (r <= 0) return MOVE_MIN;
+  /** The identity transfer g(r): 1 at the median, soft-saturating toward `max` above it and `min` below. Movement's bounds by
+   *  default; the dodge recharge rate passes its own. */
+  function moveTransfer(r, min = MOVE_MIN, max = MOVE_MAX) {
+    if (r <= 0) return min;
     const lr = Math.log(r);
-    const w = lr >= 0 ? Math.log(MOVE_MAX) : Math.log(1 / MOVE_MIN);
+    const w = lr >= 0 ? Math.log(max) : Math.log(1 / min);
     return Math.exp(w * Math.tanh((MOVE_K * lr) / w));
+  }
+  /** A copy's Speed against the median's, both at L50 (level cancels). */
+  function speedRatio(baseSpe, iv, nature, ev) {
+    return statValue(baseSpe, 50, iv, ev, nature) / statValue(SPEED_MEDIAN, 50);
   }
   /** Base Speed stat -> movement px/s. Same for player and enemy. iv / nature / ev: a copy's Speed IV, nature and EVs, default
    *  neutral. */
   function speedToPx(baseSpe, iv = 0, nature = 1, ev = 0) {
-    const r = statValue(baseSpe, 50, iv, ev, nature) / statValue(SPEED_MEDIAN, 50);
-    return BASE_PX * moveTransfer(r);
+    return BASE_PX * moveTransfer(speedRatio(baseSpe, iv, nature, ev));
+  }
+  /** #123: how fast spent dodge charges tick back for this Speed (1 at the median: the charge takes the dodge cooldown;
+   *  above 1 sooner). Same inputs as speedToPx. */
+  function dodgeRechargeRate(baseSpe, iv = 0, nature = 1, ev = 0) {
+    return moveTransfer(speedRatio(baseSpe, iv, nature, ev), DODGE_RATE_MIN, DODGE_RATE_MAX);
   }
 
   // ---- enemy level from run time (Phase 1: linear L1 at 0:00 -> L50 at 30:00) ----
@@ -262,10 +275,13 @@ G.Stats = (() => {
     MOVE_K,
     MOVE_MAX,
     MOVE_MIN,
+    DODGE_RATE_MAX,
+    DODGE_RATE_MIN,
     statValue,
     hpForLevel,
     moveTransfer,
     speedToPx,
+    dodgeRechargeRate,
     levelForTime,
     XP_BOOST_END,
     XP_SCALAR,

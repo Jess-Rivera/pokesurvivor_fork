@@ -242,7 +242,7 @@ have identical HP at the same level (consistency goal met).
 ## IVs and natures (feature/pokeboxes, pokebox step 4, built 2026-11-04; TUNE by feel)
 - Mainline: stat = floor((2B + IV) x L / 100) + 5, then x1.1 raised / x0.9 lowered, rounded down (HP: IV only, never a nature). Enemies 0 IV, neutral (D2), so an average copy is a small net player buff. Plan and tables: docs/ASCII Concept Maps/Pokebox 4 - IVs and Natures Apply.txt.
 - Size vs today (base 80): IV 15 +0% / +7% / +8% at L5 / L25 / L50; IV 31 +8% / +16% / +18%; IV 31 raised +15% / +27% / +29%; IV 0 lowered -15% / -11% / -11%. HP base 80: IV 31 +4% / +9% / +11%.
-- Movement (D3, through the 0.7x to 1.3x curve): base Spe 65 goes 96.6 px/s (IV 0, lowered) to 131.8 (IV 31, raised) around a plain 107.0; base 30 76.0 to 86.7; base 100 and up barely move (+2% or less). Feel risk to watch; if too big, soften MOVE_K later.
+- Movement (D3, through the 0.7x to 1.3x curve, history): base Spe 65 went 96.6 px/s (IV 0, lowered) to 131.8 (IV 31, raised) around a plain 107.0. Since #123 (0.95x to 1.05x): 101.8 to 112.3; base 30 and base 100 sit on the band's ends (101.7, 112.3) whatever the IV. Speed investment now shows mostly in dodge recharge: base 65 IV 31 raised 5.9 s, IV 0 lowered 7.7 s.
 
 ## EVs (feature/pokeboxes, pokebox step 5, built 2026-11-04; TUNE before playtesters)
 - Earning (map F1, Jess 2026-11-04): a defeated enemy adds its species' typed mainline yield x a class rate to six run banks, in thousandths. Rates: wild 1/1000, elite 1/500, gym 1x (full yield), shiny x2 of its class (EV_RATE and SHINY_EV in js/systems/copies.js). Golden and thief units count as wild. Fractions and ungiven EVs are lost at run end.
@@ -268,6 +268,8 @@ feel with the interactive tuner over the real 966-species roster:
 - 2026-11-01, bounds 0.5/3.0 -> 0.7/1.3 (Jeremy playtest: speed spread too wide; Jess picked 0.7 to 1.3). k stays 1.0. Same curve for player, wild enemies and gym leaders.
   px/s now: Spe 5 to 20 = 75, Spe 45 = 82, median 107, Spe 100 = 136, Spe 130 and up = 139 (saturates). Old: Spe 100 = 161, Spe 130 = 198, Spe 200 = 250.
   Felt spread ~1.86x (was ~4.6x). Watch item: everything from about Spe 110 up now moves the same; if fast mons should still differ, lower k (k 0.5 gives Spe 100 127, 130 134, 200 138; slow end Spe 45 91).
+- 2026-11-15, #123 (decision 2026-11-15-123-speed-band-and-dodge-recharge): bounds 0.7/1.3 -> 0.95/1.05 (horde games keep move speed nearly flat; slow starters could not kite early chasers). Same curve for player, wild enemies and gym leaders; enemy variety from class multipliers. px/s: Spe 45 and under 101.7, median 107, Spe 71 112.0, Spe 90 and up 112.3 (spread ~1.10x).
+  Dodge recharge (new, DODGE_RATE_MIN 0.8, DODGE_RATE_MAX 1.2, same g(r), k 1.0): the 7 s charge cooldown takes Spe 5 to 31 8.75 s, Spe 45 8.6 s, median 7.0 s, Spe 71 6.5 s, Spe 90 5.9 s, Spe 130 and up 5.8 s. Bright Powder 15% shorter on top. TUNE by feel.
 - Bomb pickup (2026-11-01, Jeremy playtest): kills every wild enemy in view outright (shield included); bosses, gym leaders and elites take the old 60 + 14 x level. Then BOMB_QUIET = 3 s with no drip and no tides (js/game.js; G.Spawner.quiet, a second bomb restarts the window). Drop rate unchanged (0.6% per kill).
 
 ## 2026-10-18 — fix/attack-calc slice 1 (needs playtest)

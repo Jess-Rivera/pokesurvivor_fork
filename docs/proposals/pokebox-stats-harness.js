@@ -5,7 +5,8 @@
 // js/systems/copies.js with stubs (pattern: stat-stage-harness.js), and reads js/game.js as text for the buildFighter wiring.
 // Expected numbers are hand-derived from the mainline formula, never read from the code under test:
 //   stat = floor((2B + IV) x L / 100) + 5, then x1.1 or x0.9 rounded down;  HP = (floor((2B + IV) x L / 100) + L + 10) x 2 (HP_SCALAR);
-//   movement = 107 x g(Spe at L50 / 70), g(r) = exp(w tanh(ln r / w)), w = ln 1.3 above the median, ln(1 / 0.7) below.
+//   movement: since #123 checked as relations (decision 2026-11-14-tests-check-relations-not-values), never as px/s: inside
+//   G.Stats' band, the median at BASE_PX, a higher IV or a raised nature never slower.
 // The mutation runner (pokebox-stats-mutate.js) points PS_STATS, PS_PLAYER, PS_COPIES and PS_GAME at altered copies; every
 // mutation must make this harness fail.
 const fs = require('fs'), vm = require('vm');
@@ -48,7 +49,10 @@ const mon = d => DEX_BY[d];
     ok(S.statValue(b, L) === st && S.attack(b, L) === st && S.defense(b, L, 0, 0, 1) === st && S.spAtk(b, L) === st && S.spDef(b, L) === st, 'neutral stat base ' + b + ' L' + L + ' = ' + st);
     ok(S.hpForLevel(b, L) === hp && S.hpForLevel(b, L, 0) === hp, 'neutral HP base ' + b + ' L' + L + ' = ' + hp);
   }
-  for (const [b, px] of [[30, 75.98169257208211], [65, 107.0], [100, 135.96190693783225], [130, 138.61553964258005]]) ok(near(S.speedToPx(b), px) && near(S.speedToPx(b, 0, 1), px), 'neutral movement base ' + b + ' = ' + px.toFixed(2));
+  { const B = [30, 65, 100, 130], px = B.map((b) => S.speedToPx(b));
+    ok(B.every((b, i) => near(S.speedToPx(b, 0, 1), px[i])), 'neutral movement: no IV and nature 1 is the plain speed');
+    ok(near(S.speedToPx(S.SPEED_MEDIAN), S.BASE_PX), 'neutral movement: the median species moves at BASE_PX');
+    ok(px.every((v, i) => i === 0 || v >= px[i - 1]) && px.every((v) => v >= S.BASE_PX * S.MOVE_MIN - 1e-9 && v <= S.BASE_PX * S.MOVE_MAX + 1e-9), 'neutral movement: ordered by base Speed and inside the band'); }
   ok(S.profile(null) === S.NEUTRAL_PROFILE && S.profile({}) === S.NEUTRAL_PROFILE && S.profile({ iv: [1, 2] }) === S.NEUTRAL_PROFILE, 'no copy or a broken one: the neutral profile');
   ok(same(S.NEUTRAL_PROFILE, { iv: [0, 0, 0, 0, 0, 0], nat: [1, 1, 1, 1, 1, 1], ev: [0, 0, 0, 0, 0, 0] }) && Object.isFrozen(S.NEUTRAL_PROFILE.iv), 'the neutral profile is 0 IV, x1, 0 EV (step 5), frozen');
 }
@@ -83,8 +87,8 @@ const mon = d => DEX_BY[d];
   ok(same(p.iv, [28, 31, 12, 5, 22, 9]) && same(p.nat, [1, 1.1, 1, 0.9, 1, 1]), 'Snorlax profile: IVs 28 31 12 5 22 9, Adamant +Atk -SpA');
   ok(S.hpForLevel(st[0], 50, p.iv[0]) === W[0], 'Snorlax HP 440 -> ' + W[0]);
   for (let i = 1; i <= 5; i++) ok(S.statValue(st[i], 50, p.iv[i], 0, p.nat[i]) === W[i], 'Snorlax ' + NAT[i] + ' = ' + W[i]);
-  ok(near(S.speedToPx(st[5], p.iv[5], p.nat[5]), 76.8629887151295), 'Snorlax movement 76.0 -> 76.9 px/s');
-  ok(near(S.speedToPx(65, 31, 1.1), 131.7905263741705) && near(S.speedToPx(65, 0, 0.9), 96.58558988960566), 'base 65 Speed: 31 IV raised 131.8 px/s, 0 IV lowered 96.6 px/s (plan D3)');
+  ok(S.speedToPx(st[5], p.iv[5], p.nat[5]) >= S.speedToPx(st[5]), 'Snorlax movement: its Speed IV never moves it slower');
+  ok(S.speedToPx(65, 31, 1.1) > S.speedToPx(65) && S.speedToPx(65, 0, 0.9) < S.speedToPx(65), 'base 65 Speed: 31 IV raised moves faster, 0 IV lowered slower (plan D3)');
 }
 
 // ===== 5. a real Player built with a profile: HP, bench sync, movement =====
@@ -94,9 +98,13 @@ const mon = d => DEX_BY[d];
   ok(pS.maxHpAt(50) === 468 && pN.maxHpAt(50) === 440, 'maxHpAt(50): 468 with the IVs, 440 plain');
   const pL = new P(mon(40), {}, false, C.profileOf(s, LOW_ID, 40)), pL0 = new P(mon(40), {}, false);
   ok(pL.maxHp === 24 && pL0.maxHp === 22, 'base 40 HP at L1: IV 31 gives 24, plain 22 (constructor HP)');
+  // #123: a median-Speed species is off the band's flat ends, so its movement shows the Speed IV and nature directly
+  ok(near(pL.baseSpd, S.speedToPx(65, pL.statIv(5), pL.statNat(5))) && (pL.statIv(5) > 0 || pL.statNat(5) !== 1) && pL.baseSpd !== pL0.baseSpd,
+    'constructor movement uses the copy Speed IV and nature (a median species): ' + pL.baseSpd + ' vs ' + pL0.baseSpd);
   pS.hp = pS.maxHp / 2; pS.syncLevel(50);
   ok(pS.maxHp === 468 && pS.hp === 234, 'bench sync to L50 keeps the HP fraction with the IVs in (468, half = 234)');
-  ok(near(pS.baseSpd, 76.8629887151295) && near(pN.baseSpd, 75.98169257208211), 'constructor movement uses the Speed IV (76.9 vs 76.0 px/s)');
+  // #123: movement saturates in its narrow band for a slow species, so the dodge recharge rate (same inputs) shows the IV gets through
+  ok(pS.baseSpd >= pN.baseSpd && pS.speciesDodgeRate > pN.speciesDodgeRate, 'constructor Speed uses the Speed IV (movement never slower, dodge recharge faster)');
 }
 
 // ===== 6. moveFactor: Atk for physical, SpA for special, neither for status =====
@@ -122,7 +130,7 @@ const mon = d => DEX_BY[d];
 // ===== 8. enemy calls (no profile) are unchanged =====
 { ok(near(S.attackFactor(110, 65, 50, { dmg: 60, cat: 'physical' }), 3036.0) && near(S.attackFactor(110, 65, 50, { dmg: 60, cat: 'physical' }, 1, null), 3036.0), 'attackFactor with no profile: 3036');
   ok(near(S.applyPlayerDefense(50000, 65, 110, 'physical', 50), [329.94736842105266, 358.14285714285717][1]) && near(S.applyPlayerDefense(50000, 65, 110, 'special', 50, 1, null), [199.4126984126984, 218.3913043478261][1]), 'applyPlayerDefense with no profile: plain Def / SpD');
-  ok(near(S.speedToPx(30), 75.98169257208211) && S.hpForLevel(160, 50) === 440, 'speedToPx and hpForLevel with no IV: plain');
+  ok(near(S.speedToPx(30), S.speedToPx(30, 0, 1, 0)) && S.hpForLevel(160, 50) === 440, 'speedToPx and hpForLevel with no IV: plain');
 }
 
 // ===== 9. copies: profileOf, the D4 fallbacks, two copies of one species, the debug setter, the buildFighter wiring =====

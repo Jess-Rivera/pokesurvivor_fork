@@ -2625,9 +2625,14 @@ if (G.LeaderPlanner) {
       blocked(completed >= 1, '16e: Bait emerges: Brock completes a draw (or wait for your Ember), dodge, use plan (' + completed + ' times; Ember cast ' + r.mainCasts + ' times)', 60);
       ok(r.punish >= 1, '16e: and lands hits while Ember cools: ' + r.punish + ' of ' + r.hits + ' hits');
       // the planned dodge goes through the bag and reflex: every dodge press follows a read threat by reflex or more
+      // The AI log keeps only its last LOG_N notes, so a dodge before the window's first threat note may have lost its threat note to
+      // the cap; only dodges after it are judged (#123: the new speeds moved the window's edge onto one)
       const notes = r.ai.log,
-        early = notes.filter((d) => d.act === 'dodge' && d.serial != null && !notes.some((x) => x.act === 'threat' && x.serial === d.serial && x.read));
-      ok(early.length === 0, '16e: every dodge answers a threat the bag read: ' + early.length + ' did not');
+        firstThreat = notes.findIndex((x) => x.act === 'threat'),
+        early = notes.filter((d, index) => index > firstThreat && firstThreat >= 0 && d.act === 'dodge' && d.serial != null &&
+          !notes.some((x) => x.act === 'threat' && x.serial === d.serial && x.read)),
+        judged = notes.filter((d, index) => index > firstThreat && firstThreat >= 0 && d.act === 'dodge').length;
+      ok(judged > 0 && early.length === 0, '16e: every dodge answers a threat the bag read: ' + early.length + ' of ' + judged + ' did not');
       // RETIRED 2026-11-14 (decision 2026-11-14-39-planner-checks-replace-duels): the counter-play, learning and #53 sharpness
       // duels. Their scripted you stands still and never dodges, so their numbers said nothing about how a player fights.
       // What they aimed at keeps direct checks: the cooldown window and its run memory (#50), the intelligence curves (17).
@@ -2937,6 +2942,38 @@ if (G.LeaderPlanner) {
         }
         ok(plainThreats.length > 0 && plainThreats.every((hit, i) => hit > 0 && sturdier[i] < hit),
           '16i: your hit on it reads its own defense (defenseMul): ' + plainThreats.join(', ') + ' then ' + sturdier.join(', '));
+      }
+      // 16j (#123, decision 2026-11-15-123-speed-band-and-dodge-recharge): the leader's read of when its next charge returns
+      // matches the time its own tick really takes, at its species' recharge rate and with Bright Powder on top.
+      {
+        const secondsBack = () => {
+            let seconds = 0;
+            const step = 0.001;
+            while (kitMon.dodges.cd[0] > 0 && seconds < 60) {
+              kitMon.tickDodges(step);
+              seconds += step;
+            }
+            return seconds;
+          },
+          readThenRun = () => {
+            kitMon.dodges.cd = [3, 0];
+            kitMon.dodgeT = 0;
+            const world = kitBelief.snapshot(kitMon, kitAI.set, kitAI.conf),
+              read = world ? world.own.dodgeCharges.nextBackIn : NaN;
+            return { read, real: secondsBack() };
+          },
+          savedCharges = kitMon.dodges.cd.slice(),
+          plainRun = readThenRun();
+        kitMon.hasItem = (id) => id === 'brightpowder';
+        let powderRun;
+        try {
+          powderRun = readThenRun();
+        } finally {
+          delete kitMon.hasItem;
+          kitMon.dodges.cd = savedCharges;
+        }
+        ok(near(plainRun.read, plainRun.real, 2e-3) && near(powderRun.read, powderRun.real, 2e-3) && powderRun.real < plainRun.real,
+          '16j: the leader reads when its charge returns as it really does: ' + [plainRun, powderRun].map((r) => r.read.toFixed(3) + ' vs ' + r.real.toFixed(3)).join(', '));
       }
     }
   }

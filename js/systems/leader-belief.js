@@ -391,7 +391,8 @@ G.LeaderBelief = (() => {
           dodgeCharges: {
             ready: charges.length - spent.length,
             total: charges.length,
-            nextBackIn: spent.length ? Math.min(...spent) : 0,
+            // #123: the charge's seconds left at the rate the leader's own tick runs (Speed, Bright Powder)
+            nextBackIn: spent.length ? Math.min(...spent) / e.dodgeRechargeRate() : 0,
           },
         },
         slots: e.slots.map((group, index) => ({
