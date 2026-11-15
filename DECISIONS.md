@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-15, #123: move speed 0.95x to 1.05x for every Player and wild enemy; Speed sets dodge recharge (Jess)](docs/decisions/2026-11-15-123-speed-band-and-dodge-recharge.md)
 - [2026-11-15, #109: goal weights scale the whole score (value minus cost) when it is above 0; weight 0 is never ranked (Jess)](docs/decisions/2026-11-15-109-goal-weights-scale-the-whole-score.md)
 - [2026-11-14, #109 target feel: Brock a ranged wall, Misty a fast aggressor (canon); the should and should-not tables are #109's done-condition (Jess)](docs/decisions/2026-11-14-109-brock-and-misty-target-feel.md)
 - [2026-11-14, Brock and Misty get a template check (#109), then gyms 3 to 8 (#111), then one tuning pass across all eight; supersedes the ordering below (Jess)](docs/decisions/2026-11-14-template-check-then-gyms-then-full-tuning.md)
