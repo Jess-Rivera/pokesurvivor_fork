@@ -11,16 +11,15 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 3. Before leaving a machine: commit and push (the branch and main).
 
 ## Next (queue set by Jess 2026-11-15; gym leader AI parked)
-1. #124 feel test of the new prices (Needs Playtest). Its bonuses and the shops 2 to 4 check wait for a traced run that
-   reaches gym 1.
-2. #125: 1 or 2 traced runs with G.Debug.xpBoost(false), then the slice opening. Model: docs/ASCII Concept Maps/
-   125 - XP Boost Comparison.md.
-3. #128 acquisition rework, then #97 upgrade system. 4. #126 UI unify (#61 first), then #127 Main Menu v3.0.
+1. Merge balance/124-economy-xp into main (#124 and #125 closed 2026-11-15; XP boost now off by default).
+2. #97 full redesign pass: Jess answers the review's calls (docs/ASCII Concept Maps/97 - Upgrade System Review.md), then
+   the slice opening. #131 Silver bonuses later, after a traced run reaches gym 1.
+3. #128 acquisition rework. 4. #126 UI unify (#61 first), then #127 Main Menu v3.0.
 5. #129 architecture review. 6. #130 regions and map selection. Parked: #111, then #122.
 7. Leftovers from earlier: #49 close or umbrella; board by hand (#86 to Accepted, #29 out of Blocked, the Triage cards);
    drafts (leader reads your cards and items as seen; buffValue reads the whole kit; trace records the leader's level; 16i
    parity; #122 comment on early gates). Any time: #121, #120, #57, #58, #110.
-   Triage: needs-triage on #74 #75 #93 #97 #99 #100 #101 #102 #105 #107.
+   Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107.
 8. Owner decisions: #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
 9. New issues to file: region type maps, PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing.
 10. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83; unknown local branch

@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-15, #125: the opening XP boost is off by default; only G.Debug.xpBoost(true) turns it on (Jess)](docs/decisions/2026-11-15-125-opening-xp-boost-off-by-default.md)
 - [2026-11-15, #124: Silver is 1 per kill from 0; move prices fall by slots filled, Trainer below the TM Mart (Jess)](docs/decisions/2026-11-15-124-move-price-by-slots-filled.md)
 - [2026-11-15, #124: the economy is independent of XP; good play earns surplus, poor play grinds but can finish (Jess)](docs/decisions/2026-11-15-124-economy-independent-of-xp.md)
 - [2026-11-15, #125: your level against the world level follows your skill, with diminishing returns ahead (Jess)](docs/decisions/2026-11-15-125-xp-tracks-skill-against-the-world-level.md)

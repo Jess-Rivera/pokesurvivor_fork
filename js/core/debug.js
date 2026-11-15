@@ -13,7 +13,7 @@
  *   G.Debug.loadout(id, id, ...) set the pre-run loadout directly (cleaned: unlocked only, one Stone, within your slots). No ids: logs it. Saved.
  *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
  *   G.Debug.silver(n)  set this run's Silver to n (no arg: logs it). In a run only, not saved (Silver is run-only). For the Move Shop.
- *   G.Debug.xpBoost(on)  #125: turn the opening 3-minute XP boost on (true) or off (false); no arg: logs it. Until reload, not saved.
+ *   G.Debug.xpBoost(on)  #125: turn the opening 3-minute XP boost on (true) or off (false, the default); no arg: logs it. Until reload, not saved.
  *   G.Debug.tickets(n, m) set your Pokeballs (x1 tickets) to n and, if given, your Master Balls (x10 tickets) to m (no arg: logs both). Saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.berryslots(n) set how many berry slots this save has (1 to 4; no arg: logs the current count). Saved.
@@ -269,7 +269,7 @@ G.Debug = (() => {
     return G.Silver.whole;
   }
 
-  /** #125: turn the opening 3-minute XP boost on (true) or off (false); no argument logs it. ?dev only. Takes effect at once and
+  /** #125: turn the opening 3-minute XP boost on (true) or off (false, the game's default); no argument logs it. ?dev only. Takes effect at once and
    *  stays for later runs until the page reloads (not saved). The run pace trace records the setting on each run's start row. */
   function xpBoost(enabled) {
     if (!on) {

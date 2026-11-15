@@ -25,7 +25,8 @@ G.Spawner = (() => {
   // toward minute 6, when you already have attacks to take them down.
   const hpK = (t) => 3.3 + Math.min(1.7, t / 210);
   const SHINY_RATE = 1 / 4096;
-  // Opening XP boost: wild kills pay XP_BOOST x until the first boss slot (3:00).
+  // Opening XP boost: wild kills pay XP_BOOST x until the first boss slot (3:00). Off by default since 2026-11-15 (#125,
+  // decision 2026-11-15-125-opening-xp-boost-off-by-default); only ?dev G.Debug.xpBoost(true) turns it on.
   const XP_BOOST = 2.0;
   let acc = 0,
     surgeT = 32,
@@ -36,7 +37,7 @@ G.Spawner = (() => {
   let forceShiny = 0; // for testing: the next N spawn shiny
   let quietT = 0; // s left with no drip and no tides (a Bomb pickup, quiet())
   let debugMul = 1; // ?dev: scales the drip, the tides, bursts and the elite timer (0 = nothing spawns), see G.Debug.spawn
-  let xpBoostOn = true; // #125 ?dev: G.Debug.xpBoost(false) turns the opening XP boost off for test runs; kept across runs, not saved
+  let xpBoostOn = false; // #125: off by default; ?dev G.Debug.xpBoost(true) turns it on for test runs; kept across runs, not saved
 
   function reset() {
     acc = 0;
@@ -271,7 +272,7 @@ G.Spawner = (() => {
     if (announceT > 0) announceT -= dt;
   }
 
-  /** XP multiplier for wild kills: XP_BOOST until the first boss slot, then 1 (always 1 with the ?dev switch off). */
+  /** XP multiplier for wild kills: 1, or XP_BOOST until the first boss slot when ?dev switched the boost on. */
   function xpBoost() {
     return xpBoostOn && runT < G.Stats.XP_BOOST_END ? XP_BOOST : 1;
   }
