@@ -9,10 +9,13 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 2. `node tools/check.js` must end with "check: all passed". Say "catch me up".
 3. Before leaving a machine: commit and push.
 
-## Next (from the 2026-11-15 home session)
-1. #109 and #123 closed and merged to main 2026-11-15. Create feature/111-gyms-3-to-8 off main.
-2. #111 (gyms 3 to 8) on a new branch off main, slice opening first.
-   Then #122, the eight-gym tuning pass (blocked by #111).
+## Next (queue set by Jess 2026-11-15; gym leader AI parked)
+1. #124 economy pass, with #125 XP pass (shop price is 5 x world level x run level; you outlevel the world by about Lv 4).
+   Slice opening first (goal, done, end-goal test).
+2. #128 acquisition rework, then #97 upgrade system.
+3. #126 UI unify umbrella (#61 style guide first), then #127 Main Menu v3.0.
+4. #129 architecture review. 5. #130 later regions and map selection.
+6. Parked: #111 (gyms 3 to 8), then #122 (blocked by #111).
 3. #49: close (Decider done) or keep as umbrella. Board by hand: #86 to Accepted, #29 out of Blocked, the Triage cards.
 4. New issues to draft: the leader reads your cards and items as seen (K2); buffValue reads the whole kit; the trace
    records the leader's level; 16i estimate-vs-real-hit parity. Comment on #122: an early gate gives a low-level leader

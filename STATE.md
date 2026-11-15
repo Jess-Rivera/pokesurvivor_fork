@@ -1,11 +1,11 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-15, Claude Code (home). Branch: main (balance/109-template-check merged 2026-11-15, 4eb7e1e9). Next branch: feature/111-gyms-3-to-8. No branch rules file.
+Last updated: 2026-11-15, Claude Code (home). Branch: main (balance/109-template-check merged 2026-11-15, 4eb7e1e9). Next branch: one for #124 (economy pass). No branch rules file.
 
 ## START HERE (next session, either tool)
 1. #109 and #123 closed 2026-11-15 (feel test passed) and merged to main.
-2. Next: #111 (gyms 3 to 8) on feature/111-gyms-3-to-8 off main (Jess creates it). Open it with the slice opening (goal, done, end-goal test).
+2. Next: #124 economy + #125 XP (queue in TODO.md, set 2026-11-15). #111 gyms 3 to 8 is parked.
 3. Any time: #121, #120, #110, #57, #58.
 
 ## What just landed on main
