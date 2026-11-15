@@ -141,3 +141,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Found: the 3-minute boost makes most of the early lead (+2.1 levels at 3:00 against +0.7 without, from 2 traces).
 - Broke and fixed: the trace hook staled one shops mutation; the recorder had to attach after game.js loads.
 - Stopped at: #124 in Needs Playtest on balance/124-economy-xp; next a boost-off traced run for #125.
+
+## 2026-11-15 night (Claude Code, home), #124 and #125 closed; #128 acquisition started; #132 to #135 built
+- Closed #124, #125 (XP boost now off by default, debug only) and #132, #133, #134, #135 after feel tests. #131 holds the Silver leftovers.
+- Ruled: #97 is a full redesign shipping with the acquisition new save; Exp Candy drops unparked; tickets pay coins (40 per x1, 400 per x10);
+  rescue event first-build rulings (decisions 2026-11-15-128, -132, -133, -135). #128 split into children #132 to #143.
+- Built on feature/128-acquisition: save v4 reset; gacha, slot machine and tickets removed (dead CSS and the gacha copy origin too);
+  rescue event (G.Rescue, G.UberElite, generated Stage 1 data, green arrow, rescue-harness with 7 deliberate breaks caught).
+- Broke and fixed: Escape on a menu screen read the removed pull overlay; a Co-Authored-By line against CLAUDE.md (dropped).
+- Stopped at: #145 filed (move tooltip lacks Physical/Special/Status). Next: #136 catch phase and belt, or #145 first.
