@@ -112,7 +112,9 @@ G.Shops = (() => {
 
   /** Walking in (once per visit): the game opens the shop screen. False when it cannot now (another screen is open). */
   function enter(s) {
-    return G.Game.openShop(s);
+    const opened = G.Game.openShop(s);
+    if (opened && G.Shops.recorder) G.Shops.recorder('enter', s.kind); // #124: the run pace trace, dev only
+    return opened;
   }
 
   /** Every map frame (solo). t = run time. */
@@ -122,8 +124,10 @@ G.Shops = (() => {
     for (const s of shops) s.t += dt;
     shops = shops.filter((s) => s.t < LIFE);
     if (nextAt != null && t >= nextAt && !shops.length && !pl.dead) {
-      if (place(pl)) nextAt = null;
-      else nextAt = t + RETRY; // no free ground yet: both try again shortly
+      if (place(pl)) {
+        nextAt = null;
+        if (G.Shops.recorder) G.Shops.recorder('pair', t); // #124: the run pace trace, dev only (js/core/debug-run-trace.js)
+      } else nextAt = t + RETRY; // no free ground yet: both try again shortly
     }
     for (const s of shops) {
       const on = !pl.dead && onBuilding(s.kind, s.x, s.y, pl.x, pl.y);
@@ -226,6 +230,7 @@ G.Shops = (() => {
       if (!f.replaceMove(f.slots[slot][0].id, id)) return false;
     } else if (!f.addMove(id, true)) return false; // a purchase never changes the active slot
     G.Silver.spend(c.cost);
+    if (G.Shops.recorder) G.Shops.recorder('buy', shop.kind, c.cost); // #124: the run pace trace, dev only
     if (shop.kind === 'trainer') {
       const ids = shop.stock.get(f),
         k = ids ? ids.indexOf(id) : -1;
@@ -296,6 +301,8 @@ G.Shops = (() => {
   }
 
   return {
+    /** #124: the run pace trace's recorder (js/core/debug-run-trace.js attaches it under ?dev); null otherwise. */
+    recorder: null,
     BLINK,
     reset,
     update,

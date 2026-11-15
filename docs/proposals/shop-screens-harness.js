@@ -164,7 +164,7 @@ game.player = lead; game.roster = [lead];
   ok(/NEED = \[[^\]]*'ShopUI'/.test(read('js/main.js')), 'main.js lists ShopUI in the NEED array');
   ok(/const SCREENS = \[[^\]]*'scr-shop'/.test(code(read('js/ui/ui.js'))), 'ui.js lists scr-shop, so hideAll closes it');
   const sh = code(read('js/systems/shops.js'));
-  ok(/function enter\(s\) \{\s*return G\.Game\.openShop\(s\);/.test(sh) && !/opens soon/.test(sh), 'shops.js: entering opens the screen, no notice');
+  ok(/function enter\(s\) \{[^}]*G\.Game\.openShop\(s\);[^}]*return opened;/.test(sh) && !/opens soon/.test(sh), 'shops.js: entering opens the screen, no notice');
   const g = code(read('js/game.js')), op = body(g, 'function openShop(');
   ok(/state !== 'playing'/.test(op) && ['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup'].every(s => op.includes("'" + s + "'")),
     'game.js: openShop never opens over another screen');

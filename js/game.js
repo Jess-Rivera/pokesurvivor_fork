@@ -234,6 +234,7 @@ G.Game = (() => {
     deathT = 0;
 
     state = 'playing';
+    if (G.Game.runRecorder) G.Game.runRecorder('start', time); // #124: the run pace trace, dev only (js/core/debug-run-trace.js)
   }
 
   /** Ends the run without a fall. keepsEvs: a quit by choice (End Run, signing out) gives no EVs (#103, Jess
@@ -589,6 +590,7 @@ G.Game = (() => {
     if (G.Coop.active) G.Coop.end();
     if (coop) G.Social.setPlaying(false);
     state = 'over';
+    if (G.Game.runRecorder) G.Game.runRecorder('end', time, dead); // #124: the run pace trace, dev only
     G.LeaderMemory.end(); // Leader AI slice 4: what the leaders remembered of you dies with the run, never saved
     G.Audio.music(null);
     G.Audio.sfx(dead ? 'gameover' : 'back');
@@ -1231,6 +1233,7 @@ G.Game = (() => {
     G.Interact.update(dt, pl);
     G.GymArena.update(dt, pl, time);
     G.Shops.update(dt, pl, time); // Move Shop step 3: the buildings on the map
+    if (G.Game.runRecorder) G.Game.runRecorder('tick', time); // #124: the run pace trace, dev only
     if (!coop || G.Coop.isHost) G.Gym.update(dt, pl, time);
     G.Events.update(dt, all, time);
     G.Weather.update(dt, time, pl);
@@ -1458,6 +1461,8 @@ G.Game = (() => {
   })();
 
   return {
+    /** #124: the run pace trace's recorder (js/core/debug-run-trace.js attaches it under ?dev); null otherwise. */
+    runRecorder: null,
     init,
     startRun,
     everyone,
