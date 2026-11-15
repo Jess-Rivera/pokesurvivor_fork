@@ -1,13 +1,11 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-15, Claude Code (home). Branch: balance/109-template-check (off main). No branch rules file.
+Last updated: 2026-11-15, Claude Code (home). Branch: balance/109-template-check (merging to main), next branch for #111. No branch rules file.
 
 ## START HERE (next session, either tool)
-1. Jess's feel test of #109 (Brock and Misty at loop 1 against the target feel tables, T4) and #123 (Turtwig, Bulbasaur,
-   Froakie through 0:00 to 4:00). Both cards are in Needs Playtest.
-2. If both read right: close #109 and #123, merge the branch to main (Jess runs it), then open #111 (gyms 3 to 8) on a new
-   branch off main with its slice opening (goal, done, end-goal test).
+1. #109 and #123 closed 2026-11-15 (feel test passed). balance/109-template-check merges to main (Jess runs it).
+2. Next: #111 (gyms 3 to 8) on a new branch off main. Open it with the slice opening (goal, done, end-goal test).
 3. Any time: #121, #120, #110, #57, #58.
 
 ## Where we are on the branch

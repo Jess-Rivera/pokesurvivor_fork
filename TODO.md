@@ -5,13 +5,13 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Getting up to date (either machine), from the 2026-11-15 home session
-1. `git status` must be clean. `git fetch origin`, then `git checkout balance/109-template-check`, then `git pull --ff-only`.
+1. `git status` must be clean. `git fetch origin`, then `git checkout main`, then `git pull --ff-only`.
 2. `node tools/check.js` must end with "check: all passed". Say "catch me up".
 3. Before leaving a machine: commit and push.
 
 ## Next (from the 2026-11-15 home session)
-1. Feel test #109 (Brock, Misty at loop 1, target feel tables) and #123 (Turtwig, Bulbasaur, Froakie, 0:00 to 4:00).
-2. Both right: close #109 and #123, merge balance/109-template-check to main, then #111 (gyms 3 to 8) off main.
+1. #109 and #123 closed 2026-11-15. Merge balance/109-template-check to main.
+2. #111 (gyms 3 to 8) on a new branch off main, slice opening first.
    Then #122, the eight-gym tuning pass (blocked by #111).
 3. #49: close (Decider done) or keep as umbrella. Board by hand: #86 to Accepted, #29 out of Blocked, the Triage cards.
 4. New issues to draft: the leader reads your cards and items as seen (K2); buffValue reads the whole kit; the trace
