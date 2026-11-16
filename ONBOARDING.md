@@ -55,6 +55,8 @@ python tools/make_seo_pages.py # builds the Spanish + English SEO pages, en/inde
 
 Move Lab (dev tool, never shipped): open `tools/move-lab.html` (double-click or the local server). It loads the real move scripts, lists every routed move, loads a gym leader's lineup for any loop and level (each mon with its own moves and cards), and folds upgrade cards into each mon's moves, with base vs effective fields, the leader form and reach, and a paste-ready `moves` / `cards` block for js/data/gyms.js.
 
+UI Library (dev tool, never shipped, #147): open `tools/ui-library.html` (double-click). The design language on one page: every font, working colour, type colour and UI piece, labelled with its job, using the game's own fonts, CSS and type colours; plus each screen's CSS variables (flagged when not in HUD-STYLE) and the UI-PALETTES reference sets. Roles are copied from docs/HUD-STYLE.md; `node tools/smoke-ui-library.js` fails when HUD-STYLE or UI-PALETTES lists a colour the page lacks, so add new colours there and here together.
+
 Key facts about `tools/build.js`:
 - It reads the script list between `<!-- scripts:begin -->` and `<!-- scripts:end -->`
   in `dev.html`, concatenates those files, and runs them through terser (minify) and

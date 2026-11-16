@@ -1,0 +1,452 @@
+<!doctype html>
+<!-- UI Library (dev tool, never ships; Jess 2026-11-15, #147). The design language on one page: every font, colour and UI piece,
+     each labelled with its job. It loads the game's own fonts, stylesheets and type colours (js/core/util.js), so those can't drift
+     from the game. The roles and labels are copied from docs/HUD-STYLE.md "Colour palette" and docs/UI-PALETTES.md; the check
+     tools/smoke-ui-library.js fails when either doc lists a colour this page does not show. Open it by double-click (file://). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI Library</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/bw-menu.css">
+<link rel="stylesheet" href="../css/hud-overlay.css">
+<style>
+  /* The page's own chrome: neutral, so the game's colours read true. style.css sets body overflow hidden and no text
+     selection for the game; both are undone here. */
+  :root { --lib-bg: #15171c; --lib-panel: #1e2128; --lib-line: #2e323b; --lib-text: #e4e6eb; --lib-dim: #8b919c; --lib-accent: #6ea4ff; }
+  html, body { height: auto; }
+  body { overflow: auto; background: var(--lib-bg); color: var(--lib-text); font: 14px/1.45 system-ui, sans-serif;
+    -webkit-font-smoothing: auto; touch-action: auto; }
+  body, body * { -webkit-user-select: text; user-select: text; }
+  header { position: sticky; top: 0; z-index: 10; background: var(--lib-bg); border-bottom: 1px solid var(--lib-line);
+    padding: 10px 16px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; }
+  header nav { display: flex; gap: 12px; flex-wrap: wrap; }
+  header nav a { color: var(--lib-dim); text-decoration: none; font-size: 13px; }
+  header nav a:hover { color: var(--lib-text); }
+  main { max-width: 1400px; margin: 0 auto; padding: 8px 16px 64px; }
+  section { margin-top: 28px; }
+  h2 { font-size: 20px; margin: 0 0 4px; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--lib-dim); margin: 22px 0 4px; }
+  .lib-note { color: var(--lib-dim); font-size: 13px; margin: 2px 0 10px; max-width: 900px; }
+  .lib-tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #2b3242; color: var(--lib-dim);
+    vertical-align: middle; margin-left: 6px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+  .lib-tag.lib-proposed { background: #4a3a12; color: #ffd27a; }
+  .lib-tag.lib-offspec { background: #3a2230; color: #f0a0c0; }
+  .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .lib-card { background: var(--lib-panel); border: 1px solid var(--lib-line); border-radius: 6px; overflow: hidden; }
+  .lib-card .lib-chip-row { display: flex; height: 56px; }
+  .lib-card .lib-chip-row > div { flex: 1; display: flex; align-items: flex-end; padding: 4px 6px; font: 11px ui-monospace, monospace; }
+  .lib-card .lib-body { padding: 8px 10px; }
+  .lib-card .lib-role { font-weight: 600; }
+  .lib-card .lib-hex { font: 12px ui-monospace, monospace; color: var(--lib-dim); }
+  .lib-card .lib-use { font-size: 12px; color: var(--lib-dim); margin-top: 2px; }
+  table.lib-ramp { border-collapse: collapse; width: 100%; max-width: 900px; font-size: 13px; }
+  table.lib-ramp td, table.lib-ramp th { padding: 4px 6px; border-bottom: 1px solid var(--lib-line); text-align: left; }
+  table.lib-ramp th { color: var(--lib-dim); font-weight: 500; }
+  table.lib-ramp .lib-sw { width: 120px; font: 11px ui-monospace, monospace; }
+  .lib-stage { background: #0c0d10; border: 1px solid var(--lib-line); border-radius: 6px; padding: 16px; display: flex;
+    flex-wrap: wrap; gap: 18px; align-items: center; }
+  .lib-sample { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .lib-sample .lib-cap { font-size: 12px; color: var(--lib-dim); }
+  .lib-fontrow { background: var(--lib-panel); border: 1px solid var(--lib-line); border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }
+  .lib-fontrow .lib-meta { font-size: 12px; color: var(--lib-dim); margin-bottom: 8px; }
+  .lib-fontrow .lib-meta b { color: var(--lib-text); font-size: 14px; }
+  .lib-fontrow .lib-specimens { display: flex; flex-direction: column; gap: 8px; color: #fff; overflow-x: auto;
+    -webkit-font-smoothing: none; /* as the game draws text (style.css body) */ }
+  .lib-fontrow .lib-specimens span.lib-size { font: 11px ui-monospace, monospace; color: var(--lib-dim); display: inline-block; width: 48px; }
+  .lib-fontrow .lib-fail { color: #ff7a6b; }
+
+  /* Samples drawn from HUD-STYLE values (not live components). */
+  .s-chip { width: 70px; height: 24px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+    font: 20px/20px 'HudText', monospace; color: #fff;
+    text-shadow: 2px 0 0 #101010, -2px 0 0 #101010, 0 2px 0 #101010, 0 -2px 0 #101010, 2px 2px 0 #101010, -2px -2px 0 #101010, 2px -2px 0 #101010, -2px 2px 0 #101010; }
+  .s-chip.solid { background: linear-gradient(var(--fill) 0 66%, var(--shade) 66% 100%); }
+  .s-chip.hollow { background: #101010; box-shadow: inset 0 0 0 2px var(--rim); color: var(--rim); text-shadow: none; }
+  .s-bar { width: 240px; height: 12px; background: linear-gradient(#f3f3f3 0 66%, #adadad 66% 100%); outline: 2px solid #212121; position: relative; }
+  .s-bar.dark { background: linear-gradient(#7f7f7f 0 66%, #464646 66% 100%); }
+  .s-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--pct); background: linear-gradient(var(--fill) 0 66%, var(--shade) 66% 100%); }
+  .s-tooltip { background: #181818; border: 2px solid #f3b200; padding: 8px 12px; max-width: 320px;
+    font: 20px/22px var(--font); color: #fff; text-shadow: 1px 0 0 #101010, -1px 0 0 #101010, 0 1px 0 #101010, 0 -1px 0 #101010; }
+  .s-tooltip b { color: #ffd23f; font-weight: 400; display: block; }
+  .s-typeplate { display: inline-flex; align-items: center; height: 32px; padding: 0 18px 0 14px; color: #fff;
+    background: repeating-conic-gradient(#393939 0 25%, #292929 0 50%) 0 0 / 8px 8px;
+    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); box-shadow: inset 0 0 0 3px var(--rim);
+    font: 20px/20px 'HudText', monospace; outline: 2px solid #000000; }
+  .s-btn { min-width: 220px; padding: 8px 14px; background: #181818; border: 3px solid var(--rim); color: #fff;
+    font: 30px/30px 'HudText', monospace; text-align: center; }
+  .s-shake { animation: lib-flash 0.5s steps(1) infinite; }
+  @keyframes lib-flash { 50% { --fill: #ffffff; background: #ffffff; color: #101010; text-shadow: none; } }
+  .toast.lib-static { position: static; transform: none; animation: none; display: block; left: auto; bottom: auto; }
+  .s-ball { width: 120px; height: 120px; border-radius: 50%; position: relative; overflow: hidden; outline: 4px solid #747474;
+    box-shadow: 0 0 0 10px #575757; margin: 12px; }
+  .s-ball::before { content: ''; position: absolute; inset: 0 0 55% 0; background: #c8141c; border-bottom: 4px solid #ffffff; }
+  .s-ball::after { content: ''; position: absolute; inset: 55% 0 0 0; background: #313a46; border-top: 4px solid #ffffff; }
+  .s-ball i { position: absolute; inset: 42% 0 42% 0; background: #000000; z-index: 1; }
+  .lib-screenvars td.lib-where { color: var(--lib-dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>UI Library</h1>
+  <nav>
+    <a href="#fonts">Fonts</a><a href="#colours">Working colours</a><a href="#types">Type palette</a>
+    <a href="#pieces">Pieces</a><a href="#screens">Screen variables</a><a href="#reference">Reference palettes</a>
+  </nav>
+  <span class="lib-note" style="margin:0">Source of truth: docs/HUD-STYLE.md. Dev tool, never ships (#147).</span>
+</header>
+<main>
+
+<section id="fonts">
+  <h2>Fonts</h2>
+  <p class="lib-note">Each face is loaded from assets/fonts through the game's own stylesheets. Pixel faces only at whole multiples of their grid (HUD-STYLE "Crisp sizes only").</p>
+  <div id="font-list"></div>
+</section>
+
+<section id="colours">
+  <h2>Working colours</h2>
+  <p class="lib-note">HUD-STYLE "Working colours". A working palette, not a frozen one: every colour has a job. B/W colours come in pairs (a bright fill over a dark shade), shown as a split swatch.</p>
+  <div id="colour-groups"></div>
+</section>
+
+<section id="types">
+  <h2>Type palette <span class="lib-tag">canonical for all UI</span></h2>
+  <p class="lib-note">Bulbapedia Scarlet/Violet. Base for fills, Dark for shades and outlines, Light for highlights and for type-coloured text over the map. Read live from G.U.TYPE_COLOR, TYPE_COLOR_LIGHT and TYPE_COLOR_DARK (js/core/util.js).</p>
+  <table class="lib-ramp" id="type-table"></table>
+</section>
+
+<section id="pieces">
+  <h2>Pieces</h2>
+  <p class="lib-note">The type chips, toasts and HUD text use the game's real CSS classes. The rest are drawn here from HUD-STYLE values to show the look; the live versions are SVG pieces inside the running HUD, so check those in game.</p>
+
+  <h3>Type chips <span class="lib-tag">real: .type, style.css</span></h3>
+  <p class="lib-note">The type's Base fill inside a 2 px Dark rim, white text with a hard #101010 shadow. Team screen, Pokedex, pause sheet (G.UI.typeChip).</p>
+  <div class="lib-stage" id="type-chips"></div>
+
+  <h3>How a type shows on a panel</h3>
+  <p class="lib-note">From the B2 battle rip: an angled rim in the type's colour around a #393939 / #292929 checker body, with a #000000 outline.</p>
+  <div class="lib-stage" id="type-plates"></div>
+
+  <h3>HUD text <span class="lib-tag">real: .hud-text, hud-overlay.css</span></h3>
+  <p class="lib-note">In game the face comes from the .hud-overlay layer; it is set on the samples here.</p>
+  <div class="lib-stage">
+    <div class="lib-sample"><span class="hud-text" style="font-family:'HudText',monospace">PIKACHU  Lv 12</span><span class="lib-cap">White text, eight hard #101010 shadows one font pixel out (20 px body)</span></div>
+    <div class="lib-sample"><span class="hud-text" style="font-family:'HudText',monospace;opacity:0.45">Region  Map  Kills</span><span class="lib-cap">Dim text: white at about 45%</span></div>
+  </div>
+
+  <h3>Life meters and bars</h3>
+  <p class="lib-note">B/W thresholds: green above 50%, yellow 50% to 20%, red below 20%. Fill over shade on the empty track.</p>
+  <div class="lib-stage" id="bars"></div>
+
+  <h3>Status chips (70 x 24)</h3>
+  <p class="lib-note">Majors are solid (fill over shade), on the left. Minors are hollow (a #101010 body in a rim of their own colour), in the character info panel only.</p>
+  <div class="lib-stage" id="status-chips"></div>
+
+  <h3>Effect chips</h3>
+  <p class="lib-note">Good band above, bad band next to the life meter. Stat chips are the stat's Base over Dark (UI-PALETTES "Pokemon Stats"); type guard chips are the type's SV Base over Dark.</p>
+  <div class="lib-stage" id="effect-chips"></div>
+
+  <h3>Shake Off prompt (flashing)</h3>
+  <div class="lib-stage"><div class="lib-sample"><span class="s-chip solid s-shake" style="--fill:#f3b200;--shade:#9a6110;width:200px;height:32px">SHAKE OFF!</span><span class="lib-cap">#f3b200 over #9a6110, flashing to #ffffff</span></div></div>
+
+  <h3>Tooltip</h3>
+  <div class="lib-stage"><div class="s-tooltip"><b>Oran Berry</b>Restores a little HP when the holder is low.</div>
+    <span class="lib-note" style="margin:0">GameFont 20 px, #181818 body, 2 px #f3b200 frame, name in #ffd23f. Always the topmost layer (TooltipLayer).</span></div>
+
+  <h3>Toasts <span class="lib-tag">real: .toast, style.css</span></h3>
+  <div class="lib-stage">
+    <div class="toast lib-static">Caught! Bulbasaur joins the team.</div>
+    <div class="toast bad lib-static">Not enough coins.</div>
+    <span class="lib-note" style="margin:0">Michroma 20 px on 30 px lines. Teal #29ceff rim for news, red #c8141c for bad news (tone 'bad').</span>
+  </div>
+
+  <h3>Pause menu</h3>
+  <div class="lib-stage">
+    <div class="lib-sample"><div class="s-ball"><i></i></div><span class="lib-cap">Ball caps #c8141c / #313a46, #ffffff edges, ring #575757 with #747474 outer edge</span></div>
+    <div class="lib-sample"><div class="s-btn" style="--rim:#ffffff">Resume</div><span class="lib-cap">Button at rest: #ffffff rim, #181818 flat body</span></div>
+    <div class="lib-sample"><div class="s-btn" style="--rim:#38d030">Team</div><span class="lib-cap">Focus or hover: #38d030 rim</span></div>
+    <div class="lib-sample"><div class="s-btn" style="--rim:#e8202a;background:#7c1016;box-shadow:0 0 0 3px #ff8a90">End</div><span class="lib-cap">End answer focused: #ff8a90 / #e8202a / #7c1016 rim, #7c1016 body</span></div>
+    <div class="lib-sample"><div class="s-btn" style="--rim:#ffffff;background:#848484">No</div><span class="lib-cap">No answer focused: #848484 body</span></div>
+  </div>
+
+  <h3>Wayfinding arrows</h3>
+  <p class="lib-note">Chevrons off the character toward an off-screen target: Base fill, Dark outline, Light shine, then a #101010 line outside. No halo.</p>
+  <div class="lib-stage" id="arrows"></div>
+</section>
+
+<section id="screens">
+  <h2>Screen variables</h2>
+  <p class="lib-note">The CSS variables each screen's stylesheet defines, read live from the game's CSS. Rows marked "not in HUD-STYLE" are colours a screen uses that the spec doesn't list yet.</p>
+  <table class="lib-ramp lib-screenvars" id="screen-vars"></table>
+</section>
+
+<section id="reference">
+  <h2>Reference palettes</h2>
+  <p class="lib-note">docs/UI-PALETTES.md: Bulbapedia's light, base and dark sets. Reference, not rules; a set is used only once HUD-STYLE adopts it.</p>
+  <div id="reference-sets"></div>
+</section>
+
+</main>
+
+<script>window.G = {};</script>
+<script src="../js/core/util.js"></script>
+<script>
+'use strict';
+// ---------- Data copied from docs/HUD-STYLE.md "Colour palette" (roles and jobs). Keep in step with the doc; the smoke checks it. ----------
+// A colour entry is [hex, role, where used] or, for a B/W pair, [[fill, shade], role, where used].
+const WORKING_GROUPS = [
+  { title: 'Panels and lines', note: 'B2 bar frame and the menus.', colours: [
+    ['#181818', 'Panel body', 'Every HUD panel, menu bars (--bw-charcoal), toasts, tooltips, pause buttons'],
+    ['#212121', 'Frame', 'Panel and bar frames (B2, not W2)'],
+    ['#303030', 'Checker', 'Body texture, checkered with the panel colour'],
+    ['#495151', 'Slate', 'Dividers, empty slots, chip rim fallback'],
+    ['#adadad', 'Light grey', 'B2 bar track shade'],
+    ['#c6c6c6', 'Light grey, lighter', 'Disabled text and icons'],
+    ['#f3f3f3', 'Off-white track', 'Empty bar track'],
+    ['#29ceff', 'Accent line', 'Menu lines (--bw-line), toast rim, focus edges'],
+    ['#8cfff7', 'Secondary text', 'Menu sub text (--bw-sub)'],
+    ['#fff000', 'Title', 'Menu titles (--bw-title)'],
+    ['#8f8500', 'Title shade', 'Under menu titles (--bw-title-shade)'],
+    ['#00213a', 'Ink shadow', 'Menu text shadow (--bw-ink-shadow)'],
+  ] },
+  { title: 'Text', colours: [
+    ['#ffffff', 'Text', 'All HUD text'],
+    ['#101010', 'Text outline', 'Hard outline on HUD text, type chip shadow, outer line on arrows and toasts'],
+  ] },
+  { title: 'How a type shows', note: 'B2 lower-screen battle rip.', colours: [
+    ['#393939', 'Checker light', 'Type plate body'],
+    ['#292929', 'Checker dark', 'Type plate body'],
+    ['#000000', 'Outline', 'Type plate outline; also the open ball inside and the pause screen dim (at 55%)'],
+  ] },
+  { title: 'Bars (fill over shade)', note: 'B2/W2 HP bar rip.', colours: [
+    [['#00fb49', '#008a28'], 'HP above 50%', 'Life meters'],
+    [['#f3b200', '#9a6110'], 'HP 50% to 20%', 'Life meters; also the Lv label and the Shake Off prompt'],
+    [['#fb3041', '#922030'], 'HP below 20%', 'Life meters; also the female sign'],
+    [['#f3f3f3', '#adadad'], 'Empty track', 'Bar background'],
+    [['#7f7f7f', '#464646'], 'Empty track (dark bar)', 'Bar background on dark bars'],
+    [['#00baf3', '#00799a'], 'EXP', 'The portrait ring; also the male sign'],
+  ] },
+  { title: 'Status chips, major (fill over shade)', colours: [
+    [['#848484', '#4a4a4a'], 'SLP', 'Sleep'],
+    [['#d631de', '#6b2942'], 'PSN', 'Poison'],
+    [['#d631de', '#391042'], 'Bad PSN', 'Bad poison'],
+    [['#e75a4a', '#b50000'], 'BRN', 'Burn'],
+    [['#218cf7', '#005a8c'], 'FRZ', 'Freeze'],
+    [['#efad00', '#ad6b00'], 'PAR', 'Paralysis'],
+  ] },
+  { title: 'Status chips, minor (hollow: rim and text)', note: 'Body #101010. Character info panel only.', colours: [
+    ['#d8b000', 'CNF', 'Confusion'],
+    ['#1f9fe7', 'DZE', 'Daze'],
+    ['#e73963', 'DRW', 'Drowsy'],
+    ['#adb5bd', 'TRP', 'Trapped'],
+  ] },
+  { title: 'Effect chip colours', note: 'Ramped like the B2 buttons: 100%, about 55%, 45% and 33% of the bright tone.', colours: [
+    ['#5fe08a', 'Regen', 'REG chip (Aqua Ring)'],
+    ['#ffb347', 'Lansat', 'LAN chip'],
+    ['#ffd23f', 'Pinap', 'PIN chip; also the tooltip name'],
+  ] },
+  { title: 'Tooltips', colours: [
+    ['#f3b200', 'Tooltip frame', '2 px frame on every pause menu tooltip'],
+    ['#ffd23f', 'Tooltip name', 'The item or move name'],
+  ] },
+  { title: 'Wayfinding arrows', note: 'From UI-PALETTES "Attacks".', colours: [
+    ['#375ab2', 'Gym gate: fill', 'Special Base'], ['#243b74', 'Gym gate: outline', 'Special Dark'], ['#7d94cd', 'Gym gate: shine', 'Special Light'],
+    ['#eb5628', 'Move Trainer, TM Mart: fill', 'Physical Base'], ['#99381a', 'Move Trainer, TM Mart: outline', 'Physical Dark'], ['#f29173', 'Move Trainer, TM Mart: shine', 'Physical Light'],
+    ['#3fae5a', 'Rescue: fill', 'Proposed (#135), by eye', 'proposed'], ['#22703a', 'Rescue: outline', 'Proposed (#135)', 'proposed'], ['#8fdda5', 'Rescue: shine', 'Proposed (#135)', 'proposed'],
+  ] },
+  { title: 'Pause menu', note: 'After the b2-lower rip, picked by eye.', colours: [
+    ['#c8141c', 'Ball top cap', 'Also the bad-news toast rim (--pm-red)'],
+    ['#313a46', 'Ball bottom cap', '--pm-slate'],
+    ['#747474', 'Circle ring, outer edge', ''],
+    ['#575757', 'Circle ring', ''],
+    ['#38d030', 'Button rim, focus or hover', 'Rest rim is #ffffff'],
+    ['#ff8a90', 'End answer rim, light', ''],
+    ['#e8202a', 'End answer rim, base', ''],
+    ['#7c1016', 'End answer rim, dark', 'Also its body when focused'],
+    ['#848484', 'No answer body, focused', ''],
+  ] },
+];
+
+// UI-PALETTES sets: [name, light, base, dark]. adopted names where HUD-STYLE uses the set.
+const REFERENCE_SETS = [
+  { title: 'Pokemon Stats', adopted: 'Adopted: stat raise and drop chips (Base over Dark)', rows: [
+    ['HP', '#9EE865', '#69DC12', '#448F0C'], ['Attack', '#F5DE69', '#EFCC18', '#9B8510'], ['Defense', '#F09A65', '#E86412', '#97410C'],
+    ['Special Attack', '#66D8F6', '#14C3F1', '#0D7F9D'], ['Special Defense', '#899EEA', '#4A6ADF', '#304591'], ['Speed', '#E46CCA', '#D51DAD', '#8B1370'],
+    ['Special (Gen I)', '#78BBF0', '#2F97E8', '#1F6297']] },
+  { title: 'Attacks', adopted: 'Adopted: Physical and Special for the wayfinding arrows. Text is #FFFFFF.', rows: [
+    ['Physical', '#F29173', '#EB5628', '#99381A'], ['Special', '#7D94CD', '#375AB2', '#243B74'], ['Status', '#AEAEAE', '#828282', '#555555']] },
+  { title: 'Regions', candidate: 'Candidate: the Map panel and region select', rows: [
+    ['Kanto', '#ACD36C', '#80BB1D', '#537A13'], ['Johto', '#DCD677', '#CAC02E', '#837D1E'], ['Hoenn', '#9CD7C8', '#67C1AB', '#437E6F'],
+    ['Sinnoh', '#B7A3C3', '#9072A3', '#5E4A6A'], ['Unova', '#9FCADF', '#6BAECE', '#467186'], ['Kalos', '#DD608C', '#CB0B4F', '#840733'],
+    ['Alola', '#E89483', '#DC5A40', '#8F3B2A'], ['Galar', '#C97DC0', '#AC379E', '#702467'], ['Isle of Armor', '#FDE060', '#FCD00B', '#A48707'],
+    ['Crown Tundra', '#66CA9C', '#15AE68', '#0D7143'], ['Hisui', '#7C93A9', '#36597B', '#233A50'], ['Paldea', '#E8CC59', '#DCB000', '#8F7200'],
+    ['Kitakami', '#59C3BB', '#00A398', '#006A62'], ['Blueberry', '#5987A7', '#004878', '#002E4E'], ['Lumiose', '#82C7E0', '#3FA9D0', '#296E87'],
+    ['Hyperspace', '#858585', '#444444', '#2C2C2C'], ['Orange', '#FFAC59', '#FF7F00', '#A65300'], ['Orre', '#ADA588', '#817548', '#544C2F'],
+    ['PokePark', '#A7DB8D', '#78C850', '#4E8234'], ['Sevii', '#8FDEB8', '#52CC91', '#35855E']] },
+  { title: 'Bag', candidate: 'Candidate: berry slots, run items, held items, the Inventory', rows: [
+    ['Apricorn', '#F5C169', '#F0A018', '#9C6810'], ['Battle items pocket', '#78A2EB', '#3070E0', '#1F4992'], ['Berries pocket', '#6EC188', '#20A048', '#15682F'],
+    ['Cologne', '#D2CCDC', '#BAB1C9', '#797383'], ['Ingredients pocket', '#CA8263', '#AD3F0F', '#70290A'], ['Items pocket', '#D89DB7', '#C86890', '#82445E'],
+    ['Key items pocket', '#B788E6', '#9048D8', '#5E2F8C'], ['Mail pocket', '#69B7CC', '#1890B0', '#105E72'], ['Medicine pocket', '#EBA27E', '#E07038', '#924924'],
+    ['Poke Balls pocket', '#DBB26E', '#C88820', '#825815'], ['TMs and HMs pocket', '#ACC66E', '#80A820', '#536D15'], ['Treasures pocket', '#F7DB8C', '#F2C74E', '#9D8133'],
+    ['Z-Crystals pocket', '#CEB38A', '#B48A4B', '#755A31']] },
+  { title: 'Time', candidate: 'Candidate: a time-of-day tint', rows: [
+    ['Morning', '#A2DFEB', '#70CEE0', '#498692'], ['Day', '#AAD6FC', '#7CC0FA', '#517DA3'], ['Evening', '#EFBFA4', '#E79D73', '#96664B'], ['Night', '#CFC2EF', '#B5A1E6', '#766996']] },
+  { title: 'Seasons', candidate: 'Candidate: a weather tint', rows: [
+    ['Spring', '#C7FA89', '#B0F858', '#7BAE3D'], ['Summer', '#A0DEFA', '#78D0F8', '#5492AE'], ['Autumn', '#FAB189', '#F89058', '#AE653D'], ['Winter', '#F4E3FA', '#F0D8F8', '#A897AE']] },
+  { title: 'Egg Groups', candidate: 'Nothing yet', rows: [
+    ['Monster', '#BBA38B', '#97724C', '#624A31'], ['Water 1', '#9FE1FB', '#6BD1F9', '#4688A2'], ['Water 2', '#8AB9F3', '#4B94ED', '#31609A'],
+    ['Water 3', '#6FA3CE', '#2271B4', '#164975'], ['Bug', '#C8D775', '#AAC22A', '#6F7E1B'], ['Flying', '#B7CBF6', '#90AFF1', '#5E7290'],
+    ['Field', '#EED29B', '#E5BA65', '#957942'], ['Fairy', '#FFC0D2', '#FF9EB9', '#A66778'], ['Grass', '#AEE294', '#82D25A', '#55893B'],
+    ['Human-Like', '#87D0CA', '#47B7AE', '#2E7771'], ['Mineral', '#BBB79C', '#979067', '#625E43'], ['Amorphous', '#C1AEDE', '#9F82CC', '#675585'],
+    ['Ditto', '#D0C8E4', '#B6AAD5', '#766F8A'], ['Dragon', '#9692D5', '#5E57BF', '#3D397C'], ['No Eggs Discovered', '#F5E059', '#EFCF00', '#9B8700']] },
+];
+
+// Fonts: [css family, file, job, sizes, sample text]
+const FONTS = [
+  ['HudText', 'Truth-And-Ideals-10px.ttf', 'HUD text face (the B/W DS font). Everything directly on or about a Pokemon: names, stats, HP, moves, EVs, its panels. Body 20, headers 30, emphasis 40 (lean on 20).', [20, 30, 40], 'PIKACHU Lv 12  HP 34/50  0123456789'],
+  ['HudDigits', 'BoldPixels.ttf', 'Display numbers (BoldPixels, 16 px grid, fixed-width digits): World Level, Lv NN. CC-BY-SA 4.0, credit needed.', [32, 48], 'Lv 42  W 7'],
+  ['HudModule', 'Michroma-Regular.ttf', 'The game talking (Michroma): module panels like DPS-Upgrades, titles like EXPEDITION OVER, toasts. Smooth, soft dark shadow, digits not fixed width.', [20, 30], 'EXPEDITION OVER  DPS 1,240'],
+  ['GameFont', 'Silver-game.ttf', 'The game UI font (var(--font)): tooltips at 20 px; the base face of older screens.', [20, 30], 'Restores a little HP when low.'],
+  ['PokeBW', 'pokemon-b-w.ttf', 'Main menu and B/W menu screens. Not in the HUD: only 81 characters (no plus, minus, accents, gender signs).', [16, 32], 'NEW RUN  POKEDEX  SETTINGS'],
+  ['Monogram', 'monogram-extended.ttf', 'Settings screen labels.', [16, 32], 'Music volume  Screen shake'],
+];
+
+// Screen variables: [selector to read from, variable, where used]. HUD-STYLE hexes are matched automatically.
+const SCREEN_VARS = [
+  ['Main and B/W menus (bw-menu.css :root)', ':root', ['--bw-charcoal', '--bw-line', '--bw-sub', '--bw-sub-sel', '--bw-title', '--bw-title-shade', '--bw-ink-shadow', '--bw-grid', '--bw-grid-line']],
+  ['Team screen fields (bw-team.css)', '#scr-roster .ros-center', ['--bw-field', '--bw-field-edge', '--bw-field-focus']],
+  ['Settings rows (bw-settings.css)', '#scr-settings', ['--st-edge', '--st-edge-hot', '--st-card', '--st-lab', '--st-val']],
+  ['Settings danger rows (bw-settings.css)', '.st-row.danger', ['--st-edge', '--st-edge-hot', '--st-lab', '--st-val']],
+  ['Pause menu (pause-menu.css)', '.pause-menu', ['--pm-red', '--pm-slate']],
+  ['Older blue screens (style.css :root)', ':root', ['--ink', '--muted', '--box1', '--box2', '--edge', '--edge-in', '--edge-out', '--gold', '--gold2', '--red', '--green', '--shadow', '--r1', '--r2', '--r3', '--r4', '--r5']],
+];
+
+// ---------- helpers ----------
+const $ = (id) => document.getElementById(id);
+const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+function inkFor(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return '#fff';
+  const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#101010' : '#ffffff';
+}
+const swatchCell = (hex, label) => `<div style="background:${hex};color:${inkFor(hex)}">${esc(label || hex)}</div>`;
+const hudStyleHexes = new Set();
+WORKING_GROUPS.forEach((group) => group.colours.forEach(([hex]) => [].concat(hex).forEach((h) => hudStyleHexes.add(h.toLowerCase()))));
+
+// ---------- fonts ----------
+$('font-list').innerHTML = FONTS.map(([family, file, job, sizes, text]) => `
+  <div class="lib-fontrow" data-font="${family}">
+    <div class="lib-meta"><b>${family}</b> <span class="lib-font-status"></span><br>assets/fonts/${file}<br>${esc(job)}</div>
+    <div class="lib-specimens">${sizes.map((px) => `<div style="font-family:'${family}';font-size:${px}px;line-height:1.2;white-space:nowrap"><span class="lib-size">${px}px</span>${esc(text)}</div>`).join('')}</div>
+  </div>`).join('');
+// PokeBW and Monogram live in bw-settings.css too; declare them here so the page needs no settings screen.
+document.fonts.add(new FontFace('PokeBW', "url('../assets/fonts/pokemon-b-w.ttf')"));
+document.fonts.add(new FontFace('Monogram', "url('../assets/fonts/monogram-extended.ttf')", { weight: '551 900' }));
+window.libFontsReady = Promise.all(FONTS.map(([family, , , sizes]) =>
+  document.fonts.load(`${sizes[0]}px '${family}'`).then((faces) => {
+    const ok = faces.length > 0;
+    const status = document.querySelector(`[data-font="${family}"] .lib-font-status`);
+    status.textContent = ok ? '' : 'did not load';
+    status.className = 'lib-font-status' + (ok ? '' : ' lib-fail');
+    return [family, ok];
+  }, () => [family, false])));
+
+// ---------- working colours ----------
+$('colour-groups').innerHTML = WORKING_GROUPS.map((group) => `
+  <h3>${esc(group.title)}</h3>${group.note ? `<p class="lib-note">${esc(group.note)}</p>` : ''}
+  <div class="lib-grid">${group.colours.map(([hex, role, use, status]) => {
+    const pair = Array.isArray(hex);
+    const chips = pair ? swatchCell(hex[0], 'fill ' + hex[0]) + swatchCell(hex[1], 'shade ' + hex[1]) : swatchCell(hex);
+    return `<div class="lib-card"><div class="lib-chip-row">${chips}</div><div class="lib-body">
+      <div class="lib-role">${esc(role)}${status === 'proposed' ? '<span class="lib-tag lib-proposed">proposed</span>' : ''}</div>
+      <div class="lib-hex">${pair ? hex.join(' over ') : hex}</div>${use ? `<div class="lib-use">${esc(use)}</div>` : ''}</div></div>`;
+  }).join('')}</div>`).join('');
+
+// ---------- type palette and type chips ----------
+const TYPES = Object.keys(G.U.TYPE_COLOR);
+const typeLabel = (type) => type[0].toUpperCase() + type.slice(1);
+$('type-table').innerHTML = '<tr><th>Type</th><th>Light</th><th>Base</th><th>Dark</th></tr>' + TYPES.map((type) => {
+  const tones = [G.U.TYPE_COLOR_LIGHT[type], G.U.TYPE_COLOR[type], G.U.TYPE_COLOR_DARK[type]];
+  return `<tr><td>${typeLabel(type)}</td>${tones.map((hex) => `<td class="lib-sw" style="background:${hex};color:${inkFor(hex)}">${hex}</td>`).join('')}</tr>`;
+}).join('');
+// Same markup as G.UI.typeChip (js/ui/ui.js), English names since this page has no translation layer.
+$('type-chips').innerHTML = TYPES.map((type) =>
+  `<span class="type" style="background:${G.U.TYPE_COLOR[type]};--type-rim:${G.U.TYPE_COLOR_DARK[type]}">${typeLabel(type)}</span>`).join('');
+$('type-plates').innerHTML = ['fire', 'water', 'grass', 'ghost'].map((type) =>
+  `<span class="s-typeplate" style="--rim:${G.U.TYPE_COLOR[type]}">${typeLabel(type)}</span>`).join('');
+
+// ---------- bars ----------
+const BAR_SAMPLES = [
+  ['HP 80%: above 50%', '#00fb49', '#008a28', 80], ['HP 35%: 50% to 20%', '#f3b200', '#9a6110', 35],
+  ['HP 12%: below 20%', '#fb3041', '#922030', 12], ['EXP 60% (shown here as a bar; in game it is the portrait ring)', '#00baf3', '#00799a', 60],
+];
+$('bars').innerHTML = BAR_SAMPLES.map(([cap, fill, shade, pct]) =>
+  `<div class="lib-sample"><div class="s-bar"><i style="--fill:${fill};--shade:${shade};--pct:${pct}%"></i></div><span class="lib-cap">${cap}</span></div>`).join('') +
+  `<div class="lib-sample"><div class="s-bar dark"><i style="--fill:#00fb49;--shade:#008a28;--pct:50%"></i></div><span class="lib-cap">On the dark track (#7f7f7f over #464646)</span></div>`;
+
+// ---------- status and effect chips ----------
+const majors = WORKING_GROUPS.find((g) => g.title.startsWith('Status chips, major')).colours;
+const minors = WORKING_GROUPS.find((g) => g.title.startsWith('Status chips, minor')).colours;
+$('status-chips').innerHTML = majors.map(([[fill, shade], tag]) =>
+  `<div class="lib-sample"><span class="s-chip solid" style="--fill:${fill};--shade:${shade}">${tag === 'Bad PSN' ? 'PSN' : tag}</span><span class="lib-cap">${tag}</span></div>`).join('') +
+  minors.map(([rim, tag, use]) => `<div class="lib-sample"><span class="s-chip hollow" style="--rim:${rim}">${tag}</span><span class="lib-cap">${use}</span></div>`).join('');
+const stats = REFERENCE_SETS[0].rows;
+const STAT_CHIPS = [['ATK', 'Attack', 'raise'], ['DEF', 'Defense', 'raise'], ['SPA', 'Special Attack', 'drop'], ['SPD', 'Special Defense', 'drop'], ['SPE', 'Speed', 'drop (also Slow)']];
+$('effect-chips').innerHTML = STAT_CHIPS.map(([tag, name, note]) => {
+  const row = stats.find((r) => r[0] === name);
+  return `<div class="lib-sample"><span class="s-chip solid" style="--fill:${row[2]};--shade:${row[3]}">${tag}</span><span class="lib-cap">${name} ${note}</span></div>`;
+}).join('') + `<div class="lib-sample"><span class="s-chip solid" style="--fill:${G.U.TYPE_COLOR.fire};--shade:${G.U.TYPE_COLOR_DARK.fire}">OCC</span><span class="lib-cap">Type guard (Occa, Fire)</span></div>`;
+
+// ---------- arrows ----------
+const ARROWS = [['Gym gate', '#375ab2', '#243b74', '#7d94cd'], ['Move Trainer, TM Mart', '#eb5628', '#99381a', '#f29173'], ['Rescue (proposed)', '#3fae5a', '#22703a', '#8fdda5']];
+$('arrows').innerHTML = ARROWS.map(([cap, fill, dark, shine]) => `<div class="lib-sample">
+  <svg width="90" height="60" viewBox="0 0 90 60" style="shape-rendering:crispEdges">
+    <polyline points="20,8 50,30 20,52" fill="none" stroke="#101010" stroke-width="22" stroke-linecap="square" stroke-linejoin="miter"/>
+    <polyline points="20,8 50,30 20,52" fill="none" stroke="${dark}" stroke-width="16" stroke-linecap="square" stroke-linejoin="miter"/>
+    <polyline points="20,8 50,30 20,52" fill="none" stroke="${fill}" stroke-width="10" stroke-linecap="square" stroke-linejoin="miter"/>
+    <polyline points="20,8 50,30" fill="none" stroke="${shine}" stroke-width="3" stroke-linecap="square"/>
+  </svg><span class="lib-cap">${cap}</span></div>`).join('');
+
+// ---------- screen variables (read live from the game's CSS) ----------
+['css/bw-team.css', 'css/bw-settings.css', 'css/pause-menu.css'].forEach((href) => { const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '../' + href; document.head.appendChild(link); });
+function readVar(selector, name) {
+  if (selector === ':root') return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  // Build a hidden element chain matching a simple selector like '#scr-roster .ros-center' or '.st-row.danger'.
+  const top = document.createElement('div');
+  top.style.cssText = 'position:absolute;visibility:hidden;width:0;height:0;overflow:hidden';
+  let parent = top, leaf = top;
+  selector.split(/\s+/).forEach((part, index) => {
+    const el = index === 0 ? top : document.createElement('div');
+    const id = /#([\w-]+)/.exec(part);
+    if (id) el.id = id[1];
+    el.className = (part.match(/\.[\w-]+/g) || []).map((c) => c.slice(1)).join(' ');
+    if (index > 0) parent.appendChild(el);
+    parent = leaf = el;
+  });
+  document.body.appendChild(top);
+  const value = getComputedStyle(leaf).getPropertyValue(name).trim();
+  top.remove();
+  return value;
+}
+function renderScreenVars() {
+  $('screen-vars').innerHTML = '<tr><th>Screen</th><th>Variable</th><th>Value</th><th>In HUD-STYLE?</th></tr>' + SCREEN_VARS.flatMap(([where, selector, names]) =>
+    names.map((name) => {
+      const value = readVar(selector, name) || '(not found)';
+      const inSpec = hudStyleHexes.has(value.toLowerCase());
+      const cell = /^#|^rgb/.test(value) ? `<td class="lib-sw" style="background:${value};color:${value.startsWith('#') ? inkFor(value) : '#fff'}">${esc(value)}</td>` : `<td>${esc(value)}</td>`;
+      return `<tr><td class="lib-where">${esc(where)}</td><td><code>${name}</code></td>${cell}<td>${inSpec ? 'yes' : '<span class="lib-tag lib-offspec">not in HUD-STYLE</span>'}</td></tr>`;
+    })).join('');
+}
+// The screen stylesheets are added above, so read once everything has loaded.
+window.addEventListener('load', renderScreenVars);
+
+// ---------- reference palettes ----------
+$('reference-sets').innerHTML = REFERENCE_SETS.map((set) => `
+  <h3>${esc(set.title)} <span class="lib-tag">${esc(set.adopted || set.candidate)}</span></h3>
+  <table class="lib-ramp"><tr><th>Name</th><th>Light</th><th>Base</th><th>Dark</th></tr>${set.rows.map(([name, ...tones]) =>
+    `<tr><td>${esc(name)}</td>${tones.map((hex) => `<td class="lib-sw" style="background:${hex};color:${inkFor(hex)}">${hex}</td>`).join('')}</tr>`).join('')}</table>`).join('');
+</script>
+</body>
+</html>

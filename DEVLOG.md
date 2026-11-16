@@ -158,3 +158,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Tests: rescue-harness parts 5e and 6 (relations; two hand mutants caught), smoke-ui catch flow on a real run.
 - Broke and fixed: forcing Math.random for a sure catch also made wild shinies, so the smoke counts rescue copies only.
 - Stopped at: #136 in Needs Playtest (works as built; Jess polishes its UI later, with #126). Next: feel test, then #137.
+
+## 2026-11-15 (Claude Code, home), #147 UI Library dev page
+- tools/ui-library.html: fonts, working colours (B/W pairs split), SV type palette (live from G.U), pieces (real .type, .toast,
+  .hud-text; the rest drawn from HUD-STYLE values), per-screen CSS variables read live and flagged when off-spec, UI-PALETTES sets.
+- tools/smoke-ui-library.js: every HUD-STYLE palette hex (116) and UI-PALETTES hex (199) shown, 6 faces load, chips take .type.
+  Mutation (one hex changed) fails it. Game CSS class names collided (.card, .grid), so page classes are lib- prefixed.
+- Stopped at: Jess looks it over; plan in docs/ASCII Concept Maps/UI Library - Slice Plan.md.
