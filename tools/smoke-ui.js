@@ -569,7 +569,7 @@ async function catchFlow(browser, query, tag) {
       const host = cursorAt && cursorAt.closest('[data-slot], [data-owned-index], .catch-button');
       const ring = root.querySelector('.catch-ring'),
         ringDeg = ring ? parseFloat(ring.style.getPropertyValue('--flee')) : NaN;
-      const tip = root.querySelector('.hud-tip'),
+      const tip = document.querySelector('.hud-tip-layer .hud-tip'), // the page's one tooltip layer
         frame = root.querySelector('.catch-window'); // absent while the screen is closed
       let cursor = 'none';
       if (host && host.dataset.slot != null) cursor = 'slot ' + host.dataset.belt + '.' + host.dataset.slot;

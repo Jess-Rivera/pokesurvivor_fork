@@ -612,17 +612,21 @@
 /* ---------- the shared tooltip layer (js/ui/hud-overlay.js TooltipLayer; Jess, 2026-11-12: every hover tooltip is
    the topmost layer). The layer is the stage's last child and sits above everything on it; nothing else on a stage
    may use a z-index of 100 or more. ---------- */
+/* the page's one tooltip layer (G.HudKit tooltips, decision 2026-11-16-one-universal-tooltip-layer): over the whole window,
+   above everything; nothing else on the page may reach z-index 1000 */
 .hud-tip-layer {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 1000;
   pointer-events: none;
 }
 /* the look every tooltip shares (Jess, 2026-11-11): the game's UI font (GameFont, more readable than the pixel HUD
    font at this size), a yellow frame, the name in yellow */
 .hud-tip {
   position: absolute;
+  transform-origin: 0 0; /* placed at its anchor point, then scaled to its screen's size (hud-kit-items.js) */
   font-family: var(--font);
+  color: #ffffff;
   background: #181818;
   border: 2px solid #f3b200;
   box-shadow: 0 0 0 2px #101010;

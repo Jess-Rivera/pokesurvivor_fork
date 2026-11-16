@@ -164,7 +164,7 @@ async function main() {
   await shot('inventory-open.png');
 
   // The shown tooltip, from the menu's shared tooltip layer (Jess, 2026-11-12: every hover tooltip is the topmost
-  // layer): its text, font, whether the layer is the stage's last child, and the sample points across its box that
+  // layer): its text, font, whether the layer is the page's one layer, and the sample points across its box that
   // something else covers (0 = on top everywhere).
   const tipNow = () =>
     page.evaluate(() => {
@@ -184,7 +184,9 @@ async function main() {
       return {
         text: tip.textContent,
         font: getComputedStyle(tip).fontFamily,
-        last: document.querySelector('.pm-stage').lastElementChild === tip.parentElement,
+        // the page's one tooltip layer (decision 2026-11-16-one-universal-tooltip-layer): the body's last child, z 1000
+        last:
+          document.body.lastElementChild === tip.parentElement && getComputedStyle(tip.parentElement).zIndex === '1000',
         covered,
         sampled,
       };

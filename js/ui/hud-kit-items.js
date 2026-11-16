@@ -73,7 +73,7 @@ G.HudKitItems = (() => {
    * The tight 2x2 item grid (#90, HUD-STYLE "Berry bag"): item squares in two columns, half a square between them, filling
    * row by row. Used by the run screen's berry bag and the pause menu's Run Inventory.
    * slots: [{ key, icon, locked, tip: { name, desc }, className, attrs }]: icon null = empty; locked = dimmed (not bought);
-   * tip = the hover tooltip (none on the run screen), drawn in the screen's TooltipLayer; attrs = extra attributes for
+   * tip = the hover tooltip (none on the run screen), drawn in the page's tooltip layer; attrs = extra attributes for
    * the slot's element (data-*, handlers). tipPlace: where the tooltip opens (showTooltip's place; above by default).
    */
   function ItemGrid({ slots, artSize = 20, className, tipPlace }) {
@@ -104,53 +104,94 @@ G.HudKitItems = (() => {
   const itemTipHandlers = (tip, place) =>
     tooltipHandlers({ name: tip.name, lines: tip.desc ? [tip.desc] : [], variant: 'item' }, place);
 
-  // ---------- the shared tooltip layer (Jess, 2026-11-12: every hover tooltip is the topmost layer) ----------
+  // ---------- the tooltip layer: one for the whole page, always on top (Jess, 2026-11-16, decision 2026-11-16-one-universal-tooltip-layer) ----------
   /**
-   * One tooltip at a time, drawn by TooltipLayer, which a screen mounts as the LAST child of its stage (the pause
-   * menu's 1920 x 1080 stage), above everything else on it. No tooltip lives inside its panel any more: there it was
-   * trapped under later panels (the team cards over the move list's tooltip) and clipped by scroll boxes.
+   * One tooltip at a time, drawn in ONE layer the kit puts on the page itself: fixed over the whole window, the body's
+   * last child, z-index 1000 (nothing else on the page may reach it), never catching the pointer. Screens do not mount
+   * a layer of their own. Before 2026-11-16 each screen mounted one and the kit remembered only the last, so closing the
+   * catch screen left the pause menu's tooltips with nowhere to draw. Nested tooltips (Path of Exile style) are not built;
+   * when they are, tooltipState becomes a stack and nothing else here changes shape.
    * showTooltip(anchor, content, place): content { name, lines, variant } (variant 'item': name and a 300 px
    *   description; 'detail': the detail panel's 558 px box; 'plain': one line, no name); nothing to show hides it.
    *   place { side: 'above' (default) | 'below' | 'leftOf' | 'rightOf', align: 'centre' (default) | 'start' | 'end', gap
-   *   (px, default 8), beside: for 'leftOf' / 'rightOf', the element or a selector (closest to the anchor) whose left /
-   *   right edge it is off; level with the anchor's top }.
+   *   (px at the screen's own size, default 8), beside: for 'leftOf' / 'rightOf', the element or a selector (closest to
+   *   the anchor) whose left / right edge it is off; level with the anchor's top }.
+   * The tooltip is drawn at the hovered screen's scale (a menu stage fitted to the window draws its tooltips fitted too).
+   * While one shows, the layer re-places it every frame from its anchor (a sliding panel carries it along) and hides it
+   * when the anchor is removed or hidden, so a closing screen can never leave one behind.
    * hideTooltip(): gone (a scroll, a redraw, a pick-up, the menu closing).
    * tooltipHandlers(content, place): an anchor's hover handlers; content may be a function read on each show. A
    *   pointer move re-shows it after a redraw under a still pointer (an item put down, the next Pokemon by key).
    */
-  const tooltipState = signal(null); // { anchor, name, lines, variant, x, y, shift } in stage pixels
-  let tooltipLayer = null; // the mounted layer's element
+  const tooltipState = signal(null); // { anchor, name, lines, variant, place }
+  const tooltipPlace = signal(null); // { x, y, shift, scale } in window pixels, from the anchor this frame
   function hideTooltip() {
     if (tooltipState.value) tooltipState.value = null;
+    tooltipPlace.value = null;
   }
-  function showTooltip(anchor, content, place = {}) {
-    const layer = tooltipLayer;
-    const lines = (content && content.lines ? content.lines : []).filter(Boolean);
-    if (!layer || !anchor || !content || !(content.name || lines.length)) return hideTooltip();
-    const layerBox = layer.getBoundingClientRect(),
-      anchorBox = anchor.getBoundingClientRect(),
-      scale = layerBox.width / (layer.offsetWidth || layerBox.width || 1); // the stage is scaled to fit the window
-    const toStageX = (x) => (x - layerBox.left) / scale,
-      toStageY = (y) => (y - layerBox.top) / scale;
+  /** The scale the anchor's screen is drawn at: a menu stage is scaled to fit the window (--pm-scale); 1 elsewhere. */
+  function anchorScale(anchor) {
+    const stage = anchor.closest('.pm-stage');
+    if (!stage || !stage.offsetWidth) return 1;
+    return stage.getBoundingClientRect().width / stage.offsetWidth;
+  }
+  /** Where the tooltip goes for its anchor now, or null when the anchor is gone or hidden. */
+  function placeFor(anchor, place) {
+    if (!anchor.isConnected || !anchor.getClientRects().length || getComputedStyle(anchor).visibility === 'hidden')
+      return null;
+    const anchorBox = anchor.getBoundingClientRect(),
+      scale = anchorScale(anchor);
     const side = place.side || 'above',
       align = place.align || 'centre',
-      gap = place.gap != null ? place.gap : 8;
-    let x, y, shift;
+      gap = (place.gap != null ? place.gap : 8) * scale;
     if (side === 'leftOf' || side === 'rightOf') {
       const beside = (typeof place.beside === 'string' ? anchor.closest(place.beside) : place.beside) || anchor,
         besideBox = beside.getBoundingClientRect();
-      x = side === 'leftOf' ? toStageX(besideBox.left) - gap : toStageX(besideBox.right) + gap;
-      y = toStageY(anchorBox.top);
-      shift = side === 'leftOf' ? 'translate(-100%, 0)' : 'none';
-    } else {
-      const edge =
-        align === 'start' ? anchorBox.left : align === 'end' ? anchorBox.right : (anchorBox.left + anchorBox.right) / 2;
-      x = toStageX(edge);
-      y = side === 'below' ? toStageY(anchorBox.bottom) + gap : toStageY(anchorBox.top) - gap;
-      const shiftX = align === 'start' ? '0' : align === 'end' ? '-100%' : '-50%';
-      shift = 'translate(' + shiftX + ', ' + (side === 'below' ? '0' : '-100%') + ')';
+      return {
+        x: side === 'leftOf' ? besideBox.left - gap : besideBox.right + gap,
+        y: anchorBox.top,
+        shift: side === 'leftOf' ? 'translate(-100%, 0)' : 'none',
+        scale,
+      };
     }
-    tooltipState.value = { anchor, name: content.name || '', lines, variant: content.variant || 'item', x, y, shift };
+    const edge =
+      align === 'start' ? anchorBox.left : align === 'end' ? anchorBox.right : (anchorBox.left + anchorBox.right) / 2;
+    const shiftX = align === 'start' ? '0' : align === 'end' ? '-100%' : '-50%';
+    return {
+      x: edge,
+      y: side === 'below' ? anchorBox.bottom + gap : anchorBox.top - gap,
+      shift: 'translate(' + shiftX + ', ' + (side === 'below' ? '0' : '-100%') + ')',
+      scale,
+    };
+  }
+  const samePlace = (a, b) => a && b && a.x === b.x && a.y === b.y && a.shift === b.shift && a.scale === b.scale;
+  let following = false; // the per-frame follow runs only while a tooltip shows
+  function follow() {
+    const shown = tooltipState.value;
+    if (!shown) {
+      following = false;
+      return;
+    }
+    const next = placeFor(shown.anchor, shown.place);
+    if (!next) {
+      following = false;
+      return hideTooltip();
+    }
+    if (!samePlace(next, tooltipPlace.value)) tooltipPlace.value = next;
+    requestAnimationFrame(follow);
+  }
+  function showTooltip(anchor, content, place = {}) {
+    const lines = (content && content.lines ? content.lines : []).filter(Boolean);
+    if (!anchor || !content || !(content.name || lines.length)) return hideTooltip();
+    const at = placeFor(anchor, place);
+    if (!at) return hideTooltip();
+    if (layerElement !== document.body.lastElementChild) document.body.appendChild(layerElement); // stay the body's last child
+    tooltipState.value = { anchor, name: content.name || '', lines, variant: content.variant || 'item', place };
+    tooltipPlace.value = at;
+    if (!following) {
+      following = true;
+      requestAnimationFrame(follow);
+    }
   }
   function tooltipHandlers(content, place) {
     const contentNow = () => (typeof content === 'function' ? content() : content);
@@ -167,30 +208,24 @@ G.HudKitItems = (() => {
       },
     };
   }
-  /** The layer itself: mount it as the stage's last child. It never catches the pointer. */
+  /** The page's one layer: the tooltip at its anchor's place, drawn at its screen's scale from the anchor point. */
   function TooltipLayer() {
-    const ref = preactHooks.useRef(null);
-    preactHooks.useLayoutEffect(() => {
-      tooltipLayer = ref.current;
-      return () => {
-        if (tooltipLayer === ref.current) tooltipLayer = null;
-      };
-    }, []);
-    const shown = tooltipState.value;
-    return html`<div class="hud-tip-layer" ref=${ref}>
-      ${
-        shown
-          ? html`<div
-              class=${'hud-tip is-' + shown.variant}
-              style=${{ left: shown.x + 'px', top: shown.y + 'px', transform: shown.shift }}
-            >
-              ${shown.name ? html`<div class="hud-text hud-tip-name">${shown.name}</div>` : null}
-              ${shown.lines.map((line, index) => html`<div key=${index} class="hud-text hud-tip-line">${line}</div>`)}
-            </div>`
-          : null
-      }
+    const shown = tooltipState.value,
+      at = tooltipPlace.value;
+    if (!shown || !at) return null;
+    return html`<div
+      class=${'hud-tip is-' + shown.variant}
+      style=${{ left: at.x + 'px', top: at.y + 'px', transform: 'scale(' + at.scale + ') ' + at.shift }}
+    >
+      ${shown.name ? html`<div class="hud-text hud-tip-name">${shown.name}</div>` : null}
+      ${shown.lines.map((line, index) => html`<div key=${index} class="hud-text hud-tip-line">${line}</div>`)}
     </div>`;
   }
+  const layerElement = document.createElement('div');
+  layerElement.className = 'hud-tip-layer';
+  layerElement.setAttribute('translate', 'no'); // English-only text
+  document.body.appendChild(layerElement);
+  coreKit.preact.render(html`<${TooltipLayer} />`, layerElement);
 
   /**
    * A scrolling box with the pause menu's thin scroll bar (dex-buttons AF2-AF20). Made for the move list in #89,
@@ -283,7 +318,6 @@ G.HudKitItems = (() => {
     ItemSquare,
     ItemGrid,
     ScrollBox,
-    TooltipLayer,
     showTooltip,
     hideTooltip,
     tooltipHandlers,

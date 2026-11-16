@@ -202,3 +202,34 @@ Why not pokeapi's capture_rate (Acquisition v1 spec, "CATCH ODDS CHECK" and roun
 
 These are the #136 [Open] playtest values; changing them is a balance call (levers: the star bands, the time bonus, the
 90% cap), not part of these fixes.
+
+## Bug 1 (Jess, 2026-11-16): pause menu tooltips stop working: built
+
+Cause: the kit remembers one tooltip layer, the last one mounted. The pause menu mounts its layer once at load; the
+catch screen (136b) mounts its own; closing a catch clears the record, so every pause tooltip is dropped until a reload.
+Reproduced headless (a hex-corner tooltip shows before a catch, not after).
+
+Fix, Jess's design: **one universal tooltip layer, the topmost thing on the page, always**. It replaces the per-screen
+layers, so two screens can never fight over it, and it is the base nested tooltips (Path of Exile style) need later.
+
+```mermaid
+flowchart TB
+  subgraph Page["the page (document body)"]
+    direction TB
+    G["game canvas, HUD (z 5), pause menu (z 15), screens (z 20), rotate prompt (z 200)"]
+    T["Tooltip layer: fixed over the whole window, z 1000, never catches the pointer<br/>(last child of the body)"]
+  end
+  A["any hovered thing on any screen"] -->|showTooltip| T
+  T -->|"every frame while shown: follow the anchor,<br/>hide if it is gone or hidden"| A
+```
+
+| Part | Change |
+|---|---|
+| The layer | `js/ui/hud-kit-items.js`: the kit mounts one layer on the body itself at load (fixed, the full window, z-index 1000, pointer events off). Screens stop mounting their own: the `TooltipLayer` lines leave `pause-menu.js` and `catch-ui.js`. |
+| Placement | Tooltips are placed in window pixels and drawn at the hovered screen's scale (the menu stage's fit, `--pm-scale`; 1 elsewhere), so they keep today's size on every window. Sides stay above, below, leftOf, rightOf. |
+| Lifetime | While a tooltip shows, the layer checks its anchor every frame: it follows it (a sliding panel carries its tooltip along) and hides it when the anchor is removed or hidden. A screen closing can never leave a tooltip behind, even if it forgets to call hideTooltip. |
+| Nesting | Not built now. One tooltip at a time today; the layer's state is the one place nesting changes later (a stack of tooltips, each anchored to the one under it). |
+| #102 | The layer now exists for every screen. #102 stays open for moving the old team sheet's tooltips and the browser `title` tips onto it. |
+| Rule | HUD-STYLE "Every hover tooltip is the topmost layer of its screen" ([Approved] 2026-11-12) becomes "of the page", with a new decision file (`docs/decisions/2026-11-16-one-universal-tooltip-layer...`) and an index line. Z-index rule: nothing else on the page may reach 1000. |
+| Tests | `smoke-pause-menu.js` and `smoke-pause-inventory.js`: "the layer is the stage's last child" becomes "the layer is the body's last child, above everything" (the covered-points checks stay). New check in `smoke-pause-menu.js`: open and close a catch, then a pause tooltip still shows (fails today). `smoke-ui.js` catch flow: the owned tooltip is in the same layer. |
+| Risk | Medium-low: every pause and catch tooltip moves layer. The covered-points checks prove each one is still on top across its box. |

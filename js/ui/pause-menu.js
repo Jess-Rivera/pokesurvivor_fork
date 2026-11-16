@@ -38,7 +38,7 @@
 G.PauseMenu = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
-  const { html, signal, preact, PALETTE, PixelShape, moveSlotRow, TooltipLayer, hideTooltip, fitToStage } = overlay.kit;
+  const { html, signal, preact, PALETTE, PixelShape, moveSlotRow, hideTooltip, fitToStage } = overlay.kit;
   const { SlotButton, SLOT_BUTTON, REST_RIM } = overlay.kit; // the shared menu button (also the End Run screen's)
 
   // Step lengths in ms: dim and closed ball in, then ball opens with the panels sliding in. Open is about 0.23 s (Jess,
@@ -252,7 +252,6 @@ G.PauseMenu = (() => {
       <div class="pm-stage">
         <div class="pm-centre"><${BallBack} /><${Buttons} /><${BallCaps} /></div>
         <${Panels} />
-        <${TooltipLayer} />
       </div>
       ${inventory ? html`<${inventory.CarryGhost} />` : null}`;
   }

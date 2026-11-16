@@ -21,8 +21,8 @@
  * value is drawn between 10% and 100% of the radius. Each corner shows the final stat (HP as the game has it) with the
  * yellow "+X%"; hovering it shows the copy's make-up, "Base: N, IV: N, EV: N".
  *
- * Every hover tooltip here is drawn in the menu's shared tooltip layer (the kit's TooltipLayer, the stage's last
- * child), so nothing on the menu covers it (Jess, 2026-11-12).
+ * Every hover tooltip here is drawn in the page's one tooltip layer (the kit's, the body's last child at z-index 1000),
+ * so nothing on the menu covers it (Jess, 2026-11-12; one layer for the page, 2026-11-16).
  *
  * Team panel (548 x 160): the six team slots in 3 columns by 2 rows, in slot order, as the run screen's roster cards
  * narrowed to fit (no status chips). A missing member is an empty frame. Clicking a card shows it on the detail panel;

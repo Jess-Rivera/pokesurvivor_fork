@@ -109,7 +109,6 @@ G.HudOverlay = (() => {
     'ItemSquare',
     'ItemGrid',
     'ScrollBox',
-    'TooltipLayer',
     'showTooltip',
     'hideTooltip',
     'tooltipHandlers',

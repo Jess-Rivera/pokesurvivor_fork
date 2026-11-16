@@ -19,7 +19,7 @@ G.CatchUI = (() => {
   if (!overlay || !overlay.ready || !screen) return { ready: false };
   const { html, signal, hooks, preact, PALETTE, FAINTED_RIM, typeColours, Box, ScrollBox, Cursor, TeamButton } =
     overlay.kit;
-  const { REST_RIM, FOCUS_RIM, fitToStage, TooltipLayer, showTooltip, hideTooltip } = overlay.kit;
+  const { REST_RIM, FOCUS_RIM, fitToStage, showTooltip, hideTooltip } = overlay.kit;
   const { portraitSource, portraitFallback } = overlay.kit;
 
   // ---------- sizes and places (stage pixels; the window is centred on the 1920 x 1080 stage) ----------
@@ -527,7 +527,6 @@ G.CatchUI = (() => {
             : null
         }
       </div>
-      <${TooltipLayer} />
     </div>`;
   }
 

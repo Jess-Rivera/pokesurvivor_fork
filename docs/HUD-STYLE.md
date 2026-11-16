@@ -129,13 +129,14 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
   20 px, more readable than Truth And Ideals for sentences. Every pause menu tooltip (items, the stat hex corners, the
   move rows) shares one look: `#181818` body, a 2 px `#f3b200` frame, the name in `#ffd23f`, white text with the hard
   outline. A hovered tooltip is always on top of its neighbours.
-- `[Approved]` **Every hover tooltip is the topmost layer of its screen** (Jess, 2026-11-12). In the pause menu every
-  tooltip is drawn in one shared layer, the kit's `TooltipLayer` (js/ui/hud-kit-items.js), mounted as the stage's last
-  child at z-index 100; no tooltip lives inside its panel (there it was trapped under later panels and clipped by scroll
-  boxes). Nothing else on a stage may use a z-index of 100 or more. New tooltips use `tooltipHandlers` or `showTooltip`,
-  never a hidden child shown on `:hover`. The smokes check each one is the top element across its whole box.
-  `[Legacy behavior]` Outside the pause menu (the old team sheet's move tooltips, the browser `title` tips) this is
-  not done yet: #102.
+- `[Approved]` **Every hover tooltip is in the page's one tooltip layer, on top of everything** (Jess, 2026-11-16,
+  decision 2026-11-16-one-universal-tooltip-layer; replaces "the topmost layer of its screen", 2026-11-12). The HUD kit
+  puts one layer on the page (js/ui/hud-kit-items.js): fixed over the whole window, the body's last child, z-index
+  1000, never catching the pointer. Screens do not mount their own. Nothing else on the page may reach z-index 1000. A
+  tooltip is drawn at its screen's scale, follows its anchor each frame and hides when the anchor goes away. New
+  tooltips use `tooltipHandlers` or `showTooltip`, never a hidden child shown on `:hover`. The smokes check each one is
+  the top element across its whole box. Nested tooltips (Path of Exile style) are planned on this layer, not built.
+  `[Legacy behavior]` The old team sheet's move tooltips and the browser `title` tips do not use it yet: #102.
 
 - `[Approved]` **No PokeBW in the HUD.** It has only 81 characters (no plus, minus, accented capitals, female or male
   signs).
