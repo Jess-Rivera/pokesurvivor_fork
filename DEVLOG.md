@@ -157,4 +157,4 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   refilled each run until #137; held catches placed at the run end on the EV flag. G.Debug.catch(). Run Info "Caught this run".
 - Tests: rescue-harness parts 5e and 6 (relations; two hand mutants caught), smoke-ui catch flow on a real run.
 - Broke and fixed: forcing Math.random for a sure catch also made wild shinies, so the smoke counts rescue copies only.
-- Stopped at: #136 in Needs Playtest. Next: Jess feel test, then #137.
+- Stopped at: #136 in Needs Playtest (works as built; Jess polishes its UI later, with #126). Next: feel test, then #137.

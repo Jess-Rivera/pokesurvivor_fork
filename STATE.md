@@ -17,7 +17,7 @@ Last updated: 2026-11-15 late, Claude Code (home). Branch: feature/128-acquisiti
 - Rescue: G.Rescue, G.UberElite, js/data/stage-one.js (generated), rescue-harness.js. Clocks 60 s reach, 60 s fight, HP for 40 s.
 - #136 (unplaytested): G.Catch (odds, flee, belt save.belt, held catches), G.CatchUI (BW popup, css/bw-catch.css). A win leaves
   the Stage 1 30 s; touch opens the catch. Catches reach the box at the run end only when it keeps EVs (fall, crash).
-  Belt refills to 6 each run until #137 ([Legacy behavior]). Run Info "Caught this run".
+  Belt refills to 6 each run until #137 ([Legacy behavior]). Run Info "Caught this run". Catch screen look: Jess, later (#126).
 - check.js clean (60 harnesses); smoke-ui (with a catch flow) passes.
 
 ## Watch

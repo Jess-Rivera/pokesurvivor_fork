@@ -11,7 +11,8 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 3. Before leaving a machine: commit and push (the branch and main).
 
 ## Next (queue set by Jess 2026-11-15; gym leader AI parked)
-1. Owed: feel test #136 (catch phase; G.Debug.rescue() or G.Debug.catch()). #145 (move tooltip class) is small and ready.
+1. Owed: feel test #136 (catch phase; G.Debug.rescue() or G.Debug.catch()). Its screen works; Jess polishes the catch UI later
+   (with #126). #145 (move tooltip class) is small and ready.
 2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill) next, then #138; #146 keep-or-sell list;
    order in docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
