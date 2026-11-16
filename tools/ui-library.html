@@ -48,6 +48,10 @@
     border-radius: 4px; padding: 4px 10px; font: 13px system-ui, sans-serif; cursor: pointer; }
   .lib-screen-bar button:hover { border-color: var(--lib-accent); }
   .lib-team-list { font-size: 12px; color: var(--lib-dim); }
+  .lib-font-line { font-size: 11px; color: var(--lib-dim); font-family: ui-monospace, monospace; }
+  .lib-hover-font { font: 12px ui-monospace, monospace; color: var(--lib-accent); min-height: 1.45em; margin: 8px 0 0; }
+  table.lib-font-table { margin-top: 12px; }
+  table.lib-font-table td:first-child { width: 34%; }
 
   /* Components: the kit's pieces are placed absolutely inside the HUD; here they sit in the flow. */
   .lib-live .lib-stage { background: #0c0d10; }
@@ -142,6 +146,9 @@
   <p class="lib-note">The run HUD as the game draws it: every panel file (js/ui/hud-*-panel.js) mounted for real on a 1920 x 1080 screen, reading a fake run built through the game's own classes (G.Player, G.Team, G.RunStats, G.DpsHistory) instead of a live one. Nothing here is saved.</p>
   <div class="lib-screen-bar"><button data-reroll>New random team</button><span class="lib-team-list" data-team-list></span></div>
   <div class="lib-screen-wrap" data-screen-slot="run"></div>
+  <p class="lib-hover-font" data-hover-font>Hover any text on the screen to see its font.</p>
+  <h3>Fonts by panel <span class="lib-tag">read live from the panels</span></h3>
+  <table class="lib-ramp lib-font-table" data-font-table="run"></table>
 </section>
 
 <section id="pause-panels" data-tab="pause">
@@ -149,6 +156,9 @@
   <p class="lib-note">The pause menu (js/ui/pause-menu.js) opened for real over the same fake run: Run Info, the Pokemon detail and team panels, and the Run Inventory. Hover for the game's tooltips; click a team card to show that Pokemon.</p>
   <div class="lib-screen-bar"><button data-reroll>New random team</button><span class="lib-team-list" data-team-list></span></div>
   <div class="lib-screen-wrap" data-screen-slot="pause"></div>
+  <p class="lib-hover-font" data-hover-font>Hover any text on the screen to see its font.</p>
+  <h3>Fonts by panel <span class="lib-tag">read live from the panels</span></h3>
+  <table class="lib-ramp lib-font-table" data-font-table="pause"></table>
 </section>
 
 <section id="menu-panels" data-tab="menu">
@@ -540,6 +550,42 @@ function inkFor(hex) {
   return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#101010' : '#ffffff';
 }
 const swatchCell = (hex, label) => `<div style="background:${hex};color:${inkFor(hex)}">${esc(label || hex)}</div>`;
+// Fonts as drawn: every bit of text inside an element, its computed face (the first family named) and size in CSS
+// pixels (the 1080p sizes, before the screen box is scaled). Faces not in FONTS are flagged "not a listed face".
+const LISTED_FACES = new Set(FONTS.map(([family]) => family));
+const faceOf = (element) => getComputedStyle(element).fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '');
+window.libFontsIn = (root) => {
+  const faces = new Map(); // face -> Set of sizes
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const element = node.parentElement;
+    if (!node.textContent.trim() || !element || element.closest('style, script')) continue;
+    const face = faceOf(element);
+    if (!faces.has(face)) faces.set(face, new Set());
+    faces.get(face).add(Math.round(parseFloat(getComputedStyle(element).fontSize)));
+  }
+  return [...faces].map(([face, sizes]) => ({ face, sizes: [...sizes].sort((a, b) => a - b), listed: LISTED_FACES.has(face) }));
+};
+// HUD-STYLE "Crisp sizes only": a pixel face is crisp only at whole multiples of its grid. Only the faces whose grid the
+// spec names are checked; HudModule is smooth, so the rule does not apply to it.
+const PIXEL_GRID = { HudText: 10, HudDigits: 16 };
+const offGrid = (face, size) => PIXEL_GRID[face] && size % PIXEL_GRID[face] !== 0;
+const fontFlags = ({ face, sizes, listed }) =>
+  (listed ? '' : '<span class="lib-tag lib-offspec">not a listed face</span>') +
+  (sizes.some((size) => offGrid(face, size))
+    ? `<span class="lib-tag lib-offspec">${sizes.filter((size) => offGrid(face, size)).join(', ')} px off its ${PIXEL_GRID[face]} px grid</span>` : '');
+const fontInline = (fonts) => fonts.map((font) => `${esc(font.face)} ${font.sizes.join('/')} px${fontFlags(font)}`).join(', ');
+window.libFontHtml = (fonts) => fonts.length
+  ? fonts.map((font) => `<b>${esc(font.face)}</b> ${font.sizes.join(' / ')} px${fontFlags(font)}`).join('<br>')
+  : '<span class="lib-note">no text</span>';
+// Caption each sample with the fonts its piece draws in (the caption itself is left out).
+window.libCaptionFonts = (container) => container.querySelectorAll('.lib-sample').forEach((sample) => {
+  sample.querySelectorAll('.lib-font-line').forEach((line) => line.remove());
+  const piece = sample.firstElementChild;
+  const fonts = piece && !piece.classList.contains('lib-cap') ? window.libFontsIn(piece) : [];
+  if (fonts.length) sample.insertAdjacentHTML('beforeend', `<span class="lib-font-line">Font: ${fontInline(fonts)}</span>`);
+});
+window.libFontInline = fontInline;
 const hudStyleHexes = new Set();
 WORKING_GROUPS.forEach((group) => group.colours.forEach(([hex]) => [].concat(hex).forEach((h) => hudStyleHexes.add(h.toLowerCase()))));
 
@@ -968,17 +1014,75 @@ $('reference-sets').innerHTML = REFERENCE_SETS.map((set) => `
       G.PauseMenu.open();
     }
   }
-  window.addEventListener('lib-tab', (event) => showScreen(event.detail));
+  // ---------- fonts by panel: read from the mounted panels once they have drawn ----------
+  const PANEL_FONTS = {
+    run: [
+      ['Character info: name, HP, Lv, moves, timer, Silver (hud-player-panel.js)', '.hud-player'],
+      ['Team roster and berry bag (hud-roster-panel.js)', '.hud-roster'],
+      ['Team items (hud-run-items-panel.js)', '.hud-run-items'],
+      ['World Level, region (hud-map-panel.js)', '.hud-map'],
+      ['Kills line (hud-map-panel.js)', '.hud-kills'],
+      ['DPS-Upgrades (hud-dps-panel.js)', '.hud-dps'],
+      ['Enemy name bar (hud-boss-panel.js)', '.hud-boss'],
+    ],
+    pause: [
+      ['Run Info (pause-run-info.js)', '.pm-panel-info'],
+      ['Pokemon detail (pause-pokemon.js)', '.pm-panel-detail'],
+      ['Team cards (pause-pokemon.js)', '.pm-panel-team'],
+      ['Run Inventory (pause-inventory.js)', '.pm-panel-inventory'],
+      ['Ball buttons (pause-menu.js)', '.pm-centre'],
+      ['Tooltip (kit TooltipLayer)', '.hud-tip-layer'],
+    ],
+  };
+  function showPanelFonts(tab) {
+    const table = document.querySelector(`[data-font-table="${tab}"]`);
+    if (!table) return;
+    table.innerHTML = '<tr><th>Panel</th><th>Font and sizes</th></tr>' + PANEL_FONTS[tab].map(([name, selector]) => {
+      const panel = screen.querySelector(selector);
+      const cell = panel ? window.libFontHtml(window.libFontsIn(panel)) : '<span class="lib-note">not on screen in this run</span>';
+      return `<tr data-panel="${selector}"><td>${name}</td><td>${cell}</td></tr>`;
+    }).join('');
+  }
+  // After two frames the panels have read the run and drawn (the pause menu's panels mount as it opens).
+  const afterDraw = (then) => requestAnimationFrame(() => requestAnimationFrame(then));
+  let currentTab = null;
+  const refreshFonts = () => currentTab && afterDraw(() => showPanelFonts(currentTab));
+  // Hover: the text under the pointer, its face and size.
+  screen.addEventListener('mouseover', (event) => {
+    const readout = screen.closest('section').querySelector('[data-hover-font]');
+    const element = event.target;
+    const text = [...element.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent).join('').trim();
+    if (!text) return;
+    const size = Math.round(parseFloat(getComputedStyle(element).fontSize));
+    const face = faceOf(element);
+    readout.textContent = `"${text.slice(0, 40)}": ${face} ${size} px${offGrid(face, size) ? ' (off its ' + PIXEL_GRID[face] + ' px grid)' : ''}` +
+      ` (.${[...element.classList].join(' .') || element.tagName.toLowerCase()})`;
+  });
+  screen.addEventListener('click', refreshFonts); // a team card click changes the detail panel
+
+  window.addEventListener('lib-tab', (event) => {
+    currentTab = PANEL_FONTS[event.detail] ? event.detail : null;
+    showScreen(event.detail);
+    refreshFonts();
+  });
   document.querySelectorAll('[data-reroll]').forEach((button) => button.addEventListener('click', () => {
     seed = 1 + Math.floor(Math.random() * 99999);
     run = null;
     showScreen(button.closest('section').dataset.tab);
+    refreshFonts();
   }));
   window.libFakeRun = () => run; // the smoke reads the team it built
 })();
 
 // Open the remembered tab (or the first one) once every script above is ready.
 (() => {
+  // Font captions on the Base UI bits and Main menu pieces. A Styles stage with no captioned samples gets one line for the stage.
+  ['components-body', 'pieces', 'menu-body'].forEach((id) => window.libCaptionFonts(document.getElementById(id)));
+  document.querySelectorAll('#pieces .lib-stage, #menu-body .lib-menu-frame').forEach((stage) => {
+    if (stage.querySelector('.lib-sample')) return;
+    const fonts = window.libFontsIn(stage).filter((font) => font.face !== 'system-ui');
+    if (fonts.length) stage.insertAdjacentHTML('afterend', `<p class="lib-font-line">Font: ${window.libFontInline(fonts)}</p>`);
+  });
   let saved = null;
   try { saved = sessionStorage.getItem('uiLibrary.tab'); } catch (error) { /* private window */ }
   window.libShowTab(saved);

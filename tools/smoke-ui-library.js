@@ -194,6 +194,35 @@ const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PAL
     `the pause panels show the fake run: team cards ${pause.cards.join('/')}, Run Info kills ${pause.kills.join('/')}, detail ${pause.name.join('/')}`
   );
 
+  // Fonts by panel: on both screens, every panel that is mounted and draws text names the face it draws in.
+  const fontTables = [];
+  for (const tab of ['run', 'pause']) {
+    await page.evaluate((name) => window.libShowTab(name), tab);
+    await page.waitForTimeout(400);
+    fontTables.push(
+      await page.evaluate((name) => {
+        const rows = [...document.querySelectorAll(`[data-font-table="${name}"] tr[data-panel]`)];
+        const unnamed = rows.filter((row) => {
+          const panel = document.querySelector('.lib-screen ' + row.dataset.panel);
+          const hasText = panel && panel.textContent.trim();
+          return hasText && !row.querySelector('td:last-child b');
+        });
+        return { name, rows: rows.length, unnamed: unnamed.map((row) => row.dataset.panel) };
+      }, tab)
+    );
+  }
+  ok(
+    fontTables.every((table) => table.rows >= 5 && table.unnamed.length === 0),
+    'each screen lists the font of every panel that draws text: ' +
+      fontTables
+        .map(
+          (table) =>
+            `${table.name} ${table.rows} rows` +
+            (table.unnamed.length ? ', no font for ' + table.unnamed.join(' ') : '')
+        )
+        .join('; ')
+  );
+
   // A new random team rebuilds the run, and the page never writes the browser's save storage (file:// pages share it with the game).
   const seedBefore = await page.evaluate(() => document.querySelector('[data-team-list]').textContent);
   await page.click('#pause-panels [data-reroll]');
