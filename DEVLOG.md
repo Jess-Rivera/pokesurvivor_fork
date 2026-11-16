@@ -184,3 +184,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   per passed shake; 148b flee ring after the break-out and G.Debug.catchMath. Harness 6a to relations, mutants checked.
 - Fixed in Jess's txt: step 7's critical was 4096x too big. Found: WL 1 early bonus makes most 1 and 2 stars sure catches.
 - Stopped at: Jess's feel test, then tuning (star curve, early bonus, 0 badge penalty).
+
+## 2026-11-16 (Claude Code, home), #148c catch tuning, #148 closed, #149 Shop UI rework filed
+- Jess's tuning picks after the feel test: Steep star curve (1 / .5 / .25 / .1 / .05, 5 star its own value), early World
+  Level bonus x2 at WL 1 fading evenly to x1 at WL 13 (rescale, not a clip), badge penalty unchanged. Decision file.
+- Built test first: harness 6a gained three relations (WL 1 rate at most twice WL 13, bonus shrinks every level, 5 star
+  below 4 star), red on the old numbers; four mutants fail it. check.js and smoke-ui pass. Jess: feels good, #148 closed.
+- Filed #149: Shop menu UI rework on sub-branch rework/shop, before #137. Rescue pick stays star weighted (no new issue).
+- Stopped at: Jess makes the Shop mockup; next session opens #149.
