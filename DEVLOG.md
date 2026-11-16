@@ -176,3 +176,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Broke and fixed: double click died because a click rebuilt the belt (the old smoke passed it anyway); pause tooltips died
   after a catch (one remembered layer). Filed #148 (catch odds too high). #136 feel-tested and closed.
 - Stopped at: next session opens #148.
+
+## 2026-11-16 (Claude Code, home), #148 catch odds: Jess's shake formula
+- Options map (A to C, retuned star bands) dropped for Jess's own mainline-style formula (pokeball-math-human-made.txt).
+- Decided: capture_rate back (overrides round 5), faster win = easier, critical = sure catch, Timer Ball for long fights.
+- Built: pokedex cr via tools/add_base_stats.py; catch.js ODDS + rateParts; separate critical and shake rolls with one wobble
+  per passed shake; 148b flee ring after the break-out and G.Debug.catchMath. Harness 6a to relations, mutants checked.
+- Fixed in Jess's txt: step 7's critical was 4096x too big. Found: WL 1 early bonus makes most 1 and 2 stars sure catches.
+- Stopped at: Jess's feel test, then tuning (star curve, early bonus, 0 badge penalty).

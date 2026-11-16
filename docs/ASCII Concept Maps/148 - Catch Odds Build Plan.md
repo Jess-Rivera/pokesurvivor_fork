@@ -66,3 +66,23 @@ flowchart LR
 | 5 | Part 6a's loop over the rescue pool | Relation checks only | The existing harness, no new one | 6a about the same length |
 
 Touched-code cleanups: none beyond removing the replaced band code. Save: no new save fields (the session is not saved).
+
+## 6. Open tuning (Jess, after the feel test; nothing decided)
+
+Typical rescue capture rate by star (the real pool's median): 1 star 190, 2 star 180, 3 star 60, 4 star 45, 5 star 5 (the
+four Paradox Pokemon). One throw / whole encounter (3 throws), half the clock left, Poke Ball:
+
+| Star curve (1 to 5 star) | WL | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|---|
+| Now 1 / .75 / .5 / .25 / (.25) | 1 | 100/100 | 100/100 | 48/86 | 27/62 | 8/22 |
+| | 20 | 67/97 | 56/91 | 24/56 | 14/36 | 4/12 |
+| Steeper 1 / .6 / .35 / .15 / .08 | 1 | 100/100 | 98/100 | 39/77 | 21/50 | 4/12 |
+| | 20 | 67/97 | 49/87 | 20/48 | 10/28 | 2/6 |
+| Steep 1 / .5 / .25 / .1 / .05 | 1 | 100/100 | 88/100 | 32/69 | 16/41 | 3/9 |
+| | 20 | 67/97 | 44/83 | 16/41 | 8/23 | 2/5 |
+
+- The star curve only bites from 3 star up; at World Level 1 the early bonus (x3.4) caps most 1 and 2 stars at a sure
+  catch. Levers: a steeper curve with its own 5 star entry (my pick: Steeper), a smaller early bonus (say x2 at WL 1).
+- Badge cap penalty (Jess asked why 0 badges costs nothing): it is for the World Level outrunning your badges, so it is x1
+  under the cap. Options shown: A, the 0 badge cap at WL 5; B, no 4-level grace; or a flat x0.85 for no badges.
+- Test species (4 star): Scyther 123 (cr 45), Cryogonal 615 (cr 25), Shuckle 213 (cr 190); `G.Debug.catchMath(true)` first.

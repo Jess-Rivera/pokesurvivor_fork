@@ -4,9 +4,9 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-11-16, Claude Code (home). Branch: feature/128-acquisition (off main, not merged). No branch rules file.
 
 ## START HERE (next session, either tool)
-1. #148 catch odds BUILT 2026-11-16, Needs Playtest: Jess's shake formula (capture_rate back, faster win = easier,
-   critical from 31 species, honest wobble count). Feel test 1 to 4 stars with G.Debug.catch(). Decision
-   2026-11-16-148-catch-odds-mainline-shake-formula; plan docs/ASCII Concept Maps/148 - Catch Odds Build Plan.md.
+1. #148 catch odds BUILT 2026-11-16, Needs Playtest. Jess finishes the feel test with G.Debug.catchMath(true) and a 4 star
+   (G.Debug.catch(123) Scyther, 615 Cryogonal, 213 Shuckle), then rules on the open tuning: star curve (Now / Steeper /
+   Steep), early World Level bonus size, badge penalty for 0 badges. Tables: 148 - Catch Odds Build Plan.md section 6.
 2. Then #137 (Shop balls: restock, Great and Ultra, ends the belt refill; ball tiers and prices are Jess's call), #138, #146.
    Order: docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md. #97 ships with the new save.
 3. Small and ready: #145 (pause move tooltip lacks Physical/Special/Status). #147 UI Library waits on Jess's look.
@@ -17,6 +17,8 @@ Last updated: 2026-11-16, Claude Code (home). Branch: feature/128-acquisition (o
   shift per catch), flee ring, three belts (2 and 3 locked), owned grid with IV + EV tooltip, team-menu buttons (kit
   TeamButton), the B2 cursor on every control, arrows / Enter / 1-6, throw animation. Text in Silver on its pixel grid
   (27.1429 / 40.7143 px), the first screen of #99. All 17 balls cut: tools/make_ball_sprites.py, js/data/ball-sprites.js.
+- #148 Jess's shake formula (capture_rate back in pokedex cr, faster win = easier, critical from 31 species, wobble per
+  passed shake); 148b: flee ring fills after the break-out, G.Debug.catchMath. Decision 2026-11-16-148-catch-odds-mainline-shake-formula.
 - One universal tooltip layer (decision 2026-11-16-one-universal-tooltip-layer): fixed, body's last child, z 1000.
 - check.js clean (60 harnesses); smoke-ui, smoke-pause-menu (known 401 px), smoke-pause-inventory, smoke-ui-library pass.
 
@@ -27,7 +29,7 @@ Last updated: 2026-11-16, Claude Code (home). Branch: feature/128-acquisition (o
 - #148 should be linked as a sub-issue of #136 by Jess (gh api write).
 
 ## Open owner decisions
-- #148 feel test. #137 ball tiers (Timer Ball ruled: for long fights, 4x cap) and prices. #97 purpose and shape. #131 bonus sizes. #49, #107, #86, #99 (rest of it), #93,
+- #148 feel test and tuning (star curve, early bonus, 0 badge penalty). #137 ball tiers (Timer Ball ruled: for long fights, 4x cap) and prices. #97 purpose and shape. #131 bonus sizes. #49, #107, #86, #99 (rest of it), #93,
   #60. Exp Candy amounts (#139). R1 Shedinja, R4 Alcremie N. Flee 5/3/1 and the 30 s catch wait (playtest).
 
 Rules: CLAUDE.md.
