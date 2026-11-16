@@ -150,21 +150,48 @@ const win = () => { fresh(); Rz.debugFire(); const guard = guards[0]; Rz.onUberH
 const C = G.Catch, save = G.DB.save, CK = C.K;
 const result = (dex, nature, timeFraction) => ({ outcome: 'won', dex, name: G.DEX_BY[dex].name, nature, natureName: 'x', timeFraction });
 const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === name) + 1;
-{ // 6a odds: a relation of time left, BST inside a band, the drop between bands, and the ceiling
-  const all = Rz.pool(null);
+{ // 6a odds (#148, Jess's shake formula): relations of time, capture rate, star, badges, World Level and the critical catch
+  const all = Rz.pool(null), cr = (m) => G.DEX_BY[m.dex].cr;
+  const at = (m, over) => Object.assign({ dex: m.dex, timeFraction: 0.5, worldLevel: 20, badges: 2, ownedSpecies: 0 }, over);
+  const p = (m, over, ball = 'poke') => C.odds(at(m, over), ball);
   for (const m of all) {
-    if (!(C.odds(m.dex, 'poke', 1) >= C.odds(m.dex, 'poke', 0.5) && C.odds(m.dex, 'poke', 0.5) >= C.odds(m.dex, 'poke', 0))) bad(m.name + ': more time left never lowers the odds');
-    if (C.odds(m.dex, 'poke', 1) > CK.ceiling + 1e-9) bad(m.name + ' passes the ceiling');
+    if (!(Number.isInteger(cr(m)) && cr(m) >= 1 && cr(m) <= 255)) bad(m.name + ' has no capture rate from 1 to 255');
+    if (!(p(m, { timeFraction: 1 }) >= p(m, { timeFraction: 0.5 }) && p(m, { timeFraction: 0.5 }) >= p(m, { timeFraction: 0 }))) bad(m.name + ': a faster win never lowers the odds');
+    for (let level = 2; level <= 60; level++) if (p(m, { worldLevel: level, badges: 12 }) > p(m, { worldLevel: level - 1, badges: 12 }) + 1e-12) bad(m.name + ': a lower World Level never lowers the odds (WL ' + level + ')');
+    for (let badges = 1; badges <= 12; badges++) if (p(m, { worldLevel: 60, badges }) < p(m, { worldLevel: 60, badges: badges - 1 }) - 1e-12) bad(m.name + ': further over the badge cap never raises the odds');
+    const cap = C.ODDS.badgeCaps[2];
+    if (Math.abs(p(m, { worldLevel: cap, badges: 2 }) - p(m, { worldLevel: cap, badges: 12 })) > 1e-12) bad(m.name + ': at the badge cap, no penalty');
   }
-  for (let r = 1; r <= 4; r++) {
-    const band = all.filter((m) => m.rarity === r).sort((a, b) => a.bst - b.bst);
-    for (let i = 1; i < band.length; i++) if (band[i].bst > band[i - 1].bst && !(C.baseOdds(band[i].dex) < C.baseOdds(band[i - 1].dex))) bad(r + ' star: ' + band[i].name + ' has a higher BST but no lower base than ' + band[i - 1].name);
-    const next = all.filter((m) => m.rarity === r + 1);
-    if (band.length && next.length && !(Math.min(...band.map((m) => C.baseOdds(m.dex))) > Math.max(...next.map((m) => C.baseOdds(m.dex))))) bad('every ' + r + ' star base is above every ' + (r + 1) + ' star base');
+  for (const a of all) for (const b of all) {
+    if (a.rarity === b.rarity && cr(a) > cr(b) && p(a) < p(b) - 1e-12) bad(a.name + ' has a higher capture rate but lower odds than ' + b.name);
+    if (cr(a) === cr(b) && a.rarity > b.rarity && p(a) > p(b) + 1e-12) bad(a.name + ' is a higher star but has higher odds than ' + b.name);
   }
-  const top = all.filter((m) => m.rarity === 4);
-  if (top.length && !top.some((m) => C.odds(m.dex, 'poke', 0) < C.odds(m.dex, 'poke', 1))) bad('a 4 star catch gains from time left');
-  console.log('6a odds rise with time left, fall with BST inside a band, drop between bands, never pass the ceiling'); }
+  if (!all.some((m) => p(m, { worldLevel: 1, badges: 12 }) > p(m, { worldLevel: 13, badges: 12 }))) bad('an early World Level gives a bonus');
+  if (all.some((m) => p(m, { worldLevel: 13, badges: 12 }) !== p(m, { worldLevel: 40, badges: 12 }))) bad('the early World Level bonus is gone from World Level 13 (no badge debt)');
+  const best = { timeFraction: 1, worldLevel: 1, badges: 12, ownedSpecies: 0 };
+  for (const m of all.filter((x) => x.rarity >= 4 && cr(x) <= 45)) if (!(p(m, best) < 1)) bad(m.name + ': a 4 star at capture rate 45 or less is never a sure catch with a Poke Ball');
+  if (C.criticalChance(C.ODDS.rateCap, 30) !== 0) bad('30 or fewer species in the Pokedex: never a critical catch');
+  if (!(C.criticalChance(C.ODDS.rateCap, 31) > 0 && C.criticalChance(C.ODDS.rateCap, 601) >= C.criticalChance(C.ODDS.rateCap, 31))) bad('from 31 species a critical catch can happen, and more species never lower it');
+  // a critical catch always catches: the first roll hits the critical, every later roll would fail a shake
+  const sequence = (rolls) => { let i = 0; return () => rolls[Math.min(i++, rolls.length - 1)]; };
+  const owned = {}; for (let d = 1; d <= 31; d++) owned[d] = { at: 0, from: 'x' };
+  const keepOwned = save.owned; save.owned = owned;
+  C.startRun(save); C.begin(result(147, natureId('bold'), 0.5));
+  if (C.throwBall('poke', sequence([0, 0.9999])) !== 'caught' || !C.lastThrow.critical) bad('a critical catch always catches');
+  delete owned[31]; C.begin(result(147, natureId('bold'), 0.5));
+  if (C.throwBall('poke', sequence([0, 0.9999])) === 'caught' || C.lastThrow.critical) bad('with 30 species owned, the same rolls are no critical catch');
+  save.owned = keepOwned;
+  // the wobbles tell the truth: caught means a critical or every shake passed; a miss passed fewer
+  let thrown = 0;
+  for (const m of all) {
+    C.startRun(save); if (!C.begin(result(m.dex, natureId('bold'), rnd()))) continue;
+    const outcome = C.throwBall('poke', rnd), roll = C.lastThrow; thrown++;
+    if (!(roll.shakes >= 0 && roll.shakes <= C.ODDS.shakes)) bad(m.name + ': shakes ' + roll.shakes + ' out of range');
+    if ((outcome === 'caught') !== (roll.critical || roll.shakes === C.ODDS.shakes)) bad(m.name + ': ' + outcome + ' with ' + roll.shakes + ' shakes');
+  }
+  if (!thrown) bad('no throws checked');
+  console.log('6a odds rise with a faster win and capture rate, fall with star, World Level and badge debt; critical from 31 species; wobbles match the roll');
+  console.log('6a blocked on #137: Ultra above Great above Poke, the Timer Ball never past 4x (only the Poke Ball exists)'); }
 { // 6b flee: misses until it runs off follow the nature bucket (spec: easy above default above hard)
   const misses = (name) => { C.startRun(save); C.begin(result(147, natureId(name), 0)); let n = 0, o;
     do { o = C.throwBall('poke', () => 0.9999); n++; } while (o === 'miss' && n < 50); return o === 'fled' ? n : -1; };

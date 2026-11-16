@@ -50,7 +50,7 @@ G.CatchUI = (() => {
     FLY_ARC = 140, // how high the arc rises above the straight line
     SPIN_FRAME_MS = 40,
     ABSORB_MS = 220, // the ball opens and the portrait shrinks into it
-    WOBBLE_FRAME_MS = 85, // twelve wobble frames: three shakes, about a second
+    WOBBLE_FRAME_MS = 60, // each shake is half the wobble strip (six frames, alternating sides), about a third of a second
     RESULT_MS = 900, // the result stays this long before a caught or fled catch closes
     BREAK_OUT_MS = 260; // a miss: the ball stays open while the portrait comes back
 
@@ -216,17 +216,26 @@ G.CatchUI = (() => {
     face.value = 'absorbed';
     await wait(ABSORB_MS);
     if (!alive()) return;
-    const wobble = BALL_SPRITES.animations.wobble;
-    await play(wobble.length * WOBBLE_FRAME_MS, (t, elapsed) => {
-      flight.value = {
-        ...flight.value,
-        frame: wobble[Math.min(wobble.length - 1, Math.floor(elapsed / WOBBLE_FRAME_MS))],
-      };
-    });
-    if (!alive()) return;
+    // #148: one wobble per shake the throw passed (none when it broke out at once; one on a critical catch)
+    const wobble = BALL_SPRITES.animations.wobble,
+      shakeFrames = wobble.length / 2,
+      roll = G.Catch.lastThrow || { shakes: 0, critical: false };
+    for (let shake = 0; shake < roll.shakes; shake++) {
+      const frames = wobble.slice((shake % 2) * shakeFrames, (shake % 2) * shakeFrames + shakeFrames);
+      await play(frames.length * WOBBLE_FRAME_MS, (t, elapsed) => {
+        flight.value = {
+          ...flight.value,
+          frame: frames[Math.min(frames.length - 1, Math.floor(elapsed / WOBBLE_FRAME_MS))],
+        };
+      });
+      if (!alive()) return;
+    }
     if (outcome === 'caught') {
       flight.value = { ...flight.value, frame: BALL_SPRITES.animations.front[0], caught: true };
-      note.value = 'Gotcha! ' + name + ' was caught! It joins your Pokebox when the run ends.';
+      note.value =
+        (roll.critical ? 'Critical catch! ' : 'Gotcha! ') +
+        name +
+        ' was caught! It joins your Pokebox when the run ends.';
       G.Audio.sfx('shinyGet');
       await wait(RESULT_MS);
       if (!alive()) return;
@@ -330,7 +339,7 @@ G.CatchUI = (() => {
     const rim = typeColours(types[0]),
       rimRight = types[1] ? typeColours(types[1]) : null;
     const ball = selectedBall();
-    const band = G.Catch.band(G.Catch.odds(session.dex, ball.id, session.timeFraction), session.bandShift);
+    const band = G.Catch.band(G.Catch.odds(session, ball.id), session.bandShift);
     const fled = (session.misses / session.allowed) * 360;
     return html`<${Box} left=${MON.left} top=${MON.top} width=${MON.width} height=${MON.height} rim=${rim} rimRight=${rimRight}
       className="catch-mon">

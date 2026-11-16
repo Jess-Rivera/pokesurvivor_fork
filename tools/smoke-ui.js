@@ -581,7 +581,7 @@ async function catchFlow(browser, query, tag) {
         name: (root.querySelector('.catch-name') || {}).textContent || '',
         portrait: faceImage ? faceImage.getAttribute('src') || '' : '',
         band: (root.querySelector('.catch-band') || {}).textContent || '',
-        truth: session ? Math.round(G.Catch.odds(session.dex, 'poke', session.timeFraction) * 100) : null,
+        truth: session ? Math.round(G.Catch.odds(session, 'poke') * 100) : null,
         reach: G.Catch.K.bandAccuracy,
         beltBalls: root.querySelectorAll('[data-belt="0"].is-full').length,
         lockedBelts: root.querySelectorAll('.catch-belt.is-locked').length,

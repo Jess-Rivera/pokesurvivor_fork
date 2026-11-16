@@ -298,3 +298,10 @@ feel with the interactive tuner over the real 966-species roster:
 - Wild effect: +bump is added to the wild HP (enemyHp 3rd arg -> hpForLevel at level+bump) AND atkLvl (enemyAttackFactor), PLAIN wilds only (not boss/gym/elite). Frozen at spawn, so the ramp expresses over spawn turnover (seconds of lag near the enemy cap, by design).
 - Gym leader effect: effective level = locked base + escBump() at the moment of entry; flows through makeDef (HP via the elite reference model at the higher tEq, and every gymFactor move via gym.level). Read once (leader built at entry).
 - Levers if it feels wrong: GRACE (longer = more generous), ESC_STEP (smaller = faster spiral), or add a cap later if uncapped proves too punishing in real play. No playtest data yet.
+
+## Catch odds (#148, built 2026-11-16; TUNE by feel)
+- Jess's mainline-style shake formula (decision 2026-11-16-148-catch-odds-mainline-shake-formula; values in js/systems/catch.js ODDS).
+- Rate (0 to 255) = capture rate x time term ((3 - 2 x share of the fight clock used) / 3) x ball x star (1, 0.75, 0.5, 0.25) x
+  badge cap penalty (0.85 per 4 World Levels over the cap, up to 6 steps) x early World Level bonus (max(1, (36 - 2 x WL) / 10)).
+- One throw: a critical catch first (sure; rate x 0.5 to 2.5 / 6 out of 256, from 31 species owned), else 3 shakes at (rate / 255) ^ 3/16.
+- Levers: the star multipliers, the badge caps, the time term's 2, the early bonus. Worked odds: docs/ASCII Concept Maps/148 - Catch Odds Slice Opening.md.

@@ -180,6 +180,8 @@ HUD-STYLE "Fonts" ([Proposed]); the rest of #99 stays open.
 
 ### Catch rate today (question 4)
 
+> Replaced by #148 (2026-11-16): Jess's shake formula, capture_rate back. See `148 - Catch Odds Build Plan.md`. Kept below as history.
+
 ```mermaid
 flowchart LR
   S["Star band base<br/>1 star 80% to 60%<br/>2 star 55% to 40%<br/>3 star 35% to 22%<br/>4 star 18% to 6%<br/>(higher BST = lower in the band)"] --> M["x ball<br/>(Poke 1)"]

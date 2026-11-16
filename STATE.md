@@ -4,9 +4,9 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-11-16, Claude Code (home). Branch: feature/128-acquisition (off main, not merged). No branch rules file.
 
 ## START HERE (next session, either tool)
-1. #148 catch odds: the equation feels far too high (every 1 and 2 star hits the 90% cap). Open the slice (goal, done, end-goal
-   test agreed first), then bring Jess a short options map with worked odds per star and ball. Why not pokeapi capture_rate:
-   Acquisition v1 spec round 5 (2026-11-12). Today's formula: 136b plan, "Catch rate today".
+1. #148 catch odds BUILT 2026-11-16, Needs Playtest: Jess's shake formula (capture_rate back, faster win = easier,
+   critical from 31 species, honest wobble count). Feel test 1 to 4 stars with G.Debug.catch(). Decision
+   2026-11-16-148-catch-odds-mainline-shake-formula; plan docs/ASCII Concept Maps/148 - Catch Odds Build Plan.md.
 2. Then #137 (Shop balls: restock, Great and Ultra, ends the belt refill; ball tiers and prices are Jess's call), #138, #146.
    Order: docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md. #97 ships with the new save.
 3. Small and ready: #145 (pause move tooltip lacks Physical/Special/Status). #147 UI Library waits on Jess's look.
@@ -27,7 +27,7 @@ Last updated: 2026-11-16, Claude Code (home). Branch: feature/128-acquisition (o
 - #148 should be linked as a sub-issue of #136 by Jess (gh api write).
 
 ## Open owner decisions
-- #148 equation. #137 ball tiers and prices. #97 purpose and shape. #131 bonus sizes. #49, #107, #86, #99 (rest of it), #93,
+- #148 feel test. #137 ball tiers (Timer Ball ruled: for long fights, 4x cap) and prices. #97 purpose and shape. #131 bonus sizes. #49, #107, #86, #99 (rest of it), #93,
   #60. Exp Candy amounts (#139). R1 Shedinja, R4 Alcremie N. Flee 5/3/1 and the 30 s catch wait (playtest).
 
 Rules: CLAUDE.md.
