@@ -301,6 +301,7 @@ Object.defineProperty(window, 'innerHeight', { configurable: true, get: () => 10
 <script src="js/data/upgrades.js"></script>
 <script src="js/data/evolvable.js"></script>
 <script src="js/data/stage-one.js"></script>
+<script src="js/data/ball-sprites.js"></script>
 <script src="js/data/species-traits.js"></script>
 <script src="js/systems/copies.js"></script>
 <script src="js/data/items.js"></script>
@@ -483,6 +484,18 @@ const WORKING_GROUPS = [
     ['#e8202a', 'End answer rim, base', ''],
     ['#7c1016', 'End answer rim, dark', 'Also its body when focused'],
     ['#848484', 'No answer body, focused', ''],
+  ] },
+  { title: 'Catch screen', note: 'Proposed (136b). Every colour is an existing one with a job here.', colours: [
+    ['#DBB26E', 'Belt rim, light', 'Bag: Poke Balls pocket; also the selected slot edge'],
+    ['#C88820', 'Belt rim, base', 'Bag: Poke Balls pocket'],
+    ['#825815', 'Belt rim, dark', 'Also the slot edge and the selected slot body'],
+    ['#C1C2C1', 'Pokemon owned rim, light', 'Normal type ramp; also the owned portrait edge'],
+    ['#9FA19F', 'Pokemon owned rim, base', 'Normal type ramp'],
+    ['#676967', 'Pokemon owned rim, dark', 'Normal type ramp'],
+    ['#e7e7e7', 'Flee ring, empty', 'Fills with the first type\'s Dark, one step per miss'],
+    ['#38d030', 'Throw rim, focused', 'The pause menu button focus'],
+    ['#7c1016', 'Let It Go body, focused', 'With the End answer rim; text white at 45% until focused'],
+    ['#f3b200', 'Result line', 'The Lv yellow'],
   ] },
 ];
 

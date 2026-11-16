@@ -10,8 +10,12 @@
 //   region flow: the real menu, Play and region card path, then Space dodges and neither Space nor Enter starts a new run;
 //   login: a first launch shows the PokeSwarm login, and Tab, Space and the arrows work in its text fields.
 //   onboarding: a new guest picks a region (9 cards of 3) and starts with its three starters, Grass leading; a save with a partner skips it.
-//   catch (#136): touching a won rescue opens the catch screen (portrait, a %, one belt cell per slot); a double click throws, the
-//          screen closes and the run plays on with the catch held; a quit places nothing, a team fall places it in the Pokebox.
+//   catch (#136, redesign 136b): touching a won rescue opens the catch screen: the portrait, a band 2 x bandAccuracy wide that
+//          holds the true chance, belt 1 full and numbered, belts 2 and 3 locked, every owned copy of the species. The arrow
+//          keys move the selection cursor (belt, owned grid with its tooltip, Throw, Let It Go); Esc asks; Enter on Throw
+//          throws, leaving that slot empty and filling the flee ring by misses / allowed; a click selects without replacing
+//          the slot (what a real double click needs) and a double click throws; the run plays on with the catch held; a quit
+//          places nothing; a number key throws from belt 1, and a team fall places the catch in the Pokebox.
 // Fails on any page or console error.
 const path = require('path'),
   cp = require('child_process');
@@ -533,60 +537,182 @@ async function catchFlow(browser, query, tag) {
     await page.evaluate(() => G.Game.startRun());
     await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 20000 });
   };
-  const winAndTouch = () =>
-    page.evaluate(() => {
+  // ownCopies: copies of the rescued species put in the box first (method other), for the owned grid. The nature is set to
+  // Bold (an easy nature, more than one miss allowed) so a forced miss never ends the catch.
+  const winAndTouch = (ownCopies = 0) =>
+    page.evaluate((copies) => {
       const pl = G.Game.player;
       G.Rescue.debugFire();
       const e = G.Rescue.active;
+      e.nature = G.SpeciesTraits.NATURES.findIndex((n) => n[0] === 'bold') + 1;
+      e.natureName = 'Bold';
+      for (let i = 0; i < copies; i++) G.DB.obtain(e.dex, false, 'other', G.DB.save, 1 + i);
       e.x = pl.x - G.Rescue.K.monOffsetX; // the Stage 1 stands right on the player
       e.y = pl.y;
       G.Rescue.onUberHit(e.uber);
       G.Rescue.onUberDown(e.uber);
       return e.name;
-    });
+    }, ownCopies);
   await run();
   // Rescue copies only (method r): other copies can join the box at a run end too (a wild shiny).
   const rescued = () => page.evaluate(() => G.DB.save.box.filter((c) => c.m === 'r').length);
   const box0 = await rescued();
-  const name = await winAndTouch();
+  const name = await winAndTouch(5);
   await page.waitForFunction(() => G.UI.isOpen('scr-catch'), null, { timeout: 5000 }).catch(() => {});
-  const shown = await page.evaluate(() => ({
-    open: G.UI.isOpen('scr-catch'),
-    paused: G.Game.state === 'choice',
-    name: document.getElementById('catch-name').textContent,
-    portrait: document.getElementById('catch-portrait').getAttribute('src') || '',
-    odds: document.getElementById('catch-odds').textContent,
-    cells: document.querySelectorAll('#catch-belt .catch-cell').length,
-    balls: document.querySelectorAll('#catch-belt .catch-cell:not(.empty)').length,
-    size: G.Catch.belt().size,
-  }));
-  ok(shown.open && shown.paused, tag + ': touching the won Stage 1 opens the catch screen and pauses the run');
+  // what the screen shows, read from the page
+  const screen = () =>
+    page.evaluate(() => {
+      const root = document.getElementById('scr-catch'),
+        session = G.Catch.session,
+        cursorAt = root.querySelector('.hud-cursor'),
+        faceImage = root.querySelector('.catch-face img');
+      const host = cursorAt && cursorAt.closest('[data-slot], [data-owned-index], .catch-button');
+      const ring = root.querySelector('.catch-ring'),
+        ringDeg = ring ? parseFloat(ring.style.getPropertyValue('--flee')) : NaN;
+      const tip = root.querySelector('.hud-tip'),
+        frame = root.querySelector('.catch-window'); // absent while the screen is closed
+      let cursor = 'none';
+      if (host && host.dataset.slot != null) cursor = 'slot ' + host.dataset.belt + '.' + host.dataset.slot;
+      else if (host && host.dataset.ownedIndex != null) cursor = 'owned ' + host.dataset.ownedIndex;
+      else if (host) cursor = host.classList.contains('catch-let-go') ? 'let go' : 'throw';
+      return {
+        open: G.UI.isOpen('scr-catch'),
+        paused: G.Game.state === 'choice',
+        name: (root.querySelector('.catch-name') || {}).textContent || '',
+        portrait: faceImage ? faceImage.getAttribute('src') || '' : '',
+        band: (root.querySelector('.catch-band') || {}).textContent || '',
+        truth: session ? Math.round(G.Catch.odds(session.dex, 'poke', session.timeFraction) * 100) : null,
+        reach: G.Catch.K.bandAccuracy,
+        beltBalls: root.querySelectorAll('[data-belt="0"].is-full').length,
+        lockedBelts: root.querySelectorAll('.catch-belt.is-locked').length,
+        keysOn: [0, 1, 2].map((b) => root.querySelectorAll('[data-belt="' + b + '"] .catch-slot-key').length),
+        total: G.Catch.total(),
+        owned: root.querySelectorAll('[data-owned-index]').length,
+        ownedInBox: session ? G.Copies.all(G.DB.save).filter((c) => c.speciesID === session.dex).length : null,
+        cursor,
+        tipRightOfWindow: !!tip && !!frame && tip.getBoundingClientRect().left >= frame.getBoundingClientRect().right,
+        misses: session ? session.misses : null,
+        allowed: session ? session.allowed : null,
+        ringShare: ringDeg / 360,
+        selected: (root.querySelector('.catch-slot.is-selected') || { dataset: {} }).dataset.slot,
+        asking: G.UI.isOpen('scr-ask'),
+        // why a catch did not open: the run's state and the screens up
+        why:
+          G.Game.state + ' / ' + [...document.querySelectorAll('section.scr:not(.hidden)')].map((x) => x.id).join(','),
+      };
+    });
+  // one key, then a few frames so the game loop reads it (headless frames can be slow)
+  const key = async (code) => {
+    await page.keyboard.press(code);
+    await page.waitForTimeout(150);
+  };
+  const forceRandom = (value) =>
+    page.evaluate((v) => {
+      window.realRandom = window.realRandom || Math.random;
+      Math.random = () => v;
+    }, value);
+  const realRandom = () => page.evaluate(() => (Math.random = window.realRandom || Math.random));
+  let shown = await screen();
   ok(
-    shown.name === name && /Portrait\.png$/.test(shown.portrait) && /^\d+%$/.test(shown.odds),
-    tag + ': it shows the name, the portrait and a catch % (' + shown.odds + ')'
+    shown.open && shown.paused,
+    tag +
+      ': touching the won Stage 1 opens the catch screen and pauses the run' +
+      (shown.open ? '' : ' (' + shown.why + ')')
+  );
+  const [low, high] = (shown.band.match(/\d+/g) || []).map(Number);
+  ok(
+    shown.name.endsWith(name) && /Portrait\.png$/.test(shown.portrait) && /^\d+-\d+%$/.test(shown.band),
+    tag + ': it shows "Nature Name", the portrait and a catch band (' + shown.name + ', ' + shown.band + ')'
   );
   ok(
-    shown.cells === shown.size && shown.balls === shown.size,
-    tag + ': one belt cell per slot, all full at the start (' + shown.balls + ' / ' + shown.cells + ')'
+    high - low === 2 * shown.reach && low <= shown.truth && shown.truth <= high,
+    tag + ': the band is 2 x bandAccuracy wide and holds the true chance (' + shown.truth + '% in ' + shown.band + ')'
   );
-  // A sure catch: the roll happens on the throw, so Math.random is forced only around it.
-  await page.evaluate(() => {
-    window.realRandom = Math.random;
-    Math.random = () => 0;
-  });
-  await page.dblclick('#catch-belt .catch-cell.on');
-  await page.evaluate(() => (Math.random = window.realRandom));
-  await page.waitForFunction(() => !G.UI.isOpen('scr-catch'), null, { timeout: 6000 }).catch(() => {});
+  ok(
+    shown.beltBalls === shown.total && shown.lockedBelts === 2 && shown.keysOn.join() === '6,0,0',
+    tag +
+      ': belt 1 holds every ball and shows 1 to 6, belts 2 and 3 are locked (' +
+      shown.beltBalls +
+      ' balls, keys ' +
+      shown.keysOn.join('/') +
+      ')'
+  );
+  ok(
+    shown.owned === shown.ownedInBox && shown.owned >= 5,
+    tag + ': Pokemon owned shows every copy of the species in the box (' + shown.owned + ')'
+  );
+  // the cursor: down the belt, right into the owned grid (tooltip right of the window), down to Throw and Let It Go
+  const path = [];
+  for (const code of ['ArrowDown', 'ArrowRight', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowUp']) {
+    await key(code);
+    const now = await screen();
+    path.push(now.cursor + (now.cursor.startsWith('owned') ? (now.tipRightOfWindow ? ' tip' : ' no tip') : ''));
+  }
+  ok(
+    path.join(', ') === 'slot 0.1, owned 0 tip, owned 4 tip, throw, let go, throw',
+    tag +
+      ': the arrow keys walk the cursor belt, owned grid (with its tooltip), Throw, Let It Go (' +
+      path.join(', ') +
+      ')'
+  );
+  await key('Escape');
+  ok((await screen()).asking, tag + ': Esc asks before letting it go');
+  await page.click('#ask-no');
+  await page.waitForTimeout(150);
+  shown = await screen();
+  ok(shown.open && !shown.asking, tag + ': Keep trying keeps the catch open');
+  // Enter on Throw: a sure miss; the selected slot empties and the ring fills by misses / allowed
+  const before = shown;
+  await forceRandom(0.9999);
+  await key('Enter');
+  await realRandom();
+  await page.waitForFunction(() => !G.CatchUI.busy, null, { timeout: 6000 }).catch(() => {});
+  shown = await screen();
+  const thrownEmpty = await page.evaluate(
+    (slot) =>
+      !document.querySelector('#scr-catch [data-belt="0"][data-slot="' + slot + '"]').classList.contains('is-full'),
+    before.selected
+  );
+  ok(
+    shown.total === before.total - 1 && thrownEmpty && shown.misses === 1,
+    tag + ': Enter on Throw throws the selected ball and leaves its slot empty (a miss)'
+  );
+  ok(
+    Math.abs(shown.ringShare - shown.misses / shown.allowed) < 0.01,
+    tag +
+      ': the flee ring fills misses / allowed (' +
+      shown.ringShare.toFixed(2) +
+      ' at ' +
+      shown.misses +
+      '/' +
+      shown.allowed +
+      ')'
+  );
+  // a click selects without replacing the slot (a real double click needs the same element twice), then a double click throws
+  const slot = await page.$('#scr-catch [data-belt="0"].is-full:not(.is-selected)');
+  await slot.click();
+  await page.waitForTimeout(100);
+  ok(
+    await slot.evaluate((element) => element.isConnected && element.classList.contains('is-selected')),
+    tag + ': a click selects the ball and keeps the same slot element'
+  );
+  await forceRandom(0);
+  await slot.dblclick();
+  await realRandom();
+  await page.waitForFunction(() => !G.UI.isOpen('scr-catch'), null, { timeout: 8000 }).catch(() => {});
   const after = await page.evaluate(() => ({
     open: G.UI.isOpen('scr-catch'),
     state: G.Game.state,
     held: G.Catch.held.length,
     left: G.Catch.total(),
-    size: G.Catch.belt().size,
     box: G.DB.save.box.filter((c) => c.m === 'r').length,
   }));
   ok(
-    !after.open && after.state === 'playing' && after.held === 1 && after.left === after.size - 1 && after.box === box0,
+    !after.open &&
+      after.state === 'playing' &&
+      after.held === 1 &&
+      after.left === shown.total - 1 &&
+      after.box === box0,
     tag + ': a double click throws one ball, the catch is held (not boxed) and the run plays on'
   );
   await page.evaluate(() => G.Game.quit());
@@ -596,15 +722,16 @@ async function catchFlow(browser, query, tag) {
   await run();
   await winAndTouch();
   await page.waitForFunction(() => G.UI.isOpen('scr-catch'), null, { timeout: 5000 }).catch(() => {});
-  await page.evaluate(() => {
-    const real = Math.random;
-    Math.random = () => 0;
-    G.CatchUI.throwNow();
-    Math.random = real;
-  });
+  // number key 2 throws from belt 1 (a sure catch)
+  const total2 = await page.evaluate(() => G.Catch.total());
+  await forceRandom(0);
+  await key('Digit2');
+  await realRandom();
   await page
-    .waitForFunction(() => G.Game.state === 'playing' && G.Catch.held.length === 1, null, { timeout: 6000 })
+    .waitForFunction(() => G.Game.state === 'playing' && G.Catch.held.length === 1, null, { timeout: 8000 })
     .catch(() => {});
+  const byKey = await page.evaluate(() => ({ held: G.Catch.held.length, total: G.Catch.total() }));
+  ok(byKey.held === 1 && byKey.total === total2 - 1, tag + ': number key 2 throws a ball from belt 1');
   await page.evaluate(() => {
     for (const f of G.Game.roster) {
       f.runItems = [];

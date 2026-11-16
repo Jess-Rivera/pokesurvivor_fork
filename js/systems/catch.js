@@ -6,6 +6,10 @@
  * run paused. This file holds every rule; the screen only draws and routes input.
  *   odds     P = min(ceiling, base x ball x (1 + t)); t = the fight's time left, 0 to 1. base slides by BST inside the star's
  *            band (BANDS), with a drop between bands.
+ *   band     the screen never shows the exact chance: a range 2 x bandAccuracy points wide (K.bandAccuracy, 15 to start, a
+ *            #97 meta upgrade later) that always holds it. Where the true chance sits inside is rolled once per catch
+ *            (session.bandShift) and shared by every ball, so a better ball always reads better (Jess, 2026-11-16, plan
+ *            docs/ASCII Concept Maps/136b - Catch Screen Redesign Plan.md). The range slides to stay inside 0 to 100.
  *   flee     misses allowed by the rescued Pokemon's nature (FLEE). The last allowed miss, or a miss that empties the belt,
  *            and it runs off.
  *   belt     save.belt: one shared count of balls ({ size, poke }). A throw uses one ball, caught or not. Only Poke Balls until
@@ -20,6 +24,7 @@ G.Catch = (() => {
   const K = {
     ceiling: 0.9, // the most a throw can be ([Open] playtest)
     startBelt: 6, // a new save's belt size
+    bandAccuracy: 15, // the shown range reaches this many points either side of its middle (#97 narrows it later)
   };
   // Ball tiers. Great (1.5) and Ultra (2) arrive with the Shop unlocks (#137).
   const BALLS = [{ id: 'poke', name: 'Poke Ball', mult: 1, icon: 'ps:ball.poke' }];
@@ -52,7 +57,7 @@ G.Catch = (() => {
   };
 
   let held = []; // { dex, name, nature, natureName } caught this run
-  let session = null; // the open catch: { dex, name, nature, natureName, star, timeFraction, misses, allowed }
+  let session = null; // the open catch: { dex, name, nature, natureName, star, timeFraction, misses, allowed, bandShift }
 
   // ---------------- odds and flee ----------------
 
@@ -64,9 +69,9 @@ G.Catch = (() => {
   /** The base catch chance of a species: its star's band, slid by its BST inside it. */
   function baseOdds(dex) {
     const mon = G.DEX_BY[dex];
-    const band = BANDS[(mon && mon.rarity) || 1] || BANDS[1];
-    const along = Math.max(0, Math.min(1, (bst(dex) - band.lo) / (band.hi - band.lo)));
-    return band.from + (band.to - band.from) * along;
+    const starBand = BANDS[(mon && mon.rarity) || 1] || BANDS[1];
+    const along = Math.max(0, Math.min(1, (bst(dex) - starBand.lo) / (starBand.hi - starBand.lo)));
+    return starBand.from + (starBand.to - starBand.from) * along;
   }
 
   /** The chance one throw of this ball catches it, with t (0 to 1) of the fight clock left. */
@@ -75,6 +80,16 @@ G.Catch = (() => {
     if (!ball) return 0;
     const t = Math.max(0, Math.min(1, timeFraction || 0));
     return Math.min(K.ceiling, baseOdds(dex) * ball.mult * (1 + t));
+  }
+
+  /** The range the screen shows for a true chance (0 to 1): { low, high } in whole percent, 2 x bandAccuracy wide, holding
+   *  the true chance (rounded). shift (-bandAccuracy to +bandAccuracy) moves the range off-centre; 0 centres it. */
+  function band(chance, shift = 0) {
+    const reach = K.bandAccuracy,
+      truth = Math.round(chance * 100),
+      offset = Math.max(-reach, Math.min(reach, Math.round(shift)));
+    const low = Math.max(0, Math.min(100 - 2 * reach, truth - reach + offset));
+    return { low, high: low + 2 * reach };
   }
 
   /** Misses allowed before it runs off, by its nature (the pokeapi id, 1 to 25). */
@@ -115,7 +130,7 @@ G.Catch = (() => {
   }
 
   /** Touching a won rescue's Pokemon: the catch it opens, or null when the belt is empty. */
-  function begin(result) {
+  function begin(result, rnd = Math.random) {
     if (!result || total() <= 0) return null;
     const mon = G.DEX_BY[result.dex];
     session = {
@@ -127,6 +142,7 @@ G.Catch = (() => {
       timeFraction: result.timeFraction || 0,
       misses: 0,
       allowed: fleeAllowance(result.nature),
+      bandShift: Math.round((rnd() * 2 - 1) * K.bandAccuracy), // where the true chance sits in the shown range
     };
     return session;
   }
@@ -178,6 +194,7 @@ G.Catch = (() => {
     FLEE,
     baseOdds,
     odds,
+    band,
     fleeAllowance,
     belt,
     count,

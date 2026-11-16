@@ -750,42 +750,8 @@
       </div>
     </section>
 
-    <!-- #136: the catch screen (js/ui/catch-ui.js, G.CatchUI; css/bw-catch.css over the Inventory window's frame) -->
-    <section id="scr-catch" class="scr dim hidden">
-      <div class="inv catch">
-        <div class="inv-head"><b>Catch</b><span id="catch-count"></span></div>
-        <p class="inv-sub">Pick a ball and throw it. Every throw uses a ball, caught or not.</p>
-        <div class="catch-main">
-          <div class="catch-mon">
-            <div class="catch-face"><img id="catch-portrait" alt="" /></div>
-            <div class="catch-title"><b id="catch-name"></b><span id="catch-star"></span></div>
-            <div id="catch-nature" class="catch-nature"></div>
-            <div class="catch-oddsbox">
-              <span id="catch-odds" class="catch-odds"></span>
-              <span id="catch-odds-ball" class="catch-odds-ball"></span>
-            </div>
-            <div id="catch-time" class="catch-time"></div>
-          </div>
-          <div class="catch-side">
-            <div class="inv-dbox catch-fleebox">
-              <span>Flee</span>
-              <div id="catch-flee" class="catch-flee"></div>
-              <small id="catch-flee-text"></small>
-            </div>
-            <div id="catch-stage" class="catch-stage"><span id="catch-stage-ball"></span></div>
-            <div id="catch-belt" class="catch-belt"></div>
-            <div id="catch-note" class="inv-note catch-note"></div>
-            <div class="inv-hint">
-              Number key or click: pick a ball. Enter, Throw, or a double click: throw it. Esc: let it go.
-            </div>
-          </div>
-        </div>
-        <div class="inv-foot catch-foot">
-          <button class="bw-btn" id="catch-letgo">Let it go<img src="assets/ui/team/back-x.png" alt="" /></button>
-          <button class="bw-btn" id="catch-throw">Throw<img src="assets/ui/team/commit-arrow.png" alt="" /></button>
-        </div>
-      </div>
-    </section>
+    <!-- #136: the catch screen (js/ui/catch-ui.js, G.CatchUI, draws inside it from the HUD kit; css/bw-catch.css) -->
+    <section id="scr-catch" class="scr dim hidden"></section>
 
     <!-- In-game confirm dialog (G.UI.ask): replaces the browser confirm() for new screens. Not in the SCREENS list, so it sits on top of whatever is open. -->
     <section id="scr-ask" class="scr dim hidden">
@@ -895,6 +861,7 @@
     <script defer src="js/data/upgrades.js"></script>
     <script defer src="js/data/evolvable.js"></script>
     <script defer src="js/data/stage-one.js"></script>
+    <script defer src="js/data/ball-sprites.js"></script>
     <script defer src="js/data/species-traits.js"></script>
     <script defer src="js/systems/copies.js"></script>
     <script defer src="js/data/items.js"></script>

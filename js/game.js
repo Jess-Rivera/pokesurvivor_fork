@@ -762,7 +762,7 @@ G.Game = (() => {
   /** #136: touching a won rescue's Stage 1 opens the catch screen (js/ui/catch-ui.js) with the run paused, as a shop does.
    *  False when it cannot now (another screen is open, co-op): G.Rescue tries again next frame. */
   function openCatch(result) {
-    if (!pl || pl.dead || state !== 'playing' || G.Coop.active) return false;
+    if (!pl || pl.dead || state !== 'playing' || G.Coop.active || !G.CatchUI.ready) return false;
     if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop', 'scr-catch'].some(G.UI.isOpen)) return false;
     const session = G.Catch.begin(result);
     if (!session) return false;

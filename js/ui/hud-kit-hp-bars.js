@@ -6,8 +6,8 @@
 G.HudKitHpBars = (() => {
   const coreKit = G.HudKit;
   if (!coreKit.ready) return { ready: false };
-  const { html, signal, PALETTE, HP_COLOURS, hpBand, SLOT_GRID, BAR_CHECKER, PixelShape, portraitSource } = coreKit;
-  const { portraitFallback } = coreKit;
+  const { html, signal, hooks: preactHooks, PALETTE, HP_COLOURS, hpBand, SLOT_GRID, BAR_CHECKER, PixelShape } = coreKit;
+  const { portraitSource, portraitFallback } = coreKit;
 
   // ---------- the roster card (b2-lower Y15 to AA16): the run screen's roster rows and the pause menu's team panel ----------
   // HUD-STYLE "Roster rows". The box is drawn at 2 px per art pixel, 32 rows tall; its width varies (the run screen's
@@ -99,6 +99,57 @@ G.HudKitHpBars = (() => {
     }
     return runs;
   };
+  /**
+   * A box: the roster card's box at any size (2 px art pixels) with a flat body, rimmed in `rim`; its contents go inside.
+   * Moved here from the pause menu's detail panel (#89) for the catch screen (136b). rimRight (optional): a second ramp for
+   * the right side, the rim blending from rim to rimRight across the top and bottom (a dual-type Pokemon, Jess 2026-11-16).
+   */
+  let boxGradientCount = 0;
+  function Box({ left, top, width, height, rim, rimRight, className, children }) {
+    const artWidth = width / 2,
+      artRows = height / 2;
+    const gradientId = preactHooks.useMemo(() => 'hud-box-rim-' + ++boxGradientCount, []);
+    const blended = rimRight && (rimRight.base !== rim.base || rimRight.light !== rim.light);
+    const shade = (part) => (blended ? 'url(#' + gradientId + '-' + part + ')' : rim[part]);
+    const colours = {
+      ...rosterColours({ light: shade('light'), base: shade('base'), dark: shade('dark') }, PALETTE.body),
+    };
+    return html`<div
+      class=${'pm-box' + (className ? ' ' + className : '')}
+      style=${{ left: left + 'px', top: top + 'px', width: width + 'px', height: height + 'px' }}
+    >
+      ${
+        blended
+          ? html`<svg class="pm-box-gradients" width="0" height="0" aria-hidden="true">
+              <defs>
+                ${['light', 'base', 'dark'].map(
+                  (part) =>
+                    html`<linearGradient
+                      key=${part}
+                      id=${gradientId + '-' + part}
+                      gradientUnits="userSpaceOnUse"
+                      x1="0"
+                      y1="0"
+                      x2=${artWidth}
+                      y2="0"
+                    >
+                      <stop offset="0.1" stop-color=${rim[part]} />
+                      <stop offset="0.9" stop-color=${rimRight[part]} />
+                    </linearGradient>`
+                )}
+              </defs>
+            </svg>`
+          : null
+      }
+      <${PixelShape}
+        artWidth=${artWidth}
+        artRows=${artRows}
+        artPixel=${2}
+        paintRow=${letterRows(rosterBoxGrid(artWidth, artRows, false), colours)}
+      />
+      ${children}
+    </div>`;
+  }
   /** The HP fill for a card artWidth wide: whole art pixels as a fraction of the track, one pixel while alive. */
   function rosterFill(hpFraction, fainted, artWidth) {
     const fillArt = rosterFillArtWidth(artWidth),
@@ -362,5 +413,6 @@ G.HudKitHpBars = (() => {
     letterRows,
     rosterFill,
     createLifeBar,
+    Box,
   };
 })();

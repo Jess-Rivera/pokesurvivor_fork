@@ -85,7 +85,7 @@ G.PausePokemon = (() => {
   if (!overlay || !overlay.ready) return { ready: false, runStatsNumbers, runStatsRows };
   const { html, signal, hooks, PALETTE, FAINTED_RIM, PixelShape, typeColours, hpBand } = overlay.kit;
   const { IconCanvas, Cursor, RosterCard, rosterBoxGrid, rosterColours, letterRows, rosterFill } = overlay.kit;
-  const { createLifeBar, portraitSource, portraitFallback, ItemGrid, ScrollBox } = overlay.kit;
+  const { createLifeBar, portraitSource, portraitFallback, ItemGrid, ScrollBox, Box } = overlay.kit;
   const { tooltipHandlers, hideTooltip } = overlay.kit; // every tooltip is drawn in the menu's shared layer
   const inventory = G.PauseInventory && G.PauseInventory.ready ? G.PauseInventory : null; // held item moves (#90)
 
@@ -199,22 +199,6 @@ G.PausePokemon = (() => {
       style=${{ ...style, transformOrigin: origin }}
       >${text}</span
     >`;
-  }
-
-  /** A box: the roster card's box at any size with a flat body, rimmed in `rim`; its contents go inside. */
-  function Box({ left, top, width, height, rim, className, children }) {
-    return html`<div
-      class=${'pm-box' + (className ? ' ' + className : '')}
-      style=${{ left: left + 'px', top: top + 'px', width: width + 'px', height: height + 'px' }}
-    >
-      <${PixelShape}
-        artWidth=${width / 2}
-        artRows=${height / 2}
-        artPixel=${2}
-        paintRow=${letterRows(rosterBoxGrid(width / 2, height / 2, false), rosterColours(rim, PALETTE.body))}
-      />
-      ${children}
-    </div>`;
   }
 
   /** A pixel arrow (after b2-lower AC8 to AD8): a filled triangle with an outline, pointing left or right. */

@@ -108,6 +108,7 @@ G.HudOverlay = (() => {
     'ItemGrid',
     'ScrollBox',
     'TooltipLayer',
+    'showTooltip',
     'hideTooltip',
     'tooltipHandlers',
     'Cursor',
@@ -123,6 +124,7 @@ G.HudOverlay = (() => {
     'createChipReader',
     'createEffectChipReader',
     'createLifeBar',
+    'Box',
     'portraitSource',
     'portraitFallback',
   ];

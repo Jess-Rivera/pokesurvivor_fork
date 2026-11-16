@@ -383,6 +383,27 @@ to E14 and F15 to J18; values picked by eye, not sampled.
 
 ---
 
+#### `[Proposed]` Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16)
+
+Every colour is an existing one given a job here (plan: docs/ASCII Concept Maps/136b - Catch Screen Redesign Plan.md).
+Proposed until Jess feel-tests the screen.
+
+| Role                                        | Colour                        | Source                            |
+| ------------------------------------------- | ----------------------------- | --------------------------------- |
+| Window background                           | `#181818`, frame `#212121`    | the Run Info panel                |
+| Pokemon panel rim                           | its type ramps, left first type, right second, blended along top and bottom | Type colours |
+| Belt rim (light, base, dark)                | `#DBB26E` `#C88820` `#825815` | UI-PALETTES Bag, Poke Balls pocket |
+| Belt slot edge / selected slot body         | `#825815` / `#825815` with a `#DBB26E` edge | the same ramp   |
+| Locked belt rim                             | the fainted grey ramp at 45%  | Roster rows                       |
+| Pokemon owned rim (light, base, dark)       | `#C1C2C1` `#9FA19F` `#676967` | Normal type ramp                  |
+| Flee ring filled / empty                    | first type's Dark / `#e7e7e7` | Type colours / run item paper     |
+| Throw rim focused                           | `#38d030`                     | Pause menu button focus           |
+| Let It Go text at rest                      | `#ffffff` at 45%              | mockup                            |
+| Let It Go rim and body focused              | `#ff8a90` `#e8202a` `#7c1016`, body `#7c1016` | Pause menu End answer |
+| Result line                                 | `#f3b200`                     | the Lv yellow                     |
+
+---
+
 #### `[Approved]` Toasts (G.UI.toast, every screen; Jess, 2026-11-13, #104c)
 - Body `#181818` and a 2 px rim `#29ceff`: the main menu top and bottom bars' charcoal and teal line (bw-menu.css
   `--bw-charcoal`, `--bw-line`), with a 2 px `#101010` outline. Bad news (`tone 'bad'`): the same with the pause menu

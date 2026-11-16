@@ -7,6 +7,22 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-16',
+    title: ['A new catch screen', 'A new catch screen'],
+    chg: [
+      [
+        'The catch screen has a new look. It shows a range for your catch chance instead of an exact number, and a ring around the Pokemon fills with every miss until it runs off. Your belt holds 6 Poke Balls, and two more belts are coming later. You can also see every one of that species you already own, with its IVs and EVs on hover. Arrow keys move a cursor, Enter selects or throws, and keys 1 to 6 throw from that slot.',
+        'The catch screen has a new look. It shows a range for your catch chance instead of an exact number, and a ring around the Pokemon fills with every miss until it runs off. Your belt holds 6 Poke Balls, and two more belts are coming later. You can also see every one of that species you already own, with its IVs and EVs on hover. Arrow keys move a cursor, Enter selects or throws, and keys 1 to 6 throw from that slot.',
+      ],
+    ],
+    fix: [
+      [
+        'Double-clicking a Poke Ball on the catch screen now throws it.',
+        'Double-clicking a Poke Ball on the catch screen now throws it.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-15',
     title: ['Speed and dodges', 'Speed and dodges'],
     new: [

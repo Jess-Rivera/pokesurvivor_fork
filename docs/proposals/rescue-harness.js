@@ -215,6 +215,26 @@ const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === nam
   if (realSave !== G.DB.save) bad('the test save stays loaded');
   C.startRun(save);
   console.log('6d held until the run ends: a quit loses them, a kept end places them with their nature, a full box sells'); }
+{ // 6e the shown band (Jess, 2026-11-16): 2 x bandAccuracy wide, always holds the true chance, inside 0 to 100, off-centre by the
+  // catch's own shift; one shift per catch, so the same shift keeps a higher chance's range at or above a lower one's
+  const reach = CK.bandAccuracy, shifts = [-reach, -reach / 2, 0, reach / 2, reach];
+  const centres = new Set();
+  for (let pct = 0; pct <= 100; pct++)
+    for (const shift of shifts) {
+      const b = C.band(pct / 100, shift);
+      if (b.high - b.low !== 2 * reach) bad('a band is ' + 2 * reach + ' points wide: ' + pct + '% shift ' + shift + ' gave ' + b.low + ' to ' + b.high);
+      if (!(b.low <= pct && pct <= b.high)) bad('the band holds the true chance: ' + pct + '% shift ' + shift + ' gave ' + b.low + ' to ' + b.high);
+      if (b.low < 0 || b.high > 100) bad('the band stays inside 0 to 100: ' + pct + '% gave ' + b.low + ' to ' + b.high);
+      if (pct === 47) centres.add(pct - (b.low + b.high) / 2);
+      if (pct > 0 && C.band((pct - 1) / 100, shift).low > b.low) bad('with one shift, a higher chance never reads lower: ' + pct + '%');
+    }
+  if (centres.size < 3) bad('the shift moves the true chance off the middle of the band (47%: ' + [...centres].join() + ')');
+  C.startRun(save);
+  const s1 = C.begin(result(147, natureId('bold'), 0.5), () => 0), lowShift = s1.bandShift;
+  const s2 = C.begin(result(147, natureId('bold'), 0.5), () => 0.9999);
+  if (!(Math.abs(lowShift) <= reach && Math.abs(s2.bandShift) <= reach && lowShift < s2.bandShift)) bad('each catch rolls its own shift inside the reach');
+  C.letGo();
+  console.log('6e band: ' + 2 * reach + ' wide, holds the true chance, inside 0 to 100, off-centre by a per-catch shift'); }
 
 console.log(fail ? fail + ' FAILED' : 'rescue harness: all passed');
 process.exit(fail ? 1 : 0);

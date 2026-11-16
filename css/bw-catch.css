@@ -1,162 +1,203 @@
-/* ============ bw-catch.css: the catch screen (#136, js/ui/catch-ui.js) ============
- * The Inventory window (bw-inventory.css: frame, title bar, sub line, detail boxes, bottom bar) holds it; only the catch's own
- * parts are here. Left: the portrait, name, star, nature and the catch chance. Right: the Flee pips, the throw stage, the belt
- * strip, the result line and the hint. The Throw and Let it go buttons are the Team screen's .bw-btn (bw-team.css).
+/* ============ bw-catch.css: the catch screen (#136, redesign 136b; js/ui/catch-ui.js) ============
+ * Mockup: assets/excalidraw/Catch Pokemon Popup.svg. The pause menu's stage (pause-menu.css .pm-stage, scaled by --pm-scale)
+ * inside #scr-catch; boxes, buttons, cursor and tooltip are the HUD kit's (hud-overlay.css, pause-menu.css). Places and sizes
+ * come from catch-ui.js (stage pixels); only the looks are here.
  */
-.inv.catch {
-  width: min(760px, 100%);
+.catch-host {
+  position: absolute;
+  inset: 0;
+  user-select: none;
+  --pm-scale: 1;
 }
-.catch-main {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 16px;
+.catch-stage {
+  font-family: 'HudText', monospace;
+  font-synthesis: none;
+  color: #ffffff;
+}
+.catch-stage .pm-box,
+.catch-ring,
+.catch-slot,
+.catch-owned-cell,
+.catch-button,
+.catch-ball {
+  position: absolute;
+}
+/* the window: the Run Info panel's background (pause-menu.css .pm-panel) */
+.catch-window {
+  position: absolute;
+  background: #181818;
+  border: 1px solid #212121;
+  box-shadow: 0 0 0 2px #101010;
+}
+.pm-box-gradients {
+  position: absolute;
 }
 
-/* ---------- left: the Pokemon ---------- */
-.catch-mon {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 14px;
-  background: rgba(0, 99, 140, 0.35);
+/* ---------- the Pokemon: the flee ring (one step per miss, the first type's Dark), name, band ---------- */
+.catch-ring {
+  border-radius: 50%;
+  background: conic-gradient(var(--flee-fill) 0 var(--flee), var(--flee-empty) var(--flee) 360deg);
 }
 .catch-face {
-  width: 128px;
-  height: 128px;
-  border: 3px solid var(--bw-line);
+  position: absolute;
+  box-sizing: border-box;
+  border: 4px solid #101010;
   border-radius: 50%;
   overflow: hidden;
-  background: rgba(0, 33, 57, 0.8);
+  background: #101010;
+  transition:
+    transform 0.2s ease-in,
+    opacity 0.2s linear;
 }
 .catch-face img {
+  display: block;
   width: 100%;
   height: 100%;
   image-rendering: pixelated;
 }
-.catch-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 22px;
+.catch-face.is-absorbed img {
+  transform: scale(0);
+  transition: transform 0.2s ease-in;
 }
-.catch-nature {
-  font-size: 14px;
-  color: var(--bw-sub);
+.catch-face img {
+  transition: transform 0.2s ease-out;
 }
-.catch-oddsbox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 6px;
-  padding: 8px 18px;
-  background: rgba(0, 33, 57, 0.6);
+.catch-face.is-fled img {
+  opacity: 0;
+  transition: opacity 0.6s linear;
 }
-.catch-odds {
+.catch-mon .catch-name {
+  left: 20px;
+  right: 20px;
+  top: 232px;
+  white-space: normal;
+  text-align: center;
+  line-height: 36px;
+}
+.catch-mon .catch-band {
+  left: 0;
+  right: 0;
+  top: 318px;
+  text-align: center;
   font-size: 40px;
-  color: var(--bw-title);
+  line-height: 40px;
+  color: #ffffff;
+  text-shadow:
+    4px 0 0 #101010,
+    -4px 0 0 #101010,
+    0 4px 0 #101010,
+    0 -4px 0 #101010,
+    4px 4px 0 #101010,
+    -4px 4px 0 #101010,
+    4px -4px 0 #101010,
+    -4px -4px 0 #101010;
 }
-.catch-odds-ball {
-  font-size: 13px;
-  color: var(--muted);
-}
-.catch-time {
-  font-size: 12px;
-  color: var(--muted);
+.catch-mon .catch-ball-name {
+  left: 0;
+  right: 0;
+  top: 372px;
   text-align: center;
 }
+.catch-mon .catch-note {
+  left: 20px;
+  right: 20px;
+  top: 404px;
+  white-space: normal;
+  text-align: center;
+  line-height: 24px;
+  color: #f3b200;
+}
 
-/* ---------- right: flee, stage, belt ---------- */
-.catch-side {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-.catch-fleebox {
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  font-size: 16px;
-}
-.catch-fleebox small {
-  flex-basis: 100%;
-  font-size: 12px;
-  color: var(--muted);
-}
-.catch-flee {
-  display: flex;
-  gap: 6px;
-}
-.catch-pip {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #ff5f6d;
-  transform: rotate(45deg);
-}
-.catch-pip.on {
-  background: #ff5f6d;
-}
-.catch-stage {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* ---------- the belts: six slots each, belt 1 in the Poke Balls pocket colours, 2 and 3 locked ---------- */
+.catch-slot {
+  width: 64px;
   height: 64px;
-  background: rgba(0, 33, 57, 0.5);
+  box-sizing: border-box;
+  border: 2px solid #825815;
+  background: #101010;
 }
-.catch-stage.throwing #catch-stage-ball {
-  animation: catch-wobble 0.33s ease-in-out 3;
-}
-@keyframes catch-wobble {
-  25% {
-    transform: rotate(-22deg);
-  }
-  75% {
-    transform: rotate(22deg);
-  }
-}
-.catch-belt {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.catch-cell {
-  appearance: none;
-  position: relative;
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 2px solid var(--bw-line);
-  background: rgba(0, 33, 57, 0.7);
+.catch-slot.is-full {
   cursor: pointer;
 }
-.catch-cell.on {
-  border-color: var(--bw-title);
-  background: rgba(0, 99, 140, 0.6);
+.catch-slot.is-selected.is-full {
+  border-color: #dbb26e;
+  background: #825815;
 }
-.catch-cell.empty {
-  opacity: 0.35;
-  cursor: default;
+.catch-slot .catch-ball {
+  left: -2px;
+  top: -2px;
 }
-.catch-cell small {
+.catch-ball {
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+.catch-slot-key {
   position: absolute;
-  right: 3px;
-  bottom: 1px;
-  font-size: 10px;
-  color: var(--bw-sub);
+  right: 2px;
+  bottom: 2px;
 }
-.catch-note {
-  min-height: 2.6em;
+.catch-belt.is-locked {
+  opacity: 0.45;
 }
-.catch-foot {
-  justify-content: space-between;
+.catch-belt.is-locked .catch-slot {
+  border-color: #495151;
 }
 
-@media (max-width: 720px) {
-  .catch-main {
-    grid-template-columns: 1fr;
+/* ---------- Pokemon owned: Normal's colours, a 4 x 4 window that scrolls ---------- */
+.catch-owned-grid {
+  position: relative;
+}
+.catch-owned-cell {
+  width: 56px;
+  height: 56px;
+}
+.catch-owned-face {
+  position: absolute;
+  inset: 4px;
+  box-sizing: border-box;
+  border: 2px solid #c1c2c1;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #101010;
+}
+.catch-owned-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.catch-owned .catch-owned-none {
+  left: 0;
+  right: 0;
+  top: 128px;
+  text-align: center;
+  color: #9fa19f;
+}
+
+/* ---------- Throw and Let It Go: the kit's menu button; Let It Go's text at 45% until focused ---------- */
+.catch-button {
+  width: 282px;
+  height: 66px;
+}
+.catch-button .pm-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.catch-let-go:not(.is-focused) .hud-text {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ---------- the ball in the air ---------- */
+.catch-flight {
+  z-index: 2;
+}
+.catch-flight.is-caught {
+  animation: catch-click 0.3s ease-out;
+}
+@keyframes catch-click {
+  50% {
+    filter: brightness(1.8);
   }
 }

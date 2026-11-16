@@ -111,8 +111,9 @@ G.HudKitItems = (() => {
    * trapped under later panels (the team cards over the move list's tooltip) and clipped by scroll boxes.
    * showTooltip(anchor, content, place): content { name, lines, variant } (variant 'item': name and a 300 px
    *   description; 'detail': the detail panel's 558 px box; 'plain': one line, no name); nothing to show hides it.
-   *   place { side: 'above' (default) | 'below' | 'leftOf', align: 'centre' (default) | 'start' | 'end', gap (px,
-   *   default 8), beside: for 'leftOf', the element or a selector (closest to the anchor) whose left edge it is off }.
+   *   place { side: 'above' (default) | 'below' | 'leftOf' | 'rightOf', align: 'centre' (default) | 'start' | 'end', gap
+   *   (px, default 8), beside: for 'leftOf' / 'rightOf', the element or a selector (closest to the anchor) whose left /
+   *   right edge it is off; level with the anchor's top }.
    * hideTooltip(): gone (a scroll, a redraw, a pick-up, the menu closing).
    * tooltipHandlers(content, place): an anchor's hover handlers; content may be a function read on each show. A
    *   pointer move re-shows it after a redraw under a still pointer (an item put down, the next Pokemon by key).
@@ -135,11 +136,12 @@ G.HudKitItems = (() => {
       align = place.align || 'centre',
       gap = place.gap != null ? place.gap : 8;
     let x, y, shift;
-    if (side === 'leftOf') {
-      const beside = (typeof place.beside === 'string' ? anchor.closest(place.beside) : place.beside) || anchor;
-      x = toStageX(beside.getBoundingClientRect().left) - gap;
+    if (side === 'leftOf' || side === 'rightOf') {
+      const beside = (typeof place.beside === 'string' ? anchor.closest(place.beside) : place.beside) || anchor,
+        besideBox = beside.getBoundingClientRect();
+      x = side === 'leftOf' ? toStageX(besideBox.left) - gap : toStageX(besideBox.right) + gap;
       y = toStageY(anchorBox.top);
-      shift = 'translate(-100%, 0)';
+      shift = side === 'leftOf' ? 'translate(-100%, 0)' : 'none';
     } else {
       const edge =
         align === 'start' ? anchorBox.left : align === 'end' ? anchorBox.right : (anchorBox.left + anchorBox.right) / 2;
@@ -282,6 +284,7 @@ G.HudKitItems = (() => {
     ItemGrid,
     ScrollBox,
     TooltipLayer,
+    showTooltip,
     hideTooltip,
     tooltipHandlers,
   };
