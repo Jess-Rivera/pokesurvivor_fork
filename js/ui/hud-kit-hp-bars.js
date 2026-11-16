@@ -7,7 +7,7 @@ G.HudKitHpBars = (() => {
   const coreKit = G.HudKit;
   if (!coreKit.ready) return { ready: false };
   const { html, signal, hooks: preactHooks, PALETTE, HP_COLOURS, hpBand, SLOT_GRID, BAR_CHECKER, PixelShape } = coreKit;
-  const { portraitSource, portraitFallback } = coreKit;
+  const { portraitSource, portraitFallback, letterRows } = coreKit;
 
   // ---------- the roster card (b2-lower Y15 to AA16): the run screen's roster rows and the pause menu's team panel ----------
   // HUD-STYLE "Roster rows". The box is drawn at 2 px per art pixel, 32 rows tall; its width varies (the run screen's
@@ -87,18 +87,6 @@ G.HudKitHpBars = (() => {
     f: PALETTE.frame,
     t: PALETTE.trackEdge,
   });
-  /** paintRow for a grid of letters: runs of one letter become one rectangle. */
-  const letterRows = (grid, colours) => (row) => {
-    const line = grid[row],
-      runs = [];
-    let start = 0;
-    for (let column = 1; column <= line.length; column++) {
-      if (column < line.length && line[column] === line[start]) continue;
-      if (line[start] !== ' ') runs.push([start, column - start, colours[line[start]]]);
-      start = column;
-    }
-    return runs;
-  };
   /**
    * A box: the roster card's box at any size (2 px art pixels) with a flat body, rimmed in `rim`; its contents go inside.
    * Moved here from the pause menu's detail panel (#89) for the catch screen (136b). rimRight (optional): a second ramp for
@@ -410,7 +398,6 @@ G.HudKitHpBars = (() => {
     ROSTER_ART_ROWS,
     rosterBoxGrid,
     rosterColours,
-    letterRows,
     rosterFill,
     createLifeBar,
     Box,

@@ -412,6 +412,22 @@
   left: -2px;
   top: 4px;
 }
+/* the team menu's button in any colours (G.HudKit TeamButton, after assets/ui/team/btn.png): the shape is its SVG, the
+   screen places and styles the label */
+.hud-team-button {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: #ffffff;
+}
+.hud-team-button svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
 .hud-cursor {
   position: absolute;
   width: 14px;

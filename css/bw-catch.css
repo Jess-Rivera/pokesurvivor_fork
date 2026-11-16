@@ -10,9 +10,28 @@
   --pm-scale: 1;
 }
 .catch-stage {
-  font-family: 'HudText', monospace;
+  font-family: 'GameFont', monospace;
   font-synthesis: none;
   color: #ffffff;
+}
+/* Text (#99 pilot, Jess 2026-11-16): Silver (GameFont) on its pixel grid. Silver-game.ttf draws 19 font pixels per em and
+   GameFont enlarges it 140%, so 27.1429 px is exactly 2 screen pixels per font pixel and 40.7143 px exactly 3; whole sizes
+   such as 20 or 28 fall between and blur. The outline is one font pixel. */
+.catch-text,
+.catch-button .hud-team-button-label {
+  position: absolute;
+  font-size: 27.1429px;
+  line-height: 30px;
+  white-space: nowrap;
+  text-shadow:
+    2px 0 0 #101010,
+    -2px 0 0 #101010,
+    0 2px 0 #101010,
+    0 -2px 0 #101010,
+    2px 2px 0 #101010,
+    -2px 2px 0 #101010,
+    2px -2px 0 #101010,
+    -2px -2px 0 #101010;
 }
 .catch-stage .pm-box,
 .catch-ring,
@@ -72,46 +91,42 @@
   top: 232px;
   white-space: normal;
   text-align: center;
-  line-height: 36px;
 }
 .catch-mon .catch-band {
   left: 0;
   right: 0;
-  top: 318px;
+  top: 306px;
   text-align: center;
-  font-size: 40px;
-  line-height: 40px;
+  font-size: 40.7143px;
+  line-height: 44px;
   color: #ffffff;
   text-shadow:
-    4px 0 0 #101010,
-    -4px 0 0 #101010,
-    0 4px 0 #101010,
-    0 -4px 0 #101010,
-    4px 4px 0 #101010,
-    -4px 4px 0 #101010,
-    4px -4px 0 #101010,
-    -4px -4px 0 #101010;
+    3px 0 0 #101010,
+    -3px 0 0 #101010,
+    0 3px 0 #101010,
+    0 -3px 0 #101010,
+    3px 3px 0 #101010,
+    -3px 3px 0 #101010,
+    3px -3px 0 #101010,
+    -3px -3px 0 #101010;
 }
 .catch-mon .catch-ball-name {
   left: 0;
   right: 0;
-  top: 372px;
+  top: 356px;
   text-align: center;
 }
 .catch-mon .catch-note {
   left: 20px;
   right: 20px;
-  top: 404px;
+  top: 394px;
   white-space: normal;
   text-align: center;
-  line-height: 24px;
   color: #f3b200;
 }
 
 /* ---------- the belts: six slots each, belt 1 in the Poke Balls pocket colours, 2 and 3 locked ---------- */
 .catch-slot {
-  width: 64px;
-  height: 64px;
   box-sizing: border-box;
   border: 2px solid #825815;
   background: #101010;
@@ -124,18 +139,18 @@
   background: #825815;
 }
 .catch-slot .catch-ball {
-  left: -2px;
-  top: -2px;
+  left: 0;
+  top: 0;
 }
 .catch-ball {
   image-rendering: pixelated;
   background-repeat: no-repeat;
   pointer-events: none;
 }
-.catch-slot-key {
-  position: absolute;
-  right: 2px;
-  bottom: 2px;
+.catch-slot .catch-slot-key {
+  right: 0;
+  bottom: -4px;
+  line-height: 27px;
 }
 .catch-belt.is-locked {
   opacity: 0.45;
@@ -151,6 +166,23 @@
 .catch-owned-cell {
   width: 56px;
   height: 56px;
+}
+/* the cursor sits on the cell's edge here (4 px out elsewhere): the scroll box clips anything outside a cell */
+.catch-owned-cell .hud-cursor-top-left {
+  left: 0;
+  top: 0;
+}
+.catch-owned-cell .hud-cursor-top-right {
+  right: 0;
+  top: 0;
+}
+.catch-owned-cell .hud-cursor-bottom-left {
+  left: 0;
+  bottom: 0;
+}
+.catch-owned-cell .hud-cursor-bottom-right {
+  right: 0;
+  bottom: 0;
 }
 .catch-owned-face {
   position: absolute;
@@ -175,17 +207,21 @@
   color: #9fa19f;
 }
 
-/* ---------- Throw and Let It Go: the kit's menu button; Let It Go's text at 45% until focused ---------- */
+/* ---------- Throw and Let It Go: the team menu's button (the kit's TeamButton); Let It Go's text at 45% until focused ---------- */
 .catch-button {
-  width: 282px;
-  height: 66px;
+  width: 280px;
+  height: 72px;
 }
-.catch-button .pm-button {
+.catch-button .hud-team-button {
   position: absolute;
   left: 0;
   top: 0;
 }
-.catch-let-go:not(.is-focused) .hud-text {
+.catch-button .hud-team-button-label {
+  left: 28px; /* the team menu's 14 px left padding at this button's 2x size */
+  top: 21px;
+}
+.catch-let-go:not(.is-focused) .hud-team-button-label {
   color: rgba(255, 255, 255, 0.45);
 }
 

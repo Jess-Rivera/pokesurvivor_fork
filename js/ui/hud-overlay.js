@@ -101,6 +101,8 @@ G.HudOverlay = (() => {
     'SLOT_BUTTON',
     'REST_RIM',
     'SlotButton',
+    'TeamButton',
+    'FOCUS_RIM',
     'fitToStage',
     'createButtonRow',
     'IconCanvas',

@@ -118,6 +118,13 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
   face ("this is the game talking"): module panels, titles like EXPEDITION OVER, and messages such as toasts.
   `[Open]` the menu buttons (pause menu, End Run, EV screen) are game UI but use `HudText` 30 px today; Jess to rule.
 
+- `[Proposed]` **Catch screen in Silver, on its pixel grid** (Jess, 2026-11-16, the first screen of #99): every text on
+  the catch screen is GameFont (Silver-game). Silver-game.ttf draws 19 font pixels per em and GameFont enlarges it 140%,
+  so it is crisp only at multiples of 13.5714 px (one screen pixel per font pixel): 27.1429 px (2 per font pixel) for
+  what HudText shows at 20 and 30 px, 40.7143 px (3) for what it shows at 40 px. Whole sizes such as 20 or 28 fall
+  between steps and blur. The outline is one font pixel (2 px, or 3 px at 40.7143). HudText, for comparison, is 10
+  font pixels per em, hence its 20, 30 and 40 px. Proposed until Jess feel-tests the screen; the rest of #99 stays open.
+
 - `[Approved]` **Tooltips use the game's UI font** (Jess, 2026-11-11, #90): GameFont (`var(--font)`, Silver-game) at
   20 px, more readable than Truth And Ideals for sentences. Every pause menu tooltip (items, the stat hex corners, the
   move rows) shares one look: `#181818` body, a 2 px `#f3b200` frame, the name in `#ffd23f`, white text with the hard
@@ -397,7 +404,9 @@ Proposed until Jess feel-tests the screen.
 | Locked belt rim                             | the fainted grey ramp at 45%  | Roster rows                       |
 | Pokemon owned rim (light, base, dark)       | `#C1C2C1` `#9FA19F` `#676967` | Normal type ramp                  |
 | Flee ring filled / empty                    | first type's Dark / `#e7e7e7` | Type colours / run item paper     |
-| Throw rim focused                           | `#38d030`                     | Pause menu button focus           |
+| Buttons                                     | the team menu's button shape (`assets/ui/team/btn.png`, kit `TeamButton`), 4 px per art pixel | Jess, 2026-11-16 |
+| Button rim at rest / body                   | `#ffffff` `#e7e7e7` `#848484` / `#181818` | the pause menu's rest ramp, panel body |
+| Throw rim focused                           | `#9be895` `#38d030` `#1d6c19` | Pause menu button focus ramp      |
 | Let It Go text at rest                      | `#ffffff` at 45%              | mockup                            |
 | Let It Go rim and body focused              | `#ff8a90` `#e8202a` `#7c1016`, body `#7c1016` | Pause menu End answer |
 | Result line                                 | `#f3b200`                     | the Lv yellow                     |

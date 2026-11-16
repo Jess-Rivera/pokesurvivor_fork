@@ -17,21 +17,25 @@ G.CatchUI = (() => {
   const overlay = G.HudOverlay,
     screen = document.getElementById('scr-catch'); // absent on pages that load the game's scripts without its screens
   if (!overlay || !overlay.ready || !screen) return { ready: false };
-  const { html, signal, hooks, preact, PALETTE, FAINTED_RIM, typeColours, Box, ScrollBox, Cursor, SlotButton } =
+  const { html, signal, hooks, preact, PALETTE, FAINTED_RIM, typeColours, Box, ScrollBox, Cursor, TeamButton } =
     overlay.kit;
-  const { REST_RIM, fitToStage, TooltipLayer, showTooltip, hideTooltip, portraitSource, portraitFallback } =
-    overlay.kit;
+  const { REST_RIM, FOCUS_RIM, fitToStage, TooltipLayer, showTooltip, hideTooltip } = overlay.kit;
+  const { portraitSource, portraitFallback } = overlay.kit;
 
   // ---------- sizes and places (stage pixels; the window is centred on the 1920 x 1080 stage) ----------
   const WINDOW = { width: 980, height: 500 },
     PAD = 20,
     MON = { left: PAD, top: PAD, width: 340, height: 460 },
     RING = { size: 192, top: 24, band: 12 }, // a 40 px portrait drawn 4x inside a 4 px outline inside the ring band
-    BELT = { firstLeft: 380, step: 96, width: 84, height: 460, count: 3, slots: 6 },
-    SLOT = { size: 64, gap: 8, left: 10, top: 18 }, // a ball frame (32 px) drawn 2x fills a slot
+    // Belts: the box rim is 12 px; slots sit 4 px clear of it (Jess, 2026-11-16: option B), the belts only as tall as
+    // six slots need, centred on the window's height
+    SLOT = { size: 52, gap: 8, left: 16, top: 14, ballScale: 1.5 }, // a ball frame (32 px) drawn 1.5x, 48 px
+    BELT = { firstLeft: 380, step: 96, width: 84, count: 3, slots: 6 },
     OWNED = { left: 676, top: PAD, width: 284, height: 280, columns: 4, cell: 56, gap: 4, inset: 16 },
-    BUTTON_ART_WIDTH = 94, // 282 x 66 px: the kit's menu button
-    BUTTON_TOP = [320, 404];
+    BUTTON_ART_WIDTH = 70, // 280 x 72 px: the team menu's button at 4 px per art pixel
+    BUTTON_TOP = [316, 400];
+  BELT.height = 2 * SLOT.top + BELT.slots * SLOT.size + (BELT.slots - 1) * SLOT.gap; // 380
+  BELT.top = PAD + (WINDOW.height - 2 * PAD - BELT.height) / 2;
   // Poke Balls pocket (UI-PALETTES "Bag", tools/ui-library.html) for the belts; Normal's type ramp for Pokemon owned.
   const POCKET_RIM = { light: '#DBB26E', base: '#C88820', dark: '#825815' },
     OWNED_RIM = typeColours('normal');
@@ -99,7 +103,7 @@ G.CatchUI = (() => {
   const selectedBall = () => slotsOf(0)[selectedSlot.value] || G.Catch.BALLS[0];
   const slotCentre = (belt, slot) => ({
     x: BELT.firstLeft + belt * BELT.step + SLOT.left + SLOT.size / 2,
-    y: PAD + SLOT.top + slot * (SLOT.size + SLOT.gap) + SLOT.size / 2,
+    y: BELT.top + SLOT.top + slot * (SLOT.size + SLOT.gap) + SLOT.size / 2,
   });
   const faceCentre = { x: MON.left + MON.width / 2, y: MON.top + RING.top + RING.size / 2 };
 
@@ -306,7 +310,7 @@ G.CatchUI = (() => {
   // ---------- drawing ----------
   const px = (value) => value + 'px';
   /** One ball frame from its strip, drawn at `scale` (whole numbers keep the pixel art crisp). */
-  function BallSprite({ ball, frame, scale = 2, className, style }) {
+  function BallSprite({ ball, frame, scale = SLOT.ballScale, className, style }) {
     const size = BALL_SPRITES.size * scale;
     return html`<div
       class=${'catch-ball' + (className ? ' ' + className : '')}
@@ -346,10 +350,10 @@ G.CatchUI = (() => {
           <img src=${portraitSource(session.dex, false)} data-dex=${session.dex} alt="" onError=${portraitFallback} />
         </div>
       </div>
-      <div class="hud-text hud-text-30 catch-name">${session.natureName + ' ' + session.name}</div>
+      <div class="catch-text catch-name">${session.natureName + ' ' + session.name}</div>
       <div class="catch-band">${band.low + '-' + band.high + '%'}</div>
-      <div class="hud-text catch-ball-name">${'with a ' + ball.name}</div>
-      <div class="hud-text catch-note">${note.value}</div>
+      <div class="catch-text catch-ball-name">${'with a ' + ball.name}</div>
+      <div class="catch-text catch-note">${note.value}</div>
     </${Box}>`;
   }
 
@@ -360,7 +364,7 @@ G.CatchUI = (() => {
       at = focus.value;
     return html`<${Box}
       left=${BELT.firstLeft + belt * BELT.step}
-      top=${PAD}
+      top=${BELT.top}
       width=${BELT.width}
       height=${BELT.height}
       rim=${locked ? FAINTED_RIM : POCKET_RIM}
@@ -373,13 +377,18 @@ G.CatchUI = (() => {
           class=${'catch-slot' + (ball ? ' is-full' : '') + (!locked && slot === selectedSlot.value ? ' is-selected' : '')}
           data-belt=${belt}
           data-slot=${slot}
-          style=${{ left: px(SLOT.left), top: px(SLOT.top + slot * (SLOT.size + SLOT.gap)) }}
+          style=${{
+            left: px(SLOT.left),
+            top: px(SLOT.top + slot * (SLOT.size + SLOT.gap)),
+            width: px(SLOT.size),
+            height: px(SLOT.size),
+          }}
           onMouseEnter=${() => !busy.value && ball && focusSlot(belt, slot)}
           onClick=${() => !locked && select(slot)}
           onDblClick=${() => !locked && throwNow(slot)}
         >
           ${ball ? html`<${BallSprite} ball=${ball.id} frame=${BALL_SPRITES.animations.front[0]} />` : null}
-          ${numbered ? html`<span class="hud-text catch-slot-key">${slot + 1}</span>` : null}
+          ${numbered ? html`<span class="catch-text catch-slot-key">${slot + 1}</span>` : null}
           ${cursorHere ? html`<${Cursor} />` : null}
         </div>`;
       })}
@@ -421,7 +430,7 @@ G.CatchUI = (() => {
       >
         <div class="catch-owned-grid" style=${{ height: px(rows * (OWNED.cell + OWNED.gap) - OWNED.gap) }}>${cells}</div>
       </${ScrollBox}>
-      ${view.owned.length ? null : html`<div class="hud-text catch-owned-none">None owned yet</div>`}
+      ${view.owned.length ? null : html`<div class="catch-text catch-owned-none">None owned yet</div>`}
     </${Box}>`;
   }
 
@@ -429,12 +438,14 @@ G.CatchUI = (() => {
     const at = focus.value;
     const throwFocused = at.area === 'button' && at.index === 0,
       letGoFocused = at.area === 'button' && at.index === 1;
-    const place = (index) => ({ left: px(OWNED.left + 1), top: px(BUTTON_TOP[index]) });
+    const place = (index) => ({ left: px(OWNED.left + 2), top: px(BUTTON_TOP[index]) });
     return html`<div class="catch-button" style=${place(0)}>
-        <${SlotButton}
+        <${TeamButton}
           id="throw"
           label="Throw"
           artWidth=${BUTTON_ART_WIDTH}
+          rim=${REST_RIM}
+          focusRim=${FOCUS_RIM}
           focused=${throwFocused}
           onEnter=${() => !busy.value && (focus.value = { area: 'button', index: 0 })}
           onPress=${() => throwNow()}
@@ -442,7 +453,7 @@ G.CatchUI = (() => {
         ${throwFocused ? html`<${Cursor} />` : null}
       </div>
       <div class=${'catch-button catch-let-go' + (letGoFocused ? ' is-focused' : '')} style=${place(1)}>
-        <${SlotButton}
+        <${TeamButton}
           id="let-go"
           label="Let It Go"
           artWidth=${BUTTON_ART_WIDTH}
@@ -508,7 +519,10 @@ G.CatchUI = (() => {
                 ball=${fl.ball}
                 frame=${fl.frame}
                 className=${'catch-flight' + (fl.caught ? ' is-caught' : '')}
-                style=${{ left: px(fl.x - BALL_SPRITES.size), top: px(fl.y - BALL_SPRITES.size) }}
+                style=${{
+                  left: px(fl.x - (BALL_SPRITES.size * SLOT.ballScale) / 2),
+                  top: px(fl.y - (BALL_SPRITES.size * SLOT.ballScale) / 2),
+                }}
               />`
             : null
         }

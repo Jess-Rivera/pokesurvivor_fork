@@ -150,3 +150,55 @@ the species' types (already in the dex data). No save change.
 | Q6 (agreed) | The band near the ends: a true chance of 8% or 88% (the ceiling is 90%) would push a 30-wide band under 0 or over 100. | Keep it 30 wide and slide it inside 0 to 100, so 8% might read 0 to 30. |
 | Q7 (agreed) | One random shift per catch shared by every ball, or a fresh shift per ball tier? | One per catch, shared: switching balls then moves the band by the true difference, so a better ball always reads better. Fresh per ball could make a Great Ball look worse than a Poke Ball. |
 | Q8 (agreed) | The owned tooltip's six numbers: IV + EV per stat (matches the sort), or IVs only? | IV + EV per stat, so the tooltip explains the sort order. |
+
+## Playtest fixes 1 (Jess, 2026-11-16): built, waiting on the feel test
+
+| # | What Jess saw | Cause | Fix |
+|---|---|---|---|
+| 1 | Balls and slots too big, no padding to the belt edge | The belt box's rim is 12 px thick; the 64 px slots sat 10 px from the box edge, so they overlapped it | Option B (Jess): 52 px slots, the ball at 1.5x (48 px), 4 px clear of the rim. The belts get shorter to fit six slots with the same 4 px clear at top and bottom (about 380 px tall instead of 460), centred on the window's height. |
+| 2 | The cursor in Pokemon owned shows black, not yellow | The cursor's corners sit 4 px outside the cell; the owned grid is a scroll box, which clips anything outside it, so only the black inner edge shows | Approved: in the owned grid only, the cursor sits on the cell's edge (the portrait circle is 4 px in, so it still frames it). |
+| 3 | Wrong buttons | I used the pause menu's buttons. The team menu's button is the B/W rip `assets/ui/team/btn.png` | A new kit button drawn from that rip's pixel layout at 4 px per art pixel (268 x 72), recoloured per the mockup: rim white ramp at rest, Throw focused green ramp, Let It Go focused red ramp with the dark red body; body `#181818`; text left-aligned like the team menu; no X or U icons. |
+| 3b | Font (#99): every text on the catch screen in Monogram or Silver, at about today's sizes | | See "Font" below; one face for the whole screen. |
+
+`136b - belt size options.png` (left A, right B; B chosen).
+
+### Font (#99 pilot on the catch screen)
+
+`136b - catch font options.png`: today's HudText, then Monogram and Silver (GameFont) at sizes on their pixel grids.
+
+| Text (today) | Monogram | Silver (GameFont) |
+|---|---|---|
+| Name, buttons (30 px) | 32 px | 28 px |
+| Band (40 px) | 48 px | 40 px |
+| "with a Poke Ball", result line, slot numbers, "None owned yet" (20 px) | 16 px (too small) or 24 px (soft, off its grid) | 20 px |
+| Owned tooltip | already GameFont | already GameFont |
+
+Built with Silver (GameFont). The font files decide the crisp sizes: Silver-game.ttf is 19 font pixels per em, enlarged
+140% by GameFont, so it is crisp only at multiples of 13.5714 px. Text HudText shows at 20 and 30 px is now 27.1429 px
+(2 screen pixels per font pixel); the 40 px band is 40.7143 px (3). 13.57 px was too small to read, so the small lines
+grew a little. Monogram-extended is an outline font with no pixel grid, so no size of it is exact. Rule recorded in
+HUD-STYLE "Fonts" ([Proposed]); the rest of #99 stays open.
+
+### Catch rate today (question 4)
+
+```mermaid
+flowchart LR
+  S["Star band base<br/>1 star 80% to 60%<br/>2 star 55% to 40%<br/>3 star 35% to 22%<br/>4 star 18% to 6%<br/>(higher BST = lower in the band)"] --> M["x ball<br/>(Poke 1)"]
+  M --> T["x (1 + time left)<br/>time left = share of the 60 s fight clock<br/>left when the guard fell, 0 to 1"]
+  T --> C["capped at 90%"]
+```
+
+`G.Debug.catch()` passes time left 0.5, so every base is multiplied by 1.5. A real win does the same with the real time
+left. Every 1-star and most 2-stars land on the 90% cap; the spec meant that ("for 1 and 2 star mons the UberElite fight
+is the real gate").
+
+Why not pokeapi's capture_rate (Acquisition v1 spec, "CATCH ODDS CHECK" and round 5, Jess 2026-11-12):
+
+| Finding | Detail |
+|---|---|
+| It does not track strength | Bulbasaur, Dratini and Eevee are 45, the same as Lapras, Scyther and Nihilego. Starters would be as hard as Ultra Beasts. |
+| Mainline odds assume a weakened target | At full HP a throw is 23.5% median across Stage 1s, about 6% for anything good; the rescued Pokemon is never damaged, so time left stands in for HP. |
+| Ruling | Round 5: odds from the BST ladder inside star tiers (E3); the flee meter keyed to nature, not capture_rate. |
+
+These are the #136 [Open] playtest values; changing them is a balance call (levers: the star bands, the time bonus, the
+90% cap), not part of these fixes.

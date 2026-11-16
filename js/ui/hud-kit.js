@@ -83,6 +83,19 @@ G.HudKit = (() => {
     </svg>`;
   }
 
+  /** paintRow for a grid of letters: runs of one letter become one rectangle. */
+  const letterRows = (grid, colours) => (row) => {
+    const line = grid[row],
+      runs = [];
+    let start = 0;
+    for (let column = 1; column <= line.length; column++) {
+      if (column < line.length && line[column] === line[start]) continue;
+      if (line[start] !== ' ') runs.push([start, column - start, colours[line[start]]]);
+      start = column;
+    }
+    return runs;
+  };
+
   // ---------- the B2 move button (b2-lower F15 to J16, measured 2026-11-10) ----------
   /**
    * Its left end, row by row, at half the rip's height (22 rows): a short 45 degree run down to a flat point (rows 6 to 8),
@@ -149,6 +162,83 @@ G.HudKit = (() => {
         paintRow=${(row) => moveSlotRow(row, artWidth, SLOT_BUTTON.artRows, rimNow, bodyNow)}
       />
       <span class="hud-text hud-text-30">${label}</span>
+    </button>`;
+  }
+
+  // ---------- the team menu's button (assets/ui/team/btn.png, the B/W bag button), any colours (catch screen, 136b) ----------
+  /**
+   * The rip's left end, one letter per art pixel (18 rows); the middle repeats the row's last letter and the right end is
+   * the mirror. o outline and inner line, L / B / D the rim's light, base and dark, G the body, space nothing.
+   */
+  const TEAM_BUTTON_LEFT_END = [
+    '   oooo',
+    '  oBLLL',
+    '  oLDoo',
+    ' oDLoGG',
+    ' oBBoGG',
+    ' oLDGGG',
+    ' oLoGGG',
+    'oDLoGGG',
+    'oBBoGGG',
+    'oBBoGGG',
+    'oDLoGGG',
+    ' oLoGGG',
+    ' oLDGGG',
+    ' oBBoGG',
+    ' oDLoGG',
+    '  oLDoo',
+    '  oBLLL',
+    '   oooo',
+  ];
+  const TEAM_BUTTON = { artRows: TEAM_BUTTON_LEFT_END.length, artPixel: 4 };
+  const teamButtonGrids = new Map();
+  function teamButtonGrid(artWidth) {
+    if (!teamButtonGrids.has(artWidth))
+      teamButtonGrids.set(
+        artWidth,
+        TEAM_BUTTON_LEFT_END.map((left) => {
+          const middle = left[left.length - 1].repeat(artWidth - 2 * left.length);
+          return left + middle + left.split('').reverse().join('');
+        })
+      );
+    return teamButtonGrids.get(artWidth);
+  }
+  /**
+   * A button in the team menu's shape: rim ramps ({ light, base, dark }) at rest and focused, body colours, the label left
+   * aligned as in the team menu. Never takes the page's keyboard focus (see keepPageFocus).
+   */
+  function TeamButton({
+    id,
+    label,
+    artWidth,
+    rim,
+    focusRim,
+    body = PALETTE.body,
+    focusBody,
+    focused,
+    onEnter,
+    onPress,
+  }) {
+    const rimNow = focused ? focusRim || rim : rim,
+      bodyNow = focused && focusBody ? focusBody : body;
+    const colours = { o: PALETTE.outline, L: rimNow.light, B: rimNow.base, D: rimNow.dark, G: bodyNow };
+    return html`<button
+      type="button"
+      class=${'hud-team-button' + (focused ? ' focused' : '')}
+      style=${{ width: artWidth * TEAM_BUTTON.artPixel + 'px', height: TEAM_BUTTON.artRows * TEAM_BUTTON.artPixel + 'px' }}
+      data-action=${id}
+      tabindex="-1"
+      onMouseDown=${keepPageFocus}
+      onMouseEnter=${onEnter}
+      onClick=${onPress}
+    >
+      <${PixelShape}
+        artWidth=${artWidth}
+        artRows=${TEAM_BUTTON.artRows}
+        artPixel=${TEAM_BUTTON.artPixel}
+        paintRow=${letterRows(teamButtonGrid(artWidth), colours)}
+      />
+      <span class="hud-team-button-label">${label}</span>
     </button>`;
   }
 
@@ -248,10 +338,13 @@ G.HudKit = (() => {
     BAR_CHECKER,
     SLOT_GRID,
     PixelShape,
+    letterRows,
     moveSlotRow,
     SLOT_BUTTON,
     REST_RIM,
     SlotButton,
+    TeamButton,
+    FOCUS_RIM,
     fitToStage,
     createButtonRow,
     Cursor,
