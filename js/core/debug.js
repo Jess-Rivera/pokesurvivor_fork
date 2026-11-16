@@ -16,6 +16,8 @@
  *   G.Debug.rescue()   #135: start a rescue event now (the toast, the arrow, the UberElite). False when one is up or you are in a gym arena.
  *   G.Debug.catch([dex])   #136: open the catch screen now for a won rescue of that species (default: a random rescue pick), as if
  *                      its UberElite fell with half the clock left. False when another screen is open or the belt is empty.
+ *   G.Debug.catchMath([on])  #148: print a catch throw's math (every factor of the rate, the critical and shake chances, each
+ *                      roll) as a console table. No arg: the last throw. true: every throw as it lands, until false or a reload.
  *   G.Debug.xpBoost(on)  #125: turn the opening 3-minute XP boost on (true) or off (false, the default); no arg: logs it. Until reload, not saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.berryslots(n) set how many berry slots this save has (1 to 4; no arg: logs the current count). Saved.
@@ -275,6 +277,86 @@ G.Debug = (() => {
     const started = G.Rescue.debugFire();
     console.log('[Debug] rescue: ' + (started ? 'started' : 'not started (one is up, or you are in a gym arena)'));
     return started;
+  }
+
+  // #148: the catch math printer. While on, G.Catch.throwBall is wrapped to print each throw; off puts the original back.
+  let unwrappedThrowBall = null;
+  const percent = (share) => (share * 100).toFixed(1) + '%';
+  const times = (factor) => 'x' + +factor.toFixed(3);
+
+  /** One throw's math as console table rows. */
+  function catchMathRows(roll) {
+    const math = roll.math,
+      mon = G.DEX_BY[math.dex] || { name: '?' };
+    const shakes = math.shakeRolls.map((value) => value.toFixed(3) + (value < math.shakeChance ? ' pass' : ' fail'));
+    const result = roll.critical
+      ? 'caught: critical catch'
+      : roll.caught
+        ? 'caught: all ' + roll.shakes + ' shakes passed'
+        : 'broke free after ' + roll.shakes + ' shake' + (roll.shakes === 1 ? '' : 's');
+    return [
+      { step: 'Pokemon', value: mon.name + ' #' + math.dex + ', ' + math.ballId + ' ball' },
+      { step: 'capture rate', value: math.captureRate },
+      { step: 'time term', value: times(math.timeTerm) + ' (' + percent(math.timeLeft) + ' of the clock left)' },
+      { step: 'ball', value: times(math.ball) },
+      { step: 'star', value: times(math.star) + ' (' + (mon.rarity || 1) + ' star)' },
+      {
+        step: 'badge cap penalty',
+        value:
+          times(math.badgePenalty) +
+          ' (World Level ' +
+          math.worldLevel +
+          ', ' +
+          math.badges +
+          ' badges, cap ' +
+          math.badgeCap +
+          ')',
+      },
+      { step: 'early World Level bonus', value: times(math.earlyBonus) },
+      { step: 'rate', value: math.rate.toFixed(2) + ' / ' + G.Catch.ODDS.rateCap },
+      {
+        step: 'critical',
+        value:
+          percent(math.criticalChance) +
+          ' (' +
+          math.ownedSpecies +
+          ' species owned), roll ' +
+          math.criticalRoll.toFixed(3),
+      },
+      { step: 'shake chance', value: percent(math.shakeChance) + ' each, rolls ' + (shakes.join(', ') || 'none') },
+      { step: 'throw chance', value: percent(math.throwChance) },
+      { step: 'result', value: result },
+    ];
+  }
+
+  /** #148: print the last catch throw's math, or (on true / false) print every throw as it lands. Until a reload. */
+  function catchMath(printEveryThrow) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (printEveryThrow === true && !unwrappedThrowBall) {
+      unwrappedThrowBall = G.Catch.throwBall;
+      G.Catch.throwBall = (...args) => {
+        const outcome = unwrappedThrowBall(...args);
+        if (outcome !== 'none' && G.Catch.lastThrow) console.table(catchMathRows(G.Catch.lastThrow));
+        return outcome;
+      };
+    } else if (printEveryThrow === false && unwrappedThrowBall) {
+      G.Catch.throwBall = unwrappedThrowBall;
+      unwrappedThrowBall = null;
+    }
+    if (printEveryThrow !== undefined) {
+      console.log('[Debug] catchMath: ' + (unwrappedThrowBall ? 'printing every throw' : 'off'));
+      return !!unwrappedThrowBall;
+    }
+    const roll = G.Catch.lastThrow;
+    if (!roll) {
+      console.log('[Debug] catchMath: no throw yet in this catch.');
+      return null;
+    }
+    console.table(catchMathRows(roll));
+    return roll.math;
   }
 
   /** #136: open the catch screen now, as if a rescue of dex was won with half its clock left. In a run only. */
@@ -1353,6 +1435,7 @@ G.Debug = (() => {
     xpBoost,
     rescue,
     catch: catchNow,
+    catchMath,
     unlockitem,
     loadout,
     ignite,

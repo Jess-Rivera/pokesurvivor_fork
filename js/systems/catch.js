@@ -80,17 +80,18 @@ G.Catch = (() => {
   let held = []; // { dex, name, nature, natureName } caught this run
   let session = null; // the open catch: { dex, name, nature, natureName, star, timeFraction, worldLevel, badges,
   //                     ownedSpecies, misses, allowed, bandShift }
-  let lastThrow = null; // the last throw's roll: { critical, shakes, caught }
+  let lastThrow = null; // the last throw's roll: { critical, shakes, caught, math }
 
   // ---------------- odds and flee ----------------
 
   const clampShare = (share) => Math.max(0, Math.min(1, share || 0));
 
+  /** The World Level cap for this many badges this run. */
+  const badgeCap = (badges) => ODDS.badgeCaps[Math.max(0, Math.min(ODDS.badgeCaps.length - 1, badges || 0))];
+
   /** The badge cap penalty: x overCapPenalty for each overCapLevelsPerStep World Levels past this run's badge cap. */
   function badgeCapPenalty(worldLevel, badges) {
-    const caps = ODDS.badgeCaps;
-    const cap = caps[Math.max(0, Math.min(caps.length - 1, badges || 0))];
-    const overCap = Math.max(0, (worldLevel || 1) - cap);
+    const overCap = Math.max(0, (worldLevel || 1) - badgeCap(badges));
     const steps = Math.min(ODDS.overCapMaxSteps, Math.floor(overCap / ODDS.overCapLevelsPerStep));
     return Math.pow(ODDS.overCapPenalty, steps);
   }
@@ -101,23 +102,31 @@ G.Catch = (() => {
     return Math.max(1, bonus / ODDS.earlyBonusDivisor);
   }
 
-  /** The modified catch rate (0 to 255) of one catch with one ball. catchState is a session or any object with its
-   *  fields: { dex, timeFraction (share of the fight clock left, 0 to 1), worldLevel, badges }. */
-  function modifiedRate(catchState, ballId) {
+  /** Every factor of one catch's rate with one ball, and the rate (0 to 255) they make. catchState is a session or any
+   *  object with its fields: { dex, timeFraction (share of the fight clock left, 0 to 1), worldLevel, badges }. Null for
+   *  an unknown ball or species. */
+  function rateParts(catchState, ballId) {
     const ball = BALL_BY[ballId],
       mon = G.DEX_BY[catchState.dex];
-    if (!ball || !mon) return 0;
+    if (!ball || !mon) return null;
     const timeUsed = 1 - clampShare(catchState.timeFraction);
-    const timeTerm = (ODDS.timeTermWhole - ODDS.timeTermPerUsed * timeUsed) / ODDS.timeTermWhole;
-    const star = ODDS.starMult[Math.min(ODDS.starMult.length, mon.rarity || 1) - 1];
-    const rate =
-      (mon.cr || 0) *
-      timeTerm *
-      ball.mult *
-      star *
-      badgeCapPenalty(catchState.worldLevel, catchState.badges) *
-      earlyLevelBonus(catchState.worldLevel);
-    return Math.min(ODDS.rateCap, rate);
+    const parts = {
+      captureRate: mon.cr || 0,
+      timeTerm: (ODDS.timeTermWhole - ODDS.timeTermPerUsed * timeUsed) / ODDS.timeTermWhole,
+      ball: ball.mult,
+      star: ODDS.starMult[Math.min(ODDS.starMult.length, mon.rarity || 1) - 1],
+      badgePenalty: badgeCapPenalty(catchState.worldLevel, catchState.badges),
+      earlyBonus: earlyLevelBonus(catchState.worldLevel),
+    };
+    const product = Object.values(parts).reduce((total, factor) => total * factor, 1);
+    parts.rate = Math.min(ODDS.rateCap, product);
+    return parts;
+  }
+
+  /** The modified catch rate (0 to 255) of one catch with one ball (see rateParts). */
+  function modifiedRate(catchState, ballId) {
+    const parts = rateParts(catchState, ballId);
+    return parts ? parts.rate : 0;
   }
 
   /** The chance a throw is a critical catch (a sure catch), by its rate and the species owned in the Pokedex. */
@@ -215,15 +224,35 @@ G.Catch = (() => {
     return session;
   }
 
-  /** Rolls one throw: { critical, shakes (passed, 0 to 3), caught }. A critical catch is sure; otherwise the shakes stop
-   *  at the first that fails. */
+  /** Rolls one throw: { critical, shakes (passed, 0 to 3), caught } plus the math behind it (G.Debug.catchMath prints it):
+   *  the rate's parts, the run inputs, each chance and each roll. A critical catch is sure; otherwise the shakes stop at
+   *  the first that fails. */
   function rollThrow(catchState, ballId, rnd) {
-    const rate = modifiedRate(catchState, ballId);
-    if (rnd() < criticalChance(rate, catchState.ownedSpecies)) return { critical: true, shakes: 1, caught: true };
-    const shakePass = shakeChance(rate);
+    const parts = rateParts(catchState, ballId) || { rate: 0 };
+    const math = {
+      dex: catchState.dex,
+      ballId,
+      worldLevel: catchState.worldLevel,
+      badges: catchState.badges,
+      badgeCap: badgeCap(catchState.badges),
+      ownedSpecies: catchState.ownedSpecies,
+      timeLeft: clampShare(catchState.timeFraction),
+      ...parts,
+      criticalChance: criticalChance(parts.rate, catchState.ownedSpecies),
+      shakeChance: shakeChance(parts.rate),
+      throwChance: odds(catchState, ballId),
+      criticalRoll: rnd(),
+      shakeRolls: [],
+    };
+    if (math.criticalRoll < math.criticalChance) return { critical: true, shakes: 1, caught: true, math };
     let shakes = 0;
-    while (shakes < ODDS.shakes && rnd() < shakePass) shakes++;
-    return { critical: false, shakes, caught: shakes === ODDS.shakes };
+    while (shakes < ODDS.shakes) {
+      const roll = rnd();
+      math.shakeRolls.push(roll);
+      if (roll >= math.shakeChance) break;
+      shakes++;
+    }
+    return { critical: false, shakes, caught: shakes === ODDS.shakes, math };
   }
 
   /** One throw. 'caught' (held for the run), 'miss' (try again), 'fled' (the last allowed miss, or the belt is empty), or
@@ -273,6 +302,7 @@ G.Catch = (() => {
     BALLS,
     ODDS,
     FLEE,
+    rateParts,
     modifiedRate,
     criticalChance,
     shakeChance,

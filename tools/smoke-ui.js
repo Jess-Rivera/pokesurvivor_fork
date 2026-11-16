@@ -544,6 +544,10 @@ async function catchFlow(browser, query, tag) {
       const pl = G.Game.player;
       G.Rescue.debugFire();
       const e = G.Rescue.active;
+      // #148: a species whose odds stay under a sure catch at World Level 1 (capture rate 45), so a forced roll can miss;
+      // a random pick with a high capture rate is a sure catch this early (the early World Level bonus)
+      e.dex = 1;
+      e.name = G.DEX_BY[1].name;
       e.nature = G.SpeciesTraits.NATURES.findIndex((n) => n[0] === 'bold') + 1;
       e.natureName = 'Bold';
       for (let i = 0; i < copies; i++) G.DB.obtain(e.dex, false, 'other', G.DB.save, 1 + i);
@@ -661,13 +665,35 @@ async function catchFlow(browser, query, tag) {
   await page.waitForTimeout(150);
   shown = await screen();
   ok(shown.open && !shown.asking, tag + ': Keep trying keeps the catch open');
-  // Enter on Throw: a sure miss; the selected slot empties and the ring fills by misses / allowed
+  // Enter on Throw: a sure miss; the selected slot empties and the ring fills by misses / allowed, after the break-out
   const before = shown;
   await forceRandom(0.9999);
   await key('Enter');
   await realRandom();
+  const midThrow = await screen();
+  ok(
+    midThrow.misses === 1 && midThrow.ringShare < 0.01,
+    tag + ': the flee ring waits for the throw to end (' + midThrow.ringShare.toFixed(2) + ' mid-throw, 1 miss counted)'
+  );
   await page.waitForFunction(() => !G.CatchUI.busy, null, { timeout: 6000 }).catch(() => {});
   shown = await screen();
+  const printed = await page.evaluate(() => {
+    const tables = [],
+      realTable = console.table;
+    console.table = (rows) => tables.push(rows);
+    const math = G.Debug.catchMath();
+    console.table = realTable;
+    const rows = tables[0] || [];
+    return {
+      rows: rows.length,
+      result: (rows.find((row) => row.step === 'result') || {}).value || '',
+      rolls: math ? math.shakeRolls.length : -1,
+    };
+  });
+  ok(
+    printed.rows > 0 && printed.rolls === 1 && /broke free after 0 shakes/.test(printed.result),
+    tag + ': G.Debug.catchMath() prints the last throw (' + printed.rows + ' rows, "' + printed.result + '")'
+  );
   const thrownEmpty = await page.evaluate(
     (slot) =>
       !document.querySelector('#scr-catch [data-belt="0"][data-slot="' + slot + '"]').classList.contains('is-full'),

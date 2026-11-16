@@ -75,6 +75,7 @@ G.CatchUI = (() => {
   const flight = signal(null); // the ball in the air: { ball, frame, x, y }
   const face = signal('shown'); // the portrait: 'shown', 'absorbed' (inside the ball) or 'fled'
   const beltCount = signal(0); // read on every belt change, so the slots redraw
+  const shownMisses = signal(0); // the flee ring's misses: catches up with the session after a throw's break-out (#148b)
   let thrownSlots = new Set(); // belt 1 slots emptied by a throw this catch: a thrown ball leaves its own slot empty
   let onClose = null;
   let throwToken = 0; // a throw's timers stop when the screen closes under them
@@ -248,6 +249,7 @@ G.CatchUI = (() => {
     await wait(BREAK_OUT_MS);
     if (!alive()) return;
     flight.value = null;
+    shownMisses.value = view.session.misses;
     if (outcome === 'fled') {
       face.value = 'fled';
       note.value = G.Catch.total() > 0 ? name + ' broke free and ran off!' : 'Out of Poke Balls! ' + name + ' ran off.';
@@ -340,7 +342,7 @@ G.CatchUI = (() => {
       rimRight = types[1] ? typeColours(types[1]) : null;
     const ball = selectedBall();
     const band = G.Catch.band(G.Catch.odds(session, ball.id), session.bandShift);
-    const fled = (session.misses / session.allowed) * 360;
+    const fled = (shownMisses.value / session.allowed) * 360;
     return html`<${Box} left=${MON.left} top=${MON.top} width=${MON.width} height=${MON.height} rim=${rim} rimRight=${rimRight}
       className="catch-mon">
       <div
@@ -559,6 +561,7 @@ G.CatchUI = (() => {
     busy.value = false;
     flight.value = null;
     face.value = 'shown';
+    shownMisses.value = session.misses;
     thrownSlots = new Set();
     beltCount.value++;
     shown.value = { session, owned, types: (mon && mon.types) || ['normal'] };
