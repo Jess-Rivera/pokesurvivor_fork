@@ -62,6 +62,40 @@ const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PAL
     `all ${fonts.length} font faces load` + (unloaded.length ? ', failed ' + unloaded.join(' ') : '')
   );
 
+  // Components: each kit piece mounts with a drawn shape (non-zero size), and every image it asks for loads.
+  const pieces = await page.evaluate(() => {
+    const sized = (selector) =>
+      [...document.querySelectorAll('#components-body ' + selector)].filter((el) => {
+        const box = el.getBoundingClientRect();
+        return box.width > 0 && box.height > 0;
+      }).length;
+    const images = [...document.querySelectorAll('#components-body img')];
+    return {
+      slots: sized('.hud-slot'),
+      cards: sized('.hud-roster-row'),
+      lifeBars: sized('.hud-lifebar svg'),
+      chips: sized('.hud-chip svg'),
+      buttons: sized('.pm-button svg'),
+      squares: sized('.hud-item-square svg'),
+      cursors: sized('.hud-cursor'),
+      menuRows: sized('.bw-row'),
+      images: images.length,
+      brokenImages: images.filter((image) => !image.complete || image.naturalWidth === 0).map((image) => image.src),
+    };
+  });
+  const expected = { slots: 4, cards: 4, lifeBars: 3, chips: 14, buttons: 4, squares: 6, cursors: 8, menuRows: 6 };
+  const short = Object.keys(expected).filter((name) => pieces[name] !== expected[name]);
+  ok(
+    short.length === 0,
+    'every component mounts with a drawn shape' +
+      (short.length ? ': ' + short.map((name) => `${name} ${pieces[name]}/${expected[name]}`).join(', ') : '')
+  );
+  ok(
+    pieces.images > 0 && pieces.brokenImages.length === 0,
+    `all ${pieces.images} component images load (portraits, type glyphs)` +
+      (pieces.brokenImages.length ? ', broken ' + pieces.brokenImages.join(' ') : '')
+  );
+
   // The chips use the game's .type rule: its rim is an inset box shadow, which only style.css supplies.
   const chips = await page.evaluate(() =>
     [...document.querySelectorAll('#type-chips .type')].map((chip) => getComputedStyle(chip).boxShadow)

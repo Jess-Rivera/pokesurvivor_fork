@@ -8,9 +8,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>UI Library</title>
-<link rel="stylesheet" href="../css/style.css">
-<link rel="stylesheet" href="../css/bw-menu.css">
-<link rel="stylesheet" href="../css/hud-overlay.css">
+<!-- Every path on this page is from the repo root, as in dev.html, so the HUD kit's own asset paths (assets/pokemon/,
+     assets/icons/types/) resolve. Section links use data-jump, since a #hash link would resolve against this base. -->
+<base href="../">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/bw-menu.css">
+<link rel="stylesheet" href="css/hud-overlay.css">
+<link rel="stylesheet" href="css/pause-menu.css">
 <style>
   /* The page's own chrome: neutral, so the game's colours read true. style.css sets body overflow hidden and no text
      selection for the game; both are undone here. */
@@ -25,6 +29,16 @@
   header nav { display: flex; gap: 12px; flex-wrap: wrap; }
   header nav a { color: var(--lib-dim); text-decoration: none; font-size: 13px; }
   header nav a:hover { color: var(--lib-text); }
+  header nav a { cursor: pointer; }
+
+  /* Components: the kit's pieces are placed absolutely inside the HUD; here they sit in the flow. */
+  .lib-live .lib-stage { background: #0c0d10; }
+  .lib-live .lib-stage.lib-game-bg { background: #2a3a2a; }
+  .lib-live .hud-slot, .lib-live .hud-roster-row { position: relative !important; left: auto !important; bottom: auto !important; }
+  .lib-live .lib-piece { position: relative; font-family: 'HudText', monospace; color: #fff; }
+  .lib-live .pm-button { position: relative; }
+  .lib-menu-frame { position: relative; height: 560px; width: 100%; overflow: hidden; border-radius: 6px;
+    background: radial-gradient(circle at 30% 60%, #2f5a3a, #0b1a12); --u: 0.52px; --bw-panel: calc(535 * var(--u)); --bw-fade: calc(360 * var(--u)); }
   main { max-width: 1400px; margin: 0 auto; padding: 8px 16px 64px; }
   section { margin-top: 28px; }
   h2 { font-size: 20px; margin: 0 0 4px; }
@@ -91,12 +105,19 @@
 <header>
   <h1>UI Library</h1>
   <nav>
-    <a href="#fonts">Fonts</a><a href="#colours">Working colours</a><a href="#types">Type palette</a>
-    <a href="#pieces">Pieces</a><a href="#screens">Screen variables</a><a href="#reference">Reference palettes</a>
+    <a data-jump="components">Components</a><a data-jump="fonts">Fonts</a><a data-jump="colours">Working colours</a>
+    <a data-jump="types">Type palette</a><a data-jump="pieces">Styles</a><a data-jump="screens">Screen variables</a>
+    <a data-jump="reference">Reference palettes</a>
   </nav>
   <span class="lib-note" style="margin:0">Source of truth: docs/HUD-STYLE.md. Dev tool, never ships (#147).</span>
 </header>
 <main>
+
+<section id="components">
+  <h2>Components <span class="lib-tag">live, placeholder content</span></h2>
+  <p class="lib-note">The game's own pieces, mounted from the HUD kit (js/ui/hud-kit*.js) and styled by its real CSS, fed placeholder names and numbers. Where a piece is private to its panel, it is rebuilt here from the same kit parts and named as such.</p>
+  <div id="components-body" class="lib-live"></div>
+</section>
 
 <section id="fonts">
   <h2>Fonts</h2>
@@ -117,8 +138,8 @@
 </section>
 
 <section id="pieces">
-  <h2>Pieces</h2>
-  <p class="lib-note">The type chips, toasts and HUD text use the game's real CSS classes. The rest are drawn here from HUD-STYLE values to show the look; the live versions are SVG pieces inside the running HUD, so check those in game.</p>
+  <h2>Styles</h2>
+  <p class="lib-note">Looks that are not kit components. The type chips, toasts and HUD text use the game's real CSS classes; the rest are drawn here from HUD-STYLE values (the live components are in Components above).</p>
 
   <h3>Type chips <span class="lib-tag">real: .type, style.css</span></h3>
   <p class="lib-note">The type's Base fill inside a 2 px Dark rim, white text with a hard #101010 shadow. Team screen, Pokedex, pause sheet (G.UI.typeChip).</p>
@@ -190,7 +211,18 @@
 </main>
 
 <script>window.G = {};</script>
-<script src="../js/core/util.js"></script>
+<script src="js/core/util.js"></script>
+<script src="js/vendor/preact.min.js"></script>
+<script src="js/vendor/preact-hooks.min.js"></script>
+<script src="js/vendor/htm.min.js"></script>
+<script src="js/vendor/preact-signals-core.min.js"></script>
+<script src="js/vendor/preact-signals.min.js"></script>
+<script src="js/ui/icons.js"></script>
+<script src="js/ui/hud-kit.js"></script>
+<script src="js/ui/hud-kit-items.js"></script>
+<script src="js/ui/hud-kit-hp-bars.js"></script>
+<script src="js/ui/hud-kit-chips.js"></script>
+<script src="js/ui/hud-overlay.js"></script>
 <script>
 'use strict';
 // ---------- Data copied from docs/HUD-STYLE.md "Colour palette" (roles and jobs). Keep in step with the doc; the smoke checks it. ----------
@@ -342,8 +374,8 @@ $('font-list').innerHTML = FONTS.map(([family, file, job, sizes, text]) => `
     <div class="lib-specimens">${sizes.map((px) => `<div style="font-family:'${family}';font-size:${px}px;line-height:1.2;white-space:nowrap"><span class="lib-size">${px}px</span>${esc(text)}</div>`).join('')}</div>
   </div>`).join('');
 // PokeBW and Monogram live in bw-settings.css too; declare them here so the page needs no settings screen.
-document.fonts.add(new FontFace('PokeBW', "url('../assets/fonts/pokemon-b-w.ttf')"));
-document.fonts.add(new FontFace('Monogram', "url('../assets/fonts/monogram-extended.ttf')", { weight: '551 900' }));
+document.fonts.add(new FontFace('PokeBW', "url('assets/fonts/pokemon-b-w.ttf')"));
+document.fonts.add(new FontFace('Monogram', "url('assets/fonts/monogram-extended.ttf')", { weight: '551 900' }));
 window.libFontsReady = Promise.all(FONTS.map(([family, , , sizes]) =>
   document.fonts.load(`${sizes[0]}px '${family}'`).then((faces) => {
     const ok = faces.length > 0;
@@ -410,7 +442,12 @@ $('arrows').innerHTML = ARROWS.map(([cap, fill, dark, shine]) => `<div class="li
   </svg><span class="lib-cap">${cap}</span></div>`).join('');
 
 // ---------- screen variables (read live from the game's CSS) ----------
-['css/bw-team.css', 'css/bw-settings.css', 'css/pause-menu.css'].forEach((href) => { const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '../' + href; document.head.appendChild(link); });
+['css/bw-team.css', 'css/bw-settings.css'].forEach((href) => { const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; document.head.appendChild(link); });
+// Section links: a #hash link would resolve against <base href="../">, so the header scrolls instead.
+document.querySelector('header nav').addEventListener('click', (event) => {
+  const target = event.target.closest('[data-jump]');
+  if (target) document.getElementById(target.dataset.jump).scrollIntoView({ behavior: 'smooth' });
+});
 function readVar(selector, name) {
   if (selector === ':root') return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   // Build a hidden element chain matching a simple selector like '#scr-roster .ros-center' or '.st-row.danger'.
@@ -447,6 +484,128 @@ $('reference-sets').innerHTML = REFERENCE_SETS.map((set) => `
   <h3>${esc(set.title)} <span class="lib-tag">${esc(set.adopted || set.candidate)}</span></h3>
   <table class="lib-ramp"><tr><th>Name</th><th>Light</th><th>Base</th><th>Dark</th></tr>${set.rows.map(([name, ...tones]) =>
     `<tr><td>${esc(name)}</td>${tones.map((hex) => `<td class="lib-sw" style="background:${hex};color:${inkFor(hex)}">${hex}</td>`).join('')}</tr>`).join('')}</table>`).join('');
+</script>
+<script>
+'use strict';
+// ---------- Components: the HUD kit's pieces with placeholder content ----------
+(() => {
+  const body = document.getElementById('components-body');
+  if (!G.HudOverlay.ready) {
+    body.innerHTML = '<p class="lib-note lib-fail">Preact, htm or Signals did not load, so the kit pieces cannot mount.</p>';
+    return;
+  }
+  // G.HudOverlay (js/ui/hud-overlay.js) mounted its layer with the shared SVG patterns (slot grid, bar checker); no panel
+  // files are loaded, so it shows nothing else. Every piece reads the kit there, as the game's panels do.
+  const kit = G.HudOverlay.kit;
+  const { html, preact, signal, PALETTE, PixelShape, moveSlotRow, SLOT_GRID, SlotButton, REST_RIM, Cursor, typeColours, hpBand } = kit;
+  const { ItemSquare, ItemGrid, RosterCard, rosterFill, createLifeBar, Chip, FAINTED_RIM } = kit;
+
+  // The move slot is private to js/ui/hud-player-panel.js (Slot); this rebuilds it from the same kit parts and numbers.
+  const SLOT = { artWidth: 105, artRows: 22, artPixel: 2, wellSize: 36, wellFirst: 47 },
+    BOND_RIM = { light: '#ffd3f1', base: '#ff8ad8', dark: '#8c4c77' },
+    EMPTY_RIM = { light: PALETTE.checker, base: PALETTE.frame, dark: PALETTE.frame };
+  const wellCentre = (index) => SLOT.wellFirst + ((SLOT.artWidth * SLOT.artPixel - 2 * SLOT.wellFirst) * index) / 3;
+  const glyph = (type) => 'assets/icons/types/' + type.charAt(0).toUpperCase() + type.slice(1) + '_icon.png';
+  function MoveSlot({ types, keyLabel, active, cooldown = 0 }) {
+    const rim = !types.length ? EMPTY_RIM : types.length > 1 ? BOND_RIM : typeColours(types[0]);
+    const bodyFill = rim === EMPTY_RIM ? PALETTE.body : SLOT_GRID;
+    return html`<div class=${'hud-slot' + (active ? ' is-active' : '')}
+      style=${{ width: SLOT.artWidth * SLOT.artPixel + 'px', height: SLOT.artRows * SLOT.artPixel + 'px' }}>
+      <${PixelShape} artWidth=${SLOT.artWidth} artRows=${SLOT.artRows} artPixel=${SLOT.artPixel}
+        paintRow=${(row) => moveSlotRow(row, SLOT.artWidth, SLOT.artRows, rim, bodyFill)} />
+      ${[0, 1, 2, 3].map((well) => html`<div class="hud-well" style=${{ left: wellCentre(well) - SLOT.wellSize / 2 + 'px' }}>
+        <div class="hud-well-disc" style=${types[well] ? { background: typeColours(types[well]).base } : null}>
+          ${types[well] ? html`<img src=${glyph(types[well])} alt="" />
+            <div class="hud-well-shade" style=${{ '--wipe': Math.round((1 - (well === 0 ? cooldown : 0)) * 360) + 'deg' }}></div>` : null}
+        </div></div>`)}
+      <span class="hud-text hud-slot-key">${keyLabel}</span>
+      ${active ? html`<${Cursor} />` : null}
+    </div>`;
+  }
+
+  const lifeBars = [0.8, 0.35, 0.12].map((fraction) => ({ fraction, bar: createLifeBar({ artPixel: 2, artWidth: signal(231), labelTop: -6 }) }));
+
+  const ROSTER_WIDTH = 139; // js/ui/hud-roster-panel.js ROW.artWidth
+  const TEAM = [
+    { dex: 1, type: 'grass', name: 'Lorem', hp: 0.9 },
+    { dex: 4, type: 'fire', name: 'Ipsum', hp: 0.4 },
+    { dex: 7, type: 'water', name: 'Dolor', hp: 0.12 },
+    { dex: 25, type: 'electric', name: 'Sit Amet', hp: 0, fainted: true },
+  ];
+
+  const MAJOR_CHIPS = [['SLP', '#848484', '#4a4a4a'], ['PSN', '#d631de', '#6b2942'], ['BRN', '#e75a4a', '#b50000'], ['FRZ', '#218cf7', '#005a8c'], ['PAR', '#efad00', '#ad6b00']];
+  const MINOR_CHIPS = [['CNF', '#d8b000'], ['DZE', '#1f9fe7'], ['DRW', '#e73963'], ['TRP', '#adb5bd']];
+  const STAT_CHIPS = [['ATK', '#EFCC18', '#9B8510'], ['DEF', '#E86412', '#97410C'], ['SPA', '#14C3F1', '#0D7F9D'], ['SPD', '#4A6ADF', '#304591'], ['SPE', '#D51DAD', '#8B1370']];
+  const chip = ([label, fill, shade], index, timer = null) => ({ key: label + index, label, fill, shade, text: null, timer });
+
+  const Piece = ({ caption, children, width }) => html`<div class="lib-sample">
+    <div class="lib-piece" style=${width ? { width: width + 'px' } : null}>${children}</div>
+    <span class="lib-cap">${caption}</span></div>`;
+  const Group = ({ title, built, note, bg, children }) => html`<h3>${title} <span class="lib-tag">${built}</span></h3>
+    ${note ? html`<p class="lib-note">${note}</p>` : null}
+    <div class=${'lib-stage' + (bg ? ' lib-game-bg' : '')}>${children}</div>`;
+
+  function Components() {
+    return html`
+      <${Group} title="Move slots" built="rebuilt from kit parts: hud-player-panel.js Slot"
+        note="The four move buttons in the character info panel. Rim: the move's type colour; pink when moves are bonded; dark when empty. Each well is one move (a bond holds up to 4). The yellow corners mark the active slot; the dark wipe is the cooldown.">
+        <${Piece} caption="One Fire move, on cooldown"><${MoveSlot} types=${['fire']} keyLabel="1" cooldown=${0.6} /><//>
+        <${Piece} caption="One Water move, active"><${MoveSlot} types=${['water']} keyLabel="2" active=${true} /><//>
+        <${Piece} caption="Bonded: three moves"><${MoveSlot} types=${['grass', 'electric', 'psychic']} keyLabel="3" /><//>
+        <${Piece} caption="Empty"><${MoveSlot} types=${[]} keyLabel="4" /><//>
+      <//>
+      <${Group} title="Team cards" built="real: kit RosterCard" bg=${true}
+        note="One card per team member in the roster (lower left) and the pause menu. Rim: the Pokemon's first type; HP fill green, yellow, red by the B/W thresholds; grey when fainted.">
+        ${TEAM.map((member) => html`<${Piece} caption=${member.fainted ? 'Fainted' : 'HP ' + Math.round(member.hp * 100) + '%'}>
+          <${RosterCard} artWidth=${ROSTER_WIDTH} rim=${member.fainted ? FAINTED_RIM : typeColours(member.type)}
+            fill=${rosterFill(member.hp, member.fainted, ROSTER_WIDTH)} band=${hpBand(member.hp)}
+            dex=${member.dex} shiny=${false} name=${member.name} fainted=${member.fainted} /><//>`)}
+      <//>
+      <${Group} title="Life meter" built="real: kit createLifeBar"
+        note="Your active Pokemon's HP in the character info panel, and the enemy Player entity's. Green above 50%, yellow to 20%, red below.">
+        ${lifeBars.map(({ fraction, bar }) => html`<${Piece} caption=${'HP ' + Math.round(fraction * 100) + '%'}><${bar.View} /><//>`)}
+      <//>
+      <${Group} title="Status and effect chips" built="real: kit Chip"
+        note="70 x 24. Majors solid, minors hollow (character info panel only), stat and effect chips in the good and bad bands. The white bar along the bottom is the time left.">
+        ${MAJOR_CHIPS.map((style, index) => html`<${Piece} caption=${style[0]}><${Chip} chip=${chip(style, index, index === 0 ? 0.6 : null)} /><//>`)}
+        ${MINOR_CHIPS.map(([label, colour], index) => html`<${Piece} caption=${label + ' (minor)'}><${Chip} chip=${{ key: label + index, label, fill: '#101010', shade: colour, text: colour, timer: null }} /><//>`)}
+        ${STAT_CHIPS.map((style, index) => html`<${Piece} caption=${style[0] + ' stage'}><${Chip} chip=${chip(style, index)} /><//>`)}
+      <//>
+      <${Group} title="Menu buttons" built="real: kit SlotButton"
+        note="The pause menu, End Run and EV screen buttons: the move slot shape at 1.5x. White rim at rest, green on focus; End Run's answer is red.">
+        <${Piece} caption="At rest"><${SlotButton} id="a" label="Resume" /><//>
+        <${Piece} caption="Focused"><${SlotButton} id="b" label="Team" focused=${true} /><//>
+        <${Piece} caption="End, focused"><${SlotButton} id="c" label="End" artWidth=${60} focused=${true}
+          focusRim=${{ light: '#ff8a90', base: '#e8202a', dark: '#7c1016' }} focusBody="#7c1016" /><//>
+        <${Piece} caption="No, focused"><${SlotButton} id="d" label="No" artWidth=${60} focused=${true} focusRim=${REST_RIM} focusBody="#848484" /><//>
+      <//>
+      <${Group} title="Item squares" built="real: kit ItemSquare, ItemGrid"
+        note="Held item (yellow rim when holding, slate when empty), the berry bag and the pause menu's Run Inventory (a 2 x 2 grid).">
+        <${Piece} caption="Held item"><${ItemSquare} icon="coin" artSize=${20} /><//>
+        <${Piece} caption="Empty"><${ItemSquare} icon=${null} artSize=${20} /><//>
+        <${Piece} caption="Berry bag grid"><${ItemGrid} slots=${[{ key: 'a', icon: 'coin' }, { key: 'b', icon: 'star' }, { key: 'c', icon: null }, { key: 'd', icon: null }]} /><//>
+      <//>
+      <${Group} title="Selection cursor" built="real: kit Cursor" note="The B2 cursor: yellow corner brackets around whatever is selected.">
+        <${Piece} caption="Around a box"><div style=${{ position: 'relative', width: '160px', height: '60px', background: PALETTE.body }}><${Cursor} /></div><//>
+      <//>`;
+  }
+  preact.render(html`<${Components} />`, body);
+  lifeBars.forEach(({ fraction, bar }, index) => bar.update(Math.round(fraction * 100), 100, false, 'sample' + index));
+
+  // The main menu panel is plain markup in dev.html (#scr-menu), styled by css/bw-menu.css; copied here with placeholder text.
+  body.insertAdjacentHTML('beforeend', `<h3>Main menu <span class="lib-tag">real CSS: bw-menu.css; markup copied from dev.html #scr-menu</span></h3>
+    <p class="lib-note">The right-hand menu panel. The selected row is highlighted; Play is the tall first row. Shown at about half size.</p>
+    <div class="lib-menu-frame"><div class="bw-panel" style="animation:none">
+      <h1 class="bw-title">PokeSwarm</h1>
+      <div class="bw-list">
+        <button class="bw-row play sel">Play<small>Lorem ipsum dolor sit amet</small></button>
+        <button class="bw-row">Team<small>12 / 151</small></button>
+        <button class="bw-row">Inventory<small>Consectetur adipiscing</small></button>
+        <button class="bw-row">Shop<small>Sed do eiusmod tempor</small></button>
+        <button class="bw-row">Missions<small>Ut labore et dolore</small></button>
+        <button class="bw-row">Settings<small>Magna aliqua</small></button>
+      </div></div></div>`);
+})();
 </script>
 </body>
 </html>

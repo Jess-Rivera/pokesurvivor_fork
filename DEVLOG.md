@@ -164,4 +164,6 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   .hud-text; the rest drawn from HUD-STYLE values), per-screen CSS variables read live and flagged when off-spec, UI-PALETTES sets.
 - tools/smoke-ui-library.js: every HUD-STYLE palette hex (116) and UI-PALETTES hex (199) shown, 6 faces load, chips take .type.
   Mutation (one hex changed) fails it. Game CSS class names collided (.card, .grid), so page classes are lib- prefixed.
+- Then a Components section (Jess: placeholder content is fine): the HUD kit mounted with lorem names and numbers; move
+  slots rebuilt from kit parts, main menu markup copied. Smoke checks each piece draws and its images load.
 - Stopped at: Jess looks it over; plan in docs/ASCII Concept Maps/UI Library - Slice Plan.md.

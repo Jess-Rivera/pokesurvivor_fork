@@ -62,3 +62,30 @@ flowchart TB
 - Some HUD pieces (life meters, chip bands) only mount inside a running HUD. Those show as CSS-drawn samples using the
   same classes, not the live component. Fine for looking at, but those few could drift. The check only covers colours and
   fonts.
+
+---
+
+# Slice 2: the real pieces (built 2026-11-15)
+
+Jess (2026-11-15): no screenshots, mount the pieces with placeholder content ("lorem ipsum is fine"). So the page loads
+Preact and the HUD kit (js/ui/hud-kit*.js, hud-overlay.js for the shared SVG patterns, no panels) and mounts each piece
+with fake names and numbers, styled by the real CSS.
+
+```mermaid
+flowchart LR
+  K[HUD kit<br/>RosterCard, Chip, createLifeBar,<br/>SlotButton, ItemSquare, ItemGrid, Cursor] --> C[Components section]
+  P[hud-player-panel.js Slot<br/>private] -. rebuilt from kit parts .-> C
+  M[dev.html #scr-menu markup<br/>+ bw-menu.css] -. copied, lorem text .-> C
+  C --> T[smoke-ui-library:<br/>each piece drawn, every image loads]
+```
+
+| Piece | Source |
+| --- | --- |
+| Team cards, life meter, chips, menu buttons, item squares, cursor | Real kit components |
+| Move slots | Rebuilt from kit parts (Slot is private to hud-player-panel.js) |
+| Main menu panel | Markup copied from dev.html, real CSS |
+
+## Not yet on the page
+
+Private panel pieces (the pause menu's Pokemon panel and move rows, Run Info, level-up cards, shop, catch screen, EV screen,
+settings rows). Showing them for real needs each panel to export its piece, a game-code change that needs Jess's approval.
