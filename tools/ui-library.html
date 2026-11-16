@@ -2,7 +2,11 @@
 <!-- UI Library (dev tool, never ships; Jess 2026-11-15, #147). The design language on one page: every font, colour and UI piece,
      each labelled with its job. It loads the game's own fonts, stylesheets and type colours (js/core/util.js), so those can't drift
      from the game. The roles and labels are copied from docs/HUD-STYLE.md "Colour palette" and docs/UI-PALETTES.md; the check
-     tools/smoke-ui-library.js fails when either doc lists a colour this page does not show. Open it by double-click (file://). -->
+     tools/smoke-ui-library.js fails when either doc lists a colour this page does not show. Open it by double-click (file://).
+     Tabs group the sections. The Run panels and Pause panels tabs mount the game's real panels over a fake run (the last
+     script below), so the page loads the game's own scripts; only the boot and the live run are left out. -->
+
+<!-- Add a "?seed=N" to the address to see one fake team again; the seed is shown above each screen. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -26,10 +30,24 @@
   header { position: sticky; top: 0; z-index: 10; background: var(--lib-bg); border-bottom: 1px solid var(--lib-line);
     padding: 10px 16px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
   header h1 { font-size: 18px; margin: 0; }
-  header nav { display: flex; gap: 12px; flex-wrap: wrap; }
-  header nav a { color: var(--lib-dim); text-decoration: none; font-size: 13px; }
-  header nav a:hover { color: var(--lib-text); }
-  header nav a { cursor: pointer; }
+  header nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  header nav button { background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--lib-dim);
+    font: 13px system-ui, sans-serif; padding: 4px 10px; cursor: pointer; }
+  header nav button:hover { color: var(--lib-text); }
+  header nav button[aria-selected="true"] { color: var(--lib-text); background: var(--lib-panel); border-color: var(--lib-line); }
+  section[hidden] { display: none; }
+
+  /* The game screen: a 1920x1080 box scaled to the page width. Its transform makes it the containing block for the
+     panels' position: fixed, so the real HUD and pause menu lay out inside it as if it were the window. */
+  .lib-screen-wrap { position: relative; width: 100%; max-width: 1400px; border: 1px solid var(--lib-line); border-radius: 6px;
+    overflow: hidden; background: #0b1a12; }
+  .lib-screen { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0;
+    background: radial-gradient(circle at 40% 55%, #3d6b45, #16301d 70%, #0b1a12); overflow: hidden; }
+  .lib-screen-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0 0 10px; }
+  .lib-screen-bar button { background: var(--lib-panel); color: var(--lib-text); border: 1px solid var(--lib-line);
+    border-radius: 4px; padding: 4px 10px; font: 13px system-ui, sans-serif; cursor: pointer; }
+  .lib-screen-bar button:hover { border-color: var(--lib-accent); }
+  .lib-team-list { font-size: 12px; color: var(--lib-dim); }
 
   /* Components: the kit's pieces are placed absolutely inside the HUD; here they sit in the flow. */
   .lib-live .lib-stage { background: #0c0d10; }
@@ -104,40 +122,59 @@
 <body>
 <header>
   <h1>UI Library</h1>
-  <nav>
-    <a data-jump="components">Components</a><a data-jump="fonts">Fonts</a><a data-jump="colours">Working colours</a>
-    <a data-jump="types">Type palette</a><a data-jump="pieces">Styles</a><a data-jump="screens">Screen variables</a>
-    <a data-jump="reference">Reference palettes</a>
+  <nav role="tablist">
+    <button data-tab="bits">Base UI bits</button><button data-tab="run">Run panels</button><button data-tab="pause">Pause panels</button>
+    <button data-tab="menu">Main menu panels</button><button data-tab="fonts">Fonts</button><button data-tab="colours">Colours</button>
+    <button data-tab="screens">Screen variables</button><button data-tab="reference">Reference palettes</button>
   </nav>
   <span class="lib-note" style="margin:0">Source of truth: docs/HUD-STYLE.md. Dev tool, never ships (#147).</span>
 </header>
 <main>
 
-<section id="components">
+<section id="components" data-tab="bits">
   <h2>Components <span class="lib-tag">live, placeholder content</span></h2>
   <p class="lib-note">The game's own pieces, mounted from the HUD kit (js/ui/hud-kit*.js) and styled by its real CSS, fed placeholder names and numbers. Where a piece is private to its panel, it is rebuilt here from the same kit parts and named as such.</p>
   <div id="components-body" class="lib-live"></div>
 </section>
 
-<section id="fonts">
+<section id="run-panels" data-tab="run">
+  <h2>Run panels <span class="lib-tag">real panels, fake run</span></h2>
+  <p class="lib-note">The run HUD as the game draws it: every panel file (js/ui/hud-*-panel.js) mounted for real on a 1920 x 1080 screen, reading a fake run built through the game's own classes (G.Player, G.Team, G.RunStats, G.DpsHistory) instead of a live one. Nothing here is saved.</p>
+  <div class="lib-screen-bar"><button data-reroll>New random team</button><span class="lib-team-list" data-team-list></span></div>
+  <div class="lib-screen-wrap" data-screen-slot="run"></div>
+</section>
+
+<section id="pause-panels" data-tab="pause">
+  <h2>Pause panels <span class="lib-tag">real panels, fake run</span></h2>
+  <p class="lib-note">The pause menu (js/ui/pause-menu.js) opened for real over the same fake run: Run Info, the Pokemon detail and team panels, and the Run Inventory. Hover for the game's tooltips; click a team card to show that Pokemon.</p>
+  <div class="lib-screen-bar"><button data-reroll>New random team</button><span class="lib-team-list" data-team-list></span></div>
+  <div class="lib-screen-wrap" data-screen-slot="pause"></div>
+</section>
+
+<section id="menu-panels" data-tab="menu">
+  <h2>Main menu panels</h2>
+  <div id="menu-body" class="lib-live"></div>
+</section>
+
+<section id="fonts" data-tab="fonts">
   <h2>Fonts</h2>
   <p class="lib-note">Each face is loaded from assets/fonts through the game's own stylesheets. Pixel faces only at whole multiples of their grid (HUD-STYLE "Crisp sizes only").</p>
   <div id="font-list"></div>
 </section>
 
-<section id="colours">
+<section id="colours" data-tab="colours">
   <h2>Working colours</h2>
   <p class="lib-note">HUD-STYLE "Working colours". A working palette, not a frozen one: every colour has a job. B/W colours come in pairs (a bright fill over a dark shade), shown as a split swatch.</p>
   <div id="colour-groups"></div>
 </section>
 
-<section id="types">
+<section id="types" data-tab="colours">
   <h2>Type palette <span class="lib-tag">canonical for all UI</span></h2>
   <p class="lib-note">Bulbapedia Scarlet/Violet. Base for fills, Dark for shades and outlines, Light for highlights and for type-coloured text over the map. Read live from G.U.TYPE_COLOR, TYPE_COLOR_LIGHT and TYPE_COLOR_DARK (js/core/util.js).</p>
   <table class="lib-ramp" id="type-table"></table>
 </section>
 
-<section id="pieces">
+<section id="pieces" data-tab="bits">
   <h2>Styles</h2>
   <p class="lib-note">Looks that are not kit components. The type chips, toasts and HUD text use the game's real CSS classes; the rest are drawn here from HUD-STYLE values (the live components are in Components above).</p>
 
@@ -196,13 +233,13 @@
   <div class="lib-stage" id="arrows"></div>
 </section>
 
-<section id="screens">
+<section id="screens" data-tab="screens">
   <h2>Screen variables</h2>
   <p class="lib-note">The CSS variables each screen's stylesheet defines, read live from the game's CSS. Rows marked "not in HUD-STYLE" are colours a screen uses that the spec doesn't list yet.</p>
   <table class="lib-ramp lib-screenvars" id="screen-vars"></table>
 </section>
 
-<section id="reference">
+<section id="reference" data-tab="reference">
   <h2>Reference palettes</h2>
   <p class="lib-note">docs/UI-PALETTES.md: Bulbapedia's light, base and dark sets. Reference, not rules; a set is used only once HUD-STYLE adopts it.</p>
   <div id="reference-sets"></div>
@@ -210,19 +247,158 @@
 
 </main>
 
-<script>window.G = {};</script>
+<!-- The game's scripts, in dev.html's order, minus the boot (js/main.js), the run itself (js/game.js: a fake G.Game stands in,
+     below) and the deferred network stack (firebase-config, js/net/). The smoke checks this list against dev.html. -->
+<script>
+window.G = {};
+// The panels size themselves from the window (centre line, pause stage fit). On this page they live in a 1920 x 1080 box,
+// so they are told the window is that size; the page's own layout never reads these.
+Object.defineProperty(window, 'innerWidth', { configurable: true, get: () => 1920 });
+Object.defineProperty(window, 'innerHeight', { configurable: true, get: () => 1080 });
+</script>
 <script src="js/core/util.js"></script>
 <script src="js/vendor/preact.min.js"></script>
 <script src="js/vendor/preact-hooks.min.js"></script>
 <script src="js/vendor/htm.min.js"></script>
 <script src="js/vendor/preact-signals-core.min.js"></script>
 <script src="js/vendor/preact-signals.min.js"></script>
+<script src="js/core/stats.js"></script>
+<script src="js/core/simbus.js"></script>
+<script src="js/systems/log.js"></script>
+<script src="js/core/i18n.js"></script>
+<script src="js/data/lang-en.js"></script>
+<script src="js/core/settings.js"></script>
+<script src="js/data/music.js"></script>
+<script src="js/data/pokedex.js"></script>
+<script src="js/data/sprites-meta.js"></script>
+<script src="js/data/status-anims.js"></script>
+<script src="js/core/db.js"></script>
+<script src="js/core/audio.js"></script>
+<script src="js/core/input.js"></script>
+<script src="js/core/touch.js"></script>
+<script src="js/core/sprites.js"></script>
+<script src="js/core/camera.js"></script>
+<script src="js/data/learnsets.js"></script>
+<script src="js/data/moves.js"></script>
+<script src="js/data/types.js"></script>
+<script src="js/data/starters.js"></script>
+<script src="js/data/enemy-classes.js"></script>
+<script src="js/data/enemies.js"></script>
+<script src="js/data/gyms.js"></script>
+<script src="js/data/leader-ai-settings.js"></script>
+<script src="js/data/gym-contact.js"></script>
+<script src="js/data/shop-contact.js"></script>
+<script src="js/data/upgrades.js"></script>
+<script src="js/data/evolvable.js"></script>
+<script src="js/data/stage-one.js"></script>
+<script src="js/data/species-traits.js"></script>
+<script src="js/systems/copies.js"></script>
+<script src="js/data/items.js"></script>
+<script src="js/data/ground-items.js"></script>
+<script src="js/data/drops.js"></script>
+<script src="js/data/pickup-sprites.js"></script>
+<script src="js/data/pokesprite-index.js"></script>
+<script src="js/data/missions.js"></script>
+<script src="js/data/achievements.js"></script>
+<script src="js/data/funding.js"></script>
+<script src="js/data/changelog.js"></script>
+<script src="js/world/tiles.js"></script>
+<script src="js/world/world.js"></script>
+<script src="js/entities/vfx.js"></script>
+<script src="js/entities/fx.js"></script>
+<script src="js/entities/projectile.js"></script>
+<script src="js/entities/enemy.js"></script>
+<script src="js/entities/elite.js"></script>
+<script src="js/entities/uber-elite.js"></script>
+<script src="js/entities/boss-ai.js"></script>
+<script src="js/entities/pickup.js"></script>
+<script src="js/entities/player.js"></script>
+<script src="js/entities/player-sim-pass.js"></script>
+<script src="js/entities/gym-leader.js"></script>
+<script src="js/entities/leader-ai.js"></script>
+<script src="js/systems/combat.js"></script>
+<script src="js/systems/spawner.js"></script>
+<script src="js/systems/elites.js"></script>
+<script src="js/systems/rescue.js"></script>
+<script src="js/systems/catch.js"></script>
+<script src="js/systems/levelup.js"></script>
+<script src="js/systems/interact.js"></script>
+<script src="js/systems/gym-arena.js"></script>
+<script src="js/systems/gym.js"></script>
+<script src="js/systems/shops.js"></script>
+<script src="js/systems/events.js"></script>
+<script src="js/systems/weather.js"></script>
+<script src="js/systems/pathing.js"></script>
+<script src="js/systems/progress.js"></script>
+<script src="js/systems/silver.js"></script>
+<script src="js/systems/hazards.js"></script>
+<script src="js/systems/status.js"></script>
+<script src="js/systems/stages.js"></script>
+<script src="js/systems/team.js"></script>
+<script src="js/systems/leader-memory.js"></script>
+<script src="js/systems/leader-info.js"></script>
+<script src="js/systems/leader-belief.js"></script>
+<script src="js/systems/leader-planner.js"></script>
+<script src="js/data/move-attributes.js"></script>
+<script src="js/data/moves-generated.js"></script>
+<script src="js/data/move-overrides.js"></script>
+<script src="js/data/move-handler.js"></script>
+<script src="js/data/move-resolver.js"></script>
+<script src="js/systems/team-cards.js"></script>
+<script src="js/systems/dps-history.js"></script>
+<script src="js/systems/run-stats.js"></script>
+<script src="js/systems/move-geom.js"></script>
+<script src="js/systems/move-sim.js"></script>
+<script src="js/systems/move-effects.js"></script>
+<script src="js/systems/move-route.js"></script>
+<script src="js/systems/move-render.js"></script>
+<script src="js/ui/move-info.js"></script>
 <script src="js/ui/icons.js"></script>
+<script src="js/ui/status-fx.js"></script>
+<script src="js/ui/ui.js"></script>
+<script src="js/ui/statchart.js"></script>
+<script src="js/ui/sheet.js"></script>
+<script src="js/ui/hud.js"></script>
 <script src="js/ui/hud-kit.js"></script>
 <script src="js/ui/hud-kit-items.js"></script>
 <script src="js/ui/hud-kit-hp-bars.js"></script>
 <script src="js/ui/hud-kit-chips.js"></script>
 <script src="js/ui/hud-overlay.js"></script>
+<script src="js/ui/hud-boss-panel.js"></script>
+<script src="js/ui/hud-player-panel.js"></script>
+<script src="js/ui/hud-roster-panel.js"></script>
+<script src="js/ui/hud-run-items-panel.js"></script>
+<script src="js/ui/hud-map-panel.js"></script>
+<script src="js/ui/hud-dps-panel.js"></script>
+<script src="js/ui/pause-inventory.js"></script>
+<script src="js/ui/pause-pokemon.js"></script>
+<script src="js/ui/pause-run-info.js"></script>
+<script src="js/ui/pause-menu.js"></script>
+<script src="js/ui/end-run.js"></script>
+<script src="js/ui/ev-screen.js"></script>
+<script src="js/ui/confetti.js"></script>
+<script src="js/ui/gym-present.js"></script>
+<script src="js/ui/login.js"></script>
+<script src="js/ui/test.js"></script>
+<script src="js/ui/menu.js"></script>
+<script src="js/ui/gacha-ui.js"></script>
+<script src="js/ui/run-ui.js"></script>
+<script src="js/ui/shop-ui.js"></script>
+<script src="js/ui/catch-ui.js"></script>
+<script src="js/ui/social-ui.js"></script>
+<script src="js/ui/ranking-ui.js"></script>
+<script src="js/ui/mod-ui.js"></script>
+<script src="js/ui/goals-ui.js"></script>
+<script src="js/ui/settings-ui.js"></script>
+<script src="js/ui/layout-ui.js"></script>
+<script src="js/ui/support-ui.js"></script>
+<script src="js/ui/news-ui.js"></script>
+<script src="js/core/updater.js"></script>
+<script src="js/core/debug.js"></script>
+<script src="js/core/debug-run-screens.js"></script>
+<script src="js/core/debug-leader.js"></script>
+<script src="js/core/debug-leader-trace.js"></script>
+<script src="js/core/debug-run-trace.js"></script>
 <script>
 'use strict';
 // ---------- Data copied from docs/HUD-STYLE.md "Colour palette" (roles and jobs). Keep in step with the doc; the smoke checks it. ----------
@@ -443,10 +619,21 @@ $('arrows').innerHTML = ARROWS.map(([cap, fill, dark, shine]) => `<div class="li
 
 // ---------- screen variables (read live from the game's CSS) ----------
 ['css/bw-team.css', 'css/bw-settings.css'].forEach((href) => { const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; document.head.appendChild(link); });
-// Section links: a #hash link would resolve against <base href="../">, so the header scrolls instead.
+// ---------- tabs: one group of sections at a time. The tab is remembered for this browser tab only (sessionStorage), not in
+// the URL, since a #hash would resolve against <base href="../">. Other scripts listen for 'lib-tab' to set up their screen. ----------
+const TAB_KEY = 'uiLibrary.tab';
+window.libShowTab = (name) => {
+  const tabs = [...document.querySelectorAll('header nav [data-tab]')];
+  if (!tabs.some((tab) => tab.dataset.tab === name)) name = tabs[0].dataset.tab;
+  tabs.forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.tab === name)));
+  document.querySelectorAll('main > section').forEach((section) => (section.hidden = section.dataset.tab !== name));
+  try { sessionStorage.setItem(TAB_KEY, name); } catch (error) { /* private window: the tab is just not remembered */ }
+  window.dispatchEvent(new CustomEvent('lib-tab', { detail: name }));
+  return name;
+};
 document.querySelector('header nav').addEventListener('click', (event) => {
-  const target = event.target.closest('[data-jump]');
-  if (target) document.getElementById(target.dataset.jump).scrollIntoView({ behavior: 'smooth' });
+  const tab = event.target.closest('[data-tab]');
+  if (tab) window.libShowTab(tab.dataset.tab);
 });
 function readVar(selector, name) {
   if (selector === ':root') return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -593,7 +780,7 @@ $('reference-sets').innerHTML = REFERENCE_SETS.map((set) => `
   lifeBars.forEach(({ fraction, bar }, index) => bar.update(Math.round(fraction * 100), 100, false, 'sample' + index));
 
   // The main menu panel is plain markup in dev.html (#scr-menu), styled by css/bw-menu.css; copied here with placeholder text.
-  body.insertAdjacentHTML('beforeend', `<h3>Main menu <span class="lib-tag">real CSS: bw-menu.css; markup copied from dev.html #scr-menu</span></h3>
+  document.getElementById('menu-body').insertAdjacentHTML('beforeend', `<h3>Main menu <span class="lib-tag">real CSS: bw-menu.css; markup copied from dev.html #scr-menu</span></h3>
     <p class="lib-note">The right-hand menu panel. The selected row is highlighted; Play is the tall first row. Shown at about half size.</p>
     <div class="lib-menu-frame"><div class="bw-panel" style="animation:none">
       <h1 class="bw-title">PokeSwarm</h1>
@@ -605,6 +792,196 @@ $('reference-sets').innerHTML = REFERENCE_SETS.map((set) => `
         <button class="bw-row">Missions<small>Ut labore et dolore</small></button>
         <button class="bw-row">Settings<small>Magna aliqua</small></button>
       </div></div></div>`);
+})();
+</script>
+<script>
+'use strict';
+// ---------- A fake run for the real panels (Run panels and Pause panels tabs) ----------
+// The panels read G.Game, the save and the run systems exactly as in a run. G.Game is a stand-in object here (js/game.js is
+// not loaded), but everything it hands out is built with the game's own classes and calls: G.Player members with real
+// moves and held items, a G.Team, a G.DpsHistory and G.RunStats record filled through their own record calls, G.Gym
+// badges, G.Silver kills, G.Catch catches. Placeholder numbers, real code paths.
+(() => {
+  if (!G.HudOverlay.ready) return;
+
+  // The save is a sandbox: file:// pages share one localStorage with the game, so nothing on this page may write it.
+  const sandboxSave = {
+    runSlots: 4, berrySlots: 4, team: [], pbind: {}, pupg: {}, owned: {}, shiny: {}, itemsFound: {},
+    teamItems: {}, teamLoadout: [], box: [], belt: { size: 6, poke: 6 },
+  };
+  G.DB = Object.create(G.DB, { save: { value: sandboxSave }, commit: { value: () => {} } });
+  // The network stack is not loaded (deferred, CLAUDE.md "Local-first"); the HUD only asks whether co-op is on.
+  if (!G.Coop) G.Coop = { active: false, isHost: false };
+
+  const RUN_SECONDS = 452, // 7:32 into the run
+    TEAM_LEVEL = 24,
+    HP_SHARES = [1, 0.72, 0.46, 0.17, 0.88, 0], // by team slot; the last one has fainted
+    FAINTED_AT = 388;
+
+  // A small seeded random, so a team can be named and shown again (?seed=N in the page address).
+  function seededRandom(seed) {
+    let state = seed >>> 0;
+    return () => {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let mixed = Math.imul(state ^ (state >>> 15), 1 | state);
+      mixed = (mixed + Math.imul(mixed ^ (mixed >>> 7), 61 | mixed)) ^ mixed;
+      return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const seedFromAddress = Number(new URLSearchParams(location.search).get('seed'));
+  let seed = seedFromAddress > 0 ? seedFromAddress : 1 + Math.floor(Math.random() * 99999);
+
+  const SPECIES = G.DEX.filter((mon) => mon.dex <= 493 && mon.stats && G.startMoveOf(mon.dex));
+  const HELD_ITEMS = G.Items.LIST.filter((item) => item.tier === 'pokemon').map((item) => item.id);
+  const RUN_ITEMS = G.Items.LIST.filter((item) => item.tier === 'run').map((item) => item.id);
+  const BERRIES = G.Grounds.LIST.filter((ground) => ground.bag).map((ground) => ground.id);
+
+  let run = null; // { team, roster, names }
+
+  function buildRun() {
+    const random = seededRandom(seed);
+    const pick = (list) => list[Math.floor(random() * list.length)];
+    const shuffled = (list) => list.map((value) => [random(), value]).sort((a, b) => a[0] - b[0]).map(([, value]) => value);
+
+    G.Gym.reset();
+    G.Silver.reset();
+    G.Catch.startRun(sandboxSave);
+
+    const roster = shuffled(SPECIES).slice(0, 6).map((mon, slot) => {
+      const member = new G.Player(mon, {}, random() < 0.2, null);
+      member.teamSlot = slot;
+      member.addMove(G.startMoveOf(mon.dex));
+      const pool = G.Moves.poolFor(mon).filter((id) => !member.hasMove(id) && !G.MoveInfo.isBuff(id));
+      for (const id of shuffled(pool).slice(0, 3)) member.addMove(id);
+      member.setActive(0);
+      member.syncLevel(TEAM_LEVEL);
+      return member;
+    });
+    const team = G.Team.create(roster, (from, to) => to.syncLevel(from.level));
+    team.dpsHistory = G.DpsHistory.create();
+    team.runStats = G.RunStats.create();
+    const player = team.active;
+
+    // Held items on four of the six, two berries in the bag, one team item.
+    shuffled(roster).slice(0, 4).forEach((member) => member.equip(pick(HELD_ITEMS)));
+    shuffled(BERRIES).slice(0, 2).forEach((id) => player.berries.push(id));
+    const runItem = pick(RUN_ITEMS);
+    roster.forEach((member) => G.Items.BY[runItem].on(member));
+    player.runItems.push(runItem);
+
+    // The run so far: each member had a turn on the field, dealt damage, landed statuses, took and healed hits.
+    const stats = team.runStats,
+      history = team.dpsHistory;
+    for (let second = 0; second < RUN_SECONDS; second++) {
+      const onField = roster[Math.floor(second / 80) % roster.length];
+      const damage = Math.round(40 + random() * 160 + second / 3);
+      G.DpsHistory.record(history, onField, damage);
+      G.RunStats.dealt(stats, onField, damage, { typeMult: random() < 0.3 ? 2 : 1, dot: random() < 0.1, moveId: onField.moves[0] && onField.moves[0].id });
+      if (random() < 0.6) G.RunStats.kill(stats, onField, random() < 0.02);
+      if (random() < 0.05) G.RunStats.inflicted(stats, onField, pick(['burn', 'poison', 'paralysis', 'sleep', 'confusion']));
+      if (random() < 0.2) G.RunStats.taken(stats, onField, Math.round(random() * 30));
+      if (random() < 0.1) G.RunStats.healed(stats, onField, Math.round(random() * 20));
+      G.DpsHistory.advance(history, 1, onField);
+    }
+    for (let item = 0; item < 3; item++) G.RunStats.item(stats);
+    G.RunStats.shiny(stats);
+    const fainted = roster[5];
+    G.RunStats.faint(stats, fainted, FAINTED_AT);
+
+    roster.forEach((member, slot) => {
+      member.hp = Math.round(member.maxHp * HP_SHARES[slot]);
+      if (HP_SHARES[slot] === 0) member.dead = true;
+    });
+    player.kills = stats.members.reduce((sum, counts) => sum + (counts ? counts.kills : 0), 0);
+    player.coins = 145;
+    for (let kill = 0; kill < player.kills; kill++) G.Silver.kill();
+    G.Silver.spend(Math.min(G.Silver.whole, 30));
+    G.Gym.debugBadges([{ badge: 'Boulder Badge', at: 212 }]);
+    const caughtMon = pick(SPECIES);
+    G.Catch.held.push({ dex: caughtMon.dex, name: caughtMon.name, nature: 'adamant', natureName: 'Adamant' });
+
+    const evBank = [3.4, 0, 1.2, 0, 0.6, 5.8];
+    const regionBest = G.RunStats.regionEntry({ loop: 1, splits: [240], fightStartedAt: null, endTime: 610 });
+    G.Game = {
+      state: 'playing',
+      st: { time: RUN_SECONDS },
+      get player() { return team.active; },
+      get roster() { return roster; },
+      get everyone() { return [team.active]; },
+      get activeIndex() { return team.activeIdx; },
+      swapCooldown: 0,
+      swapMax: G.Team.SWAP_LOCK,
+      runStats: stats,
+      regionBest,
+      runIsClean: true,
+      shiniesCaught: 0,
+      evBank,
+      swap: () => false,
+      openCatch() {}, openShop() {}, flash() {}, togglePause() {},
+    };
+    run = { team, roster };
+    const label = roster.map((member) => {
+      const held = member.item && G.Items.BY[member.item];
+      return member.mon.name + (member.shiny ? ' (shiny)' : '') + (held ? ' @ ' + held.name : '');
+    }).join(', ');
+    const extras = 'Berries: ' + player.berries.map((id) => G.Grounds.BY[id].name).join(', ') + '. Team item: ' + G.Items.BY[runItem].name + '.';
+    document.querySelectorAll('[data-team-list]').forEach((el) => (el.textContent = 'Seed ' + seed + ': ' + label + '. ' + extras));
+  }
+
+  // ---------- the screen box that the HUD layer and the pause menu live in ----------
+  const screen = document.createElement('div');
+  screen.className = 'lib-screen';
+  screen.append(document.querySelector('.hud-overlay'), document.querySelector('.pause-menu'));
+  const fitScreen = () => {
+    const slot = screen.parentElement;
+    if (!slot || !slot.clientWidth) return;
+    const scale = slot.clientWidth / 1920;
+    screen.style.transform = 'scale(' + scale + ')';
+    slot.style.height = Math.round(1080 * scale) + 'px';
+  };
+  new ResizeObserver(fitScreen).observe(document.querySelector('main'));
+
+  let syncing = false;
+  function syncLoop() {
+    if (!syncing) return;
+    G.HudOverlay.sync(true);
+    requestAnimationFrame(syncLoop);
+  }
+  if (G.PauseMenu.ready) {
+    // Resume closes the menu and opens it again, so the panels stay on show; End Run and Settings do nothing here.
+    G.PauseMenu.wire({ resume: () => G.PauseMenu.close(() => setTimeout(G.PauseMenu.open, 400)), endRun() {}, settings() {} });
+  }
+
+  function showScreen(tab) {
+    const slot = document.querySelector(`[data-screen-slot="${tab}"]`);
+    syncing = false;
+    if (G.PauseMenu.ready) G.PauseMenu.hideNow();
+    if (!slot) return;
+    if (!run) buildRun();
+    slot.appendChild(screen);
+    fitScreen();
+    if (tab === 'run') {
+      syncing = true;
+      syncLoop();
+    } else if (G.PauseMenu.ready) {
+      G.HudOverlay.sync(true);
+      G.PauseMenu.open();
+    }
+  }
+  window.addEventListener('lib-tab', (event) => showScreen(event.detail));
+  document.querySelectorAll('[data-reroll]').forEach((button) => button.addEventListener('click', () => {
+    seed = 1 + Math.floor(Math.random() * 99999);
+    run = null;
+    showScreen(button.closest('section').dataset.tab);
+  }));
+  window.libFakeRun = () => run; // the smoke reads the team it built
+})();
+
+// Open the remembered tab (or the first one) once every script above is ready.
+(() => {
+  let saved = null;
+  try { saved = sessionStorage.getItem('uiLibrary.tab'); } catch (error) { /* private window */ }
+  window.libShowTab(saved);
 })();
 </script>
 </body>
