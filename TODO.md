@@ -4,17 +4,17 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-15 night home session
+## Getting up to date (either machine), from the 2026-11-16 home session
 1. `git status` must be clean. `git fetch origin`, then `git checkout feature/128-acquisition`
    (first time on a machine: `git checkout -b feature/128-acquisition origin/feature/128-acquisition`), then `git pull --ff-only`.
 2. `node tools/check.js` must end with "check: all passed". Say "catch me up".
 3. Before leaving a machine: commit and push (the branch and main).
 
-## Next (queue set by Jess 2026-11-15; gym leader AI parked)
-1. Owed: feel test #136 (catch phase; G.Debug.rescue() or G.Debug.catch()). Its screen works; Jess polishes the catch UI later
-   (with #126). #145 (move tooltip class) is small and ready.
-2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill) next, then #138; #146 keep-or-sell list;
-   order in docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
+## Next (queue set by Jess 2026-11-15, updated 2026-11-16; gym leader AI parked)
+1. #148 catch odds, the next session (Jess, 2026-11-16): open the slice, then an options map with worked odds per star and ball.
+   #145 (move tooltip class) is small and ready. #147 UI Library waits on Jess's look.
+2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill) after #148, then #138; #146 keep-or-sell
+   list; order in docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143). #136 closed 2026-11-16.
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
    97 - Upgrade System Review.md). #131 Silver bonuses later, after a traced run reaches gym 1. 4. #126 UI unify (#61 first), then #127 Main Menu v3.0.
 5. #129 architecture review. 6. #130 regions and map selection. Parked: #111, then #122.
@@ -22,7 +22,8 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
    drafts (leader reads your cards and items as seen; buffValue reads the whole kit; trace records the leader's level; 16i
    parity; #122 comment on early gates). Any time: #121, #120, #57, #58, #110.
    Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107.
-8. Owner decisions: #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
+8. Owner decisions: #148, #137 tiers and prices, #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107. Jess: link #148 as a
+   sub-issue of #136 on GitHub.
 9. New issues to file: region type maps, PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing.
 10. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83; unknown local branch
     refactor/damage-layer on the work machine.

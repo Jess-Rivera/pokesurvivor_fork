@@ -1,8 +1,7 @@
 # 136b, Catch screen redesign plan (follow-up to #136)
 
 Source: `assets/excalidraw/Catch Pokemon Popup.svg` (Jess, 16 Nov) plus two playtest notes: double click does not throw,
-and the arrow keys should move a visible selection cursor. Status: **built 2026-11-16, waiting on Jess's feel test**
-(#136, Needs Playtest). Q1 to Q8 answered by Jess on 2026-11-16. "Changes made during the build" below lists what moved
+and the arrow keys should move a visible selection cursor. Status: **built and feel-tested 2026-11-16; #136 closed**. Q1 to Q8 answered by Jess on 2026-11-16. "Changes made during the build" below lists what moved
 from the plan.
 
 ## Slice opening (agree before the build)
@@ -151,7 +150,7 @@ the species' types (already in the dex data). No save change.
 | Q7 (agreed) | One random shift per catch shared by every ball, or a fresh shift per ball tier? | One per catch, shared: switching balls then moves the band by the true difference, so a better ball always reads better. Fresh per ball could make a Great Ball look worse than a Poke Ball. |
 | Q8 (agreed) | The owned tooltip's six numbers: IV + EV per stat (matches the sort), or IVs only? | IV + EV per stat, so the tooltip explains the sort order. |
 
-## Playtest fixes 1 (Jess, 2026-11-16): built, waiting on the feel test
+## Playtest fixes 1 (Jess, 2026-11-16): built, feel-tested
 
 | # | What Jess saw | Cause | Fix |
 |---|---|---|---|

@@ -167,3 +167,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Then a Components section (Jess: placeholder content is fine): the HUD kit mounted with lorem names and numbers; move
   slots rebuilt from kit parts, main menu markup copied. Smoke checks each piece draws and its images load.
 - Stopped at: Jess looks it over; plan in docs/ASCII Concept Maps/UI Library - Slice Plan.md.
+
+## 2026-11-16 (Claude Code, home), #136 catch screen redesign (136b) and one tooltip layer
+- Built Jess's catch mockup on the HUD kit: type-rimmed panel, catch band (30 wide, one shift per catch), flee ring, three
+  belts, owned grid with IV + EV tooltip, team-menu buttons, B2 cursor with arrows / Enter / 1-6; all 17 balls cut to strips.
+- Playtest fixes: belt and ball sizes, the owned cursor (clipped by its scroll box), the button shape, all text in Silver on
+  its pixel grid (27.1429 / 40.7143 px, read from the font file). Decided: one universal tooltip layer (decision file).
+- Broke and fixed: double click died because a click rebuilt the belt (the old smoke passed it anyway); pause tooltips died
+  after a catch (one remembered layer). Filed #148 (catch odds too high). #136 feel-tested and closed.
+- Stopped at: next session opens #148.
