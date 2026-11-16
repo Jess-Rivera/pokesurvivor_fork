@@ -67,7 +67,7 @@ flowchart LR
 
 Touched-code cleanups: none beyond removing the replaced band code. Save: no new save fields (the session is not saved).
 
-## 6. Open tuning (Jess, after the feel test; nothing decided)
+## 6. Open tuning (decided 2026-11-16, see section 7)
 
 Typical rescue capture rate by star (the real pool's median): 1 star 190, 2 star 180, 3 star 60, 4 star 45, 5 star 5 (the
 four Paradox Pokemon). One throw / whole encounter (3 throws), half the clock left, Poke Ball:
@@ -86,3 +86,55 @@ four Paradox Pokemon). One throw / whole encounter (3 throws), half the clock le
 - Badge cap penalty (Jess asked why 0 badges costs nothing): it is for the World Level outrunning your badges, so it is x1
   under the cap. Options shown: A, the 0 badge cap at WL 5; B, no 4-level grace; or a flat x0.85 for no badges.
 - Test species (4 star): Scyther 123 (cr 45), Cryogonal 615 (cr 25), Shuckle 213 (cr 190); `G.Debug.catchMath(true)` first.
+
+## 7. Tuning slice 148c (Jess's picks 2026-11-16; built 2026-11-16, waiting on Jess's feel test)
+
+Ruling: decision 2026-11-16-148-catch-tuning-steep-curve-x2-fading-bonus. Steep curve, x2 bonus fading, badges as built.
+
+**Opening (goal, done, test)**
+
+| | |
+|---|---|
+| Goal | Rescue catches feel earned: a 4 star is about 1 in 3 per encounter at World Level 1, about 1 in 4 later |
+| Done when | The ODDS table holds the Steep curve and the fading x2 bonus; harness 6a is green with the new relations; Jess feel-tests a 4 star with `G.Debug.catchMath(true)` |
+| Test (written first) | Harness 6a gains three relations from the ruling, each failing on today's code (below) |
+
+```mermaid
+flowchart LR
+  T["6a: three new relations<br/>(red on today's numbers)"] --> C["catch.js ODDS:<br/>star curve, bonus start and fade"]
+  C --> G["6a green, mutants fail it"]
+  G --> F["Jess feel test<br/>catchMath(true), 4 star"]
+  F --> X["#148 closes or retunes"]
+```
+
+**New relations in harness 6a** (docs/proposals/rescue-harness.js, kept as relations, no copied numbers)
+
+| Relation | Fails today because | Mutant it catches |
+|---|---|---|
+| A Pokemon's rate at World Level 1 is at most twice its rate at World Level 13 (bonus no more than x2) | x3.4 | a start above x2 |
+| The bonus shrinks at every level from 1 to 13 (strictly, not flat then falling) | (passes today) | a clip at x2 (flat to WL 8) |
+| A 5 star is below a 4 star of the same capture rate | 5 star uses the 4 star value | the 5 star entry dropped |
+
+The existing relations stay: higher star never higher odds, bonus gone from WL 13, a 4 star at capture rate 45 or less never sure.
+
+**Code change** (js/systems/catch.js, the ODDS table and the bonus function only)
+
+| Where | Change |
+|---|---|
+| ODDS starMult | Five entries, Steep: 1, 0.5, 0.25, 0.1, 0.05 (5 star gets its own value) |
+| ODDS early bonus numbers | Replace base 36 / per level 2 / divisor 10 with a named start (x2) and the level it ends at (13) |
+| earlyLevelBonus | Falls in equal steps from the start at WL 1 to x1 at WL 13, x1 after; same name and callers |
+| Comments | The step notes name the new numbers and the ruling |
+
+No other file changes behavior. G.Debug.catchMath already prints the bonus and star factor, so it shows the new values as is.
+
+**Expected odds** (formula, Poke Ball, half the clock left, one throw / whole encounter)
+
+| WL | 1 star | 2 star | 3 star | 4 star |
+|---|---|---|---|---|
+| 1 (x2) | 100/100 | 65/96 | 24/56 | 12/32 |
+| 8 (x1.42) | 82/99 | 54/90 | 20/48 | 10/27 |
+| 13 and up (x1) | 67/97 | 44/83 | 16/41 | 8/23 |
+
+**Risks:** none for saves (no stored odds). Rescues only roll 1 to 4 star, so the 5 star value only shows through
+`G.Debug.catch` on a 5 star for now. Then: check.js, npm run format, smoke-ui (catchMath), comment on #148.

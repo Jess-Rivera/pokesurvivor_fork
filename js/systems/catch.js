@@ -36,14 +36,16 @@ G.Catch = (() => {
     rateCap: 255, // the most a modified rate can be; at it every shake passes (step 6)
     timeTermWhole: 3, // the time term is (3 - 2 x share of the fight clock used) / 3 (step 1, flipped: faster is bigger)
     timeTermPerUsed: 2,
-    starMult: [1, 0.75, 0.5, 0.25], // by star, 1 to 4; higher stars use the 4 star value (step 3b)
+    // by star, 1 to 5 (step 3b); Steep curve after the feel test (decision 2026-11-16-148-catch-tuning-steep-curve-x2-fading-bonus)
+    starMult: [1, 0.5, 0.25, 0.1, 0.05],
     badgeCaps: [10, 18, 26, 34, 42, 50, 58, 66, 75, 83, 91, 99, 100], // World Level cap by badges this run, 0 to 12 (step 4)
     overCapLevelsPerStep: 4, // each 4 World Levels over the cap is one penalty step
     overCapPenalty: 0.85, // x per step
     overCapMaxSteps: 6,
-    earlyBonusBase: 36, // early World Level bonus: max(1, (36 - 2 x World Level) / 10) (step 5)
-    earlyBonusPerLevel: 2,
-    earlyBonusDivisor: 10,
+    // early World Level bonus (step 5): earlyBonusStart at World Level 1, falling in equal steps to x1 at earlyBonusEndLevel,
+    // x1 after (same ruling: x2 fading, not clipped)
+    earlyBonusStart: 2,
+    earlyBonusEndLevel: 13,
     criticalBySpecies: [
       // species owned in the Pokedex -> critical multiplier (step 7); fewer than 31: no critical catch
       [601, 2.5],
@@ -96,10 +98,11 @@ G.Catch = (() => {
     return Math.pow(ODDS.overCapPenalty, steps);
   }
 
-  /** The early World Level bonus: large at World Level 1, gone from World Level 13. */
+  /** The early World Level bonus: earlyBonusStart at World Level 1, shrinking every level, gone from earlyBonusEndLevel. */
   function earlyLevelBonus(worldLevel) {
-    const bonus = ODDS.earlyBonusBase - ODDS.earlyBonusPerLevel * (worldLevel || 1);
-    return Math.max(1, bonus / ODDS.earlyBonusDivisor);
+    const levelsLeft = ODDS.earlyBonusEndLevel - (worldLevel || 1);
+    const stepPerLevel = (ODDS.earlyBonusStart - 1) / (ODDS.earlyBonusEndLevel - 1);
+    return Math.max(1, 1 + levelsLeft * stepPerLevel);
   }
 
   /** Every factor of one catch's rate with one ball, and the rate (0 to 255) they make. catchState is a session or any

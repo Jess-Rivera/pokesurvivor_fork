@@ -168,6 +168,13 @@ const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === nam
   }
   if (!all.some((m) => p(m, { worldLevel: 1, badges: 12 }) > p(m, { worldLevel: 13, badges: 12 }))) bad('an early World Level gives a bonus');
   if (all.some((m) => p(m, { worldLevel: 13, badges: 12 }) !== p(m, { worldLevel: 40, badges: 12 }))) bad('the early World Level bonus is gone from World Level 13 (no badge debt)');
+  // 148c tuning (decision 2026-11-16-148-catch-tuning-steep-curve-x2-fading-bonus): the early bonus starts no higher than
+  // x2 and shrinks at every World Level to 13 (a fade, not a clip); a 5 star is harder than a 4 star
+  const parts = (m, over) => C.rateParts(at(m, over), 'poke');
+  for (const m of all) if (parts(m, { worldLevel: 1, badges: 12 }).rate > 2 * parts(m, { worldLevel: 13, badges: 12 }).rate + 1e-9) bad(m.name + ': the World Level 1 rate is at most twice the World Level 13 rate (bonus no more than x2)');
+  for (let level = 2; level <= 13; level++) if (!(parts(all[0], { worldLevel: level, badges: 12 }).earlyBonus < parts(all[0], { worldLevel: level - 1, badges: 12 }).earlyBonus)) bad('the early bonus shrinks at every World Level from 1 to 13 (WL ' + level + ')');
+  const fiveStar = G.DEX.find((m) => m.rarity === 5 && m.cr), fourStar = all.find((m) => m.rarity === 4);
+  if (!fiveStar || !(parts(fiveStar).star < parts(fourStar).star)) bad('a 5 star has a lower star factor than a 4 star');
   const best = { timeFraction: 1, worldLevel: 1, badges: 12, ownedSpecies: 0 };
   for (const m of all.filter((x) => x.rarity >= 4 && cr(x) <= 45)) if (!(p(m, best) < 1)) bad(m.name + ': a 4 star at capture rate 45 or less is never a sure catch with a Poke Ball');
   if (C.criticalChance(C.ODDS.rateCap, 30) !== 0) bad('30 or fewer species in the Pokedex: never a critical catch');
