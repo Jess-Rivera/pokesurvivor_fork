@@ -18,14 +18,8 @@
   color: #ffffff;
   user-select: none;
 }
-.inv-pane > *,
-.inv-frame > * {
+.inv-pane > * {
   position: absolute;
-}
-/* the mockup's thin #29ceff rim around the cards and the slots */
-.inv-frame {
-  box-sizing: border-box;
-  border: 2px solid #29ceff;
 }
 .inv-card-grid {
   display: grid;

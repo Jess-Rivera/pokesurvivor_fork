@@ -397,3 +397,12 @@ Found while building: a cursor whose key listener was added at load time ran bef
 the Shop and the Main Menu then reopened it; each screen now adds its listener in its init, as before.
 Filed during the build (Jess): #151 a button you cannot afford still takes the cursor and toasts "Unable to Afford" (every
 menu; decision 2026-11-17-unaffordable-buttons-take-the-cursor), #152 the pocket Buy's unaffordable look.
+
+**149d feel-test round 1 (Jess 2026-11-17, screenshot assets/screenshots/inventory-bug1.png):**
+| # | Fix |
+|---|---|
+| 1 | Enter on the Shop's Inventory closed the Shop and the Inventory never showed: the Inventory's key listener read the same Enter and pressed its Exit. A key a menu window handles now goes no further (createMenuCursor) |
+| 2 | With only one slot bought, Swap swaps with it at once (no slot pick) |
+| 3 | No teal frame inside the window: the cards and slots sit in the window itself (30 px from its edges); Shop and Exit sit where the Shop's Exit does, so nothing moves between the two screens |
+| - | Filed: #153 the Main Menu selects with Enter or Space and moves with the arrows only; the Shop and Inventory select with Enter only and move with the arrows and WASD |
+smoke-ui: Shop pass 30 checks (the Inventory check now by Enter and by click); Inventory pass 20.

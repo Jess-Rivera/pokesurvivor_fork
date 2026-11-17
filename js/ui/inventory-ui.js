@@ -9,8 +9,9 @@
  *   slots    right: the four team item slots, the run screen's box sized up (the HUD kit's RunItemBox); slots not bought
  *            are dimmed. Pressing a filled slot unequips it
  *   swap     Swap shows "Select a slot to swap." under the slots; by keys the cursor goes to slot 1, and Enter on a slot
- *            swaps the two items; with the mouse a click on a slot does. Esc, or a click anywhere else, cancels. A second
- *            Stone skips the pick: it takes the first Stone's slot, with a toast (Jess 2026-11-17)
+ *            swaps the two items; with the mouse a click on a slot does. Esc, or a click anywhere else, cancels. There is
+ *            no pick with only one slot bought (the swap is with it), and none for a second Stone: it takes the first
+ *            Stone's slot, with a toast (Jess 2026-11-17)
  *   buttons  Shop opens the Shop (the background stays dimmed); Exit returns to the Main Menu
  *   input    the Shop's selection cursor rules (the kit's createMenuCursor): the search bar, every card button, the
  *            filled slots, Shop and Exit; while picking a slot to swap, only the bought slots
@@ -39,19 +40,19 @@ G.InventoryUI = (() => {
   } = windowKit;
 
   // ---------- sizes and places (stage pixels, inside the window, which is the Shop's: 1145 x 670) ----------
+  // Everything sits straight in the window, as the Shop's panes do (Jess 2026-11-17: no frame inside the window); Shop and
+  // Exit sit where the Shop's Exit does, so going between the two screens nothing moves.
   const WINDOW = { width: 1145, height: 670 },
-    FRAME = { inset: 30 }, // the thin #29ceff rim around the cards and the slots
-    CARDS = { inset: 14, width: 600, searchWidth: 584, listTop: 56, listWidth: 584, columns: 3 },
-    SLOTS = { artWidth: 120, artPixel: 3, gap: 12, top: 20 }, // 360 x 96 each (Jess 2026-11-17)
+    EDGE = 30, // from the window's left, top and right edges
+    CARDS = { width: 600, searchWidth: 584, listTop: 56, listWidth: 584, columns: 3 },
+    SLOTS = { artWidth: 120, artPixel: 3, gap: 12 }, // 360 x 96 each (Jess 2026-11-17)
     SWAP_LINE = { gap: 14, height: 30 },
-    BUTTONS = { shopArtWidth: 52, exitArtWidth: 52, gap: 16, bottom: 14 };
-  FRAME.width = WINDOW.width - 2 * FRAME.inset;
-  FRAME.height = WINDOW.height - 2 * FRAME.inset;
-  CARDS.listHeight = FRAME.height - 4 - 2 * CARDS.inset - CARDS.listTop;
+    BUTTONS = { shopArtWidth: 52, exitArtWidth: 52, gap: 16, bottom: 24 };
+  // the card list ends level with the bottom of Shop and Exit (as the Shop's sale grid does)
+  CARDS.listHeight = WINDOW.height - BUTTONS.bottom - EDGE - CARDS.listTop;
   SLOTS.width = SLOTS.artWidth * SLOTS.artPixel;
   SLOTS.height = RUN_BOX_ROWS * SLOTS.artPixel;
-  // the slot column: centred in the room right of the cards
-  SLOTS.left = Math.round((CARDS.inset + CARDS.width + FRAME.width - 4 - SLOTS.width) / 2);
+  SLOTS.left = WINDOW.width - EDGE - SLOTS.width; // right aligned with Exit
   const SEARCH_ID = 'inv-search',
     CARD_ID = 'item-', // cursor ids: a card's button, a slot
     SLOT_ID = 'slot-',
@@ -157,7 +158,9 @@ G.InventoryUI = (() => {
     if (save.teamLoadout.includes(id)) return changed(G.Items.unequipTeamItem(save, id));
     const result = G.Items.equipTeamItem(save, id);
     if (result.ok || result.error !== 'full') return changed(result, id);
-    swapping.value = id; // every bought slot is full: pick the slot to swap with
+    // every bought slot is full: with only one bought there is nothing to pick (Jess 2026-11-17), else pick the slot
+    if (G.Items.runSlots(save) === 1) return changed(G.Items.swapTeamItem(save, id, 0), id);
+    swapping.value = id;
     cursor.moveTo(SLOT_ID + 0);
     G.Audio.sfx('select');
   }
@@ -239,16 +242,15 @@ G.InventoryUI = (() => {
     saveTick.value; // redraw after a change
     if (!G.DB.save) return null;
     const view = inventoryView(),
-      at = cursor.cursorOn(),
-      innerHeight = FRAME.height - 4;
+      at = cursor.cursorOn();
     const emptyLine = !view.anyUnlocked
       ? 'Nothing unlocked yet. Gym leaders and bosses can drop team items.'
       : !view.items.length
         ? 'No team item matches.'
         : null;
-    const slotsBottom = SLOTS.top + G.Items.RUN_SLOTS_MAX * (SLOTS.height + SLOTS.gap) - SLOTS.gap,
-      buttonTop = innerHeight - BUTTONS.bottom - BUTTON.height,
-      exitLeft = SLOTS.left + SLOTS.width - BUTTONS.exitArtWidth * BUTTON.artPixel,
+    const slotsBottom = EDGE + G.Items.RUN_SLOTS_MAX * (SLOTS.height + SLOTS.gap) - SLOTS.gap,
+      buttonTop = WINDOW.height - BUTTONS.bottom - BUTTON.height,
+      exitLeft = WINDOW.width - EDGE - BUTTONS.exitArtWidth * BUTTON.artPixel,
       shopLeft = exitLeft - BUTTONS.gap - BUTTONS.shopArtWidth * BUTTON.artPixel;
     // a mouse press anywhere but a pressable slot cancels a swap (its Swap button starts the next one on the click)
     const cancelOnMouse = (event) => {
@@ -256,93 +258,88 @@ G.InventoryUI = (() => {
     };
     return html`<div class="inv-pane" onMouseDown=${cancelOnMouse}>
       <div
-        class="inv-frame"
-        style=${{ left: px(FRAME.inset), top: px(FRAME.inset), width: px(FRAME.width), height: px(FRAME.height) }}
+        class="inv-cards"
+        style=${{ left: px(EDGE), top: px(EDGE), width: px(CARDS.width), height: px(WINDOW.height - EDGE - BUTTONS.bottom) }}
       >
-        <div
-          class="inv-cards"
-          style=${{ left: px(CARDS.inset), top: px(CARDS.inset), width: px(CARDS.width), height: px(innerHeight) }}
+        <${SearchStop} id=${SEARCH_ID} area="cards" at=${at} className="inv-search-host">
+          <${SearchBar}
+            value=${query.value}
+            onChange=${(text) => (query.value = text)}
+            placeholder="Search team items"
+            width=${CARDS.searchWidth}
+            className="inv-search"
+          />
+        </${SearchStop}>
+        <${ScrollBox}
+          box=${{ left: 0, top: CARDS.listTop, width: CARDS.listWidth, height: CARDS.listHeight }}
+          trackRight=${0}
+          colours=${SCROLL_COLOURS}
+          resetOn=${[query.value, openCount.value]}
         >
-          <${SearchStop} id=${SEARCH_ID} area="cards" at=${at} className="inv-search-host">
-            <${SearchBar}
-              value=${query.value}
-              onChange=${(text) => (query.value = text)}
-              placeholder="Search team items"
-              width=${CARDS.searchWidth}
-              className="inv-search"
-            />
-          </${SearchStop}>
-          <${ScrollBox}
-            box=${{ left: 0, top: CARDS.listTop, width: CARDS.listWidth, height: CARDS.listHeight }}
-            trackRight=${0}
-            colours=${SCROLL_COLOURS}
-            resetOn=${[query.value, openCount.value]}
+          <div
+            class="inv-card-grid"
+            style=${{
+              gridTemplateColumns: `repeat(${CARDS.columns}, ${px(CARD.width)})`,
+              gap: px(CARD.gap),
+              padding: px(CURSOR_ROOM) + ' 0 ' + px(CARD.gap), // the cursor's corners at the top, whole last cards
+            }}
           >
-            <div
-              class="inv-card-grid"
+            ${view.items.map(
+              (item) =>
+                html`<${ItemCard}
+                  key=${item.id}
+                  cursor=${cursor}
+                  item=${item}
+                  buttonId=${CARD_ID + item.id}
+                  buttonLabel=${buttonLabelFor(item, view)}
+                  disabled=${false}
+                  onPress=${() => pressCard(item.id)}
+                  area="cards"
+                />`
+            )}
+          </div>
+          ${emptyLine ? html`<div class="hud-text shop-empty">${emptyLine}</div>` : null}
+        </${ScrollBox}>
+      </div>
+      <div class="inv-slots" style=${{ left: px(SLOTS.left), top: px(EDGE), width: px(SLOTS.width) }}>
+        ${Array.from(
+          { length: G.Items.RUN_SLOTS_MAX },
+          (_, slot) => html`<${Slot} key=${slot} slot=${slot} view=${view} at=${at} />`
+        )}
+      </div>
+      ${
+        swapping.value
+          ? html`<div
+              class="hud-text inv-swap-line"
               style=${{
-                gridTemplateColumns: `repeat(${CARDS.columns}, ${px(CARD.width)})`,
-                gap: px(CARD.gap),
-                padding: px(CURSOR_ROOM) + ' 0 ' + px(CARD.gap), // the cursor's corners at the top, whole last cards
+                left: px(SLOTS.left),
+                top: px(slotsBottom + SWAP_LINE.gap),
+                width: px(SLOTS.width),
+                height: px(SWAP_LINE.height),
               }}
             >
-              ${view.items.map(
-                (item) =>
-                  html`<${ItemCard}
-                    key=${item.id}
-                    cursor=${cursor}
-                    item=${item}
-                    buttonId=${CARD_ID + item.id}
-                    buttonLabel=${buttonLabelFor(item, view)}
-                    disabled=${false}
-                    onPress=${() => pressCard(item.id)}
-                    area="cards"
-                  />`
-              )}
-            </div>
-            ${emptyLine ? html`<div class="hud-text shop-empty">${emptyLine}</div>` : null}
-          </${ScrollBox}>
-        </div>
-        <div class="inv-slots" style=${{ left: px(SLOTS.left), top: px(SLOTS.top), width: px(SLOTS.width) }}>
-          ${Array.from(
-            { length: G.Items.RUN_SLOTS_MAX },
-            (_, slot) => html`<${Slot} key=${slot} slot=${slot} view=${view} at=${at} />`
-          )}
-        </div>
-        ${
-          swapping.value
-            ? html`<div
-                class="hud-text inv-swap-line"
-                style=${{
-                  left: px(SLOTS.left),
-                  top: px(slotsBottom + SWAP_LINE.gap),
-                  width: px(SLOTS.width),
-                  height: px(SWAP_LINE.height),
-                }}
-              >
-                ${SWAP_PROMPT}
-              </div>`
-            : null
-        }
-        <${CursorButton}
-          cursor=${cursor}
-          id="shop"
-          action="inv-shop"
-          label="Shop"
-          artWidth=${BUTTONS.shopArtWidth}
-          onPress=${openShop}
-          style=${{ left: px(shopLeft), top: px(buttonTop) }}
-        />
-        <${CursorButton}
-          cursor=${cursor}
-          id="exit"
-          action="inv-exit"
-          label="Exit"
-          artWidth=${BUTTONS.exitArtWidth}
-          onPress=${close}
-          style=${{ left: px(exitLeft), top: px(buttonTop) }}
-        />
-      </div>
+              ${SWAP_PROMPT}
+            </div>`
+          : null
+      }
+      <${CursorButton}
+        cursor=${cursor}
+        id="shop"
+        action="inv-shop"
+        label="Shop"
+        artWidth=${BUTTONS.shopArtWidth}
+        onPress=${openShop}
+        style=${{ left: px(shopLeft), top: px(buttonTop) }}
+      />
+      <${CursorButton}
+        cursor=${cursor}
+        id="exit"
+        action="inv-exit"
+        label="Exit"
+        artWidth=${BUTTONS.exitArtWidth}
+        onPress=${close}
+        style=${{ left: px(exitLeft), top: px(buttonTop) }}
+      />
     </div>`;
   }
 

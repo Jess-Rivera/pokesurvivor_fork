@@ -1310,13 +1310,21 @@ async function shopFlow(browser, query, tag) {
   await sleep(200);
   await page.click('.shop-tab[data-tab="items"]');
   await sleep(100);
+  const inventoryOpen = () =>
+    page.evaluate(() => G.UI.isOpen('scr-inventory') && !G.UI.isOpen('scr-gacha') && G.UI.isOpen('scr-menu'));
+  // by keys (Jess 2026-11-17: Enter there closed the Shop and the Inventory never showed), then by mouse
+  await page.hover('.shop-inventory button');
+  await page.keyboard.press('Enter');
+  await sleep(200);
+  const byKeys = await inventoryOpen();
+  await page.evaluate(() => G.GachaUI.open());
+  await sleep(200);
   await page.click('.shop-inventory button');
   await sleep(200);
-  const inventoryOpen = await page.evaluate(() => ({
-    inventory: G.UI.isOpen('scr-inventory'),
-    shop: G.UI.isOpen('scr-gacha'),
-  }));
-  ok(inventoryOpen.inventory && !inventoryOpen.shop, tag + ': Inventory leaves the Shop for the Inventory screen');
+  ok(
+    byKeys && (await inventoryOpen()),
+    tag + ': Inventory, by Enter or a click, leaves the Shop for the Inventory screen'
+  );
   ok(
     errs.length === 0,
     tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')
@@ -1485,6 +1493,18 @@ async function inventoryFlow(browser, query, tag) {
     tag + ': with the mouse a click elsewhere cancels a swap, and a click on a slot swaps'
   );
 
+  // one slot bought: Swap swaps with it at once, no slot pick (Jess 2026-11-17)
+  await setUp(1, [plain[0]]);
+  await sleep(200);
+  view = await shown();
+  const oneSlotLabel = cardOf(view, plain[1]).label;
+  await keyOn(plain[1], 'Enter');
+  view = await shown();
+  ok(
+    oneSlotLabel === 'Swap' && !view.swapLine && view.loadout.join() === plain[1],
+    tag + ': with one slot bought, Swap swaps with it at once (no slot pick)'
+  );
+
   // one Stone: a second Stone's Swap goes straight to the first Stone's slot, with the toast
   await setUp(2, [plain[0], stones[0]]);
   await sleep(200);
@@ -1505,6 +1525,8 @@ async function inventoryFlow(browser, query, tag) {
   const narrowed = (await shown()).cards;
   await page.fill('#scr-inventory .inv-search', '');
   await sleep(150);
+  await page.keyboard.press('Escape'); // gives the keys back to the cursor (the search box keeps its Esc)
+  await sleep(100);
   ok(
     narrowed.length > 0 &&
       narrowed.length <= view.cards.length &&
@@ -1513,16 +1535,51 @@ async function inventoryFlow(browser, query, tag) {
     tag + ': the search bar narrows the cards by name, and clearing it restores them'
   );
 
-  // Shop and Exit
-  await page.click('#scr-inventory [data-action="inv-shop"]');
+  // the layout (Jess 2026-11-17): no frame inside the window; the cards and slots sit in the window itself, and Exit sits
+  // where the Shop's Exit does
+  const inventoryLayout = await page.evaluate(() => {
+    const windowRect = document.getElementById('inv-window').getBoundingClientRect(),
+      inside = (selector) => {
+        const rect = document.querySelector(selector).getBoundingClientRect();
+        return (
+          rect.left >= windowRect.left &&
+          rect.right <= windowRect.right &&
+          rect.top >= windowRect.top &&
+          rect.bottom <= windowRect.bottom
+        );
+      },
+      exit = document.querySelector('#scr-inventory [data-action="inv-exit"]').getBoundingClientRect();
+    return {
+      framed: !!document.querySelector('#scr-inventory .inv-frame, #scr-inventory .shop-owned'),
+      inside: inside('.inv-cards') && inside('.inv-slots') && inside('[data-action="inv-shop"]'),
+      exit: [exit.left - windowRect.left, exit.top - windowRect.top].map(Math.round).join(),
+    };
+  });
+  // Shop by keys, then the Shop's Exit measured in its own window
+  await page.hover('#scr-inventory [data-action="inv-shop"]');
+  await page.keyboard.press('Enter');
   await sleep(200);
   view = await shown();
+  const shopExit = await page.evaluate(() => {
+    const windowRect = document.querySelector('#scr-gacha .shop-window').getBoundingClientRect(),
+      exit = document.querySelector('[data-action="shop-exit"]').getBoundingClientRect();
+    return [exit.left - windowRect.left, exit.top - windowRect.top].map(Math.round).join();
+  });
+  ok(
+    !inventoryLayout.framed && inventoryLayout.inside && inventoryLayout.exit === shopExit,
+    tag +
+      ": no frame inside the window; cards, slots and Shop sit in it; Exit sits where the Shop's does (" +
+      inventoryLayout.exit +
+      ' / ' +
+      shopExit +
+      ')'
+  );
   const shopTab = await page.evaluate(() =>
     [...document.querySelectorAll('.shop-tab.is-selected')].map((t) => t.dataset.tab)
   );
   ok(
     view.shop && !view.inventory && view.menu && shopTab.join() === 'items',
-    tag + ': Shop leaves the Inventory for the Shop on Team Items, over the Main Menu'
+    tag + ': Shop, by Enter, leaves the Inventory for the Shop on Team Items, over the Main Menu'
   );
   await page.evaluate(() => G.InventoryUI.open());
   await sleep(200);

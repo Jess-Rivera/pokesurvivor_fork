@@ -179,7 +179,9 @@ G.MenuWindowKit = (() => {
 
     // ---------- keys (the Main Menu screens read the page's keydown, as menu.js does) ----------
     // The screen adds onKey in its init(), after menu.js has added its own: a key that closes the screen must not then
-    // reach the Main Menu's listener (Enter on Exit would press the Main Menu's selected row).
+    // reach the Main Menu's listener (Enter on Exit would press the Main Menu's selected row). A key it handles goes no
+    // further either: Enter on the Shop's Inventory opens the Inventory, whose listener comes next and would otherwise
+    // read the same Enter (Jess 2026-11-17: by keys the Shop closed and the Inventory never showed).
     function onKey(event) {
       if (!isOpen() || G.UI.isOpen('scr-ask') || event.target.closest('input, textarea, select')) return;
       const key = event.key,
@@ -193,6 +195,7 @@ G.MenuWindowKit = (() => {
       else if (direction) stepFocus(direction[0], direction[1]);
       else return;
       event.preventDefault();
+      event.stopImmediatePropagation();
     }
 
     /**
