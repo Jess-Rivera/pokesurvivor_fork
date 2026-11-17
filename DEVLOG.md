@@ -209,3 +209,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   clipped; WASD moves the cursor; Up row by row, search bar only from the top row; no cursor with the mouse, none on search bars.
 - Decisions: cursor tooltips after a settable delay; no selection cursor with the mouse. smoke-ui Shop pass 30 checks.
 - Stopped at: 149c signed off; next session opens 149d (Inventory screen).
+
+## 2026-11-17 (Claude Code, home, second session), #149d built and signed off
+- 149d Inventory: the Shop's window; searchable 3-column cards (220 wide) with Equip / Unequip / Swap; 4 slot panels drawn
+  like the run screen's (unbought dimmed); "Select a slot to swap." (skipped with one slot, or for a second Stone, which toasts).
+- Shared: js/ui/menu-window-kit.js (the Shop's cursor rules, CursorButton, ItemCard, SearchStop) and the kit's RunItemBox.
+  Equip rules moved to G.Items. Old Inventory code, markup and styles gone. smoke-ui Inventory pass 20, Shop 30.
+- Broke and fixed: key listener order (Enter reached a second screen); game.js closed the Inventory on any Esc.
+- Filed #151, #152 (unaffordable buttons take the cursor, toast "Unable to Afford"; decision), #153 (menu keys differ).
+- Stopped at: 149d signed off; next 149e Pokeballs layout.

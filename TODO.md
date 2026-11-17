@@ -4,15 +4,16 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-17 home session
+## Getting up to date (either machine), from the 2026-11-17 home session (second)
 1. `git status` must be clean. `git fetch origin`, then `git checkout rework/shop`
    (first time on a machine: `git checkout -b rework/shop origin/rework/shop`), then `git pull --ff-only`.
 2. `node tools/check.js` must end with "check: all passed". Say "catch me up".
 3. Before leaving a machine: commit and push (the branch and main).
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-16; gym leader AI parked)
-1. #149 Main Menu Shop on rework/shop: 149a, 149b, 149c signed off; next open 149d Inventory screen, then 149e, 149f.
-   Sub-slices and rulings: docs/ASCII Concept Maps/149 - Shop Rework Opening.md. #150 blocked on #149 and #97.
+1. #149 Main Menu Shop on rework/shop: 149a to 149d signed off; next open 149e Pokeballs layout, then 149f TRs.
+   Sub-slices and rulings: docs/ASCII Concept Maps/149 - Shop Rework Opening.md. #151 and #152 (unaffordable buttons) fit
+   before or with 149e; #153 (menu keys) needs Jess's key set. #150 blocked on #149 and #97.
    #145 small and ready. #147 waits on Jess.
 2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill) after #149, then #138; #146 keep-or-sell
    list; order in docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
@@ -23,7 +24,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
    drafts (leader reads your cards and items as seen; buffValue reads the whole kit; trace records the leader's level; 16i
    parity; #122 comment on early gates). Any time: #121, #120, #57, #58, #110.
    Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107.
-8. Owner decisions: #149 Shop look and tabs, #137 tiers and prices, #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
+8. Owner decisions: #153 menu key set, #151 Full button and the cursor, #137 tiers and prices, #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
 9. New issues to file: region type maps, PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing.
 10. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83; unknown local branch
     refactor/damage-layer on the work machine.

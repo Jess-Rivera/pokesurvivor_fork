@@ -408,3 +408,5 @@ menu; decision 2026-11-17-unaffordable-buttons-take-the-cursor), #152 the pocket
 smoke-ui: Shop pass 30 checks (the Inventory check now by Enter and by click); Inventory pass 20.
 
 **149d feel-test round 2 (Jess 2026-11-17):** the card list widens toward the slots: three cards 220 wide (the Shop keeps 186; ItemCard takes a width), search bar as wide as the list. The only issue found in that playtest.
+
+**149d signed off (Jess 2026-11-17, feel test good after two fix rounds).** #149 stays open for 149e and 149f. Next: 149e Pokeballs layout.
