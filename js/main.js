@@ -40,6 +40,7 @@
     'UberElite',
     'Rescue',
     'Catch',
+    'BALL_CATALOG',
     'Boss',
     'Pickups',
     'PlayerEntity',

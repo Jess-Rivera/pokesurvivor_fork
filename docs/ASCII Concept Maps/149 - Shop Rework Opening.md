@@ -410,3 +410,53 @@ smoke-ui: Shop pass 30 checks (the Inventory check now by Enter and by click); I
 **149d feel-test round 2 (Jess 2026-11-17):** the card list widens toward the slots: three cards 220 wide (the Shop keeps 186; ItemCard takes a width), search bar as wide as the list. The only issue found in that playtest.
 
 **149d signed off (Jess 2026-11-17, feel test good after two fix rounds).** #149 stays open for 149e and 149f. Next: 149e Pokeballs layout.
+
+## Draft opening for 149e (Pokeballs layout), for Jess to agree
+Mockup: assets/excalidraw/Shop-Pokeballs.svg. Buying stays with #137; this slice draws the tab. No code here.
+
+| | |
+|---|---|
+| Goal | The Pokeballs tab shows the mockup: a scrolling 3-column grid of 17 ball cards (name, line, picture; dimmed with Unlock until unlocked) and, on the right, the catch screen's three belts sized up, with Buy under belts 2 and 3. |
+| Done when | Every ball has one card; Poke Ball (the only ball the game throws today) is lit with Buy, the other 16 dimmed with Unlock. The belts show the save's belt (belt 1 bought, holding its Poke Balls; 2 and 3 locked). The cursor reaches every card Buy, both belt Buys and Exit. Any Buy press changes nothing in the save and says why (E3). |
+| End-goal test | smoke-ui Shop pass gains a Pokeballs section (in place, no new harness). Relations: cards = the ball list's length, each card's name from the list; lit cards = the balls G.Catch throws; belts = 3 x 6 slots, bought belts = belt size / 6, balls drawn = the save's Poke Ball count; arrows reach every Buy and Exit; a press leaves coins and belt unchanged and toasts. |
+
+```mermaid
+flowchart LR
+  subgraph Window[Shop window, Pokeballs tab]
+    RAIL[rail] --- GRID[ball cards, 3 columns, scroll<br/>17 balls: 5 rows of 3, then 2]
+    GRID --- BELTS[belt 1 bought: Poke Balls<br/>belts 2, 3 locked]
+    BELTS --- BB[Buy 10,000 / Buy 15,000<br/>under belts 2 and 3]
+    BB --- EXIT[Exit]
+  end
+  CAT[ball catalog<br/>id, name, line] --> GRID
+  CATCH[G.Catch.BALLS<br/>what is throwable] -->|lit or dimmed| GRID
+  SAVE[save.belt<br/>size, poke] --> BELTS
+```
+
+### Parts (prose plan)
+| # | Where | What |
+|---|---|---|
+| 1 | new js/data/balls.js (a script tag in dev.html, a NEED entry, the build list) | The ball catalog: the 17 balls in shop order (Poke, Great, Ultra, Master, then Safari, Net, Dive, Nest, Repeat, Timer, Luxury, Premier, Dusk, Heal, Quick, Cherish, Dream; mainline item order), each with its id (the sprite file's name), its name and a one-line description (E2). #137 adds unlock prices and tiers here. |
+| 2 | js/ui/hud-kit-items.js (the HUD kit) | BallSprite moves here from catch-ui.js unchanged (its second user is the Shop); catch-ui takes it from the kit. |
+| 3 | js/ui/menu-window-kit.js, ItemCard | Two options: a picture to draw in the icon box in place of the item icon (the ball's frame 9, flipped, E5), and dimmed (the whole card at the locked look). |
+| 4 | new js/ui/shop-balls.js (E4) | The Pokeballs pane: the card grid in the kit's ScrollBox (the Team Items sale grid's sizes), the three belts (display only: Bag rim when bought, the locked rim when not, the save's Poke Balls in belt 1's slots), the two belt Buys, and what the cursor may reach on this tab. |
+| 5 | js/ui/gacha-ui.js | The Pokeballs tab draws the new pane instead of Coming soon; the cursor asks the pane for its items and presses on that tab. |
+| 6 | tools/smoke-ui.js | The Pokeballs section above. |
+
+**Plan check.** Reuses: ItemCard, CursorButton (refusal), ScrollBox, createMenuCursor, Box, the catch screen's belt look and BallSprite, G.Catch.BALLS, save.belt. New: the catalog (no ball list with names and lines exists; G.BALL_SPRITES is generated sprite data), ItemCard's two options (two real users each), the pane file. Not built: any purchase, unlock state in the save, prices for balls, Shift-click x10, the Belt 2 before Belt 3 rule (all #137). Size: gacha-ui.js stays near 600; the new pane file is about 200 lines.
+
+### Decisions for Jess
+| # | Question | Default if you say nothing |
+|---|---|---|
+| E1 | Ball card prices: #137 owns tiers and prices (open). Show a number now? | No number: locked cards read "Unlock", Poke Ball reads "Buy". #137 adds prices. |
+| E2 | Ball descriptions: mainline lines talk about turns, night, underwater and fishing, which this game does not have | Poke, Great, Ultra, Master get honest lines (Great 1.5x and Ultra 2x as catch.js plans them; Master always catches); the other 13 read "Coming soon." |
+| E3 | Pressing a Buy before #137 | The refusal path: the cursor reaches it, label greyed, toast "Coming soon." The belt Buys show the mockup's temporary 10,000 and 15,000. |
+| E4 | Where the new tab lives | Its own file (shop-balls.js), so gacha-ui.js does not pass 1000 lines when 149f adds TRs; Team Items and Character Upgrades move out the same way later (folded into #154's spirit, own issue if you want it). |
+| E5 | Ball picture | The open frame (frame 10) flipped, at 2x (64 px, the card's icon size), per the mockup |
+
+**Jess 2026-11-17:** all defaults agreed except E5: the picture is frame 9 (the last frame before the open frame; the mockup's "slot 10" counted from 1), flipped, at 2x. Build.
+
+**149e built (2026-11-17), needs Jess's feel test.** As planned, with these details settled during the build:
+- The belts are 96 wide, 145 apart, with 68 px slots. That spacing lets a 141 px Buy sit under each of belts 2 and 3, and belt 3's Buy ends at the pane's right edge.
+- The card grid reuses the Team Items sale grid's sizes and its scroll bar.
+- smoke-ui Shop pass, new Pokeballs section: 4 checks covering the cards, the belts, the arrows and the "Coming soon." presses. The Team Items checks' card selectors are now scoped to #shop-items, since the ball cards share `.shop-card`.

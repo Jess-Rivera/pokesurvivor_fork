@@ -108,6 +108,7 @@ G.HudOverlay = (() => {
     'IconCanvas',
     'RunItemBox',
     'RUN_BOX_ROWS',
+    'BallSprite',
     'ItemSquare',
     'ItemGrid',
     'ScrollBox',

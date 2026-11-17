@@ -285,18 +285,31 @@ G.MenuWindowKit = (() => {
   /**
    * A team item card (149c): thin #29ceff rim, #303030 body, icon, divider, name, description, and one button at the
    * bottom (its id is the cursor's, in the given area). width: the Shop's 186 by default; the Inventory's are wider.
-   * refusal: as CursorButton's.
+   * refusal: as CursorButton's. picture: drawn in the icon box in place of the item's icon (the Shop's ball cards, 149e);
+   * dimmed: the whole card at the locked look (a ball not unlocked yet).
    */
-  function ItemCard({ cursor, item, buttonId, buttonLabel, disabled, refusal, onPress, area, width = CARD.width }) {
+  function ItemCard({
+    cursor,
+    item,
+    buttonId,
+    buttonLabel,
+    disabled,
+    refusal,
+    onPress,
+    area,
+    width = CARD.width,
+    picture,
+    dimmed,
+  }) {
     const inner = width - 2 * CARD_RIM;
     return html`<div
-      class="shop-card"
+      class=${'shop-card' + (dimmed ? ' is-dimmed' : '')}
       data-item=${item.id}
       data-cursor-whole
       style=${{ width: px(width), height: px(CARD.height) }}
     >
       <div class="shop-card-icon" style=${{ left: px((inner - CARD.iconSize) / 2), top: px(CARD.iconTop) }}>
-        <${IconCanvas} icon=${item.icon || item.id} size=${CARD.iconSize} />
+        ${picture || html`<${IconCanvas} icon=${item.icon || item.id} size=${CARD.iconSize} />`}
       </div>
       <div
         class="shop-card-divider"

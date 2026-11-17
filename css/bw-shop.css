@@ -199,3 +199,21 @@
 .shop-button.refused .hud-team-button-label {
   color: rgba(255, 255, 255, 0.45);
 }
+
+/* ---------- Pokeballs (149e): the ball cards and the belts, drawn by js/ui/shop-balls.js into #shop-balls. The cards
+   and buttons are js/ui/menu-window-kit.js pieces; the belts' slots use the catch screen's look (bw-catch.css) ---------- */
+.shop-balls-pane {
+  position: absolute;
+  inset: 0;
+  font-family: 'GameFont', monospace;
+  font-synthesis: none;
+  color: #ffffff;
+}
+.shop-ball-list,
+.shop-belt {
+  position: absolute;
+}
+/* a ball not unlocked yet: the whole card dimmed (mockup); its button still takes the cursor */
+.shop-card.is-dimmed {
+  opacity: 0.45;
+}

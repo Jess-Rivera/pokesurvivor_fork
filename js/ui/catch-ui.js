@@ -20,7 +20,7 @@ G.CatchUI = (() => {
   const { html, signal, hooks, preact, PALETTE, FAINTED_RIM, typeColours, Box, ScrollBox, Cursor, TeamButton } =
     overlay.kit;
   const { REST_RIM, FOCUS_RIM, fitToStage, showTooltip, hideTooltip } = overlay.kit;
-  const { portraitSource, portraitFallback } = overlay.kit;
+  const { portraitSource, portraitFallback, BallSprite } = overlay.kit;
 
   // ---------- sizes and places (stage pixels; the window is centred on the 1920 x 1080 stage) ----------
   const WINDOW = { width: 980, height: 500 },
@@ -320,21 +320,6 @@ G.CatchUI = (() => {
 
   // ---------- drawing ----------
   const px = (value) => value + 'px';
-  /** One ball frame from its strip, drawn at `scale` (whole numbers keep the pixel art crisp). */
-  function BallSprite({ ball, frame, scale = SLOT.ballScale, className, style }) {
-    const size = BALL_SPRITES.size * scale;
-    return html`<div
-      class=${'catch-ball' + (className ? ' ' + className : '')}
-      style=${{
-        ...style,
-        width: px(size),
-        height: px(size),
-        backgroundImage: 'url(' + BALL_SPRITES.path(ball) + ')',
-        backgroundSize: px(size * BALL_SPRITES.frames) + ' ' + px(size),
-        backgroundPosition: px(-frame * size) + ' 0',
-      }}
-    ></div>`;
-  }
 
   function MonPanel({ view }) {
     const { session, types } = view;
@@ -398,7 +383,15 @@ G.CatchUI = (() => {
           onClick=${() => !locked && select(slot)}
           onDblClick=${() => !locked && throwNow(slot)}
         >
-          ${ball ? html`<${BallSprite} ball=${ball.id} frame=${BALL_SPRITES.animations.front[0]} />` : null}
+          ${
+            ball
+              ? html`<${BallSprite}
+                  ball=${ball.id}
+                  frame=${BALL_SPRITES.animations.front[0]}
+                  scale=${SLOT.ballScale}
+                />`
+              : null
+          }
           ${numbered ? html`<span class="catch-text catch-slot-key">${slot + 1}</span>` : null}
           ${cursorHere ? html`<${Cursor} />` : null}
         </div>`;
@@ -529,6 +522,7 @@ G.CatchUI = (() => {
             ? html`<${BallSprite}
                 ball=${fl.ball}
                 frame=${fl.frame}
+                scale=${SLOT.ballScale}
                 className=${'catch-flight' + (fl.caught ? ' is-caught' : '')}
                 style=${{
                   left: px(fl.x - (BALL_SPRITES.size * SLOT.ballScale) / 2),

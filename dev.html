@@ -673,10 +673,8 @@
         <div class="pm-stage shop-stage">
           <div class="shop-window">
             <div class="shop-panes">
-              <!-- Pokeballs: filled by #137 -->
-              <div id="shop-balls" class="shop-pane hidden">
-                <p class="shop-soon">Coming soon: Poke Ball restocks and bigger belts.</p>
-              </div>
+              <!-- Pokeballs: the ball cards and the belts, drawn by js/ui/shop-balls.js (149e); buying comes with #137 -->
+              <div id="shop-balls" class="shop-pane shop-pane-fixed hidden"></div>
 
               <!-- Character Upgrades: the Berry Pocket and Team Items Pocket cards, drawn by gacha-ui.js (149b) -->
               <div id="shop-upgrades" class="shop-pane hidden"></div>
@@ -861,6 +859,7 @@
     <script defer src="js/data/evolvable.js"></script>
     <script defer src="js/data/stage-one.js"></script>
     <script defer src="js/data/ball-sprites.js"></script>
+    <script defer src="js/data/balls.js"></script>
     <script defer src="js/data/species-traits.js"></script>
     <script defer src="js/systems/copies.js"></script>
     <script defer src="js/data/items.js"></script>
@@ -963,6 +962,7 @@
     <script defer src="js/ui/test.js"></script>
     <script defer src="js/ui/menu-window-kit.js"></script>
     <script defer src="js/ui/menu.js"></script>
+    <script defer src="js/ui/shop-balls.js"></script>
     <script defer src="js/ui/gacha-ui.js"></script>
     <script defer src="js/ui/inventory-ui.js"></script>
     <script defer src="js/ui/run-ui.js"></script>
