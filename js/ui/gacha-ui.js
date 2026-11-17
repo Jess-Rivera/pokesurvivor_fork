@@ -6,9 +6,13 @@
  *            it), Character Upgrades (team item slots, berry slots), Team Items (100k unlocks), TRs (149f fills it).
  *            Flush with the window's left edge; the chosen tab uses its -selected art. A click or Q / E switches them.
  *   Exit     the team menu's button at 3 px per art pixel, bottom right; back to the Main Menu.
+ *   pockets  the Character Upgrades pane (149b, mockup Shop-Character-Upgrades.svg): the Berry Pocket and the Team Items
+ *            Pocket, each a box in the pause menu's detail-panel shape with its 2x2 slot grid (unbought slots dimmed), a
+ *            divider, its name and line, and one Buy button for the next slot (Full once every slot is bought).
  *   input    the selection cursor takes no tab. With the mouse it shows only on the eligible item under it (or nowhere);
- *            a key press snaps it back to the last item it was on (the kit's inputMode). In 149a Exit is its only item
- *            (Enter presses it); the panes' Buy buttons join when 149b and 149c rebuild them. Esc leaves.
+ *            a key press snaps it back to the last item it was on (the kit's inputMode). Eligible items: the pockets'
+ *            Buy buttons you can press (on Character Upgrades), then Exit. The arrows step through them, Enter presses,
+ *            Esc leaves. The Team Items pane's Buy joins when 149c rebuilds it.
  */
 G.GachaUI = (() => {
   const $ = G.UI.$;
@@ -19,7 +23,8 @@ G.GachaUI = (() => {
     console.warn('[Shop] the HUD kit did not load: the Shop cannot open');
     return { init() {}, open() {} };
   }
-  const { html, signal, preact, Cursor, inputMode, TeamButton, REST_RIM, FOCUS_RIM, fitToStage } = kitOverlay.kit;
+  const { html, signal, preact, Box, ItemGrid, Cursor, inputMode, TeamButton, REST_RIM, FOCUS_RIM, fitToStage } =
+    kitOverlay.kit;
   let shopSel = null; // Team Items tab: the item shown in the detail column
   const fmt = (n) => n.toLocaleString('en-US');
 
@@ -39,16 +44,60 @@ G.GachaUI = (() => {
     TEAM_BUTTON_ROWS = 18;
   EXIT.width = EXIT.artWidth * EXIT.artPixel; // 156
   EXIT.height = TEAM_BUTTON_ROWS * EXIT.artPixel; // 54
+  // the pocket cards (149b), in pane pixels: side by side from the pane's top left; inside each, the grid, the divider
+  // (short of the rim), the name and line, then Buy at the bottom (the team menu button at 3 px per art pixel)
+  const POCKET = {
+    left: 40,
+    top: 20,
+    gap: 36,
+    width: 260,
+    height: 390, // room for a two-line pocket line above Buy
+    gridArtSize: 28, // squares of 56 px, 28 px apart: a 140 px grid
+    gridTop: 30,
+    dividerTop: 196,
+    textInset: 18,
+    nameTop: 212,
+    lineTop: 244,
+    buyArtWidth: 76,
+    buyBottom: 18,
+  };
+  POCKET.gridWidth = POCKET.gridArtSize * 2 * 2 + POCKET.gridArtSize;
+  POCKET.buyWidth = POCKET.buyArtWidth * EXIT.artPixel; // 228
+  POCKET.buyHeight = TEAM_BUTTON_ROWS * EXIT.artPixel; // 54
+  // the pockets' colours (docs/UI-PALETTES.md "Berries pocket" and "Items pocket" ramps; the mockup's #303030 body)
+  const BERRY_POCKET_RIM = { light: '#6ec188', base: '#20a048', dark: '#15682f' },
+    TEAM_ITEM_POCKET_RIM = { light: '#d89db7', base: '#c86890', dark: '#82445e' },
+    POCKET_BODY = '#303030';
 
   // ---------- state ----------
   const tab = signal(OPENING_TAB);
+  const saveTick = signal(0); // bumped on every refresh: the drawn pieces read the save again
   // The selection cursor (Jess, 2026-11-16): the tabs never take it (Q and E or a click switch them). focus is the last
   // item it was on; hovered is the eligible item under the mouse, or null. Using the keys (kit inputMode 'keys') it shows
   // on focus; using the mouse it shows only on hovered, so it leaves when the mouse is over anything else. In 149a Exit is
-  // the only eligible item; the panes' Buy buttons join when 149b and 149c rebuild them.
+  // eligible item besides the pockets' Buy buttons you can press (149b); the Team Items Buy joins in 149c.
   const focus = signal('exit'),
     hovered = signal(null);
-  const cursorOn = () => (inputMode.value === 'keys' ? focus.value : hovered.value);
+  /** The items the cursor may sit on now, in arrow order: the pressable pocket Buys (Character Upgrades only), then Exit. */
+  function eligibleItems() {
+    saveTick.value; // read again after a purchase or a coin change
+    const buys =
+      tab.value === 'upgrades'
+        ? pockets()
+            .filter((pocket) => pocket.canBuy)
+            .map((pocket) => pocket.id)
+        : [];
+    return [...buys, 'exit'];
+  }
+  /**
+   * Where the cursor shows: by keys, the last item it was on (Exit if that one can no longer take it); by mouse, the
+   * eligible item under the pointer, or nowhere.
+   */
+  function cursorOn() {
+    const items = eligibleItems();
+    if (inputMode.value === 'keys') return items.includes(focus.value) ? focus.value : 'exit';
+    return items.includes(hovered.value) ? hovered.value : null;
+  }
   /** The mouse entered (an id) or left (null) an eligible item; entering also makes it the keys' starting point. */
   function hover(id) {
     hovered.value = id;
@@ -91,7 +140,7 @@ G.GachaUI = (() => {
   function refresh() {
     for (const { key } of TABS) $('shop-' + key).classList.toggle('hidden', key !== tab.value);
     if (tab.value === 'items') refreshItems();
-    else if (tab.value === 'upgrades') refreshUpgrades();
+    saveTick.value++;
     G.UI.refreshCoins();
   }
 
@@ -103,6 +152,8 @@ G.GachaUI = (() => {
     else if (key === 'Enter') press();
     else if (key === 'q' || key === 'Q') stepTab(-1);
     else if (key === 'e' || key === 'E') stepTab(1);
+    else if (key === 'ArrowLeft' || key === 'ArrowUp') stepFocus(-1);
+    else if (key === 'ArrowRight' || key === 'ArrowDown') stepFocus(1);
     else return;
     event.preventDefault();
   }
@@ -113,9 +164,21 @@ G.GachaUI = (() => {
     if (index >= 0 && index < TABS.length) pickTab(TABS[index].key);
   }
 
+  /** The arrows: the eligible item before or after the cursor's (no wrap). */
+  function stepFocus(step) {
+    const items = eligibleItems(),
+      index = items.indexOf(cursorOn() || focus.value) + step;
+    if (index < 0 || index >= items.length || items[index] === focus.value) return;
+    focus.value = items[index];
+    G.Audio.sfx('hover');
+  }
+
   /** Enter on whatever the cursor is on. */
   function press() {
-    if (focus.value === 'exit') close();
+    const at = cursorOn();
+    if (at === 'exit') return close();
+    const pocket = pockets().find((entry) => entry.id === at);
+    if (pocket && pocket.canBuy) pocket.buy();
   }
 
   // ---------- drawing the rail and Exit ----------
@@ -223,45 +286,122 @@ G.GachaUI = (() => {
     refresh();
   }
 
-  // ---------------- Team Upgrades tab: team item slots, bought in order ----------------
-  function refreshUpgrades() {
-    const s = G.DB.save,
-      have = G.Items.runSlots(s),
-      max = G.Items.RUN_SLOTS_MAX,
-      box = $('shop-upgrades');
-    let html = `<p class="sub" style="margin:4px 0 10px">You have <b>${have}</b> of ${max} team item slots. Each slot carries one team item into every run. Slots are bought in order.</p>`;
-    for (let k = 2; k <= max; k++) {
-      const price = G.Items.slotPrice(k),
-        owned = have >= k,
-        next = k === have + 1,
-        afford = s.coins >= price;
-      html += `<div class="panel shop-up${owned ? ' owned' : ''}"><div class="shop-up-t"><b>Team item slot ${k}</b>
-        <span class="ds">${owned ? 'Unlocked' : next ? 'Carry one more team item into every run.' : `Buy slot ${k - 1} first.`}</span></div>
-        <div class="shop-price"><span class="coin"></span> ${fmt(price)}</div>
-        <button class="btn gold shop-up-b" data-slot="${k}"${owned || !next || !afford ? ' disabled' : ''}>${owned ? 'Owned' : !next ? 'Locked' : afford ? 'Buy' : 'Not enough PokéCoins'}</button></div>`;
-    }
-    // Berry slots (#96, temporary): bought in order at the team item slot prices, cap 4.
-    const berriesOwned = G.Grounds.berrySlots(s),
-      berryMax = G.Grounds.BERRY_SLOTS_MAX;
-    html += `<p class="sub" style="margin:16px 0 10px">You have <b>${berriesOwned}</b> of ${berryMax} berry slots. Each slot holds one status berry in the team berry bag during a run. Slots are bought in order.</p>`;
-    for (let slotNumber = 2; slotNumber <= berryMax; slotNumber++) {
-      const price = G.Grounds.berrySlotPrice(slotNumber),
-        owned = berriesOwned >= slotNumber,
-        next = slotNumber === berriesOwned + 1,
-        afford = s.coins >= price;
-      html += `<div class="panel shop-up${owned ? ' owned' : ''}"><div class="shop-up-t"><b>Berry slot ${slotNumber}</b>
-        <span class="ds">${owned ? 'Unlocked' : next ? 'Carry one more berry in every run.' : `Buy berry slot ${slotNumber - 1} first.`}</span></div>
-        <div class="shop-price"><span class="coin"></span> ${fmt(price)}</div>
-        <button class="btn gold shop-berry-b" data-slot="${slotNumber}"${owned || !next || !afford ? ' disabled' : ''}>${owned ? 'Owned' : !next ? 'Locked' : afford ? 'Buy' : 'Not enough PokéCoins'}</button></div>`;
-    }
-    box.innerHTML = html;
-    box.querySelectorAll('.shop-up-b').forEach((b) => {
-      b.onclick = () => buySlot(+b.dataset.slot);
-    });
-    box.querySelectorAll('.shop-berry-b').forEach((button) => {
-      button.onclick = () => buyBerrySlot(+button.dataset.slot);
-    });
+  // ---------------- Character Upgrades tab: the Berry Pocket and the Team Items Pocket (149b) ----------------
+  /** Each pocket as the save has it now: slots owned of max, the next slot's price, whether its Buy can be pressed. */
+  function pockets() {
+    const save = G.DB.save;
+    if (!save) return [];
+    const pocket = (key, name, line, rim, owned, max, priceOf, buy) => {
+      const full = owned >= max,
+        price = full ? 0 : priceOf(owned + 1);
+      return {
+        id: 'buy-' + key,
+        key,
+        name,
+        line,
+        rim,
+        owned,
+        max,
+        full,
+        price,
+        canBuy: !full && save.coins >= price,
+        buy: () => buy(owned + 1),
+      };
+    };
+    return [
+      pocket(
+        'berry',
+        'Berry Pocket',
+        'Holds Berries during a run.',
+        BERRY_POCKET_RIM,
+        G.Grounds.berrySlots(save),
+        G.Grounds.BERRY_SLOTS_MAX,
+        (slotNumber) => G.Grounds.berrySlotPrice(slotNumber),
+        buyBerrySlot
+      ),
+      pocket(
+        'item',
+        'Team Items Pocket',
+        'Holds Team Items during a run.',
+        TEAM_ITEM_POCKET_RIM,
+        G.Items.runSlots(save),
+        G.Items.RUN_SLOTS_MAX,
+        (slotNumber) => G.Items.slotPrice(slotNumber),
+        buySlot
+      ),
+    ];
   }
+
+  function Pocket({ pocket, index }) {
+    const focused = cursorOn() === pocket.id;
+    const slots = Array.from({ length: pocket.max }, (_, slotIndex) => ({
+      key: slotIndex,
+      icon: null,
+      locked: slotIndex >= pocket.owned,
+    }));
+    return html`<${Box}
+      left=${POCKET.left + index * (POCKET.width + POCKET.gap)}
+      top=${POCKET.top}
+      width=${POCKET.width}
+      height=${POCKET.height}
+      rim=${pocket.rim}
+      body=${POCKET_BODY}
+      className="shop-pocket"
+    >
+      <div
+        class="shop-pocket-grid"
+        data-pocket=${pocket.key}
+        style=${{ left: px((POCKET.width - POCKET.gridWidth) / 2), top: px(POCKET.gridTop) }}
+      >
+        <${ItemGrid} slots=${slots} artSize=${POCKET.gridArtSize} />
+      </div>
+      <div
+        class="shop-pocket-divider"
+        style=${{ left: px(POCKET.textInset), right: px(POCKET.textInset), top: px(POCKET.dividerTop) }}
+      ></div>
+      <div class="hud-text shop-pocket-name" style=${{ left: px(POCKET.textInset), top: px(POCKET.nameTop) }}>
+        ${pocket.name}
+      </div>
+      <div
+        class="hud-text shop-pocket-line"
+        style=${{ left: px(POCKET.textInset), right: px(POCKET.textInset), top: px(POCKET.lineTop) }}
+      >
+        ${pocket.line}
+      </div>
+      <div
+        class="shop-button shop-buy"
+        style=${{
+          left: px((POCKET.width - POCKET.buyWidth) / 2),
+          top: px(POCKET.height - POCKET.buyBottom - POCKET.buyHeight),
+          width: px(POCKET.buyWidth),
+          height: px(POCKET.buyHeight),
+        }}
+        onMouseEnter=${() => hover(pocket.canBuy ? pocket.id : null)}
+        onMouseLeave=${() => hover(null)}
+      >
+        <${TeamButton}
+          id=${pocket.id}
+          label=${pocket.full ? 'Full' : 'Buy ' + fmt(pocket.price)}
+          artWidth=${POCKET.buyArtWidth}
+          artPixel=${EXIT.artPixel}
+          rim=${REST_RIM}
+          focusRim=${FOCUS_RIM}
+          focused=${focused}
+          disabled=${!pocket.canBuy}
+          onPress=${() => pocket.canBuy && pocket.buy()}
+        />
+        ${focused ? html`<${Cursor} />` : null}
+      </div>
+    </${Box}>`;
+  }
+
+  function Pockets() {
+    saveTick.value; // redraw after a purchase or a coin change
+    return html`<div>
+      ${pockets().map((pocket, index) => html`<${Pocket} key=${pocket.key} pocket=${pocket} index=${index} />`)}
+    </div>`;
+  }
+  preact.render(html`<${Pockets} />`, $('shop-upgrades'));
 
   async function buyBerrySlot(slotNumber) {
     const price = G.Grounds.berrySlotPrice(slotNumber);

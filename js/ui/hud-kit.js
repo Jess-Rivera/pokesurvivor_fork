@@ -206,7 +206,8 @@ G.HudKit = (() => {
   /**
    * A button in the team menu's shape: rim ramps ({ light, base, dark }) at rest and focused, body colours, the label left
    * aligned as in the team menu. Never takes the page's keyboard focus (see keepPageFocus). artPixel: screen pixels per
-   * art pixel (4 by default, the catch screen; the Main Menu Shop's Exit uses 3, #149a).
+   * art pixel (4 by default, the catch screen; the Main Menu Shop's Exit uses 3, #149a). disabled: the button cannot be
+   * pressed (the Shop's Buy you cannot afford, #149b); the screen dims it and keeps its cursor off it.
    */
   function TeamButton({
     id,
@@ -218,6 +219,7 @@ G.HudKit = (() => {
     body = PALETTE.body,
     focusBody,
     focused,
+    disabled = false,
     onEnter,
     onPress,
   }) {
@@ -229,6 +231,7 @@ G.HudKit = (() => {
       class=${'hud-team-button' + (focused ? ' focused' : '')}
       style=${{ width: artWidth * artPixel + 'px', height: TEAM_BUTTON.artRows * artPixel + 'px' }}
       data-action=${id}
+      disabled=${disabled}
       tabindex="-1"
       onMouseDown=${keepPageFocus}
       onMouseEnter=${onEnter}

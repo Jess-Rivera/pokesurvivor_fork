@@ -90,3 +90,28 @@
     2px -2px 0 #101010,
     -2px -2px 0 #101010;
 }
+
+/* ---------- Character Upgrades (149b): the pocket cards, drawn by gacha-ui.js into #shop-upgrades ---------- */
+.shop-pocket {
+  position: absolute;
+  font-family: 'GameFont', monospace;
+  font-synthesis: none;
+  color: #ffffff;
+  user-select: none;
+}
+.shop-pocket-divider {
+  height: 2px;
+  background: #495151; /* Slate divider, short of the rim */
+}
+.shop-pocket-name {
+  color: #8cfff7; /* Secondary text */
+}
+.shop-pocket .shop-pocket-line {
+  white-space: normal; /* wraps inside the card (the kit's .hud-text keeps one line) */
+  line-height: 26px;
+}
+/* a Buy you cannot press (Full, or not enough PokeCoins): dimmed, the price still shown */
+.shop-button .hud-team-button[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}

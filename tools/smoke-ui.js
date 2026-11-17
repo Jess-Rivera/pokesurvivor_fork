@@ -782,6 +782,9 @@ async function catchFlow(browser, query, tag) {
 // #149a: the Main Menu Shop opens over the Main Menu with four rail tabs, each showing its own pane; a team item and a berry
 // slot bought there spend PokeCoins and read as owned; a Buy you cannot afford cannot take focus; Q and E switch tabs, the
 // cursor sits on Exit (never a tab) and Enter presses it; Esc leaves too. Relations only: prices are read from the game.
+// #149b: the Character Upgrades pocket cards: each grid lights one square per slot owned and dims the rest up to the cap;
+// a Buy adds one slot for the price its label shows; Full and unaffordable Buys are disabled (the price still shown) and
+// the arrows skip them; the arrows step Berry Buy, Team Items Buy, Exit, and Enter on a Buy asks first.
 async function shopFlow(browser, query, tag) {
   const { page, errs } = await boot(browser, query);
   await page.evaluate(() => {
@@ -801,7 +804,12 @@ async function shopFlow(browser, query, tag) {
         .filter((p) => !p.classList.contains('hidden'))
         .map((p) => p.id),
       selected: [...document.querySelectorAll('.shop-tab.is-selected')].map((t) => t.dataset.tab),
-      cursorOn: (document.querySelector('.shop-rail .hud-cursor') || {}).parentElement?.className || '',
+      // the action of the button the cursor's corners sit on ('' when it shows nowhere)
+      cursorOn: (() => {
+        const corner = document.querySelector('#scr-gacha .hud-cursor');
+        const button = corner && corner.parentElement.querySelector('button');
+        return (button && button.dataset.action) || '';
+      })(),
     }));
   const clickConfirm = async () => {
     await page.waitForFunction(() => G.UI.isOpen('scr-ask'), null, { timeout: 3000 });
@@ -877,40 +885,114 @@ async function shopFlow(browser, query, tag) {
     tag + ': buying a team item spends its price, owns it and takes it off the list'
   );
 
-  // a berry slot: coins drop by the next slot's price and the save has one more berry slot
+  // 149b: the Character Upgrades pocket cards, read from the drawn page and the save
   await page.click('.shop-tab[data-tab="upgrades"]');
   await sleep(100);
-  const beforeBerry = await page.evaluate(() => ({ coins: G.DB.save.coins, slots: G.Grounds.berrySlots(G.DB.save) }));
-  await page.click('.shop-berry-b:not([disabled])');
-  await clickConfirm();
-  const afterBerry = await page.evaluate(
-    (slotsBefore) => ({
-      coins: G.DB.save.coins,
-      slots: G.Grounds.berrySlots(G.DB.save),
-      price: G.Grounds.berrySlotPrice(slotsBefore + 1),
-    }),
-    beforeBerry.slots
-  );
+  const pocketsNow = () =>
+    page.evaluate(() => {
+      const read = (key, owned, max) => {
+        const grid = document.querySelector('.shop-pocket-grid[data-pocket="' + key + '"]');
+        const squares = grid ? [...grid.querySelectorAll('.hud-grid-slot')] : [];
+        const button = document.querySelector('[data-action="buy-' + key + '"]');
+        return {
+          owned,
+          max,
+          lit: squares.filter((square) => !square.classList.contains('is-locked')).length,
+          total: squares.length,
+          label: button ? button.textContent.trim() : '',
+          disabled: !button || button.disabled,
+        };
+      };
+      const save = G.DB.save;
+      return {
+        coins: save.coins,
+        berry: read('berry', G.Grounds.berrySlots(save), G.Grounds.BERRY_SLOTS_MAX),
+        item: read('item', G.Items.runSlots(save), G.Items.RUN_SLOTS_MAX),
+      };
+    });
+  const POCKET_KEYS = ['berry', 'item'];
+  const priceOn = (label) => Number(label.replace(/\D/g, ''));
+  const gridsMatch = (pockets) =>
+    POCKET_KEYS.every((key) => pockets[key].lit === pockets[key].owned && pockets[key].total === pockets[key].max);
+  const setSave = (fields) =>
+    page.evaluate((values) => {
+      Object.assign(G.DB.save, values);
+      G.DB.commit(true);
+    }, fields);
+  await setSave({ berrySlots: 1, runSlots: 1, coins: 10000000 });
+  await sleep(100);
+  let pockets = await pocketsNow();
+  ok(gridsMatch(pockets), tag + ': each pocket grid lights one square per slot owned, dimmed up to the cap');
+
+  // a Buy on each pocket: one more slot and one more lit square, for the price its label showed
+  let buysRight = true;
+  for (const key of POCKET_KEYS) {
+    const before = await pocketsNow();
+    await page.click('[data-action="buy-' + key + '"]');
+    await clickConfirm();
+    const after = await pocketsNow();
+    if (!(
+      after[key].owned === before[key].owned + 1 &&
+      after[key].lit === before[key].lit + 1 &&
+      before.coins - after.coins === priceOn(before[key].label) &&
+      gridsMatch(after)
+    ))
+      buysRight = false;
+  }
+  ok(buysRight, tag + ': a pocket Buy adds one slot and one lit square for the price its label shows');
+
+  // keys: the arrows step Berry Buy, Team Items Buy, Exit (no wrap); Enter on a Buy asks first
+  await page.keyboard.press('Shift');
+  await sleep(50);
+  const arrow = async (key) => {
+    await page.keyboard.press(key);
+    await sleep(80);
+    return (await shown()).cursorOn;
+  };
+  const arrowWalk = [];
+  for (const key of ['ArrowRight', 'ArrowLeft', 'ArrowLeft', 'ArrowLeft', 'ArrowRight', 'ArrowDown'])
+    arrowWalk.push(await arrow(key));
   ok(
-    afterBerry.slots === beforeBerry.slots + 1 && beforeBerry.coins - afterBerry.coins === afterBerry.price,
-    tag + ': buying a berry slot spends its price and adds the slot'
+    arrowWalk.join() === 'shop-exit,buy-item,buy-berry,buy-berry,buy-item,shop-exit',
+    tag + ': the arrows step Berry Buy, Team Items Buy and Exit (' + arrowWalk.join(' > ') + ')'
+  );
+  await arrow('ArrowLeft');
+  await arrow('ArrowLeft');
+  const coinsBeforeEnter = (await pocketsNow()).coins;
+  await page.keyboard.press('Enter');
+  await sleep(150);
+  const enterAsks = await page.evaluate(() => G.UI.isOpen('scr-ask'));
+  if (enterAsks) await page.click('#ask-no');
+  await sleep(150);
+  ok(
+    enterAsks && (await pocketsNow()).coins === coinsBeforeEnter,
+    tag + ': Enter on a Buy asks first; No spends nothing'
   );
 
-  // too poor: every Buy is disabled, so it cannot take focus
+  // a full pocket reads Full and cannot be pressed; the arrows skip it
+  await setSave({ berrySlots: 99 });
+  await sleep(100);
+  pockets = await pocketsNow();
+  const skipsFull = (await arrow('ArrowLeft')) === 'buy-item' && (await arrow('ArrowLeft')) === 'buy-item';
+  ok(
+    pockets.berry.owned === pockets.berry.max && pockets.berry.label === 'Full' && pockets.berry.disabled && skipsFull,
+    tag + ': a full pocket reads Full, is disabled, and the arrows skip it'
+  );
+
+  // too poor: both Buys disabled with their price still shown, cannot take focus, and the cursor stays on Exit
+  await setSave({ berrySlots: 1, coins: 0 });
+  await sleep(100);
+  pockets = await pocketsNow();
   const poor = await page.evaluate(() => {
-    G.DB.save.coins = 0;
-    G.DB.commit(true);
-    const buttons = [...document.querySelectorAll('#shop-upgrades button')].filter((b) =>
-      /Buy|Not enough/.test(b.textContent)
-    );
-    buttons.forEach((b) => b.focus());
-    return {
-      count: buttons.length,
-      focused: buttons.includes(document.activeElement),
-      allDisabled: buttons.every((b) => b.disabled),
-    };
+    const buttons = [...document.querySelectorAll('.shop-buy button')];
+    buttons.forEach((button) => button.focus());
+    return buttons.includes(document.activeElement);
   });
-  ok(poor.count > 0 && poor.allDisabled && !poor.focused, tag + ': a Buy you cannot afford cannot take focus');
+  const stuckOnExit = (await arrow('ArrowRight')) === 'shop-exit' && (await arrow('ArrowLeft')) === 'shop-exit';
+  ok(
+    POCKET_KEYS.every((key) => pockets[key].disabled && priceOn(pockets[key].label) > 0) && !poor && stuckOnExit,
+    tag + ': an unaffordable Buy shows its price, is disabled, cannot take focus, and the cursor stays on Exit'
+  );
 
   // keys: Q is the tab above (Character Upgrades to Pokeballs), E the one below; the tabs never take the cursor, which
   // sits on Exit, and Enter there leaves

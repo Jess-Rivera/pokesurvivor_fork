@@ -1,10 +1,10 @@
-// tools/smoke-berry-slots.js: headless browser check for #96, buying berry slots on the Shop's Team Upgrades tab. A check, not
+// tools/smoke-berry-slots.js: headless browser check for #96, buying berry slots on the Shop's Character Upgrades tab. A check, not
 // a harness: tools/check.js only syntax-checks it, since it needs a browser. Playwright is NOT a repo dependency (PLAYWRIGHT_DIR,
 // as in tools/smoke-gym.js). Usage from the repo root:  node tools/smoke-berry-slots.js
 // Runs dev.html?dev over file:// (how Jess plays):
 //   an old save with no berrySlots field reads as 1 slot;
-//   the Shop's Team Upgrades tab lists berry slots 2 to 4, only slot 2 buyable;
-//   clicking Buy and confirming spends 9,000 PokeCoins and gives 2 slots (saved), slot 3 becomes the next one;
+//   the Shop's Berry Pocket (149b) lights 1 of its 4 squares and its Buy offers slot 2 for 9,000;
+//   clicking Buy and confirming spends 9,000 PokeCoins and gives 2 slots (saved, 2 squares lit); slot 3 is next;
 //   cancelling the confirm spends nothing;
 //   slot 4 cannot be bought before slot 3, nothing past 4, and too few coins refuses;
 //   a run started with 3 slots lets the bag take 3 different berries and refuses a 4th.
@@ -54,22 +54,26 @@ async function main() {
   });
   ok((await page.evaluate(() => G.Grounds.berrySlots(G.DB.save))) === 1, 'old save without berrySlots reads as 1 slot');
 
-  // The Shop, Team Upgrades tab
+  // The Shop, Character Upgrades tab: the Berry Pocket (149b)
   await page.evaluate(() => G.GachaUI.open());
   await page.click('.shop-tab[data-tab="upgrades"]');
-  const rows = await page.$$eval('.shop-berry-b', (buttons) =>
-    buttons.map((b) => ({ slot: +b.dataset.slot, disabled: b.disabled, text: b.textContent.trim() }))
-  );
-  ok(rows.map((r) => r.slot).join(',') === '2,3,4', 'berry slots 2, 3, 4 listed (got ' + rows.map((r) => r.slot) + ')');
-  ok(rows[0] && !rows[0].disabled && rows[0].text === 'Buy', 'berry slot 2 is buyable');
-  ok(rows[1] && rows[1].disabled && rows[1].text === 'Locked', 'berry slot 3 is locked before slot 2');
-  ok(
-    (await page.$eval('#shop-upgrades', (box) => box.textContent)).includes('1 of 4 berry slots'),
-    'tab reads "1 of 4 berry slots"'
-  );
+  const berryPocket = () =>
+    page.evaluate(() => {
+      const squares = [...document.querySelectorAll('.shop-pocket-grid[data-pocket="berry"] .hud-grid-slot')];
+      const button = document.querySelector('[data-action="buy-berry"]');
+      return {
+        lit: squares.filter((square) => !square.classList.contains('is-locked')).length,
+        total: squares.length,
+        text: button.textContent.trim(),
+        disabled: button.disabled,
+      };
+    });
+  const before = await berryPocket();
+  ok(before.lit === 1 && before.total === 4, 'the Berry Pocket lights 1 of its 4 squares');
+  ok(!before.disabled && before.text === 'Buy 9,000', 'its Buy offers slot 2 for 9,000 (' + before.text + ')');
 
   // Cancel spends nothing
-  await page.click('.shop-berry-b[data-slot="2"]');
+  await page.click('[data-action="buy-berry"]');
   await page.waitForSelector('#scr-ask:not(.hidden)');
   ok((await page.textContent('#ask-msg')).includes('9,000'), 'confirm names the 9,000 price');
   await page.click('#ask-no');
@@ -79,7 +83,7 @@ async function main() {
   );
 
   // Buy slot 2
-  await page.click('.shop-berry-b[data-slot="2"]');
+  await page.click('[data-action="buy-berry"]');
   await page.waitForSelector('#scr-ask:not(.hidden)');
   await page.click('#ask-ok');
   await page.waitForFunction(() => G.Grounds.berrySlots(G.DB.save) === 2, null, { timeout: 5000 }).catch(() => {});
@@ -92,12 +96,9 @@ async function main() {
     afterBuy.coins === 1000 && afterBuy.slots === 2 && afterBuy.field === 2,
     'buying slot 2 spends 9,000 and saves 2 slots'
   );
-  const rowsAfter = await page.$$eval('.shop-berry-b', (buttons) =>
-    buttons.map((b) => ({ disabled: b.disabled, text: b.textContent.trim() }))
-  );
-  ok(rowsAfter[0].text === 'Owned', 'slot 2 shows Owned');
-  ok(rowsAfter[1].text === 'Not enough PokéCoins' && rowsAfter[1].disabled, 'slot 3 is next but unaffordable at 1,000');
-  ok(rowsAfter[2].text === 'Locked', 'slot 4 stays locked');
+  const after = await berryPocket();
+  ok(after.lit === 2, 'the Berry Pocket lights 2 squares');
+  ok(after.text === 'Buy 23,000' && after.disabled, 'slot 3 is next but unaffordable at 1,000 (' + after.text + ')');
 
   // The buy function's own rules
   const rules = await page.evaluate(() => {

@@ -104,3 +104,56 @@ catch screen keeps 4). smoke-ui's Shop pass now has 10 checks.
 **Cursor fix (Jess 2026-11-16):** the cursor follows the device in use (decision
 2026-11-16-selection-cursor-follows-the-device-in-use): with the mouse it shows only on the eligible item under it, or
 nowhere; a key press snaps it back to the last item. The page-wide mode is the kit's inputMode. smoke-ui Shop pass: 11 checks.
+
+**149a signed off (Jess 2026-11-17, feel test good).** #149 stays open for b to f.
+
+## Draft opening for 149b (Character Upgrades), for Jess to agree
+Source: assets/excalidraw/Shop-Character-Upgrades.svg.
+
+```mermaid
+flowchart LR
+  subgraph PANE[Character Upgrades pane]
+    BP[Berry Pocket card<br/>rim #20A048, body #303030<br/>2x2 berry grid, unbought slots dimmed<br/>slate divider, not touching the rim<br/>'Berry Pocket' #8cfff7 + 'Holds Berries during a run.']
+    TP[Team Items Pocket card<br/>rim #c86890, body #303030<br/>2x2 team item grid, unbought dimmed<br/>slate divider<br/>'Team Items Pocket' #8cfff7 + 'Holds Team Items during a run.']
+    BP --> BB[BUY $N: the next berry slot]
+    TP --> TB[BUY $N: the next team item slot]
+  end
+  BB --> ASK[the G.UI.ask confirm, as today] --> GRID[the grid redraws, one more slot lit]
+```
+
+- **Goal:** the Character Upgrades tab looks like the mockup: two pocket cards in the pause menu's detail-panel shape,
+  each showing its 2x2 grid (the kit's ItemGrid, as the pause menu's Run Inventory draws it), with one BUY $N button that buys
+  the next slot. Prices, order, caps and the save fields stay the same.
+- **Done when:**
+  - Both cards draw from the save: lit squares equal the slots owned, dimmed squares the rest.
+  - Each BUY shows the next slot's price, asks first, then spends PokeCoins and lights one more square.
+  - A full pocket's button reads Full and cannot be pressed. A BUY you cannot afford cannot be pressed or focused.
+  - The selection cursor reaches both BUY buttons and Exit (arrows, Enter, hover), following the device in use as in 149a.
+  - The old list rows and their text are gone.
+- **End-goal test:** smoke-ui's Shop pass grows. It checks these relations:
+  - Each grid's lit-square count equals the save's slot count, and lit plus dimmed equals the cap.
+  - After a BUY, the count rises by one and PokeCoins fall by the price the button showed.
+  - A full or unaffordable BUY is disabled and the cursor skips it.
+  - Arrows move the cursor between the two BUYs and Exit.
+  smoke-berry-slots keeps passing, adjusted to the new button.
+
+| Open question | My default |
+|---|---|
+| Q1 What fills the empty space ("maybe for more upgrades")? | Nothing, left empty for now |
+| Q2 What does a full pocket's button say? | "Full", disabled |
+| Q3 Does an unaffordable BUY still show its price? | Yes, dimmed, same as the 149a rule |
+| Q4 Do the squares get a tooltip (for example "Slot 3, not bought")? | No tooltip in 149b |
+
+Opening agreed by Jess 2026-11-17 ("agreed, build"), defaults Q1 to Q4 taken.
+
+**149b built 2026-11-17, Needs Playtest.**
+| Part | What |
+|---|---|
+| Pane | two pocket cards (260 x 390) in the kit's Box with a #303030 body; 2x2 ItemGrid of 56 px squares, unbought dimmed; slate divider; name in #8cfff7, line in white (wraps) |
+| Buy | the team menu button at 3 px per art pixel, "Buy N" or "Full"; disabled (dimmed, price kept) when full or unaffordable; asks first, as before |
+| Cursor | the pressable Buys then Exit; arrows step them (no wrap), Enter presses, disabled Buys never take it |
+| Kit | Box gains a body colour option; TeamButton gains disabled |
+| Gone | the old slot rows and their .shop-up styles |
+| Tests | smoke-ui Shop pass: 15 checks (grids match the save, a Buy adds one slot for its label's price, arrows, Enter asks, Full, unaffordable); smoke-berry-slots reads the pocket |
+
+Next: 149c Team Items.
