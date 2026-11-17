@@ -24,13 +24,7 @@ G.MenuUI = (() => {
   });
   const dexCtrl = newCtrl();
   const rosCtrl = newCtrl(); // the Team screen keeps its own filters, separate from the Pokédex
-  const BST_BANDS = [
-    { k: 'lo', label: '≤300', lo: 0, hi: 300, stars: 3 },
-    { k: 'mid', label: '301-400', lo: 301, hi: 400, stars: 4 },
-    { k: 'hi', label: '401-500', lo: 401, hi: 500, stars: 5 },
-    { k: 'vhi', label: '501-600', lo: 501, hi: 600, stars: 6 },
-    { k: 'top', label: '600+', lo: 601, hi: 9999, stars: 7 },
-  ];
+  const BST_BANDS = G.Copies.BST_BANDS; // shared with the Shop's TMs tab (#149 149f)
   // N bright stars out of 7 (dim for the rest), matching bstStars' 100-BST-per-star scale.
   const bstTierStars = (n, size = 11) => {
     let out = '';
@@ -160,7 +154,7 @@ G.MenuUI = (() => {
           if (G.Social.room) G.LobbyUI.open();
           else openRegionPicker();
         } else if (go === 'team') openRoster();
-        else if (go === 'inventory') openInventory();
+        else if (go === 'inventory') G.InventoryUI.open();
         else if (go === 'dex') browseDex();
         else if (go === 'upgrades') openUpgrades();
         else if (go === 'gacha') G.GachaUI.open();
@@ -748,149 +742,7 @@ G.MenuUI = (() => {
     });
   }
 
-  // ---------------- inventory: the pre-run team item loadout (F3d-2) ----------------
-  // save.teamItems = unlocked ids, save.teamLoadout = equipped ids BY SLOT (null = empty; G.Items.cleanLoadout keeps it valid). Saves at once.
-  // Two INDEPENDENT highlights: inv.sel = the item shown in the detail column, inv.slot = the target slot. A double-click joins them.
-  const inv = { slot: 0, sel: null };
-  // The controls, on every slot's and item's tooltip (no buttons in the window).
-  const INV_TIP =
-    'Click a slot to target it. Double-click an item to equip it in the targeted slot, or to unequip it if it is already there. Right-click a slot to empty it.';
-  const invUnlocked = () => G.Items.LIST.filter((i) => i.tier === 'run' && G.Items.unlocked(G.DB.save, i.id));
-
-  function openInventory() {
-    const s = G.DB.save;
-    G.Items.cleanLoadout(s);
-    inv.slot = 0;
-    inv.sel = s.teamLoadout.find(Boolean) || (invUnlocked()[0] || {}).id || null;
-    G.UI.show('scr-inventory', true);
-    renderInventory();
-  }
-
-  function invSave() {
-    G.Items.cleanLoadout(G.DB.save);
-    G.DB.commit();
-    renderInventory();
-  }
-
-  /** Put `id` in the highlighted slot (replacing what is there). It leaves any other slot it was in; a same-group item (a second Stone) is removed. */
-  function invEquip(id) {
-    const s = G.DB.save,
-      load = s.teamLoadout,
-      def = G.Items.BY[id],
-      n = G.Items.runSlots(s);
-    if (!def || !G.Items.unlocked(s, id) || inv.slot >= n) return;
-    for (let k = 0; k < load.length; k++) {
-      const x = load[k];
-      if (x === id || (x && def.group && G.Items.BY[x] && G.Items.BY[x].group === def.group)) load[k] = null;
-    }
-    while (load.length < inv.slot) load.push(null);
-    load[inv.slot] = id;
-    inv.sel = id;
-    G.Audio.sfx('select');
-    invSave();
-  }
-
-  function invUnequip(id) {
-    const load = G.DB.save.teamLoadout,
-      i = load.indexOf(id);
-    if (i < 0) return;
-    load[i] = null;
-    G.Audio.sfx('select');
-    invSave();
-  }
-
-  function renderInventory() {
-    const s = G.DB.save,
-      load = s.teamLoadout,
-      n = G.Items.runSlots(s);
-    inv.slot = Math.min(inv.slot, n - 1);
-    const total = G.Items.LIST.filter((i) => i.tier === 'run').length,
-      have = invUnlocked();
-    $('inv-count').textContent = `${have.length} of ${total} unlocked`;
-    const icon = (it, sz) => G.Icons.html(it.icon || it.id, sz);
-
-    // Left: the unlocked slots (only those), slot 1 on top. Clicking one only moves the target slot; the selected item does not change.
-    const slots = $('inv-slots');
-    slots.innerHTML = '';
-    for (let k = 0; k < n; k++) {
-      const it = G.Items.BY[load[k]];
-      const el = document.createElement('div');
-      el.className = 'inv-slot' + (it ? ' full' : '') + (k === inv.slot ? ' on' : '');
-      el.innerHTML = (it ? icon(it, 36) : '') + `<span class="inv-sn">Slot ${k + 1}</span>`;
-      el.title = (it ? it.name : 'Empty slot') + '\n' + INV_TIP;
-      el.onclick = () => {
-        inv.slot = k;
-        G.Audio.sfx('click');
-        renderInventory();
-      };
-      el.ondblclick = () => {
-        if (it) {
-          inv.sel = it.id;
-          renderInventory();
-        }
-      }; // double-click a filled slot to inspect its item
-      el.oncontextmenu = (e) => {
-        e.preventDefault();
-        if (it) invUnequip(it.id);
-      };
-      slots.appendChild(el);
-    }
-
-    // Middle: everything you have unlocked.
-    const grid = $('inv-grid');
-    grid.innerHTML = '';
-    if (!have.length)
-      grid.innerHTML =
-        '<div class="sub" style="grid-column:1/-1;padding:12px">Nothing unlocked yet. Gym leaders and bosses can drop team items.</div>';
-    for (const it of have) {
-      const k = load.indexOf(it.id);
-      const el = document.createElement('div');
-      el.className = 'inv-cell' + (inv.sel === it.id ? ' on' : '');
-      el.title = it.name + '\n' + INV_TIP;
-      el.innerHTML =
-        `<div class="inv-ico">${icon(it, 36)}</div><b>${it.name}</b>` +
-        (k >= 0 ? `<span class="inv-eq">Slot ${k + 1}</span>` : '');
-      el.onclick = () => {
-        inv.sel = it.id;
-        G.Audio.sfx('click');
-        renderInventory();
-      };
-      // In the targeted slot: unequip. Anywhere else (or nowhere): equip it there, moving it if needed.
-      el.ondblclick = () => {
-        if (load[inv.slot] === it.id) invUnequip(it.id);
-        else invEquip(it.id);
-      };
-      grid.appendChild(el);
-    }
-
-    // Right: the selected item, in the Team screen's alternating blues. The hint always names the HIGHLIGHTED slot.
-    const det = $('inv-detail');
-    const it = G.Items.BY[inv.sel];
-    if (!it || !G.Items.unlocked(s, it.id)) {
-      det.innerHTML = '<div class="inv-drow">Pick an item to see what it does.</div>';
-      return;
-    }
-    const k = load.indexOf(it.id),
-      T = inv.slot;
-    const here = G.Items.BY[load[T]];
-    const clashId = it.group
-      ? load.find((x, i) => x && x !== it.id && i !== T && G.Items.BY[x] && G.Items.BY[x].group === it.group)
-      : null;
-    let note = '';
-    if (k !== T && here) note = `Replaces ${here.name} in Slot ${T + 1}.`;
-    if (clashId)
-      note +=
-        (note ? ' ' : '') +
-        `Only one ${it.group === 'stone' ? 'Stone' : 'of this kind'} at a time: ${G.Items.BY[clashId].name} is removed.`;
-    const hint =
-      k === T
-        ? `In Slot ${T + 1}. Double-click it to unequip.`
-        : `Double-click it to ${k >= 0 ? 'move it from Slot ' + (k + 1) + ' to' : 'equip it in'} Slot ${T + 1}.`;
-    det.innerHTML = `<div class="inv-dbox"><div class="inv-dico">${icon(it, 56)}</div><b>${it.name}</b></div>
-      <div class="inv-drow">${it.desc}</div>
-      ${note ? `<div class="inv-note">${note}</div>` : ''}
-      <div class="inv-hint">${hint}</div>`;
-  }
+  // The Inventory (the pre-run team item loadout) is G.InventoryUI, js/ui/inventory-ui.js (#149d).
 
   // ---------------- team screen ----------------
   // A fullscreen editor for the 6 fixed team slots. It works on a COPY of the team (ros.team);
@@ -1134,7 +986,7 @@ G.MenuUI = (() => {
     }
     if (!(s.coins >= price)) {
       G.Audio.sfx('error');
-      G.UI.toast('Not enough PokéCoins');
+      G.UI.toast('Unable to Afford');
       return;
     }
     const yes = await G.UI.ask(`Spend ${rosCoins(price)} PokéCoins on Box ${n}?`, {
@@ -1146,7 +998,7 @@ G.MenuUI = (() => {
     const r = G.Copies.buyBox(s);
     if (!r.ok) {
       G.Audio.sfx('error');
-      G.UI.toast(r.error === 'poor' ? 'Not enough PokéCoins' : 'You have every box');
+      G.UI.toast(r.error === 'poor' ? 'Unable to Afford' : 'You have every box');
       rosRenderTabs();
       return;
     }
@@ -1596,6 +1448,7 @@ G.MenuUI = (() => {
       note:
         (c.isFavorite ? `${p.name} is a favorite. ` : '') +
         (c.evTotal ? `It has ${c.evTotal} EVs. They are lost. ` : '') +
+        (c.tmsLearned.length ? `Its ${c.tmsLearned.length} learned TMs go with it. ` : '') +
         (last
           ? `This is your last ${p.name}. The Pokédex keeps it.`
           : `You will have ${rosCoins((s.coins || 0) + price)} PokéCoins.`),
@@ -1728,7 +1581,11 @@ G.MenuUI = (() => {
     const yes = await G.UI.ask(`Sell ${ids.length} Pokémon for ${rosCoins(coins)} PokéCoins?`, {
       title: 'Sell Pokémon',
       ok: 'Sell',
-      note: 'Team, locked and favorite Pokémon are never part of a batch.',
+      note:
+        'Team, locked and favorite Pokémon are never part of a batch.' +
+        (ids.some((id) => (G.Copies.get(s, id) || { tmsLearned: [] }).tmsLearned.length)
+          ? ' Learned TMs go with the Pokémon sold.'
+          : ''),
     });
     if (!yes) return;
     const r = G.Copies.sellMany(s, ids, rosPending());
@@ -1922,5 +1779,5 @@ G.MenuUI = (() => {
     e.preventDefault();
   }
 
-  return { init, open, GEN_NAMES };
+  return { init, open, GEN_NAMES, REGION_NAMES: REGION_CARDS };
 })();

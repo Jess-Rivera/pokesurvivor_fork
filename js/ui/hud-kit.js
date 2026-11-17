@@ -205,17 +205,21 @@ G.HudKit = (() => {
   }
   /**
    * A button in the team menu's shape: rim ramps ({ light, base, dark }) at rest and focused, body colours, the label left
-   * aligned as in the team menu. Never takes the page's keyboard focus (see keepPageFocus).
+   * aligned as in the team menu. Never takes the page's keyboard focus (see keepPageFocus). artPixel: screen pixels per
+   * art pixel (4 by default, the catch screen; the Main Menu Shop's Exit uses 3, #149a). disabled: the button cannot be
+   * pressed at all; the screen dims it and keeps its cursor off it (a Buy that refuses is not disabled, #151).
    */
   function TeamButton({
     id,
     label,
     artWidth,
+    artPixel = TEAM_BUTTON.artPixel,
     rim,
     focusRim,
     body = PALETTE.body,
     focusBody,
     focused,
+    disabled = false,
     onEnter,
     onPress,
   }) {
@@ -225,8 +229,9 @@ G.HudKit = (() => {
     return html`<button
       type="button"
       class=${'hud-team-button' + (focused ? ' focused' : '')}
-      style=${{ width: artWidth * TEAM_BUTTON.artPixel + 'px', height: TEAM_BUTTON.artRows * TEAM_BUTTON.artPixel + 'px' }}
+      style=${{ width: artWidth * artPixel + 'px', height: TEAM_BUTTON.artRows * artPixel + 'px' }}
       data-action=${id}
+      disabled=${disabled}
       tabindex="-1"
       onMouseDown=${keepPageFocus}
       onMouseEnter=${onEnter}
@@ -235,7 +240,7 @@ G.HudKit = (() => {
       <${PixelShape}
         artWidth=${artWidth}
         artRows=${TEAM_BUTTON.artRows}
-        artPixel=${TEAM_BUTTON.artPixel}
+        artPixel=${artPixel}
         paintRow=${letterRows(teamButtonGrid(artWidth), colours)}
       />
       <span class="hud-team-button-label">${label}</span>
@@ -313,9 +318,40 @@ G.HudKit = (() => {
   const CURSOR_CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
   const Cursor = () => CURSOR_CORNERS.map((corner) => html`<${CursorCorner} key=${corner} corner=${corner} />`);
 
+  // ---------- the input mode: which device moves the selection cursor (Jess, 2026-11-16, #149a) ----------
+  // 'keys' after any key press: the cursor shows on the last item it was on. 'mouse' once the mouse really moves (more
+  // than MOUSE_JITTER_PX from where it was when the keys took over, so a jitter does not count) or clicks: the cursor
+  // shows only on the eligible item under the mouse, or nowhere. One page-wide signal; screens read inputMode.value.
+  const MOUSE_JITTER_PX = 6;
+  const inputMode = signal('keys');
+  let mouseAnchor = null; // where the mouse was first seen since the keys took over
+  addEventListener(
+    'keydown',
+    () => {
+      mouseAnchor = null;
+      if (inputMode.value !== 'keys') inputMode.value = 'keys';
+    },
+    true
+  );
+  addEventListener(
+    'mousemove',
+    (event) => {
+      if (inputMode.value === 'mouse') return;
+      if (!mouseAnchor) mouseAnchor = { x: event.clientX, y: event.clientY };
+      else if (Math.hypot(event.clientX - mouseAnchor.x, event.clientY - mouseAnchor.y) > MOUSE_JITTER_PX)
+        inputMode.value = 'mouse';
+    },
+    true
+  );
+  addEventListener('mousedown', () => (inputMode.value = 'mouse'), true);
+
   // ---------- portraits (HUD-STYLE "Assets": SpriteCollab Normal face, 40x40) ----------
   const PORTRAIT_PATH = 'assets/pokemon/';
-  const portraitSource = (dex, shiny) => PORTRAIT_PATH + dex + (shiny ? '/s/Portrait.png' : '/Portrait.png');
+  // the species whose shiny has no portrait of its own (no assets/pokemon/<dex>/s/Portrait.png): their shinies show the
+  // normal face without asking for the missing file first (the Shop's Pokebox grid draws hundreds of copies, #149 149f)
+  const NO_SHINY_PORTRAIT = new Set([588, 820, 847, 868, 896, 916, 933, 958, 1007]);
+  const portraitSource = (dex, shiny) =>
+    PORTRAIT_PATH + dex + (shiny && !NO_SHINY_PORTRAIT.has(+dex) ? '/s/Portrait.png' : '/Portrait.png');
   /** onError for a portrait <img>: a shiny with no portrait of its own (#958) falls back to the normal face. */
   function portraitFallback(event) {
     const image = event.target,
@@ -348,6 +384,7 @@ G.HudKit = (() => {
     fitToStage,
     createButtonRow,
     Cursor,
+    inputMode,
     portraitSource,
     portraitFallback,
   };

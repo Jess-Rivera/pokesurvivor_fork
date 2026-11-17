@@ -8,6 +8,7 @@
  *   g 0 male 1 female 2 none  x y height and weight scale   a ability slot    s shiny   e EVs   k nickname   h friendship
  *   v starting move override  p upgrades (id -> rank)       f favorite   l locked   o original trainer, if not this save   r form
  *   b box, counted from 0, left out for the first box
+ *   j TMs learned for good (#149 149f): move ids, bought in the Main Menu Shop; in a run they join its Move Trainer pool
  * Stat order everywhere: HP, Atk, Def, SpA, SpD, Spe (the game's stats array and pokeapi).
  */
 G.Copies = (() => {
@@ -27,6 +28,15 @@ G.Copies = (() => {
   // The star tier's name and colour (moved here from the retired gacha, #133). The Spanish names are G.T() keys.
   const RARITY_NAME = { 1: 'Común', 2: 'Poco común', 3: 'Rara', 4: 'Épica', 5: 'Legendaria' };
   const RARITY_COLOR = { 1: '#9fb1c9', 2: '#5fe08a', 3: '#4fb4ff', 4: '#c47bff', 5: '#ffcb3d' };
+  // A species' BST as 3 to 7 stars (100 BST per star): the Pokedex and Team screens' filter bands, and the Shop's TMs
+  // Pokemon filter (#149 149f). Moved here from js/ui/menu.js so both read one list.
+  const BST_BANDS = [
+    { k: 'lo', label: '≤300', lo: 0, hi: 300, stars: 3 },
+    { k: 'mid', label: '301-400', lo: 301, hi: 400, stars: 4 },
+    { k: 'hi', label: '401-500', lo: 401, hi: 500, stars: 5 },
+    { k: 'vhi', label: '501-600', lo: 501, hi: 600, stars: 6 },
+    { k: 'top', label: '600+', lo: 601, hi: 9999, stars: 7 },
+  ];
   // EVs (pokebox step 5, docs/proposals/ev-progression.md): a defeated enemy adds its species' typed EV yield x its class rate to
   // the run's six banks, counted in whole thousandths of an EV so the banks stay exact. TUNE (BALANCE.md "EVs").
   const EV_RATE = { wild: 1, elite: 2, gym: 1000 }; // thousandths per yield point: wild 1/1000, elite 1/500, gym the full yield
@@ -147,7 +157,27 @@ G.Copies = (() => {
       upgrades: Object.assign({}, c.p),
       isFavorite: !!c.f,
       isLocked: !!c.l,
+      tmsLearned: Array.isArray(c.j) ? c.j.map(currentMoveId) : [],
     };
+  }
+
+  /** A saved move id as it plays now: a retired move (G.Moves.RETIRED) reads as its replacement. */
+  function currentMoveId(id) {
+    const retired = G.Moves && G.Moves.RETIRED;
+    return (retired && retired[id]) || id;
+  }
+
+  /** Copy `id` learns TM move `moveId` for good (#149 149f; the rules, coins included, are G.TMs.teach's). False when the
+   *  copy is gone or already knows it. The caller saves. */
+  function learnTm(save, id, moveId) {
+    if (!isId(id) || typeof moveId !== 'string') return false;
+    const u = shortId(id),
+      c = (save.box || []).find((x) => x.u === u);
+    if (!c) return false;
+    const learned = Array.isArray(c.j) ? c.j : [];
+    if (learned.map(currentMoveId).includes(moveId)) return false;
+    c.j = [...learned, moveId];
+    return true;
   }
 
   const all = (save) => (save.box || []).map((c) => read(c, save));
@@ -561,6 +591,12 @@ G.Copies = (() => {
       for (const flag of ['f', 'l'])
         if (c[flag]) c[flag] = 1;
         else delete c[flag];
+      if (Array.isArray(c.j)) {
+        // TMs learned: a retired move becomes its replacement, an unknown one is dropped, each once
+        const learned = c.j.filter((moveId) => typeof moveId === 'string').map(currentMoveId);
+        c.j = [...new Set(learned)].filter((moveId) => !G.MoveDefs || G.MoveDefs[moveId]);
+        if (!c.j.length) delete c.j;
+      } else delete c.j;
       if (typeof c.o !== 'string' || !c.o) delete c.o;
       if (typeof c.r !== 'string' || !c.r) delete c.r;
       if (c.b != null) c.b = wholeUpTo(c.b, save.boxCount - 1);
@@ -610,6 +646,8 @@ G.Copies = (() => {
     SELL_PRICE,
     RARITY_NAME,
     RARITY_COLOR,
+    BST_BANDS,
+    learnTm,
     linkTeam,
     clean,
     IV_MAX,

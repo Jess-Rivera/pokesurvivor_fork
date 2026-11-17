@@ -4,17 +4,19 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-16 home session
-1. `git status` must be clean. `git fetch origin`, then `git checkout feature/128-acquisition`
-   (first time on a machine: `git checkout -b feature/128-acquisition origin/feature/128-acquisition`), then `git pull --ff-only`.
-2. `node tools/check.js` must end with "check: all passed". Say "catch me up".
-3. Before leaving a machine: commit and push (the branch and main).
+## Getting up to date (either machine), from the 2026-11-17 home session (third)
+1. `git status` must be clean. Push this session's work, then merge rework/shop into feature/128-acquisition (#149 R5):
+   `git push origin rework/shop`, `git checkout feature/128-acquisition`, `git pull --ff-only`,
+   `git merge --no-ff rework/shop`, `node tools/check.js` (must end "check: all passed"), `git push origin feature/128-acquisition`.
+2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
+   `node tools/check.js`. Say "catch me up".
+3. Before leaving a machine: commit and push.
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-16; gym leader AI parked)
-1. #148 feel test (built 2026-11-16, Needs Playtest): Jess tests 4 stars with G.Debug.catchMath(true), then rules on the star
-   curve, early bonus and 0 badge penalty (148 - Catch Odds Build Plan.md section 6). #145 small and ready. #147 waits on Jess.
-2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill) after #148, then #138; #146 keep-or-sell
-   list; order in docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143). #136 closed 2026-11-16.
+1. #149 closed (Shop rework done). After the merge above: #137 on feature/128-acquisition (needs Jess's ball tiers and
+   prices). #153 (menu keys) needs Jess's key set. #154 split menu.js. #150 blocked on #97. #145 small. #147 waits on Jess.
+2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill), then #138; #146 keep-or-sell
+   list; order in docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
    97 - Upgrade System Review.md). #131 Silver bonuses later, after a traced run reaches gym 1. 4. #126 UI unify (#61 first), then #127 Main Menu v3.0.
 5. #129 architecture review. 6. #130 regions and map selection. Parked: #111, then #122.
@@ -22,8 +24,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
    drafts (leader reads your cards and items as seen; buffValue reads the whole kit; trace records the leader's level; 16i
    parity; #122 comment on early gates). Any time: #121, #120, #57, #58, #110.
    Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107.
-8. Owner decisions: #148 tuning, #137 tiers and prices, #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107. Jess: link #148 as a
-   sub-issue of #136 on GitHub.
+8. Owner decisions: #153 menu key set, #151 Full button and the cursor, #137 tiers and prices, #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
 9. New issues to file: region type maps, PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing.
 10. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83; unknown local branch
     refactor/damage-layer on the work machine.

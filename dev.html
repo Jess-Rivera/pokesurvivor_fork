@@ -97,6 +97,7 @@
     <link rel="stylesheet" href="css/bw-upgrades.css" />
     <link rel="stylesheet" href="css/bw-settings.css" />
     <link rel="stylesheet" href="css/bw-catch.css" />
+    <link rel="stylesheet" href="css/bw-shop.css" />
     <link rel="stylesheet" href="css/hud-overlay.css" />
     <link rel="stylesheet" href="css/pause-menu.css" />
   </head>
@@ -202,7 +203,7 @@
           <button class="bw-row play sel" data-go="play">Jugar<small>Entra en la mazmorra</small></button>
           <button class="bw-row" data-go="team">Team<small id="menu-dex-count"></small></button>
           <button class="bw-row" data-go="inventory">Inventory<small>Team items for your run</small></button>
-          <button class="bw-row" data-go="gacha">Shop<small>Pokémon, team items and upgrades</small></button>
+          <button class="bw-row" data-go="gacha">Shop<small>Poke Balls, upgrades, team items and TMs</small></button>
           <button class="bw-row" data-go="goals">
             Misiones<small id="menu-goals-sub">Misiones, logros y perfil</small>
           </button>
@@ -589,18 +590,12 @@
       </div>
     </section>
 
-    <!-- ====== Inventory (pre-run team item loadout, opened from the main menu) ====== -->
+    <!-- ====== Inventory (Main Menu, #149d; js/ui/inventory-ui.js, css/bw-inventory.css): the pre-run team item loadout,
+         the Shop's window on the 1920 x 1080 stage over the Main Menu. Everything in it is drawn into #inv-window. ====== -->
     <section id="scr-inventory" class="scr dim hidden">
-      <div class="inv">
-        <div class="inv-head"><b>Inventory</b><span id="inv-count"></span></div>
-        <p class="inv-sub">Team items you equip here start every run. Gym leaders and bosses can drop new ones.</p>
-        <div class="inv-main">
-          <aside class="inv-slots" id="inv-slots"></aside>
-          <div class="inv-grid" id="inv-grid"></div>
-          <aside class="inv-detail" id="inv-detail"></aside>
-        </div>
-        <div class="inv-foot">
-          <button class="bw-btn" id="inv-back" data-back>Back<img src="assets/ui/team/back-x.png" alt="" /></button>
+      <div class="inv-host" translate="no">
+        <div class="pm-stage inv-stage">
+          <div id="inv-window" class="shop-window"></div>
         </div>
       </div>
     </section>
@@ -671,28 +666,28 @@
       </div>
     </section>
 
-    <!-- ====== Gacha ====== -->
+    <!-- ====== Shop (Main Menu, #149; js/ui/gacha-ui.js, css/bw-shop.css): a window on the 1920 x 1080 stage over the
+         Main Menu. The icon rail and Exit are drawn into #shop-rail from the HUD kit; the panes sit in .shop-panes. ====== -->
     <section id="scr-gacha" class="scr dim hidden">
-      <div class="box wide">
-        <div class="row between">
-          <h2>Shop</h2>
-          <button class="btn small ghost" data-back>Volver</button>
-        </div>
-        <div class="gen-tabs" id="shop-tabs"></div>
+      <div class="shop-host" translate="no">
+        <div class="pm-stage shop-stage">
+          <div class="shop-window">
+            <div class="shop-panes">
+              <!-- Pokeballs: the ball cards and the belts, drawn by js/ui/shop-balls.js (149e); buying comes with #137 -->
+              <div id="shop-balls" class="shop-pane shop-pane-fixed hidden"></div>
 
-        <!-- Team Items: buy an unlock for the Inventory -->
-        <div id="shop-items" class="shop-pane hidden">
-          <p class="sub" style="margin: 4px 0 8px">
-            Unlock a team item for good (equip it in Inventory). <span id="shop-items-count"></span>
-          </p>
-          <div class="shop-items-main">
-            <div class="grid inv-grid" id="shop-items-grid"></div>
-            <aside class="panel inv-detail" id="shop-items-detail"></aside>
+              <!-- Character Upgrades: the Berry Pocket and Team Items Pocket cards, drawn by gacha-ui.js (149b) -->
+              <div id="shop-upgrades" class="shop-pane hidden"></div>
+
+              <!-- Team Items: cards for sale and the owned panel, drawn by gacha-ui.js (149c) -->
+              <div id="shop-items" class="shop-pane shop-pane-fixed hidden"></div>
+
+              <!-- TMs: the TM cards and the Pokemon panel, drawn by js/ui/shop-tms.js (149f) -->
+              <div id="shop-tms" class="shop-pane shop-pane-fixed hidden"></div>
+            </div>
+            <div id="shop-rail" class="shop-rail"></div>
           </div>
         </div>
-
-        <!-- Team Upgrades: team item slots -->
-        <div id="shop-upgrades" class="shop-pane hidden"></div>
       </div>
     </section>
 
@@ -862,6 +857,7 @@
     <script defer src="js/data/evolvable.js"></script>
     <script defer src="js/data/stage-one.js"></script>
     <script defer src="js/data/ball-sprites.js"></script>
+    <script defer src="js/data/balls.js"></script>
     <script defer src="js/data/species-traits.js"></script>
     <script defer src="js/systems/copies.js"></script>
     <script defer src="js/data/items.js"></script>
@@ -900,6 +896,7 @@
     <script defer src="js/systems/gym-arena.js"></script>
     <script defer src="js/systems/gym.js"></script>
     <script defer src="js/systems/shops.js"></script>
+    <script defer src="js/systems/tms.js"></script>
     <script defer src="js/systems/events.js"></script>
     <script defer src="js/systems/weather.js"></script>
     <script defer src="js/systems/pathing.js"></script>
@@ -962,8 +959,12 @@
     <script defer src="js/ui/gym-present.js"></script>
     <script defer src="js/ui/login.js"></script>
     <script defer src="js/ui/test.js"></script>
+    <script defer src="js/ui/menu-window-kit.js"></script>
     <script defer src="js/ui/menu.js"></script>
+    <script defer src="js/ui/shop-balls.js"></script>
+    <script defer src="js/ui/shop-tms.js"></script>
     <script defer src="js/ui/gacha-ui.js"></script>
+    <script defer src="js/ui/inventory-ui.js"></script>
     <script defer src="js/ui/run-ui.js"></script>
     <script defer src="js/ui/shop-ui.js"></script>
     <script defer src="js/ui/catch-ui.js"></script>

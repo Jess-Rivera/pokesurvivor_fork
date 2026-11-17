@@ -8,7 +8,7 @@
  * Entering opens the shop screen (G.Game.openShop, js/ui/shop-ui.js, Move Shop step 4) and pauses the run. It never opens over
  * another screen: the game refuses, and the visit is not used up (it tries again next frame while you stand on it).
  * Step 4, stock and buying (plan: docs/ASCII Concept Maps/Move Shop step 4 - Shop screens.txt): the Trainer offers each member 4
- * random moves from its level-up and egg pool it does not know, rolled the first time you look at that member and kept for this
+ * random moves from its level-up and egg pool (plus the TMs its copy learned for good, G.TMs, #149 149f) it does not know, rolled the first time you look at that member and kept for this
  * building; the Mart offers 4 random TMs, once per building, never sold out. Price (#124): the shop's base less a discount set by
  * the member's slots filled (PRICES below), paid on confirm. Full slots (or a third buff) go through a forget step: only LOOSE moves can be forgotten, since bonds are fixed (Jess
  * 2026-11-05); with 2 buffs already, a buff may only replace a buff. No refund for a forgotten move. A purchase never changes the
@@ -38,7 +38,7 @@ G.Shops = (() => {
     SHADOW_A = 0.35; // the building's shadow, as the gym gate's
   const KINDS = {
     trainer: { name: 'Move Trainer', src: 'assets/tileset/move-trainer.png' },
-    mart: { name: 'TM Mart', src: 'assets/tileset/tm-mart.png' },
+    mart: { name: 'TR Shop', src: 'assets/tileset/tm-mart.png' }, // was TM Mart: a run's moves are TRs (decision 2026-11-17-tm-for-good-tr-for-one-run)
   };
   const ORDER = ['trainer', 'mart'];
   let shops = []; // { kind, x, y, t, on }: x, y = the door (the building's feet); t = age in s; on = standing on it
@@ -165,6 +165,14 @@ G.Shops = (() => {
     return Math.round(rule.base * (1 - discount));
   }
 
+  /** Member f's Move Trainer pool: its level-up and egg moves plus the TMs its copy learned (R6: they join the pool), each once. */
+  function trainerPool(f) {
+    const pool = G.Moves.poolFor(f.mon),
+      save = G.DB && G.DB.save,
+      learned = f.copyUid && save && G.TMs ? G.TMs.learned(save, f.copyUid) : [];
+    return learned.length ? [...new Set([...pool, ...learned])] : pool;
+  }
+
   /** What this shop offers member f now. Trainer: f's 4, rolled once per building, known moves left out. Mart: the 4 TMs. */
   function offers(shop, f) {
     if (shop.kind === 'mart') {
@@ -177,7 +185,7 @@ G.Shops = (() => {
       shop.stock.set(
         f,
         (ids = G.U.pickN(
-          G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id)),
+          trainerPool(f).filter((id) => !f.hasMove(id)),
           STOCK
         ))
       );
@@ -194,7 +202,7 @@ G.Shops = (() => {
     const mart = shop.kind === 'mart';
     if (!mart && (!f || f.dead)) return false;
     const shown = offers(shop, f),
-      pool = mart ? G.Moves.tmList() : G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id)),
+      pool = mart ? G.Moves.tmList() : trainerPool(f).filter((id) => !f.hasMove(id)),
       next = G.U.pickN(
         pool.filter((id) => !shown.includes(id)),
         STOCK

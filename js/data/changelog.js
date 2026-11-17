@@ -7,6 +7,22 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-17',
+    title: ['TMs for good', 'TMs for good'],
+    new: [
+      [
+        'TMs in the Shop: buy a TM with PokeCoins to teach one of your Pokemon a move for good. In every run after that, the Move Trainer can offer that move to it.',
+        'TMs in the Shop: buy a TM with PokeCoins to teach one of your Pokemon a move for good. In every run after that, the Move Trainer can offer that move to it.',
+      ],
+    ],
+    chg: [
+      [
+        'The TM Mart you find during a run is now the TR Shop. A move bought there is a TR and lasts that run only.',
+        'The TM Mart you find during a run is now the TR Shop. A move bought there is a TR and lasts that run only.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-16',
     title: ['A new catch screen', 'A new catch screen'],
     chg: [

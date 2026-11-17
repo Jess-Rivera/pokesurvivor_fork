@@ -91,16 +91,17 @@ G.HudKitHpBars = (() => {
    * A box: the roster card's box at any size (2 px art pixels) with a flat body, rimmed in `rim`; its contents go inside.
    * Moved here from the pause menu's detail panel (#89) for the catch screen (136b). rimRight (optional): a second ramp for
    * the right side, the rim blending from rim to rimRight across the top and bottom (a dual-type Pokemon, Jess 2026-11-16).
+   * body (optional): the flat inside's colour, the panel body by default (the Shop's pocket cards use a lighter one, #149b).
    */
   let boxGradientCount = 0;
-  function Box({ left, top, width, height, rim, rimRight, className, children }) {
+  function Box({ left, top, width, height, rim, rimRight, body = PALETTE.body, className, children }) {
     const artWidth = width / 2,
       artRows = height / 2;
     const gradientId = preactHooks.useMemo(() => 'hud-box-rim-' + ++boxGradientCount, []);
     const blended = rimRight && (rimRight.base !== rim.base || rimRight.light !== rim.light);
     const shade = (part) => (blended ? 'url(#' + gradientId + '-' + part + ')' : rim[part]);
     const colours = {
-      ...rosterColours({ light: shade('light'), base: shade('base'), dark: shade('dark') }, PALETTE.body),
+      ...rosterColours({ light: shade('light'), base: shade('base'), dark: shade('dark') }, body),
     };
     return html`<div
       class=${'pm-box' + (className ? ' ' + className : '')}

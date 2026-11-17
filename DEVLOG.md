@@ -184,3 +184,45 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   per passed shake; 148b flee ring after the break-out and G.Debug.catchMath. Harness 6a to relations, mutants checked.
 - Fixed in Jess's txt: step 7's critical was 4096x too big. Found: WL 1 early bonus makes most 1 and 2 stars sure catches.
 - Stopped at: Jess's feel test, then tuning (star curve, early bonus, 0 badge penalty).
+
+## 2026-11-16 (Claude Code, home), #148c catch tuning, #148 closed, #149 Shop UI rework filed
+- Jess's tuning picks after the feel test: Steep star curve (1 / .5 / .25 / .1 / .05, 5 star its own value), early World
+  Level bonus x2 at WL 1 fading evenly to x1 at WL 13 (rescale, not a clip), badge penalty unchanged. Decision file.
+- Built test first: harness 6a gained three relations (WL 1 rate at most twice WL 13, bonus shrinks every level, 5 star
+  below 4 star), red on the old numbers; four mutants fail it. check.js and smoke-ui pass. Jess: feels good, #148 closed.
+- Filed #149: Shop menu UI rework on sub-branch rework/shop, before #137. Rescue pick stays star weighted (no new issue).
+- Stopped at: Jess makes the Shop mockup; next session opens #149.
+
+## 2026-11-16 (Claude Code, home, late), #149 opened: Main Menu Shop, 149a shell built
+- #149 is the Main Menu Shop (not the in-run shop; the issue named the wrong file, fixed). Jess's mockups committed.
+- Rulings: four tabs (Pokeballs, Character Upgrades, Team Items, TRs) plus the Inventory restyle; a TR is learned for good and
+  joins the Move Trainer pool, priced by move power; TR starting move is #150 (blocked). Sub-slices a to f; merge before #137.
+- Built 149a: window over the dimmed Main Menu, flush icon rail (no cursor, Q / E), smaller Exit, old panes inside. Feel-test
+  fixes, then the cursor follows the device in use (kit inputMode; decision). smoke-ui Shop pass, 11 checks, green.
+- Stopped at: 149a Needs Playtest, not closed; next 149b Character Upgrades.
+
+## 2026-11-17 (Claude Code, home), #149b and #149c built and signed off
+- 149b Character Upgrades: two pocket cards (2x2 slot grid, Buy for the next slot, Full when done). Kit: Box body, TeamButton disabled.
+- 149c Team Items: searchable 3-column sale cards beside a searchable owned panel 4 across; Inventory beside Exit. New
+  Tooltip Delay setting (keys show tooltips after it). Kit: ItemGrid columns and overlay, SearchBar.
+- Three feel-test rounds: pane scrolled with scrollIntoView (now overflow clip, own-box scrolling, whole cards); cursor corners
+  clipped; WASD moves the cursor; Up row by row, search bar only from the top row; no cursor with the mouse, none on search bars.
+- Decisions: cursor tooltips after a settable delay; no selection cursor with the mouse. smoke-ui Shop pass 30 checks.
+- Stopped at: 149c signed off; next session opens 149d (Inventory screen).
+
+## 2026-11-17 (Claude Code, home, second session), #149d built and signed off
+- 149d Inventory: the Shop's window; searchable 3-column cards (220 wide) with Equip / Unequip / Swap; 4 slot panels drawn
+  like the run screen's (unbought dimmed); "Select a slot to swap." (skipped with one slot, or for a second Stone, which toasts).
+- Shared: js/ui/menu-window-kit.js (the Shop's cursor rules, CursorButton, ItemCard, SearchStop) and the kit's RunItemBox.
+  Equip rules moved to G.Items. Old Inventory code, markup and styles gone. smoke-ui Inventory pass 20, Shop 30.
+- Broke and fixed: key listener order (Enter reached a second screen); game.js closed the Inventory on any Esc.
+- Filed #151, #152 (unaffordable buttons take the cursor, toast "Unable to Afford"; decision), #153 (menu keys differ).
+- Stopped at: 149d signed off; next 149e Pokeballs layout.
+
+## 2026-11-17 (Claude Code, home, third session), #151 #152, 149e and 149f built and signed off; #149 closed
+- #151 #152: a Buy that cannot buy takes the cursor and toasts why. 149e Pokeballs tab (17 ball cards, the belts, buys inert).
+- 149f TMs tab: G.TMs (price by power, teach), a copy's learned TMs (copies.js key j), the Move Trainer pool adds them;
+  js/ui/shop-tms.js; kit Dropdown (multi-select). Decision: TM kept for good, the in-run TM Mart renamed TR Shop.
+- Broke and fixed: game.js closed the Shop on any Esc; team slots piled in a corner; slow cursor with every Pokemon owned
+  (lists recomputed per button); shiny portraits with no file logged 404s.
+- Stopped at: #149 closed; next merge rework/shop into feature/128-acquisition, then #137.

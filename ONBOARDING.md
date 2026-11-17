@@ -116,6 +116,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 - `enemies.js` enemy roster and tiers. `starters.js` the 29 starters + personality test.
 - `leader-ai-settings.js` (`G.LeaderSettings`) the leader AI's baseline settings, tuning tables and per-gym `ai` resolution (LEADER-AI "Authoring a leader"); each name is also on `G.LeaderAI`. Loads after gyms.js.
 - `upgrades.js` permanent upgrades. `items.js` equippable run items. `ground-items.js` (`G.Grounds`) items used on touch. `drops.js` (`G.Drops`) every drop chance, one table per source; docs/ITEMS.md is generated from these by tools/items_report.js.
+- `ball-sprites.js` (`G.BALL_SPRITES`, generated) the Poke Ball animation strips. `balls.js` (`G.BALL_CATALOG`) every ball the Main Menu Shop shows, with its name and line; which balls a throw can use is `G.Catch`'s.
 - `achievements.js`, `missions.js` quests/achievements. `changelog.js` news (bilingual).
 - `types.js` the type chart. `music.js` the song scores. `lang-en.js` the i18n dictionary.
 - `funding.js` support/funding config.
@@ -147,7 +148,8 @@ in English. Do not add those new English strings to `lang-en.js`.
 - `move-info.js` (`G.MoveInfo`: a move's display name, type, icon badge and generated card text, read from `G.MoveDefs`; loads
   before icons.js), `icons.js` pixel-art icons drawn in code, `status-fx.js` (`G.StatusFx`: the on-sprite status and stat
   change animations, drawn by every Pokemon from `G.STATUS_ANIMS` in `js/data/status-anims.js`), then `ui.js`, `hud.js`, `sheet.js` (the team sheet), `gym-present.js`, `login.js`,
-  `menu.js`, `test.js` (personality test), and the per-screen UIs: `gacha-ui.js`,
+  `menu.js`, `test.js` (personality test), and the per-screen UIs: `gacha-ui.js` (the Main Menu Shop, with its
+  Pokeballs tab in `shop-balls.js` and the pieces it shares with the Inventory in `menu-window-kit.js`),
   `run-ui.js`, `social-ui.js`, `ranking-ui.js`, `settings-ui.js`, `goals-ui.js`,
   `layout-ui.js`, `mod-ui.js`, `news-ui.js`, `slots.js` (gacha slot machine),
   `support-ui.js`.
