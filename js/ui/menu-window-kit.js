@@ -367,8 +367,8 @@ G.MenuWindowKit = (() => {
   /**
    * A multi-select filter box (#149 149f): a box the height of a search bar showing its label (with the count chosen),
    * and when open, a list of choices under it, in groups with a header each. A choice toggles; within a group any chosen
-   * choice matches, across groups each must (the screen's filter does the matching). The box is a cursor stop like a
-   * search bar (its green rim, no corners); open, the cursor stays inside it (the screen offers only dropdownItems) and
+   * choice matches, across groups each must (the screen's filter does the matching). The box and each choice take the
+   * selection cursor (its corners; Jess 2026-11-17), the mouse shows a green rim; open, the cursor stays inside it (the screen offers only dropdownItems) and
    * Esc or a click outside closes it.
    *   id, area     the box's cursor id and area; each choice's id is id + ':' + key, in the area id while open
    *   groups       [{ name, choices: [{ key, label }] }]
@@ -378,7 +378,7 @@ G.MenuWindowKit = (() => {
   function Dropdown({ cursor, id, area, label, groups, chosen, at, isOpen, onOpenChange, onToggle, box, list }) {
     const count = chosen.length;
     return html`<div
-        class=${'shop-search-host shop-dropdown' + (at === id ? ' is-cursor' : '') + (isOpen ? ' is-open' : '')}
+        class=${'shop-search-host shop-dropdown' + (isOpen ? ' is-open' : '')}
         data-cursor-id=${id}
         data-cursor-area=${isOpen ? id : area}
         style=${{ left: px(box.left), top: px(box.top), width: px(box.width) }}
@@ -387,6 +387,7 @@ G.MenuWindowKit = (() => {
         onClick=${() => onOpenChange(!isOpen)}
       >
         <div class="hud-search shop-dropdown-box">${count ? label + ' (' + count + ')' : label}</div>
+        ${cursor.cornersIf(at === id)}
       </div>
       ${
         isOpen
@@ -407,7 +408,7 @@ G.MenuWindowKit = (() => {
                           const choiceId = id + ':' + choice.key;
                           return html`<div
                             key=${choice.key}
-                            class=${'shop-dropdown-choice' + (at === choiceId ? ' is-cursor' : '')}
+                            class="shop-dropdown-choice"
                             data-cursor-id=${choiceId}
                             data-cursor-area=${id}
                             data-choice=${choice.key}
@@ -417,6 +418,7 @@ G.MenuWindowKit = (() => {
                           >
                             <span class=${'shop-check' + (chosen.includes(choice.key) ? ' is-on' : '')}></span>
                             <span class="hud-text">${choice.label}</span>
+                            ${cursor.cornersIf(at === choiceId)}
                           </div>`;
                         })}`
                   )}

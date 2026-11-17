@@ -219,7 +219,7 @@
 }
 
 /* ---------- the kit's Dropdown (149f, js/ui/menu-window-kit.js): a box like the search bar, its grouped choices in a
-   list under it; a click outside the list closes it ---------- */
+   list under it; a click outside the list closes it. The keys' cursor shows its corners; the mouse a green rim ---------- */
 .shop-dropdown .shop-dropdown-box {
   line-height: 36px;
   white-space: nowrap;
@@ -227,9 +227,9 @@
   cursor: pointer;
   user-select: none;
 }
-.shop-dropdown.is-cursor .shop-dropdown-box,
+.shop-dropdown:hover .shop-dropdown-box,
 .shop-dropdown.is-open .shop-dropdown-box {
-  border-color: #38d030; /* the cursor is on it, or its list is open: the focus green */
+  border-color: #38d030; /* under the mouse, or its list is open: the focus green */
 }
 .shop-dropdown-catcher {
   position: absolute;
@@ -251,6 +251,7 @@
   color: #8cfff7; /* Secondary text */
 }
 .shop-dropdown-choice {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -260,8 +261,29 @@
   border: 2px solid transparent;
   cursor: pointer;
 }
-.shop-dropdown-choice.is-cursor {
+.shop-dropdown-choice:hover {
   border-color: #38d030;
+}
+/* inside a scroll box the cursor sits on the item's edge (the box clips anything outside it), as the catch screen's cells */
+.shop-dropdown-choice .hud-cursor-top-left,
+.shop-tms-face-cell .hud-cursor-top-left {
+  left: 0;
+  top: 0;
+}
+.shop-dropdown-choice .hud-cursor-top-right,
+.shop-tms-face-cell .hud-cursor-top-right {
+  right: 0;
+  top: 0;
+}
+.shop-dropdown-choice .hud-cursor-bottom-left,
+.shop-tms-face-cell .hud-cursor-bottom-left {
+  left: 0;
+  bottom: 0;
+}
+.shop-dropdown-choice .hud-cursor-bottom-right,
+.shop-tms-face-cell .hud-cursor-bottom-right {
+  right: 0;
+  bottom: 0;
 }
 /* a tick box: a choice in a Dropdown, and the TMs tab's Able to Learn toggle */
 .shop-check {
@@ -296,6 +318,7 @@
   z-index: 3; /* an open filter list lies over the cards and the portraits */
 }
 .shop-toggle {
+  position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -304,7 +327,7 @@
   border: 2px solid #ffffff;
   cursor: pointer;
 }
-.shop-toggle.is-cursor {
+.shop-toggle:hover {
   border-color: #38d030;
 }
 .shop-toggle .shop-check {
@@ -324,38 +347,42 @@
   border: 2px solid #9fa19f;
   background: #303030;
 }
-.shop-tms-chosen,
-.shop-tms-slot,
-.shop-tms-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  background: #181818;
-  border: 2px solid #495151;
-}
-.shop-tms-slot,
-.shop-tms-cell {
+/* every portrait: a round face 4 px inside its cell (the catch screen's .catch-owned-face), the cursor on the cell's edge */
+.shop-tms-face-cell {
+  position: relative;
   cursor: pointer;
 }
-.shop-tms-slot.is-empty {
+.shop-tms-panel > .shop-tms-face-cell {
+  position: absolute;
+}
+.shop-tms-face-cell.is-empty {
   opacity: 0.45;
   cursor: default;
 }
-.shop-tms-slot.is-chosen,
-.shop-tms-cell.is-chosen {
+.shop-tms-face {
+  position: absolute;
+  inset: 4px;
+  box-sizing: border-box;
+  border: 2px solid #c1c2c1;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #101010;
+}
+.shop-tms-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.shop-tms-face-cell.is-chosen .shop-tms-face,
+.shop-tms-chosen .shop-tms-face {
   border-color: #29ceff; /* the chosen Pokemon */
 }
-.shop-tms-slot.is-cursor,
-.shop-tms-cell.is-cursor {
-  border-color: #38d030;
+.shop-tms-face-cell:not(.is-empty):hover .shop-tms-face {
+  border-color: #38d030; /* under the mouse */
 }
 .shop-tms-box-grid {
   display: grid;
-}
-.shop-portrait {
-  display: block;
-  image-rendering: pixelated;
 }
 .shop-tms-divider {
   height: 2px;

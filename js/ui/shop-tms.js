@@ -27,15 +27,15 @@ G.ShopTmsPane = (() => {
   const GRID = { columns: 3, width: 584, top: 56 };
   GRID.height = PANE_HEIGHT - CURSOR_ROOM - GRID.top;
   const TYPE_LIST = { top: 48, width: 220, height: 420 }; // the Type filter's open list, under its box
-  // the Pokemon panel: the Team Items owned panel's place and size; the portraits are 40 px art at 2x (chosen and box
-  // grid) and 1x (team slots)
+  // the Pokemon panel: the Team Items owned panel's place and size. Every portrait is a round face in its cell, the
+  // catch screen's look (css/bw-catch.css .catch-owned-face; Jess 2026-11-17), the cursor's corners on the cell's edges
   const PANEL = { left: 624, width: 377, height: 530, inset: 14 };
   const CHOSEN = { top: 44, size: 88, nameTop: 12 };
-  const TEAM = { left: 148, top: 44, size: 48, gap: 12, columns: 3 };
+  const TEAM = { left: 144, top: 44, size: 52, gap: 10, columns: 3 };
   const DIVIDER_TOP = 166;
   const FINDER = { top: 180, searchWidth: 200, filterLeft: 226, filterWidth: 137 };
-  const BOX_GRID = { top: 232, columns: 3, cell: 80, gap: 16 };
-  BOX_GRID.width = BOX_GRID.columns * BOX_GRID.cell + (BOX_GRID.columns - 1) * BOX_GRID.gap; // 272
+  const BOX_GRID = { top: 232, columns: 4, cell: 76, gap: 10, trackRight: 6 }; // four across (Jess 2026-11-17)
+  BOX_GRID.width = BOX_GRID.columns * BOX_GRID.cell + (BOX_GRID.columns - 1) * BOX_GRID.gap; // 334
   BOX_GRID.height = PANEL.height - BOX_GRID.top - PANEL.inset;
   const FILTER_LIST = { top: 224, width: 240, height: 296 }; // the Pokemon filter's open list, right-aligned to its box
   // cursor ids
@@ -63,6 +63,23 @@ G.ShopTmsPane = (() => {
   addEventListener('pointerdown', (event) => (shiftClick = event.shiftKey), true);
   addEventListener('keydown', () => (shiftClick = false), true);
 
+  /**
+   * One remembered result: the last key and value; a call with the same key gives the value back without computing it.
+   * The cursor asks for the tab's items once per drawn button, so the lists below are computed once per change, not
+   * once per button (Jess 2026-11-17: with every Pokemon owned, moving the cursor was slow).
+   */
+  function remembered(compute) {
+    let lastKey = null,
+      lastValue = null;
+    return (key, ...args) => {
+      if (key !== lastKey) {
+        lastValue = compute(...args);
+        lastKey = key;
+      }
+      return lastValue;
+    };
+  }
+
   /** The tab for one Shop window: cursor is its selection cursor, refresh redraws the Shop after a purchase. */
   function create({ cursor, refresh }) {
     const tmQuery = signal(''),
@@ -72,6 +89,7 @@ G.ShopTmsPane = (() => {
       monFilters = signal([]),
       chosenUid = signal(null),
       openDropdown = signal(null); // TM_TYPE, MON_FILTER or null
+    let saveVersion = 0; // bumped at each opening and purchase: the remembered lists are computed again
 
     /** Each opening: filters cleared, Able to Learn on, the team's lead chosen. */
     function reset() {
@@ -81,30 +99,37 @@ G.ShopTmsPane = (() => {
       monQuery.value = '';
       monFilters.value = [];
       openDropdown.value = null;
+      saveVersion++;
       const lead = (G.DB.save && G.DB.save.team.find((slot) => slot && slot.uid)) || null;
       chosenUid.value = lead ? lead.uid : null;
     }
 
     // ---------- what is shown ----------
     /** The chosen copy (read), or the first copy in the box when the chosen one is gone; null with an empty box. */
+    const chosenCopyOf = remembered(
+      (save) => (chosenUid.value && G.Copies.get(save, chosenUid.value)) || G.Copies.all(save)[0] || null
+    );
     function chosenCopy() {
       const save = G.DB.save;
       if (!save) return null;
-      return (chosenUid.value && G.Copies.get(save, chosenUid.value)) || G.Copies.all(save)[0] || null;
+      return chosenCopyOf([saveVersion, save.box.length, chosenUid.value].join('|'), save);
     }
     const nameOfCopy = (copy) => copy.nickname || G.DEX_BY[copy.speciesID].name;
 
     /** The TMs the cards show: by name, narrowed by the search, the Type filter and Able to Learn. */
-    function shownTms(copy) {
-      const save = G.DB.save,
-        uid = copy && copy.pokemonUUID,
-        named = nameHas(tmQuery.value);
+    const shownTmsFor = remembered((save, uid) => {
+      const named = nameHas(tmQuery.value);
       return G.TMs.list().filter((moveId) => {
         const def = G.MoveDefs[moveId];
         if (!named(def)) return false;
         if (typesChosen.value.length && !typesChosen.value.includes(def.type)) return false;
         return !ableOnly.value || G.TMs.standing(save, uid, moveId) !== 'cannot';
       });
+    });
+    function shownTms(copy) {
+      const uid = copy && copy.pokemonUUID,
+        key = [saveVersion, uid, tmQuery.value, typesChosen.value.join(), ableOnly.value].join('|');
+      return shownTmsFor(key, G.DB.save, uid);
     }
 
     const typeGroups = () => [
@@ -150,6 +175,10 @@ G.ShopTmsPane = (() => {
     function shownCopies() {
       const save = G.DB.save;
       if (!save) return [];
+      const key = [saveVersion, save.box.length, save.boxCount, monQuery.value, monFilters.value.join()].join('|');
+      return shownCopiesOf(key, save);
+    }
+    const shownCopiesOf = remembered((save) => {
       const text = monQuery.value.trim().toLowerCase(),
         chosenByGroup = {};
       for (const key of monFilters.value) {
@@ -166,7 +195,7 @@ G.ShopTmsPane = (() => {
       return G.Copies.all(save)
         .filter(passes)
         .sort((a, b) => a.speciesID - b.speciesID || a.dateObtained - b.dateObtained);
-    }
+    });
     /** The team's six slots: each { slot, uid, dex, shiny } or null. A slot with no copy cannot be chosen. */
     const teamSlots = () => (G.DB.save ? G.DB.save.team : []).slice(0, 6);
 
@@ -278,6 +307,7 @@ G.ShopTmsPane = (() => {
         return;
       }
       G.Audio.sfx('confirm');
+      saveVersion++;
       G.DB.commit(true);
       G.UI.toast(`${pokemonName} learned ${moveName} for good!`);
       refresh();
@@ -326,44 +356,56 @@ G.ShopTmsPane = (() => {
           list=${{ left: BAR.typeLeft, top: TYPE_LIST.top, width: TYPE_LIST.width, height: TYPE_LIST.height }}
         />
         <div
-          class=${'shop-search-host shop-toggle' + (at === TM_ABLE ? ' is-cursor' : '') + (ableOnly.value ? ' is-on' : '')}
+          class=${'shop-toggle' + (ableOnly.value ? ' is-on' : '')}
           data-cursor-id=${TM_ABLE}
           data-cursor-area="tm-bar"
           style=${{ left: px(BAR.toggleLeft), top: px(4), width: px(BAR.toggleSize), height: px(BAR.toggleSize) }}
           onMouseEnter=${() => cursor.hover(TM_ABLE)}
           onMouseLeave=${() => cursor.hover(null)}
           onClick=${() => press(TM_ABLE)}
-        ><span class="shop-check"></span></div>
+        >
+          <span class="shop-check"></span>
+          ${cursor.cornersIf(at === TM_ABLE)}
+        </div>
         <div class="hud-text shop-toggle-label" style=${{ left: px(BAR.labelLeft), top: px(2) }}>Able to<br />Learn</div>`;
     }
 
-    function Portrait({ dex, shiny, size }) {
-      return html`<img
-        class="shop-portrait"
-        src=${portraitSource(dex, shiny)}
-        data-dex=${dex}
-        onError=${portraitFallback}
-        loading="lazy"
-        alt=""
-        style=${{ width: px(size), height: px(size) }}
-      />`;
+    /** A round portrait face (the catch screen's look), filling its cell less the cursor's room. */
+    function Face({ dex, shiny }) {
+      return html`<div class="shop-tms-face">
+        ${
+          dex
+            ? html`<img
+                src=${portraitSource(dex, shiny)}
+                data-dex=${dex}
+                onError=${portraitFallback}
+                loading="lazy"
+                alt=""
+              />`
+            : null
+        }
+      </div>`;
+    }
+
+    /** A Pokemon the cursor can choose: a team slot or a Pokebox cell. place: its left and top in the panel (team slots). */
+    function FaceCell({ id, area, uid, dex, shiny, size, place, at, chosen }) {
+      return html`<div
+        class=${'shop-tms-face-cell' + (chosen ? ' is-chosen' : '')}
+        data-cursor-id=${id}
+        data-cursor-area=${area}
+        data-uid=${uid}
+        style=${{ ...place, width: px(size), height: px(size) }}
+        onMouseEnter=${() => cursor.hover(id)}
+        onMouseLeave=${() => cursor.hover(null)}
+        onClick=${() => choose(uid)}
+      >
+        <${Face} dex=${dex} shiny=${shiny} />
+        ${cursor.cornersIf(at === id)}
+      </div>`;
     }
 
     function PokemonPanel({ at, copy }) {
       const chosenUidNow = copy && copy.pokemonUUID;
-      const pickable = (id, uid, className, place, content) =>
-        html`<div
-          class=${className + (uid === chosenUidNow ? ' is-chosen' : '') + (at === id ? ' is-cursor' : '')}
-          data-cursor-id=${id}
-          data-cursor-area=${id.startsWith(TEAM_SLOT) ? 'team' : 'box'}
-          data-uid=${uid}
-          style=${place}
-          onMouseEnter=${() => cursor.hover(id)}
-          onMouseLeave=${() => cursor.hover(null)}
-          onClick=${() => choose(uid)}
-        >
-          ${content}
-        </div>`;
       return html`<div
         class="shop-tms-panel"
         style=${{ left: px(PANEL.left), width: px(PANEL.width), height: px(PANEL.height) }}
@@ -375,19 +417,33 @@ G.ShopTmsPane = (() => {
           class="shop-tms-chosen"
           style=${{ left: px(PANEL.inset), top: px(CHOSEN.top), width: px(CHOSEN.size), height: px(CHOSEN.size) }}
         >
-          ${copy ? html`<${Portrait} dex=${copy.speciesID} shiny=${copy.isShiny} size=${80} />` : null}
+          <${Face} dex=${copy && copy.speciesID} shiny=${copy && copy.isShiny} />
         </div>
         ${teamSlots().map((slot, index) => {
           const place = {
             left: px(TEAM.left + (index % TEAM.columns) * (TEAM.size + TEAM.gap)),
             top: px(TEAM.top + Math.floor(index / TEAM.columns) * (TEAM.size + TEAM.gap)),
-            width: px(TEAM.size),
-            height: px(TEAM.size),
           };
-          if (!slot || !slot.uid) return html`<div key=${index} class="shop-tms-slot is-empty" style=${place}></div>`;
-          return html`<div key=${index}>
-            ${pickable(TEAM_SLOT + index, slot.uid, 'shop-tms-slot', place, html`<${Portrait} dex=${slot.dex} shiny=${slot.shiny} size=${40} />`)}
-          </div>`;
+          if (!slot || !slot.uid)
+            return html`<div
+              key=${index}
+              class="shop-tms-face-cell is-empty"
+              style=${{ ...place, width: px(TEAM.size), height: px(TEAM.size) }}
+            >
+              <${Face} dex=${slot && slot.dex} shiny=${slot && slot.shiny} />
+            </div>`;
+          return html`<${FaceCell}
+            key=${index}
+            id=${TEAM_SLOT + index}
+            area="team"
+            uid=${slot.uid}
+            dex=${slot.dex}
+            shiny=${slot.shiny}
+            size=${TEAM.size}
+            place=${place}
+            at=${at}
+            chosen=${slot.uid === chosenUidNow}
+          />`;
         })}
         <div class="shop-pocket-divider shop-tms-divider" style=${{ left: px(PANEL.inset), right: px(PANEL.inset), top: px(DIVIDER_TOP) }}></div>
         <div class="shop-tms-finder" style=${{ left: px(PANEL.inset), top: px(FINDER.top) }}>
@@ -420,35 +476,28 @@ G.ShopTmsPane = (() => {
           />
         </div>
         <${ScrollBox}
-          box=${{
-            left: PANEL.inset - CURSOR_ROOM,
-            top: BOX_GRID.top - CURSOR_ROOM,
-            width: BOX_GRID.width + 2 * CURSOR_ROOM,
-            height: BOX_GRID.height,
-          }}
-          trackRight=${PANEL.inset - CURSOR_ROOM - 6}
+          box=${{ left: PANEL.inset, top: BOX_GRID.top, width: BOX_GRID.width, height: BOX_GRID.height }}
+          trackRight=${BOX_GRID.trackRight}
           colours=${SCROLL_COLOURS}
           resetOn=${[monQuery.value, monFilters.value.join()]}
         >
           <div
             class="shop-tms-box-grid"
-            style=${{
-              padding: px(CURSOR_ROOM),
-              gridTemplateColumns: `repeat(${BOX_GRID.columns}, ${px(BOX_GRID.cell)})`,
-              gap: px(BOX_GRID.gap),
-            }}
+            style=${{ gridTemplateColumns: `repeat(${BOX_GRID.columns}, ${px(BOX_GRID.cell)})`, gap: px(BOX_GRID.gap) }}
           >
             ${shownCopies().map(
               (entry) =>
-                html`<div key=${entry.pokemonUUID}>
-                  ${pickable(
-                    MON_CELL + entry.pokemonUUID,
-                    entry.pokemonUUID,
-                    'shop-tms-cell',
-                    { width: px(BOX_GRID.cell), height: px(BOX_GRID.cell) },
-                    html`<${Portrait} dex=${entry.speciesID} shiny=${entry.isShiny} size=${BOX_GRID.cell - 4} />`
-                  )}
-                </div>`
+                html`<${FaceCell}
+                  key=${entry.pokemonUUID}
+                  id=${MON_CELL + entry.pokemonUUID}
+                  area="box"
+                  uid=${entry.pokemonUUID}
+                  dex=${entry.speciesID}
+                  shiny=${entry.isShiny}
+                  size=${BOX_GRID.cell}
+                  at=${at}
+                  chosen=${entry.pokemonUUID === chosenUidNow}
+                />`
             )}
           </div>
         </${ScrollBox}>

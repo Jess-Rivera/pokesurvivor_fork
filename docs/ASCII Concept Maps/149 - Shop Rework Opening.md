@@ -532,3 +532,12 @@ the build:
 Checks: shop-screens-harness section 12 (+2 mutants, caught), pokebox-copies-harness 6b, smoke-ui Shop pass TMs section (6
 checks). check.js clean; smoke-ui all passed; smoke-berry-slots passed. Two shop-screens mutants on game.js were already STALE
 before this slice (the shop-over-another-screen and bond-screen guards).
+
+**149f feel-test round 1 (Jess 2026-11-17, screenshot assets/screenshots/tm-shop-bug1.png):**
+| # | Fix |
+|---|---|
+| 1 | Every portrait is a round face in its cell (the catch screen's look); the Pokebox grid is four across (76 px cells) |
+| 2, 3 | The team slots lost their places (each filled slot sat in an extra box, so all of them piled up in the panel's top-left corner: the Squirtle there). Now six slots, each in its own place, showing the team |
+| 4 | Moving the cursor was slow with every Pokemon owned: each drawn button asked for the tab's items, and each ask read the whole Pokebox again. The lists are now remembered until something changes (about one frame per move with 500 portraits shown) |
+| 5 | The keys' cursor shows its corners on portraits, the Able to Learn toggle, the dropdown boxes and their choices (search bars keep their green rim); the mouse shows a green rim |
+smoke-ui Shop pass: +2 checks (team slots, round faces, four across; the cursor's corners on a portrait), all passed.

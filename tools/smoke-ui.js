@@ -1510,8 +1510,7 @@ async function shopFlow(browser, query, tag) {
   const tmsNow = () =>
     page.evaluate(() => {
       const save = G.DB.save,
-        uid = (document.querySelector('.shop-tms-cell.is-chosen, .shop-tms-slot.is-chosen') || { dataset: {} }).dataset
-          .uid;
+        uid = (document.querySelector('.shop-tms-face-cell.is-chosen') || { dataset: {} }).dataset.uid;
       return {
         uid,
         coins: save.coins,
@@ -1526,15 +1525,65 @@ async function shopFlow(browser, query, tag) {
         })),
       };
     });
+  // the Pokemon panel (feel test 1, Jess 2026-11-17): six team slots, each in its own place, showing the save's team in
+  // order; every portrait a round face; the Pokebox grid four across; the keys' cursor shows its corners on a portrait
+  const panel = await page.evaluate(() => {
+    const slots = [...document.querySelectorAll('.shop-tms-panel > .shop-tms-face-cell')],
+      cells = [...document.querySelectorAll('.shop-tms-box-grid .shop-tms-face-cell')].slice(0, 8);
+    const placeOf = (element) => {
+      const rect = element.getBoundingClientRect();
+      return Math.round(rect.left) + ',' + Math.round(rect.top);
+    };
+    return {
+      want: G.DB.save.team.slice(0, 6).map((slot) => (slot ? slot.dex : null)),
+      shown: slots.map((element) => {
+        const image = element.querySelector('img');
+        return image ? +image.dataset.dex : null;
+      }),
+      places: new Set(slots.map(placeOf)).size,
+      round: [...document.querySelectorAll('#shop-tms .shop-tms-face')].every(
+        (face) => getComputedStyle(face).borderRadius === '50%'
+      ),
+      // portraits in the grid's first row: the ones level with the first
+      firstRow: cells.filter(
+        (element) =>
+          Math.round(element.getBoundingClientRect().top) === Math.round(cells[0].getBoundingClientRect().top)
+      ).length,
+    };
+  });
+  ok(
+    panel.shown.length === 6 &&
+      panel.shown.join() === panel.want.join() &&
+      panel.places === 6 &&
+      panel.round &&
+      panel.firstRow === 4,
+    tag +
+      ': six team slots in their own places show the team in order; every portrait is round; the Pokebox grid is four across (' +
+      JSON.stringify(panel) +
+      ')'
+  );
+  const firstCell = await page.evaluate(
+    () => document.querySelector('.shop-tms-box-grid .shop-tms-face-cell').dataset.cursorId
+  );
+  await mouseOver('.shop-tms-box-grid .shop-tms-face-cell');
+  await page.keyboard.press('Shift');
+  await sleep(100);
+  const cornersOnCell = (await shown()).cursorOn === firstCell;
+  const nextCell = await arrow('ArrowRight');
+  ok(
+    cornersOnCell && nextCell.startsWith('mon-cell-') && nextCell !== firstCell,
+    tag + ': by keys the selection cursor sits on a portrait (its corners) and the arrows move it along the grid'
+  );
+
   // choose a box Pokemon with at least one TM to buy (the lead may know them all)
   const firstChoice = await page.evaluate(() => {
     const save = G.DB.save,
-      cell = [...document.querySelectorAll('.shop-tms-cell')].find((element) =>
+      cell = [...document.querySelectorAll('.shop-tms-box-grid .shop-tms-face-cell')].find((element) =>
         G.TMs.list().some((moveId) => G.TMs.standing(save, element.dataset.uid, moveId) === 'buy')
       );
     return cell && cell.dataset.uid;
   });
-  await page.click('.shop-tms-cell[data-uid="' + firstChoice + '"]');
+  await page.click('.shop-tms-box-grid .shop-tms-face-cell[data-uid="' + firstChoice + '"]');
   await sleep(150);
   const tms = await tmsNow();
   ok(
@@ -1598,12 +1647,12 @@ async function shopFlow(browser, query, tag) {
   const otherChoice = await page.evaluate((uid) => {
     const save = G.DB.save,
       mine = G.Copies.get(save, uid).speciesID,
-      cell = [...document.querySelectorAll('.shop-tms-cell')].find(
+      cell = [...document.querySelectorAll('.shop-tms-box-grid .shop-tms-face-cell')].find(
         (element) => G.Copies.get(save, element.dataset.uid).speciesID !== mine
       );
     return cell && cell.dataset.uid;
   }, firstChoice);
-  await page.click('.shop-tms-cell[data-uid="' + otherChoice + '"]');
+  await page.click('.shop-tms-box-grid .shop-tms-face-cell[data-uid="' + otherChoice + '"]');
   await sleep(150);
   const tmOther = await tmsNow();
   ok(
@@ -1622,7 +1671,7 @@ async function shopFlow(browser, query, tag) {
   await page.keyboard.press('Escape');
   await sleep(150);
   const tmFiltered = await page.evaluate(() => {
-    const cells = [...document.querySelectorAll('.shop-tms-cell')];
+    const cells = [...document.querySelectorAll('.shop-tms-box-grid .shop-tms-face-cell')];
     return {
       count: cells.length,
       typed: cells.every((element) => {
