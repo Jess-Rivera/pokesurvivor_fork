@@ -7,4 +7,6 @@
 - Built first in the Main Menu Shop (#149a). The page-wide mode lives in the HUD kit (`inputMode`, js/ui/hud-kit.js) so
   every screen can read it; the catch screen and the other cursor screens adopt it with the UI unification (#126).
 
+Superseded in part (2026-11-17): with the mouse no corners show at all; see 2026-11-17-no-selection-cursor-with-the-mouse.
+
 Canonical: js/ui/hud-kit.js "the input mode" comment; js/ui/gacha-ui.js header for the Shop.

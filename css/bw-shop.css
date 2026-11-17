@@ -131,6 +131,9 @@
 .shop-search-host .hud-search {
   display: block;
 }
+.shop-search-host.is-cursor .hud-search {
+  border-color: #38d030; /* the keys' cursor is on it: its focus green, no corners (Jess 2026-11-17) */
+}
 .shop-items-pane {
   inset: 0;
   font-family: 'GameFont', monospace; /* the Shop's font, as the pockets and buttons */

@@ -246,3 +246,8 @@ Also: each opening of the Shop sends both scroll boxes back to the top.
 | 2 | The owned panel is 377 wide, 4 px inside the pane, so a scaled-down stage never rounds its right rim away |
 | 3 | The search bars are cursor stops at the top of their areas: Up from an area's top item goes to its search bar, never the other grid; Up never leaves an area; Down with nothing below goes on to Inventory and Exit; Enter on a search bar starts typing (Enter or Esc gives the keys back) |
 | - | The sale side sits 6 px in from the pane's top and left, so the cursor on its search bar shows whole; its list still ends level with Inventory and Exit |
+
+**149c feel-test round 3 (Jess 2026-11-17):** Up goes row by row, even to a row scrolled out of sight; the search bar only
+from the top row; sideways never lands on a search bar. No selection cursor with the mouse anywhere in the Shop (the button
+under it shows its green rim). No corners on a search bar: its green rim shows the keys' cursor is there. Decision
+2026-11-17-no-selection-cursor-with-the-mouse.

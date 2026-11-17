@@ -809,13 +809,18 @@ async function shopFlow(browser, query, tag) {
         .filter((p) => !p.classList.contains('hidden'))
         .map((p) => p.id),
       selected: [...document.querySelectorAll('.shop-tab.is-selected')].map((t) => t.dataset.tab),
-      // what the cursor's corners sit on: the button's action, or the item's cursor id ('' when it shows nowhere)
+      // where the keys' cursor shows: the item its corners sit on (the button's action, or the item's cursor id), or a
+      // search bar showing it by its green rim ('' when it shows nowhere, always so with the mouse)
       cursorOn: (() => {
         const corner = document.querySelector('#scr-gacha .hud-cursor');
-        const host = corner && corner.closest('[data-cursor-id]');
+        const host = corner
+          ? corner.closest('[data-cursor-id]')
+          : document.querySelector('.shop-search-host.is-cursor');
         const button = host && host.querySelector('button');
         return (button && button.dataset.action) || (host && host.dataset.cursorId) || '';
       })(),
+      // the button with the green (focused) rim, whether by keys or under the mouse
+      greenOn: (document.querySelector('#scr-gacha .hud-team-button.focused') || { dataset: {} }).dataset.action || '',
     }));
   const arrowKey = async (key) => {
     await page.keyboard.press(key);
@@ -843,29 +848,34 @@ async function shopFlow(browser, query, tag) {
   }
   ok(paneRight, tag + ': each tab shows its own pane, alone, and is the one selected tab');
 
-  // the cursor follows the device in use: with the mouse it shows only on the eligible item under it (Exit), and leaves
-  // when the mouse goes over anything else (a team item card, a tab); a key press snaps it back to the last item it was on
+  // the cursor follows the device in use: with the mouse no corners show anywhere (decision
+  // 2026-11-17-no-selection-cursor-with-the-mouse), the button under it shows its green rim and nothing does over a card
+  // or a tab; a key press brings the corners back on the last item
   await page.click('.shop-tab[data-tab="items"]');
   await sleep(100);
   const centreOf = async (selector) => {
     const box = await (await page.$(selector)).boundingBox();
     return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   };
-  const mouseTo = async (selector) => {
+  const mouseOver = async (selector) => {
     const at = await centreOf(selector);
     await page.mouse.move(at.x, at.y, { steps: 5 });
     await sleep(100);
-    return (await shown()).cursorOn;
+    return shown();
   };
-  const onExitByMouse = (await mouseTo('.shop-exit .hud-team-button')).includes('shop-exit');
-  const offOnCard = (await mouseTo('.shop-card-icon')) === '';
-  const offOnTab = (await mouseTo('.shop-tab[data-tab="trs"]')) === '';
+  const mouseTo = async (selector) => (await mouseOver(selector)).cursorOn;
+  const overExit = await mouseOver('.shop-exit .hud-team-button');
+  const onExitByMouse = overExit.cursorOn === '' && overExit.greenOn === 'shop-exit';
+  const overCard = await mouseOver('.shop-card-icon');
+  const offOnCard = overCard.cursorOn === '' && overCard.greenOn === '';
+  const overTab = await mouseOver('.shop-tab[data-tab="trs"]');
+  const offOnTab = overTab.cursorOn === '' && overTab.greenOn === '';
   await page.keyboard.press('Shift');
   await sleep(100);
   const snapsBack = (await shown()).cursorOn.includes('shop-exit');
   ok(
     onExitByMouse && offOnCard && offOnTab && snapsBack,
-    tag + ': with the mouse the cursor is only on the item under it (gone over a card or tab); a key brings it back'
+    tag + ': with the mouse no cursor shows, only the green rim of the button under it; a key brings the cursor back'
   );
 
   // 149c: the Team Items pane. Cards for sale plus owned items cover every team item; the owned grid is 4 across with
@@ -1128,18 +1138,29 @@ async function shopFlow(browser, query, tag) {
   let saleTop = '';
   for (let step = 0; step < 6 && saleTop !== firstCardBuy; step++) saleTop = await arrowKey('ArrowLeft');
   saleTop = await toTop(saleTop);
-  const searchCorners = await page.evaluate(() => {
-    const pane = document.getElementById('shop-items').getBoundingClientRect();
-    const corners = [...document.querySelectorAll('.shop-sale-search-host .hud-cursor')];
-    return (
-      corners.length === 4 &&
-      corners.every(
-        (corner) => corner.getBoundingClientRect().top >= pane.top && corner.getBoundingClientRect().left >= pane.left
-      )
-    );
-  });
+  // on a search bar the cursor shows no corners, only the bar's green rim
+  const searchLook = await page.evaluate(
+    () =>
+      !document.querySelector('#scr-gacha .hud-cursor') &&
+      getComputedStyle(document.querySelector('.shop-sale-search')).borderTopColor === 'rgb(56, 208, 48)'
+  );
+  // Up goes to the row above even when that row is scrolled out of sight; the search bar only from the top row
   const saleBack = await arrowKey('ArrowDown');
-  await arrowKey('ArrowUp');
+  await arrowKey('ArrowDown');
+  const thirdRow = await arrowKey('ArrowDown');
+  const upFromThird = await arrowKey('ArrowUp');
+  const upFromSecond = await arrowKey('ArrowUp');
+  const upFromFirst = await arrowKey('ArrowUp');
+  ok(
+    thirdRow.startsWith('sale-') &&
+      upFromThird.startsWith('sale-') &&
+      upFromSecond === saleBack &&
+      upFromFirst === 'search-sale',
+    tag +
+      ': Up goes row by row (' +
+      [thirdRow, upFromThird, upFromSecond, upFromFirst].join(' > ') +
+      '), the search bar only from the top row'
+  );
   await page.keyboard.press('Enter');
   await sleep(100);
   const typing = await page.evaluate(() => document.activeElement.classList.contains('shop-sale-search'));
@@ -1153,9 +1174,9 @@ async function shopFlow(browser, query, tag) {
       ')'
   );
   ok(
-    saleTop === 'search-sale' && searchCorners && saleBack.startsWith('sale-') && typing,
+    saleTop === 'search-sale' && searchLook && saleBack.startsWith('sale-') && typing,
     tag +
-      ': Up from the top cards goes to the sale search bar (cursor whole), Down comes back, Enter there starts typing'
+      ': Up from the top cards goes to the sale search bar (its green rim, no corners), Down comes back, Enter there starts typing'
   );
 
   // 149b: the Character Upgrades pocket cards, read from the drawn page and the save

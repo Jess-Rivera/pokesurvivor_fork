@@ -186,6 +186,11 @@ G.GachaUI = (() => {
     if (inputMode.value === 'keys') return items.includes(focus.value) ? focus.value : 'exit';
     return items.includes(hovered.value) ? hovered.value : null;
   }
+  /**
+   * The cursor's corners show only while the keys are in use (Jess 2026-11-17: no selection cursor with the mouse; the
+   * item under the mouse shows its own green rim). Decision 2026-11-17-no-selection-cursor-with-the-mouse.
+   */
+  const cornersIf = (shown) => (shown && inputMode.value === 'keys' ? html`<${Cursor} />` : null);
   /** The mouse entered (an id) or left (null) an eligible item; entering also makes it the keys' starting point. */
   function hover(id) {
     hovered.value = id;
@@ -277,8 +282,9 @@ G.GachaUI = (() => {
    * The arrows (149c): the nearest eligible item that way, measured between the items' centres on the screen, a step
    * across the way counting double; none that way keeps the cursor where it is. What it lands on scrolls into view.
    * Up and down stay inside the item's own area (data-cursor-area: the sale side, the owned panel) while it has an
-   * item that way, so the top item's Up goes to that area's search bar, not the other grid (Jess 2026-11-17). Up never
-   * leaves an area (on its search bar it stays put); Down with nothing below in the area goes on to Inventory and Exit.
+   * item that way, so the top item's Up goes to that area's search bar, not the other grid (Jess 2026-11-17). The search
+   * bar comes only after the area's top row (a row scrolled out of sight above still comes first), and sideways moves
+   * never land on one. Up never leaves an area; Down with nothing below in the area goes on to Inventory and Exit.
    */
   function stepFocus(directionX, directionY) {
     const from = cursorOn() || focus.value,
@@ -290,12 +296,12 @@ G.GachaUI = (() => {
     };
     const start = centre(fromElement),
       fromArea = fromElement.dataset.cursorArea;
-    const nearestIn = (sameAreaOnly) => {
+    const nearestIn = (allowed) => {
       let best = null,
         bestScore = Infinity;
       for (const id of eligibleItems()) {
         const element = id !== from && cursorElement(id);
-        if (!element || (sameAreaOnly && element.dataset.cursorArea !== fromArea)) continue;
+        if (!element || !allowed(id, element)) continue;
         const point = centre(element);
         if (!point.width) continue; // not drawn
         const dx = point.x - start.x,
@@ -311,8 +317,15 @@ G.GachaUI = (() => {
       }
       return best;
     };
-    const best =
-      directionY && fromArea ? nearestIn(true) || (directionY > 0 ? nearestIn(false) : null) : nearestIn(false);
+    const isSearch = (id) => id === SALE_SEARCH || id === OWNED_SEARCH,
+      inArea = (element) => element.dataset.cursorArea === fromArea;
+    const best = !directionY
+      ? nearestIn((id) => !isSearch(id)) // sideways never lands on a search bar
+      : fromArea
+        ? nearestIn((id, element) => inArea(element) && !isSearch(id)) || // the next row in the area, scrolled or not
+          nearestIn((id, element) => inArea(element)) || // only from the top row: the area's search bar
+          (directionY > 0 ? nearestIn(() => true) : null) // Down with nothing below goes on to Inventory and Exit
+        : nearestIn(() => true);
     if (!best) return;
     focus.value = best.id;
     showInScrollBox(best.element);
@@ -429,7 +442,7 @@ G.GachaUI = (() => {
                 onEnter=${() => hover('inventory')}
                 onPress=${openInventory}
               />
-              ${inventoryFocused ? html`<${Cursor} />` : null}
+              ${cornersIf(inventoryFocused)}
             </div>`
           : null
       }
@@ -455,7 +468,7 @@ G.GachaUI = (() => {
           onEnter=${() => hover('exit')}
           onPress=${close}
         />
-        ${exitFocused ? html`<${Cursor} />` : null}
+        ${cornersIf(exitFocused)}
       </div>
     </div>`;
   }
@@ -540,7 +553,7 @@ G.GachaUI = (() => {
           disabled=${!canAfford}
           onPress=${() => canAfford && buyItem(item.id)}
         />
-        ${focused ? html`<${Cursor} />` : null}
+        ${cornersIf(focused)}
       </div>
     </div>`;
   }
@@ -570,21 +583,22 @@ G.GachaUI = (() => {
             tip.onMouseLeave(event);
           },
         },
-        overlay: at === id ? html`<${Cursor} />` : null,
+        overlay: cornersIf(at === id),
       };
     });
   }
 
-  /** A search bar as a cursor stop at the top of its area: the cursor's corners sit on it; Enter there starts typing. */
+  /**
+   * A search bar as a cursor stop at the top of its area, for the keys only: no corners on it, its own green rim shows the
+   * cursor is there (Jess 2026-11-17); Enter starts typing. The mouse just clicks into it.
+   */
   function SearchStop({ id, area, at, className, children }) {
     return html`<div
-      class=${'shop-search-host ' + className}
+      class=${'shop-search-host ' + className + (at === id ? ' is-cursor' : '')}
       data-cursor-id=${id}
       data-cursor-area=${area}
-      onMouseEnter=${() => hover(id)}
-      onMouseLeave=${() => hover(null)}
     >
-      ${children} ${at === id ? html`<${Cursor} />` : null}
+      ${children}
     </div>`;
   }
 
@@ -800,7 +814,7 @@ G.GachaUI = (() => {
           disabled=${!pocket.canBuy}
           onPress=${() => pocket.canBuy && pocket.buy()}
         />
-        ${focused ? html`<${Cursor} />` : null}
+        ${cornersIf(focused)}
       </div>
     </${Box}>`;
   }
