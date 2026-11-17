@@ -200,3 +200,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Built 149a: window over the dimmed Main Menu, flush icon rail (no cursor, Q / E), smaller Exit, old panes inside. Feel-test
   fixes, then the cursor follows the device in use (kit inputMode; decision). smoke-ui Shop pass, 11 checks, green.
 - Stopped at: 149a Needs Playtest, not closed; next 149b Character Upgrades.
+
+## 2026-11-17 (Claude Code, home), #149b and #149c built and signed off
+- 149b Character Upgrades: two pocket cards (2x2 slot grid, Buy for the next slot, Full when done). Kit: Box body, TeamButton disabled.
+- 149c Team Items: searchable 3-column sale cards beside a searchable owned panel 4 across; Inventory beside Exit. New
+  Tooltip Delay setting (keys show tooltips after it). Kit: ItemGrid columns and overlay, SearchBar.
+- Three feel-test rounds: pane scrolled with scrollIntoView (now overflow clip, own-box scrolling, whole cards); cursor corners
+  clipped; WASD moves the cursor; Up row by row, search bar only from the top row; no cursor with the mouse, none on search bars.
+- Decisions: cursor tooltips after a settable delay; no selection cursor with the mouse. smoke-ui Shop pass 30 checks.
+- Stopped at: 149c signed off; next session opens 149d (Inventory screen).
