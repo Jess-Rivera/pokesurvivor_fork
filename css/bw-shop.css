@@ -118,7 +118,8 @@
 
 /* ---------- Team Items (149c): cards for sale and the owned panel, drawn by gacha-ui.js into #shop-items ---------- */
 .shop-pane-fixed {
-  overflow: hidden; /* its own scroll boxes scroll; the pane stays put */
+  bottom: -86px; /* down to the bottom of Inventory and Exit (gacha-ui.js SALE.listHeight) */
+  overflow: clip; /* only its own scroll boxes scroll: clip, unlike hidden, cannot be scrolled by code either */
   padding-right: 0;
 }
 .shop-items-pane,

@@ -788,7 +788,8 @@ async function catchFlow(browser, query, tag) {
 // #149c: the Team Items pane: sale cards plus owned items cover every team item, the owned grid is 4 across with dimmed
 // empties; a card Buy moves its item to the owned grid for its label's price; each search bar narrows its grid; owned
 // squares show their tooltip at once by mouse and after the Tooltip Delay by keys; unaffordable Buys are skipped;
-// Inventory opens the Inventory screen.
+// Inventory opens the Inventory screen. Feel-test fixes: cursor corners unclipped, movement keys, whole cards scrolled
+// into view with the pane still, the sale grid level with the buttons' bottom.
 async function shopFlow(browser, query, tag) {
   const { page, errs } = await boot(browser, query);
   await page.evaluate(() => {
@@ -999,6 +1000,90 @@ async function shopFlow(browser, query, tag) {
   ok(
     restingOn.startsWith('own-') && !tipEarly && tipLate,
     tag + ': by keys an owned square shows its tooltip only after the Tooltip Delay (1 s)'
+  );
+
+  // 149c feel-test fixes (Jess 2026-11-17): the cursor's corners on an owned square stay inside its scroll box; the
+  // movement keys move the cursor as the arrows do; a key move onto a card's Buy scrolls the whole card into view while
+  // the pane itself never scrolls (search bars and the owned panel unclipped); the sale grid and its bar end level with
+  // the bottom of Inventory and Exit
+  const cornersInside = await page.evaluate(() => {
+    const corners = [...document.querySelectorAll('.shop-owned-grid .hud-cursor')],
+      box = document.querySelector('.shop-owned .hud-scroll-box').getBoundingClientRect();
+    return (
+      corners.length === 4 &&
+      corners.every((corner) => {
+        const rect = corner.getBoundingClientRect();
+        return rect.left >= box.left && rect.right <= box.right && rect.top >= box.top && rect.bottom <= box.bottom;
+      })
+    );
+  });
+  ok(cornersInside, tag + ': the cursor on an owned square shows all four corners inside its scroll box');
+  await setSaveItems({ coins: 10000000 });
+  await sleep(100);
+  const moveKeys = await page.evaluate(() =>
+    ['move_left', 'move_up', 'move_right', 'move_down'].map((name) =>
+      G.Input.bindingsOf(name).find((code) => code.startsWith('key'))
+    )
+  );
+  const letter = (code) => code.slice(3); // 'keya' -> 'a'
+  // the same walk from the same start (a fresh Shop opens with the cursor on Exit), once by arrows, once by movement keys
+  const walk = async (keys) => {
+    await page.keyboard.press('Escape');
+    await sleep(150);
+    await page.click('#scr-menu [data-go="gacha"]');
+    await sleep(200);
+    await page.keyboard.press('Shift');
+    const path = [];
+    for (const key of keys) path.push(await arrowKey(key));
+    return path;
+  };
+  const byArrows = await walk(['ArrowLeft', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight']);
+  const byLetters = await walk([moveKeys[0], moveKeys[1], moveKeys[0], moveKeys[3], moveKeys[2]].map(letter));
+  ok(
+    moveKeys.every(Boolean) && byArrows.join() === byLetters.join() && new Set(byArrows).size > 1,
+    tag + ': the movement keys move the cursor as the arrows do (' + byLetters.join(' > ') + ')'
+  );
+  for (let step = 0; step < 6; step++) await arrowKey('ArrowLeft');
+  let cardInView = true;
+  for (let step = 0; step < 4; step++) {
+    const id = await arrowKey(letter(moveKeys[3]));
+    const view = await page.evaluate((cursorId) => {
+      const card = document.querySelector('[data-cursor-id="' + cursorId + '"]').closest('.shop-card'),
+        box = card.closest('.hud-scroll-box').getBoundingClientRect(),
+        rect = card.getBoundingClientRect();
+      return rect.top >= box.top - 1 && rect.bottom <= box.bottom + 1;
+    }, id);
+    if (!id.startsWith('sale-') || !view) cardInView = false;
+  }
+  const paneStill = await page.evaluate(() => {
+    const pane = document.getElementById('shop-items'),
+      paneRect = pane.getBoundingClientRect();
+    const inside = (selector) => {
+      const rect = document.querySelector(selector).getBoundingClientRect();
+      return rect.top >= paneRect.top && rect.left >= paneRect.left;
+    };
+    return pane.scrollTop === 0 && inside('.shop-sale-search') && inside('.shop-owned') && inside('.shop-owned-search');
+  });
+  ok(
+    cardInView && paneStill,
+    tag +
+      ': moving down the cards by key shows each whole card; the pane never scrolls (search bars and owned panel unclipped)'
+  );
+  const bottoms = await page.evaluate(() => {
+    const bottom = (selector) => Math.round(document.querySelector(selector).getBoundingClientRect().bottom);
+    return {
+      list: bottom('.shop-sale .hud-scroll-box'),
+      bar: bottom('.shop-sale .hud-scroll-track'),
+      exit: bottom('.shop-exit'),
+      inventory: bottom('.shop-inventory'),
+    };
+  });
+  ok(
+    bottoms.list === bottoms.exit && bottoms.bar === bottoms.exit && bottoms.inventory === bottoms.exit,
+    tag +
+      ': the sale grid and its bar end level with the bottom of Inventory and Exit (' +
+      JSON.stringify(bottoms) +
+      ')'
   );
 
   // 149b: the Character Upgrades pocket cards, read from the drawn page and the save

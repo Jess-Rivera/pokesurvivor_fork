@@ -228,3 +228,13 @@ flowchart LR
 
 Found while testing: Esc in a search box closed the whole Shop; the box now keeps its Enter and Esc to itself.
 Next: 149d Inventory screen.
+
+**149c feel-test fixes (Jess 2026-11-17, screenshot assets/screenshots/team-item-shop-bug1.png):**
+| # | Fix |
+|---|---|
+| 1 | The owned grid's scroll box has 6 px of room around the squares, so the cursor's corners are never clipped |
+| 2 | The cursor also moves with the movement keys as bound in Settings (WASD by default), besides the arrows |
+| 3 | A key move scrolls only the item's own scroll box, enough to show the whole card behind a Buy (it used scrollIntoView, which also scrolled the pane) |
+| 4 | The Team Items pane reaches 86 px lower, so the sale grid and its bar end level with the bottom of Inventory and Exit |
+| 5 | Cause of the clipped search bar and owned panel: that pane scroll (all of it moved as one). The pane is now overflow: clip, which code cannot scroll; the sale side and the owned panel stay separate boxes |
+Also: each opening of the Shop sends both scroll boxes back to the top.

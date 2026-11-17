@@ -90,14 +90,15 @@ G.GachaUI = (() => {
   const BERRY_POCKET_RIM = { light: '#6ec188', base: '#20a048', dark: '#15682f' },
     TEAM_ITEM_POCKET_RIM = { light: '#d89db7', base: '#c86890', dark: '#82445e' },
     POCKET_BODY = '#303030';
-  // the Team Items pane (149c), in pane pixels (the pane is 1005 x 530): the sale side on the left, the owned panel on the
-  // right; the cards' Buy is the team menu button at 3 px per art pixel
+  // the Team Items pane (149c), in pane pixels: the sale side on the left, the owned panel on the right; the cards' Buy is
+  // the team menu button at 3 px per art pixel. This pane reaches 86 px lower than the others (css/bw-shop.css
+  // .shop-pane-fixed), to the bottom of Inventory and Exit: 1005 x 616 (Jess 2026-11-17)
   const SALE = {
     width: 600,
     searchWidth: 584,
     listTop: 56,
     listWidth: 584,
-    listHeight: 474,
+    listHeight: 560, // its bottom level with the bottom of Inventory and Exit
     columns: 3,
     cardWidth: 186,
     cardHeight: 350, // room for a six-line description above Buy
@@ -127,6 +128,9 @@ G.GachaUI = (() => {
   OWNED.squareSize = OWNED.artSize * 2;
   OWNED.listWidth = OWNED.columns * OWNED.squareSize + (OWNED.columns - 1) * OWNED.artSize; // 330
   OWNED.listHeight = OWNED.visibleRows * OWNED.squareSize + (OWNED.visibleRows - 1) * OWNED.artSize; // 420
+  // room inside the owned scroll box for the cursor's corners, which sit 4 px outside a square (Jess 2026-11-17: they
+  // were clipped at the box's edges)
+  const CURSOR_ROOM = 6;
   const INVENTORY_BUTTON = { artWidth: 64, gap: 16 }; // left of Exit on the Team Items tab
   INVENTORY_BUTTON.width = INVENTORY_BUTTON.artWidth * EXIT.artPixel; // 192
   const SCROLL_COLOURS = { track: '#303030', thumb: '#29ceff', thumbRim: '#29ceff' }; // the mockup's teal bar
@@ -139,6 +143,7 @@ G.GachaUI = (() => {
   const saveTick = signal(0); // bumped on every refresh: the drawn pieces read the save again
   const saleQuery = signal(''), // the Team Items search bars' text
     ownedQuery = signal('');
+  const openCount = signal(0); // each opening sends the scroll boxes back to the top
   // The selection cursor (Jess, 2026-11-16): the tabs never take it (Q and E or a click switch them). focus is the last
   // item it was on; hovered is the eligible item under the mouse, or null. Using the keys (kit inputMode 'keys') it shows
   // on focus; using the mouse it shows only on hovered, so it leaves when the mouse is over anything else. Each eligible
@@ -196,6 +201,7 @@ G.GachaUI = (() => {
     tab.value = OPENING_TAB;
     saleQuery.value = '';
     ownedQuery.value = '';
+    openCount.value++;
     focus.value = 'exit';
     hovered.value = null;
     refresh();
@@ -225,17 +231,31 @@ G.GachaUI = (() => {
   // ---------- keys (the Main Menu screens read the page's keydown, as menu.js does) ----------
   function onKey(event) {
     if (!G.UI.isOpen('scr-gacha') || G.UI.isOpen('scr-ask') || event.target.closest('input, textarea, select')) return;
-    const key = event.key;
+    const key = event.key,
+      direction = directionOf(event);
     if (key === 'Escape') close();
     else if (key === 'Enter') press();
     else if (key === 'q' || key === 'Q') stepTab(-1);
     else if (key === 'e' || key === 'E') stepTab(1);
-    else if (key === 'ArrowLeft') stepFocus(-1, 0);
-    else if (key === 'ArrowRight') stepFocus(1, 0);
-    else if (key === 'ArrowUp') stepFocus(0, -1);
-    else if (key === 'ArrowDown') stepFocus(0, 1);
+    else if (direction) stepFocus(direction[0], direction[1]);
     else return;
     event.preventDefault();
+  }
+
+  // the cursor moves with the arrows and with the movement keys (Jess 2026-11-17), as bound in Settings (WASD by default)
+  const MOVE_ACTIONS = [
+    ['move_left', -1, 0],
+    ['move_right', 1, 0],
+    ['move_up', 0, -1],
+    ['move_down', 0, 1],
+  ];
+  const ARROWS = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, -1], arrowdown: [0, 1] };
+  /** The way a key press moves the cursor ([x, y]), or null when it is not an arrow or a movement key. */
+  function directionOf(event) {
+    const code = (event.code || event.key).toLowerCase();
+    if (ARROWS[code]) return ARROWS[code];
+    const action = MOVE_ACTIONS.find(([name]) => G.Input.bindingsOf(name).includes(code));
+    return action ? [action[1], action[2]] : null;
   }
 
   /** Q and E: the tab above or below the shown one on the rail (no wrap). */
@@ -249,7 +269,7 @@ G.GachaUI = (() => {
 
   /**
    * The arrows (149c): the nearest eligible item that way, measured between the items' centres on the screen, a step
-   * across the way counting double; none that way keeps the cursor where it is. The new item scrolls into view.
+   * across the way counting double; none that way keeps the cursor where it is. What it lands on scrolls into view.
    */
   function stepFocus(directionX, directionY) {
     const from = cursorOn() || focus.value,
@@ -280,8 +300,25 @@ G.GachaUI = (() => {
     }
     if (!best) return;
     focus.value = best.id;
-    best.element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    showInScrollBox(best.element);
     G.Audio.sfx('hover');
+  }
+
+  /**
+   * Scrolls the item's own scroll box (only that box: the pane never moves) so the whole of it shows: for a card's Buy,
+   * the whole card (Jess 2026-11-17). A few pixels of margin keep the cursor's corners in view too.
+   */
+  function showInScrollBox(element) {
+    const box = element.closest('.hud-scroll-box');
+    if (!box) return;
+    const target = element.closest('.shop-card') || element,
+      boxRect = box.getBoundingClientRect(),
+      targetRect = target.getBoundingClientRect(),
+      screenScale = boxRect.height / box.clientHeight, // the stage is scaled to fit the window
+      margin = CURSOR_ROOM;
+    if (targetRect.top < boxRect.top) box.scrollTop -= (boxRect.top - targetRect.top) / screenScale + margin;
+    else if (targetRect.bottom > boxRect.bottom)
+      box.scrollTop += (targetRect.bottom - boxRect.bottom) / screenScale + margin;
   }
 
   /** Enter on whatever the cursor is on. */
@@ -543,7 +580,7 @@ G.GachaUI = (() => {
           box=${{ left: 0, top: SALE.listTop, width: SALE.listWidth, height: SALE.listHeight }}
           trackRight=${0}
           colours=${SCROLL_COLOURS}
-          resetOn=${[saleQuery.value]}
+          resetOn=${[saleQuery.value, openCount.value]}
         >
           <div
             class="shop-sale-grid"
@@ -572,18 +609,25 @@ G.GachaUI = (() => {
           className="shop-owned-search"
         />
         <${ScrollBox}
-          box=${{ left: OWNED.inset, top: OWNED.listTop, width: OWNED.listWidth, height: OWNED.listHeight }}
-          trackRight=${OWNED.inset - 6}
+          box=${{
+            left: OWNED.inset - CURSOR_ROOM,
+            top: OWNED.listTop - CURSOR_ROOM,
+            width: OWNED.listWidth + 2 * CURSOR_ROOM,
+            height: OWNED.listHeight + 2 * CURSOR_ROOM,
+          }}
+          trackRight=${OWNED.inset - CURSOR_ROOM - 6}
           colours=${SCROLL_COLOURS}
-          resetOn=${[ownedQuery.value]}
+          resetOn=${[ownedQuery.value, openCount.value]}
         >
-          <${ItemGrid}
-            slots=${ownedSlots(view.owned, at)}
+          <div class="shop-owned-room" style=${{ padding: px(CURSOR_ROOM) }}>
+            <${ItemGrid}
+              slots=${ownedSlots(view.owned, at)}
             artSize=${OWNED.artSize}
             columns=${OWNED.columns}
             tipPlace=${OWNED_TIP_PLACE}
-            className="shop-owned-grid"
-          />
+              className="shop-owned-grid"
+            />
+          </div>
         </${ScrollBox}>
       </div>
     </div>`;
