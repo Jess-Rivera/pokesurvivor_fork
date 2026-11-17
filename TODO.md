@@ -4,19 +4,17 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-17 home session (third)
-1. `git status` must be clean. Push this session's work, then merge rework/shop into feature/128-acquisition (#149 R5):
-   `git push origin rework/shop`, `git checkout feature/128-acquisition`, `git pull --ff-only`,
-   `git merge --no-ff rework/shop`, `node tools/check.js` (must end "check: all passed"), `git push origin feature/128-acquisition`.
+## Getting up to date (either machine), from the 2026-11-17 home session (fourth)
+1. `git status` must be clean. Push this session's work: `git push origin feature/128-acquisition`.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
-   `node tools/check.js`. Say "catch me up".
+   `node tools/check.js` (must end "check: all passed"). Say "catch me up".
 3. Before leaving a machine: commit and push.
 
-## Next (queue set by Jess 2026-11-15, updated 2026-11-16; gym leader AI parked)
-1. #149 closed (Shop rework done). After the merge above: #137 on feature/128-acquisition (needs Jess's ball tiers and
-   prices). #153 (menu keys) needs Jess's key set. #154 split menu.js. #150 blocked on #97. #145 small. #147 waits on Jess.
-2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill), then #138; #146 keep-or-sell
-   list; order in docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
+## Next (queue set by Jess 2026-11-15, updated 2026-11-17; gym leader AI parked)
+1. #137 on feature/128-acquisition (Shop balls; needs Jess's ball tiers and prices first). #154 closed (menu.js split).
+   #145 small and ready. #153 (menu keys) needs Jess's key set. #150 blocked on #97. #147 waits on Jess.
+2. #128 acquisition: #137 (ends the belt refill), then #138; #146 keep-or-sell list; order in
+   docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
    97 - Upgrade System Review.md). #131 Silver bonuses later, after a traced run reaches gym 1. 4. #126 UI unify (#61 first), then #127 Main Menu v3.0.
 5. #129 architecture review. 6. #130 regions and map selection. Parked: #111, then #122.

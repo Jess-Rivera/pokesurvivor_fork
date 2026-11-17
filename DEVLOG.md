@@ -226,3 +226,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Broke and fixed: game.js closed the Shop on any Esc; team slots piled in a corner; slow cursor with every Pokemon owned
   (lists recomputed per button); shiny portraits with no file logged 404s.
 - Stopped at: #149 closed; next merge rework/shop into feature/128-acquisition, then #137.
+
+## 2026-11-17 (Claude Code, home, fourth session), #154 menu.js split, closed
+- js/ui/menu.js (1783 lines) split by duty into menu.js (Main Menu, region select), menu-dex-grid.js, menu-pokedex.js,
+  menu-team.js, menu-team-copies.js, menu-upgrades.js; G.MenuUI unchanged for callers; listeners keep their order.
+- Decided: the upgrades screen moved now (#97 swaps one file); the shared filter state lives with the shared grid.
+- Checks: check.js all passed, smoke-team passed, smoke-ui passed twice (one known asset-load flake). Jess feel-tested.
+- Stopped at: #154 closed; next #137 (needs ball tiers and prices).
