@@ -1033,9 +1033,9 @@ async function shopFlow(browser, query, tag) {
     await page.click('#scr-menu [data-go="gacha"]');
     await sleep(200);
     await page.keyboard.press('Shift');
-    const path = [];
-    for (const key of keys) path.push(await arrowKey(key));
-    return path;
+    const visited = [];
+    for (const key of keys) visited.push(await arrowKey(key));
+    return visited;
   };
   const byArrows = await walk(['ArrowLeft', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight']);
   const byLetters = await walk([moveKeys[0], moveKeys[1], moveKeys[0], moveKeys[3], moveKeys[2]].map(letter));
