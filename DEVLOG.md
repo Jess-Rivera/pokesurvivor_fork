@@ -192,3 +192,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   below 4 star), red on the old numbers; four mutants fail it. check.js and smoke-ui pass. Jess: feels good, #148 closed.
 - Filed #149: Shop menu UI rework on sub-branch rework/shop, before #137. Rescue pick stays star weighted (no new issue).
 - Stopped at: Jess makes the Shop mockup; next session opens #149.
+
+## 2026-11-16 (Claude Code, home, late), #149 opened: Main Menu Shop, 149a shell built
+- #149 is the Main Menu Shop (not the in-run shop; the issue named the wrong file, fixed). Jess's mockups committed.
+- Rulings: four tabs (Pokeballs, Character Upgrades, Team Items, TRs) plus the Inventory restyle; a TR is learned for good and
+  joins the Move Trainer pool, priced by move power; TR starting move is #150 (blocked). Sub-slices a to f; merge before #137.
+- Built 149a: window over the dimmed Main Menu, flush icon rail (no cursor, Q / E), smaller Exit, old panes inside. Feel-test
+  fixes, then the cursor follows the device in use (kit inputMode; decision). smoke-ui Shop pass, 11 checks, green.
+- Stopped at: 149a Needs Playtest, not closed; next 149b Character Upgrades.

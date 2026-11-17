@@ -4,16 +4,16 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-16 home session (second)
-1. `git status` must be clean. `git fetch origin`, then `git checkout feature/128-acquisition`
-   (first time on a machine: `git checkout -b feature/128-acquisition origin/feature/128-acquisition`), then `git pull --ff-only`.
-   For #149: `git checkout -b rework/shop feature/128-acquisition` and `git push -u origin rework/shop` (once, by Jess).
+## Getting up to date (either machine), from the 2026-11-16 home session (third)
+1. `git status` must be clean. `git fetch origin`, then `git checkout rework/shop`
+   (first time on a machine: `git checkout -b rework/shop origin/rework/shop`), then `git pull --ff-only`.
 2. `node tools/check.js` must end with "check: all passed". Say "catch me up".
 3. Before leaving a machine: commit and push (the branch and main).
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-16; gym leader AI parked)
-1. #149 Shop menu UI rework on rework/shop: waits on Jess's Shop mockup; opening needs the look, the tabs, where balls go and
-   the merge-back order. #145 small and ready. #147 waits on Jess. (#148 closed 2026-11-16, feel test good.)
+1. #149 Main Menu Shop on rework/shop: 149a shell built (Needs Playtest, not closed); Jess feel-tests it, then 149b Character
+   Upgrades. Sub-slices and rulings: docs/ASCII Concept Maps/149 - Shop Rework Opening.md. #150 blocked on #149 and #97.
+   #145 small and ready. #147 waits on Jess.
 2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill) after #149, then #138; #146 keep-or-sell
    list; order in docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
