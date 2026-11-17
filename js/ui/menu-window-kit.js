@@ -191,7 +191,8 @@ G.MenuWindowKit = (() => {
         extraKey = keys[key.toLowerCase()],
         direction = directionOf(event);
       if (key === 'Escape') escape();
-      else if (key === 'Enter') {
+      else if (key === 'Enter' || key === ' ') {
+        // Enter and Space both press (#153, decision 2026-11-17-one-menu-key-set)
         const at = cursorOn(),
           atElement = at && elementOf(at),
           refusal = atElement && atElement.dataset.refusal;

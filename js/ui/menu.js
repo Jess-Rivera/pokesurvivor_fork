@@ -16,6 +16,14 @@ G.MenuUI = (() => {
     menuCur = (i + rows.length) % rows.length;
     rows.forEach((b, k) => b.classList.toggle('sel', k === menuCur));
   }
+  /** How far a key moves the row cursor: 1 down, -1 up, 0 for any other key. The arrows and the bound movement keys
+   *  both move it, as in the Shop and Inventory (#153, decision 2026-11-17-one-menu-key-set). */
+  function rowStepOf(event) {
+    const code = (event.code || event.key).toLowerCase();
+    if (event.key === 'ArrowDown' || G.Input.bindingsOf('move_down').includes(code)) return 1;
+    if (event.key === 'ArrowUp' || G.Input.bindingsOf('move_up').includes(code)) return -1;
+    return 0;
+  }
   /** The main menu is the top screen: nothing (Settings, a dialog, another screen) open over it. */
   const menuOnTop = () => G.UI.isOpen('scr-menu') && document.querySelectorAll('.scr:not(.hidden)').length === 1;
 
@@ -45,12 +53,16 @@ G.MenuUI = (() => {
     });
     addEventListener('keydown', (e) => {
       if (!menuOnTop() || rgOpen || e.target.closest('input, textarea, select')) return;
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        select(menuCur + (e.key === 'ArrowDown' ? 1 : -1));
+      const rowStep = rowStepOf(e);
+      if (rowStep) {
+        select(menuCur + rowStep);
         G.Audio.sfx('hover');
       } else if (e.key === 'Enter' || e.key === ' ') rows[menuCur].click();
       else return;
       e.preventDefault();
+      // A key it handles goes no further: Enter or Space on Play opens the region picker, whose own listener comes next
+      // and would read the same key as picking the first card (the run started without showing the picker; #153).
+      e.stopImmediatePropagation();
     });
     // The screens' own listeners, in the order menu.js always registered them (a key one handles goes no further).
     G.MenuTeam.init();

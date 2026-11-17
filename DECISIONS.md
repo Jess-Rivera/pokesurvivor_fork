@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-17, one menu key set: Enter and Space select, the arrows and the movement keys move, on the Main Menu, Shop and Inventory (Jess)](docs/decisions/2026-11-17-one-menu-key-set.md)
 - [2026-11-17, a TM (Main Menu Shop) is learned for good by one Pokemon; the in-run TM Mart becomes the TR Shop, its TRs last one run (Jess)](docs/decisions/2026-11-17-tm-for-good-tr-for-one-run.md)
 - [2026-11-17, a button you cannot afford still takes the selection cursor (label dimmed) and toasts "Unable to Afford", in every menu (Jess)](docs/decisions/2026-11-17-unaffordable-buttons-take-the-cursor.md)
 - [2026-11-17, no selection cursor with the mouse (the green rim shows the button under it); none on search bars (Jess)](docs/decisions/2026-11-17-no-selection-cursor-with-the-mouse.md)

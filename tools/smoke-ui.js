@@ -425,6 +425,62 @@ async function regionFlow(browser, query, tag) {
     });
   };
   const sameRun = () => page.evaluate(() => window.__smokePl === G.Game.player);
+
+  // the Main Menu takes the same keys as the Shop and Inventory (#153, decision 2026-11-17-one-menu-key-set): the
+  // movement keys move the row cursor as the arrows do, and Space selects as Enter does
+  await page.evaluate(() => {
+    const t = document.getElementById('tap-start');
+    if (!t.classList.contains('hidden')) t.click();
+    G.Flow.goMenu();
+  });
+  await sleep(200);
+  const menuRow = () =>
+    page.evaluate(() => (document.querySelector('#scr-menu [data-go].sel') || { dataset: {} }).dataset.go);
+  const menuKey = async (key) => {
+    await page.keyboard.press(key);
+    await sleep(80);
+    return menuRow();
+  };
+  const menuLetters = await page.evaluate(() =>
+    ['move_up', 'move_down'].map((name) =>
+      G.Input.bindingsOf(name)
+        .find((code) => code.startsWith('key'))
+        .slice(3)
+    )
+  );
+  const rowStart = await menuRow();
+  const rowByArrow = await menuKey('ArrowDown');
+  const rowBackByLetter = await menuKey(menuLetters[0]);
+  const rowByLetter = await menuKey(menuLetters[1]);
+  await menuKey(menuLetters[0]);
+  ok(
+    rowByArrow !== rowStart && rowBackByLetter === rowStart && rowByLetter === rowByArrow,
+    tag +
+      ': the movement keys move the Main Menu cursor as the arrows do (' +
+      [rowStart, rowByArrow, rowBackByLetter, rowByLetter].join(' > ') +
+      ')'
+  );
+  for (let step = 0; step < 12 && (await menuRow()) !== 'play'; step++) await menuKey('ArrowUp');
+  const pickerOpen = () => page.evaluate(() => document.getElementById('rg').classList.contains('open'));
+  await page.keyboard.press('Space');
+  await sleep(200);
+  const bySpace = await pickerOpen();
+  await page.keyboard.press('Escape');
+  await sleep(200);
+  await page.keyboard.press('Enter');
+  await sleep(200);
+  const byEnter = await pickerOpen();
+  await page.keyboard.press('Escape');
+  await sleep(200);
+  const closedAgain = !(await pickerOpen());
+  ok(
+    bySpace && byEnter && closedAgain,
+    tag +
+      ': Space and Enter each select the Main Menu row, Play opens the picker (' +
+      [bySpace, byEnter, closedAgain, await menuRow()].join() +
+      ')'
+  );
+
   await toRun();
   ok(
     await page.evaluate(() => !document.getElementById('rg').classList.contains('open')),
@@ -1068,10 +1124,11 @@ async function shopFlow(browser, query, tag) {
   let cardFocus = ownedBeforeRefusal;
   for (let step = 0; step < 4 && !cardFocus.startsWith('sale-'); step++) cardFocus = await arrowKey('ArrowLeft');
   const cardByEnter = await cardRefusal(() => page.keyboard.press('Enter'));
+  const cardBySpace = await cardRefusal(() => page.keyboard.press('Space')); // one key set (#153)
   const cardByClick = await cardRefusal(() => page.click('[data-cursor-id="' + cardFocus + '"] button'));
   ok(
     cardFocus.startsWith('sale-') &&
-      [cardByEnter, cardByClick].every(
+      [cardByEnter, cardBySpace, cardByClick].every(
         (press) =>
           press.toast === 'Unable to Afford' &&
           !press.asked &&
@@ -1870,6 +1927,24 @@ async function inventoryFlow(browser, query, tag) {
       !view.swapLine,
     tag +
       ': Swap by keys shows "Select a slot to swap.", the cursor starts on slot 1, Enter on a slot swaps the two items'
+  );
+
+  // one key set (#153): Space presses Swap as Enter does, and the movement keys walk the slots as the arrows do
+  const slotLetter = await page.evaluate(() =>
+    G.Input.bindingsOf('move_down')
+      .find((code) => code.startsWith('key'))
+      .slice(3)
+  );
+  await keyOn(plain[3], 'Space');
+  const swapBySpace = (await shown()).swapLine === 'Select a slot to swap.';
+  await page.keyboard.press(slotLetter);
+  await sleep(150);
+  const slotByLetter = (await shown()).cursorOn;
+  await page.keyboard.press('Escape');
+  await sleep(200);
+  ok(
+    swapBySpace && slotByLetter === 'slot-1' && !(await shown()).swapLine,
+    tag + ': Space starts a swap as Enter does, and the movement keys walk the slots (' + slotByLetter + ')'
   );
 
   // Esc cancels: nothing changes, the cursor goes back to that Swap, the Inventory stays open

@@ -232,4 +232,6 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   menu-team.js, menu-team-copies.js, menu-upgrades.js; G.MenuUI unchanged for callers; listeners keep their order.
 - Decided: the upgrades screen moved now (#97 swaps one file); the shared filter state lives with the shared grid.
 - Checks: check.js all passed, smoke-team passed, smoke-ui passed twice (one known asset-load flake). Jess feel-tested.
-- Stopped at: #154 closed; next #137 (needs ball tiers and prices).
+- #153 built: one menu key set (Enter and Space select; arrows and movement keys move) on Main Menu, Shop, Inventory.
+  Broke and fixed: Enter or Space on Play reached the region picker's listener and started a run at once.
+- Stopped at: #154 closed; #153 in Needs Playtest; next #137 (needs ball tiers and prices).
