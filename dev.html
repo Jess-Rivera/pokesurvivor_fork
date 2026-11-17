@@ -590,18 +590,12 @@
       </div>
     </section>
 
-    <!-- ====== Inventory (pre-run team item loadout, opened from the main menu) ====== -->
+    <!-- ====== Inventory (Main Menu, #149d; js/ui/inventory-ui.js, css/bw-inventory.css): the pre-run team item loadout,
+         the Shop's window on the 1920 x 1080 stage over the Main Menu. Everything in it is drawn into #inv-window. ====== -->
     <section id="scr-inventory" class="scr dim hidden">
-      <div class="inv">
-        <div class="inv-head"><b>Inventory</b><span id="inv-count"></span></div>
-        <p class="inv-sub">Team items you equip here start every run. Gym leaders and bosses can drop new ones.</p>
-        <div class="inv-main">
-          <aside class="inv-slots" id="inv-slots"></aside>
-          <div class="inv-grid" id="inv-grid"></div>
-          <aside class="inv-detail" id="inv-detail"></aside>
-        </div>
-        <div class="inv-foot">
-          <button class="bw-btn" id="inv-back" data-back>Back<img src="assets/ui/team/back-x.png" alt="" /></button>
+      <div class="inv-host" translate="no">
+        <div class="pm-stage inv-stage">
+          <div id="inv-window" class="shop-window"></div>
         </div>
       </div>
     </section>
@@ -967,8 +961,10 @@
     <script defer src="js/ui/gym-present.js"></script>
     <script defer src="js/ui/login.js"></script>
     <script defer src="js/ui/test.js"></script>
+    <script defer src="js/ui/menu-window-kit.js"></script>
     <script defer src="js/ui/menu.js"></script>
     <script defer src="js/ui/gacha-ui.js"></script>
+    <script defer src="js/ui/inventory-ui.js"></script>
     <script defer src="js/ui/run-ui.js"></script>
     <script defer src="js/ui/shop-ui.js"></script>
     <script defer src="js/ui/catch-ui.js"></script>

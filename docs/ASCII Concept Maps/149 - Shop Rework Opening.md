@@ -253,3 +253,147 @@ under it shows its green rim). No corners on a search bar: its green rim shows t
 2026-11-17-no-selection-cursor-with-the-mouse.
 
 **149c signed off (Jess 2026-11-17, feel test good after three fix rounds).** Next: 149d Inventory screen.
+
+## Draft opening for 149d (Inventory screen), for Jess to agree
+Source: assets/excalidraw/Main-Menu-Inventory.svg. Today (js/ui/menu.js, scr-inventory): a slot column, an icon list and a
+detail column; click a slot to target it, double-click an item to equip it there, right-click a slot to empty it.
+Save fields stay as they are: save.teamItems (unlocked) and save.teamLoadout (equipped, by slot, gaps allowed).
+
+```mermaid
+flowchart LR
+  MM[Main Menu<br/>stays visible, dimmed] --> WIN[Inventory popup<br/>#212121 frame, #181818 body]
+  subgraph WIN2[Inside the window, rim #29ceff]
+    direction LR
+    subgraph LEFT[Unlocked team items]
+      S[Search bar: filters by name] --> G[Scrolling 3-column grid of item cards<br/>the 149c sale card, Equip in place of Buy]
+    end
+    subgraph RIGHT[Team item slots]
+      SL[4 slot panels: the run screen's box, sized up<br/>icon in the white patch, name and short line<br/>bought and empty: plain box; not bought: dimmed]
+      BTN[Shop and Exit]
+    end
+  end
+  WIN --- WIN2
+  G -- Equip --> SL
+  BTN -- Shop --> SHOP[Shop on Team Items<br/>background stays dimmed]
+  BTN -- Exit --> MM
+```
+
+- **Goal:** the Inventory screen looks like the mockup and works with one button per item. A searchable grid of your
+  unlocked team item cards, each with Equip, sits beside the four team item slots drawn like the run screen's, with Shop
+  and Exit under them. Which items you own, how many slots you bought and the one-Stone rule stay the same.
+- **Done when:**
+  - Every unlocked team item has one card (icon, name, description, button). Nothing locked shows.
+  - The slot panels: one per bought slot, plain when empty, the item's icon and name when filled; slots not bought yet
+    show dimmed, up to 4.
+  - Equip puts the item in the lowest-numbered empty bought slot and saves at once. Its button then reads Unequip.
+  - Unequip empties that item's slot; the other slots keep their places.
+  - With every bought slot full, Equip cannot be pressed and never takes the cursor.
+  - The search bar narrows the grid by name as you type.
+  - Shop closes the Inventory and opens the Shop on Team Items, background still dimmed. Exit returns to the Main Menu.
+  - The cursor follows the Shop's rules (keys only, nearest item that way, search bar at the top, Up stays in its area,
+    tooltip after the Tooltip Delay) and reaches every pressable button, the filled slots, Shop and Exit.
+  - The old slot column, icon list, detail column, the targeting, double-click and right-click, and their styles are gone.
+- **End-goal test:** smoke-ui gains an Inventory pass (the existing check that the Shop's Inventory button opens it stays). Relations:
+  - Card count equals the save's unlocked team items; typing narrows to names containing the text; clearing restores them.
+  - Lit slot panels equal G.Items.runSlots; lit plus dimmed equals the slot cap.
+  - With slot 1 empty and slot 2 filled, Equip lands in slot 1 (the lowest empty), the save's loadout holds it there,
+    and the card's button reads Unequip.
+  - Unequip empties only that slot.
+  - With every bought slot full, every Equip is disabled and the arrows skip them.
+  - Equipping a second Stone leaves exactly one Stone in the loadout (see Q3).
+  - Shop leaves the Inventory for the Shop's Team Items tab; Exit returns to the Main Menu.
+
+| Open question | My default |
+|---|---|
+| Q1 How do you unequip? | The equipped item's card button reads Unequip. Pressing a filled slot also unequips it |
+| Q2 Every bought slot is full: what does Equip show? | "Full", disabled (dimmed), skipped by the cursor; unequip something first |
+| Q3 Equip a second Stone while one is equipped | It takes the first Stone's slot (a swap in place, no question asked), as today |
+| Q4 What does a filled slot panel show? | Icon in the patch, the name in the band, the item's short description at the right, like the run screen outside a run |
+| Q5 Card order | Game order; equipped cards stay in place (their button says Unequip), no extra chip |
+| Q6 The title, "N of M unlocked" count and help line | Gone, as in the mockup; the empty grid keeps "Nothing unlocked yet. Gym leaders and bosses can drop team items." |
+| Q7 Does Exit go back to the Shop when you came from it? | No, Exit always returns to the Main Menu; Shop is the way back |
+
+**149d answers (Jess 2026-11-17):**
+| # | Ruling |
+|---|---|
+| Q1 | Agreed: the equipped card's button reads Unequip; pressing a filled slot also unequips |
+| Q2 | Every bought slot full: Equip reads **Swap**, not dimmed, the cursor still takes it. Pressing it shows "Select a slot to swap." between the slots and Shop / Exit. Keys: the cursor jumps to slot 1, arrows pick a filled slot, Enter swaps the two items. Mouse: click an equipped slot to swap |
+| Q3 | Agreed, plus a toast: "Can only have One Stone equipped." |
+| Q4 to Q6 | Agreed |
+| Q7 | Exit always returns to the Main Menu; Shop always opens the Shop |
+
+Follow-ups asked: Q8 how a swap is cancelled; Q9 a Stone swapped in while another Stone sits in a different slot.
+- Q8 agreed: Esc (or a mouse click anywhere but a filled slot) cancels a swap; the line goes and the cursor returns to Swap.
+- Q9 agreed: a Stone's Swap skips the slot pick and goes straight into the other Stone's slot, with the toast.
+- Settled with Jess: while picking a slot to swap, pressing a filled slot swaps; otherwise it unequips.
+
+**Opening agreed (Jess 2026-11-17), build with the coding principles.**
+
+## 149d build plan
+Done in three steps; steps 1 and 2 change nothing you can see (smoke-ui's Shop pass and the run HUD stay as they are).
+
+```mermaid
+flowchart TD
+  subgraph S1[Step 1: share, behavior-neutral]
+    K1[Shop cursor engine + sale card + search stop<br/>out of gacha-ui.js] --> MWK[new js/ui/menu-window-kit.js<br/>G.MenuWindowKit]
+    K2[run item box out of hud-run-items-panel.js] --> HKI[hud-kit-items.js: RunItemBox<br/>art pixel and width as options]
+  end
+  subgraph S2[Step 2: equip rules to their owner]
+    MENU[menu.js invEquip / invUnequip] --> ITEMS[js/data/items.js beside cleanLoadout:<br/>equip to lowest empty slot, unequip, swap into a slot,<br/>one Stone: the result names the Stone it replaced]
+  end
+  subgraph S3[Step 3: the new screen]
+    INV[new js/ui/inventory-ui.js, G.InventoryUI] --> USES[uses MenuWindowKit, RunItemBox, G.Items rules]
+    INV --> OLD[old Inventory code in menu.js, its markup<br/>and css/bw-inventory.css replaced]
+  end
+  S1 --> S3
+  S2 --> S3
+```
+
+| Part | Reuses | New | Where, and why there |
+|---|---|---|---|
+| Cursor engine | gacha-ui.js's focus / hover / cursorOn, the arrows' nearest-item step with areas and search stops, scroll into view, movement keys, CursorTip, cornersIf | one factory: each screen hands it its host, its eligible items, what Enter and Esc do, and any extra keys (the Shop's Q / E) | js/ui/menu-window-kit.js: two real users now (Shop, Inventory), #126 will add more; moving it keeps gacha-ui.js under 1000 lines |
+| Item card | the 149c SaleCard and its .shop-card styles | the button's label, disabled state and action become options (Buy N, Equip, Unequip, Swap) | same file; the class names keep their shop- prefix (renaming is #126's job) |
+| Slot panel | the run HUD's B2 box (grid painter, patch, name band, text area) | RunItemBox with its art pixel, width and a dimmed look as options; the HUD keeps 2 px per art pixel and 140 wide | hud-kit-items.js, the kit's item pieces; the HUD panel becomes its first user |
+| Equip rules | cleanLoadout, runSlots, the group field | equip (lowest empty bought slot, or the other Stone's slot), unequip (others keep their places), swap into a chosen slot (the old item leaves the loadout); each answers what happened, so the screen can toast | js/data/items.js, the owner of the loadout rules; the screen only draws and routes |
+| Inventory screen | Shop window size and place (1145 x 670), its frame and body colours, TeamButton for Shop and Exit, SearchBar, ScrollBox, G.UI.toast | the window: search + 3-column cards left; 4 slot panels right (3 px per art pixel, 120 art wide: 360 x 96 each), the swap line under them, Shop and Exit at the bottom | js/ui/inventory-ui.js, its own file and G module; the section keeps the id scr-inventory (ui.js and game.js read it) |
+| Links | G.GachaUI.open, G.MenuUI.open | Main Menu's Inventory row and the Shop's Inventory button call G.InventoryUI.open; Shop calls G.GachaUI.open (Team Items, dimmed background kept); Exit calls G.MenuUI.open | menu.js and gacha-ui.js each lose their own openInventory |
+
+**Cursor on the Inventory:** areas are the card side (its search bar on top) and the slot side. Eligible: the search bar,
+every card button, filled slots, Shop, Exit. While picking a slot to swap: only the bought slots, starting on slot 1.
+
+**Tests (end-goal test from the opening):**
+- smoke-ui gains an Inventory pass with the opening's relations, plus: Swap shows the line and moves the cursor to slot 1;
+  Enter on a slot swaps (the old item's card reads Equip again); Esc cancels with the loadout unchanged; a second Stone's
+  Equip or Swap leaves one Stone and shows the toast.
+- docs/proposals/items-f3d2-harness.js gains checks for the three new G.Items rules (updated in place, no new harness):
+  lowest empty slot with a gap, full means no equip, unequip keeps the others' places, swap, the one-Stone replacement.
+- The Shop pass and smoke-berry-slots must pass unchanged after step 1.
+
+**Not built:** tooltips on the slot panels (the panel already shows the name and description); drag and drop; renaming
+gacha-ui.js or the shop- class names (#126); a slot order rearrange.
+
+**Size:** gacha-ui.js shrinks (about 870 to 650 lines). New: menu-window-kit.js (about 300), inventory-ui.js (about 350).
+menu.js loses about 150. js/data/items.js grows about 50 (already past 1000; it is the data and rules file, no split
+here). Two new script lines in dev.html; neither file needs a NEED entry (the Shop's is not in it either).
+
+**Touched-code cleanups:** the dead .inv-* styles and css/bw-inventory.css go with the old screen (its link line in
+dev.html too); the Main Menu's Inventory subtitle text stays.
+
+**Risk:** step 1 moves the 149c cursor rules Jess signed off after three rounds; the Shop pass (30 checks) is the guard,
+and the cursor feel gets a quick re-check in the Shop at feel test.
+
+**149d built 2026-11-17, Needs Playtest.**
+| Part | What |
+|---|---|
+| Shared pieces | js/ui/menu-window-kit.js (G.MenuWindowKit): the Shop's cursor rules as createMenuCursor, CursorButton, ItemCard, SearchStop; the Shop now uses them (smoke-ui Shop pass 30 checks unchanged) |
+| Slot box | the run HUD's team item box is the kit's RunItemBox (hud-kit-items.js), art pixel and width as options; the run screen keeps 2 and 140 (smoke-hud-overlay passes) |
+| Rules | js/data/items.js: firstEmptySlot, equipTeamItem, unequipTeamItem, swapTeamItem (one Stone: the result names what it replaced); items-f3d2-harness section 6 |
+| Screen | js/ui/inventory-ui.js (G.InventoryUI): the Shop's window; search and 3-column cards (Equip / Unequip / Swap); 4 slot panels 360 x 96, unbought dimmed; "Select a slot to swap."; Shop and Exit |
+| Gone | the old Inventory code in menu.js and its markup; css/bw-inventory.css rewritten for the new window |
+| Wiring | game.js boot calls G.InventoryUI.init (after the Main Menu, so a key that closes the Inventory never reaches the Main Menu); the Inventory left game.js's per-frame "Esc returns to the menu" list (Esc first cancels a swap); tools/ui-library.html loads the two new scripts |
+| Tests | smoke-ui Inventory pass, 18 checks; smoke-berry-slots, smoke-pause-inventory, smoke-team, smoke-ui-library pass; check.js clean |
+
+Found while building: a cursor whose key listener was added at load time ran before the Main Menu's, so Enter on Exit closed
+the Shop and the Main Menu then reopened it; each screen now adds its listener in its init, as before.
+Filed during the build (Jess): #151 a button you cannot afford still takes the cursor and toasts "Unable to Afford" (every
+menu; decision 2026-11-17-unaffordable-buttons-take-the-cursor), #152 the pocket Buy's unaffordable look.

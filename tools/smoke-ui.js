@@ -1324,6 +1324,225 @@ async function shopFlow(browser, query, tag) {
   await page.close();
 }
 
+// ---- the Main Menu Inventory (#149d): cards of the unlocked team items with Equip / Unequip / Swap, the four slot panels,
+// the swap pick, one Stone, search, Shop and Exit. Relations only: what the save holds against what is drawn. ----
+async function inventoryFlow(browser, query, tag) {
+  const { page, errs } = await boot(browser, query);
+  // every team item unlocked; a loadout and a slot count set per check, then the Inventory opened again
+  const setUp = (runSlots, loadout) =>
+    page.evaluate(
+      (slotSetup) => {
+        if (!document.getElementById('tap-start').classList.contains('hidden'))
+          document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        const save = G.DB.save;
+        for (const item of G.Items.LIST) if (item.tier === 'run') G.Items.unlock(save, item.id);
+        save.runSlots = slotSetup.runSlots;
+        save.teamLoadout = slotSetup.loadout;
+        G.MenuUI.open();
+        G.InventoryUI.open();
+      },
+      { runSlots, loadout }
+    );
+  const shown = () =>
+    page.evaluate(() => {
+      const corner = document.querySelector('#scr-inventory .hud-cursor'),
+        cornerHost = corner && corner.closest('[data-cursor-id]'),
+        swapLine = document.querySelector('#scr-inventory .inv-swap-line'),
+        toast = document.querySelector('.toast');
+      return {
+        inventory: G.UI.isOpen('scr-inventory'),
+        shop: G.UI.isOpen('scr-gacha'),
+        menu: G.UI.isOpen('scr-menu'),
+        loadout: G.DB.save.teamLoadout.slice(),
+        runSlots: G.Items.runSlots(G.DB.save),
+        cards: [...document.querySelectorAll('#scr-inventory .shop-card')].map((card) => ({
+          id: card.dataset.item,
+          name: card.querySelector('.shop-card-name').textContent.trim(),
+          label: card.querySelector('.hud-team-button').textContent.trim(),
+          disabled: card.querySelector('.hud-team-button').disabled,
+        })),
+        slots: [...document.querySelectorAll('#scr-inventory .inv-slots .hud-run-item')].map((slot) => ({
+          dimmed: slot.classList.contains('is-dimmed'),
+          name: (slot.querySelector('.hud-run-name') || { textContent: '' }).textContent.trim(),
+        })),
+        cursorOn: (cornerHost && cornerHost.dataset.cursorId) || '',
+        swapLine: swapLine ? swapLine.textContent.trim() : '',
+        toast: toast && toast.style.display !== 'none' ? toast.textContent : '',
+        teamItems: G.Items.LIST.filter((item) => item.tier === 'run').length,
+        unlocked: G.Items.LIST.filter((item) => item.tier === 'run' && G.Items.unlocked(G.DB.save, item.id)).length,
+        slotCap: G.Items.RUN_SLOTS_MAX,
+        stones: G.Items.LIST.filter((item) => item.tier === 'run' && item.group === 'stone').map((item) => item.id),
+        plain: G.Items.LIST.filter((item) => item.tier === 'run' && !item.group).map((item) => item.id),
+      };
+    });
+  const cardOf = (view, id) => view.cards.find((card) => card.id === id);
+  const buttonOf = (id) => `#scr-inventory [data-cursor-id="item-${id}"]`;
+  /** Puts the keys' cursor on a card's button (the mouse over it makes it the keys' starting point), then a key press. */
+  const keyOn = async (id, key) => {
+    await page.hover(buttonOf(id));
+    await page.keyboard.press(key);
+    await sleep(150);
+  };
+
+  await setUp(3, []);
+  await sleep(300);
+  let view = await shown();
+  const { plain, stones } = view;
+  ok(
+    view.inventory && view.menu && view.cards.length === view.unlocked && view.cards.length > 0,
+    tag + ': the Inventory opens over the Main Menu with one card per unlocked team item'
+  );
+  ok(
+    view.slots.length === view.slotCap && view.slots.filter((slot) => !slot.dimmed).length === view.runSlots,
+    tag + ': the slot panels: one lit per bought slot, dimmed up to the cap'
+  );
+
+  // a gap below a filled slot: Equip lands in the lowest empty slot, the card then reads Unequip
+  await setUp(3, [null, plain[0]]);
+  await sleep(200);
+  await page.click(buttonOf(plain[1]) + ' button');
+  await sleep(200);
+  view = await shown();
+  ok(
+    view.loadout[0] === plain[1] &&
+      view.loadout[1] === plain[0] &&
+      cardOf(view, plain[1]).label === 'Unequip' &&
+      view.slots[0].name === cardOf(view, plain[1]).name,
+    tag +
+      ': Equip fills the lowest empty slot (slot 1 under a filled slot 2), the save holds it, its card reads Unequip'
+  );
+  await page.click(buttonOf(plain[1]) + ' button');
+  await sleep(200);
+  view = await shown();
+  ok(
+    !view.loadout[0] && view.loadout[1] === plain[0] && cardOf(view, plain[1]).label === 'Equip',
+    tag + ': Unequip empties only that slot'
+  );
+  await page.click('#scr-inventory .inv-slots [data-slot="1"]');
+  await sleep(200);
+  view = await shown();
+  ok(!view.loadout.includes(plain[0]), tag + ': pressing a filled slot unequips its item');
+
+  // every bought slot full: the other cards read Swap, can be pressed, and the cursor reaches them
+  await setUp(2, [plain[0], plain[1]]);
+  await sleep(200);
+  view = await shown();
+  const others = view.cards.filter((card) => !view.loadout.includes(card.id));
+  await keyOn(plain[2], 'ArrowDown'); // a key moves off and back: the cursor takes the Swap buttons
+  await page.keyboard.press('ArrowUp');
+  await sleep(150);
+  const reachable = (await shown()).cursorOn.startsWith('item-');
+  ok(
+    others.every((card) => card.label === 'Swap' && !card.disabled) && reachable,
+    tag + ': with every bought slot full the other cards read Swap, are pressable, and the cursor reaches them'
+  );
+
+  // Swap by keys: the line shows, the cursor goes to slot 1; Down and Enter swap with slot 2
+  await keyOn(plain[2], 'Enter');
+  view = await shown();
+  const swapStarted = view.swapLine === 'Select a slot to swap.' && view.cursorOn === 'slot-0';
+  await page.keyboard.press('ArrowDown');
+  await sleep(150);
+  await page.keyboard.press('Enter');
+  await sleep(200);
+  view = await shown();
+  ok(
+    swapStarted &&
+      view.loadout[0] === plain[0] &&
+      view.loadout[1] === plain[2] &&
+      !view.loadout.includes(plain[1]) &&
+      cardOf(view, plain[1]).label !== 'Unequip' &&
+      !view.swapLine,
+    tag +
+      ': Swap by keys shows "Select a slot to swap.", the cursor starts on slot 1, Enter on a slot swaps the two items'
+  );
+
+  // Esc cancels: nothing changes, the cursor goes back to that Swap, the Inventory stays open
+  const beforeEscape = view.loadout.join();
+  await keyOn(plain[3], 'Enter');
+  await page.keyboard.press('Escape');
+  await sleep(200);
+  view = await shown();
+  ok(
+    view.inventory && !view.swapLine && view.loadout.join() === beforeEscape && view.cursorOn === 'item-' + plain[3],
+    tag + ': Esc cancels a swap: the loadout is unchanged and the cursor returns to the Swap'
+  );
+
+  // Swap by mouse: click Swap, then a slot; a click anywhere else cancels
+  await page.click(buttonOf(plain[3]) + ' button');
+  await sleep(150);
+  await page.click('#scr-inventory .inv-search');
+  await sleep(150);
+  view = await shown();
+  const mouseCancelled = !view.swapLine && view.loadout.join() === beforeEscape;
+  await page.click(buttonOf(plain[3]) + ' button');
+  await sleep(150);
+  await page.click('#scr-inventory .inv-slots [data-slot="0"]');
+  await sleep(200);
+  view = await shown();
+  ok(
+    mouseCancelled && view.loadout[0] === plain[3] && !view.loadout.includes(plain[0]),
+    tag + ': with the mouse a click elsewhere cancels a swap, and a click on a slot swaps'
+  );
+
+  // one Stone: a second Stone's Swap goes straight to the first Stone's slot, with the toast
+  await setUp(2, [plain[0], stones[0]]);
+  await sleep(200);
+  await keyOn(stones[1], 'Enter');
+  view = await shown();
+  ok(
+    !view.swapLine &&
+      view.loadout[1] === stones[1] &&
+      view.loadout.filter((id) => stones.includes(id)).length === 1 &&
+      view.toast === 'Can only have One Stone equipped.',
+    tag + ': a second Stone takes the first Stone\'s slot, no slot pick, and toasts "Can only have One Stone equipped."'
+  );
+
+  // search: narrows to names holding the text; clearing restores every card
+  const searchText = view.cards[0].name.slice(0, 3).toLowerCase();
+  await page.fill('#scr-inventory .inv-search', searchText);
+  await sleep(150);
+  const narrowed = (await shown()).cards;
+  await page.fill('#scr-inventory .inv-search', '');
+  await sleep(150);
+  ok(
+    narrowed.length > 0 &&
+      narrowed.length <= view.cards.length &&
+      narrowed.every((card) => card.name.toLowerCase().includes(searchText)) &&
+      (await shown()).cards.length === view.cards.length,
+    tag + ': the search bar narrows the cards by name, and clearing it restores them'
+  );
+
+  // Shop and Exit
+  await page.click('#scr-inventory [data-action="inv-shop"]');
+  await sleep(200);
+  view = await shown();
+  const shopTab = await page.evaluate(() =>
+    [...document.querySelectorAll('.shop-tab.is-selected')].map((t) => t.dataset.tab)
+  );
+  ok(
+    view.shop && !view.inventory && view.menu && shopTab.join() === 'items',
+    tag + ': Shop leaves the Inventory for the Shop on Team Items, over the Main Menu'
+  );
+  await page.evaluate(() => G.InventoryUI.open());
+  await sleep(200);
+  await page.keyboard.press('Escape');
+  await sleep(200);
+  view = await shown();
+  ok(!view.inventory && view.menu, tag + ': Esc with no swap open leaves the Inventory for the Main Menu');
+  await page.evaluate(() => G.InventoryUI.open());
+  await sleep(200);
+  await page.click('#scr-inventory [data-action="inv-exit"]');
+  await sleep(200);
+  view = await shown();
+  ok(!view.inventory && !view.shop && view.menu, tag + ': Exit returns to the Main Menu');
+  ok(
+    errs.length === 0,
+    tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')
+  );
+  await page.close();
+}
+
 async function onboardingFlow(browser, query, tag) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   const page = await ctx.newPage();
@@ -1421,6 +1640,7 @@ async function onboardingFlow(browser, query, tag) {
     await onboardingFlow(browser, '?dev', 'onboarding');
     await catchFlow(browser, '?dev', 'catch');
     await shopFlow(browser, '?dev', 'shop');
+    await inventoryFlow(browser, '?dev', 'inventory');
   } catch (e) {
     fail++;
     console.log('FAIL  crashed: ' + ((e && e.stack) || e));

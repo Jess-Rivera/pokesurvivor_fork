@@ -116,7 +116,8 @@
   cursor: default;
 }
 
-/* ---------- Team Items (149c): cards for sale and the owned panel, drawn by gacha-ui.js into #shop-items ---------- */
+/* ---------- Team Items (149c): cards for sale and the owned panel, drawn by gacha-ui.js into #shop-items. The cards,
+   search stops and buttons are js/ui/menu-window-kit.js pieces; the Inventory (149d, bw-inventory.css) uses them too ---------- */
 .shop-pane-fixed {
   bottom: -86px; /* down to the bottom of Inventory and Exit (gacha-ui.js SALE.listHeight) */
   overflow: clip; /* only its own scroll boxes scroll: clip, unlike hidden, cannot be scrolled by code either */
@@ -150,8 +151,8 @@
 .shop-sale-grid {
   display: grid;
 }
-.shop-items-pane .hud-search {
-  font-family: 'GameFont', monospace; /* the Shop's font (the kit's search box uses the HUD font) */
+.shop-search-host .hud-search {
+  font-family: 'GameFont', monospace; /* the menu windows' font (the kit's search box uses the HUD font) */
 }
 /* a card and the owned panel: the mockup's thin #29ceff rim on a #303030 body */
 .shop-card,
@@ -174,9 +175,9 @@
   height: 2px;
   background: #495151; /* Slate divider, short of the rim */
 }
-.shop-items-pane .shop-card-name,
-.shop-items-pane .shop-card-description,
-.shop-items-pane .shop-empty {
+.shop-card .shop-card-name,
+.shop-card .shop-card-description,
+.shop-empty {
   white-space: normal; /* wraps inside the card (the kit's .hud-text keeps one line) */
   line-height: 24px;
 }

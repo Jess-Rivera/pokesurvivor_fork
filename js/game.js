@@ -1018,11 +1018,12 @@ G.Game = (() => {
       return;
     }
     if (state === 'ui') {
-      // Esc on a menu subscreen returns to the menu. (Upgrades handles its own Esc: it goes back to the Team screen.)
+      // Esc on a menu subscreen returns to the menu. (Upgrades handles its own Esc: it goes back to the Team screen. The
+      // Inventory handles its own too: Esc first cancels a swap in progress, #149d.)
       if (
         G.Input.tap('escape') &&
         !G.UI.isOpen('scr-profile') &&
-        ['scr-dex', 'scr-inventory', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
+        ['scr-dex', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
       )
         G.MenuUI.open();
       return;
@@ -1579,6 +1580,7 @@ G.Flow = {
     G.TestUI.init();
     G.MenuUI.init();
     G.GachaUI.init();
+    G.InventoryUI.init();
     G.SocialUI.init();
     G.RankingUI.init();
     G.ModUI.init();

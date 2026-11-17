@@ -6,7 +6,7 @@
 G.HudKitItems = (() => {
   const coreKit = G.HudKit;
   if (!coreKit.ready) return { ready: false };
-  const { html, signal, hooks: preactHooks, PALETTE, BAR_CHECKER, PixelShape } = coreKit;
+  const { html, signal, hooks: preactHooks, PALETTE, BAR_CHECKER, SLOT_GRID, PixelShape } = coreKit;
 
   // ---------- the B2 bag button (b2-lower Y4 to AB5): a square with chamfered corners, a rim and the checker body ----------
   function bagButtonRow(row, artSize, rimColour) {
@@ -339,8 +339,175 @@ G.HudKitItems = (() => {
     />`;
   }
 
+  // ---------- the run item box (b2-lower AD4 to AG5): a team item slot ----------
+  // Moved here from js/ui/hud-run-items-panel.js for #149d (the run screen draws it at 2 px per art pixel and 140 wide;
+  // the Main Menu Inventory sizes it up). Look and numbers: docs/HUD-STYLE.md "Run items".
+  const RUN_BOX_ROWS = 32,
+    RUN_BOX_MIDDLE = (RUN_BOX_ROWS - 1) / 2,
+    // the name inside the box's top band (#94, Jess 2026-11-11): from just inside the top rim down to the patch, left
+    // aligned over the patch and running across the band, squeezed sideways when it is wider
+    RUN_NAME = { artTop: 4, inset: 1 }, // art rows: the rim's first inside row; art pixels: how far into the slant
+    RUN_PATCH = { artTop: 13, artWidth: 22 }, // the white patch: from the box's flat middle down to its bottom edge
+    RUN_TEXT = { gap: 4, bottom: 3, right: 10 }, // art pixels: the text area right of the patch, from the patch's top down
+    RUN_ICON_ART = 16, // the icon's size in art pixels (32 px at the run screen's 2)
+    RUN_PATCH_LEFT_INSET = 6; // the patch starts right inside the rim
+  /** The ends' slant: flat for 6 rows in the middle, then one pixel in for every three rows out (the rip's slope). */
+  const runBoxEdge = (row) => {
+    const out = Math.abs(row - RUN_BOX_MIDDLE) - 2.5;
+    return out <= 0 ? 0 : Math.ceil(out / 3);
+  };
+  // The left end of each row, one letter per art pixel from that row's edge; the rest of the row is its last letter's fill.
+  // The right end is the mirror, the bottom rows the top's mirror.
+  //   o outline, D / B / L the Lv yellow's dark, shade and fill, G the body grid, space nothing.
+  const RUN_BOX_TOP_ROWS = [
+    ['ooooo', ' '], // the corner bump
+    ['oBBBD', 'o'],
+    ['oBDooD', 'B'],
+    ['oBoLLo', 'o'],
+  ];
+  const RUN_BOX_BODY_ROW = ['oBoLLo', 'G'];
+  const RUN_BOX_COLOURS = {
+    o: PALETTE.outline,
+    D: PALETTE.lvDark,
+    B: PALETTE.lvShade,
+    L: PALETTE.lvFill,
+    G: SLOT_GRID,
+    P: PALETTE.paper,
+    e: PALETTE.paperEdge,
+  };
+
+  /** The box's letter grid, one string per art row, for a box artWidth art pixels wide. */
+  function runBoxGrid(artWidth) {
+    const rows = RUN_BOX_ROWS,
+      grid = [];
+    for (let row = 0; row < rows; row++) {
+      const fromTop = Math.min(row, rows - 1 - row),
+        [left, fill] = fromTop < RUN_BOX_TOP_ROWS.length ? RUN_BOX_TOP_ROWS[fromTop] : RUN_BOX_BODY_ROW,
+        edge = runBoxEdge(row),
+        right = left.split('').reverse().join('');
+      grid.push(
+        (' '.repeat(edge) + left + fill.repeat(artWidth - 2 * edge - 2 * left.length) + right + ' '.repeat(edge)).split(
+          ''
+        )
+      );
+    }
+    // the white patch: its top edge, the paper, a shaded right edge; it runs down through the bottom rim to the outline
+    for (let row = RUN_PATCH.artTop; row < rows - 1; row++) {
+      const left = runBoxEdge(row) + RUN_PATCH_LEFT_INSET,
+        right = left + RUN_PATCH.artWidth - 1;
+      for (let column = left; column <= right; column++)
+        grid[row][column] = row === RUN_PATCH.artTop || row === rows - 2 || column === right ? 'e' : 'P';
+    }
+    const bottomEdge = runBoxEdge(rows - 1);
+    for (let column = bottomEdge; column <= runBoxEdge(rows - 2) + RUN_PATCH_LEFT_INSET + RUN_PATCH.artWidth; column++)
+      grid[rows - 1][column] = 'o';
+    return grid.map((line) => line.join(''));
+  }
+
+  /** Everything a box of this width and art pixel needs (made once per size): its row painter and its places. */
+  const runBoxShapes = new Map();
+  function runBoxShape(artWidth, artPixel) {
+    const sizeKey = artWidth + 'x' + artPixel;
+    if (runBoxShapes.has(sizeKey)) return runBoxShapes.get(sizeKey);
+    const grid = runBoxGrid(artWidth);
+    const paintRow = (row) => {
+      const line = grid[row],
+        runs = [];
+      let start = 0;
+      for (let column = 1; column <= line.length; column++) {
+        if (column < line.length && line[column] === line[start]) continue;
+        if (line[start] !== ' ') runs.push([start, column - start, RUN_BOX_COLOURS[line[start]]]);
+        start = column;
+      }
+      return runs;
+    };
+    const width = artWidth * artPixel,
+      iconSize = RUN_ICON_ART * artPixel,
+      patchMiddleRow = Math.round((RUN_PATCH.artTop + 1 + RUN_BOX_ROWS - 3) / 2);
+    // The name band: its left edge lines up with the patch, kept clear of the slanted end at the band's top row.
+    const nameSide = Math.max(
+      (runBoxEdge(RUN_PATCH.artTop) + RUN_PATCH_LEFT_INSET) * artPixel,
+      (runBoxEdge(RUN_NAME.artTop) + RUN_PATCH_LEFT_INSET - RUN_NAME.inset) * artPixel
+    );
+    const shape = {
+      paintRow,
+      width,
+      height: RUN_BOX_ROWS * artPixel,
+      iconSize,
+      // the icon sits in the middle of the patch's paper (inside its top edge and the edges at the bottom)
+      iconPlace: {
+        left:
+          (runBoxEdge(patchMiddleRow) + RUN_PATCH_LEFT_INSET + (RUN_PATCH.artWidth - 1) / 2) * artPixel -
+          iconSize / 2 +
+          'px',
+        top: ((RUN_PATCH.artTop + 1 + RUN_BOX_ROWS - 2) / 2) * artPixel - iconSize / 2 + 'px',
+      },
+      namePlace: {
+        left: nameSide + 'px',
+        right: nameSide + 'px',
+        top: RUN_NAME.artTop * artPixel + 'px',
+        height: (RUN_PATCH.artTop - RUN_NAME.artTop) * artPixel + 'px',
+      },
+      nameRoom: width - 2 * nameSide,
+      textPlace: {
+        left: (RUN_PATCH_LEFT_INSET + RUN_PATCH.artWidth + RUN_TEXT.gap) * artPixel + 'px',
+        right: RUN_TEXT.right * artPixel + 'px',
+        top: RUN_PATCH.artTop * artPixel + 'px',
+        bottom: RUN_TEXT.bottom * artPixel + 'px',
+      },
+    };
+    runBoxShapes.set(sizeKey, shape);
+    return shape;
+  }
+
+  /** The item's name, squeezed sideways (held at its left edge) when it is wider than the band. */
+  function RunItemName({ text, place, room }) {
+    const ref = preactHooks.useRef(null);
+    preactHooks.useLayoutEffect(() => {
+      const element = ref.current;
+      if (!element) return;
+      element.style.transform = '';
+      const width = element.scrollWidth;
+      if (width > room) element.style.transform = `scaleX(${room / width})`;
+    });
+    return html`<div class="hud-text hud-run-name" style=${place}>
+      <span ref=${ref}>${text}</span>
+    </div>`;
+  }
+
+  /**
+   * One team item slot: the B2 box with the item's icon in its white patch, its name in the top band and its text (a live
+   * tracker or the short description) right of the patch. item: { name, icon, text, live } or null for an empty slot.
+   * artWidth and artPixel size it (the run screen: 140 and 2); dimmed draws a slot not bought yet; style places it;
+   * attrs adds attributes (data-*, handlers); overlay is drawn on top (a selection cursor).
+   */
+  function RunItemBox({ artWidth, artPixel, item, dimmed, className, style, attrs, overlay }) {
+    const shape = runBoxShape(artWidth, artPixel);
+    return html`<div
+      class=${'hud-run-item' + (dimmed ? ' is-dimmed' : '') + (className ? ' ' + className : '')}
+      style=${{ ...style, width: shape.width + 'px', height: shape.height + 'px' }}
+      ...${attrs || {}}
+    >
+      <${PixelShape} artWidth=${artWidth} artRows=${RUN_BOX_ROWS} artPixel=${artPixel} paintRow=${shape.paintRow} />
+      ${
+        item
+          ? html`<${RunItemName} text=${item.name} place=${shape.namePlace} room=${shape.nameRoom} />
+              <div class="hud-run-icon" style=${shape.iconPlace}>
+                <${IconCanvas} icon=${item.icon} size=${shape.iconSize} />
+              </div>
+              <div class=${'hud-text hud-run-text' + (item.live ? ' is-live' : '')} style=${shape.textPlace}>
+                <span>${item.text}</span>
+              </div>`
+          : null
+      }
+      ${overlay || null}
+    </div>`;
+  }
+
   return {
     ready: true,
+    RunItemBox,
+    RUN_BOX_ROWS,
     IconCanvas,
     ItemSquare,
     ItemGrid,

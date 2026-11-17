@@ -106,6 +106,8 @@ G.HudOverlay = (() => {
     'fitToStage',
     'createButtonRow',
     'IconCanvas',
+    'RunItemBox',
+    'RUN_BOX_ROWS',
     'ItemSquare',
     'ItemGrid',
     'ScrollBox',

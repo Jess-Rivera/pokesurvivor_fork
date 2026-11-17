@@ -2,8 +2,9 @@
 // Real js/data/items.js (unlock, starters, cleanLoadout) and the real db.js newSave / migrate / sanitize (pulled out with a test hook,
 // the file on disk is NOT modified). Covers: new saves start with Lucky Egg + Amulet Coin and an empty loadout; an OLD save without the
 // fields migrates in with the starters and keeps its own data; unlock is once-only; the loadout is cleaned (locked, unknown, duplicate,
-// second Stone and over-slot-count entries dropped, order kept); sanitize strips non-team ids. The live pickup flow, run start and the
-// Inventory window are NOT covered here (browser).
+// second Stone and over-slot-count entries dropped, order kept); sanitize strips non-team ids; the Inventory's equip rules (#149d:
+// lowest empty slot, unequip, swap, one Stone). The live pickup flow, run start and the
+// Inventory window are NOT covered here (browser: tools/smoke-ui.js).
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = (p, tweak) => vm.runInThisContext(tweak ? tweak(fs.readFileSync(R + '/' + p, 'utf8')) : fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });
@@ -93,6 +94,41 @@ if (T) {
   if (s.teamItems.leftovers || s.teamItems.fake) bad('sanitize kept a non-team id');
   if (JSON.stringify(s.teamLoadout) !== '["luckyegg"]') bad('sanitize loadout wrong: ' + s.teamLoadout);
   console.log('5 sanitize: non-team ids stripped, loadout cleaned');
+}
+
+// 6. the Main Menu Inventory's equip rules (#149d, Jess 2026-11-17): Equip fills the lowest empty bought slot; Unequip keeps
+// the other slots' places; Swap puts the item in a chosen slot and the old one leaves; one Stone: a second Stone takes the
+// first one's slot (Equip and Swap alike)
+{
+  const mk = (loadout, slots) => { const s = { teamItems: {}, teamLoadout: loadout, runSlots: slots }; for (const i of I.LIST) if (i.tier === 'run') s.teamItems[i.id] = { at: 1 }; return s; };
+  const stones = I.LIST.filter((i) => i.tier === 'run' && i.group === 'stone').map((i) => i.id);
+  const plain = I.LIST.filter((i) => i.tier === 'run' && !i.group).map((i) => i.id);
+  const stonesIn = (s) => s.teamLoadout.filter((id) => stones.includes(id)).length;
+  // a gap below a filled slot: Equip lands in the gap, the lowest empty slot
+  let s = mk([null, plain[0]], 4), r = I.equipTeamItem(s, plain[1]);
+  const lowestEmpty = 0;
+  if (!r.ok || r.slot !== lowestEmpty || s.teamLoadout[lowestEmpty] !== plain[1] || s.teamLoadout[1] !== plain[0]) bad('Equip must fill the lowest empty slot and leave the others: ' + JSON.stringify(s.teamLoadout));
+  if (r.replaced !== null) bad('Equip into an empty slot replaces nothing');
+  // every bought slot full: Equip refuses and changes nothing
+  s = mk(plain.slice(0, 2), 2); const before = JSON.stringify(s.teamLoadout); r = I.equipTeamItem(s, plain[2]);
+  if (r.ok || r.error !== 'full' || JSON.stringify(s.teamLoadout) !== before) bad('Equip with every slot full must refuse and change nothing');
+  // an item already equipped, or locked, is refused
+  s = mk([plain[0]], 2); if (I.equipTeamItem(s, plain[0]).ok) bad('Equip of an equipped item must refuse');
+  s = mk([], 2); delete s.teamItems[plain[0]]; if (I.equipTeamItem(s, plain[0]).ok || s.teamLoadout.length) bad('Equip of a locked item must refuse');
+  // Unequip empties only its slot
+  s = mk(plain.slice(0, 3), 4); r = I.unequipTeamItem(s, plain[1]);
+  if (!r.ok || s.teamLoadout[1] || s.teamLoadout[0] !== plain[0] || s.teamLoadout[2] !== plain[2]) bad('Unequip must empty only its slot: ' + JSON.stringify(s.teamLoadout));
+  if (I.unequipTeamItem(s, plain[3]).ok) bad('Unequip of an item not equipped must refuse');
+  // Swap into a chosen slot: the old item leaves, the others stay
+  s = mk(plain.slice(0, 4), 4); r = I.swapTeamItem(s, plain[4], 2);
+  if (!r.ok || r.slot !== 2 || r.replaced !== plain[2] || s.teamLoadout[2] !== plain[4] || s.teamLoadout.includes(plain[2]) || s.teamLoadout.filter(Boolean).length !== 4) bad('Swap must replace only the chosen slot: ' + JSON.stringify(s.teamLoadout));
+  s = mk(plain.slice(0, 2), 2); if (I.swapTeamItem(s, plain[2], 3).ok) bad('Swap into a slot not bought must refuse');
+  // one Stone: a second Stone takes the first one's slot, by Equip (with room) and by Swap (any slot chosen)
+  s = mk([plain[0], stones[0]], 4); r = I.equipTeamItem(s, stones[1]);
+  if (!r.ok || r.slot !== 1 || r.replaced !== stones[0] || stonesIn(s) !== 1) bad('Equip of a second Stone must take the first one\'s slot: ' + JSON.stringify(s.teamLoadout));
+  s = mk([plain[0], stones[0], plain[1], plain[2]], 4); r = I.swapTeamItem(s, stones[1], 0);
+  if (!r.ok || r.slot !== 1 || r.replaced !== stones[0] || s.teamLoadout[0] !== plain[0] || stonesIn(s) !== 1) bad('Swap of a second Stone must take the first one\'s slot, not the chosen one: ' + JSON.stringify(s.teamLoadout));
+  console.log('6 equip rules: lowest empty slot, full refuses, unequip keeps places, swap, one Stone');
 }
 
 console.log(fail ? fail + ' FAILED' : 'ALL PASS');

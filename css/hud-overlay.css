@@ -678,10 +678,12 @@
   top: 0;
 }
 .hud-run-icon canvas {
-  display: block;
-  width: 32px;
-  height: 32px;
+  display: block; /* at its own size: the box's icon size (32 px on the run screen) */
   image-rendering: pixelated;
+}
+/* a slot not bought yet (the Main Menu Inventory, #149d): dimmed as the item grid's locked squares */
+.hud-run-item.is-dimmed {
+  opacity: 0.3;
 }
 /* the name inside the box's top band (#94): left aligned, squeezed sideways from its left edge when wider */
 .hud-run-name {
