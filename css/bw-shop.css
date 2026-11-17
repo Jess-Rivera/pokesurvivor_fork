@@ -115,3 +115,84 @@
   opacity: 0.4;
   cursor: default;
 }
+
+/* ---------- Team Items (149c): cards for sale and the owned panel, drawn by gacha-ui.js into #shop-items ---------- */
+.shop-pane-fixed {
+  overflow: hidden; /* its own scroll boxes scroll; the pane stays put */
+  padding-right: 0;
+}
+.shop-items-pane,
+.shop-sale,
+.shop-owned,
+.shop-sale-search,
+.shop-owned-search {
+  position: absolute;
+}
+.shop-items-pane {
+  inset: 0;
+  font-family: 'GameFont', monospace; /* the Shop's font, as the pockets and buttons */
+  font-synthesis: none;
+  color: #ffffff;
+}
+.shop-sale {
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+.shop-sale-search {
+  left: 0;
+  top: 0;
+}
+.shop-sale-grid {
+  display: grid;
+}
+.shop-items-pane .hud-search {
+  font-family: 'GameFont', monospace; /* the Shop's font (the kit's search box uses the HUD font) */
+}
+/* a card and the owned panel: the mockup's thin #29ceff rim on a #303030 body */
+.shop-card,
+.shop-owned {
+  box-sizing: border-box;
+  border: 2px solid #29ceff;
+  background: #303030;
+}
+.shop-card {
+  position: relative;
+}
+.shop-card > * {
+  position: absolute;
+}
+.shop-card-icon canvas {
+  display: block;
+  image-rendering: pixelated;
+}
+.shop-card-divider {
+  height: 2px;
+  background: #495151; /* Slate divider, short of the rim */
+}
+.shop-items-pane .shop-card-name,
+.shop-items-pane .shop-card-description,
+.shop-items-pane .shop-empty {
+  white-space: normal; /* wraps inside the card (the kit's .hud-text keeps one line) */
+  line-height: 24px;
+}
+.shop-card-name {
+  color: #8cfff7; /* Secondary text */
+}
+.shop-empty {
+  padding: 12px 4px;
+}
+.shop-owned {
+  top: 0;
+}
+.shop-owned-search {
+  left: 14px;
+  top: 14px;
+}
+/* a card's Buy you cannot afford (mockup): the rim stays, the label goes to white at 45% */
+.shop-card-buy .hud-team-button[disabled] {
+  opacity: 1;
+}
+.shop-card-buy .hud-team-button[disabled] .hud-team-button-label {
+  color: rgba(255, 255, 255, 0.45);
+}

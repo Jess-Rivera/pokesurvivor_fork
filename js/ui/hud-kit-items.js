@@ -72,16 +72,18 @@ G.HudKitItems = (() => {
   /**
    * The tight 2x2 item grid (#90, HUD-STYLE "Berry bag"): item squares in two columns, half a square between them, filling
    * row by row. Used by the run screen's berry bag and the pause menu's Run Inventory.
-   * slots: [{ key, icon, locked, tip: { name, desc }, className, attrs }]: icon null = empty; locked = dimmed (not bought);
-   * tip = the hover tooltip (none on the run screen), drawn in the page's tooltip layer; attrs = extra attributes for
-   * the slot's element (data-*, handlers). tipPlace: where the tooltip opens (showTooltip's place; above by default).
+   * slots: [{ key, icon, locked, tip: { name, desc }, className, attrs, overlay }]: icon null = empty; locked = dimmed
+   * (not bought); tip = the hover tooltip (none on the run screen), drawn in the page's tooltip layer; attrs = extra
+   * attributes for the slot's element (data-*, handlers); overlay = drawn over the square (a selection cursor).
+   * tipPlace: where the tooltip opens (showTooltip's place; above by default). columns: squares per row (2 by default;
+   * the Main Menu Shop's owned items use 4, #149c).
    */
-  function ItemGrid({ slots, artSize = 20, className, tipPlace }) {
+  function ItemGrid({ slots, artSize = 20, columns = 2, className, tipPlace }) {
     const size = artSize * 2,
       gap = size / 2;
     return html`<div
       class=${'hud-item-grid' + (className ? ' ' + className : '')}
-      style=${{ gridTemplateColumns: `${size}px ${size}px`, gap: gap + 'px' }}
+      style=${{ gridTemplateColumns: `repeat(${columns}, ${size}px)`, gap: gap + 'px' }}
     >
       ${slots.map(
         (slot) =>
@@ -97,6 +99,7 @@ G.HudKitItems = (() => {
             ...${slot.attrs || {}}
           >
             <${ItemSquare} icon=${slot.icon || null} artSize=${artSize} />
+            ${slot.overlay || null}
           </div>`
       )}
     </div>`;
@@ -312,12 +315,37 @@ G.HudKitItems = (() => {
       </div>`;
   }
 
+  /**
+   * A search box (#149c, the Main Menu Shop's mockups): one line of HUD text on the panel body with a thin white rim.
+   * value and onChange(text) keep it in the screen's own state; Enter or Esc while typing hands the keys back to the
+   * screen (the box lets go of the keyboard; that key press itself goes no further). Player-typed text, so never translated.
+   */
+  function SearchBar({ value, onChange, placeholder = 'Search', width, className }) {
+    return html`<input
+      type="text"
+      class=${'hud-search' + (className ? ' ' + className : '')}
+      translate="no"
+      spellcheck="false"
+      autocomplete="off"
+      placeholder=${placeholder}
+      value=${value}
+      style=${width ? { width: width + 'px' } : null}
+      onInput=${(event) => onChange(event.currentTarget.value)}
+      onKeyDown=${(event) => {
+        if (event.key !== 'Enter' && event.key !== 'Escape') return;
+        event.stopPropagation(); // this key belongs to the box: the screen must not also read it (Esc would close it)
+        event.currentTarget.blur();
+      }}
+    />`;
+  }
+
   return {
     ready: true,
     IconCanvas,
     ItemSquare,
     ItemGrid,
     ScrollBox,
+    SearchBar,
     showTooltip,
     hideTooltip,
     tooltipHandlers,

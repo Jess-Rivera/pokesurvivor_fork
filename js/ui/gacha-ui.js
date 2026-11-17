@@ -9,10 +9,15 @@
  *   pockets  the Character Upgrades pane (149b, mockup Shop-Character-Upgrades.svg): the Berry Pocket and the Team Items
  *            Pocket, each a box in the pause menu's detail-panel shape with its 2x2 slot grid (unbought slots dimmed), a
  *            divider, its name and line, and one Buy button for the next slot (Full once every slot is bought).
+ *   items    the Team Items pane (149c, mockup Shop-Team-Items.svg): left, a search bar over a scrolling 3-column grid of
+ *            cards for every team item not owned yet (icon, divider, name, description, Buy); right, the owned panel:
+ *            a search bar over a scrolling 4-wide grid of the owned items, dimmed empty squares filling its visible rows,
+ *            each with its hover tooltip. Inventory (beside Exit, this tab only) opens the Inventory screen.
  *   input    the selection cursor takes no tab. With the mouse it shows only on the eligible item under it (or nowhere);
- *            a key press snaps it back to the last item it was on (the kit's inputMode). Eligible items: the pockets'
- *            Buy buttons you can press (on Character Upgrades), then Exit. The arrows step through them, Enter presses,
- *            Esc leaves. The Team Items pane's Buy joins when 149c rebuilds it.
+ *            a key press snaps it back to the last item it was on (the kit's inputMode). Eligible items: the Buy
+ *            buttons you can press, the owned squares, Inventory and Exit. An arrow moves it to the nearest eligible
+ *            item that way (scrolling it into view), Enter presses, Esc leaves. Resting on an owned square by keys
+ *            shows its tooltip after the Tooltip Delay setting (G.Settings cursorTooltipDelay, 1 s by default).
  */
 G.GachaUI = (() => {
   const $ = G.UI.$;
@@ -23,9 +28,26 @@ G.GachaUI = (() => {
     console.warn('[Shop] the HUD kit did not load: the Shop cannot open');
     return { init() {}, open() {} };
   }
-  const { html, signal, preact, Box, ItemGrid, Cursor, inputMode, TeamButton, REST_RIM, FOCUS_RIM, fitToStage } =
-    kitOverlay.kit;
-  let shopSel = null; // Team Items tab: the item shown in the detail column
+  const {
+    html,
+    signal,
+    preact,
+    hooks,
+    Box,
+    ItemGrid,
+    IconCanvas,
+    ScrollBox,
+    SearchBar,
+    Cursor,
+    inputMode,
+    TeamButton,
+    REST_RIM,
+    FOCUS_RIM,
+    fitToStage,
+    showTooltip,
+    hideTooltip,
+    tooltipHandlers,
+  } = kitOverlay.kit;
   const fmt = (n) => n.toLocaleString('en-US');
 
   // ---------- tabs (top to bottom on the rail): key, name, icon file; each key's pane is #shop-<key> ----------
@@ -68,26 +90,81 @@ G.GachaUI = (() => {
   const BERRY_POCKET_RIM = { light: '#6ec188', base: '#20a048', dark: '#15682f' },
     TEAM_ITEM_POCKET_RIM = { light: '#d89db7', base: '#c86890', dark: '#82445e' },
     POCKET_BODY = '#303030';
+  // the Team Items pane (149c), in pane pixels (the pane is 1005 x 530): the sale side on the left, the owned panel on the
+  // right; the cards' Buy is the team menu button at 3 px per art pixel
+  const SALE = {
+    width: 600,
+    searchWidth: 584,
+    listTop: 56,
+    listWidth: 584,
+    listHeight: 474,
+    columns: 3,
+    cardWidth: 186,
+    cardHeight: 350, // room for a six-line description above Buy
+    cardGap: 12,
+    textInset: 10,
+    iconSize: 64,
+    iconTop: 12,
+    dividerTop: 88,
+    nameTop: 100,
+    descriptionTop: 130,
+    buyArtWidth: 58,
+    buyBottom: 10,
+  };
+  SALE.cardInner = SALE.cardWidth - 4; // inside the card's 2 px rim
+  SALE.buyWidth = SALE.buyArtWidth * EXIT.artPixel; // 174
+  const OWNED = {
+    left: 624,
+    width: 381,
+    height: 530,
+    inset: 14, // inside the panel's 2 px rim
+    searchWidth: 349,
+    listTop: 70,
+    columns: 4, // Jess 2026-11-17: four across; content updates will add many more team items, so it scrolls
+    artSize: 30, // squares of 60 px, 30 px apart
+    visibleRows: 5, // dimmed empty squares fill out at least these rows
+  };
+  OWNED.squareSize = OWNED.artSize * 2;
+  OWNED.listWidth = OWNED.columns * OWNED.squareSize + (OWNED.columns - 1) * OWNED.artSize; // 330
+  OWNED.listHeight = OWNED.visibleRows * OWNED.squareSize + (OWNED.visibleRows - 1) * OWNED.artSize; // 420
+  const INVENTORY_BUTTON = { artWidth: 64, gap: 16 }; // left of Exit on the Team Items tab
+  INVENTORY_BUTTON.width = INVENTORY_BUTTON.artWidth * EXIT.artPixel; // 192
+  const SCROLL_COLOURS = { track: '#303030', thumb: '#29ceff', thumbRim: '#29ceff' }; // the mockup's teal bar
+  const OWNED_TIP_PLACE = { side: 'below' };
+  const SALE_ID = 'sale-', // cursor ids: a card's Buy, an owned square
+    OWNED_ID = 'own-';
 
   // ---------- state ----------
   const tab = signal(OPENING_TAB);
   const saveTick = signal(0); // bumped on every refresh: the drawn pieces read the save again
+  const saleQuery = signal(''), // the Team Items search bars' text
+    ownedQuery = signal('');
   // The selection cursor (Jess, 2026-11-16): the tabs never take it (Q and E or a click switch them). focus is the last
   // item it was on; hovered is the eligible item under the mouse, or null. Using the keys (kit inputMode 'keys') it shows
-  // on focus; using the mouse it shows only on hovered, so it leaves when the mouse is over anything else. In 149a Exit is
-  // eligible item besides the pockets' Buy buttons you can press (149b); the Team Items Buy joins in 149c.
+  // on focus; using the mouse it shows only on hovered, so it leaves when the mouse is over anything else. Each eligible
+  // item's element carries data-cursor-id, which the arrows measure.
   const focus = signal('exit'),
     hovered = signal(null);
-  /** The items the cursor may sit on now, in arrow order: the pressable pocket Buys (Character Upgrades only), then Exit. */
+  /** The items the cursor may sit on now: the shown tab's pressable Buys and owned squares, then Inventory and Exit. */
   function eligibleItems() {
     saveTick.value; // read again after a purchase or a coin change
-    const buys =
-      tab.value === 'upgrades'
-        ? pockets()
-            .filter((pocket) => pocket.canBuy)
-            .map((pocket) => pocket.id)
-        : [];
-    return [...buys, 'exit'];
+    if (tab.value === 'upgrades')
+      return [
+        ...pockets()
+          .filter((pocket) => pocket.canBuy)
+          .map((pocket) => pocket.id),
+        'exit',
+      ];
+    if (tab.value === 'items') {
+      const view = teamItemsView();
+      return [
+        ...(view.canAfford ? view.forSale.map((item) => SALE_ID + item.id) : []),
+        ...view.owned.map((item) => OWNED_ID + item.id),
+        'inventory',
+        'exit',
+      ];
+    }
+    return ['exit'];
   }
   /**
    * Where the cursor shows: by keys, the last item it was on (Exit if that one can no longer take it); by mouse, the
@@ -117,6 +194,8 @@ G.GachaUI = (() => {
     G.UI.show('scr-gacha', true);
     fitStage();
     tab.value = OPENING_TAB;
+    saleQuery.value = '';
+    ownedQuery.value = '';
     focus.value = 'exit';
     hovered.value = null;
     refresh();
@@ -139,7 +218,6 @@ G.GachaUI = (() => {
   /** Redraw the current Shop tab. */
   function refresh() {
     for (const { key } of TABS) $('shop-' + key).classList.toggle('hidden', key !== tab.value);
-    if (tab.value === 'items') refreshItems();
     saveTick.value++;
     G.UI.refreshCoins();
   }
@@ -152,8 +230,10 @@ G.GachaUI = (() => {
     else if (key === 'Enter') press();
     else if (key === 'q' || key === 'Q') stepTab(-1);
     else if (key === 'e' || key === 'E') stepTab(1);
-    else if (key === 'ArrowLeft' || key === 'ArrowUp') stepFocus(-1);
-    else if (key === 'ArrowRight' || key === 'ArrowDown') stepFocus(1);
+    else if (key === 'ArrowLeft') stepFocus(-1, 0);
+    else if (key === 'ArrowRight') stepFocus(1, 0);
+    else if (key === 'ArrowUp') stepFocus(0, -1);
+    else if (key === 'ArrowDown') stepFocus(0, 1);
     else return;
     event.preventDefault();
   }
@@ -164,21 +244,88 @@ G.GachaUI = (() => {
     if (index >= 0 && index < TABS.length) pickTab(TABS[index].key);
   }
 
-  /** The arrows: the eligible item before or after the cursor's (no wrap). */
-  function stepFocus(step) {
-    const items = eligibleItems(),
-      index = items.indexOf(cursorOn() || focus.value) + step;
-    if (index < 0 || index >= items.length || items[index] === focus.value) return;
-    focus.value = items[index];
+  /** The element an eligible item is drawn in (it carries data-cursor-id), or null. */
+  const cursorElement = (id) => stageHost.querySelector('[data-cursor-id="' + CSS.escape(id) + '"]');
+
+  /**
+   * The arrows (149c): the nearest eligible item that way, measured between the items' centres on the screen, a step
+   * across the way counting double; none that way keeps the cursor where it is. The new item scrolls into view.
+   */
+  function stepFocus(directionX, directionY) {
+    const from = cursorOn() || focus.value,
+      fromElement = cursorElement(from);
+    if (!fromElement) return;
+    const centre = (element) => {
+      const rect = element.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, width: rect.width };
+    };
+    const start = centre(fromElement);
+    let best = null,
+      bestScore = Infinity;
+    for (const id of eligibleItems()) {
+      const element = id !== from && cursorElement(id);
+      if (!element) continue;
+      const point = centre(element);
+      if (!point.width) continue; // not drawn
+      const dx = point.x - start.x,
+        dy = point.y - start.y;
+      const along = dx * directionX + dy * directionY,
+        across = Math.abs(directionX ? dy : dx);
+      if (along <= 1) continue;
+      const score = along + 2 * across;
+      if (score < bestScore) {
+        bestScore = score;
+        best = { id, element };
+      }
+    }
+    if (!best) return;
+    focus.value = best.id;
+    best.element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     G.Audio.sfx('hover');
   }
 
   /** Enter on whatever the cursor is on. */
   function press() {
     const at = cursorOn();
+    if (!at) return;
     if (at === 'exit') return close();
+    if (at === 'inventory') return openInventory();
+    if (at.startsWith(SALE_ID)) return buyItem(at.slice(SALE_ID.length));
     const pocket = pockets().find((entry) => entry.id === at);
     if (pocket && pocket.canBuy) pocket.buy();
+  }
+
+  /** Inventory (Team Items tab): the Inventory screen, over the still dimmed Main Menu. */
+  function openInventory() {
+    G.Audio.sfx('select');
+    hideTooltip();
+    G.MenuUI.openInventory();
+  }
+
+  /**
+   * By keys, the cursor resting on an owned square shows that item's tooltip after the Tooltip Delay setting (Jess
+   * 2026-11-17: keyboard and, later, controller players see tooltips too). The mouse shows them at once (ItemGrid).
+   */
+  function CursorTip() {
+    const at = cursorOn(),
+      byKeys = inputMode.value === 'keys';
+    hooks.useEffect(() => {
+      if (!byKeys || !at || !at.startsWith(OWNED_ID)) return undefined;
+      let shown = false;
+      const delaySeconds = +G.Settings.get('cursorTooltipDelay') || 1;
+      const timer = setTimeout(() => {
+        const element = cursorElement(at),
+          item = G.Items.BY[at.slice(OWNED_ID.length)];
+        if (!element || !item) return;
+        showTooltip(element, itemTip(item), OWNED_TIP_PLACE);
+        shown = true;
+      }, delaySeconds * 1000);
+      return () => {
+        clearTimeout(timer);
+        if (shown) hideTooltip();
+      };
+    }, [at, byKeys]);
+    return null;
   }
 
   // ---------- drawing the rail and Exit ----------
@@ -197,14 +344,48 @@ G.GachaUI = (() => {
   }
 
   function Rail() {
-    const exitFocused = cursorOn() === 'exit';
+    const at = cursorOn(),
+      exitFocused = at === 'exit',
+      inventoryFocused = at === 'inventory',
+      exitLeft = WINDOW.width - EXIT.right - EXIT.width,
+      buttonTop = WINDOW.height - EXIT.bottom - EXIT.height;
     return html`<div>
       ${TABS.map((entry, index) => html`<${Tab} key=${entry.key} entry=${entry} index=${index} />`)}
+      <${CursorTip} />
+      ${
+        tab.value === 'items'
+          ? html`<div
+              class="shop-button shop-inventory"
+              data-cursor-id="inventory"
+              style=${{
+                left: px(exitLeft - INVENTORY_BUTTON.gap - INVENTORY_BUTTON.width),
+                top: px(buttonTop),
+                width: px(INVENTORY_BUTTON.width),
+                height: px(EXIT.height),
+              }}
+              onMouseLeave=${() => hover(null)}
+            >
+              <${TeamButton}
+                id="shop-inventory"
+                label="Inventory"
+                artWidth=${INVENTORY_BUTTON.artWidth}
+                artPixel=${EXIT.artPixel}
+                rim=${REST_RIM}
+                focusRim=${FOCUS_RIM}
+                focused=${inventoryFocused}
+                onEnter=${() => hover('inventory')}
+                onPress=${openInventory}
+              />
+              ${inventoryFocused ? html`<${Cursor} />` : null}
+            </div>`
+          : null
+      }
       <div
         class="shop-button shop-exit"
+        data-cursor-id="exit"
         style=${{
-          left: px(WINDOW.width - EXIT.right - EXIT.width),
-          top: px(WINDOW.height - EXIT.bottom - EXIT.height),
+          left: px(exitLeft),
+          top: px(buttonTop),
           width: px(EXIT.width), // the cursor's corners sit on this box
           height: px(EXIT.height),
         }}
@@ -229,40 +410,185 @@ G.GachaUI = (() => {
   preact.render(html`<${Rail} />`, railHost);
   const fitStage = fitToStage(stageHost);
 
-  // ---------------- Team Items tab ----------------
-  function refreshItems() {
-    const s = G.DB.save,
-      grid = $('shop-items-grid'),
-      det = $('shop-items-detail');
-    const list = G.Items.LIST.filter((i) => i.tier === 'run' && !G.Items.unlocked(s, i.id));
-    $('shop-items-count').textContent = list.length ? list.length + ' for sale.' : '';
-    if (!list.some((i) => i.id === shopSel)) shopSel = list.length ? list[0].id : null;
-    grid.innerHTML = '';
-    if (!list.length)
-      grid.innerHTML = '<div class="sub" style="grid-column:1/-1;padding:12px">You own every team item.</div>';
-    for (const it of list) {
-      const el = document.createElement('div');
-      el.className = 'cell inv-cell' + (shopSel === it.id ? ' on' : '');
-      el.innerHTML = `<div class="inv-ico">${G.Icons.html(it.icon || it.id, 36)}</div><b>${it.name}</b>`;
-      el.onclick = () => {
-        shopSel = it.id;
-        G.Audio.sfx('click');
-        refreshItems();
-      };
-      grid.appendChild(el);
-    }
-    const it = G.Items.BY[shopSel];
-    if (!it) {
-      det.innerHTML = '<div class="sub">Nothing to buy.</div>';
-      return;
-    }
-    const price = G.Items.TEAM_ITEM_PRICE;
-    det.innerHTML = `<div class="inv-dico">${G.Icons.html(it.icon || it.id, 56)}</div><h3 style="margin:6px 0 4px">${it.name}</h3>
-      <div class="ds">${it.desc}</div>
-      <div class="shop-price"><span class="coin"></span> ${fmt(price)}</div>
-      <div class="inv-act"><button class="btn gold" id="shop-buy"${s.coins >= price ? '' : ' disabled'}>${s.coins >= price ? 'Buy' : 'Not enough PokéCoins'}</button></div>`;
-    $('shop-buy').onclick = () => buyItem(it.id);
+  // ---------------- Team Items tab (149c): cards for sale on the left, the owned panel on the right ----------------
+  // function declarations, not arrows: the rail is drawn before this part of the file runs
+  function itemTip(item) {
+    return { name: item.name, lines: [item.desc], variant: 'item' };
   }
+  /** A search bar's filter: the item's name holds the typed text (any case); empty text keeps every item. */
+  function nameHas(query) {
+    const text = query.trim().toLowerCase();
+    return (item) => !text || item.name.toLowerCase().includes(text);
+  }
+  /** What the pane shows now: the team items for sale and owned (each narrowed by its search bar), the price. */
+  function teamItemsView() {
+    const save = G.DB.save,
+      price = G.Items.TEAM_ITEM_PRICE;
+    if (!save) return { anyForSale: false, forSale: [], owned: [], price, canAfford: false };
+    const teamItems = G.Items.LIST.filter((item) => item.tier === 'run');
+    const notOwned = teamItems.filter((item) => !G.Items.unlocked(save, item.id));
+    return {
+      anyForSale: notOwned.length > 0,
+      forSale: notOwned.filter(nameHas(saleQuery.value)),
+      owned: teamItems.filter((item) => G.Items.unlocked(save, item.id)).filter(nameHas(ownedQuery.value)),
+      price,
+      canAfford: save.coins >= price,
+    };
+  }
+
+  function SaleCard({ item, price, canAfford, focused }) {
+    const id = SALE_ID + item.id,
+      buyHeight = TEAM_BUTTON_ROWS * EXIT.artPixel;
+    return html`<div
+      class="shop-card"
+      data-item=${item.id}
+      style=${{ width: px(SALE.cardWidth), height: px(SALE.cardHeight) }}
+    >
+      <div class="shop-card-icon" style=${{ left: px((SALE.cardInner - SALE.iconSize) / 2), top: px(SALE.iconTop) }}>
+        <${IconCanvas} icon=${item.icon || item.id} size=${SALE.iconSize} />
+      </div>
+      <div
+        class="shop-card-divider"
+        style=${{ left: px(SALE.textInset), right: px(SALE.textInset), top: px(SALE.dividerTop) }}
+      ></div>
+      <div
+        class="hud-text shop-card-name"
+        style=${{ left: px(SALE.textInset), right: px(SALE.textInset), top: px(SALE.nameTop) }}
+      >
+        ${item.name}
+      </div>
+      <div
+        class="hud-text shop-card-description"
+        style=${{ left: px(SALE.textInset), right: px(SALE.textInset), top: px(SALE.descriptionTop) }}
+      >
+        ${item.desc}
+      </div>
+      <div
+        class="shop-button shop-card-buy"
+        data-cursor-id=${id}
+        style=${{
+          left: px((SALE.cardInner - SALE.buyWidth) / 2),
+          top: px(SALE.cardHeight - 4 - SALE.buyBottom - buyHeight),
+          width: px(SALE.buyWidth),
+          height: px(buyHeight),
+        }}
+        onMouseEnter=${() => hover(canAfford ? id : null)}
+        onMouseLeave=${() => hover(null)}
+      >
+        <${TeamButton}
+          id=${id}
+          label=${'Buy ' + fmt(price)}
+          artWidth=${SALE.buyArtWidth}
+          artPixel=${EXIT.artPixel}
+          rim=${REST_RIM}
+          focusRim=${FOCUS_RIM}
+          focused=${focused}
+          disabled=${!canAfford}
+          onPress=${() => canAfford && buyItem(item.id)}
+        />
+        ${focused ? html`<${Cursor} />` : null}
+      </div>
+    </div>`;
+  }
+
+  /** The owned panel's squares: owned items four across, then dimmed empties filling out at least the visible rows. */
+  function ownedSlots(owned, at) {
+    const rows = Math.max(OWNED.visibleRows, Math.ceil(owned.length / OWNED.columns));
+    return Array.from({ length: rows * OWNED.columns }, (_, index) => {
+      const item = owned[index];
+      if (!item) return { key: 'empty-' + index, icon: null, locked: true };
+      const id = OWNED_ID + item.id,
+        tip = tooltipHandlers(itemTip(item), OWNED_TIP_PLACE);
+      return {
+        key: item.id,
+        icon: item.icon || item.id,
+        className: 'shop-owned-slot',
+        attrs: {
+          'data-cursor-id': id,
+          onMouseEnter: (event) => {
+            hover(id);
+            tip.onMouseEnter(event);
+          },
+          onMouseMove: tip.onMouseMove,
+          onMouseLeave: (event) => {
+            hover(null);
+            tip.onMouseLeave(event);
+          },
+        },
+        overlay: at === id ? html`<${Cursor} />` : null,
+      };
+    });
+  }
+
+  function TeamItemsPane() {
+    saveTick.value; // redraw after a purchase or a coin change
+    if (!G.DB.save) return null;
+    const view = teamItemsView(),
+      at = cursorOn();
+    const emptyLine = !view.anyForSale
+      ? 'You own every team item.'
+      : !view.forSale.length
+        ? 'No team item matches.'
+        : null;
+    return html`<div class="shop-items-pane">
+      <div class="shop-sale" style=${{ width: px(SALE.width) }}>
+        <${SearchBar}
+          value=${saleQuery.value}
+          onChange=${(text) => (saleQuery.value = text)}
+          placeholder="Search team items"
+          width=${SALE.searchWidth}
+          className="shop-sale-search"
+        />
+        <${ScrollBox}
+          box=${{ left: 0, top: SALE.listTop, width: SALE.listWidth, height: SALE.listHeight }}
+          trackRight=${0}
+          colours=${SCROLL_COLOURS}
+          resetOn=${[saleQuery.value]}
+        >
+          <div
+            class="shop-sale-grid"
+            style=${{ gridTemplateColumns: `repeat(${SALE.columns}, ${px(SALE.cardWidth)})`, gap: px(SALE.cardGap) }}
+          >
+            ${view.forSale.map(
+              (item) =>
+                html`<${SaleCard}
+                  key=${item.id}
+                  item=${item}
+                  price=${view.price}
+                  canAfford=${view.canAfford}
+                  focused=${at === SALE_ID + item.id}
+                />`
+            )}
+          </div>
+          ${emptyLine ? html`<div class="hud-text shop-empty">${emptyLine}</div>` : null}
+        </${ScrollBox}>
+      </div>
+      <div class="shop-owned" style=${{ left: px(OWNED.left), width: px(OWNED.width), height: px(OWNED.height) }}>
+        <${SearchBar}
+          value=${ownedQuery.value}
+          onChange=${(text) => (ownedQuery.value = text)}
+          placeholder="Search owned"
+          width=${OWNED.searchWidth}
+          className="shop-owned-search"
+        />
+        <${ScrollBox}
+          box=${{ left: OWNED.inset, top: OWNED.listTop, width: OWNED.listWidth, height: OWNED.listHeight }}
+          trackRight=${OWNED.inset - 6}
+          colours=${SCROLL_COLOURS}
+          resetOn=${[ownedQuery.value]}
+        >
+          <${ItemGrid}
+            slots=${ownedSlots(view.owned, at)}
+            artSize=${OWNED.artSize}
+            columns=${OWNED.columns}
+            tipPlace=${OWNED_TIP_PLACE}
+            className="shop-owned-grid"
+          />
+        </${ScrollBox}>
+      </div>
+    </div>`;
+  }
+  preact.render(html`<${TeamItemsPane} />`, $('shop-items'));
 
   async function buyItem(id) {
     const it = G.Items.BY[id],
@@ -370,6 +696,7 @@ G.GachaUI = (() => {
       </div>
       <div
         class="shop-button shop-buy"
+        data-cursor-id=${pocket.id}
         style=${{
           left: px((POCKET.width - POCKET.buyWidth) / 2),
           top: px(POCKET.height - POCKET.buyBottom - POCKET.buyHeight),

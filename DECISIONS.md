@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-17, the selection cursor shows tooltips after a settable delay (Tooltip Delay, 1 s default); the mouse shows them at once (Jess)](docs/decisions/2026-11-17-cursor-tooltips-after-a-settable-delay.md)
 - [2026-11-16, the selection cursor follows the device in use: under the mouse only (or gone), back to the last item on a key (Jess)](docs/decisions/2026-11-16-selection-cursor-follows-the-device-in-use.md)
 - [2026-11-16, #149 is the Main Menu Shop with four tabs (Pokeballs, Character Upgrades, Team Items, TRs) plus the Inventory screen; a TR is learned for good and joins the Move Trainer pool (Jess)](docs/decisions/2026-11-16-149-main-menu-shop-four-tabs-trs-learned-for-good.md)
 - [2026-11-16, #148 tuning: Steep star curve (1 / .5 / .25 / .1 / .05), early World Level bonus x2 fading to x1 at WL 13, badge penalty unchanged (Jess)](docs/decisions/2026-11-16-148-catch-tuning-steep-curve-x2-fading-bonus.md)

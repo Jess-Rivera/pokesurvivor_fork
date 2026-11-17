@@ -785,6 +785,10 @@ async function catchFlow(browser, query, tag) {
 // #149b: the Character Upgrades pocket cards: each grid lights one square per slot owned and dims the rest up to the cap;
 // a Buy adds one slot for the price its label shows; Full and unaffordable Buys are disabled (the price still shown) and
 // the arrows skip them; the arrows step Berry Buy, Team Items Buy, Exit, and Enter on a Buy asks first.
+// #149c: the Team Items pane: sale cards plus owned items cover every team item, the owned grid is 4 across with dimmed
+// empties; a card Buy moves its item to the owned grid for its label's price; each search bar narrows its grid; owned
+// squares show their tooltip at once by mouse and after the Tooltip Delay by keys; unaffordable Buys are skipped;
+// Inventory opens the Inventory screen.
 async function shopFlow(browser, query, tag) {
   const { page, errs } = await boot(browser, query);
   await page.evaluate(() => {
@@ -804,13 +808,19 @@ async function shopFlow(browser, query, tag) {
         .filter((p) => !p.classList.contains('hidden'))
         .map((p) => p.id),
       selected: [...document.querySelectorAll('.shop-tab.is-selected')].map((t) => t.dataset.tab),
-      // the action of the button the cursor's corners sit on ('' when it shows nowhere)
+      // what the cursor's corners sit on: the button's action, or the item's cursor id ('' when it shows nowhere)
       cursorOn: (() => {
         const corner = document.querySelector('#scr-gacha .hud-cursor');
-        const button = corner && corner.parentElement.querySelector('button');
-        return (button && button.dataset.action) || '';
+        const host = corner && corner.closest('[data-cursor-id]');
+        const button = host && host.querySelector('button');
+        return (button && button.dataset.action) || (host && host.dataset.cursorId) || '';
       })(),
     }));
+  const arrowKey = async (key) => {
+    await page.keyboard.press(key);
+    await sleep(80);
+    return (await shown()).cursorOn;
+  };
   const clickConfirm = async () => {
     await page.waitForFunction(() => G.UI.isOpen('scr-ask'), null, { timeout: 3000 });
     await page.click('#ask-ok');
@@ -847,7 +857,7 @@ async function shopFlow(browser, query, tag) {
     return (await shown()).cursorOn;
   };
   const onExitByMouse = (await mouseTo('.shop-exit .hud-team-button')).includes('shop-exit');
-  const offOnCard = (await mouseTo('#shop-items-grid .inv-cell')) === '';
+  const offOnCard = (await mouseTo('.shop-card-icon')) === '';
   const offOnTab = (await mouseTo('.shop-tab[data-tab="trs"]')) === '';
   await page.keyboard.press('Shift');
   await sleep(100);
@@ -857,32 +867,138 @@ async function shopFlow(browser, query, tag) {
     tag + ': with the mouse the cursor is only on the item under it (gone over a card or tab); a key brings it back'
   );
 
-  // a team item: coins drop by the price the pane shows, the item is owned and leaves the list
-  await page.evaluate(() => {
-    G.DB.save.coins = G.Items.TEAM_ITEM_PRICE * 2;
-    G.DB.commit(true);
-  });
+  // 149c: the Team Items pane. Cards for sale plus owned items cover every team item; the owned grid is 4 across with
+  // dimmed empties filling whole rows
+  const itemsNow = () =>
+    page.evaluate(() => {
+      const save = G.DB.save,
+        teamItems = G.Items.LIST.filter((item) => item.tier === 'run');
+      const ownedSquares = [...document.querySelectorAll('.shop-owned-grid .hud-grid-slot')];
+      return {
+        coins: save.coins,
+        total: teamItems.length,
+        ownedInSave: teamItems.filter((item) => G.Items.unlocked(save, item.id)).length,
+        cards: [...document.querySelectorAll('.shop-card')].map((card) => ({
+          id: card.dataset.item,
+          name: card.querySelector('.shop-card-name').textContent.trim(),
+          label: card.querySelector('button').textContent.trim(),
+          disabled: card.querySelector('button').disabled,
+        })),
+        owned: ownedSquares
+          .filter((square) => square.dataset.cursorId)
+          .map((square) => G.Items.BY[square.dataset.cursorId.slice(4)].name),
+        dimmed: ownedSquares.filter((square) => square.classList.contains('is-locked')).length,
+        squares: ownedSquares.length,
+        columns: getComputedStyle(document.querySelector('.shop-owned-grid')).gridTemplateColumns.split(' ').length,
+      };
+    });
+  const setSaveItems = (fields) =>
+    page.evaluate((values) => {
+      Object.assign(G.DB.save, values);
+      G.DB.commit(true);
+    }, fields);
+  await setSaveItems({ coins: 10000000 });
   await sleep(100);
-  const beforeItem = await page.evaluate(() => ({
-    coins: G.DB.save.coins,
-    id: G.Items.LIST.find((i) => i.tier === 'run' && !G.Items.unlocked(G.DB.save, i.id)).id,
-  }));
-  await page.click('#shop-buy');
-  await clickConfirm();
-  const afterItem = await page.evaluate(
-    (id) => ({
-      coins: G.DB.save.coins,
-      owned: G.Items.unlocked(G.DB.save, id),
-      listed: [...document.querySelectorAll('#shop-items-grid .inv-cell b')].some(
-        (b) => b.textContent === G.Items.BY[id].name
-      ),
-      price: G.Items.TEAM_ITEM_PRICE,
-    }),
-    beforeItem.id
-  );
+  let items = await itemsNow();
   ok(
-    afterItem.owned && !afterItem.listed && beforeItem.coins - afterItem.coins === afterItem.price,
-    tag + ': buying a team item spends its price, owns it and takes it off the list'
+    items.cards.length + items.owned.length === items.total &&
+      items.owned.length === items.ownedInSave &&
+      items.columns === 4 &&
+      items.squares % 4 === 0 &&
+      items.dimmed === items.squares - items.owned.length,
+    tag +
+      ': sale cards plus owned items cover every team item; the owned grid is 4 across, empties dimmed to whole rows'
+  );
+
+  // a card's Buy: the item leaves the sale grid for the owned grid, for the price its label showed
+  const bought = items.cards[0];
+  await page.click('.shop-card[data-item="' + bought.id + '"] button');
+  await clickConfirm();
+  const afterCardBuy = await itemsNow();
+  ok(
+    !afterCardBuy.cards.some((card) => card.id === bought.id) &&
+      afterCardBuy.owned.includes(bought.name) &&
+      items.coins - afterCardBuy.coins === Number(bought.label.replace(/\D/g, '')),
+    tag + ': a card Buy moves the item from the sale grid to the owned grid for the price its label shows'
+  );
+
+  // each search bar narrows its own grid by name; clearing it brings every item back
+  const searchRight = async (selector, listOf) => {
+    const before = listOf(await itemsNow());
+    const word = before[0].split(' ')[0].toLowerCase();
+    await page.fill(selector, word);
+    await sleep(100);
+    const narrowed = listOf(await itemsNow());
+    await page.fill(selector, '');
+    await page.keyboard.press('Escape'); // Esc while typing hands the keys back to the Shop (and does not close it)
+    await sleep(100);
+    const cleared = listOf(await itemsNow());
+    return (
+      narrowed.length > 0 &&
+      narrowed.every((name) => name.toLowerCase().includes(word)) &&
+      before.filter((name) => name.toLowerCase().includes(word)).length === narrowed.length &&
+      cleared.length === before.length
+    );
+  };
+  const saleSearch = await searchRight('.shop-sale-search', (view) => view.cards.map((card) => card.name));
+  const ownedSearch = await searchRight('.shop-owned-search', (view) => view.owned);
+  const stillOpen = await page.evaluate(() => G.UI.isOpen('scr-gacha') && !document.activeElement.closest('input'));
+  ok(
+    saleSearch && ownedSearch && stillOpen,
+    tag + ': each search bar narrows its own grid by name, and clearing it restores it'
+  );
+
+  // the mouse over an owned square shows its tooltip at once
+  await mouseTo('.shop-owned-grid [data-cursor-id]');
+  const hoverTip = await page.evaluate(() => {
+    const square = document.querySelector('.shop-owned-grid [data-cursor-id]'),
+      tip = document.querySelector('.hud-tip');
+    return !!tip && tip.textContent.includes(G.Items.BY[square.dataset.cursorId.slice(4)].name);
+  });
+  ok(hoverTip, tag + ': the mouse over an owned square shows its tooltip naming the item');
+
+  // too poor: every card Buy is disabled, its label still shows the price, and the arrows never land on one; by keys,
+  // resting on an owned square shows its tooltip only after the Tooltip Delay setting (1 s)
+  await page.mouse.move(5, 5);
+  await setSaveItems({ coins: 0 });
+  await page.evaluate(() => G.Settings.set('cursorTooltipDelay', 1));
+  await page.keyboard.press('Shift');
+  await sleep(100);
+  items = await itemsNow();
+  const visits = [];
+  for (const key of [
+    'ArrowRight',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowLeft',
+    'ArrowLeft',
+    'ArrowUp',
+    'ArrowLeft',
+    'ArrowLeft',
+  ])
+    visits.push(await arrowKey(key));
+  ok(
+    items.cards.every((card) => card.disabled && Number(card.label.replace(/\D/g, '')) > 0) &&
+      !visits.some((id) => id.startsWith('sale-')) &&
+      visits.some((id) => id.startsWith('own-')) &&
+      visits.some((id) => id === 'shop-inventory' || id === 'shop-exit'),
+    tag +
+      ': unaffordable card Buys keep their price, are disabled and the arrows skip them (' +
+      visits.join(' > ') +
+      ')'
+  );
+  const tipShown = () => page.evaluate(() => !!document.querySelector('.hud-tip'));
+  if (!(await shown()).cursorOn.startsWith('own-')) await arrowKey('ArrowRight');
+  const restingOn = (await shown()).cursorOn;
+  const tipEarly = await tipShown();
+  await sleep(1300);
+  const tipLate = await page.evaluate((id) => {
+    const tip = document.querySelector('.hud-tip');
+    return !!tip && tip.textContent.includes(G.Items.BY[id.slice(4)].name);
+  }, restingOn);
+  ok(
+    restingOn.startsWith('own-') && !tipEarly && tipLate,
+    tag + ': by keys an owned square shows its tooltip only after the Tooltip Delay (1 s)'
   );
 
   // 149b: the Character Upgrades pocket cards, read from the drawn page and the save
@@ -944,11 +1060,7 @@ async function shopFlow(browser, query, tag) {
   // keys: the arrows step Berry Buy, Team Items Buy, Exit (no wrap); Enter on a Buy asks first
   await page.keyboard.press('Shift');
   await sleep(50);
-  const arrow = async (key) => {
-    await page.keyboard.press(key);
-    await sleep(80);
-    return (await shown()).cursorOn;
-  };
+  const arrow = arrowKey;
   const arrowWalk = [];
   for (const key of ['ArrowRight', 'ArrowLeft', 'ArrowLeft', 'ArrowLeft', 'ArrowRight', 'ArrowDown'])
     arrowWalk.push(await arrow(key));
@@ -1016,6 +1128,17 @@ async function shopFlow(browser, query, tag) {
   await sleep(200);
   now = await shown();
   ok(!now.shop && now.menu, tag + ': Esc leaves the Shop for the Main Menu');
+  await page.click('#scr-menu [data-go="gacha"]');
+  await sleep(200);
+  await page.click('.shop-tab[data-tab="items"]');
+  await sleep(100);
+  await page.click('.shop-inventory button');
+  await sleep(200);
+  const inventoryOpen = await page.evaluate(() => ({
+    inventory: G.UI.isOpen('scr-inventory'),
+    shop: G.UI.isOpen('scr-gacha'),
+  }));
+  ok(inventoryOpen.inventory && !inventoryOpen.shop, tag + ': Inventory leaves the Shop for the Inventory screen');
   ok(
     errs.length === 0,
     tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')

@@ -157,3 +157,74 @@ Opening agreed by Jess 2026-11-17 ("agreed, build"), defaults Q1 to Q4 taken.
 | Tests | smoke-ui Shop pass: 15 checks (grids match the save, a Buy adds one slot for its label's price, arrows, Enter asks, Full, unaffordable); smoke-berry-slots reads the pocket |
 
 Next: 149c Team Items.
+
+**149b signed off (Jess 2026-11-17, feel test good).**
+
+## Draft opening for 149c (Team Items), for Jess to agree
+Source: assets/excalidraw/Shop-Team-Items.svg. Today: 25 team items, one price (100,000), descriptions up to 85 characters.
+
+```mermaid
+flowchart LR
+  subgraph PANE[Team Items pane]
+    direction LR
+    subgraph SALE[For sale, left]
+      S1[Search bar: filters by name] --> G1[Scrollable 3-column grid of item cards<br/>rim #29ceff thin, body #303030<br/>icon, divider, name #8cfff7, description white<br/>Buy N inside the card]
+    end
+    subgraph OWN[Owned, right: the Inventory Panel]
+      S2[Search bar: filters by name] --> G2[Scrollable 4-wide square grid<br/>rim #29ceff, body #303030<br/>owned items lit, empties dimmed<br/>hover tooltip: name and description]
+    end
+    BTN[Inventory and Exit buttons, under the owned panel]
+  end
+  G1 -- Buy, asks first --> G2
+  BTN -- Inventory --> INV[Inventory screen<br/>background stays dimmed]
+```
+
+- **Goal:** the Team Items tab looks like the mockup. A searchable grid of item cards for sale, each with its own Buy, sits beside
+  a searchable panel of the items you own, with Inventory and Exit buttons. Prices, unlocks and the save stay the same.
+- **Done when:**
+  - Every unowned team item has one card: icon, name, description, and Buy with the price.
+  - Buy asks first, spends the price, and moves the item from the sale grid to the owned panel.
+  - A Buy you cannot afford shows white text at 45%, cannot be pressed, and never takes the cursor.
+  - Each search bar narrows its own grid by name as you type.
+  - Hovering an owned square shows its name and description in the shared tooltip layer.
+  - Inventory opens the Inventory screen with the background still dimmed. Exit returns to the Main Menu.
+  - The cursor reaches every pressable Buy, Inventory and Exit by keys or mouse. The old list and detail column are gone.
+- **End-goal test:** smoke-ui's Shop pass grows. It checks these relations:
+  - Sale cards plus lit owned squares equal the number of team items.
+  - A Buy takes the item from the sale grid to the owned grid, and coins fall by the price its label showed.
+  - Typing in a search bar leaves only cards whose names contain the text, and clearing it brings them all back.
+  - At 0 coins every Buy is disabled and the arrows skip them.
+  - Hovering an owned square shows a tooltip naming that item.
+  - Inventory leaves the Shop for the Inventory screen.
+
+| Open question | My default |
+|---|---|
+| Q1 How many squares does the owned grid have? | One per team item in the game (25): owned items first, the rest dimmed |
+| Q2 How do the arrows move in the card grid? | Up, down, left and right across the pressable Buys; Right from the last column goes to the owned side's Inventory and Exit |
+| Q3 Does an owned square take the cursor? | No, mouse hover only (tooltip). Owned items have nothing to press |
+| Q4 What does the sale grid say when you own everything? | "You own every team item." |
+| Q5 The tooltip's pin icon (Hover Tooltip mockup) | Not in 149c; it belongs to the later UI unification (#126) |
+
+**149c opening agreed (Jess 2026-11-17), with two changes:**
+- Q1: the owned grid is 4 across and holds owned items only, with dimmed empty squares filling out its visible rows. It
+  scrolls, since content updates will add many more team items than today's 25 (a test kit).
+- Q3: owned squares take the selection cursor. With the cursor (keys now, a controller later) an item's tooltip shows after
+  a delay, 1 s by default, set in the Settings menu, so keyboard and controller players still see tooltips. Mouse hover
+  stays instant. The delay is a new settings field; an old save without it reads as 1 s.
+- Test changes: sale cards plus owned items equal the number of team items. The arrows reach owned squares, and the cursor
+  resting on one shows its tooltip only after the set delay.
+
+**149c built 2026-11-17, Needs Playtest.**
+| Part | What |
+|---|---|
+| Sale side | search bar over a scrolling 3-column grid of 186 x 350 cards: thin #29ceff rim, #303030 body, icon, divider, name #8cfff7, description, Buy N (white at 45%, disabled and skipped when unaffordable) |
+| Owned panel | thin #29ceff rim, search bar over a scrolling 4-across ItemGrid, dimmed empties filling at least 5 rows; hover tooltip at once |
+| Buttons | Inventory beside Exit (this tab only) opens the Inventory screen over the still dimmed Main Menu |
+| Cursor | Buys you can press, owned squares, Inventory, Exit; an arrow goes to the nearest item that way and scrolls it into view (the 149b paths come out the same); resting on an owned square shows its tooltip after the Tooltip Delay |
+| Setting | Settings, Controls, Keyboard: Tooltip Delay 0.5 / 1 / 1.5 / 2 s (default 1). Decision 2026-11-17-cursor-tooltips-after-a-settable-delay |
+| Kit | ItemGrid gains columns and a per-slot overlay; new SearchBar (Enter or Esc lets go of the keys and goes no further) |
+| Gone | the old item list, detail column and their styles |
+| Tests | smoke-ui Shop pass now 21 checks (149c adds coverage, card Buy, both searches, hover tooltip, delayed cursor tooltip with unaffordable Buys skipped, Inventory) |
+
+Found while testing: Esc in a search box closed the whole Shop; the box now keeps its Enter and Esc to itself.
+Next: 149d Inventory screen.

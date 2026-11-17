@@ -3372,26 +3372,6 @@ a.btn {
   background: rgba(255, 210, 63, 0.14);
 }
 
-/* ---- Shop (was Gacha): the old Team Items and Team Upgrades panes; the window and rail are css/bw-shop.css (#149) ---- */
-.shop-items-main {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 14px;
-}
-.shop-price {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-weight: 700;
-  margin: 6px 0 10px;
-}
-@media (max-width: 820px) {
-  .shop-items-main {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* ---- In-game confirm dialog (G.UI.ask) ---- */
 #scr-ask {
   z-index: 62;

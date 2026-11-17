@@ -1922,5 +1922,5 @@ G.MenuUI = (() => {
     e.preventDefault();
   }
 
-  return { init, open, GEN_NAMES };
+  return { init, open, openInventory, GEN_NAMES };
 })();
