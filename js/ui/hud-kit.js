@@ -207,7 +207,7 @@ G.HudKit = (() => {
    * A button in the team menu's shape: rim ramps ({ light, base, dark }) at rest and focused, body colours, the label left
    * aligned as in the team menu. Never takes the page's keyboard focus (see keepPageFocus). artPixel: screen pixels per
    * art pixel (4 by default, the catch screen; the Main Menu Shop's Exit uses 3, #149a). disabled: the button cannot be
-   * pressed (the Shop's Buy you cannot afford, #149b); the screen dims it and keeps its cursor off it.
+   * pressed at all; the screen dims it and keeps its cursor off it (a Buy that refuses is not disabled, #151).
    */
   function TeamButton({
     id,

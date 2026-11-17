@@ -17,7 +17,7 @@
 //          the slot (what a real double click needs) and a double click throws; the run plays on with the catch held; a quit
 //          places nothing; a number key throws from belt 1, and a team fall places the catch in the Pokebox.
 //   shop (#149a): the Main Menu Shop over the Main Menu, four rail tabs each with its own pane, a team item and a berry slot
-//          bought (price spent, owned), an unaffordable Buy cannot take focus, Q / E switch tabs, Enter on Exit, Esc; the
+//          bought (price spent, owned), a Buy that cannot buy refuses with a toast (#151), Q / E switch tabs, Enter on Exit, Esc; the
 //          cursor shows only under the mouse while it is in use and snaps back on a key.
 // Fails on any page or console error.
 const path = require('path'),
@@ -780,14 +780,15 @@ async function catchFlow(browser, query, tag) {
 // Onboarding F3 (2026-11-05): a new guest goes straight to the region pick (9 cards of 3 sprites), picks Johto and lands in the
 // menu with Chikorita leading Cyndaquil and Totodile; a save that already has a partner skips the screen on the next load.
 // #149a: the Main Menu Shop opens over the Main Menu with four rail tabs, each showing its own pane; a team item and a berry
-// slot bought there spend PokeCoins and read as owned; a Buy you cannot afford cannot take focus; Q and E switch tabs, the
+// slot bought there spend PokeCoins and read as owned; Q and E switch tabs, the
 // cursor sits on Exit (never a tab) and Enter presses it; Esc leaves too. Relations only: prices are read from the game.
 // #149b: the Character Upgrades pocket cards: each grid lights one square per slot owned and dims the rest up to the cap;
-// a Buy adds one slot for the price its label shows; Full and unaffordable Buys are disabled (the price still shown) and
-// the arrows skip them; the arrows step Berry Buy, Team Items Buy, Exit, and Enter on a Buy asks first.
+// a Buy adds one slot for the price its label shows; Full and unaffordable Buys (#151, #152) keep their rim, grey their
+// label, take the cursor, and Enter toasts why and buys nothing; the arrows step Berry Buy, Team Items Buy, Exit, and Enter on a Buy asks first.
 // #149c: the Team Items pane: sale cards plus owned items cover every team item, the owned grid is 4 across with dimmed
 // empties; a card Buy moves its item to the owned grid for its label's price; each search bar narrows its grid; owned
-// squares show their tooltip at once by mouse and after the Tooltip Delay by keys; unaffordable Buys are skipped;
+// squares show their tooltip at once by mouse and after the Tooltip Delay by keys; unaffordable Buys take the cursor and
+// toast "Unable to Afford" by Enter or a click (#151);
 // Inventory opens the Inventory screen. Feel-test fixes: cursor corners unclipped, movement keys, whole cards scrolled
 // into view with the pane still, the sale grid level with the buttons' bottom.
 async function shopFlow(browser, query, tag) {
@@ -894,6 +895,10 @@ async function shopFlow(browser, query, tag) {
           name: card.querySelector('.shop-card-name').textContent.trim(),
           label: card.querySelector('button').textContent.trim(),
           disabled: card.querySelector('button').disabled,
+          // #151 / #152: a Buy that refuses keeps its rim (no dimming) and greys only its label
+          refused: card.querySelector('.shop-button').classList.contains('refused'),
+          labelGreyed: getComputedStyle(card.querySelector('.hud-team-button-label')).color.includes('0.45'),
+          opacity: Number(getComputedStyle(card.querySelector('button')).opacity),
         })),
         owned: ownedSquares
           .filter((square) => square.dataset.cursorId)
@@ -968,8 +973,8 @@ async function shopFlow(browser, query, tag) {
   });
   ok(hoverTip, tag + ': the mouse over an owned square shows its tooltip naming the item');
 
-  // too poor: every card Buy is disabled, its label still shows the price, and the arrows never land on one; by keys,
-  // resting on an owned square shows its tooltip only after the Tooltip Delay setting (1 s)
+  // too poor (#151, #152): every card Buy keeps its price and its rim with a greyed label, is not disabled, and the arrows
+  // land on them; by keys, resting on an owned square shows its tooltip only after the Tooltip Delay setting (1 s)
   await page.mouse.move(5, 5);
   await setSaveItems({ coins: 0 });
   await page.evaluate(() => G.Settings.set('cursorTooltipDelay', 1));
@@ -988,13 +993,25 @@ async function shopFlow(browser, query, tag) {
     'ArrowDown',
   ])
     visits.push(await arrowKey(key));
+  // the cards now take the cursor (#151): step right out of them past Inventory to Exit, then up and into the owned grid
+  for (let step = 0; step < 6 && visits[visits.length - 1] !== 'shop-exit'; step++)
+    visits.push(await arrowKey('ArrowRight'));
+  visits.push(await arrowKey('ArrowUp')); // the owned panel's search bar
+  visits.push(await arrowKey('ArrowDown')); // its first square
   ok(
-    items.cards.every((card) => card.disabled && Number(card.label.replace(/\D/g, '')) > 0) &&
-      !visits.some((id) => id.startsWith('sale-')) &&
+    items.cards.every(
+      (card) =>
+        !card.disabled &&
+        card.refused &&
+        card.labelGreyed &&
+        card.opacity === 1 &&
+        Number(card.label.replace(/\D/g, '')) > 0
+    ) &&
+      visits.some((id) => id.startsWith('sale-')) &&
       visits.some((id) => id.startsWith('own-')) &&
       visits.some((id) => id === 'shop-inventory' || id === 'shop-exit'),
     tag +
-      ': unaffordable card Buys keep their price, are disabled and the arrows skip them (' +
+      ': unaffordable card Buys keep their price and rim, grey their label, and the arrows reach them (' +
       visits.join(' > ') +
       ')'
   );
@@ -1028,6 +1045,46 @@ async function shopFlow(browser, query, tag) {
     );
   });
   ok(cornersInside, tag + ': the cursor on an owned square shows all four corners inside its scroll box');
+
+  const ownedBeforeRefusal = (await shown()).cursorOn;
+  // too poor (#151): Enter and a click on a card's Buy both toast "Unable to Afford"; no dialog asks, nothing is spent
+  const cardRefusal = async (pressIt) => {
+    await page.evaluate(() => {
+      const toast = document.querySelector('.toast');
+      if (toast) toast.textContent = '';
+    });
+    await pressIt();
+    await sleep(150);
+    const result = await page.evaluate(() => ({
+      toast: (document.querySelector('.toast') || { textContent: '' }).textContent.trim(),
+      asked: G.UI.isOpen('scr-ask'),
+    }));
+    if (result.asked) await page.click('#ask-no');
+    return { ...result, after: await itemsNow() };
+  };
+  let cardFocus = ownedBeforeRefusal;
+  for (let step = 0; step < 4 && !cardFocus.startsWith('sale-'); step++) cardFocus = await arrowKey('ArrowLeft');
+  const cardByEnter = await cardRefusal(() => page.keyboard.press('Enter'));
+  const cardByClick = await cardRefusal(() => page.click('[data-cursor-id="' + cardFocus + '"] button'));
+  ok(
+    cardFocus.startsWith('sale-') &&
+      [cardByEnter, cardByClick].every(
+        (press) =>
+          press.toast === 'Unable to Afford' &&
+          !press.asked &&
+          press.after.coins === 0 &&
+          press.after.ownedInSave === items.ownedInSave
+      ),
+    tag +
+      ': Enter or a click on an unaffordable card Buy toasts "Unable to Afford", asks nothing and spends nothing (' +
+      [cardFocus, cardByEnter.toast, cardByClick.toast].join(' / ') +
+      ')'
+  );
+  // back on the owned square the cursor was on, by keys, for the checks below
+  await mouseTo('[data-cursor-id="' + ownedBeforeRefusal + '"]');
+  await page.mouse.move(5, 5);
+  await page.keyboard.press('Shift');
+  await sleep(80);
   await setSaveItems({ coins: 10000000 });
   await sleep(100);
   const moveKeys = await page.evaluate(() =>
@@ -1195,6 +1252,10 @@ async function shopFlow(browser, query, tag) {
           total: squares.length,
           label: button ? button.textContent.trim() : '',
           disabled: !button || button.disabled,
+          refused: !!button && button.closest('.shop-button').classList.contains('refused'),
+          labelGreyed:
+            !!button && getComputedStyle(button.querySelector('.hud-team-button-label')).color.includes('0.45'),
+          opacity: button ? Number(getComputedStyle(button).opacity) : 0,
         };
       };
       const save = G.DB.save;
@@ -1206,6 +1267,22 @@ async function shopFlow(browser, query, tag) {
     });
   const POCKET_KEYS = ['berry', 'item'];
   const priceOn = (label) => Number(label.replace(/\D/g, ''));
+  // Enter on the item under the cursor, for a Buy that should refuse: the toast it shows, whether a dialog asked, and
+  // the pockets afterwards (the toast is cleared first, so an older one cannot count)
+  const refusedEnter = async () => {
+    await page.evaluate(() => {
+      const toast = document.querySelector('.toast');
+      if (toast) toast.textContent = '';
+    });
+    await page.keyboard.press('Enter');
+    await sleep(150);
+    const result = await page.evaluate(() => ({
+      toast: (document.querySelector('.toast') || { textContent: '' }).textContent.trim(),
+      asked: G.UI.isOpen('scr-ask'),
+    }));
+    if (result.asked) await page.click('#ask-no');
+    return { ...result, after: await pocketsNow() };
+  };
   const gridsMatch = (pockets) =>
     POCKET_KEYS.every((key) => pockets[key].lit === pockets[key].owned && pockets[key].total === pockets[key].max);
   const setSave = (fields) =>
@@ -1259,30 +1336,58 @@ async function shopFlow(browser, query, tag) {
     tag + ': Enter on a Buy asks first; No spends nothing'
   );
 
-  // a full pocket reads Full and cannot be pressed; the arrows skip it
+  // a full pocket reads Full, greys its label and takes the cursor; Enter shows "All belt slots are full." and buys
+  // nothing (#151, Jess 2026-11-17)
   await setSave({ berrySlots: 99 });
   await sleep(100);
   pockets = await pocketsNow();
-  const skipsFull = (await arrow('ArrowLeft')) === 'buy-item' && (await arrow('ArrowLeft')) === 'buy-item';
+  const reachesFull = (await arrow('ArrowLeft')) === 'buy-berry';
+  const fullPress = await refusedEnter();
   ok(
-    pockets.berry.owned === pockets.berry.max && pockets.berry.label === 'Full' && pockets.berry.disabled && skipsFull,
-    tag + ': a full pocket reads Full, is disabled, and the arrows skip it'
+    pockets.berry.owned === pockets.berry.max &&
+      pockets.berry.label === 'Full' &&
+      pockets.berry.refused &&
+      pockets.berry.labelGreyed &&
+      !pockets.berry.disabled &&
+      reachesFull &&
+      fullPress.toast === 'All belt slots are full.' &&
+      !fullPress.asked &&
+      fullPress.after.berry.owned === pockets.berry.owned,
+    tag + ': a full pocket reads Full, takes the cursor, and Enter toasts "All belt slots are full." and buys nothing'
   );
 
-  // too poor: both Buys disabled with their price still shown, cannot take focus, and the cursor stays on Exit
+  // too poor (#151, #152): both Buys keep their price and rim with a greyed label, take the cursor, and Enter toasts
+  // "Unable to Afford" and spends nothing
   await setSave({ berrySlots: 1, coins: 0 });
   await sleep(100);
   pockets = await pocketsNow();
-  const poor = await page.evaluate(() => {
-    const buttons = [...document.querySelectorAll('.shop-buy button')];
-    buttons.forEach((button) => button.focus());
-    return buttons.includes(document.activeElement);
-  });
-  const stuckOnExit = (await arrow('ArrowRight')) === 'shop-exit' && (await arrow('ArrowLeft')) === 'shop-exit';
+  const poorPresses = [];
+  for (const key of ['ArrowRight', 'ArrowLeft']) {
+    const landedOn = await arrow(key);
+    poorPresses.push({ landedOn, ...(await refusedEnter()) });
+  }
   ok(
-    POCKET_KEYS.every((key) => pockets[key].disabled && priceOn(pockets[key].label) > 0) && !poor && stuckOnExit,
-    tag + ': an unaffordable Buy shows its price, is disabled, cannot take focus, and the cursor stays on Exit'
+    POCKET_KEYS.every(
+      (key) =>
+        pockets[key].refused &&
+        pockets[key].labelGreyed &&
+        pockets[key].opacity === 1 &&
+        !pockets[key].disabled &&
+        priceOn(pockets[key].label) > 0
+    ) &&
+      poorPresses.map((press) => press.landedOn).join() === 'buy-item,buy-berry' &&
+      poorPresses.every(
+        (press) =>
+          press.toast === 'Unable to Afford' &&
+          !press.asked &&
+          press.after.coins === 0 &&
+          POCKET_KEYS.every((key) => press.after[key].owned === pockets[key].owned)
+      ),
+    tag +
+      ': an unaffordable Buy keeps its price and rim with a greyed label, takes the cursor, and Enter toasts ' +
+      '"Unable to Afford" and spends nothing'
   );
+  await arrow('ArrowDown'); // back to Exit for the tab keys below
 
   // keys: Q is the tab above (Character Upgrades to Pokeballs), E the one below; the tabs never take the cursor, which
   // sits on Exit, and Enter there leaves

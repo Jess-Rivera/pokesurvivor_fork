@@ -114,6 +114,9 @@ G.GachaUI = (() => {
   const INVENTORY_BUTTON = { artWidth: 64, gap: 16 }; // left of Exit on the Team Items tab
   INVENTORY_BUTTON.width = INVENTORY_BUTTON.artWidth * BUTTON.artPixel; // 192
   const OWNED_TIP_PLACE = { side: 'below' };
+  // what a Buy that cannot buy says when pressed (#151, decision 2026-11-17-unaffordable-buttons-take-the-cursor)
+  const UNAFFORDABLE = 'Unable to Afford',
+    POCKET_FULL = 'All belt slots are full.';
   const SALE_ID = 'sale-', // cursor ids: a card's Buy, an owned square, the two search bars
     OWNED_ID = 'own-',
     SALE_SEARCH = 'search-sale',
@@ -138,21 +141,18 @@ G.GachaUI = (() => {
     tipFor: (id) => (id.startsWith(OWNED_ID) ? itemTip(G.Items.BY[id.slice(OWNED_ID.length)]) : null),
     tipPlace: OWNED_TIP_PLACE,
   });
-  /** The items the cursor may sit on now: the shown tab's pressable Buys and owned squares, then Inventory and Exit. */
+  /**
+   * The items the cursor may sit on now: the shown tab's Buys (one you cannot afford, or a Full pocket's, too: it refuses
+   * when pressed, #151) and owned squares, then Inventory and Exit.
+   */
   function eligibleItems() {
     saveTick.value; // read again after a purchase or a coin change
-    if (tab.value === 'upgrades')
-      return [
-        ...pockets()
-          .filter((pocket) => pocket.canBuy)
-          .map((pocket) => pocket.id),
-        'exit',
-      ];
+    if (tab.value === 'upgrades') return [...pockets().map((pocket) => pocket.id), 'exit'];
     if (tab.value === 'items') {
       const view = teamItemsView();
       return [
         SALE_SEARCH,
-        ...(view.canAfford ? view.forSale.map((item) => SALE_ID + item.id) : []),
+        ...view.forSale.map((item) => SALE_ID + item.id),
         OWNED_SEARCH,
         ...view.owned.map((item) => OWNED_ID + item.id),
         'inventory',
@@ -216,7 +216,7 @@ G.GachaUI = (() => {
     if (at === SALE_SEARCH || at === OWNED_SEARCH) return cursor.elementOf(at).querySelector('input').focus(); // type; Enter or Esc gives the keys back
     if (at.startsWith(SALE_ID)) return buyItem(at.slice(SALE_ID.length));
     const pocket = pockets().find((entry) => entry.id === at);
-    if (pocket && pocket.canBuy) pocket.buy();
+    if (pocket) pocket.buy(); // a refusing Buy never gets here: the cursor's Enter refuses it (the kit)
   }
 
   /** Inventory (Team Items tab): the Inventory screen, over the still dimmed Main Menu. */
@@ -370,7 +370,7 @@ G.GachaUI = (() => {
                   item=${item}
                   buttonId=${SALE_ID + item.id}
                   buttonLabel=${'Buy ' + fmt(view.price)}
-                  disabled=${!view.canAfford}
+                  refusal=${view.canAfford ? null : UNAFFORDABLE}
                   onPress=${() => buyItem(item.id)}
                   area="sale"
                 />`
@@ -427,7 +427,7 @@ G.GachaUI = (() => {
     const r = G.Items.buyTeamItem(G.DB.save, id);
     if (!r.ok) {
       G.Audio.sfx('error');
-      G.UI.toast(r.error === 'poor' ? 'Not enough PokéCoins' : 'You cannot buy that');
+      G.UI.toast(r.error === 'poor' ? UNAFFORDABLE : 'You cannot buy that');
       refresh();
       return;
     }
@@ -438,7 +438,10 @@ G.GachaUI = (() => {
   }
 
   // ---------------- Character Upgrades tab: the Berry Pocket and the Team Items Pocket (149b) ----------------
-  /** Each pocket as the save has it now: slots owned of max, the next slot's price, whether its Buy can be pressed. */
+  /**
+   * Each pocket as the save has it now: slots owned of max, the next slot's price, and its Buy's refusal (null when it
+   * can buy; a Full pocket's line, or Unable to Afford, #151).
+   */
   function pockets() {
     const save = G.DB.save;
     if (!save) return [];
@@ -455,7 +458,7 @@ G.GachaUI = (() => {
         max,
         full,
         price,
-        canBuy: !full && save.coins >= price,
+        refusal: full ? POCKET_FULL : save.coins >= price ? null : UNAFFORDABLE,
         buy: () => buy(owned + 1),
       };
     };
@@ -523,7 +526,7 @@ G.GachaUI = (() => {
         id=${pocket.id}
         label=${pocket.full ? 'Full' : 'Buy ' + fmt(pocket.price)}
         artWidth=${POCKET.buyArtWidth}
-        disabled=${!pocket.canBuy}
+        refusal=${pocket.refusal}
         onPress=${pocket.buy}
         className="shop-buy"
         style=${{
@@ -553,7 +556,7 @@ G.GachaUI = (() => {
     const result = G.Grounds.buyBerrySlot(G.DB.save);
     if (!result.ok) {
       G.Audio.sfx('error');
-      G.UI.toast(result.error === 'poor' ? 'Not enough PokéCoins' : 'You cannot buy that');
+      G.UI.toast(result.error === 'poor' ? UNAFFORDABLE : 'You cannot buy that');
       refresh();
       return;
     }
@@ -574,7 +577,7 @@ G.GachaUI = (() => {
     const r = G.Items.buySlot(G.DB.save);
     if (!r.ok) {
       G.Audio.sfx('error');
-      G.UI.toast(r.error === 'poor' ? 'Not enough PokéCoins' : 'You cannot buy that');
+      G.UI.toast(r.error === 'poor' ? UNAFFORDABLE : 'You cannot buy that');
       refresh();
       return;
     }

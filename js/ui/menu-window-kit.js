@@ -189,8 +189,11 @@ G.MenuWindowKit = (() => {
         direction = directionOf(event);
       if (key === 'Escape') escape();
       else if (key === 'Enter') {
-        const at = cursorOn();
-        if (at) press(at);
+        const at = cursorOn(),
+          atElement = at && elementOf(at),
+          refusal = atElement && atElement.dataset.refusal;
+        if (refusal) refuse(refusal);
+        else if (at) press(at);
       } else if (extraKey) extraKey();
       else if (direction) stepFocus(direction[0], direction[1]);
       else return;
@@ -228,9 +231,17 @@ G.MenuWindowKit = (() => {
     return { cursorOn, cornersIf, hover, moveTo, elementOf, onKey, CursorTip };
   }
 
+  /** A press the button turns down (#151): the error sound and the refusal's toast; nothing else happens. */
+  function refuse(refusal) {
+    G.Audio.sfx('error');
+    G.UI.toast(refusal);
+  }
+
   /**
    * The team menu button at 3 px per art pixel in a box the cursor can sit on (its corners sit on this box). A disabled
-   * button never takes the cursor. style places the box; area puts it in a cursor area; action is the button's
+   * button never takes the cursor. refusal (#151, decision 2026-11-17-unaffordable-buttons-take-the-cursor): the toast a
+   * press shows instead of acting ("Unable to Afford", or a Full pocket's line); the button still takes the cursor, keeps
+   * its rim and greys its label. style places the box; area puts it in a cursor area; action is the button's
    * data-action (the cursor id by default).
    */
   function CursorButton({
@@ -240,6 +251,7 @@ G.MenuWindowKit = (() => {
     label,
     artWidth,
     disabled = false,
+    refusal = null,
     onPress,
     className,
     style,
@@ -247,9 +259,10 @@ G.MenuWindowKit = (() => {
   }) {
     const focused = cursor.cursorOn() === id;
     return html`<div
-      class=${'shop-button' + (className ? ' ' + className : '')}
+      class=${'shop-button' + (refusal ? ' refused' : '') + (className ? ' ' + className : '')}
       data-cursor-id=${id}
       data-cursor-area=${area}
+      data-refusal=${refusal || undefined}
       style=${{ ...style, width: px(artWidth * BUTTON.artPixel), height: px(BUTTON.height) }}
       onMouseEnter=${() => cursor.hover(disabled ? null : id)}
       onMouseLeave=${() => cursor.hover(null)}
@@ -263,7 +276,7 @@ G.MenuWindowKit = (() => {
         focusRim=${FOCUS_RIM}
         focused=${focused}
         disabled=${disabled}
-        onPress=${() => !disabled && onPress()}
+        onPress=${() => (refusal ? refuse(refusal) : !disabled && onPress())}
       />
       ${cursor.cornersIf(focused)}
     </div>`;
@@ -272,8 +285,9 @@ G.MenuWindowKit = (() => {
   /**
    * A team item card (149c): thin #29ceff rim, #303030 body, icon, divider, name, description, and one button at the
    * bottom (its id is the cursor's, in the given area). width: the Shop's 186 by default; the Inventory's are wider.
+   * refusal: as CursorButton's.
    */
-  function ItemCard({ cursor, item, buttonId, buttonLabel, disabled, onPress, area, width = CARD.width }) {
+  function ItemCard({ cursor, item, buttonId, buttonLabel, disabled, refusal, onPress, area, width = CARD.width }) {
     const inner = width - 2 * CARD_RIM;
     return html`<div
       class="shop-card"
@@ -306,6 +320,7 @@ G.MenuWindowKit = (() => {
         label=${buttonLabel}
         artWidth=${CARD.buttonArtWidth}
         disabled=${disabled}
+        refusal=${refusal}
         onPress=${onPress}
         className="shop-card-buy"
         area=${area}

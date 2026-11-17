@@ -110,7 +110,7 @@
   white-space: normal; /* wraps inside the card (the kit's .hud-text keeps one line) */
   line-height: 26px;
 }
-/* a Buy you cannot press (Full, or not enough PokeCoins): dimmed, the price still shown */
+/* a button that cannot be pressed at all: dimmed (a Buy that refuses is .refused below, #151) */
 .shop-button .hud-team-button[disabled] {
   opacity: 0.4;
   cursor: default;
@@ -194,10 +194,8 @@
   left: 14px;
   top: 14px;
 }
-/* a card's Buy you cannot afford (mockup): the rim stays, the label goes to white at 45% */
-.shop-card-buy .hud-team-button[disabled] {
-  opacity: 1;
-}
-.shop-card-buy .hud-team-button[disabled] .hud-team-button-label {
+/* a Buy that refuses (cannot afford, or a Full pocket; #151, #152): the rim stays, the label goes to white at 45%
+   (the Team Items mockup's look, now every Buy's) */
+.shop-button.refused .hud-team-button-label {
   color: rgba(255, 255, 255, 0.45);
 }

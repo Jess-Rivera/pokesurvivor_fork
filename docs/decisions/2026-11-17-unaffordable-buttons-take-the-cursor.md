@@ -5,6 +5,8 @@
 - Pressing it buys nothing and shows the toast "Unable to Afford" (today the only reason a buy fails).
 - This replaces the 149b and 149c rule that an unaffordable Buy is disabled and the cursor skips it.
 - An unaffordable pocket Buy (Character Upgrades) gets the Team Items look: normal rim, greyed label.
-- Not built yet: #151 (cursor and toast) and #152 (pocket look). Open on #151: a Full button stays skipped by default.
+- A Full pocket Buy follows the same path (Jess, same day): it takes the cursor, its label stays dimmed, and pressing
+  it shows "All belt slots are full." and buys nothing. Every "Not enough PokéCoins" toast becomes "Unable to Afford".
+- Built by #151 and #152 (rework/shop), plan: docs/ASCII Concept Maps/151-152 - Unaffordable Buttons Plan.md.
 
-Canonical: #151 and #152 until built; then js/ui/menu-window-kit.js CursorButton.
+Canonical: js/ui/menu-window-kit.js CursorButton (its refusal option).

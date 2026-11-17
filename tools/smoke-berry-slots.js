@@ -66,11 +66,15 @@ async function main() {
         total: squares.length,
         text: button.textContent.trim(),
         disabled: button.disabled,
+        refused: button.closest('.shop-button').classList.contains('refused'), // #151: refuses with a toast
       };
     });
   const before = await berryPocket();
   ok(before.lit === 1 && before.total === 4, 'the Berry Pocket lights 1 of its 4 squares');
-  ok(!before.disabled && before.text === 'Buy 9,000', 'its Buy offers slot 2 for 9,000 (' + before.text + ')');
+  ok(
+    !before.disabled && !before.refused && before.text === 'Buy 9,000',
+    'its Buy offers slot 2 for 9,000 (' + before.text + ')'
+  );
 
   // Cancel spends nothing
   await page.click('[data-action="buy-berry"]');
@@ -98,7 +102,10 @@ async function main() {
   );
   const after = await berryPocket();
   ok(after.lit === 2, 'the Berry Pocket lights 2 squares');
-  ok(after.text === 'Buy 23,000' && after.disabled, 'slot 3 is next but unaffordable at 1,000 (' + after.text + ')');
+  ok(
+    after.text === 'Buy 23,000' && after.refused,
+    'slot 3 is next but unaffordable (refuses) at 1,000 (' + after.text + ')'
+  );
 
   // The buy function's own rules
   const rules = await page.evaluate(() => {

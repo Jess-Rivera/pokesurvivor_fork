@@ -992,7 +992,7 @@ G.MenuUI = (() => {
     }
     if (!(s.coins >= price)) {
       G.Audio.sfx('error');
-      G.UI.toast('Not enough PokéCoins');
+      G.UI.toast('Unable to Afford');
       return;
     }
     const yes = await G.UI.ask(`Spend ${rosCoins(price)} PokéCoins on Box ${n}?`, {
@@ -1004,7 +1004,7 @@ G.MenuUI = (() => {
     const r = G.Copies.buyBox(s);
     if (!r.ok) {
       G.Audio.sfx('error');
-      G.UI.toast(r.error === 'poor' ? 'Not enough PokéCoins' : 'You have every box');
+      G.UI.toast(r.error === 'poor' ? 'Unable to Afford' : 'You have every box');
       rosRenderTabs();
       return;
     }
