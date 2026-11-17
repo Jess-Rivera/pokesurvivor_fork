@@ -6,8 +6,12 @@
  *           with "Buy <price>"; a locked Great or Ultra is dimmed with "Unlock <price>"; the other balls are dimmed
  *           and refuse with "Coming soon.".
  *   belts   the catch screen's three belts of six slots, sized up: bought belts (G.Catch.beltsBought) in the Poke Balls
- *           pocket colours holding the save's balls, best tier first; the rest locked, the next one with a Buy and its
- *           price under it (belts are bought in order).
+ *           pocket colours holding the save's balls slot for slot (G.Catch.slots); the rest locked, the next one with a
+ *           Buy and its price under it (belts are bought in order).
+ *   arrange #137b: every slot of a bought belt takes the cursor. A ball moves as in the in-run Inventory
+ *           (js/ui/pause-inventory.js): a click picks it up and a second click puts it down, a drag puts it down where
+ *           the pointer lets go; by keys Enter or Space picks up and puts down. Onto an empty slot it moves, onto a ball
+ *           the two swap (G.Catch.moveBall); its own slot, Esc, or anywhere else puts it back. Each move saves.
  *   buys    #137, every rule in G.Catch: a ball buy is instant (one ball; Shift, by click or key, buys up to 10); an
  *           unlock or a belt asks first (G.UI.ask) and a shift-click skips the question, as on the TMs tab. A Buy that
  *           cannot buy takes the cursor and refuses with its reason (#151). Prices: js/data/balls.js.
@@ -16,7 +20,7 @@ G.ShopBallsPane = (() => {
   const kitOverlay = G.HudOverlay,
     windowKit = G.MenuWindowKit;
   if (!kitOverlay || !kitOverlay.ready || !windowKit.ready || !G.BALL_CATALOG) return { ready: false };
-  const { html, Box, ScrollBox, BallSprite, FAINTED_RIM } = kitOverlay.kit;
+  const { html, signal, Box, ScrollBox, BallSprite, FAINTED_RIM } = kitOverlay.kit;
   const { BUTTON, CARD, CURSOR_ROOM, SCROLL_COLOURS, px, CursorButton, ItemCard } = windowKit;
 
   // ---------- sizes and places (pane pixels; the pane is 1005 x 616, down to the bottom of Exit) ----------
@@ -47,8 +51,10 @@ G.ShopBallsPane = (() => {
     done: 'Already bought.',
     none: 'You cannot buy that.',
   };
-  const BALL_ID = 'ball-', // cursor ids: a card's button, the next belt's Buy
-    BELT_ID = 'belt-';
+  const BALL_ID = 'ball-', // cursor ids: a card's button, the next belt's Buy, a belt slot (its place across the belts)
+    BELT_ID = 'belt-',
+    SLOT_ID = 'slot-';
+  const DRAG_START_DISTANCE = 6; // px the pointer moves before a press becomes a drag (as the in-run Inventory)
   const fmt = (n) => n.toLocaleString('en-US');
 
   // Shift on the press: by click or by key it buys up to SHIFT_BUY_COUNT balls (B6, B12); only a shift-click skips an
@@ -73,16 +79,145 @@ G.ShopBallsPane = (() => {
 
   /** The next belt's number, or null when every belt is bought. */
   const nextBelt = () => (G.Catch.nextBeltPrice() ? G.Catch.beltsBought() + 1 : null);
-  /** What the cursor may reach on this tab, in reading order: every card's button, then the next belt's Buy. */
+  /** What the cursor may reach on this tab, in reading order: every card's button, every slot of the bought belts,
+   *  then the next belt's Buy. */
   function cursorItems() {
     const belt = nextBelt();
-    return [...G.BALL_CATALOG.map((ball) => BALL_ID + ball.id), ...(belt ? [BELT_ID + belt] : [])];
+    return [
+      ...G.BALL_CATALOG.map((ball) => BALL_ID + ball.id),
+      ...G.Catch.slots().map((_, position) => SLOT_ID + position),
+      ...(belt ? [BELT_ID + belt] : []),
+    ];
   }
 
-  /** Every bought slot's ball id or null, best tier first (the catch screen's order), across the bought belts. */
-  function beltBalls() {
-    const balls = G.Catch.ballsBestFirst();
-    return Array.from({ length: G.Catch.beltsBought() * BELT.slots }, (_, slot) => balls[slot] || null);
+  // ---------- arranging the balls (#137b) ----------
+  // carried: { from (slot position), ball (id), mode: 'click' | 'drag' | 'keys' } while a ball is picked up
+  const carried = signal(null),
+    ghostAt = signal({ x: 0, y: 0 }); // the pointer in pane pixels, for the carried ball
+  let pressed = null, // { from, ball, x, y }: a press on a ball, not yet a click or a drag
+    swallowNextClick = false;
+
+  /** A slot position's place in the pane: its belt (0 to 2), its row (0 to 5) and its centre. */
+  function slotPlace(position) {
+    const belt = Math.floor(position / BELT.slots),
+      row = position % BELT.slots;
+    return {
+      belt,
+      row,
+      x: BELT.left + belt * BELT.step + SLOT.left + SLOT.size / 2,
+      y: CURSOR_ROOM + SLOT.top + row * (SLOT.size + SLOT.gap) + SLOT.size / 2,
+    };
+  }
+  /** The slot position under a page point, or null. */
+  function slotUnder(clientX, clientY) {
+    const element = document.elementFromPoint(clientX, clientY),
+      slot = element && element.closest('[data-ball-slot]');
+    return slot ? +slot.dataset.ballSlot : null;
+  }
+  /** A page point in pane pixels (the Shop's stage is scaled to fit). */
+  function panePoint(clientX, clientY) {
+    const pane = document.querySelector('.shop-balls-pane');
+    if (!pane || !pane.offsetWidth) return { x: 0, y: 0 };
+    const rect = pane.getBoundingClientRect(),
+      scale = rect.width / pane.offsetWidth;
+    return { x: (clientX - rect.left) / scale, y: (clientY - rect.top) / scale };
+  }
+
+  function pickUp(from, mode) {
+    const ball = G.Catch.slots()[from];
+    if (!ball) return;
+    carried.value = { from, ball, mode };
+    G.Audio.sfx('select');
+  }
+  /** Puts the carried ball down on slot to: a move or a swap, saved. Its own slot or no slot puts it back. */
+  function putDown(to) {
+    const holding = carried.value;
+    carried.value = null;
+    if (!holding || to == null || to === holding.from) return;
+    if (!G.Catch.moveBall(G.DB.save, holding.from, to).ok) return;
+    G.Audio.sfx('confirm');
+    G.DB.commit(true);
+  }
+  /** Esc: a carried ball goes back. True when there was one (the Shop then stays open). */
+  function escape() {
+    if (!carried.value) return false;
+    carried.value = null;
+    G.Audio.sfx('back');
+    return true;
+  }
+  /** The Shop opened: nothing half picked up. */
+  function reset() {
+    carried.value = null;
+    pressed = null;
+  }
+
+  function onSlotPointerDown(event, position) {
+    if (event.button !== 0) return;
+    const holding = carried.value;
+    if (holding && holding.mode !== 'drag') return putDown(position); // the second click of a click move
+    const ball = G.Catch.slots()[position];
+    if (ball) pressed = { from: position, x: event.clientX, y: event.clientY };
+  }
+  document.addEventListener('pointermove', (event) => {
+    if (pressed && !carried.value) {
+      const distance = Math.hypot(event.clientX - pressed.x, event.clientY - pressed.y);
+      if (distance >= DRAG_START_DISTANCE) {
+        pickUp(pressed.from, 'drag');
+        pressed = null;
+      }
+    }
+    if (carried.value && carried.value.mode !== 'keys') ghostAt.value = panePoint(event.clientX, event.clientY);
+  });
+  document.addEventListener('pointerup', (event) => {
+    const holding = carried.value;
+    if (holding && holding.mode === 'drag') {
+      swallowNextClick = true;
+      putDown(slotUnder(event.clientX, event.clientY));
+    } else if (pressed) {
+      pickUp(pressed.from, 'click'); // a click: the ball is picked up until the next press
+      ghostAt.value = panePoint(event.clientX, event.clientY);
+    }
+    pressed = null;
+  });
+  // a press anywhere but a slot while a ball is carried by click puts it back
+  document.addEventListener(
+    'pointerdown',
+    (event) => {
+      const holding = carried.value;
+      if (holding && holding.mode !== 'drag' && !event.target.closest('[data-ball-slot]')) carried.value = null;
+    },
+    true
+  );
+  document.addEventListener(
+    'click',
+    (event) => {
+      if (!swallowNextClick) return;
+      swallowNextClick = false;
+      event.stopPropagation();
+      event.preventDefault();
+    },
+    true
+  );
+
+  /** Enter or Space on a slot: picks its ball up, or puts the carried ball down there. */
+  function pressSlot(position) {
+    if (carried.value) putDown(position);
+    else pickUp(position, 'keys');
+  }
+
+  /** The carried ball: under the pointer, or by keys over the slot the cursor is on. */
+  function CarryGhost({ cursor }) {
+    const holding = carried.value;
+    if (!holding) return null;
+    let at = ghostAt.value;
+    if (holding.mode === 'keys') {
+      const on = cursor.cursorOn();
+      if (!on || !on.startsWith(SLOT_ID)) return null;
+      at = slotPlace(+on.slice(SLOT_ID.length));
+    }
+    return html`<div class="shop-carry-ghost" style=${{ left: px(at.x), top: px(at.y) }}>
+      <${BallSprite} ball=${holding.ball} frame=${G.BALL_SPRITES.animations.front[0]} scale=${SLOT.ballScale} />
+    </div>`;
   }
 
   /** "Unable to Afford" when the save's coins are under price, else null. */
@@ -117,8 +252,12 @@ G.ShopBallsPane = (() => {
 
   // ---------- buying (every rule is G.Catch's; a buy saves, and the save redraws the Shop) ----------
 
-  /** Enter or a click on one of this tab's buttons; false when the id is not this tab's (Exit). */
+  /** Enter or a click on one of this tab's buttons or slots; false when the id is not this tab's (Exit). */
   function press(id) {
+    if (id.startsWith(SLOT_ID)) {
+      pressSlot(+id.slice(SLOT_ID.length));
+      return true;
+    }
     if (id.startsWith(BALL_ID)) {
       const ballId = id.slice(BALL_ID.length);
       if (G.Catch.isUnlocked(ballId)) buyBalls(ballId);
@@ -179,9 +318,11 @@ G.ShopBallsPane = (() => {
     settle(G.Catch.buyBelt(G.DB.save), (result) => `Belt ${result.belts} bought: six more ball slots.`);
   }
 
-  function Belt({ number, balls }) {
+  function Belt({ cursor, number, balls }) {
     const locked = number > G.Catch.beltsBought(),
-      firstSlot = (number - 1) * BELT.slots;
+      firstSlot = (number - 1) * BELT.slots,
+      holding = carried.value,
+      at = cursor.cursorOn();
     return html`<${Box}
       left=${BELT.left + (number - 1) * BELT.step}
       top=${CURSOR_ROOM}
@@ -191,19 +332,29 @@ G.ShopBallsPane = (() => {
       className=${'catch-belt shop-belt' + (locked ? ' is-locked' : '')}
     >
       ${Array.from({ length: BELT.slots }, (_, slot) => {
-        const ball = locked ? null : balls[firstSlot + slot];
+        const position = firstSlot + slot,
+          ball = locked ? null : balls[position],
+          id = SLOT_ID + position,
+          lifted = holding && holding.from === position;
         return html`<div
           key=${slot}
-          class=${'catch-slot' + (ball ? ' is-full' : '')}
+          class=${'catch-slot' + (ball ? ' is-full' : '') + (lifted ? ' is-lifted' : '')}
           data-belt=${number}
+          data-ball-slot=${locked ? undefined : position}
+          data-cursor-id=${locked ? undefined : id}
+          data-cursor-area=${'belt-' + number}
           style=${{
             left: px(SLOT.left),
             top: px(SLOT.top + slot * (SLOT.size + SLOT.gap)),
             width: px(SLOT.size),
             height: px(SLOT.size),
           }}
+          onMouseEnter=${() => !locked && cursor.hover(id)}
+          onMouseLeave=${() => cursor.hover(null)}
+          onPointerDown=${(event) => !locked && onSlotPointerDown(event, position)}
         >
           ${ball ? html`<${BallSprite} ball=${ball} frame=${G.BALL_SPRITES.animations.front[0]} scale=${SLOT.ballScale} />` : null}
+          ${locked ? null : cursor.cornersIf(at === id)}
         </div>`;
       })}
     </${Box}>`;
@@ -212,7 +363,7 @@ G.ShopBallsPane = (() => {
   /** The tab: cards on the left, the belts and their Buys on the right. openCount sends the cards back to the top. */
   function Pane({ cursor, openCount }) {
     if (!G.DB.save) return null;
-    const balls = beltBalls(),
+    const balls = G.Catch.slots(),
       belt = nextBelt();
     return html`<div class="shop-balls-pane">
       <div
@@ -237,7 +388,10 @@ G.ShopBallsPane = (() => {
           </div>
         </${ScrollBox}>
       </div>
-      ${Array.from({ length: BELT.count }, (_, index) => html`<${Belt} key=${index} number=${index + 1} balls=${balls} />`)}
+      ${Array.from(
+        { length: BELT.count },
+        (_, index) => html`<${Belt} key=${index} cursor=${cursor} number=${index + 1} balls=${balls} />`
+      )}
       ${
         belt
           ? html`<${CursorButton}
@@ -256,8 +410,9 @@ G.ShopBallsPane = (() => {
             />`
           : null
       }
+      <${CarryGhost} cursor=${cursor} />
     </div>`;
   }
 
-  return { ready: true, Pane, cursorItems, press };
+  return { ready: true, Pane, cursorItems, press, escape, reset };
 })();

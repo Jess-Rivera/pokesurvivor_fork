@@ -134,7 +134,7 @@ G.DB = (() => {
       teamLoadout: [], // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
       box: [], // every Pokemon owned, as compact copies (only G.Copies reads them)
       boxCount: 2, // boxes this player has
-      belt: { size: 6, poke: 6, great: 0, ultra: 0, unlocked: [] }, // #136, #137: the ball belt (G.Catch reads and fixes it)
+      belt: { size: 6, slots: Array(6).fill('poke'), unlocked: [] }, // #136, #137b: the ball belt, slot by slot (G.Catch)
       trainerId: G.Copies ? G.Copies.uuid() : null, // this save's original trainer id, never changes
     };
     if (G.Items) G.Items.grantStarters(save); // Lucky Egg + Amulet Coin

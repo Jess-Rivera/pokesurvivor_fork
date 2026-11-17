@@ -5,8 +5,9 @@ Last updated: 2026-11-17 (fifth session), Claude Code (home). Branch: feature/12
 No branch rules file.
 
 ## START HERE (next session, either tool)
-0. #137 (Shop balls) built, in Needs Playtest. Feel test: Shop, Pokeballs tab: buy a Poke Ball (Enter, click), Shift
-   buys 10, unlock Great, buy Belt 2; then a run's catch throws from belt 2. Close it on Jess's OK.
+0. #137 (Shop balls) and its feel-test fix 137b (each ball keeps a slot; arrange by click, drag, Enter / Space) built,
+   in Needs Playtest. Feel test: buys fill the first empty slot; move and swap balls by keys and mouse; a run's catch
+   shows your layout and a throw leaves its slot empty. Close it on Jess's OK.
 1. Next on #128: #138 (Lost Pokemon pool), then #146.
 2. Ready with nothing owed: #145 (small tooltip bug). #150 blocked on #97.
 
@@ -14,6 +15,7 @@ No branch rules file.
 - #153 and #147 closed. #137: balls, Great and Ultra unlocks and belts bought with PokeCoins on the Pokeballs tab and
   kept between runs; the free run-start refill is gone; the catch screen throws from every bought belt (decision
   2026-11-17-137-balls-bought-and-kept-no-refill; plan and as-built: docs/ASCII Concept Maps/137 - Shop Balls Plan.md).
+  137b: save.belt is now a slot layout (old saves convert on load); decision 2026-11-17-137b-ball-slots-kept-and-arranged.
 
 ## Landed earlier (2026-11-17, fourth)
 - #154 closed: js/ui/menu.js split into six files (menu.js Main Menu and region select; menu-dex-grid.js,

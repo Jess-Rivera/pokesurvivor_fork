@@ -594,7 +594,7 @@ async function catchFlow(browser, query, tag) {
   });
   // belt: the save's belt for the run (#137: nothing refills it, so each run here sets its own)
   const run = async (belt = { size: 6, poke: 6 }) => {
-    await page.evaluate((fields) => Object.assign(G.DB.save.belt, { great: 0, ultra: 0 }, fields), belt);
+    await page.evaluate((fields) => (G.DB.save.belt = { unlocked: [], ...fields }), belt);
     await page.evaluate(() => G.Game.startRun());
     await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 20000 });
   };
@@ -823,8 +823,15 @@ async function catchFlow(browser, query, tag) {
   await page
     .waitForFunction(() => G.Game.state === 'playing' && G.Catch.held.length === 1, null, { timeout: 8000 })
     .catch(() => {});
-  const byKey = await page.evaluate(() => ({ held: G.Catch.held.length, total: G.Catch.total() }));
-  ok(byKey.held === 1 && byKey.total === total2 - 1, tag + ': number key 2 throws a ball from belt 1');
+  const byKey = await page.evaluate(() => ({
+    held: G.Catch.held.length,
+    total: G.Catch.total(),
+    slots: G.DB.save.belt.slots.join(),
+  }));
+  ok(
+    byKey.held === 1 && byKey.total === total2 - 1 && byKey.slots === 'poke,,poke,poke,poke,poke,poke,poke,,,,',
+    tag + ': number key 2 throws the ball in belt 1 slot 2 and empties that slot in the save (' + byKey.slots + ')'
+  );
   await page.evaluate(() => {
     for (const f of G.Game.roster) {
       f.runItems = [];
@@ -1482,6 +1489,7 @@ async function shopFlow(browser, query, tag) {
         })),
         coins: G.DB.save.coins,
         belt: { ...G.DB.save.belt },
+        counts: Object.fromEntries(G.Catch.BALLS.map((ball) => [ball.id, G.Catch.count(ball.id)])),
         cards: cards.map((card) => ({
           id: card.dataset.item,
           name: card.querySelector('.shop-card-name').textContent.trim(),
@@ -1616,10 +1624,11 @@ async function shopFlow(browser, query, tag) {
       refusals.map((press) => press.id + (press.reached ? '' : ' (not reached)') + ': ' + press.toast).join(' / ') +
       ')'
   );
-  // a ball buy: Enter buys one at its card's price, no question, one more ball drawn on the belt
+  // a ball buy: Enter buys one at its card's price, no question, one more ball drawn on the belt, in the first empty
+  // slot; every ball already placed stays in its slot (#137b)
   const toastNow = () =>
     page.evaluate(() => (document.querySelector('.toast') || { textContent: '' }).textContent.trim());
-  await setSave({ coins: 1000, belt: { ...BALL_BELT, poke: 2 } });
+  await setSave({ coins: 1000, belt: { size: 6, slots: ['poke', null, 'poke', null, null, null], unlocked: [] } });
   await ballCursorTo('ball-poke');
   let before = await ballsNow();
   await page.keyboard.press('Enter');
@@ -1627,12 +1636,13 @@ async function shopFlow(browser, query, tag) {
   let after = await ballsNow();
   const pokeCard = (state) => state.cards.find((card) => card.id === 'poke');
   ok(
-    after.belt.poke === before.belt.poke + 1 &&
+    after.counts.poke === before.counts.poke + 1 &&
+      after.belt.slots.join() === 'poke,poke,poke,,,' &&
       before.coins - after.coins === priceOn(pokeCard(before).label) &&
       after.ballsDrawn === before.ballsDrawn + 1 &&
       !(await page.evaluate(() => G.UI.isOpen('scr-ask'))),
     tag +
-      ': Enter on Buy adds one ball for the price its card shows, drawn on the belt, with no question (' +
+      ': Enter on Buy adds one ball, in the first empty slot (nothing moves), for the price its card shows, with no question (' +
       (await toastNow()) +
       ')'
   );
@@ -1649,7 +1659,7 @@ async function shopFlow(browser, query, tag) {
     () => document.querySelectorAll('#shop-balls .shop-belt')[1].querySelectorAll('.catch-ball').length
   );
   ok(
-    after.belt.poke === 10 &&
+    after.counts.poke === 10 &&
       before.coins - after.coins === 10 * priceOn(pokeCard(before).label) &&
       after.ballsDrawn === 10 &&
       beltTwoBalls === 4,
@@ -1694,6 +1704,91 @@ async function shopFlow(browser, query, tag) {
     tag +
       ': a belt Buy asks, adds six slots for its price, and the next belt is for sale (' +
       after.beltBuys.join() +
+      ')'
+  );
+  // #137b: arranging the balls. By keys: Enter on a ball picks it up, Enter on an empty slot moves it there, on a ball
+  // swaps the two, Esc puts it back. By mouse: a click then a click moves it; a drag swaps two. Each move is saved.
+  const layoutNow = () => page.evaluate(() => G.DB.save.belt.slots.join());
+  await setSave({ belt: { size: 12, slots: ['great', 'poke', null, ...Array(9).fill(null)], unlocked: ['great'] } });
+  const keyMove = async (from, to) => {
+    await ballCursorTo('slot-' + from);
+    await page.keyboard.press('Enter');
+    await sleep(80);
+    await ballCursorTo('slot-' + to);
+    await page.keyboard.press('Space');
+    await sleep(150);
+    return layoutNow();
+  };
+  const movedByKey = await keyMove(0, 2); // onto an empty slot
+  const swappedByKey = await keyMove(1, 2); // onto a ball
+  const acrossByKey = await keyMove(2, 6); // to belt 2
+  await ballCursorTo('slot-1');
+  await page.keyboard.press('Enter');
+  await sleep(80);
+  const liftedShown = await page.evaluate(() => !!document.querySelector('#shop-balls .catch-slot.is-lifted'));
+  await ballCursorTo('slot-4');
+  await page.keyboard.press('Escape');
+  await sleep(150);
+  const afterEscape = await layoutNow();
+  const shopStillOpen = await page.evaluate(() => G.UI.isOpen('scr-gacha'));
+  ok(
+    movedByKey === ',poke,great,,,,,,,,,' &&
+      swappedByKey === ',great,poke,,,,,,,,,' &&
+      acrossByKey === ',great,,,,,poke,,,,,' &&
+      liftedShown &&
+      afterEscape === acrossByKey &&
+      shopStillOpen,
+    tag +
+      ': by keys a ball moves to an empty slot, swaps with a ball, crosses belts, and Esc puts it back with the Shop open (' +
+      [movedByKey, swappedByKey, acrossByKey, afterEscape].join(' / ') +
+      ')'
+  );
+  const slotCentreOf = (position) =>
+    page.evaluate((at) => {
+      const rect = document.querySelector('#shop-balls [data-ball-slot="' + at + '"]').getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }, position);
+  // a click picks up, a click on another slot puts down
+  let point = await slotCentreOf(1);
+  await page.mouse.click(point.x, point.y);
+  await sleep(80);
+  point = await slotCentreOf(3);
+  await page.mouse.click(point.x, point.y);
+  await sleep(150);
+  const movedByClick = await layoutNow();
+  // a drag from one ball onto another swaps them
+  const dragFrom = await slotCentreOf(3),
+    dragTo = await slotCentreOf(6);
+  await page.mouse.move(dragFrom.x, dragFrom.y);
+  await page.mouse.down();
+  await page.mouse.move(dragFrom.x + 20, dragFrom.y + 20, { steps: 4 });
+  await page.mouse.move(dragTo.x, dragTo.y, { steps: 8 });
+  await page.mouse.up();
+  await sleep(150);
+  const swappedByDrag = await layoutNow();
+  // a click on a ball, then a click outside the belts, puts it back
+  point = await slotCentreOf(3);
+  await page.mouse.click(point.x, point.y);
+  await sleep(80);
+  const outside = await page.evaluate(() => {
+    // between belt 1 and belt 2, on no slot
+    const centre = (at) => document.querySelector('#shop-balls [data-ball-slot="' + at + '"]').getBoundingClientRect();
+    const left = centre(0),
+      right = centre(6);
+    return { x: (left.left + left.right + right.left + right.right) / 4, y: (left.top + left.bottom) / 2 };
+  });
+  await page.mouse.click(outside.x, outside.y);
+  await sleep(150);
+  const afterOutside = await layoutNow(),
+    stillLifted = await page.evaluate(() => !!document.querySelector('#shop-balls .catch-slot.is-lifted'));
+  ok(
+    movedByClick === ',,,great,,,poke,,,,,' &&
+      swappedByDrag === ',,,poke,,,great,,,,,' &&
+      afterOutside === swappedByDrag &&
+      !stillLifted,
+    tag +
+      ': by mouse a click then a click moves a ball, a drag swaps two, a click outside puts it back (' +
+      [movedByClick, swappedByDrag, afterOutside].join(' / ') +
       ')'
   );
   await page.click('.shop-tab[data-tab="upgrades"]');

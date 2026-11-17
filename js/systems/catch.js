@@ -15,8 +15,10 @@
  *            docs/ASCII Concept Maps/136b - Catch Screen Redesign Plan.md). The range slides to stay inside 0 to 100.
  *   flee     misses allowed by the rescued Pokemon's nature (FLEE). The last allowed miss, or a miss that empties the belt,
  *            and it runs off.
- *   belt     save.belt: one shared count of balls, any mix of tiers ({ size, poke, great, ultra, unlocked }). size
- *            is the slots bought, six per belt, three belts at most. A throw uses one ball, caught or not; nothing refills it.
+ *   belt     save.belt: { size, slots, unlocked }. size is the slots bought, six per belt, three belts at most; slots
+ *            holds one entry per slot, a ball id or null, in the player's order (#137b: belt 1 top to bottom, then
+ *            belts 2 and 3). A throw empties its slot, caught or not; nothing refills it. A buy fills the first empty
+ *            slots and moves nothing; the Shop moves balls between slots (moveBall).
  *   shop     #137: the Main Menu Shop's Pokeballs tab (js/ui/shop-balls.js) buys balls, the Great and Ultra
  *            unlocks (unlocked lists them; Poke needs none) and the next belt, each paid in PokeCoins. Prices:
  *            js/data/balls.js.
@@ -173,43 +175,46 @@ G.Catch = (() => {
 
   const save = () => G.DB.save;
 
-  /** The save's belt, fixed up when absent or broken (an older save): every tier's count (0 when absent), the unlocked
-   *  list, and never more balls than slots (the worst tier goes first). */
+  /** The save's belt, fixed up when absent or broken: an older save's per-tier counts ({ poke, great, ultra }) become
+   *  slots, best tier first (the order they were always shown in), and the counts go; the slots are cut or padded to
+   *  the size, and an unknown ball becomes an empty slot. */
   function belt(s = save()) {
-    if (!s) return { size: 0, poke: 0, great: 0, ultra: 0, unlocked: [] };
+    if (!s) return { size: 0, slots: [], unlocked: [] };
     const whole = (value, fallback) => (Number.isFinite(+value) && +value >= 0 ? Math.floor(+value) : fallback);
     if (!s.belt || typeof s.belt !== 'object') s.belt = { size: K.ballsPerBelt, poke: K.ballsPerBelt };
     const fixed = s.belt;
     fixed.size = Math.min(K.maxBelts * K.ballsPerBelt, whole(fixed.size, K.ballsPerBelt));
-    fixed.poke = whole(fixed.poke, fixed.size);
-    for (const ball of BALLS) fixed[ball.id] = whole(fixed[ball.id], 0);
-    if (!Array.isArray(fixed.unlocked)) fixed.unlocked = [];
-    let over = BALLS.reduce((sum, ball) => sum + fixed[ball.id], 0) - fixed.size;
-    for (const ball of BALLS) {
-      if (over <= 0) break;
-      const trimmed = Math.min(over, fixed[ball.id]);
-      fixed[ball.id] -= trimmed;
-      over -= trimmed;
+    if (!Array.isArray(fixed.slots)) {
+      // an old save without a Poke Ball count had a full belt of them (#136)
+      const countOf = (id) => whole(fixed[id], id === 'poke' ? fixed.size : 0);
+      fixed.slots = [];
+      for (const ball of [...BALLS].reverse()) for (let n = countOf(ball.id); n > 0; n--) fixed.slots.push(ball.id);
     }
+    for (const ball of BALLS) delete fixed[ball.id];
+    fixed.slots = Array.from({ length: fixed.size }, (_, slot) =>
+      BALL_BY[fixed.slots[slot]] ? fixed.slots[slot] : null
+    );
+    if (!Array.isArray(fixed.unlocked)) fixed.unlocked = [];
     return fixed;
   }
 
+  /** The slots: a ball id or null each, in the player's order. */
+  const slots = (s = save()) => belt(s).slots;
   /** Balls of one tier on the belt. */
-  const count = (ballId, s = save()) => (BALL_BY[ballId] ? belt(s)[ballId] || 0 : 0);
+  const count = (ballId, s = save()) => slots(s).filter((id) => id === ballId).length;
   /** Every ball on the belt. */
-  const total = (s = save()) => BALLS.reduce((sum, b) => sum + count(b.id, s), 0);
+  const total = (s = save()) => slots(s).filter(Boolean).length;
   /** The best stocked ball, or null for an empty belt. */
   const bestStocked = (s = save()) => [...BALLS].reverse().find((b) => count(b.id, s) > 0) || null;
-  /** Every ball on the belt as its id, best tier first: the order the Shop and the catch screen fill the slots in. */
-  function ballsBestFirst(s = save()) {
-    const ids = [];
-    for (const ball of [...BALLS].reverse()) for (let n = count(ball.id, s); n > 0; n--) ids.push(ball.id);
-    return ids;
+  /** The first slot holding the best stocked ball (the catch screen's first selection, R6), or -1 for an empty belt. */
+  function bestSlot(s = save()) {
+    const best = bestStocked(s);
+    return best ? slots(s).indexOf(best.id) : -1;
   }
   /** Belts bought (six slots each), 1 to K.maxBelts. */
   const beltsBought = (s = save()) => Math.max(1, Math.floor(belt(s).size / K.ballsPerBelt));
   /** Empty slots left on the bought belts. */
-  const room = (s = save()) => Math.max(0, belt(s).size - total(s));
+  const room = (s = save()) => slots(s).filter((id) => !id).length;
   /** A tier a throw can use and the Shop sells: Poke from the start, Great and Ultra once their unlock is bought. */
   const isUnlocked = (ballId, s = save()) =>
     !!BALL_BY[ballId] && (!BALL_BY[ballId].unlockPrice || belt(s).unlocked.includes(ballId));
@@ -229,9 +234,14 @@ G.Catch = (() => {
     if (room(s) <= 0) return { ok: false, error: 'full' };
     const bought = Math.min(wanted, room(s), Math.floor((s.coins || 0) / ball.price));
     if (bought < 1) return { ok: false, error: 'poor' };
-    const cost = bought * ball.price;
+    const cost = bought * ball.price,
+      layout = slots(s);
     s.coins -= cost;
-    belt(s)[ballId] += bought;
+    for (let placed = 0, slot = 0; placed < bought; slot++)
+      if (!layout[slot]) {
+        layout[slot] = ballId; // the first empty slots; no ball already placed moves (#137b, R1)
+        placed++;
+      }
     return { ok: true, bought, cost };
   }
 
@@ -253,7 +263,18 @@ G.Catch = (() => {
     if (!((s.coins || 0) >= price)) return { ok: false, error: 'poor' };
     s.coins -= price;
     belt(s).size += K.ballsPerBelt;
+    belt(s); // six empty slots at the end
     return { ok: true, cost: price, belts: beltsBought(s) };
+  }
+
+  /** Moves the ball in slot from to slot to: an empty slot takes it, a filled one swaps the two (#137b). Refuses an
+   *  empty from or a slot outside the bought belts. */
+  function moveBall(s, from, to) {
+    const layout = s ? slots(s) : [];
+    const inRange = (slot) => Number.isInteger(slot) && slot >= 0 && slot < layout.length;
+    if (!inRange(from) || !inRange(to) || !layout[from]) return { ok: false, error: 'none' };
+    [layout[from], layout[to]] = [layout[to], layout[from]];
+    return { ok: true };
   }
 
   // ---------------- a run ----------------
@@ -327,12 +348,14 @@ G.Catch = (() => {
   }
 
   /** One throw. 'caught' (held for the run), 'miss' (try again), 'fled' (the last allowed miss, or the belt is empty), or
-   *  'none' (no catch open, or no ball of that tier). Every throw but 'none' uses one ball. How it went (critical, shakes
-   *  passed) is in lastThrow, for the screen's wobbles. */
-  function throwBall(ballId, rnd = Math.random) {
-    const c = session;
-    if (!c || count(ballId) <= 0) return 'none';
-    belt()[ballId]--;
+   *  'none' (no catch open, or no ball of that tier in that slot). Every throw but 'none' empties its slot: the one given
+   *  (the screen's), else the first holding that tier. How it went (critical, shakes passed) is in lastThrow, for the
+   *  screen's wobbles. */
+  function throwBall(ballId, rnd = Math.random, slot = slots().indexOf(ballId)) {
+    const c = session,
+      layout = slots();
+    if (!c || !ballId || layout[slot] !== ballId) return 'none';
+    layout[slot] = null;
     lastThrow = rollThrow(c, ballId, rnd);
     if (lastThrow.caught) {
       held.push({ dex: c.dex, name: c.name, nature: c.nature, natureName: c.natureName });
@@ -384,7 +407,9 @@ G.Catch = (() => {
     count,
     total,
     bestStocked,
-    ballsBestFirst,
+    bestSlot,
+    slots,
+    moveBall,
     beltsBought,
     room,
     isUnlocked,

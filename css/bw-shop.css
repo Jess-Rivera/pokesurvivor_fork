@@ -388,3 +388,20 @@
   height: 2px;
   background: #495151;
 }
+
+/* ---------- arranging the balls (#137b, js/ui/shop-balls.js): click or drag, or Enter / Space by keys ---------- */
+.shop-belt .catch-slot.is-full {
+  cursor: grab;
+}
+.shop-belt .catch-slot.is-lifted .catch-ball {
+  opacity: 0.25;
+}
+.shop-carry-ghost {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 30;
+}
+.shop-carry-ghost .catch-ball {
+  position: relative;
+}

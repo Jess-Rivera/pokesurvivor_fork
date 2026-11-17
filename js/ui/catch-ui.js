@@ -5,8 +5,8 @@
  * menu's 1920 x 1080 stage, scaled to fit, inside the #scr-catch screen.
  *   left     the Pokemon: the portrait in a ring that fills one step per miss (flee), "{Nature} {Name}", the catch band (a
  *            range that holds the true chance, G.Catch.band) and the ball it is for. Rimmed in its type colours.
- *   middle   three belts of six slots: the belts the save has bought (G.Catch.beltsBought, #137) hold its balls, best
- *            tier first from belt 1 down; the rest are locked.
+ *   middle   three belts of six slots: the belts the save has bought (G.Catch.beltsBought, #137) hold its balls slot
+ *            for slot as the save lays them out (G.Catch.slots, arranged in the Shop, #137b); the rest are locked.
  *   right    Pokemon owned: every copy of this species in the Pokebox (best IV + EV total first), its tooltip on focus;
  *            then Throw and Let It Go.
  *   input    one selection cursor over every control. Arrows (the move keys) move it, hover moves it too. Enter on a ball
@@ -77,7 +77,6 @@ G.CatchUI = (() => {
   const face = signal('shown'); // the portrait: 'shown', 'absorbed' (inside the ball) or 'fled'
   const beltCount = signal(0); // read on every belt change, so the slots redraw
   const shownMisses = signal(0); // the flee ring's misses: catches up with the session after a throw's break-out (#148b)
-  let thrownSlots = new Set(); // slots emptied by a throw this catch (positionOf): a thrown ball leaves its slot empty
   let onClose = null;
   let throwToken = 0; // a throw's timers stop when the screen closes under them
 
@@ -85,16 +84,13 @@ G.CatchUI = (() => {
   const isLocked = (belt) => belt >= G.Catch.beltsBought(); // a belt not bought in the Shop yet (#137)
   /** A slot's place across the belts: belt 1's six, then belt 2's, then belt 3's. */
   const positionOf = (belt, slot) => belt * BELT.slots + slot;
-  /** A belt's six slots: the save's balls, best tier first across the bought belts, in the slots no throw has emptied
-   *  this catch; null is empty. */
+  /** A belt's six slots as the save lays them out (a throw empties its own slot); null is empty. */
   function slotsOf(belt) {
     beltCount.value; // redraw when the belt changes
     if (isLocked(belt)) return Array(BELT.slots).fill(null);
-    const balls = G.Catch.ballsBestFirst().map((id) => G.Catch.BALLS.find((ball) => ball.id === id)),
-      slots = Array(G.Catch.beltsBought() * BELT.slots).fill(null);
-    for (let position = 0; position < slots.length && balls.length; position++)
-      if (!thrownSlots.has(position)) slots[position] = balls.shift();
-    return slots.slice(positionOf(belt, 0), positionOf(belt + 1, 0));
+    return G.Catch.slots()
+      .slice(positionOf(belt, 0), positionOf(belt + 1, 0))
+      .map((id) => G.Catch.BALLS.find((ball) => ball.id === id) || null);
   }
   const stocked = (belt) =>
     slotsOf(belt)
@@ -201,13 +197,12 @@ G.CatchUI = (() => {
     const view = shown.value;
     const ball = slotsOf(belt)[slot];
     if (!view || busy.value || !ball) return;
-    const outcome = G.Catch.throwBall(ball.id);
+    const outcome = G.Catch.throwBall(ball.id, Math.random, positionOf(belt, slot));
     if (outcome === 'none') return;
     const token = ++throwToken,
       name = view.session.name,
       alive = () => token === throwToken && shown.value === view;
     selected.value = { belt, slot };
-    thrownSlots.add(positionOf(belt, slot));
     busy.value = true;
     note.value = '';
     hideTooltip();
@@ -569,10 +564,10 @@ G.CatchUI = (() => {
     flight.value = null;
     face.value = 'shown';
     shownMisses.value = session.misses;
-    thrownSlots = new Set();
     beltCount.value++;
     shown.value = { session, owned, types: (mon && mon.types) || ['normal'] };
-    const first = nearestAnywhere({ belt: 0, slot: 0 }) || { belt: 0, slot: 0 };
+    const best = Math.max(0, G.Catch.bestSlot()), // the best ball starts selected (spec, R6)
+      first = { belt: Math.floor(best / BELT.slots), slot: best % BELT.slots };
     selected.value = first;
     focusSlot(first.belt, first.slot);
     G.UI.show('scr-catch');

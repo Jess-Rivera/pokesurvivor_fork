@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-17, #137b each ball keeps its own slot: a buy fills the first empty slot; balls move by click, drag or keys in the Shop; a throw empties its slot (Jess)](docs/decisions/2026-11-17-137b-ball-slots-kept-and-arranged.md)
 - [2026-11-17, #137 balls and belts are bought in the Shop (prices set) and kept between runs; no free refill; Shift buys 10 (Jess)](docs/decisions/2026-11-17-137-balls-bought-and-kept-no-refill.md)
 - [2026-11-17, one menu key set: Enter and Space select, the arrows and the movement keys move, on the Main Menu, Shop and Inventory (Jess)](docs/decisions/2026-11-17-one-menu-key-set.md)
 - [2026-11-17, a TM (Main Menu Shop) is learned for good by one Pokemon; the in-run TM Mart becomes the TR Shop, its TRs last one run (Jess)](docs/decisions/2026-11-17-tm-for-good-tr-for-one-run.md)

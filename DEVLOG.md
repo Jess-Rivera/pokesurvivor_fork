@@ -243,3 +243,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Decided: B1 to B12 (decision 2026-11-17-137-balls-bought-and-kept-no-refill).
 - Checks: rescue-harness, smoke-ui, check.js all passed; smoke-pause-menu only the known 401 px failure.
 - Stopped at: #137 in Needs Playtest; next #138.
+
+## 2026-11-17 (Claude Code, home, fifth session, later), #137b ball slots
+- Feel test: buying pushed balls down and onto the next belt (counts per tier, redrawn best first on every change).
+- save.belt is now a slot layout; buys fill the first empty slot; the Shop moves and swaps balls by click, drag, Enter
+  and Space (the in-run Inventory's pick-up model); a throw empties its slot; old saves convert on load.
+- Checks: rescue-harness, smoke-ui, check.js all passed; smoke-pause-menu only the known 401 px failure.
+- Stopped at: #137 back in Needs Playtest.

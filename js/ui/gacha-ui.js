@@ -146,7 +146,7 @@ G.GachaUI = (() => {
     eligibleItems,
     home: 'exit',
     press,
-    escape: () => (tab.value === 'tms' && tmsPane.escape()) || close(),
+    escape: () => (tab.value === 'tms' && tmsPane.escape()) || (tab.value === 'balls' && ballsPane.escape()) || close(),
     keys: { q: () => stepTab(-1), e: () => stepTab(1) },
     tipFor: (id) => (id.startsWith(OWNED_ID) ? itemTip(G.Items.BY[id.slice(OWNED_ID.length)]) : null),
     tipPlace: OWNED_TIP_PLACE,
@@ -193,6 +193,7 @@ G.GachaUI = (() => {
     ownedQuery.value = '';
     openCount.value++;
     tmsPane.reset();
+    ballsPane.reset();
     cursor.moveTo('exit');
     refresh();
   }
