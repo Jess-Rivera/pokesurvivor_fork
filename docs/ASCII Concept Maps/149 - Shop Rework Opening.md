@@ -541,3 +541,6 @@ before this slice (the shop-over-another-screen and bond-screen guards).
 | 4 | Moving the cursor was slow with every Pokemon owned: each drawn button asked for the tab's items, and each ask read the whole Pokebox again. The lists are now remembered until something changes (about one frame per move with 500 portraits shown) |
 | 5 | The keys' cursor shows its corners on portraits, the Able to Learn toggle, the dropdown boxes and their choices (search bars keep their green rim); the mouse shows a green rim |
 smoke-ui Shop pass: +2 checks (team slots, round faces, four across; the cursor's corners on a portrait), all passed.
+
+**149f signed off (Jess 2026-11-17, feel test good after one fix round). #149 closed.** Next: rework/shop merges into
+feature/128-acquisition (R5), then #137.

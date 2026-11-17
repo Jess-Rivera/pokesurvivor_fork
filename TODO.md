@@ -5,16 +5,17 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Getting up to date (either machine), from the 2026-11-17 home session (third)
-1. `git status` must be clean. `git fetch origin`, then `git checkout rework/shop`
-   (first time on a machine: `git checkout -b rework/shop origin/rework/shop`), then `git pull --ff-only`.
-2. `node tools/check.js` must end with "check: all passed". Say "catch me up".
-3. Before leaving a machine: commit and push (the branch and main).
+1. `git status` must be clean. Push this session's work, then merge rework/shop into feature/128-acquisition (#149 R5):
+   `git push origin rework/shop`, `git checkout feature/128-acquisition`, `git pull --ff-only`,
+   `git merge --no-ff rework/shop`, `node tools/check.js` (must end "check: all passed"), `git push origin feature/128-acquisition`.
+2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
+   `node tools/check.js`. Say "catch me up".
+3. Before leaving a machine: commit and push.
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-16; gym leader AI parked)
-1. #149 Main Menu Shop on rework/shop: 149a to 149e signed off; 149f (TMs tab) built, needs Jess's feel test. Then close
-   #149 and merge rework/shop into feature/128-acquisition. Notes: docs/ASCII Concept Maps/149 - Shop Rework Opening.md.
-   #153 (menu keys) needs Jess's key set. #154 split menu.js. #150 blocked on #97. #145 small and ready. #147 waits on Jess.
-2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill) after #149, then #138; #146 keep-or-sell
+1. #149 closed (Shop rework done). After the merge above: #137 on feature/128-acquisition (needs Jess's ball tiers and
+   prices). #153 (menu keys) needs Jess's key set. #154 split menu.js. #150 blocked on #97. #145 small. #147 waits on Jess.
+2. #128 acquisition on feature/128-acquisition: #137 (Shop balls, ends the belt refill), then #138; #146 keep-or-sell
    list; order in docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
    97 - Upgrade System Review.md). #131 Silver bonuses later, after a traced run reaches gym 1. 4. #126 UI unify (#61 first), then #127 Main Menu v3.0.

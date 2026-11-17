@@ -218,3 +218,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Broke and fixed: key listener order (Enter reached a second screen); game.js closed the Inventory on any Esc.
 - Filed #151, #152 (unaffordable buttons take the cursor, toast "Unable to Afford"; decision), #153 (menu keys differ).
 - Stopped at: 149d signed off; next 149e Pokeballs layout.
+
+## 2026-11-17 (Claude Code, home, third session), #151 #152, 149e and 149f built and signed off; #149 closed
+- #151 #152: a Buy that cannot buy takes the cursor and toasts why. 149e Pokeballs tab (17 ball cards, the belts, buys inert).
+- 149f TMs tab: G.TMs (price by power, teach), a copy's learned TMs (copies.js key j), the Move Trainer pool adds them;
+  js/ui/shop-tms.js; kit Dropdown (multi-select). Decision: TM kept for good, the in-run TM Mart renamed TR Shop.
+- Broke and fixed: game.js closed the Shop on any Esc; team slots piled in a corner; slow cursor with every Pokemon owned
+  (lists recomputed per button); shiny portraits with no file logged 404s.
+- Stopped at: #149 closed; next merge rework/shop into feature/128-acquisition, then #137.
