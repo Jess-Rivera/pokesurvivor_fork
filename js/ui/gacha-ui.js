@@ -4,7 +4,7 @@
  * dimmed Main Menu (css/bw-shop.css). Every buying rule lives in G.Items and G.Grounds; this file draws and routes input.
  *   rail     four icon tabs down the window's left edge (assets/ui/shop_icons/), top to bottom: Pokeballs (149e, its
  *            own file js/ui/shop-balls.js; #137 wires its buys), Character Upgrades (team item slots, berry slots), Team
- *            Items (100k unlocks), TRs (149f fills it).
+ *            Items (100k unlocks), TMs (149f, its own file js/ui/shop-tms.js: moves a Pokemon learns for good).
  *            Flush with the window's left edge; the chosen tab uses its -selected art. A click or Q / E switches them.
  *   Exit     the team menu's button at 3 px per art pixel, bottom right; back to the Main Menu.
  *   pockets  the Character Upgrades pane (149b, mockup Shop-Character-Upgrades.svg): the Berry Pocket and the Team Items
@@ -28,7 +28,15 @@ G.GachaUI = (() => {
     stageHost = document.querySelector('#scr-gacha .shop-host');
   const windowKit = G.MenuWindowKit,
     ballsPane = G.ShopBallsPane;
-  if (!kitOverlay || !kitOverlay.ready || !windowKit.ready || !ballsPane.ready || !railHost || !stageHost) {
+  if (
+    !kitOverlay ||
+    !kitOverlay.ready ||
+    !windowKit.ready ||
+    !ballsPane.ready ||
+    !G.ShopTmsPane.ready ||
+    !railHost ||
+    !stageHost
+  ) {
     console.warn('[Shop] the HUD kit did not load: the Shop cannot open');
     return { init() {}, open() {} };
   }
@@ -53,7 +61,7 @@ G.GachaUI = (() => {
     { key: 'balls', name: 'Pokeballs', icon: 'pokeball' },
     { key: 'upgrades', name: 'Character Upgrades', icon: 'character-upgrade' },
     { key: 'items', name: 'Team Items', icon: 'team-item' },
-    { key: 'trs', name: 'TRs', icon: 'tm-purchase' },
+    { key: 'tms', name: 'TMs', icon: 'tm-purchase' },
   ];
   const OPENING_TAB = 'items'; // the Shop opens on Team Items, as before the rework
   const ICON_PATH = 'assets/ui/shop_icons/';
@@ -138,11 +146,13 @@ G.GachaUI = (() => {
     eligibleItems,
     home: 'exit',
     press,
-    escape: close,
+    escape: () => (tab.value === 'tms' && tmsPane.escape()) || close(),
     keys: { q: () => stepTab(-1), e: () => stepTab(1) },
     tipFor: (id) => (id.startsWith(OWNED_ID) ? itemTip(G.Items.BY[id.slice(OWNED_ID.length)]) : null),
     tipPlace: OWNED_TIP_PLACE,
   });
+  // the TMs tab (149f) keeps its own state and draws itself; it reaches the cursor and redraws the Shop through these
+  const tmsPane = G.ShopTmsPane.create({ cursor, refresh: () => refresh() });
   /**
    * The items the cursor may sit on now: the shown tab's Buys (one you cannot afford, or a Full pocket's, too: it refuses
    * when pressed, #151) and owned squares, then Inventory and Exit.
@@ -150,6 +160,7 @@ G.GachaUI = (() => {
   function eligibleItems() {
     saveTick.value; // read again after a purchase or a coin change
     if (tab.value === 'balls') return [...ballsPane.cursorItems(), 'exit'];
+    if (tab.value === 'tms') return tmsPane.cursorItems(); // Exit included, unless a filter list is open
     if (tab.value === 'upgrades') return [...pockets().map((pocket) => pocket.id), 'exit'];
     if (tab.value === 'items') {
       const view = teamItemsView();
@@ -181,6 +192,7 @@ G.GachaUI = (() => {
     saleQuery.value = '';
     ownedQuery.value = '';
     openCount.value++;
+    tmsPane.reset();
     cursor.moveTo('exit');
     refresh();
   }
@@ -216,6 +228,7 @@ G.GachaUI = (() => {
   function press(at) {
     if (at === 'exit') return close();
     if (at === 'inventory') return openInventory();
+    if (tab.value === 'tms' && tmsPane.press(at)) return;
     if (at === SALE_SEARCH || at === OWNED_SEARCH) return cursor.elementOf(at).querySelector('input').focus(); // type; Enter or Esc gives the keys back
     if (at.startsWith(SALE_ID)) return buyItem(at.slice(SALE_ID.length));
     const pocket = pockets().find((entry) => entry.id === at);
@@ -285,6 +298,14 @@ G.GachaUI = (() => {
     return html`<${ballsPane.Pane} cursor=${cursor} openCount=${openCount.value} />`;
   }
   preact.render(html`<${BallsTab} />`, $('shop-balls'));
+
+  // ---------------- TMs tab (149f): drawn by js/ui/shop-tms.js ----------------
+  function TmsTab() {
+    saveTick.value; // redraw after a purchase or a coin change
+    if (tab.value !== 'tms') return null; // drawn only while shown: its Pokebox grid holds hundreds of portraits
+    return html`<${tmsPane.Pane} openCount=${openCount.value} />`;
+  }
+  preact.render(html`<${TmsTab} />`, $('shop-tms'));
 
   // ---------------- Team Items tab (149c): cards for sale on the left, the owned panel on the right ----------------
   // function declarations, not arrows: the rail is drawn before this part of the file runs

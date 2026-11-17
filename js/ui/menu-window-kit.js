@@ -7,6 +7,7 @@
  *   CursorButton      the team menu button at 3 px per art pixel inside a box the cursor can sit on
  *   ItemCard          a team item card: icon, divider, name, description and one button (Buy, Equip, Swap...)
  *   SearchStop        a search bar as a cursor stop at the top of its area
+ *   Dropdown          a multi-select filter box whose grouped choices open in a list under it (#149 149f, the TMs tab)
  */
 G.MenuWindowKit = (() => {
   const kitOverlay = G.HudOverlay;
@@ -23,6 +24,7 @@ G.MenuWindowKit = (() => {
     FOCUS_RIM,
     showTooltip,
     hideTooltip,
+    ScrollBox,
   } = kitOverlay.kit;
 
   const px = (value) => value + 'px';
@@ -44,6 +46,7 @@ G.MenuWindowKit = (() => {
     buttonBottom: 10,
   };
   const CARD_RIM = 2; // the card's thin rim (css/bw-shop.css .shop-card)
+  const DROPDOWN_RIM = 2; // the open list's rim (css/bw-shop.css .shop-dropdown-list)
   CARD.buttonWidth = CARD.buttonArtWidth * BUTTON.artPixel; // 174
   // room inside a scroll box for the cursor's corners, which sit 4 px outside an item (Jess 2026-11-17)
   const CURSOR_ROOM = 6;
@@ -361,6 +364,73 @@ G.MenuWindowKit = (() => {
     </div>`;
   }
 
+  /**
+   * A multi-select filter box (#149 149f): a box the height of a search bar showing its label (with the count chosen),
+   * and when open, a list of choices under it, in groups with a header each. A choice toggles; within a group any chosen
+   * choice matches, across groups each must (the screen's filter does the matching). The box is a cursor stop like a
+   * search bar (its green rim, no corners); open, the cursor stays inside it (the screen offers only dropdownItems) and
+   * Esc or a click outside closes it.
+   *   id, area     the box's cursor id and area; each choice's id is id + ':' + key, in the area id while open
+   *   groups       [{ name, choices: [{ key, label }] }]
+   *   chosen       the chosen keys; at: the id the cursor is on
+   *   box, list    places in the parent: { left, top, width } and { left, top, width, height }
+   */
+  function Dropdown({ cursor, id, area, label, groups, chosen, at, isOpen, onOpenChange, onToggle, box, list }) {
+    const count = chosen.length;
+    return html`<div
+        class=${'shop-search-host shop-dropdown' + (at === id ? ' is-cursor' : '') + (isOpen ? ' is-open' : '')}
+        data-cursor-id=${id}
+        data-cursor-area=${isOpen ? id : area}
+        style=${{ left: px(box.left), top: px(box.top), width: px(box.width) }}
+        onMouseEnter=${() => cursor.hover(id)}
+        onMouseLeave=${() => cursor.hover(null)}
+        onClick=${() => onOpenChange(!isOpen)}
+      >
+        <div class="hud-search shop-dropdown-box">${count ? label + ' (' + count + ')' : label}</div>
+      </div>
+      ${
+        isOpen
+          ? html`<div class="shop-dropdown-catcher" onClick=${() => onOpenChange(false)}></div>
+              <div
+                class="shop-dropdown-list"
+                style=${{ left: px(list.left), top: px(list.top), width: px(list.width), height: px(list.height) }}
+              >
+                <${ScrollBox}
+                  box=${{ left: 0, top: 0, width: list.width - 2 * DROPDOWN_RIM, height: list.height - 2 * DROPDOWN_RIM }}
+                  trackRight=${0}
+                  colours=${SCROLL_COLOURS}
+                >
+                  ${groups.map(
+                    (group) =>
+                      html`<div key=${group.name} class="hud-text shop-dropdown-group">${group.name}</div>
+                        ${group.choices.map((choice) => {
+                          const choiceId = id + ':' + choice.key;
+                          return html`<div
+                            key=${choice.key}
+                            class=${'shop-dropdown-choice' + (at === choiceId ? ' is-cursor' : '')}
+                            data-cursor-id=${choiceId}
+                            data-cursor-area=${id}
+                            data-choice=${choice.key}
+                            onMouseEnter=${() => cursor.hover(choiceId)}
+                            onMouseLeave=${() => cursor.hover(null)}
+                            onClick=${() => onToggle(choice.key)}
+                          >
+                            <span class=${'shop-check' + (chosen.includes(choice.key) ? ' is-on' : '')}></span>
+                            <span class="hud-text">${choice.label}</span>
+                          </div>`;
+                        })}`
+                  )}
+                </${ScrollBox}>
+              </div>`
+          : null
+      }`;
+  }
+  /** The cursor ids of an open dropdown: its box, then each choice in order. */
+  const dropdownItems = (id, groups) => [
+    id,
+    ...groups.flatMap((group) => group.choices.map((choice) => id + ':' + choice.key)),
+  ];
+
   /** A filter for a search bar: the item's name holds the typed text (any case); empty text keeps every item. */
   function nameHas(query) {
     const text = query.trim().toLowerCase();
@@ -378,6 +448,8 @@ G.MenuWindowKit = (() => {
     CursorButton,
     ItemCard,
     SearchStop,
+    Dropdown,
+    dropdownItems,
     nameHas,
   };
 })();

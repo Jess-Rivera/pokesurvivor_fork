@@ -1019,11 +1019,12 @@ G.Game = (() => {
     }
     if (state === 'ui') {
       // Esc on a menu subscreen returns to the menu. (Upgrades handles its own Esc: it goes back to the Team screen. The
-      // Inventory handles its own too: Esc first cancels a swap in progress, #149d.)
+      // Inventory handles its own too: Esc first cancels a swap in progress, #149d. So does the Shop: Esc first closes an
+      // open filter list, #149 149f.)
       if (
         G.Input.tap('escape') &&
         !G.UI.isOpen('scr-profile') &&
-        ['scr-dex', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
+        ['scr-dex', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
       )
         G.MenuUI.open();
       return;

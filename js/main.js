@@ -30,6 +30,7 @@
     'StageOne',
     'SpeciesTraits',
     'Copies',
+    'TMs',
     'Items',
     'Drops',
     'World',

@@ -1386,7 +1386,7 @@ G.Debug = (() => {
     }
     const ok = G.Shops.debugPlace();
     console.log(
-      ok ? '[Debug] Move Trainer and TM Mart placed, follow the red arrows' : '[Debug] no free ground found, try again'
+      ok ? '[Debug] Move Trainer and TR Shop placed, follow the red arrows' : '[Debug] no free ground found, try again'
     );
     return ok;
   }

@@ -460,3 +460,75 @@ flowchart LR
 - The belts are 96 wide, 145 apart, with 68 px slots. That spacing lets a 141 px Buy sit under each of belts 2 and 3, and belt 3's Buy ends at the pane's right edge.
 - The card grid reuses the Team Items sale grid's sizes and its scroll bar.
 - smoke-ui Shop pass, new Pokeballs section: 4 checks covering the cards, the belts, the arrows and the "Coming soon." presses. The Team Items checks' card selectors are now scoped to #shop-items, since the ball cards share `.shop-card`.
+
+**149e signed off (Jess 2026-11-17, feel test good, no fixes).** #149 stays open for 149f.
+
+## Draft opening for 149f (TRs), for Jess to agree
+Mockup: assets/excalidraw/Shop-TR-Menu.svg. Rulings R2, R6, R7, R8 above. The one sub-slice that changes game rules. No code here.
+
+| | |
+|---|---|
+| Goal | The TRs tab sells every TM as a TR for PokeCoins. A TR bought for the chosen Pokemon is learned by that copy for good, and in every later run that move joins its Move Trainer pool (R6). |
+| Done when | The tab shows the mockup: search, type filter, Able to Learn toggle, a scrolling 3-column grid of TR cards (type TR icon, name, one line, Buy $N), and on the right the chosen Pokemon (big portrait, the 6 team slots, a search and filter, a 3x3 scrolling Pokebox grid). Buying spends the price, saves the move on that copy, and the card then reads Learned. A Buy that cannot buy refuses with a toast (#151). In a run, that copy's Trainer offers and rerolls can roll the learned move at the Trainer price; the TM Mart, other copies and leaders are unchanged. An old save loads with no TRs learned. |
+| End-goal test | (1) shops-harness gains a section: a member whose copy learned a move outside its pool can be offered it by the Trainer (over enough rolls), and one whose copy has none never is; the Mart's stock is the TM list either way. (2) pokebox-copies-harness: a copy with no learned TRs reads as none; a learned list survives a save round trip; a retired move reads as its replacement. (3) smoke-ui Shop pass gains a TRs section: cards = TM list length with Able to Learn off, and only moves the chosen Pokemon can use with it on; buying one spends exactly its card's price and the copy then has it; a second press refuses; picking another Pokemon changes the cards' states. Relations only, no prices copied. |
+
+```mermaid
+flowchart LR
+  subgraph Tab[Shop window, TRs tab]
+    BAR[search + type filter + Able to Learn] --- GRID[TR cards, 3 columns, scroll<br/>112 TMs, sorted by name]
+    GRID --- MON[chosen Pokemon: portrait + 6 team slots<br/>search + filter, Pokebox 3x3 scroll]
+  end
+  TML[G.Moves.tmList] --> GRID
+  CAN[G.Moves.canUseTm<br/>for the chosen copy] -->|Able to Learn, Known| GRID
+  GRID -->|Buy, confirm| TRS[G.TRs.teach<br/>coins down, copy learns it]
+  TRS --> SAVE[(the copy in save.box<br/>new key: learned TR ids)]
+  SAVE --> RUN[in a run: Move Trainer pool<br/>= its pool + learned TRs]
+```
+
+### Parts (prose plan)
+| # | Where | What |
+|---|---|---|
+| 1 | new js/systems/trs.js, G.TRs (a script tag, a NEED entry, the build list) | The TR rules, apart from the screen: the price by move power (F1 bands, one table, TUNE), what a copy has learned, and teach (checks coins, that the copy can use it and does not know it, then spends and saves). Returns a reason when it refuses, as the item buys do. |
+| 2 | js/systems/copies.js | One new compact key on a copy: its learned TR move ids. Absent means none, so old saves load unchanged. read() gives it a full name; a retired id loads as its replacement, an unknown id is dropped. |
+| 3 | js/systems/shops.js | The Trainer's pool for a member (its offers and its reroll) adds that member's copy's learned TRs. Price, forget step and Mart untouched. |
+| 4 | new js/ui/shop-trs.js, G.ShopTrsPane | The TRs pane: the filter bar, the TR card grid (ItemCard with the ps:tr.<type> picture, the move's one line from G.MoveInfo), and the Pokemon panel (portrait, team slots, search and filter, Pokebox grid). Cursor items and presses for its tab. |
+| 5 | js/ui/gacha-ui.js | The TRs tab draws the new pane instead of Coming soon (as 149e did for Pokeballs). |
+| 6 | the Pokebox sell confirm (Team screen) | Selling a copy with learned TRs says they go with it (F6). |
+| 7 | tools/smoke-ui.js, shops-harness, pokebox-copies-harness | The checks above, in place (no new harness). |
+
+**Plan check.** Reuses: G.Moves.tmList and canUseTm (R8, no new TM data), G.MoveInfo's one-line description, ItemCard (picture option from 149e), CursorButton refusal, ScrollBox, SearchStop, createMenuCursor, G.UI.ask (like every Shop buy), G.Icons ps: sprites, G.Copies. New: G.TRs (game rule, kept out of the screen), the copy key, the pane file. The Pokebox filter rules (region, type, BST stars, rarity) live inside menu.js today (filterSortDex and BST_BANDS, for species, not copies): the BST band list moves to a shared spot so both read one copy, and the pane filters copies with its own small check. Not built: a TR as the starting move (#150), TRs in the TM Mart, refunds, Move Trainer art. Size: the pane about 350 lines, G.TRs about 80.
+
+### Decisions for Jess
+| # | Question | Default if you say nothing |
+|---|---|---|
+| F1 | Price bands (R7, temporary, PokeCoins). For scale: box 3 is 10,000, a team item 100,000. The 112 TMs: 4 under 40 power, 21 at 40 to 69, 29 at 70 to 89, 21 at 90 to 109, 19 at 110+, 18 status | Under 60 power: 2,000. 60 to 89: 4,000. 90 to 109: 7,000. 110 and up: 12,000. Status: 5,000 (buffs are strong here). |
+| F2 | Which cards Able to Learn shows, and what a card reads | On by default: the moves the chosen Pokemon can use (canUseTm). A move already in its level-up and egg pool reads Known (refuses "Already in its Move Trainer pool."), a bought one reads Learned (refuses "Already learned."). Off: all 112; ones it cannot use are dimmed and refuse "Can't learn this TR." |
+| F3 | Confirm popup | G.UI.ask, like every Shop buy: "Teach {name} {move} for N PokéCoins?". The mockup's red No look waits for #105 (the shared dialog restyle). Shift-click skips the confirm on TR Buy, per the mockup. |
+| F4 | The mockup says Buy only focuses if affordable | Overridden by #151 (decision 2026-11-17-unaffordable-buttons-take-the-cursor): it takes the cursor and toasts "Unable to Afford". |
+| F5 | The Pokemon panel's filter: one dropdown listing Pokebox #, region, type, BST stars, rarity | One dropdown, one choice at a time, grouped by those five. No choice: box 1 sorted by dex (mockup). The search matches name or nickname. The chosen Pokemon on open is the team's lead; a team slot or a grid portrait picks another. |
+| F6 | Selling a copy that learned TRs | The TRs go with it, no refund; the sell confirm says so. |
+| F7 | One TR teaches one copy, not the species | Yes (R2 says a Pokebox Pokemon). An evolved copy keeps its TRs, even when the evolution could not learn that move by TM. |
+| F8 | Card order | By name, A to Z. The type filter narrows it. |
+
+**Jess 2026-11-17, first answers:** F5 changed: the Pokemon panel's filter allows multi-selection (several boxes, regions, types, BST stars, rarities at once; within one group a Pokemon matches any choice, across groups it must match each, as the Team screen's filter does). F7 agreed: the purchase teaches one copy, by its UUID. Jess raised a naming change (F9 below).
+
+| # | Question | Recommendation |
+|---|---|---|
+| F9 | Names. In the main games a TM is kept and a TR is used up. Here the Main Menu buy is kept for good and the in-run buy lasts one run. | Swap them to match: the Main Menu tab sells **TMs** (the purchase is "TM", learned for good); the in-run TM Mart becomes the **TR Shop** (its stock "TRs", one run). Text only: code ids (`mart`), the building art (its sign says MART) and the tm-purchase icon stay. Built in 149f, since 149f touches shops.js anyway. Rulings R2, R6 to R8 and #150's title are reworded TR to TM; a decision file records it. |
+
+**Jess 2026-11-17:** F9 yes (rename), F1 yes (the price bands). Build. Decision: docs/decisions/2026-11-17-tm-for-good-tr-for-one-run.md.
+
+**149f built (2026-11-17), needs Jess's feel test.** As planned (named TMs, per F9), with these differences found during
+the build:
+| # | What | Why |
+|---|---|---|
+| B1 | The cards use the TM disc art (`ps:tm.<type>`), not the mockup's TR art; tools/gen_pokesprite_index.py now indexes the tm and tr cells (neither was in the index) | the tab sells TMs now; the TR art stays indexed for the TR Shop |
+| B2 | The multi-select dropdown is a kit piece (menu-window-kit.js Dropdown), not in the pane | two users: the Type filter and the Pokemon filter |
+| B3 | menu.js gives its English region names (G.MenuUI.REGION_NAMES) | the Pokemon filter reads that one list instead of a copy |
+| B4 | game.js: Esc no longer sends the Shop back to the Main Menu by itself (the Shop handles its own Esc, as the Inventory does) | Esc on an open filter list closed the whole Shop |
+| B5 | hud-kit.js: a shiny of the 9 species with no shiny portrait asks for the normal face directly | the Pokebox grid draws hundreds of copies; each missing file logged a 404 |
+| B6 | The TMs tab draws only while shown, and its portraits load lazily | the hidden grid kept 500 portraits loading under the other tabs |
+| B7 | The Main Menu's Shop line reads "team items and TMs" | F9 |
+Checks: shop-screens-harness section 12 (+2 mutants, caught), pokebox-copies-harness 6b, smoke-ui Shop pass TMs section (6
+checks). check.js clean; smoke-ui all passed; smoke-berry-slots passed. Two shop-screens mutants on game.js were already STALE
+before this slice (the shop-over-another-screen and bond-screen guards).

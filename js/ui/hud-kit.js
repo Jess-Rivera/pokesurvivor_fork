@@ -347,7 +347,11 @@ G.HudKit = (() => {
 
   // ---------- portraits (HUD-STYLE "Assets": SpriteCollab Normal face, 40x40) ----------
   const PORTRAIT_PATH = 'assets/pokemon/';
-  const portraitSource = (dex, shiny) => PORTRAIT_PATH + dex + (shiny ? '/s/Portrait.png' : '/Portrait.png');
+  // the species whose shiny has no portrait of its own (no assets/pokemon/<dex>/s/Portrait.png): their shinies show the
+  // normal face without asking for the missing file first (the Shop's Pokebox grid draws hundreds of copies, #149 149f)
+  const NO_SHINY_PORTRAIT = new Set([588, 820, 847, 868, 896, 916, 933, 958, 1007]);
+  const portraitSource = (dex, shiny) =>
+    PORTRAIT_PATH + dex + (shiny && !NO_SHINY_PORTRAIT.has(+dex) ? '/s/Portrait.png' : '/Portrait.png');
   /** onError for a portrait <img>: a shiny with no portrait of its own (#958) falls back to the normal face. */
   function portraitFallback(event) {
     const image = event.target,

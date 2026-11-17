@@ -103,6 +103,31 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
   const x = { box: 'nope' }; C.clean(x); if (!same(x.box, [])) bad('a box that is not a list is emptied');
   console.log('6 clean: bad records go, values clamp, a valid copy is untouched'); }
 
+// 6b. TMs learned for good (#149 149f, R2 and F7): one copy, by its UUID; absent reads as none; kept through a save round trip;
+// a retired move reads as its replacement (D-BUBBLE: Bubble became Water Gun), an unknown one is dropped, each move once
+{ const fresh = C.read(JSON.parse(LINE), {});
+  if (!same(fresh.tmsLearned, [])) bad('a copy that never learned a TM reads as none: ' + fresh.tmsLearned);
+  const s = { box: [JSON.parse(LINE), C.roll({ dex: 143 }, rnd)] };
+  const id = C.longId(s.box[0].u), other = C.longId(s.box[1].u);
+  if (!C.learnTm(s, id, 'thunderbolt')) bad('a copy learns a TM');
+  if (C.learnTm(s, id, 'thunderbolt')) bad('the same TM twice is refused');
+  if (C.learnTm(s, C.uuid(), 'thunderbolt')) bad('a copy that is not in the box learns nothing');
+  if (!same(C.get(s, id).tmsLearned, ['thunderbolt'])) bad('the copy has it: ' + C.get(s, id).tmsLearned);
+  if (C.get(s, other).tmsLearned.length) bad('another copy of the same species does not');
+  const back = JSON.parse(JSON.stringify(s)); C.clean(back);
+  if (!same(C.get(back, id).tmsLearned, ['thunderbolt'])) bad('a learned TM survives a save round trip');
+  const was = { Moves: G.Moves, MoveDefs: G.MoveDefs };
+  G.Moves = { RETIRED: { bubble: 'water-gun' } };
+  G.MoveDefs = { 'water-gun': {}, thunderbolt: {} };
+  const old = { box: [{ ...JSON.parse(LINE), j: ['bubble', 'water-gun', 'no-such-move', 7, 'thunderbolt'] }] };
+  if (!same(C.read(old.box[0], {}).tmsLearned.slice(0, 2), ['water-gun', 'water-gun'])) bad('a retired TM reads as its replacement');
+  C.clean(old);
+  if (!same(C.read(old.box[0], {}).tmsLearned, ['water-gun', 'thunderbolt'])) bad('clean: retired replaced, unknown dropped, each once: ' + JSON.stringify(old.box[0].j));
+  const none = { box: [{ ...JSON.parse(LINE), j: ['no-such-move'] }] }; C.clean(none);
+  if ('j' in none.box[0]) bad('clean: a list left empty is removed');
+  G.Moves = was.Moves; G.MoveDefs = was.MoveDefs;
+  console.log('6b TMs learned: one copy, kept through a save, retired and unknown moves cleaned'); }
+
 // 7. real db.js: the clean save checkpoint, fresh saves, team links through commit and reload
 (async () => {
   load('js/core/db.js', 'PB_DB');

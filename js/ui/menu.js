@@ -24,13 +24,7 @@ G.MenuUI = (() => {
   });
   const dexCtrl = newCtrl();
   const rosCtrl = newCtrl(); // the Team screen keeps its own filters, separate from the Pokédex
-  const BST_BANDS = [
-    { k: 'lo', label: '≤300', lo: 0, hi: 300, stars: 3 },
-    { k: 'mid', label: '301-400', lo: 301, hi: 400, stars: 4 },
-    { k: 'hi', label: '401-500', lo: 401, hi: 500, stars: 5 },
-    { k: 'vhi', label: '501-600', lo: 501, hi: 600, stars: 6 },
-    { k: 'top', label: '600+', lo: 601, hi: 9999, stars: 7 },
-  ];
+  const BST_BANDS = G.Copies.BST_BANDS; // shared with the Shop's TMs tab (#149 149f)
   // N bright stars out of 7 (dim for the rest), matching bstStars' 100-BST-per-star scale.
   const bstTierStars = (n, size = 11) => {
     let out = '';
@@ -1454,6 +1448,7 @@ G.MenuUI = (() => {
       note:
         (c.isFavorite ? `${p.name} is a favorite. ` : '') +
         (c.evTotal ? `It has ${c.evTotal} EVs. They are lost. ` : '') +
+        (c.tmsLearned.length ? `Its ${c.tmsLearned.length} learned TMs go with it. ` : '') +
         (last
           ? `This is your last ${p.name}. The Pokédex keeps it.`
           : `You will have ${rosCoins((s.coins || 0) + price)} PokéCoins.`),
@@ -1586,7 +1581,11 @@ G.MenuUI = (() => {
     const yes = await G.UI.ask(`Sell ${ids.length} Pokémon for ${rosCoins(coins)} PokéCoins?`, {
       title: 'Sell Pokémon',
       ok: 'Sell',
-      note: 'Team, locked and favorite Pokémon are never part of a batch.',
+      note:
+        'Team, locked and favorite Pokémon are never part of a batch.' +
+        (ids.some((id) => (G.Copies.get(s, id) || { tmsLearned: [] }).tmsLearned.length)
+          ? ' Learned TMs go with the Pokémon sold.'
+          : ''),
     });
     if (!yes) return;
     const r = G.Copies.sellMany(s, ids, rosPending());
@@ -1780,5 +1779,5 @@ G.MenuUI = (() => {
     e.preventDefault();
   }
 
-  return { init, open, GEN_NAMES };
+  return { init, open, GEN_NAMES, REGION_NAMES: REGION_CARDS };
 })();

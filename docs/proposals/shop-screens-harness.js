@@ -231,5 +231,33 @@ game.player = lead; game.roster = [lead];
   const bf = body(code(read('js/game.js')), 'function buildFighter(');
   ok(bf.length > 100 && !/pban|banned/.test(bf), 'game.js: buildFighter (Starting Moves extra pick) no longer reads bans'); }
 
+// 12. #149 149f (R6, decision 2026-11-17-tm-for-good-tr-for-one-run): a TM the member's copy learned for good joins its
+// Move Trainer pool (offers and rerolls can roll it; not a guaranteed offer). A member without it is never offered it, and
+// the TR Shop's stock stays the TM list. Real G.Copies and G.TMs over a hand-built save.
+{ load('js/data/species-traits.js'); load('js/systems/copies.js'); load('js/systems/tms.js');
+  const save = { box: [], coins: 0, team: [] };
+  base.DB = { save };
+  const pikachu = G.DEX_BY[25];
+  const taught = G.Copies.roll({ dex: 25 }, rnd), untaught = G.Copies.roll({ dex: 25 }, rnd);
+  save.box.push(taught, untaught);
+  const taughtId = G.Copies.longId(taught.u), untaughtId = G.Copies.longId(untaught.u);
+  const outside = M.tmList().find(id => M.canUseTm(pikachu, id) && !M.poolFor(pikachu).includes(id));
+  ok(!!outside, 'precondition: Pikachu has a TM outside its level-up and egg pool: ' + outside);
+  ok(G.Copies.learnTm(save, taughtId, outside), 'the copy learns it');
+  const withTm = mkF(25, [['thunder-shock']], { copyUid: taughtId }),
+    sameSpecies = mkF(25, [['thunder-shock']], { copyUid: untaughtId }),
+    noCopy = mkF(25, [['thunder-shock']]);
+  const offeredIn = (f, tries) => { for (let k = 0; k < tries; k++) if (S.offers(trainer(), f).includes(outside)) return true; return false; };
+  ok(offeredIn(withTm, 400), 'the Move Trainer can offer the learned TM to that copy');
+  ok(!offeredIn(sameSpecies, 400) && !offeredIn(noCopy, 400), 'never to another copy of the species, or a member with no copy');
+  let rerolled = false;
+  for (let k = 0; k < 400 && !rerolled; k++) { const sh = { ...trainer(), rerolls: 1 }; S.reroll(sh, withTm); rerolled = S.offers(sh, withTm).includes(outside); }
+  ok(rerolled, 'a reroll can roll it too');
+  const knows = mkF(25, [['thunder-shock'], [outside]], { copyUid: taughtId });
+  ok(!offeredIn(knows, 200), 'a member that already knows the move this run is not offered it');
+  ok(S.offers(mart()).every(id => M.tmList().includes(id)), 'the TR Shop still sells from the TM list');
+  ok(S.nameOf('mart') === 'TR Shop', 'the in-run shop is named the TR Shop: ' + S.nameOf('mart'));
+  base.DB = undefined; delete base.DB; }
+
 console.log(fail ? 'shop screens: ' + fail + ' of ' + n + ' checks FAILED' : 'shop screens: all ' + n + ' checks passed');
 process.exitCode = fail ? 1 : 0;

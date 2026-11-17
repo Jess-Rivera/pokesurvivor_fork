@@ -872,7 +872,7 @@ async function shopFlow(browser, query, tag) {
   const onExitByMouse = overExit.cursorOn === '' && overExit.greenOn === 'shop-exit';
   const overCard = await mouseOver('#shop-items .shop-card-icon');
   const offOnCard = overCard.cursorOn === '' && overCard.greenOn === '';
-  const overTab = await mouseOver('.shop-tab[data-tab="trs"]');
+  const overTab = await mouseOver('.shop-tab[data-tab="tms"]');
   const offOnTab = overTab.cursorOn === '' && overTab.greenOn === '';
   await page.keyboard.press('Shift');
   await sleep(100);
@@ -1496,6 +1496,148 @@ async function shopFlow(browser, query, tag) {
       ': Enter on a ball card and on a belt Buy toasts "Coming soon." and changes nothing (' +
       soonPresses.map((press) => press.on + ': ' + press.toast).join(' / ') +
       ')'
+  );
+  await page.click('.shop-tab[data-tab="upgrades"]');
+  await sleep(100);
+
+  // 149f: the TMs tab. Able to Learn (on at opening) shows exactly the TMs the chosen Pokemon can use; off, every TM,
+  // the ones it cannot use dimmed. A shift-click on Buy skips the question and spends exactly the card's price, and the
+  // copy has learned it (its card then reads Learned, a press refuses). A plain click asks first. Choosing another
+  // Pokemon redraws the cards for it. The Pokemon filter takes several choices at once: two types show Pokemon of either.
+  await setSave({ coins: 10000000 });
+  await page.click('.shop-tab[data-tab="tms"]');
+  await sleep(200);
+  const tmsNow = () =>
+    page.evaluate(() => {
+      const save = G.DB.save,
+        uid = (document.querySelector('.shop-tms-cell.is-chosen, .shop-tms-slot.is-chosen') || { dataset: {} }).dataset
+          .uid;
+      return {
+        uid,
+        coins: save.coins,
+        learned: uid ? G.TMs.learned(save, uid) : [],
+        all: G.TMs.list(),
+        usable: uid ? G.TMs.list().filter((moveId) => G.TMs.standing(save, uid, moveId) !== 'cannot') : [],
+        buyable: uid ? G.TMs.list().filter((moveId) => G.TMs.standing(save, uid, moveId) === 'buy') : [],
+        cards: [...document.querySelectorAll('#shop-tms .shop-card')].map((card) => ({
+          id: card.dataset.item,
+          label: card.querySelector('button').textContent.trim(),
+          dimmed: card.classList.contains('is-dimmed'),
+        })),
+      };
+    });
+  // choose a box Pokemon with at least one TM to buy (the lead may know them all)
+  const firstChoice = await page.evaluate(() => {
+    const save = G.DB.save,
+      cell = [...document.querySelectorAll('.shop-tms-cell')].find((element) =>
+        G.TMs.list().some((moveId) => G.TMs.standing(save, element.dataset.uid, moveId) === 'buy')
+      );
+    return cell && cell.dataset.uid;
+  });
+  await page.click('.shop-tms-cell[data-uid="' + firstChoice + '"]');
+  await sleep(150);
+  const tms = await tmsNow();
+  ok(
+    tms.uid === firstChoice &&
+      tms.cards.length === tms.usable.length &&
+      tms.cards.every((card, index) => card.id === tms.usable[index] && !card.dimmed),
+    tag +
+      ': Able to Learn shows exactly the TMs the chosen Pokemon can use (' +
+      tms.cards.length +
+      ' of ' +
+      tms.all.length +
+      ')'
+  );
+  await page.click('#shop-tms .shop-toggle');
+  await sleep(150);
+  const allTms = await tmsNow();
+  ok(
+    allTms.cards.length === allTms.all.length &&
+      allTms.cards.every((card) => card.dimmed === !allTms.usable.includes(card.id)),
+    tag + ': with Able to Learn off every TM shows, dimmed exactly where it cannot learn it'
+  );
+  await page.click('#shop-tms .shop-toggle');
+  await sleep(150);
+  const tmTarget = tms.buyable[0],
+    tmTargetCard = tms.cards.find((card) => card.id === tmTarget);
+  const tmButtonOf = (moveId) => '#shop-tms .shop-card[data-item="' + moveId + '"] button';
+  await page.click(tmButtonOf(tmTarget));
+  await sleep(150);
+  const tmPlainAsks = await page.evaluate(() => G.UI.isOpen('scr-ask'));
+  if (tmPlainAsks) await page.click('#ask-no');
+  await sleep(150);
+  await page.click(tmButtonOf(tmTarget), { modifiers: ['Shift'] });
+  await sleep(250);
+  const tmBought = await tmsNow();
+  ok(
+    tmPlainAsks &&
+      tms.coins - tmBought.coins === priceOn(tmTargetCard.label) &&
+      tmBought.learned.includes(tmTarget) &&
+      tmBought.cards.find((card) => card.id === tmTarget).label === 'Learned',
+    tag +
+      ': Buy asks first; a shift-click skips it, spends exactly the card price (' +
+      tmTargetCard.label +
+      '), and the copy learns it for good'
+  );
+  await page.evaluate(() => {
+    const toast = document.querySelector('.toast');
+    if (toast) toast.textContent = '';
+  });
+  await page.click(tmButtonOf(tmTarget));
+  await sleep(150);
+  const tmAgain = await page.evaluate(() => ({
+    toast: (document.querySelector('.toast') || { textContent: '' }).textContent.trim(),
+    asked: G.UI.isOpen('scr-ask'),
+    coins: G.DB.save.coins,
+  }));
+  ok(
+    tmAgain.toast === 'Already learned.' && !tmAgain.asked && tmAgain.coins === tmBought.coins,
+    tag + ': a learned TM refuses a second buy ("' + tmAgain.toast + '") and spends nothing'
+  );
+  // another species: the cards follow the new choice
+  const otherChoice = await page.evaluate((uid) => {
+    const save = G.DB.save,
+      mine = G.Copies.get(save, uid).speciesID,
+      cell = [...document.querySelectorAll('.shop-tms-cell')].find(
+        (element) => G.Copies.get(save, element.dataset.uid).speciesID !== mine
+      );
+    return cell && cell.dataset.uid;
+  }, firstChoice);
+  await page.click('.shop-tms-cell[data-uid="' + otherChoice + '"]');
+  await sleep(150);
+  const tmOther = await tmsNow();
+  ok(
+    tmOther.uid === otherChoice &&
+      tmOther.cards.length === tmOther.usable.length &&
+      tmOther.cards.every((card, index) => card.id === tmOther.usable[index]),
+    tag + ': choosing another Pokemon redraws the cards for it (' + tmOther.cards.length + ' TMs)'
+  );
+  // the Pokemon filter: Fire and Water chosen together show only Pokemon of either type
+  await page.click('.shop-tms-finder .shop-dropdown');
+  await sleep(100);
+  for (const type of ['fire', 'water']) {
+    await page.click('.shop-dropdown-choice[data-choice="type:' + type + '"]');
+    await sleep(80);
+  }
+  await page.keyboard.press('Escape');
+  await sleep(150);
+  const tmFiltered = await page.evaluate(() => {
+    const cells = [...document.querySelectorAll('.shop-tms-cell')];
+    return {
+      count: cells.length,
+      typed: cells.every((element) => {
+        const types = G.DEX_BY[G.Copies.get(G.DB.save, element.dataset.uid).speciesID].types;
+        return types.includes('fire') || types.includes('water');
+      }),
+      both: ['fire', 'water'].every((type) =>
+        cells.some((element) => G.DEX_BY[G.Copies.get(G.DB.save, element.dataset.uid).speciesID].types.includes(type))
+      ),
+      shopOpen: G.UI.isOpen('scr-gacha'),
+    };
+  });
+  ok(
+    tmFiltered.count > 0 && tmFiltered.typed && tmFiltered.both && tmFiltered.shopOpen,
+    tag + ': the filter takes two types at once and shows Pokemon of either; Esc closes the list, not the Shop'
   );
   await page.click('.shop-tab[data-tab="upgrades"]');
   await sleep(100);
