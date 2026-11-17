@@ -267,6 +267,18 @@ G.Catch = (() => {
     return { ok: true, cost: price, belts: beltsBought(s) };
   }
 
+  /** Sells the ball in one slot back for G.BALL_SELL_SHARE of its price, rounded down (#137c); the slot empties and no
+   *  other slot moves. Refuses an empty slot or one outside the bought belts. */
+  function sellBall(s, slot) {
+    const layout = s ? slots(s) : [],
+      ball = Number.isInteger(slot) ? BALL_BY[layout[slot]] : null;
+    if (!ball) return { ok: false, error: 'none' };
+    const refund = Math.floor(ball.price * G.BALL_SELL_SHARE);
+    layout[slot] = null;
+    s.coins = (s.coins || 0) + refund;
+    return { ok: true, ball: ball.id, refund };
+  }
+
   /** Moves the ball in slot from to slot to: an empty slot takes it, a filled one swaps the two (#137b). Refuses an
    *  empty from or a slot outside the bought belts. */
   function moveBall(s, from, to) {
@@ -417,6 +429,7 @@ G.Catch = (() => {
     buyBalls,
     unlockBall,
     buyBelt,
+    sellBall,
     startRun,
     begin,
     throwBall,

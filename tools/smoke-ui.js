@@ -1342,7 +1342,8 @@ async function shopFlow(browser, query, tag) {
       };
     });
   const POCKET_KEYS = ['berry', 'item'];
-  const priceOn = (label) => Number(label.replace(/\D/g, ''));
+  // the price on a label: its last number ("Buy 50", "Unlock 5,000", "Buy Belt 2 10,000")
+  const priceOn = (label) => Number(label.trim().split(' ').pop().replace(/\D/g, ''));
   // Enter on the item under the cursor, for a Buy that should refuse: the toast it shows, whether a dialog asked, and
   // the pockets afterwards (the toast is cleared first, so an older one cannot count)
   const refusedEnter = async () => {
@@ -1468,8 +1469,9 @@ async function shopFlow(browser, query, tag) {
   // 149e and #137: the Pokeballs tab. One card per ball in the catalog, in its order. An unlocked tier
   // (G.Catch.isUnlocked) is lit and reads Buy and its price; a locked tier with an unlock price is dimmed and reads Unlock
   // and that price; every other ball is dimmed and reads Unlock. Three belts of six slots: bought ones = the save's
-  // belts, the balls drawn = the save's balls; one Buy, under the next belt, at that belt's price. The arrows reach every
-  // card button, that Buy and Exit
+  // belts, the balls drawn = the save's balls; one Buy, at that belt's price. #137c: the belts sit against the pane's
+  // right edge, each numbered; the one "Buy Belt <n>" is on Exit's row, left of it; Sell sits right above Exit, its
+  // width. The arrows reach every card button, that Buy, Sell and Exit
   const BALL_BELT = { size: 6, poke: 4, great: 0, ultra: 0, unlocked: [] };
   await setSave({ coins: 0, belt: { ...BALL_BELT } });
   await page.click('.shop-tab[data-tab="balls"]');
@@ -1494,7 +1496,8 @@ async function shopFlow(browser, query, tag) {
           id: card.dataset.item,
           name: card.querySelector('.shop-card-name').textContent.trim(),
           label: card.querySelector('button').textContent.trim(),
-          dimmed: card.classList.contains('is-dimmed'),
+          dimmed: card.classList.contains('is-dimmed') || card.classList.contains('is-dimmed-but-button'),
+          buttonLit: card.classList.contains('is-dimmed-but-button'),
           pictured: !!card.querySelector('.shop-card-icon .catch-ball'),
         })),
         beltSlots: belts.map((belt) => belt.querySelectorAll('.catch-slot').length),
@@ -1514,6 +1517,7 @@ async function shopFlow(browser, query, tag) {
     card.name === ball.name &&
     card.pictured &&
     card.dimmed === !ball.unlocked &&
+    !card.buttonLit && // no coins: no Unlock is lit
     (ball.unlocked
       ? card.label.startsWith('Buy') && priceOn(card.label) === ball.price
       : ball.unlockPrice
@@ -1540,7 +1544,52 @@ async function shopFlow(browser, query, tag) {
       balls.lockedBelts +
       ' locked)'
   );
-  // the arrows: into the top-left card, then a snake down the 3-column grid, then right to the belt Buy and Exit
+  // #137c layout: belt 3 ends a small pad in from the pane's right edge; the belts go 1, 2, 3 left to right, each showing
+  // its number; the belt Buy is on Exit's row and ends left of Exit; Sell is above Exit, right-aligned with it, between
+  // the belts and Exit; every label fits its button
+  const ballLayout = await page.evaluate(() => {
+    const pane = document.querySelector('.shop-balls-pane'),
+      belts = [...pane.querySelectorAll('.shop-belt')],
+      rect = (element) => element && element.getBoundingClientRect(),
+      exit = rect(document.querySelector('#scr-gacha .shop-exit')),
+      sell = rect(pane.querySelector('.shop-sell')),
+      buy = rect(pane.querySelector('.shop-belt-buy')),
+      lastBelt = belts[belts.length - 1];
+    return {
+      rightPad: pane.offsetWidth - (lastBelt.offsetLeft + lastBelt.offsetWidth),
+      inOrder: belts.every((belt, index) => !index || belt.offsetLeft > belts[index - 1].offsetLeft),
+      labelsFit: [...pane.querySelectorAll('.shop-sell, .shop-belt-buy')].every((host) => {
+        const label = host.querySelector('button span');
+        return label.getBoundingClientRect().width <= host.getBoundingClientRect().width - 12;
+      }),
+      numbers: belts.map((belt) => (belt.querySelector('.shop-belt-number') || { textContent: '' }).textContent.trim()),
+      buyOnExitRow: !!buy && Math.abs(buy.top - exit.top) < 1 && buy.right < exit.left,
+      sellOverExit:
+        !!sell && Math.abs(sell.right - exit.right) < 1 && sell.bottom < exit.top && sell.top > rect(lastBelt).bottom,
+    };
+  });
+  ok(
+    ballLayout.rightPad > 0 &&
+      ballLayout.rightPad <= 20 &&
+      ballLayout.inOrder &&
+      ballLayout.numbers.join() === '1,2,3' &&
+      ballLayout.buyOnExitRow &&
+      ballLayout.sellOverExit &&
+      ballLayout.labelsFit,
+    tag +
+      ': belts packed right (' +
+      ballLayout.rightPad +
+      ' px pad) and numbered ' +
+      ballLayout.numbers.join() +
+      '; the belt Buy on Exit row, Sell above Exit, labels fit (' +
+      ballLayout.buyOnExitRow +
+      ', ' +
+      ballLayout.sellOverExit +
+      ', ' +
+      ballLayout.labelsFit +
+      ')'
+  );
+  // the arrows: into the top-left card, then a snake down the 3-column grid, then on to the belt Buy, Sell and Exit
   // (Up never leaves an area, so the walk goes left into the cards before it goes up)
   const ballVisits = new Set();
   const toTopLeftCard = async () => {
@@ -1587,18 +1636,19 @@ async function shopFlow(browser, query, tag) {
     for (let step = 0; step < 2; step++) ballVisits.add(await arrow(across));
     ballVisits.add(await arrow('ArrowDown'));
   }
-  for (let step = 0; step < 4; step++) ballVisits.add(await arrow('ArrowRight'));
-  ballVisits.add(await arrow('ArrowDown'));
+  for (const id of ['belt-' + (balls.boughtBelts + 1), 'sell']) if (await ballCursorTo(id)) ballVisits.add(id);
+  ballVisits.add(await arrow('ArrowDown')); // Sell to Exit
   const wantedVisits = [
     ...balls.catalog.map((ball) => 'ball-' + ball.id),
     'belt-' + (balls.boughtBelts + 1),
+    'sell',
     'shop-exit',
   ];
   const missedVisits = wantedVisits.filter((id) => !ballVisits.has(id));
   ok(
     !missedVisits.length,
     tag +
-      ': the arrows reach every ball card, the belt Buy and Exit' +
+      ': the arrows reach every ball card, the belt Buy, Sell and Exit' +
       (missedVisits.length ? ' (missed ' + missedVisits.join(', ') + ')' : '')
   );
   // refusals (#151): Enter with no coins on a ball and on the belt Buy says "Unable to Afford"; a ball with no use yet
@@ -1670,8 +1720,36 @@ async function shopFlow(browser, query, tag) {
       beltTwoBalls +
       ' on belt 2)'
   );
-  // an unlock asks, then pays its price once; the card turns lit with its Buy price
+  // #137c: a locked Great you can afford: its card still looks dimmed but its Unlock button is not; Master (no use yet)
+  // stays wholly dimmed
   await setSave({ coins: 100000, belt: { ...BALL_BELT } });
+  await sleep(100);
+  const unlockLook = await page.evaluate(() => {
+    const seen = (element) => {
+      let opacity = 1;
+      for (let at = element; at && at.id !== 'shop-balls'; at = at.parentElement)
+        opacity *= Number(getComputedStyle(at).opacity);
+      return opacity;
+    };
+    const card = (id) => document.querySelector('#shop-balls .shop-card[data-item="' + id + '"]');
+    return {
+      greatButton: seen(card('great').querySelector('button')),
+      greatPicture: seen(card('great').querySelector('.shop-card-icon')),
+      greatName: seen(card('great').querySelector('.shop-card-name')),
+      masterButton: seen(card('master').querySelector('button')),
+    };
+  });
+  ok(
+    unlockLook.greatButton === 1 &&
+      unlockLook.greatPicture < 1 &&
+      unlockLook.greatName < 1 &&
+      unlockLook.masterButton < 1,
+    tag +
+      ': an affordable Unlock stays lit on its dimmed card; a ball with no use stays wholly dimmed (' +
+      JSON.stringify(unlockLook) +
+      ')'
+  );
+  // an unlock asks, then pays its price once; the card turns lit with its Buy price
   await ballCursorTo('ball-great');
   before = await ballsNow();
   await page.keyboard.press('Enter');
@@ -1700,7 +1778,9 @@ async function shopFlow(browser, query, tag) {
       before.coins - after.coins === priceOn(before.beltBuys[0]) &&
       after.lockedBelts === before.lockedBelts - 1 &&
       after.beltBuys.length === 1 &&
-      priceOn(after.beltBuys[0]) === after.nextBeltPrice,
+      priceOn(after.beltBuys[0]) === after.nextBeltPrice &&
+      before.beltBuys[0].startsWith('Buy Belt ' + (before.boughtBelts + 1) + ' ') &&
+      after.beltBuys[0].startsWith('Buy Belt ' + (after.boughtBelts + 1) + ' '),
     tag +
       ': a belt Buy asks, adds six slots for its price, and the next belt is for sale (' +
       after.beltBuys.join() +
@@ -1789,6 +1869,65 @@ async function shopFlow(browser, query, tag) {
     tag +
       ': by mouse a click then a click moves a ball, a drag swaps two, a click outside puts it back (' +
       [movedByClick, swappedByDrag, afterOutside].join(' / ') +
+      ')'
+  );
+  // #137c Sell: with nothing held it refuses and changes nothing; a ball held by keys, by click or dragged onto Sell is
+  // sold: its slot empties and the coins rise by the sell share of its price; no other slot changes
+  const sellState = () =>
+    page.evaluate(() => ({
+      coins: G.DB.save.coins,
+      slots: G.DB.save.belt.slots.join(),
+      share: Object.fromEntries(G.Catch.BALLS.map((ball) => [ball.id, Math.floor(ball.price * G.BALL_SELL_SHARE)])),
+    }));
+  const sellCentre = () =>
+    page.evaluate(() => {
+      const rect = document.querySelector('#shop-balls .shop-sell').getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    });
+  await setSave({
+    coins: 100,
+    belt: { size: 12, slots: ['great', 'poke', 'ultra', ...Array(9).fill(null)], unlocked: ['great', 'ultra'] },
+  });
+  const sellRefusal = { ...(await refusedOn('sell')), wanted: 'Pick up a ball first.' };
+  let sellBefore = await sellState();
+  await ballCursorTo('slot-0');
+  await page.keyboard.press('Enter');
+  await sleep(80);
+  await ballCursorTo('sell');
+  await page.keyboard.press('Enter');
+  await sleep(150);
+  const soldByKeys = await sellState();
+  point = await slotCentreOf(1);
+  await page.mouse.click(point.x, point.y);
+  await sleep(80);
+  point = await sellCentre();
+  await page.mouse.click(point.x, point.y);
+  await sleep(150);
+  const soldByClick = await sellState();
+  const sellFrom = await slotCentreOf(2),
+    sellTo = await sellCentre();
+  await page.mouse.move(sellFrom.x, sellFrom.y);
+  await page.mouse.down();
+  await page.mouse.move(sellFrom.x + 20, sellFrom.y + 20, { steps: 4 });
+  await page.mouse.move(sellTo.x, sellTo.y, { steps: 8 });
+  await page.mouse.up();
+  await sleep(150);
+  const soldByDrag = await sellState();
+  ok(
+    sellRefusal.reached &&
+      sellRefusal.toast === sellRefusal.wanted &&
+      sellRefusal.same &&
+      soldByKeys.slots === ',poke,ultra,,,,,,,,,' &&
+      soldByKeys.coins - sellBefore.coins === sellBefore.share.great &&
+      soldByClick.slots === ',,ultra,,,,,,,,,' &&
+      soldByClick.coins - soldByKeys.coins === sellBefore.share.poke &&
+      soldByDrag.slots === ',,,,,,,,,,,' &&
+      soldByDrag.coins - soldByClick.coins === sellBefore.share.ultra,
+    tag +
+      ': Sell refuses with nothing held (' +
+      sellRefusal.toast +
+      '); by keys, by click and by drag it sells the held ball for its share (' +
+      [sellBefore, soldByKeys, soldByClick, soldByDrag].map((state) => state.coins + ' ' + state.slots).join(' / ') +
       ')'
   );
   await page.click('.shop-tab[data-tab="upgrades"]');

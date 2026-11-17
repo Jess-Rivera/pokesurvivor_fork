@@ -250,3 +250,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   and Space (the in-run Inventory's pick-up model); a throw empties its slot; old saves convert on load.
 - Checks: rescue-harness, smoke-ui, check.js all passed; smoke-pause-menu only the known 401 px failure.
 - Stopped at: #137 back in Needs Playtest.
+
+## 2026-11-17 (Claude Code, home, sixth session), #137c Pokeballs tab follow-up
+- Jess's four asks: belts packed right and numbered; one "Buy Belt N price" beside Exit; Sell Pokeball above Exit
+  (half price, red focus rim); an affordable Unlock stays lit on its dimmed card. G.Catch.sellBall, G.BALL_SELL_SHARE.
+- Decided: decision 2026-11-17-137c-sell-balls-at-half-price. Sell is wider than Exit so its label fits.
+- Broke and fixed: Pane read a signal, so Preact skipped its redraws on save; Sell moved to its own component.
+- Checks: rescue-harness, smoke-ui, check.js all passed. Stopped at: #137 in Needs Playtest.

@@ -3,11 +3,15 @@
  * Opening.md. Drawn into #shop-balls by js/ui/gacha-ui.js, which owns the window, the rail, Exit and the cursor.
  *   cards   a scrolling 3-column grid of the kit's item cards, one per ball in G.BALL_CATALOG: the ball (frame 9 of its
  *           strip, flipped, 2x), divider, name, line, one button. An unlocked tier (G.Catch.isUnlocked) is lit
- *           with "Buy <price>"; a locked Great or Ultra is dimmed with "Unlock <price>"; the other balls are dimmed
+ *           with "Buy <price>"; a locked Great or Ultra is dimmed with "Unlock <price>" (the button
+ *           stays lit when you can afford it, #137c); the other balls are dimmed
  *           and refuse with "Coming soon.".
- *   belts   the catch screen's three belts of six slots, sized up: bought belts (G.Catch.beltsBought) in the Poke Balls
- *           pocket colours holding the save's balls slot for slot (G.Catch.slots); the rest locked, the next one with a
- *           Buy and its price under it (belts are bought in order).
+ *   belts   the catch screen's three belts of six slots, sized up, packed against the pane's right edge, each with its
+ *           number on its top-left corner (#137c): bought belts (G.Catch.beltsBought) in the Poke Balls pocket colours
+ *           holding the save's balls slot for slot (G.Catch.slots); the rest locked. One "Buy Belt <n> <price>" left of
+ *           Exit, on its row, buys the next belt (belts are bought in order) and is gone once every belt is bought.
+ *   sell    #137c: "Sell Pokeball" above Exit (right-aligned with it) sells the ball you are holding (picked up by click or keys, or dragged onto
+ *           it) for half its price (G.Catch.sellBall); with nothing held it refuses.
  *   arrange #137b: every slot of a bought belt takes the cursor. A ball moves as in the in-run Inventory
  *           (js/ui/pause-inventory.js): a click picks it up and a second click puts it down, a drag puts it down where
  *           the pointer lets go; by keys Enter or Space picks up and puts down. Onto an empty slot it moves, onto a ball
@@ -24,7 +28,11 @@ G.ShopBallsPane = (() => {
   const { BUTTON, CARD, CURSOR_ROOM, SCROLL_COLOURS, px, CursorButton, ItemCard } = windowKit;
 
   // ---------- sizes and places (pane pixels; the pane is 1005 x 616, down to the bottom of Exit) ----------
-  const PANE_HEIGHT = 616;
+  const PANE_WIDTH = 1005,
+    PANE_HEIGHT = 616;
+  // Exit (drawn by js/ui/gacha-ui.js, EXIT) sits in the pane's bottom right corner: its row is the pane's last 54 px
+  const EXIT_PLACE = { artWidth: 52, top: PANE_HEIGHT - BUTTON.height };
+  EXIT_PLACE.left = PANE_WIDTH - EXIT_PLACE.artWidth * BUTTON.artPixel; // 849
   // the cards: the Team Items sale grid's sizes (3 cards of CARD.width and the scroll bar), CURSOR_ROOM in from the
   // pane's top and left so the cursor's corners show whole
   const GRID = { columns: 3, width: 584 };
@@ -33,12 +41,23 @@ G.ShopBallsPane = (() => {
   // (CARD.iconSize, 64 px)
   const CARD_BALL = { frame: 9, scale: 2 };
   // the belts: the catch screen's (js/ui/catch-ui.js SLOT and BELT) sized up, its ball drawn at 2x in a 68 px slot;
-  // three belts 145 px apart so a Buy fits under each of belts 2 and 3, belt 3's Buy ending at the pane's right edge
+  // three belts 20 px apart, belt 3 ending 12 px in from the pane's right edge (Jess 2026-11-17, #137c P1 and P2)
   const SLOT = { size: 68, gap: 10, left: 14, top: 14, ballScale: 2 },
-    BELT = { left: 596, step: 145, width: 96, count: 3, slots: 6 };
+    BELT = { width: 96, gap: 20, rightPad: 12, count: 3, slots: 6 };
+  BELT.step = BELT.width + BELT.gap;
+  BELT.left = PANE_WIDTH - BELT.rightPad - BELT.count * BELT.width - (BELT.count - 1) * BELT.gap; // 665
   BELT.height = 2 * SLOT.top + BELT.slots * SLOT.size + (BELT.slots - 1) * SLOT.gap; // 486
-  const BELT_BUY = { artWidth: 47, gap: 12 }; // 141 px wide, under its belt
-  BELT_BUY.width = BELT_BUY.artWidth * BUTTON.artPixel;
+  const BELT_NUMBER = { left: 2, top: -3 }; // the belt's number on its top-left rim corner, in the 14 px above slot 1
+  // the one belt Buy, left of Exit on its row, wide enough for "Buy Belt 3 15,000" (#137c)
+  const BELT_BUY = { artWidth: 78, gap: 12 };
+  BELT_BUY.width = BELT_BUY.artWidth * BUTTON.artPixel; // 234
+  BELT_BUY.left = EXIT_PLACE.left - BELT_BUY.gap - BELT_BUY.width;
+  // Sell, right above Exit and right-aligned with it, a little wider so "Sell Pokeball" fits (#137c); its focus rim is
+  // red (Jess 2026-11-17, P5)
+  const SELL = { artWidth: 62, gap: 8 };
+  SELL.left = PANE_WIDTH - SELL.artWidth * BUTTON.artPixel; // 819
+  SELL.top = EXIT_PLACE.top - SELL.gap - BUTTON.height; // 500, 8 px under the belts' bottom (492)
+  const SELL_RIM = { light: '#ff8a90', base: '#e8202a', dark: '#7c1016' };
   const SHIFT_BUY_COUNT = 10; // balls one Shift press buys (B6)
   // the Poke Balls pocket colours (docs/UI-PALETTES.md "Bag"), the catch screen's bought belt
   const BELT_RIM = { light: '#DBB26E', base: '#C88820', dark: '#825815' };
@@ -50,10 +69,12 @@ G.ShopBallsPane = (() => {
     locked: 'Unlock it first.',
     done: 'Already bought.',
     none: 'You cannot buy that.',
+    nothingHeld: 'Pick up a ball first.',
   };
-  const BALL_ID = 'ball-', // cursor ids: a card's button, the next belt's Buy, a belt slot (its place across the belts)
-    BELT_ID = 'belt-',
-    SLOT_ID = 'slot-';
+  const BALL_ID = 'ball-', // cursor ids: a card's button, the next belt's Buy, a belt slot (its place across the belts),
+    BELT_ID = 'belt-', // Sell
+    SLOT_ID = 'slot-',
+    SELL_ID = 'sell';
   const DRAG_START_DISTANCE = 6; // px the pointer moves before a press becomes a drag (as the in-run Inventory)
   const fmt = (n) => n.toLocaleString('en-US');
 
@@ -80,12 +101,13 @@ G.ShopBallsPane = (() => {
   /** The next belt's number, or null when every belt is bought. */
   const nextBelt = () => (G.Catch.nextBeltPrice() ? G.Catch.beltsBought() + 1 : null);
   /** What the cursor may reach on this tab, in reading order: every card's button, every slot of the bought belts,
-   *  then the next belt's Buy. */
+   *  Sell, then the next belt's Buy. */
   function cursorItems() {
     const belt = nextBelt();
     return [
       ...G.BALL_CATALOG.map((ball) => BALL_ID + ball.id),
       ...G.Catch.slots().map((_, position) => SLOT_ID + position),
+      SELL_ID,
       ...(belt ? [BELT_ID + belt] : []),
     ];
   }
@@ -172,19 +194,26 @@ G.ShopBallsPane = (() => {
     const holding = carried.value;
     if (holding && holding.mode === 'drag') {
       swallowNextClick = true;
-      putDown(slotUnder(event.clientX, event.clientY));
+      if (overSell(event.clientX, event.clientY)) sellHeld();
+      else putDown(slotUnder(event.clientX, event.clientY));
     } else if (pressed) {
       pickUp(pressed.from, 'click'); // a click: the ball is picked up until the next press
       ghostAt.value = panePoint(event.clientX, event.clientY);
     }
     pressed = null;
   });
-  // a press anywhere but a slot while a ball is carried by click puts it back
+  /** True when a page point is on Sell. */
+  function overSell(clientX, clientY) {
+    const element = document.elementFromPoint(clientX, clientY);
+    return !!(element && element.closest('.shop-sell'));
+  }
+  // a press anywhere but a slot or Sell while a ball is carried by click puts it back
   document.addEventListener(
     'pointerdown',
     (event) => {
       const holding = carried.value;
-      if (holding && holding.mode !== 'drag' && !event.target.closest('[data-ball-slot]')) carried.value = null;
+      if (holding && holding.mode !== 'drag' && !event.target.closest('[data-ball-slot], .shop-sell'))
+        carried.value = null;
     },
     true
   );
@@ -223,7 +252,8 @@ G.ShopBallsPane = (() => {
   /** "Unable to Afford" when the save's coins are under price, else null. */
   const coinsShort = (price) => ((G.DB.save.coins || 0) < price ? REFUSALS.poor : null);
 
-  /** A card's button: its label, what it says when it cannot buy (null when it can), and whether the card is lit. */
+  /** A card's button: its label, what it says when it cannot buy (null when it can), whether the card is lit, and
+   *  whether a dimmed card's button stays lit (an Unlock you can afford). */
   function cardButton(ball) {
     if (G.Catch.isUnlocked(ball.id))
       return {
@@ -231,7 +261,10 @@ G.ShopBallsPane = (() => {
         refusal: G.Catch.room() <= 0 ? REFUSALS.full : coinsShort(ball.price),
         lit: true,
       };
-    if (ball.unlockPrice) return { label: 'Unlock ' + fmt(ball.unlockPrice), refusal: coinsShort(ball.unlockPrice) };
+    if (ball.unlockPrice) {
+      const refusal = coinsShort(ball.unlockPrice);
+      return { label: 'Unlock ' + fmt(ball.unlockPrice), refusal, buttonLit: !refusal }; // #137c
+    }
     return { label: 'Unlock', refusal: REFUSALS.soon };
   }
 
@@ -246,6 +279,7 @@ G.ShopBallsPane = (() => {
       onPress=${() => press(BALL_ID + ball.id)}
       area="balls"
       dimmed=${!button.lit}
+      buttonLit=${button.buttonLit}
       picture=${html`<${BallSprite} ball=${ball.id} frame=${CARD_BALL.frame} scale=${CARD_BALL.scale} flipped />`}
     />`;
   }
@@ -266,6 +300,10 @@ G.ShopBallsPane = (() => {
     }
     if (id.startsWith(BELT_ID)) {
       buyBelt();
+      return true;
+    }
+    if (id === SELL_ID) {
+      sellHeld();
       return true;
     }
     return false;
@@ -318,6 +356,15 @@ G.ShopBallsPane = (() => {
     settle(G.Catch.buyBelt(G.DB.save), (result) => `Belt ${result.belts} bought: six more ball slots.`);
   }
 
+  /** Sells the ball being held (#137c); the hold ends either way. */
+  function sellHeld() {
+    const holding = carried.value;
+    carried.value = null;
+    if (!holding) return settle({ ok: false, error: 'nothingHeld' });
+    const ball = tierOf(holding.ball);
+    settle(G.Catch.sellBall(G.DB.save, holding.from), (result) => `Sold a ${ball.name} for ${fmt(result.refund)}.`);
+  }
+
   function Belt({ cursor, number, balls }) {
     const locked = number > G.Catch.beltsBought(),
       firstSlot = (number - 1) * BELT.slots,
@@ -331,6 +378,7 @@ G.ShopBallsPane = (() => {
       rim=${locked ? FAINTED_RIM : BELT_RIM}
       className=${'catch-belt shop-belt' + (locked ? ' is-locked' : '')}
     >
+      <div class="hud-text shop-belt-number" style=${{ left: px(BELT_NUMBER.left), top: px(BELT_NUMBER.top) }}>${number}</div>
       ${Array.from({ length: BELT.slots }, (_, slot) => {
         const position = firstSlot + slot,
           ball = locked ? null : balls[position],
@@ -360,7 +408,7 @@ G.ShopBallsPane = (() => {
     </${Box}>`;
   }
 
-  /** The tab: cards on the left, the belts and their Buys on the right. openCount sends the cards back to the top. */
+  /** The tab: cards on the left, the belts on the right, Sell above Exit and the belt Buy left of it. openCount sends the cards back to the top. */
   function Pane({ cursor, openCount }) {
     if (!G.DB.save) return null;
     const balls = G.Catch.slots(),
@@ -397,21 +445,36 @@ G.ShopBallsPane = (() => {
           ? html`<${CursorButton}
               cursor=${cursor}
               id=${BELT_ID + belt}
-              label=${'Buy ' + fmt(G.BELT_PRICES[belt])}
+              label=${'Buy Belt ' + belt + ' ' + fmt(G.BELT_PRICES[belt])}
               artWidth=${BELT_BUY.artWidth}
               refusal=${coinsShort(G.BELT_PRICES[belt])}
               onPress=${() => press(BELT_ID + belt)}
               className="shop-belt-buy"
               area="belts"
-              style=${{
-                left: px(BELT.left + (belt - 1) * BELT.step + (BELT.width - BELT_BUY.width) / 2),
-                top: px(CURSOR_ROOM + BELT.height + BELT_BUY.gap),
-              }}
+              style=${{ left: px(BELT_BUY.left), top: px(EXIT_PLACE.top) }}
             />`
           : null
       }
+      <${SellButton} cursor=${cursor} />
       <${CarryGhost} cursor=${cursor} />
     </div>`;
+  }
+
+  /** Sell (#137c): refuses until a ball is held. Its own component, so only it reads the held ball: a component that
+   *  reads a signal is redrawn only when its props or that signal change, and Pane must redraw on every save. */
+  function SellButton({ cursor }) {
+    return html`<${CursorButton}
+      cursor=${cursor}
+      id=${SELL_ID}
+      label="Sell Pokeball"
+      artWidth=${SELL.artWidth}
+      refusal=${carried.value ? null : REFUSALS.nothingHeld}
+      onPress=${() => press(SELL_ID)}
+      className="shop-sell"
+      area="sell"
+      focusRim=${SELL_RIM}
+      style=${{ left: px(SELL.left), top: px(SELL.top) }}
+    />`;
   }
 
   return { ready: true, Pane, cursorItems, press, escape, reset };

@@ -349,10 +349,23 @@ const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === nam
   was = snapshot();
   for (const [from, to] of [[0, 1], [1, 18], [1, -1], [99, 1], [1.5, 2]]) if (C.moveBall(shop, from, to).ok) bad('a bad move refuses: ' + from + ' to ' + to);
   if (snapshot() !== was) bad('a refused move changes nothing');
+  // #137c sellBall: the slot empties, the coins rise by the sell share of that ball's price (rounded down), nothing else
+  // moves; an empty or outside slot refuses and changes nothing; a sell then a buy of the same ball never gains coins
+  shop.belt.slots = ['great', 'poke', 'ultra', ...Array(15).fill(null)]; shop.coins = 1000;
+  for (const [slot, id] of [[2, 'ultra'], [0, 'great']]) {
+    const others = shop.belt.slots.map((ball, i) => (i === slot ? '*' : ball)).join(); before = shop.coins; r = C.sellBall(shop, slot);
+    if (!r.ok || shop.belt.slots[slot] !== null || shop.coins - before !== Math.floor(PRICE[id].price * G.BALL_SELL_SHARE)) bad('a sale empties its slot and pays the share of its price: ' + id + ' ' + JSON.stringify(r));
+    if (shop.belt.slots.map((ball, i) => (i === slot ? '*' : ball)).join() !== others) bad('a sale moves no other ball');
+  }
+  was = snapshot();
+  for (const slot of [0, 18, -1, 1.5]) if (C.sellBall(shop, slot).ok) bad('selling an empty or outside slot refuses: ' + slot);
+  if (snapshot() !== was) bad('a refused sale changes nothing');
+  before = shop.coins; C.sellBall(shop, 1); C.buyBalls(shop, 'poke', 1);
+  if (shop.coins >= before) bad('a sell then a buy of the same ball never gains coins');
   // the catch screen's first selection (R6): the first slot holding the best ball
   shop.belt.slots = [null, 'poke', 'great', 'poke', 'great', ...Array(13).fill(null)];
   if (C.bestSlot(shop) !== 2) bad('bestSlot is the first slot of the best tier: ' + C.bestSlot(shop));
-  console.log('6f Shop: exact prices, never past the belt, locked tiers refuse, unlocks once, belts in order to three; buys fill the first empty slots, moves and swaps keep the tiers'); }
+  console.log('6f Shop: exact prices, never past the belt, locked tiers refuse, unlocks once, belts in order to three; buys fill the first empty slots, moves and swaps keep the tiers; a sale empties its slot for half the price'); }
 
 console.log(fail ? fail + ' FAILED' : 'rescue harness: all passed');
 process.exit(fail ? 1 : 0);

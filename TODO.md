@@ -11,7 +11,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 3. Before leaving a machine: commit and push.
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-17; gym leader AI parked)
-0. #137 feel test (Needs Playtest, steps in STATE), then close it. #153, #147, #154 closed.
+0. #137 feel test, including 137b and 137c (Needs Playtest, steps in STATE), then close it. #153, #147, #154 closed.
 1. #145 small and ready. #150 blocked on #97.
 2. #128 acquisition: #138 next, then #146 keep-or-sell list; order in
    docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).

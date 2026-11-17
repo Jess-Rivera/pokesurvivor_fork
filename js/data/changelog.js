@@ -11,8 +11,8 @@ G.CHANGELOG = [
     title: ['TMs for good', 'TMs for good'],
     new: [
       [
-        'Poke Balls in the Shop: buy Poke Balls for your belt (Shift buys 10), unlock Great and Ultra Balls, and buy a second and third belt for six more balls each. A new ball goes into the first empty slot, and you can move your balls between slots by click, drag or Enter and Space. Balls you do not throw stay on your belt for the next run; runs no longer refill it for free.',
-        'Poke Balls in the Shop: buy Poke Balls for your belt (Shift buys 10), unlock Great and Ultra Balls, and buy a second and third belt for six more balls each. A new ball goes into the first empty slot, and you can move your balls between slots by click, drag or Enter and Space. Balls you do not throw stay on your belt for the next run; runs no longer refill it for free.',
+        'Poke Balls in the Shop: buy Poke Balls for your belt (Shift buys 10), unlock Great and Ultra Balls, and buy a second and third belt for six more balls each. A new ball goes into the first empty slot, and you can move your balls between slots by click, drag or Enter and Space. Balls you do not throw stay on your belt for the next run; runs no longer refill it for free. You can also sell a ball you hold back for half its price.',
+        'Poke Balls in the Shop: buy Poke Balls for your belt (Shift buys 10), unlock Great and Ultra Balls, and buy a second and third belt for six more balls each. A new ball goes into the first empty slot, and you can move your balls between slots by click, drag or Enter and Space. Balls you do not throw stay on your belt for the next run; runs no longer refill it for free. You can also sell a ball you hold back for half its price.',
       ],
       [
         'TMs in the Shop: buy a TM with PokeCoins to teach one of your Pokemon a move for good. In every run after that, the Move Trainer can offer that move to it.',

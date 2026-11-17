@@ -52,3 +52,6 @@ G.BALL_CATALOG = Object.freeze(
 // Belt prices in PokeCoins, by belt number (#137; Jess 2026-11-16 mockup, 2026-11-17 B3; TUNE, BALANCE.md).
 // Belt 1 comes with every save; each belt holds six balls and is bought in order.
 G.BELT_PRICES = Object.freeze({ 2: 10000, 3: 15000 });
+
+// Selling a ball back in the Shop pays this share of its price, rounded down (#137c; Jess 2026-11-17; TUNE, BALANCE.md).
+G.BALL_SELL_SHARE = 0.5;

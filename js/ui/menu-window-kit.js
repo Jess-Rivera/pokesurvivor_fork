@@ -246,7 +246,7 @@ G.MenuWindowKit = (() => {
    * button never takes the cursor. refusal (#151, decision 2026-11-17-unaffordable-buttons-take-the-cursor): the toast a
    * press shows instead of acting ("Unable to Afford", or a Full pocket's line); the button still takes the cursor, keeps
    * its rim and greys its label. style places the box; area puts it in a cursor area; action is the button's
-   * data-action (the cursor id by default).
+   * data-action (the cursor id by default). focusRim: the rim's colours under the cursor (the kit's green by default).
    */
   function CursorButton({
     cursor,
@@ -260,6 +260,7 @@ G.MenuWindowKit = (() => {
     className,
     style,
     area,
+    focusRim = FOCUS_RIM,
   }) {
     const focused = cursor.cursorOn() === id;
     return html`<div
@@ -277,7 +278,7 @@ G.MenuWindowKit = (() => {
         artWidth=${artWidth}
         artPixel=${BUTTON.artPixel}
         rim=${REST_RIM}
-        focusRim=${FOCUS_RIM}
+        focusRim=${focusRim}
         focused=${focused}
         disabled=${disabled}
         onPress=${() => (refusal ? refuse(refusal) : !disabled && onPress())}
@@ -290,7 +291,8 @@ G.MenuWindowKit = (() => {
    * A team item card (149c): thin #29ceff rim, #303030 body, icon, divider, name, description, and one button at the
    * bottom (its id is the cursor's, in the given area). width: the Shop's 186 by default; the Inventory's are wider.
    * refusal: as CursorButton's. picture: drawn in the icon box in place of the item's icon (the Shop's ball cards, 149e);
-   * dimmed: the whole card at the locked look (a ball not unlocked yet).
+   * dimmed: the whole card at the locked look (a ball not unlocked yet); buttonLit (#137c): with dimmed, everything but
+   * the button dims, so a locked ball you can afford shows an Unlock you can press.
    */
   function ItemCard({
     cursor,
@@ -304,10 +306,11 @@ G.MenuWindowKit = (() => {
     width = CARD.width,
     picture,
     dimmed,
+    buttonLit,
   }) {
     const inner = width - 2 * CARD_RIM;
     return html`<div
-      class=${'shop-card' + (dimmed ? ' is-dimmed' : '')}
+      class=${'shop-card' + (dimmed ? (buttonLit ? ' is-dimmed-but-button' : ' is-dimmed') : '')}
       data-item=${item.id}
       data-cursor-whole
       style=${{ width: px(width), height: px(CARD.height) }}
