@@ -251,3 +251,5 @@ Also: each opening of the Shop sends both scroll boxes back to the top.
 from the top row; sideways never lands on a search bar. No selection cursor with the mouse anywhere in the Shop (the button
 under it shows its green rim). No corners on a search bar: its green rim shows the keys' cursor is there. Decision
 2026-11-17-no-selection-cursor-with-the-mouse.
+
+**149c signed off (Jess 2026-11-17, feel test good after three fix rounds).** Next: 149d Inventory screen.
