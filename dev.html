@@ -97,6 +97,7 @@
     <link rel="stylesheet" href="css/bw-upgrades.css" />
     <link rel="stylesheet" href="css/bw-settings.css" />
     <link rel="stylesheet" href="css/bw-catch.css" />
+    <link rel="stylesheet" href="css/bw-shop.css" />
     <link rel="stylesheet" href="css/hud-overlay.css" />
     <link rel="stylesheet" href="css/pause-menu.css" />
   </head>
@@ -202,7 +203,7 @@
           <button class="bw-row play sel" data-go="play">Jugar<small>Entra en la mazmorra</small></button>
           <button class="bw-row" data-go="team">Team<small id="menu-dex-count"></small></button>
           <button class="bw-row" data-go="inventory">Inventory<small>Team items for your run</small></button>
-          <button class="bw-row" data-go="gacha">Shop<small>Pokémon, team items and upgrades</small></button>
+          <button class="bw-row" data-go="gacha">Shop<small>Poke Balls, upgrades, team items and TRs</small></button>
           <button class="bw-row" data-go="goals">
             Misiones<small id="menu-goals-sub">Misiones, logros y perfil</small>
           </button>
@@ -671,28 +672,40 @@
       </div>
     </section>
 
-    <!-- ====== Gacha ====== -->
+    <!-- ====== Shop (Main Menu, #149; js/ui/gacha-ui.js, css/bw-shop.css): a window on the 1920 x 1080 stage over the
+         Main Menu. The icon rail and Exit are drawn into #shop-rail from the HUD kit; the panes sit in .shop-panes. ====== -->
     <section id="scr-gacha" class="scr dim hidden">
-      <div class="box wide">
-        <div class="row between">
-          <h2>Shop</h2>
-          <button class="btn small ghost" data-back>Volver</button>
-        </div>
-        <div class="gen-tabs" id="shop-tabs"></div>
+      <div class="shop-host" translate="no">
+        <div class="pm-stage shop-stage">
+          <div class="shop-window">
+            <div class="shop-panes">
+              <!-- Pokeballs: filled by #137 -->
+              <div id="shop-balls" class="shop-pane hidden">
+                <p class="shop-soon">Coming soon: Poke Ball restocks and bigger belts.</p>
+              </div>
 
-        <!-- Team Items: buy an unlock for the Inventory -->
-        <div id="shop-items" class="shop-pane hidden">
-          <p class="sub" style="margin: 4px 0 8px">
-            Unlock a team item for good (equip it in Inventory). <span id="shop-items-count"></span>
-          </p>
-          <div class="shop-items-main">
-            <div class="grid inv-grid" id="shop-items-grid"></div>
-            <aside class="panel inv-detail" id="shop-items-detail"></aside>
+              <!-- Character Upgrades: team item slots and berry slots (restyled in 149b) -->
+              <div id="shop-upgrades" class="shop-pane hidden"></div>
+
+              <!-- Team Items: buy an unlock for the Inventory (restyled in 149c) -->
+              <div id="shop-items" class="shop-pane hidden">
+                <p class="sub" style="margin: 4px 0 8px">
+                  Unlock a team item for good (equip it in Inventory). <span id="shop-items-count"></span>
+                </p>
+                <div class="shop-items-main">
+                  <div class="grid inv-grid" id="shop-items-grid"></div>
+                  <aside class="panel inv-detail" id="shop-items-detail"></aside>
+                </div>
+              </div>
+
+              <!-- TRs: filled in 149f -->
+              <div id="shop-trs" class="shop-pane hidden">
+                <p class="shop-soon">Coming soon: TRs, moves your Pokemon learn for good.</p>
+              </div>
+            </div>
+            <div id="shop-rail" class="shop-rail"></div>
           </div>
         </div>
-
-        <!-- Team Upgrades: team item slots -->
-        <div id="shop-upgrades" class="shop-pane hidden"></div>
       </div>
     </section>
 

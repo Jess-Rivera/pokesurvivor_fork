@@ -3372,11 +3372,7 @@ a.btn {
   background: rgba(255, 210, 63, 0.14);
 }
 
-/* ---- Shop (was Gacha): top tabs, regions down the left, Team Items, Team Upgrades ---- */
-#scr-gacha .box.wide {
-  width: min(1240px, 98vw);
-}
-
+/* ---- Shop (was Gacha): the old Team Items and Team Upgrades panes; the window and rail are css/bw-shop.css (#149) ---- */
 .shop-items-main {
   display: grid;
   grid-template-columns: 1fr 280px;

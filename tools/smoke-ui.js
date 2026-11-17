@@ -16,6 +16,8 @@
 //          throws, leaving that slot empty and filling the flee ring by misses / allowed; a click selects without replacing
 //          the slot (what a real double click needs) and a double click throws; the run plays on with the catch held; a quit
 //          places nothing; a number key throws from belt 1, and a team fall places the catch in the Pokebox.
+//   shop (#149a): the Main Menu Shop over the Main Menu, four rail tabs each with its own pane, a team item and a berry slot
+//          bought (price spent, owned), an unaffordable Buy cannot take focus, the arrows and Enter reach every tab and Exit, Esc.
 // Fails on any page or console error.
 const path = require('path'),
   cp = require('child_process');
@@ -776,6 +778,141 @@ async function catchFlow(browser, query, tag) {
 
 // Onboarding F3 (2026-11-05): a new guest goes straight to the region pick (9 cards of 3 sprites), picks Johto and lands in the
 // menu with Chikorita leading Cyndaquil and Totodile; a save that already has a partner skips the screen on the next load.
+// #149a: the Main Menu Shop opens over the Main Menu with four rail tabs, each showing its own pane; a team item and a berry
+// slot bought there spend PokeCoins and read as owned; a Buy you cannot afford cannot take focus; the arrows and Enter walk the
+// rail and press Exit, and Esc leaves too. Relations only: every price is read from the game, never copied here.
+async function shopFlow(browser, query, tag) {
+  const { page, errs } = await boot(browser, query);
+  await page.evaluate(() => {
+    if (!document.getElementById('tap-start').classList.contains('hidden'))
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    const save = G.DB.save;
+    save.teamItems = {}; // maxAll may own every team item: start with none, so the Team Items tab has something to sell
+    save.berrySlots = 1;
+    G.MenuUI.open();
+  });
+  await sleep(300);
+  const shown = () =>
+    page.evaluate(() => ({
+      shop: G.UI.isOpen('scr-gacha'),
+      menu: G.UI.isOpen('scr-menu'),
+      panes: [...document.querySelectorAll('#scr-gacha .shop-pane')]
+        .filter((p) => !p.classList.contains('hidden'))
+        .map((p) => p.id),
+      selected: [...document.querySelectorAll('.shop-tab.is-selected')].map((t) => t.dataset.tab),
+      cursorOn: (document.querySelector('.shop-rail .hud-cursor') || {}).parentElement?.className || '',
+    }));
+  const clickConfirm = async () => {
+    await page.waitForFunction(() => G.UI.isOpen('scr-ask'), null, { timeout: 3000 });
+    await page.click('#ask-ok');
+    await sleep(200);
+  };
+
+  await page.click('#scr-menu [data-go="gacha"]');
+  await sleep(300);
+  let now = await shown();
+  const tabs = await page.evaluate(() => [...document.querySelectorAll('.shop-tab')].map((t) => t.dataset.tab));
+  ok(now.shop && now.menu, tag + ': the Shop opens over the Main Menu, which stays shown');
+  ok(tabs.length === 4, tag + ': the rail has four tabs (' + tabs.join(', ') + ')');
+  let paneRight = true;
+  for (const key of tabs) {
+    await page.click('.shop-tab[data-tab="' + key + '"]');
+    await sleep(100);
+    now = await shown();
+    if (!(now.panes.length === 1 && now.panes[0] === 'shop-' + key && now.selected.join() === key)) paneRight = false;
+  }
+  ok(paneRight, tag + ': each tab shows its own pane, alone, and is the one selected tab');
+
+  // a team item: coins drop by the price the pane shows, the item is owned and leaves the list
+  await page.click('.shop-tab[data-tab="items"]');
+  await page.evaluate(() => {
+    G.DB.save.coins = G.Items.TEAM_ITEM_PRICE * 2;
+    G.DB.commit(true);
+  });
+  await sleep(100);
+  const beforeItem = await page.evaluate(() => ({
+    coins: G.DB.save.coins,
+    id: G.Items.LIST.find((i) => i.tier === 'run' && !G.Items.unlocked(G.DB.save, i.id)).id,
+  }));
+  await page.click('#shop-buy');
+  await clickConfirm();
+  const afterItem = await page.evaluate(
+    (id) => ({
+      coins: G.DB.save.coins,
+      owned: G.Items.unlocked(G.DB.save, id),
+      listed: [...document.querySelectorAll('#shop-items-grid .inv-cell b')].some(
+        (b) => b.textContent === G.Items.BY[id].name
+      ),
+      price: G.Items.TEAM_ITEM_PRICE,
+    }),
+    beforeItem.id
+  );
+  ok(
+    afterItem.owned && !afterItem.listed && beforeItem.coins - afterItem.coins === afterItem.price,
+    tag + ': buying a team item spends its price, owns it and takes it off the list'
+  );
+
+  // a berry slot: coins drop by the next slot's price and the save has one more berry slot
+  await page.click('.shop-tab[data-tab="upgrades"]');
+  await sleep(100);
+  const beforeBerry = await page.evaluate(() => ({ coins: G.DB.save.coins, slots: G.Grounds.berrySlots(G.DB.save) }));
+  await page.click('.shop-berry-b:not([disabled])');
+  await clickConfirm();
+  const afterBerry = await page.evaluate(
+    (slotsBefore) => ({
+      coins: G.DB.save.coins,
+      slots: G.Grounds.berrySlots(G.DB.save),
+      price: G.Grounds.berrySlotPrice(slotsBefore + 1),
+    }),
+    beforeBerry.slots
+  );
+  ok(
+    afterBerry.slots === beforeBerry.slots + 1 && beforeBerry.coins - afterBerry.coins === afterBerry.price,
+    tag + ': buying a berry slot spends its price and adds the slot'
+  );
+
+  // too poor: every Buy is disabled, so it cannot take focus
+  const poor = await page.evaluate(() => {
+    G.DB.save.coins = 0;
+    G.DB.commit(true);
+    const buttons = [...document.querySelectorAll('#shop-upgrades button')].filter((b) =>
+      /Buy|Not enough/.test(b.textContent)
+    );
+    buttons.forEach((b) => b.focus());
+    return {
+      count: buttons.length,
+      focused: buttons.includes(document.activeElement),
+      allDisabled: buttons.every((b) => b.disabled),
+    };
+  });
+  ok(poor.count > 0 && poor.allDisabled && !poor.focused, tag + ': a Buy you cannot afford cannot take focus');
+
+  // keys: Up walks the rail, Enter picks, Right goes to Exit, Enter there leaves
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('Enter');
+  await sleep(100);
+  now = await shown();
+  const upPicked = now.selected.join() === 'balls' && now.panes.join() === 'shop-balls';
+  await page.keyboard.press('ArrowRight');
+  await sleep(100);
+  const onExit = (await shown()).cursorOn.includes('shop-exit');
+  await page.keyboard.press('Enter');
+  await sleep(200);
+  now = await shown();
+  ok(upPicked && onExit && !now.shop && now.menu, tag + ': Up and Enter pick a tab, Right then Enter press Exit');
+  await page.click('#scr-menu [data-go="gacha"]');
+  await sleep(200);
+  await page.keyboard.press('Escape');
+  await sleep(200);
+  now = await shown();
+  ok(!now.shop && now.menu, tag + ': Esc leaves the Shop for the Main Menu');
+  ok(
+    errs.length === 0,
+    tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')
+  );
+  await page.close();
+}
+
 async function onboardingFlow(browser, query, tag) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   const page = await ctx.newPage();
@@ -872,6 +1009,7 @@ async function onboardingFlow(browser, query, tag) {
     await loginFlow(browser, '?dev', 'login');
     await onboardingFlow(browser, '?dev', 'onboarding');
     await catchFlow(browser, '?dev', 'catch');
+    await shopFlow(browser, '?dev', 'shop');
   } catch (e) {
     fail++;
     console.log('FAIL  crashed: ' + ((e && e.stack) || e));

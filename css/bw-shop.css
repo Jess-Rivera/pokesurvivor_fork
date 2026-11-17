@@ -1,0 +1,90 @@
+/* ============ bw-shop.css: the Main Menu Shop (#149; js/ui/gacha-ui.js) ============
+ * Mockups: assets/excalidraw/Shop-*.svg; plan: docs/ASCII Concept Maps/149 - Shop Rework Opening.md. A window on the menu
+ * screens' 1920 x 1080 stage (pause-menu.css .pm-stage, scaled by --pm-scale) over the dimmed Main Menu. The rail and Exit
+ * are the HUD kit's (cursor, team menu button); places of the drawn pieces come from gacha-ui.js, the window's are here.
+ */
+.shop-host {
+  position: absolute;
+  inset: 0;
+  --pm-scale: 1;
+}
+/* the window: the Menu Popup Panel (mockup: #212121 frame, #181818 body), the catch window's look */
+.shop-window {
+  position: absolute;
+  left: 115px;
+  top: 205px;
+  width: 1145px;
+  height: 670px;
+  background: #181818;
+  border: 1px solid #212121;
+  box-shadow: 0 0 0 2px #101010;
+}
+/* the panes: right of the rail, above Exit; each scrolls on its own */
+.shop-panes {
+  position: absolute;
+  left: 110px;
+  top: 30px;
+  right: 30px;
+  bottom: 110px;
+}
+.shop-pane {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.shop-soon {
+  margin: 0;
+  padding: 24px 4px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- the rail and Exit (drawn by gacha-ui.js into #shop-rail) ---------- */
+.shop-rail {
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* only its tabs and Exit take the mouse; the panes underneath stay clickable */
+  font-family: 'GameFont', monospace;
+  font-synthesis: none;
+  color: #ffffff;
+  user-select: none;
+}
+.shop-tab,
+.shop-button {
+  position: absolute;
+  pointer-events: auto;
+}
+.shop-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.shop-tab img {
+  display: block;
+  image-rendering: pixelated;
+  transform: scale(3); /* 3 screen pixels per art pixel; a whole number keeps the icons crisp */
+}
+.shop-button .hud-team-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+/* the label: Silver on its pixel grid at 2 screen pixels per font pixel, as the catch screen's buttons (bw-catch.css) */
+.shop-button .hud-team-button-label {
+  position: absolute;
+  left: 28px;
+  top: 21px;
+  font-size: 27.1429px;
+  line-height: 30px;
+  white-space: nowrap;
+  text-shadow:
+    2px 0 0 #101010,
+    -2px 0 0 #101010,
+    0 2px 0 #101010,
+    0 -2px 0 #101010,
+    2px 2px 0 #101010,
+    -2px 2px 0 #101010,
+    2px -2px 0 #101010,
+    -2px -2px 0 #101010;
+}

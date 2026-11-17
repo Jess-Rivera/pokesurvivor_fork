@@ -56,7 +56,7 @@ async function main() {
 
   // The Shop, Team Upgrades tab
   await page.evaluate(() => G.GachaUI.open());
-  await page.click('#shop-tabs .gen-tab[data-tab="upgrades"]');
+  await page.click('.shop-tab[data-tab="upgrades"]');
   const rows = await page.$$eval('.shop-berry-b', (buttons) =>
     buttons.map((b) => ({ slot: +b.dataset.slot, disabled: b.disabled, text: b.textContent.trim() }))
   );
