@@ -4,10 +4,10 @@
  * dimmed Main Menu (css/bw-shop.css). Every buying rule lives in G.Items and G.Grounds; this file draws and routes input.
  *   rail     four icon tabs down the window's left edge (assets/ui/shop_icons/), top to bottom: Pokeballs (#137 fills
  *            it), Character Upgrades (team item slots, berry slots), Team Items (100k unlocks), TRs (149f fills it).
- *            The chosen tab uses its -selected art and sits half out of the window.
- *   Exit     the team menu's button, bottom right; back to the Main Menu.
- *   input    one selection cursor over the rail and Exit (149a; the panes' Buy buttons join it when 149b and 149c
- *            rebuild them). Arrows move it, hover moves it too; Enter or a click picks a tab or presses Exit; Esc leaves.
+ *            Flush with the window's left edge; the chosen tab uses its -selected art. A click or Q / E switches them.
+ *   Exit     the team menu's button at 3 px per art pixel, bottom right; back to the Main Menu.
+ *   input    the selection cursor takes no tab. In 149a it sits on Exit (Enter presses it); the panes' Buy buttons join
+ *            it when 149b and 149c rebuild them. Esc leaves.
  */
 G.GachaUI = (() => {
   const $ = G.UI.$;
@@ -18,8 +18,7 @@ G.GachaUI = (() => {
     console.warn('[Shop] the HUD kit did not load: the Shop cannot open');
     return { init() {}, open() {} };
   }
-  const { html, signal, hooks, preact, Cursor, TeamButton, REST_RIM, FOCUS_RIM, fitToStage } = kitOverlay.kit;
-  const { showTooltip, hideTooltip } = kitOverlay.kit;
+  const { html, signal, preact, Cursor, TeamButton, REST_RIM, FOCUS_RIM, fitToStage } = kitOverlay.kit;
   let shopSel = null; // Team Items tab: the item shown in the detail column
   const fmt = (n) => n.toLocaleString('en-US');
 
@@ -34,14 +33,17 @@ G.GachaUI = (() => {
   const ICON_PATH = 'assets/ui/shop_icons/';
   // ---------- sizes and places (stage pixels, inside the window; css/bw-shop.css places the window) ----------
   const WINDOW = { width: 1145, height: 670 },
-    RAIL = { left: 8, firstTop: 70, step: 130, cell: 96, selectedShift: 48 }, // icons up to 32 px, drawn 3x (CSS)
-    EXIT = { right: 30, bottom: 24, artWidth: 45 }, // the team menu's button: 4 px per art pixel, 18 rows
-    TEAM_BUTTON_PIXEL = 4,
-    TEAM_BUTTON_HEIGHT = 18 * TEAM_BUTTON_PIXEL;
+    RAIL = { firstTop: 70, step: 130, cell: 96 }, // flush with the window's left edge; icons up to 32 px, drawn 3x (CSS)
+    EXIT = { right: 30, bottom: 24, artWidth: 52, artPixel: 3 }, // the team menu's button at 3 px per art pixel
+    TEAM_BUTTON_ROWS = 18;
+  EXIT.width = EXIT.artWidth * EXIT.artPixel; // 156
+  EXIT.height = TEAM_BUTTON_ROWS * EXIT.artPixel; // 54
 
   // ---------- state ----------
   const tab = signal(OPENING_TAB);
-  const focus = signal({ area: 'tab', index: 0 }); // { area: 'tab', index } | { area: 'exit' }
+  // What the selection cursor is on. The tabs take no cursor (Jess, 2026-11-16): Q and E or a click switch them. In 149a
+  // Exit is the only stop; the panes' Buy buttons join when 149b and 149c rebuild them.
+  const focus = signal('exit');
   const tabIndex = (key) => TABS.findIndex((entry) => entry.key === key);
 
   function init() {
@@ -56,20 +58,18 @@ G.GachaUI = (() => {
     G.UI.show('scr-gacha', true);
     fitStage();
     tab.value = OPENING_TAB;
-    focus.value = { area: 'tab', index: tabIndex(OPENING_TAB) };
+    focus.value = 'exit';
     refresh();
   }
 
   function close() {
     if (!G.UI.isOpen('scr-gacha')) return;
-    hideTooltip();
     G.Audio.sfx('back');
     G.MenuUI.open();
   }
 
   /** Shows the tab with this key and redraws it. */
   function pickTab(key) {
-    focus.value = { area: 'tab', index: tabIndex(key) };
     if (key === tab.value) return;
     tab.value = key;
     G.Audio.sfx('select');
@@ -90,86 +90,60 @@ G.GachaUI = (() => {
     const key = event.key;
     if (key === 'Escape') close();
     else if (key === 'Enter') press();
-    else if (key === 'ArrowUp' || key === 'ArrowDown') moveCursor(0, key === 'ArrowDown' ? 1 : -1);
-    else if (key === 'ArrowLeft' || key === 'ArrowRight') moveCursor(key === 'ArrowRight' ? 1 : -1, 0);
+    else if (key === 'q' || key === 'Q') stepTab(-1);
+    else if (key === 'e' || key === 'E') stepTab(1);
     else return;
     event.preventDefault();
   }
 
-  /** Up and Down walk the rail; Right goes to Exit, Left comes back to the shown tab. */
-  function moveCursor(dx, dy) {
-    const at = focus.value;
-    let next = null;
-    if (at.area === 'tab' && dx > 0) next = { area: 'exit' };
-    else if (at.area === 'tab' && dy) {
-      const index = Math.max(0, Math.min(TABS.length - 1, at.index + dy));
-      if (index !== at.index) next = { area: 'tab', index };
-    } else if (at.area === 'exit' && dx < 0) next = { area: 'tab', index: tabIndex(tab.value) };
-    if (!next) return;
-    focus.value = next;
-    G.Audio.sfx('hover');
+  /** Q and E: the tab above or below the shown one on the rail (no wrap). */
+  function stepTab(step) {
+    const index = tabIndex(tab.value) + step;
+    if (index >= 0 && index < TABS.length) pickTab(TABS[index].key);
   }
 
   /** Enter on whatever the cursor is on. */
   function press() {
-    const at = focus.value;
-    if (at.area === 'exit') close();
-    else pickTab(TABS[at.index].key);
+    if (focus.value === 'exit') close();
   }
 
   // ---------- drawing the rail and Exit ----------
   const px = (value) => value + 'px';
 
   function Tab({ entry, index }) {
-    const selected = entry.key === tab.value,
-      at = focus.value;
+    const selected = entry.key === tab.value;
     return html`<div
       class=${'shop-tab' + (selected ? ' is-selected' : '')}
       data-tab=${entry.key}
-      style=${{
-        left: px(RAIL.left - (selected ? RAIL.selectedShift : 0)),
-        top: px(RAIL.firstTop + index * RAIL.step),
-        width: px(RAIL.cell),
-        height: px(RAIL.cell),
-      }}
-      onMouseEnter=${() => (focus.value = { area: 'tab', index })}
+      style=${{ left: 0, top: px(RAIL.firstTop + index * RAIL.step), width: px(RAIL.cell), height: px(RAIL.cell) }}
       onClick=${() => pickTab(entry.key)}
     >
       <img src=${ICON_PATH + entry.icon + (selected ? '-selected' : '') + '.png'} alt=${entry.name} />
-      ${at.area === 'tab' && at.index === index ? html`<${Cursor} />` : null}
     </div>`;
   }
 
   function Rail() {
-    const at = focus.value,
-      exitFocused = at.area === 'exit',
-      shownTab = tab.value;
-    const rootRef = hooks.useRef(null);
-    // the focused tab's name shows in the page's one tooltip layer (keys and hover alike)
-    hooks.useLayoutEffect(() => {
-      if (at.area !== 'tab' || !G.UI.isOpen('scr-gacha')) return hideTooltip();
-      const anchor = rootRef.current && rootRef.current.querySelector('[data-tab="' + TABS[at.index].key + '"]');
-      showTooltip(anchor, { name: TABS[at.index].name }, { side: 'rightOf' });
-    }, [at, shownTab]);
-    return html`<div ref=${rootRef}>
+    const exitFocused = focus.value === 'exit';
+    return html`<div>
       ${TABS.map((entry, index) => html`<${Tab} key=${entry.key} entry=${entry} index=${index} />`)}
       <div
         class="shop-button shop-exit"
         style=${{
-          left: px(WINDOW.width - EXIT.right - EXIT.artWidth * TEAM_BUTTON_PIXEL),
-          top: px(WINDOW.height - EXIT.bottom - TEAM_BUTTON_HEIGHT),
-          width: px(EXIT.artWidth * TEAM_BUTTON_PIXEL), // the cursor's corners sit on this box
-          height: px(TEAM_BUTTON_HEIGHT),
+          left: px(WINDOW.width - EXIT.right - EXIT.width),
+          top: px(WINDOW.height - EXIT.bottom - EXIT.height),
+          width: px(EXIT.width), // the cursor's corners sit on this box
+          height: px(EXIT.height),
         }}
       >
         <${TeamButton}
           id="shop-exit"
           label="Exit"
           artWidth=${EXIT.artWidth}
+          artPixel=${EXIT.artPixel}
           rim=${REST_RIM}
           focusRim=${FOCUS_RIM}
           focused=${exitFocused}
-          onEnter=${() => (focus.value = { area: 'exit' })}
+          onEnter=${() => (focus.value = 'exit')}
           onPress=${close}
         />
         ${exitFocused ? html`<${Cursor} />` : null}

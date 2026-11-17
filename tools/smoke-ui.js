@@ -17,7 +17,7 @@
 //          the slot (what a real double click needs) and a double click throws; the run plays on with the catch held; a quit
 //          places nothing; a number key throws from belt 1, and a team fall places the catch in the Pokebox.
 //   shop (#149a): the Main Menu Shop over the Main Menu, four rail tabs each with its own pane, a team item and a berry slot
-//          bought (price spent, owned), an unaffordable Buy cannot take focus, the arrows and Enter reach every tab and Exit, Esc.
+//          bought (price spent, owned), an unaffordable Buy cannot take focus, Q / E switch tabs, Enter on Exit, Esc.
 // Fails on any page or console error.
 const path = require('path'),
   cp = require('child_process');
@@ -779,8 +779,8 @@ async function catchFlow(browser, query, tag) {
 // Onboarding F3 (2026-11-05): a new guest goes straight to the region pick (9 cards of 3 sprites), picks Johto and lands in the
 // menu with Chikorita leading Cyndaquil and Totodile; a save that already has a partner skips the screen on the next load.
 // #149a: the Main Menu Shop opens over the Main Menu with four rail tabs, each showing its own pane; a team item and a berry
-// slot bought there spend PokeCoins and read as owned; a Buy you cannot afford cannot take focus; the arrows and Enter walk the
-// rail and press Exit, and Esc leaves too. Relations only: every price is read from the game, never copied here.
+// slot bought there spend PokeCoins and read as owned; a Buy you cannot afford cannot take focus; Q and E switch tabs, the
+// cursor sits on Exit (never a tab) and Enter presses it; Esc leaves too. Relations only: prices are read from the game.
 async function shopFlow(browser, query, tag) {
   const { page, errs } = await boot(browser, query);
   await page.evaluate(() => {
@@ -887,19 +887,22 @@ async function shopFlow(browser, query, tag) {
   });
   ok(poor.count > 0 && poor.allDisabled && !poor.focused, tag + ': a Buy you cannot afford cannot take focus');
 
-  // keys: Up walks the rail, Enter picks, Right goes to Exit, Enter there leaves
-  await page.keyboard.press('ArrowUp');
-  await page.keyboard.press('Enter');
+  // keys: Q is the tab above (Character Upgrades to Pokeballs), E the one below; the tabs never take the cursor, which
+  // sits on Exit, and Enter there leaves
+  await page.keyboard.press('q');
   await sleep(100);
   now = await shown();
-  const upPicked = now.selected.join() === 'balls' && now.panes.join() === 'shop-balls';
-  await page.keyboard.press('ArrowRight');
+  const qPicked = now.selected.join() === 'balls' && now.panes.join() === 'shop-balls';
+  await page.keyboard.press('e');
   await sleep(100);
-  const onExit = (await shown()).cursorOn.includes('shop-exit');
+  now = await shown();
+  const ePicked = now.selected.join() === 'upgrades' && now.panes.join() === 'shop-upgrades';
+  const onExit = now.cursorOn.includes('shop-exit') && !(await page.$('.shop-tab .hud-cursor'));
   await page.keyboard.press('Enter');
   await sleep(200);
   now = await shown();
-  ok(upPicked && onExit && !now.shop && now.menu, tag + ': Up and Enter pick a tab, Right then Enter press Exit');
+  ok(qPicked && ePicked, tag + ': Q and E switch to the tab above and below');
+  ok(onExit && !now.shop && now.menu, tag + ': no tab takes the cursor; it sits on Exit, and Enter there leaves');
   await page.click('#scr-menu [data-go="gacha"]');
   await sleep(200);
   await page.keyboard.press('Escape');

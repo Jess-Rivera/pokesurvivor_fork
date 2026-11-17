@@ -1,7 +1,7 @@
 /* ============ bw-shop.css: the Main Menu Shop (#149; js/ui/gacha-ui.js) ============
  * Mockups: assets/excalidraw/Shop-*.svg; plan: docs/ASCII Concept Maps/149 - Shop Rework Opening.md. A window on the menu
- * screens' 1920 x 1080 stage (pause-menu.css .pm-stage, scaled by --pm-scale) over the dimmed Main Menu. The rail and Exit
- * are the HUD kit's (cursor, team menu button); places of the drawn pieces come from gacha-ui.js, the window's are here.
+ * screens' 1920 x 1080 stage (pause-menu.css .pm-stage, scaled by --pm-scale) over the dimmed Main Menu. Exit is the HUD
+ * kit's team menu button with its cursor; places of the drawn pieces come from gacha-ui.js, the window's are here.
  */
 .shop-host {
   position: absolute;
@@ -57,24 +57,26 @@
 .shop-tab {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* flush with the window's left edge */
   cursor: pointer;
 }
 .shop-tab img {
   display: block;
   image-rendering: pixelated;
   transform: scale(3); /* 3 screen pixels per art pixel; a whole number keeps the icons crisp */
+  transform-origin: left center;
 }
 .shop-button .hud-team-button {
   position: absolute;
   left: 0;
   top: 0;
 }
-/* the label: Silver on its pixel grid at 2 screen pixels per font pixel, as the catch screen's buttons (bw-catch.css) */
+/* the label: Silver on its pixel grid at 2 screen pixels per font pixel, as the catch screen's buttons (bw-catch.css),
+   centred on the 54 px tall Exit */
 .shop-button .hud-team-button-label {
   position: absolute;
-  left: 28px;
-  top: 21px;
+  left: 21px;
+  top: 12px;
   font-size: 27.1429px;
   line-height: 30px;
   white-space: nowrap;

@@ -73,7 +73,7 @@ Opening agreed by Jess 2026-11-16 ("Build").
 flowchart LR
   subgraph STAGE[1920 x 1080 stage, scaled like the catch screen]
     W[Shop window 1145 x 670 at 115, 205<br/>#181818 body, #212121 frame; Main Menu stays visible right]
-    W --> R[Icon rail, left edge: 4 icons at 3x,<br/>selected one uses -selected art and sits half out of the window]
+    W --> R[Icon rail, left edge: 4 icons at 3x,<br/>flush with the edge; the chosen one uses -selected art]
     W --> P[Pane area: today's Team Items and Team Upgrades panes,<br/>moved in unchanged; Pokeballs and TRs say Coming soon]
     W --> X[Exit: the team menu button, bottom right]
   end
@@ -82,7 +82,7 @@ flowchart LR
 |---|---|---|---|
 | Window and pane area | the catch screen's window look, pm-stage, fitToStage | static markup in scr-gacha | dev.html, css/bw-shop.css (new file, one link line) |
 | Rail and Exit | HUD kit TeamButton, Cursor, REST_RIM / FOCUS_RIM | a small Preact piece drawing 4 tabs and Exit | js/ui/gacha-ui.js |
-| Keys | the Main Menu's keydown pattern | Up / Down on the rail, Right to Exit, Left back, Enter picks, Esc closes | js/ui/gacha-ui.js |
+| Keys | the Main Menu's keydown pattern | Q / E or a click switch tabs (no cursor on tabs); the cursor sits on Exit, Enter presses it, Esc closes | js/ui/gacha-ui.js |
 | Test | smoke-ui's page boot | a Shop pass (the agreed end-goal test) | tools/smoke-ui.js |
 
 - Opens on Team Items, as today. The tab order matches the mockup: Pokeballs, Character Upgrades, Team Items, TRs.
@@ -95,3 +95,8 @@ flowchart LR
 **149a built 2026-11-16, Needs Playtest.** smoke-ui's Shop pass (9 checks) passes; smoke-berry-slots now clicks the new
 rail. Also done: the Main Menu's Shop subtitle names the four tabs; the dead `#scr-gacha .box.wide` rule left style.css.
 Next: 149b Character Upgrades.
+
+**149a feel-test fixes (Jess 2026-11-16):** the tabs take no cursor and no tooltip (the Hover Tooltip mockup is for the
+later UI unification, not the tabs); they never move and sit flush with the window's left edge; Q / E switch them. Exit
+is smaller: the team menu button at 3 px per art pixel (156 x 54; the kit's TeamButton gained an artPixel option, the
+catch screen keeps 4). smoke-ui's Shop pass now has 10 checks.

@@ -205,12 +205,14 @@ G.HudKit = (() => {
   }
   /**
    * A button in the team menu's shape: rim ramps ({ light, base, dark }) at rest and focused, body colours, the label left
-   * aligned as in the team menu. Never takes the page's keyboard focus (see keepPageFocus).
+   * aligned as in the team menu. Never takes the page's keyboard focus (see keepPageFocus). artPixel: screen pixels per
+   * art pixel (4 by default, the catch screen; the Main Menu Shop's Exit uses 3, #149a).
    */
   function TeamButton({
     id,
     label,
     artWidth,
+    artPixel = TEAM_BUTTON.artPixel,
     rim,
     focusRim,
     body = PALETTE.body,
@@ -225,7 +227,7 @@ G.HudKit = (() => {
     return html`<button
       type="button"
       class=${'hud-team-button' + (focused ? ' focused' : '')}
-      style=${{ width: artWidth * TEAM_BUTTON.artPixel + 'px', height: TEAM_BUTTON.artRows * TEAM_BUTTON.artPixel + 'px' }}
+      style=${{ width: artWidth * artPixel + 'px', height: TEAM_BUTTON.artRows * artPixel + 'px' }}
       data-action=${id}
       tabindex="-1"
       onMouseDown=${keepPageFocus}
@@ -235,7 +237,7 @@ G.HudKit = (() => {
       <${PixelShape}
         artWidth=${artWidth}
         artRows=${TEAM_BUTTON.artRows}
-        artPixel=${TEAM_BUTTON.artPixel}
+        artPixel=${artPixel}
         paintRow=${letterRows(teamButtonGrid(artWidth), colours)}
       />
       <span class="hud-team-button-label">${label}</span>
