@@ -6,8 +6,9 @@
  *            it), Character Upgrades (team item slots, berry slots), Team Items (100k unlocks), TRs (149f fills it).
  *            Flush with the window's left edge; the chosen tab uses its -selected art. A click or Q / E switches them.
  *   Exit     the team menu's button at 3 px per art pixel, bottom right; back to the Main Menu.
- *   input    the selection cursor takes no tab. In 149a it sits on Exit (Enter presses it); the panes' Buy buttons join
- *            it when 149b and 149c rebuild them. Esc leaves.
+ *   input    the selection cursor takes no tab. With the mouse it shows only on the eligible item under it (or nowhere);
+ *            a key press snaps it back to the last item it was on (the kit's inputMode). In 149a Exit is its only item
+ *            (Enter presses it); the panes' Buy buttons join when 149b and 149c rebuild them. Esc leaves.
  */
 G.GachaUI = (() => {
   const $ = G.UI.$;
@@ -18,7 +19,7 @@ G.GachaUI = (() => {
     console.warn('[Shop] the HUD kit did not load: the Shop cannot open');
     return { init() {}, open() {} };
   }
-  const { html, signal, preact, Cursor, TeamButton, REST_RIM, FOCUS_RIM, fitToStage } = kitOverlay.kit;
+  const { html, signal, preact, Cursor, inputMode, TeamButton, REST_RIM, FOCUS_RIM, fitToStage } = kitOverlay.kit;
   let shopSel = null; // Team Items tab: the item shown in the detail column
   const fmt = (n) => n.toLocaleString('en-US');
 
@@ -41,9 +42,18 @@ G.GachaUI = (() => {
 
   // ---------- state ----------
   const tab = signal(OPENING_TAB);
-  // What the selection cursor is on. The tabs take no cursor (Jess, 2026-11-16): Q and E or a click switch them. In 149a
-  // Exit is the only stop; the panes' Buy buttons join when 149b and 149c rebuild them.
-  const focus = signal('exit');
+  // The selection cursor (Jess, 2026-11-16): the tabs never take it (Q and E or a click switch them). focus is the last
+  // item it was on; hovered is the eligible item under the mouse, or null. Using the keys (kit inputMode 'keys') it shows
+  // on focus; using the mouse it shows only on hovered, so it leaves when the mouse is over anything else. In 149a Exit is
+  // the only eligible item; the panes' Buy buttons join when 149b and 149c rebuild them.
+  const focus = signal('exit'),
+    hovered = signal(null);
+  const cursorOn = () => (inputMode.value === 'keys' ? focus.value : hovered.value);
+  /** The mouse entered (an id) or left (null) an eligible item; entering also makes it the keys' starting point. */
+  function hover(id) {
+    hovered.value = id;
+    if (id) focus.value = id;
+  }
   const tabIndex = (key) => TABS.findIndex((entry) => entry.key === key);
 
   function init() {
@@ -59,6 +69,7 @@ G.GachaUI = (() => {
     fitStage();
     tab.value = OPENING_TAB;
     focus.value = 'exit';
+    hovered.value = null;
     refresh();
   }
 
@@ -123,7 +134,7 @@ G.GachaUI = (() => {
   }
 
   function Rail() {
-    const exitFocused = focus.value === 'exit';
+    const exitFocused = cursorOn() === 'exit';
     return html`<div>
       ${TABS.map((entry, index) => html`<${Tab} key=${entry.key} entry=${entry} index=${index} />`)}
       <div
@@ -134,6 +145,7 @@ G.GachaUI = (() => {
           width: px(EXIT.width), // the cursor's corners sit on this box
           height: px(EXIT.height),
         }}
+        onMouseLeave=${() => hover(null)}
       >
         <${TeamButton}
           id="shop-exit"
@@ -143,7 +155,7 @@ G.GachaUI = (() => {
           rim=${REST_RIM}
           focusRim=${FOCUS_RIM}
           focused=${exitFocused}
-          onEnter=${() => (focus.value = 'exit')}
+          onEnter=${() => hover('exit')}
           onPress=${close}
         />
         ${exitFocused ? html`<${Cursor} />` : null}

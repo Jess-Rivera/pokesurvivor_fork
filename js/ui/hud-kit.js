@@ -315,6 +315,33 @@ G.HudKit = (() => {
   const CURSOR_CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
   const Cursor = () => CURSOR_CORNERS.map((corner) => html`<${CursorCorner} key=${corner} corner=${corner} />`);
 
+  // ---------- the input mode: which device moves the selection cursor (Jess, 2026-11-16, #149a) ----------
+  // 'keys' after any key press: the cursor shows on the last item it was on. 'mouse' once the mouse really moves (more
+  // than MOUSE_JITTER_PX from where it was when the keys took over, so a jitter does not count) or clicks: the cursor
+  // shows only on the eligible item under the mouse, or nowhere. One page-wide signal; screens read inputMode.value.
+  const MOUSE_JITTER_PX = 6;
+  const inputMode = signal('keys');
+  let mouseAnchor = null; // where the mouse was first seen since the keys took over
+  addEventListener(
+    'keydown',
+    () => {
+      mouseAnchor = null;
+      if (inputMode.value !== 'keys') inputMode.value = 'keys';
+    },
+    true
+  );
+  addEventListener(
+    'mousemove',
+    (event) => {
+      if (inputMode.value === 'mouse') return;
+      if (!mouseAnchor) mouseAnchor = { x: event.clientX, y: event.clientY };
+      else if (Math.hypot(event.clientX - mouseAnchor.x, event.clientY - mouseAnchor.y) > MOUSE_JITTER_PX)
+        inputMode.value = 'mouse';
+    },
+    true
+  );
+  addEventListener('mousedown', () => (inputMode.value = 'mouse'), true);
+
   // ---------- portraits (HUD-STYLE "Assets": SpriteCollab Normal face, 40x40) ----------
   const PORTRAIT_PATH = 'assets/pokemon/';
   const portraitSource = (dex, shiny) => PORTRAIT_PATH + dex + (shiny ? '/s/Portrait.png' : '/Portrait.png');
@@ -350,6 +377,7 @@ G.HudKit = (() => {
     fitToStage,
     createButtonRow,
     Cursor,
+    inputMode,
     portraitSource,
     portraitFallback,
   };

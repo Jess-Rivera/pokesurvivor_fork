@@ -113,6 +113,7 @@ G.HudOverlay = (() => {
     'hideTooltip',
     'tooltipHandlers',
     'Cursor',
+    'inputMode',
     'RosterCard',
     'ROSTER_ART_PIXEL',
     'ROSTER_ART_ROWS',

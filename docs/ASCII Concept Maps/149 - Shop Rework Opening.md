@@ -100,3 +100,7 @@ Next: 149b Character Upgrades.
 later UI unification, not the tabs); they never move and sit flush with the window's left edge; Q / E switch them. Exit
 is smaller: the team menu button at 3 px per art pixel (156 x 54; the kit's TeamButton gained an artPixel option, the
 catch screen keeps 4). smoke-ui's Shop pass now has 10 checks.
+
+**Cursor fix (Jess 2026-11-16):** the cursor follows the device in use (decision
+2026-11-16-selection-cursor-follows-the-device-in-use): with the mouse it shows only on the eligible item under it, or
+nowhere; a key press snaps it back to the last item. The page-wide mode is the kit's inputMode. smoke-ui Shop pass: 11 checks.

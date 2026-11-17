@@ -17,7 +17,8 @@
 //          the slot (what a real double click needs) and a double click throws; the run plays on with the catch held; a quit
 //          places nothing; a number key throws from belt 1, and a team fall places the catch in the Pokebox.
 //   shop (#149a): the Main Menu Shop over the Main Menu, four rail tabs each with its own pane, a team item and a berry slot
-//          bought (price spent, owned), an unaffordable Buy cannot take focus, Q / E switch tabs, Enter on Exit, Esc.
+//          bought (price spent, owned), an unaffordable Buy cannot take focus, Q / E switch tabs, Enter on Exit, Esc; the
+//          cursor shows only under the mouse while it is in use and snaps back on a key.
 // Fails on any page or console error.
 const path = require('path'),
   cp = require('child_process');
@@ -823,8 +824,32 @@ async function shopFlow(browser, query, tag) {
   }
   ok(paneRight, tag + ': each tab shows its own pane, alone, and is the one selected tab');
 
-  // a team item: coins drop by the price the pane shows, the item is owned and leaves the list
+  // the cursor follows the device in use: with the mouse it shows only on the eligible item under it (Exit), and leaves
+  // when the mouse goes over anything else (a team item card, a tab); a key press snaps it back to the last item it was on
   await page.click('.shop-tab[data-tab="items"]');
+  await sleep(100);
+  const centreOf = async (selector) => {
+    const box = await (await page.$(selector)).boundingBox();
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  };
+  const mouseTo = async (selector) => {
+    const at = await centreOf(selector);
+    await page.mouse.move(at.x, at.y, { steps: 5 });
+    await sleep(100);
+    return (await shown()).cursorOn;
+  };
+  const onExitByMouse = (await mouseTo('.shop-exit .hud-team-button')).includes('shop-exit');
+  const offOnCard = (await mouseTo('#shop-items-grid .inv-cell')) === '';
+  const offOnTab = (await mouseTo('.shop-tab[data-tab="trs"]')) === '';
+  await page.keyboard.press('Shift');
+  await sleep(100);
+  const snapsBack = (await shown()).cursorOn.includes('shop-exit');
+  ok(
+    onExitByMouse && offOnCard && offOnTab && snapsBack,
+    tag + ': with the mouse the cursor is only on the item under it (gone over a card or tab); a key brings it back'
+  );
+
+  // a team item: coins drop by the price the pane shows, the item is owned and leaves the list
   await page.evaluate(() => {
     G.DB.save.coins = G.Items.TEAM_ITEM_PRICE * 2;
     G.DB.commit(true);
