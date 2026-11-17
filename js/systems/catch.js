@@ -15,9 +15,11 @@
  *            docs/ASCII Concept Maps/136b - Catch Screen Redesign Plan.md). The range slides to stay inside 0 to 100.
  *   flee     misses allowed by the rescued Pokemon's nature (FLEE). The last allowed miss, or a miss that empties the belt,
  *            and it runs off.
- *   belt     save.belt: one shared count of balls ({ size, poke }). A throw uses one ball, caught or not. Only Poke Balls until
- *            #137 adds Great and Ultra and the Shop restock. [Legacy behavior] until #137: every run start refills the belt to
- *            its size (startRun), so a playtest never runs dry.
+ *   belt     save.belt: one shared count of balls, any mix of tiers ({ size, poke, great, ultra, unlocked }). size
+ *            is the slots bought, six per belt, three belts at most. A throw uses one ball, caught or not; nothing refills it.
+ *   shop     #137: the Main Menu Shop's Pokeballs tab (js/ui/shop-balls.js) buys balls, the Great and Ultra
+ *            unlocks (unlocked lists them; Poke needs none) and the next belt, each paid in PokeCoins. Prices:
+ *            js/data/balls.js.
  *   held     every catch of a run is held, never placed mid-run. At the run end (settle): kept when the run ends with its EVs
  *            (a fall, a crash), all lost on a quit (End Run, signing out). Kept ones become copies (method rescue, the
  *            rescue's nature); a full box sells the overflow at the copy's price (G.DB.obtain).
@@ -25,11 +27,12 @@
  */
 G.Catch = (() => {
   const K = {
-    startBelt: 6, // a new save's belt size
+    ballsPerBelt: 6, // slots on one belt; a new save has one belt
+    maxBelts: 3,
     bandAccuracy: 15, // the shown range reaches this many points either side of its middle (#97 narrows it later)
   };
-  // Ball tiers. Great (1.5) and Ultra (2) arrive with the Shop unlocks (#137).
-  const BALLS = [{ id: 'poke', name: 'Poke Ball', mult: 1, icon: 'ps:ball.poke' }];
+  // Ball tiers, worst first: the catalog's balls that have a catch multiplier (js/data/balls.js; Poke, Great, Ultra).
+  const BALLS = G.BALL_CATALOG.filter((ball) => ball.catchMultiplier);
   const BALL_BY = Object.fromEntries(BALLS.map((b) => [b.id, b]));
   // The catch formula's numbers (#148, Jess's txt file; the step each comes from in brackets).
   const ODDS = {
@@ -116,7 +119,7 @@ G.Catch = (() => {
     const parts = {
       captureRate: mon.cr || 0,
       timeTerm: (ODDS.timeTermWhole - ODDS.timeTermPerUsed * timeUsed) / ODDS.timeTermWhole,
-      ball: ball.mult,
+      ball: ball.catchMultiplier,
       star: ODDS.starMult[Math.min(ODDS.starMult.length, mon.rarity || 1) - 1],
       badgePenalty: badgeCapPenalty(catchState.worldLevel, catchState.badges),
       earlyBonus: earlyLevelBonus(catchState.worldLevel),
@@ -170,14 +173,25 @@ G.Catch = (() => {
 
   const save = () => G.DB.save;
 
-  /** The save's belt, fixed up when absent or broken (an older save). */
+  /** The save's belt, fixed up when absent or broken (an older save): every tier's count (0 when absent), the unlocked
+   *  list, and never more balls than slots (the worst tier goes first). */
   function belt(s = save()) {
-    if (!s) return { size: 0, poke: 0 };
-    const whole = (v, d) => (Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : d);
-    if (!s.belt || typeof s.belt !== 'object') s.belt = { size: K.startBelt, poke: K.startBelt };
-    s.belt.size = whole(s.belt.size, K.startBelt);
-    s.belt.poke = Math.min(s.belt.size, whole(s.belt.poke, s.belt.size));
-    return s.belt;
+    if (!s) return { size: 0, poke: 0, great: 0, ultra: 0, unlocked: [] };
+    const whole = (value, fallback) => (Number.isFinite(+value) && +value >= 0 ? Math.floor(+value) : fallback);
+    if (!s.belt || typeof s.belt !== 'object') s.belt = { size: K.ballsPerBelt, poke: K.ballsPerBelt };
+    const fixed = s.belt;
+    fixed.size = Math.min(K.maxBelts * K.ballsPerBelt, whole(fixed.size, K.ballsPerBelt));
+    fixed.poke = whole(fixed.poke, fixed.size);
+    for (const ball of BALLS) fixed[ball.id] = whole(fixed[ball.id], 0);
+    if (!Array.isArray(fixed.unlocked)) fixed.unlocked = [];
+    let over = BALLS.reduce((sum, ball) => sum + fixed[ball.id], 0) - fixed.size;
+    for (const ball of BALLS) {
+      if (over <= 0) break;
+      const trimmed = Math.min(over, fixed[ball.id]);
+      fixed[ball.id] -= trimmed;
+      over -= trimmed;
+    }
+    return fixed;
   }
 
   /** Balls of one tier on the belt. */
@@ -186,15 +200,69 @@ G.Catch = (() => {
   const total = (s = save()) => BALLS.reduce((sum, b) => sum + count(b.id, s), 0);
   /** The best stocked ball, or null for an empty belt. */
   const bestStocked = (s = save()) => [...BALLS].reverse().find((b) => count(b.id, s) > 0) || null;
+  /** Every ball on the belt as its id, best tier first: the order the Shop and the catch screen fill the slots in. */
+  function ballsBestFirst(s = save()) {
+    const ids = [];
+    for (const ball of [...BALLS].reverse()) for (let n = count(ball.id, s); n > 0; n--) ids.push(ball.id);
+    return ids;
+  }
+  /** Belts bought (six slots each), 1 to K.maxBelts. */
+  const beltsBought = (s = save()) => Math.max(1, Math.floor(belt(s).size / K.ballsPerBelt));
+  /** Empty slots left on the bought belts. */
+  const room = (s = save()) => Math.max(0, belt(s).size - total(s));
+  /** A tier a throw can use and the Shop sells: Poke from the start, Great and Ultra once their unlock is bought. */
+  const isUnlocked = (ballId, s = save()) =>
+    !!BALL_BY[ballId] && (!BALL_BY[ballId].unlockPrice || belt(s).unlocked.includes(ballId));
+  /** The next belt's price, or null when every belt is bought. */
+  const nextBeltPrice = (s = save()) =>
+    beltsBought(s) < K.maxBelts ? G.BELT_PRICES[beltsBought(s) + 1] || null : null;
+
+  // ---------------- the Shop (#137) ----------------
+  // Each buy returns { ok: true, ... } or { ok: false, error }: 'none' (not a tier), 'locked', 'full', 'poor' or
+  // 'done'.
+
+  /** Buys up to wanted balls of one tier: as many as fit on the belts and the coins pay for, at least one. */
+  function buyBalls(s, ballId, wanted = 1) {
+    const ball = BALL_BY[ballId];
+    if (!s || !ball) return { ok: false, error: 'none' };
+    if (!isUnlocked(ballId, s)) return { ok: false, error: 'locked' };
+    if (room(s) <= 0) return { ok: false, error: 'full' };
+    const bought = Math.min(wanted, room(s), Math.floor((s.coins || 0) / ball.price));
+    if (bought < 1) return { ok: false, error: 'poor' };
+    const cost = bought * ball.price;
+    s.coins -= cost;
+    belt(s)[ballId] += bought;
+    return { ok: true, bought, cost };
+  }
+
+  /** The one-time unlock of Great or Ultra. */
+  function unlockBall(s, ballId) {
+    const ball = BALL_BY[ballId];
+    if (!s || !ball || !ball.unlockPrice) return { ok: false, error: 'none' };
+    if (isUnlocked(ballId, s)) return { ok: false, error: 'done' };
+    if (!((s.coins || 0) >= ball.unlockPrice)) return { ok: false, error: 'poor' };
+    s.coins -= ball.unlockPrice;
+    belt(s).unlocked.push(ballId);
+    return { ok: true, cost: ball.unlockPrice };
+  }
+
+  /** The next belt: six more slots, bought in order. */
+  function buyBelt(s) {
+    const price = s ? nextBeltPrice(s) : null;
+    if (!price) return { ok: false, error: 'done' };
+    if (!((s.coins || 0) >= price)) return { ok: false, error: 'poor' };
+    s.coins -= price;
+    belt(s).size += K.ballsPerBelt;
+    return { ok: true, cost: price, belts: beltsBought(s) };
+  }
 
   // ---------------- a run ----------------
 
-  /** A run starts: nothing held. [Legacy behavior] until #137: the belt refills to its size. */
+  /** A run starts: nothing held. The belt keeps what it has (balls are bought in the Shop, #137). */
   function startRun(s = save()) {
     held = [];
     session = null;
-    const b = belt(s);
-    if (s) b.poke = b.size;
+    belt(s);
   }
 
   /** The run's World Level (the whole number the HUD shows), 1 outside a run. */
@@ -316,6 +384,14 @@ G.Catch = (() => {
     count,
     total,
     bestStocked,
+    ballsBestFirst,
+    beltsBought,
+    room,
+    isUnlocked,
+    nextBeltPrice,
+    buyBalls,
+    unlockBall,
+    buyBelt,
     startRun,
     begin,
     throwBall,

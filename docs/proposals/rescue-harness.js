@@ -26,9 +26,11 @@ global.G = {
   Game: { player: { x: 0, y: 0, dead: false }, st: { time: 100 }, openCatch: () => false },
 };
 load('js/data/pokedex.js'); load('js/data/sprites-meta.js'); load('js/data/species-traits.js'); load('js/data/stage-one.js');
-load('js/systems/copies.js'); load('js/core/db.js'); load('js/systems/catch.js');
+load('js/data/balls.js'); load('js/systems/copies.js'); load('js/core/db.js'); load('js/systems/catch.js');
 load('js/systems/rescue.js');
 G.DB.playAsGuest(); // a fresh save in memory: the belt and the box the catch writes to
+// a run start with a full belt of Poke Balls: since #137 nothing refills the belt, so the checks that throw fill it themselves
+const refill = (s = G.DB.save) => { G.Catch.startRun(s); Object.assign(s.belt, { poke: s.belt.size, great: 0, ultra: 0 }); };
 const Rz = G.Rescue, K = Rz.K;
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -126,7 +128,7 @@ const fresh = () => { Rz.reset(); said.length = 0; guards.length = 0; G.GymArena
 
 // 5e. the wait after a win (#136): touching it opens the catch, a refusal retries, untouched it wanders off, an empty belt skips it
 const win = () => { fresh(); Rz.debugFire(); const guard = guards[0]; Rz.onUberHit(guard); Rz.update(10, player, 110); Rz.onUberDown(guard); return Rz.active; };
-{ G.Catch.startRun(G.DB.save);
+{ refill();
   let asked = 0; G.Game.openCatch = () => (asked++, false);
   const e = win(); player.x = 5000; player.y = 5000;
   Rz.update(1, player, 120);
@@ -143,7 +145,7 @@ const win = () => { fresh(); Rz.debugFire(); const guard = guards[0]; Rz.onUberH
   if (Rz.active) bad('untouched, the Stage 1 wanders off after the catch wait');
   G.DB.save.belt.poke = 0; win();
   if (Rz.active || !said.some((t) => /ran off/.test(t))) bad('an empty belt at the win: it runs off at once');
-  G.Catch.startRun(G.DB.save); player.x = 0; player.y = 0;
+  refill(); player.x = 0; player.y = 0;
   console.log('5e after a win: touch opens the catch, refused retries, untouched it wanders off, empty belt it runs off'); }
 
 // 6. the catch (#136): odds, flee, the belt and the held catches
@@ -183,7 +185,7 @@ const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === nam
   const sequence = (rolls) => { let i = 0; return () => rolls[Math.min(i++, rolls.length - 1)]; };
   const owned = {}; for (let d = 1; d <= 31; d++) owned[d] = { at: 0, from: 'x' };
   const keepOwned = save.owned; save.owned = owned;
-  C.startRun(save); C.begin(result(147, natureId('bold'), 0.5));
+  refill(); C.begin(result(147, natureId('bold'), 0.5));
   if (C.throwBall('poke', sequence([0, 0.9999])) !== 'caught' || !C.lastThrow.critical) bad('a critical catch always catches');
   delete owned[31]; C.begin(result(147, natureId('bold'), 0.5));
   if (C.throwBall('poke', sequence([0, 0.9999])) === 'caught' || C.lastThrow.critical) bad('with 30 species owned, the same rolls are no critical catch');
@@ -191,16 +193,20 @@ const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === nam
   // the wobbles tell the truth: caught means a critical or every shake passed; a miss passed fewer
   let thrown = 0;
   for (const m of all) {
-    C.startRun(save); if (!C.begin(result(m.dex, natureId('bold'), rnd()))) continue;
+    refill(); if (!C.begin(result(m.dex, natureId('bold'), rnd()))) continue;
     const outcome = C.throwBall('poke', rnd), roll = C.lastThrow; thrown++;
     if (!(roll.shakes >= 0 && roll.shakes <= C.ODDS.shakes)) bad(m.name + ': shakes ' + roll.shakes + ' out of range');
     if ((outcome === 'caught') !== (roll.critical || roll.shakes === C.ODDS.shakes)) bad(m.name + ': ' + outcome + ' with ' + roll.shakes + ' shakes');
   }
   if (!thrown) bad('no throws checked');
   console.log('6a odds rise with a faster win and capture rate, fall with star, World Level and badge debt; critical from 31 species; wobbles match the roll');
-  console.log('6a blocked on #137: Ultra above Great above Poke, the Timer Ball never past 4x (only the Poke Ball exists)'); }
+  // #137: a better ball's factor is bigger, and its odds are never lower, for every Pokemon
+  const factor = (ballId) => C.rateParts(at(all[0]), ballId).ball;
+  if (!(factor('ultra') > factor('great') && factor('great') > factor('poke'))) bad('the ball factor: Ultra above Great above Poke');
+  for (const m of all) if (!(p(m, {}, 'ultra') >= p(m, {}, 'great') && p(m, {}, 'great') >= p(m, {}, 'poke'))) bad(m.name + ': a better ball never lowers the odds');
+  console.log('6a balls: Ultra above Great above Poke, never lower odds'); }
 { // 6b flee: misses until it runs off follow the nature bucket (spec: easy above default above hard)
-  const misses = (name) => { C.startRun(save); C.begin(result(147, natureId(name), 0)); let n = 0, o;
+  const misses = (name) => { refill(); C.begin(result(147, natureId(name), 0)); let n = 0, o;
     do { o = C.throwBall('poke', () => 0.9999); n++; } while (o === 'miss' && n < 50); return o === 'fled' ? n : -1; };
   const easy = ['bold', 'calm', 'lax', 'relaxed', 'docile', 'gentle', 'mild', 'quiet'].map(misses);
   const def = ['hardy', 'lonely', 'brave', 'adamant', 'impish', 'serious', 'modest', 'bashful', 'sassy', 'quirky'].map(misses);
@@ -210,7 +216,7 @@ const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === nam
   if (easy.length + def.length + hard.length !== 25) bad('the three buckets name all 25 natures');
   console.log('6b flee by nature: easy ' + easy[0] + ' > default ' + def[0] + ' > hard ' + hard[0] + ' misses'); }
 { // 6c the belt: a new save starts with 6 (spec), each throw uses exactly one, an empty belt opens nothing, an old save gets the start belt
-  C.startRun(save);
+  refill();
   if (C.total() !== 6 || save.belt.size !== 6) bad('a new save starts with a 6-ball belt, got ' + C.total());
   for (const roll of [0.9999, 0]) {
     if (!C.session) C.begin(result(147, natureId('bold'), 0));
@@ -223,12 +229,18 @@ const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === nam
   if (C.throwBall('poke', () => 0.9999) !== 'fled') bad('a miss that empties the belt: it runs off');
   if (C.throwBall('poke') !== 'none') bad('no catch open: a throw does nothing');
   const old = { coins: 0 }; C.belt(old);
-  if (!old.belt || old.belt.size !== save.belt.size || old.belt.poke !== old.belt.size) bad('an old save without a belt gets the start belt');
+  if (!old.belt || old.belt.size !== 6 || old.belt.poke !== old.belt.size) bad('an old save without a belt gets the start belt');
+  if (old.belt.great !== 0 || old.belt.ultra !== 0 || old.belt.unlocked.length || C.isUnlocked('great', old) || !C.isUnlocked('poke', old))
+    bad('an old save has no Great or Ultra Balls and nothing unlocked; Poke needs no unlock');
+  const kept = { belt: { size: 6, poke: 4 } }; C.belt(kept);
+  if (kept.belt.poke !== 4 || C.total(kept) !== 4) bad('an old save keeps the balls on its belt');
+  const over = { belt: { size: 6, poke: 3, great: 2, ultra: 3, unlocked: ['great', 'ultra'] } }; C.belt(over);
+  if (C.total(over) !== 6 || over.belt.ultra !== 3 || over.belt.great !== 2) bad('a belt over its size is trimmed, worst tier first: ' + JSON.stringify(over.belt));
   save.belt.poke = 2; C.startRun(save);
-  if (save.belt.poke !== save.belt.size) bad('[Legacy behavior until #137] a run start refills the belt');
-  console.log('6c belt: starts at 6, one ball per throw, empty opens nothing, old saves fixed, refilled at run start'); }
+  if (save.belt.poke !== 2) bad('a run start leaves the belt as it was (no refill, #137)');
+  console.log('6c belt: starts at 6, one ball per throw, empty opens nothing, old saves fixed, a run start refills nothing'); }
 { // 6d held catches: nothing enters the box mid-run; a kept run end places each with its nature, a quit places none
-  C.startRun(save); const box0 = save.box.length, nat = natureId('timid');
+  refill(); const box0 = save.box.length, nat = natureId('timid');
   C.begin(result(147, nat, 1)); if (C.throwBall('poke', () => 0) !== 'caught') bad('a sure throw catches');
   C.begin(result(1, natureId('bold'), 1)); C.throwBall('poke', () => 0);
   if (C.held.length !== 2 || save.box.length !== box0) bad('catches are held, never placed mid-run');
@@ -241,13 +253,13 @@ const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === nam
   // a full box sells the overflow at the copy's price
   const full = { coins: 0, belt: { size: 6, poke: 6 }, boxCount: save.boxCount, owned: {}, shiny: {},
     box: Array.from({ length: 500 * save.boxCount }, (_, i) => (i >= 500 ? { u: 'x' + i, d: 1, b: Math.floor(i / 500) } : { u: 'x' + i, d: 1 })) };
-  const realSave = G.DB.save; C.startRun(full);
+  const realSave = G.DB.save; refill(full);
   // begin and throwBall read the loaded save's belt; settle writes the save it is given
   C.begin(result(147, nat, 1)); C.throwBall('poke', () => 0);
   const sold = C.settle(true, full);
   if (full.box.length !== 500 * save.boxCount || sold.sold.length !== 1 || !(full.coins > 0)) bad('a full box sells the overflow for coins');
   if (realSave !== G.DB.save) bad('the test save stays loaded');
-  C.startRun(save);
+  refill();
   console.log('6d held until the run ends: a quit loses them, a kept end places them with their nature, a full box sells'); }
 { // 6e the shown band (Jess, 2026-11-16): 2 x bandAccuracy wide, always holds the true chance, inside 0 to 100, off-centre by the
   // catch's own shift; one shift per catch, so the same shift keeps a higher chance's range at or above a lower one's
@@ -263,12 +275,53 @@ const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === nam
       if (pct > 0 && C.band((pct - 1) / 100, shift).low > b.low) bad('with one shift, a higher chance never reads lower: ' + pct + '%');
     }
   if (centres.size < 3) bad('the shift moves the true chance off the middle of the band (47%: ' + [...centres].join() + ')');
-  C.startRun(save);
+  refill();
   const s1 = C.begin(result(147, natureId('bold'), 0.5), () => 0), lowShift = s1.bandShift;
   const s2 = C.begin(result(147, natureId('bold'), 0.5), () => 0.9999);
   if (!(Math.abs(lowShift) <= reach && Math.abs(s2.bandShift) <= reach && lowShift < s2.bandShift)) bad('each catch rolls its own shift inside the reach');
   C.letGo();
   console.log('6e band: ' + 2 * reach + ' wide, holds the true chance, inside 0 to 100, off-centre by a per-catch shift'); }
+{ // 6f the Shop (#137): buys take exactly the price, never pass the belt, need the unlock; unlocks pay once; belts go in order
+  const PRICE = Object.fromEntries(G.BALL_CATALOG.map((ball) => [ball.id, ball]));
+  const shop = { coins: 1000, belt: { size: 6, poke: 2 } }; C.belt(shop);
+  const snapshot = () => JSON.stringify([shop.coins, shop.belt]);
+  let before = shop.coins, r = C.buyBalls(shop, 'poke', 1);
+  if (!r.ok || r.bought !== 1 || before - shop.coins !== PRICE.poke.price || shop.belt.poke !== 3) bad('one Poke Ball costs its price and adds one: ' + JSON.stringify(r));
+  const room = C.room(shop); before = shop.coins;
+  r = C.buyBalls(shop, 'poke', 10);
+  const expected = Math.min(10, room, Math.floor(before / PRICE.poke.price));
+  if (!r.ok || r.bought !== expected || before - shop.coins !== expected * PRICE.poke.price) bad('Shift buys min(10, room, affordable): ' + JSON.stringify(r) + ' expected ' + expected);
+  if (C.total(shop) > shop.belt.size) bad('the belt never holds more than its size');
+  let was = snapshot(); r = C.buyBalls(shop, 'poke', 1);
+  if (r.ok || r.error !== 'full' || snapshot() !== was) bad('a full belt refuses and changes nothing');
+  shop.belt.poke = 0; shop.coins = PRICE.poke.price - 1; was = snapshot(); r = C.buyBalls(shop, 'poke', 1);
+  if (r.ok || r.error !== 'poor' || snapshot() !== was) bad('too few coins refuses and changes nothing');
+  shop.coins = 100000; was = snapshot(); r = C.buyBalls(shop, 'great', 1);
+  if (r.ok || r.error !== 'locked' || snapshot() !== was) bad('a locked tier refuses and changes nothing');
+  shop.coins = PRICE.great.unlockPrice - 1; was = snapshot(); r = C.unlockBall(shop, 'great');
+  if (r.ok || r.error !== 'poor' || snapshot() !== was) bad('an unlock without the coins changes nothing');
+  shop.coins = PRICE.great.unlockPrice; r = C.unlockBall(shop, 'great');
+  if (!r.ok || shop.coins !== 0 || !C.isUnlocked('great', shop) || C.isUnlocked('ultra', shop)) bad('an unlock pays its price once and unlocks only that tier');
+  shop.coins = 100000; was = snapshot(); r = C.unlockBall(shop, 'great');
+  if (r.ok || r.error !== 'done' || snapshot() !== was) bad('a second unlock refuses and changes nothing');
+  before = shop.coins; r = C.buyBalls(shop, 'great', 1);
+  if (!r.ok || shop.belt.great !== 1 || before - shop.coins !== PRICE.great.price) bad('an unlocked Great Ball can be bought at its price');
+  if (C.unlockBall(shop, 'poke').ok || C.unlockBall(shop, 'master').ok) bad('Poke needs no unlock; a ball with no tier cannot be unlocked');
+  // belts: always the next one, so Belt 3 is never bought before Belt 2
+  shop.coins = G.BELT_PRICES[2] - 1; was = snapshot(); r = C.buyBelt(shop);
+  if (r.ok || r.error !== 'poor' || snapshot() !== was) bad('a belt without the coins changes nothing');
+  shop.coins = 100000; before = shop.coins; const size = shop.belt.size; r = C.buyBelt(shop);
+  if (!r.ok || r.belts !== 2 || shop.belt.size !== size + CK.ballsPerBelt || before - shop.coins !== G.BELT_PRICES[2]) bad('the first belt bought is Belt 2, six slots, at its price');
+  if (C.nextBeltPrice(shop) !== G.BELT_PRICES[3]) bad('after Belt 2, Belt 3 is for sale at its price');
+  before = shop.coins; r = C.buyBelt(shop);
+  if (!r.ok || r.belts !== 3 || before - shop.coins !== G.BELT_PRICES[3]) bad('the second belt bought is Belt 3 at its price');
+  was = snapshot(); r = C.buyBelt(shop);
+  if (r.ok || r.error !== 'done' || C.nextBeltPrice(shop) !== null || snapshot() !== was) bad('past the last belt, nothing is for sale');
+  if (C.beltsBought(shop) !== CK.maxBelts) bad('three belts at most');
+  // the slot order both screens draw: best tier first, one id per ball
+  const order = C.ballsBestFirst(shop), rank = (id) => C.BALLS.findIndex((ball) => ball.id === id);
+  if (order.length !== C.total(shop) || order.some((id, i) => i && rank(id) > rank(order[i - 1]))) bad('ballsBestFirst lists every ball, best tier first');
+  console.log('6f Shop: exact prices, never past the belt, locked tiers refuse, unlocks once, belts in order to three'); }
 
 console.log(fail ? fail + ' FAILED' : 'rescue harness: all passed');
 process.exit(fail ? 1 : 0);

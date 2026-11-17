@@ -11,10 +11,9 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 3. Before leaving a machine: commit and push.
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-17; gym leader AI parked)
-0. #153 feel test (Needs Playtest), then close it.
-1. #137 on feature/128-acquisition (Shop balls; needs Jess's ball tiers and prices first). #154 closed (menu.js split).
-   #145 small and ready. #150 blocked on #97. #147 waits on Jess.
-2. #128 acquisition: #137 (ends the belt refill), then #138; #146 keep-or-sell list; order in
+0. #137 feel test (Needs Playtest, steps in STATE), then close it. #153, #147, #154 closed.
+1. #145 small and ready. #150 blocked on #97.
+2. #128 acquisition: #138 next, then #146 keep-or-sell list; order in
    docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
    97 - Upgrade System Review.md). #131 Silver bonuses later, after a traced run reaches gym 1. 4. #126 UI unify (#61 first), then #127 Main Menu v3.0.
@@ -23,7 +22,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
    drafts (leader reads your cards and items as seen; buffValue reads the whole kit; trace records the leader's level; 16i
    parity; #122 comment on early gates). Any time: #121, #120, #57, #58, #110.
    Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107.
-8. Owner decisions: #151 Full button and the cursor, #137 tiers and prices, #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
+8. Owner decisions: #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
 9. New issues to file: region type maps, PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing.
 10. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83; unknown local branch
     refactor/damage-layer on the work machine.

@@ -235,3 +235,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - #153 built: one menu key set (Enter and Space select; arrows and movement keys move) on Main Menu, Shop, Inventory.
   Broke and fixed: Enter or Space on Play reached the region picker's listener and started a run at once.
 - Stopped at: #154 closed; #153 in Needs Playtest; next #137 (needs ball tiers and prices).
+
+## 2026-11-17 (Claude Code, home, fifth session), #137 Shop balls, built
+- #153 feel test passed, closed; #147 closed (the UI Library page is in use).
+- #137: Poke, Great, Ultra prices and the belt prices in js/data/balls.js; G.Catch buys balls, unlocks and belts; the
+  run-start refill is gone; shop-balls.js buys; catch-ui.js throws from every bought belt.
+- Decided: B1 to B12 (decision 2026-11-17-137-balls-bought-and-kept-no-refill).
+- Checks: rescue-harness, smoke-ui, check.js all passed; smoke-pause-menu only the known 401 px failure.
+- Stopped at: #137 in Needs Playtest; next #138.

@@ -5,7 +5,8 @@
  * menu's 1920 x 1080 stage, scaled to fit, inside the #scr-catch screen.
  *   left     the Pokemon: the portrait in a ring that fills one step per miss (flee), "{Nature} {Name}", the catch band (a
  *            range that holds the true chance, G.Catch.band) and the ball it is for. Rimmed in its type colours.
- *   middle   three belts of six slots; belt 1 is the save's belt, belts 2 and 3 are locked (a meta upgrade, later).
+ *   middle   three belts of six slots: the belts the save has bought (G.Catch.beltsBought, #137) hold its balls, best
+ *            tier first from belt 1 down; the rest are locked.
  *   right    Pokemon owned: every copy of this species in the Pokebox (best IV + EV total first), its tooltip on focus;
  *            then Throw and Let It Go.
  *   input    one selection cursor over every control. Arrows (the move keys) move it, hover moves it too. Enter on a ball
@@ -67,7 +68,7 @@ G.CatchUI = (() => {
 
   // ---------- state ----------
   const shown = signal(null); // { session, owned, types } while open
-  const selectedSlot = signal(0); // the slot of the current ball on belt 1
+  const selected = signal({ belt: 0, slot: 0 }); // the slot of the current ball
   const focus = signal({ area: 'slot', belt: 0, slot: 0 }); // { area: 'slot', belt, slot } | 'owned', index | 'button', index
   const numberedBelt = signal(0); // the belt whose slots show 1 to 6 (the one the cursor was last in)
   const note = signal('');
@@ -76,22 +77,24 @@ G.CatchUI = (() => {
   const face = signal('shown'); // the portrait: 'shown', 'absorbed' (inside the ball) or 'fled'
   const beltCount = signal(0); // read on every belt change, so the slots redraw
   const shownMisses = signal(0); // the flee ring's misses: catches up with the session after a throw's break-out (#148b)
-  let thrownSlots = new Set(); // belt 1 slots emptied by a throw this catch: a thrown ball leaves its own slot empty
+  let thrownSlots = new Set(); // slots emptied by a throw this catch (positionOf): a thrown ball leaves its slot empty
   let onClose = null;
   let throwToken = 0; // a throw's timers stop when the screen closes under them
 
   // ---------- the belts ----------
-  const isLocked = (belt) => belt > 0; // belts 2 and 3: a meta upgrade, later (Jess, 2026-11-16)
-  /** A belt's six slots: belt 1's balls, best tier first, in the slots no throw has emptied this catch; null is empty. */
+  const isLocked = (belt) => belt >= G.Catch.beltsBought(); // a belt not bought in the Shop yet (#137)
+  /** A slot's place across the belts: belt 1's six, then belt 2's, then belt 3's. */
+  const positionOf = (belt, slot) => belt * BELT.slots + slot;
+  /** A belt's six slots: the save's balls, best tier first across the bought belts, in the slots no throw has emptied
+   *  this catch; null is empty. */
   function slotsOf(belt) {
     beltCount.value; // redraw when the belt changes
-    const slots = Array(BELT.slots).fill(null);
-    if (isLocked(belt)) return slots;
-    const balls = [];
-    for (const ball of [...G.Catch.BALLS].reverse()) for (let i = 0; i < G.Catch.count(ball.id); i++) balls.push(ball);
-    for (let slot = 0; slot < BELT.slots && balls.length; slot++)
-      if (!thrownSlots.has(slot)) slots[slot] = balls.shift();
-    return slots;
+    if (isLocked(belt)) return Array(BELT.slots).fill(null);
+    const balls = G.Catch.ballsBestFirst().map((id) => G.Catch.BALLS.find((ball) => ball.id === id)),
+      slots = Array(G.Catch.beltsBought() * BELT.slots).fill(null);
+    for (let position = 0; position < slots.length && balls.length; position++)
+      if (!thrownSlots.has(position)) slots[position] = balls.shift();
+    return slots.slice(positionOf(belt, 0), positionOf(belt + 1, 0));
   }
   const stocked = (belt) =>
     slotsOf(belt)
@@ -101,7 +104,16 @@ G.CatchUI = (() => {
     const list = stocked(belt);
     return list.length ? list.reduce((best, s) => (Math.abs(s - slot) < Math.abs(best - slot) ? s : best)) : -1;
   };
-  const selectedBall = () => slotsOf(0)[selectedSlot.value] || G.Catch.BALLS[0];
+  const ballAt = ({ belt, slot }) => slotsOf(belt)[slot] || null;
+  const selectedBall = () => ballAt(selected.value) || G.Catch.BALLS[0];
+  /** The stocked slot nearest a place: on its belt first, else the first stocked slot of any belt; null when empty. */
+  function nearestAnywhere({ belt, slot }) {
+    const here = nearestStocked(belt, slot);
+    if (here >= 0) return { belt, slot: here };
+    for (let other = 0; other < BELT.count; other++)
+      if (stocked(other).length) return { belt: other, slot: stocked(other)[0] };
+    return null;
+  }
   const slotCentre = (belt, slot) => ({
     x: BELT.firstLeft + belt * BELT.step + SLOT.left + SLOT.size / 2,
     y: BELT.top + SLOT.top + slot * (SLOT.size + SLOT.gap) + SLOT.size / 2,
@@ -177,31 +189,32 @@ G.CatchUI = (() => {
   }
 
   // ---------- actions ----------
-  function select(slot) {
-    if (busy.value || !slotsOf(0)[slot]) return;
-    if (slot !== selectedSlot.value) G.Audio.sfx('select');
-    selectedSlot.value = slot;
+  const isSelected = (belt, slot) => selected.value.belt === belt && selected.value.slot === slot;
+  function select(belt, slot) {
+    if (busy.value || !slotsOf(belt)[slot]) return;
+    if (!isSelected(belt, slot)) G.Audio.sfx('select');
+    selected.value = { belt, slot };
   }
 
-  /** Throw the ball in a slot of belt 1 (the selected one when none is given). */
-  async function throwNow(slot = selectedSlot.value) {
+  /** Throw the ball in a slot (the selected one when none is given). */
+  async function throwNow(belt = selected.value.belt, slot = selected.value.slot) {
     const view = shown.value;
-    const ball = slotsOf(0)[slot];
+    const ball = slotsOf(belt)[slot];
     if (!view || busy.value || !ball) return;
     const outcome = G.Catch.throwBall(ball.id);
     if (outcome === 'none') return;
     const token = ++throwToken,
       name = view.session.name,
       alive = () => token === throwToken && shown.value === view;
-    selectedSlot.value = slot;
-    thrownSlots.add(slot);
+    selected.value = { belt, slot };
+    thrownSlots.add(positionOf(belt, slot));
     busy.value = true;
     note.value = '';
     hideTooltip();
     beltCount.value++;
     G.Audio.sfx('confirm');
     // out of the slot, in an arc onto the portrait, spinning
-    const from = slotCentre(0, slot);
+    const from = slotCentre(belt, slot);
     await play(FLY_MS, (t, elapsed) => {
       const spin = BALL_SPRITES.animations.spin;
       flight.value = {
@@ -262,7 +275,7 @@ G.CatchUI = (() => {
     note.value = 'Oh no! It broke free.';
     G.Audio.sfx('hit');
     beltCount.value++;
-    if (!slotsOf(0)[selectedSlot.value]) selectedSlot.value = Math.max(0, nearestStocked(0, selectedSlot.value));
+    if (!ballAt(selected.value)) selected.value = nearestAnywhere(selected.value) || selected.value;
     const at = focus.value;
     if (at.area === 'slot' && !slotsOf(at.belt)[at.slot])
       focusSlot(at.belt, Math.max(0, nearestStocked(at.belt, at.slot)));
@@ -294,8 +307,8 @@ G.CatchUI = (() => {
     const at = focus.value;
     if (at.area === 'slot') {
       if (isLocked(at.belt)) return;
-      if (at.slot === selectedSlot.value) throwNow(at.slot);
-      else select(at.slot);
+      if (isSelected(at.belt, at.slot)) throwNow(at.belt, at.slot);
+      else select(at.belt, at.slot);
     } else if (at.area === 'button') {
       if (at.index === 0) throwNow();
       else letGo();
@@ -370,7 +383,7 @@ G.CatchUI = (() => {
         const cursorHere = at.area === 'slot' && at.belt === belt && at.slot === slot;
         return html`<div
           key=${slot}
-          class=${'catch-slot' + (ball ? ' is-full' : '') + (!locked && slot === selectedSlot.value ? ' is-selected' : '')}
+          class=${'catch-slot' + (ball ? ' is-full' : '') + (!locked && isSelected(belt, slot) ? ' is-selected' : '')}
           data-belt=${belt}
           data-slot=${slot}
           style=${{
@@ -380,8 +393,8 @@ G.CatchUI = (() => {
             height: px(SLOT.size),
           }}
           onMouseEnter=${() => !busy.value && ball && focusSlot(belt, slot)}
-          onClick=${() => !locked && select(slot)}
-          onDblClick=${() => !locked && throwNow(slot)}
+          onClick=${() => !locked && select(belt, slot)}
+          onDblClick=${() => !locked && throwNow(belt, slot)}
         >
           ${
             ball
@@ -559,9 +572,9 @@ G.CatchUI = (() => {
     thrownSlots = new Set();
     beltCount.value++;
     shown.value = { session, owned, types: (mon && mon.types) || ['normal'] };
-    const first = Math.max(0, nearestStocked(0, 0));
-    selectedSlot.value = first;
-    focusSlot(0, first);
+    const first = nearestAnywhere({ belt: 0, slot: 0 }) || { belt: 0, slot: 0 };
+    selected.value = first;
+    focusSlot(first.belt, first.slot);
     G.UI.show('scr-catch');
     fitStage();
   }
@@ -595,7 +608,7 @@ G.CatchUI = (() => {
     for (let n = 1; n <= BELT.slots; n++)
       if ((G.Input.tap('digit' + n) || G.Input.tap('numpad' + n)) && !isLocked(belt) && slotsOf(belt)[n - 1]) {
         focusSlot(belt, n - 1);
-        return throwNow(n - 1);
+        return throwNow(belt, n - 1);
       }
   }
 

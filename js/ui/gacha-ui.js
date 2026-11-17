@@ -228,6 +228,7 @@ G.GachaUI = (() => {
   function press(at) {
     if (at === 'exit') return close();
     if (at === 'inventory') return openInventory();
+    if (tab.value === 'balls' && ballsPane.press(at)) return;
     if (tab.value === 'tms' && tmsPane.press(at)) return;
     if (at === SALE_SEARCH || at === OWNED_SEARCH) return cursor.elementOf(at).querySelector('input').focus(); // type; Enter or Esc gives the keys back
     if (at.startsWith(SALE_ID)) return buyItem(at.slice(SALE_ID.length));
@@ -292,7 +293,7 @@ G.GachaUI = (() => {
   preact.render(html`<${Rail} />`, railHost);
   const fitStage = fitToStage(stageHost);
 
-  // ---------------- Pokeballs tab (149e): drawn by js/ui/shop-balls.js; every Buy refuses until #137 ----------------
+  // ---------------- Pokeballs tab (149e, #137): drawn by js/ui/shop-balls.js, which also buys ----------------
   function BallsTab() {
     saveTick.value; // redraw after a coin or belt change
     return html`<${ballsPane.Pane} cursor=${cursor} openCount=${openCount.value} />`;

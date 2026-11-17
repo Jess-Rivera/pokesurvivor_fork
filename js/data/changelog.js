@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['TMs for good', 'TMs for good'],
     new: [
       [
+        'Poke Balls in the Shop: buy Poke Balls for your belt (Shift buys 10), unlock Great and Ultra Balls, and buy a second and third belt for six more balls each. Balls you do not throw stay on your belt for the next run; runs no longer refill it for free.',
+        'Poke Balls in the Shop: buy Poke Balls for your belt (Shift buys 10), unlock Great and Ultra Balls, and buy a second and third belt for six more balls each. Balls you do not throw stay on your belt for the next run; runs no longer refill it for free.',
+      ],
+      [
         'TMs in the Shop: buy a TM with PokeCoins to teach one of your Pokemon a move for good. In every run after that, the Move Trainer can offer that move to it.',
         'TMs in the Shop: buy a TM with PokeCoins to teach one of your Pokemon a move for good. In every run after that, the Move Trainer can offer that move to it.',
       ],

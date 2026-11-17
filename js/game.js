@@ -181,7 +181,7 @@ G.Game = (() => {
     G.Shops.reset(); // Move Shop step 3: the first pair is due at 2:00 again
     G.Events.reset();
     G.Rescue.reset(); // #135: the rescue event's roll and any rescue up
-    G.Catch.startRun(G.DB.save); // #136: nothing held; the belt refills to its size until the Shop restock (#137)
+    G.Catch.startRun(G.DB.save); // #136: nothing held; the belt keeps its balls (bought in the Shop, #137)
     G.Weather.reset();
     G.Path.clear();
     G.Hazards.clear();

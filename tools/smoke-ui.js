@@ -592,7 +592,9 @@ async function catchFlow(browser, query, tag) {
     if (!document.getElementById('tap-start').classList.contains('hidden'))
       document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   });
-  const run = async () => {
+  // belt: the save's belt for the run (#137: nothing refills it, so each run here sets its own)
+  const run = async (belt = { size: 6, poke: 6 }) => {
+    await page.evaluate((fields) => Object.assign(G.DB.save.belt, { great: 0, ultra: 0 }, fields), belt);
     await page.evaluate(() => G.Game.startRun());
     await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 20000 });
   };
@@ -804,9 +806,15 @@ async function catchFlow(browser, query, tag) {
   await page.waitForFunction(() => G.Game.state === 'over', null, { timeout: 5000 }).catch(() => {});
   ok((await rescued()) === box0, tag + ': a quit loses the held catch');
   await page.evaluate(() => G.UI.hideAll());
-  await run();
+  await run({ size: 12, poke: 8 }); // two belts bought (#137)
   await winAndTouch();
   await page.waitForFunction(() => G.UI.isOpen('scr-catch'), null, { timeout: 5000 }).catch(() => {});
+  const twoBelts = await screen();
+  const beltTwo = await page.evaluate(() => document.querySelectorAll('#scr-catch [data-belt="1"].is-full').length);
+  ok(
+    twoBelts.lockedBelts === 1 && twoBelts.beltBalls === 6 && beltTwo === 2,
+    tag + ': with two belts bought, belt 1 holds six, belt 2 the other ' + beltTwo + ' and only belt 3 is locked'
+  );
   // number key 2 throws from belt 1 (a sure catch)
   const total2 = await page.evaluate(() => G.Catch.total());
   await forceRandom(0);
@@ -841,9 +849,10 @@ async function catchFlow(browser, query, tag) {
 // #149b: the Character Upgrades pocket cards: each grid lights one square per slot owned and dims the rest up to the cap;
 // a Buy adds one slot for the price its label shows; Full and unaffordable Buys (#151, #152) keep their rim, grey their
 // label, take the cursor, and Enter toasts why and buys nothing; the arrows step Berry Buy, Team Items Buy, Exit, and Enter on a Buy asks first.
-// #149e: the Pokeballs tab: one card per catalog ball (lit Buy for throwable balls, else dimmed Unlock), three belts
-// showing the save's belt, a priced Buy under each locked belt; the arrows reach them all and every press says
-// "Coming soon." (buying is #137).
+// #149e, #137: the Pokeballs tab: one card per catalog ball (an unlocked tier lit "Buy <price>", a locked Great or Ultra
+// dimmed "Unlock <price>", the rest dimmed "Unlock"), three belts showing the save's belt, the next belt's priced Buy;
+// the arrows reach them all. A ball buy takes its price, adds one ball and asks nothing; Shift+Enter buys up to 10 across
+// two belts; refusals say why and change nothing; an unlock and a belt ask, then pay their price and change the tab.
 // #149c: the Team Items pane: sale cards plus owned items cover every team item, the owned grid is 4 across with dimmed
 // empties; a card Buy moves its item to the owned grid for its label's price; each search bar narrows its grid; owned
 // squares show their tooltip at once by mouse and after the Tooltip Delay by keys; unaffordable Buys take the cursor and
@@ -1449,69 +1458,120 @@ async function shopFlow(browser, query, tag) {
   );
   await arrow('ArrowDown'); // back to Exit for the tab keys below
 
-  // 149e: the Pokeballs tab. One card per ball in the catalog, in its order; lit with Buy exactly for the balls a throw
-  // can use (G.Catch.BALLS), the rest dimmed with Unlock, no price on either (E1). Three belts of six slots: bought ones
-  // = belt size / 6, the balls drawn = the save's balls; a Buy under each belt not bought. The arrows reach every card
-  // button, both belt Buys and Exit; Enter on any of them toasts "Coming soon." and changes nothing (E3)
-  await setSave({ coins: 0, belt: { size: 6, poke: 4 } });
+  // 149e and #137: the Pokeballs tab. One card per ball in the catalog, in its order. An unlocked tier
+  // (G.Catch.isUnlocked) is lit and reads Buy and its price; a locked tier with an unlock price is dimmed and reads Unlock
+  // and that price; every other ball is dimmed and reads Unlock. Three belts of six slots: bought ones = the save's
+  // belts, the balls drawn = the save's balls; one Buy, under the next belt, at that belt's price. The arrows reach every
+  // card button, that Buy and Exit
+  const BALL_BELT = { size: 6, poke: 4, great: 0, ultra: 0, unlocked: [] };
+  await setSave({ coins: 0, belt: { ...BALL_BELT } });
   await page.click('.shop-tab[data-tab="balls"]');
   await page.keyboard.press('Shift');
   await sleep(150);
-  const balls = await page.evaluate(() => {
-    const cards = [...document.querySelectorAll('#shop-balls .shop-card')];
-    const belts = [...document.querySelectorAll('#shop-balls .shop-belt')];
-    return {
-      catalog: G.BALL_CATALOG.map((ball) => ({ id: ball.id, name: ball.name })),
-      usable: G.Catch.BALLS.map((ball) => ball.id),
-      cards: cards.map((card) => ({
-        id: card.dataset.item,
-        name: card.querySelector('.shop-card-name').textContent.trim(),
-        label: card.querySelector('button').textContent.trim(),
-        dimmed: card.classList.contains('is-dimmed'),
-        pictured: !!card.querySelector('.shop-card-icon .catch-ball'),
-      })),
-      beltSlots: belts.map((belt) => belt.querySelectorAll('.catch-slot').length),
-      lockedBelts: belts.filter((belt) => belt.classList.contains('is-locked')).length,
-      boughtBelts: Math.floor(G.DB.save.belt.size / 6),
-      ballsDrawn: document.querySelectorAll('#shop-balls .shop-belt .catch-ball').length,
-      ballsOwned: G.Catch.total(),
-      beltBuys: [...document.querySelectorAll('#shop-balls .shop-belt-buy button')].map((button) =>
-        button.textContent.trim()
-      ),
-    };
-  });
+  const ballsNow = () =>
+    page.evaluate(() => {
+      const cards = [...document.querySelectorAll('#shop-balls .shop-card')];
+      const belts = [...document.querySelectorAll('#shop-balls .shop-belt')];
+      return {
+        catalog: G.BALL_CATALOG.map((ball) => ({
+          id: ball.id,
+          name: ball.name,
+          price: ball.price,
+          unlockPrice: ball.unlockPrice,
+          unlocked: G.Catch.isUnlocked(ball.id),
+        })),
+        coins: G.DB.save.coins,
+        belt: { ...G.DB.save.belt },
+        cards: cards.map((card) => ({
+          id: card.dataset.item,
+          name: card.querySelector('.shop-card-name').textContent.trim(),
+          label: card.querySelector('button').textContent.trim(),
+          dimmed: card.classList.contains('is-dimmed'),
+          pictured: !!card.querySelector('.shop-card-icon .catch-ball'),
+        })),
+        beltSlots: belts.map((belt) => belt.querySelectorAll('.catch-slot').length),
+        lockedBelts: belts.filter((belt) => belt.classList.contains('is-locked')).length,
+        boughtBelts: G.Catch.beltsBought(),
+        nextBeltPrice: G.Catch.nextBeltPrice(),
+        ballsDrawn: document.querySelectorAll('#shop-balls .shop-belt .catch-ball').length,
+        ballsOwned: G.Catch.total(),
+        beltBuys: [...document.querySelectorAll('#shop-balls .shop-belt-buy button')].map((button) =>
+          button.textContent.trim()
+        ),
+      };
+    });
+  const balls = await ballsNow();
+  const cardReadsRight = (card, ball) =>
+    card.id === ball.id &&
+    card.name === ball.name &&
+    card.pictured &&
+    card.dimmed === !ball.unlocked &&
+    (ball.unlocked
+      ? card.label.startsWith('Buy') && priceOn(card.label) === ball.price
+      : ball.unlockPrice
+        ? card.label.startsWith('Unlock') && priceOn(card.label) === ball.unlockPrice
+        : card.label === 'Unlock');
   ok(
     balls.cards.length === balls.catalog.length &&
-      balls.cards.every(
-        (card, index) =>
-          card.id === balls.catalog[index].id &&
-          card.name === balls.catalog[index].name &&
-          card.pictured &&
-          card.dimmed === !balls.usable.includes(card.id) &&
-          card.label === (card.dimmed ? 'Unlock' : 'Buy')
-      ),
-    tag + ': one card per catalog ball in order; lit with Buy exactly for the balls a throw can use, else dimmed Unlock'
+      balls.cards.every((card, index) => cardReadsRight(card, balls.catalog[index])),
+    tag +
+      ': one card per catalog ball in order; an unlocked tier lit with its Buy price, a locked Great or Ultra dimmed ' +
+      'with its unlock price, the rest dimmed Unlock'
   );
   ok(
     balls.beltSlots.length === 3 &&
       balls.beltSlots.every((count) => count === 6) &&
       balls.lockedBelts === 3 - balls.boughtBelts &&
       balls.ballsDrawn === Math.min(balls.ballsOwned, balls.boughtBelts * 6) &&
-      balls.beltBuys.length === balls.lockedBelts &&
-      balls.beltBuys.every((label) => priceOn(label) > 0),
+      balls.beltBuys.length === 1 &&
+      priceOn(balls.beltBuys[0]) === balls.nextBeltPrice,
     tag +
-      ": three belts of six; the bought ones hold the save's balls, each locked one has a priced Buy (" +
+      ": three belts of six; the bought ones hold the save's balls; one Buy, at the next belt's price (" +
       balls.ballsDrawn +
       ' balls, ' +
       balls.lockedBelts +
       ' locked)'
   );
-  // the arrows: into the top-left card, then a snake down the 3-column grid, then right to the belt Buys and Exit
+  // the arrows: into the top-left card, then a snake down the 3-column grid, then right to the belt Buy and Exit
   // (Up never leaves an area, so the walk goes left into the cards before it goes up)
   const ballVisits = new Set();
   const toTopLeftCard = async () => {
     for (const key of ['ArrowLeft', 'ArrowUp', 'ArrowLeft'])
       for (let step = 0; step < 10; step++) ballVisits.add(await arrow(key));
+  };
+  // the cursor onto one button of this tab by the arrow keys: each step goes toward the button's place on screen (the
+  // longer way first, the other way when that one does not move)
+  const ballCursorTo = async (id) => {
+    for (let step = 0; step < 40; step++) {
+      const where = await page.evaluate((target) => {
+        const centre = (element) => {
+          const rect = element.getBoundingClientRect();
+          return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        };
+        const goal = document.querySelector('#scr-gacha [data-cursor-id="' + target + '"]'),
+          corner = document.querySelector('#scr-gacha .hud-cursor'),
+          host = corner && corner.closest('[data-cursor-id]');
+        if (!goal) return null;
+        if (!host) return { hidden: true }; // the mouse was last: no cursor shows until a key
+        const from = centre(host),
+          to = centre(goal);
+        return { dx: to.x - from.x, dy: to.y - from.y };
+      }, id);
+      if (!where) return false;
+      if (where.hidden) {
+        await page.keyboard.press('Shift');
+        await sleep(80);
+        continue;
+      }
+      if ((await shown()).cursorOn === id) return true;
+      const horizontal = where.dx > 0 ? 'ArrowRight' : 'ArrowLeft',
+        vertical = where.dy > 0 ? 'ArrowDown' : 'ArrowUp';
+      const keys = Math.abs(where.dx) >= Math.abs(where.dy) ? [horizontal, vertical] : [vertical, horizontal];
+      const before = (await shown()).cursorOn;
+      if ((await arrow(keys[0])) === before && Math.abs(keys[1] === horizontal ? where.dx : where.dy) > 1)
+        await arrow(keys[1]);
+    }
+    return (await shown()).cursorOn === id;
   };
   await toTopLeftCard();
   for (let row = 0; row < Math.ceil(balls.catalog.length / 3); row++) {
@@ -1523,35 +1583,117 @@ async function shopFlow(browser, query, tag) {
   ballVisits.add(await arrow('ArrowDown'));
   const wantedVisits = [
     ...balls.catalog.map((ball) => 'ball-' + ball.id),
-    ...balls.beltBuys.map((_, index) => 'belt-' + (balls.boughtBelts + 1 + index)),
+    'belt-' + (balls.boughtBelts + 1),
     'shop-exit',
   ];
   const missedVisits = wantedVisits.filter((id) => !ballVisits.has(id));
   ok(
     !missedVisits.length,
     tag +
-      ': the arrows reach every ball card, both belt Buys and Exit' +
+      ': the arrows reach every ball card, the belt Buy and Exit' +
       (missedVisits.length ? ' (missed ' + missedVisits.join(', ') + ')' : '')
   );
-  // Enter on a card's button and on a belt Buy: "Coming soon.", no dialog, the save unchanged
-  const soonPress = async (id) => {
-    if (id.startsWith('ball-')) await toTopLeftCard();
-    else for (let step = 0; step < 8; step++) await arrow('ArrowRight'); // the last belt Buy, then back left to id
-    for (let step = 0; step < 3 && (await shown()).cursorOn !== id; step++) await arrow('ArrowLeft');
-    const before = await page.evaluate(() => JSON.stringify([G.DB.save.coins, G.DB.save.belt]));
+  // refusals (#151): Enter with no coins on a ball and on the belt Buy says "Unable to Afford"; a ball with no use yet
+  // says "Coming soon."; a full belt says "Your belts are full."; none asks and none changes the save
+  const ballSave = () => page.evaluate(() => JSON.stringify([G.DB.save.coins, G.DB.save.belt]));
+  const refusedOn = async (id) => {
+    const reached = await ballCursorTo(id);
+    const before = await ballSave();
     const result = await refusedEnter();
-    const after = await page.evaluate(() => JSON.stringify([G.DB.save.coins, G.DB.save.belt]));
-    return { ...result, on: (await shown()).cursorOn, same: before === after };
+    return { id, reached, toast: result.toast, asked: result.asked, same: before === (await ballSave()) };
   };
-  const soonPresses = [await soonPress('ball-poke'), await soonPress('belt-2')];
+  const refusals = [
+    { ...(await refusedOn('ball-poke')), wanted: 'Unable to Afford' },
+    { ...(await refusedOn('belt-2')), wanted: 'Unable to Afford' },
+    { ...(await refusedOn('ball-master')), wanted: 'Coming soon.' },
+  ];
+  await setSave({ coins: 100000, belt: { ...BALL_BELT, poke: 6 } });
+  refusals.push({ ...(await refusedOn('ball-poke')), wanted: 'Your belts are full.' });
   ok(
-    soonPresses.every(
-      (press, index) =>
-        press.on === ['ball-poke', 'belt-2'][index] && press.toast === 'Coming soon.' && !press.asked && press.same
-    ),
+    refusals.every((press) => press.reached && press.toast === press.wanted && !press.asked && press.same),
     tag +
-      ': Enter on a ball card and on a belt Buy toasts "Coming soon." and changes nothing (' +
-      soonPresses.map((press) => press.on + ': ' + press.toast).join(' / ') +
+      ': refusing buttons toast why, ask nothing and change nothing (' +
+      refusals.map((press) => press.id + (press.reached ? '' : ' (not reached)') + ': ' + press.toast).join(' / ') +
+      ')'
+  );
+  // a ball buy: Enter buys one at its card's price, no question, one more ball drawn on the belt
+  const toastNow = () =>
+    page.evaluate(() => (document.querySelector('.toast') || { textContent: '' }).textContent.trim());
+  await setSave({ coins: 1000, belt: { ...BALL_BELT, poke: 2 } });
+  await ballCursorTo('ball-poke');
+  let before = await ballsNow();
+  await page.keyboard.press('Enter');
+  await sleep(150);
+  let after = await ballsNow();
+  const pokeCard = (state) => state.cards.find((card) => card.id === 'poke');
+  ok(
+    after.belt.poke === before.belt.poke + 1 &&
+      before.coins - after.coins === priceOn(pokeCard(before).label) &&
+      after.ballsDrawn === before.ballsDrawn + 1 &&
+      !(await page.evaluate(() => G.UI.isOpen('scr-ask'))),
+    tag +
+      ': Enter on Buy adds one ball for the price its card shows, drawn on the belt, with no question (' +
+      (await toastNow()) +
+      ')'
+  );
+  // Shift+Enter: up to 10 balls, here across two bought belts (belt 2 holds the ones past slot 6)
+  await setSave({ coins: 100000, belt: { ...BALL_BELT, size: 12, poke: 0 } });
+  await ballCursorTo('ball-poke');
+  before = await ballsNow();
+  await page.keyboard.down('Shift');
+  await page.keyboard.press('Enter');
+  await page.keyboard.up('Shift');
+  await sleep(150);
+  after = await ballsNow();
+  const beltTwoBalls = await page.evaluate(
+    () => document.querySelectorAll('#shop-balls .shop-belt')[1].querySelectorAll('.catch-ball').length
+  );
+  ok(
+    after.belt.poke === 10 &&
+      before.coins - after.coins === 10 * priceOn(pokeCard(before).label) &&
+      after.ballsDrawn === 10 &&
+      beltTwoBalls === 4,
+    tag +
+      ': Shift+Enter buys 10, drawn across both bought belts (' +
+      after.belt.poke +
+      ' bought, ' +
+      beltTwoBalls +
+      ' on belt 2)'
+  );
+  // an unlock asks, then pays its price once; the card turns lit with its Buy price
+  await setSave({ coins: 100000, belt: { ...BALL_BELT } });
+  await ballCursorTo('ball-great');
+  before = await ballsNow();
+  await page.keyboard.press('Enter');
+  await clickConfirm();
+  after = await ballsNow();
+  const greatCard = (state) => state.cards.find((card) => card.id === 'great');
+  const greatBall = after.catalog.find((ball) => ball.id === 'great');
+  ok(
+    after.belt.unlocked.includes('great') &&
+      before.coins - after.coins === priceOn(greatCard(before).label) &&
+      !greatCard(after).dimmed &&
+      priceOn(greatCard(after).label) === greatBall.price,
+    tag +
+      ': Unlock asks, pays the price it showed, and the card turns to Buy at the ball price (' +
+      greatCard(after).label +
+      ')'
+  );
+  // a belt buy asks, then adds six slots at its price; the next belt's Buy takes its place
+  await ballCursorTo('belt-2');
+  before = await ballsNow();
+  await page.keyboard.press('Enter');
+  await clickConfirm();
+  after = await ballsNow();
+  ok(
+    after.belt.size === before.belt.size + 6 &&
+      before.coins - after.coins === priceOn(before.beltBuys[0]) &&
+      after.lockedBelts === before.lockedBelts - 1 &&
+      after.beltBuys.length === 1 &&
+      priceOn(after.beltBuys[0]) === after.nextBeltPrice,
+    tag +
+      ': a belt Buy asks, adds six slots for its price, and the next belt is for sale (' +
+      after.beltBuys.join() +
       ')'
   );
   await page.click('.shop-tab[data-tab="upgrades"]');
