@@ -972,10 +972,10 @@ async function shopFlow(browser, query, tag) {
     'ArrowDown',
     'ArrowLeft',
     'ArrowLeft',
-    'ArrowLeft',
     'ArrowUp',
-    'ArrowLeft',
-    'ArrowLeft',
+    'ArrowDown',
+    'ArrowDown',
+    'ArrowDown',
   ])
     visits.push(await arrowKey(key));
   ok(
@@ -989,7 +989,7 @@ async function shopFlow(browser, query, tag) {
       ')'
   );
   const tipShown = () => page.evaluate(() => !!document.querySelector('.hud-tip'));
-  if (!(await shown()).cursorOn.startsWith('own-')) await arrowKey('ArrowRight');
+  if (!(await shown()).cursorOn.startsWith('own-')) await arrowKey('ArrowUp'); // from Inventory, up into the owned grid
   const restingOn = (await shown()).cursorOn;
   const tipEarly = await tipShown();
   await sleep(1300);
@@ -1084,6 +1084,78 @@ async function shopFlow(browser, query, tag) {
       ': the sale grid and its bar end level with the bottom of Inventory and Exit (' +
       JSON.stringify(bottoms) +
       ')'
+  );
+
+  // second feel-test round (Jess 2026-11-17): at the end of its scroll the last card shows whole; the owned panel's rim
+  // sits inside the pane; Up from an area's top item goes to that area's search bar (cursor whole on it), Down comes back
+  // into the same grid, and Enter on a search bar starts typing
+  const edges = await page.evaluate(() => {
+    const box = document.querySelector('.shop-sale .hud-scroll-box');
+    box.scrollTop = box.scrollHeight;
+    const cards = [...box.querySelectorAll('.shop-card')],
+      boxRect = box.getBoundingClientRect(),
+      lastRect = cards[cards.length - 1].getBoundingClientRect(),
+      pane = document.getElementById('shop-items').getBoundingClientRect(),
+      owned = document.querySelector('.shop-owned').getBoundingClientRect();
+    box.scrollTop = 0;
+    return {
+      lastWhole: lastRect.bottom <= boxRect.bottom,
+      ownedInside: owned.right <= pane.right - 1 && owned.top >= pane.top,
+    };
+  });
+  ok(
+    edges.lastWhole && edges.ownedInside,
+    tag + ': the last card shows whole at the end of the scroll; the owned panel sits inside the pane'
+  );
+  const toTop = async (start) => {
+    // from the given area's first item, Up until the cursor stops moving
+    let at = start,
+      last = '';
+    for (let step = 0; step < 6 && at !== last; step++) {
+      last = at;
+      at = await arrowKey('ArrowUp');
+    }
+    return at;
+  };
+  await walk([]); // a fresh Shop: the cursor on Exit, the grids at the top
+  await arrowKey('ArrowLeft'); // Inventory
+  const ownedStart = await arrowKey('ArrowUp'); // into the owned grid
+  const ownedTop = await toTop(ownedStart);
+  const ownedBack = await arrowKey('ArrowDown');
+  const firstCardBuy = await page.evaluate(
+    () => document.querySelector('.shop-card [data-cursor-id]').dataset.cursorId
+  );
+  let saleTop = '';
+  for (let step = 0; step < 6 && saleTop !== firstCardBuy; step++) saleTop = await arrowKey('ArrowLeft');
+  saleTop = await toTop(saleTop);
+  const searchCorners = await page.evaluate(() => {
+    const pane = document.getElementById('shop-items').getBoundingClientRect();
+    const corners = [...document.querySelectorAll('.shop-sale-search-host .hud-cursor')];
+    return (
+      corners.length === 4 &&
+      corners.every(
+        (corner) => corner.getBoundingClientRect().top >= pane.top && corner.getBoundingClientRect().left >= pane.left
+      )
+    );
+  });
+  const saleBack = await arrowKey('ArrowDown');
+  await arrowKey('ArrowUp');
+  await page.keyboard.press('Enter');
+  await sleep(100);
+  const typing = await page.evaluate(() => document.activeElement.classList.contains('shop-sale-search'));
+  await page.keyboard.press('Escape');
+  await sleep(100);
+  ok(
+    ownedStart.startsWith('own-') && ownedTop === 'search-owned' && ownedBack.startsWith('own-'),
+    tag +
+      ": Up from the owned grid's top row goes to its search bar, Down comes back (" +
+      [ownedStart, ownedTop, ownedBack].join(' > ') +
+      ')'
+  );
+  ok(
+    saleTop === 'search-sale' && searchCorners && saleBack.startsWith('sale-') && typing,
+    tag +
+      ': Up from the top cards goes to the sale search bar (cursor whole), Down comes back, Enter there starts typing'
   );
 
   // 149b: the Character Upgrades pocket cards, read from the drawn page and the save

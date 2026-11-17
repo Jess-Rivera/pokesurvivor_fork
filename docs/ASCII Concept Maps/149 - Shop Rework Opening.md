@@ -238,3 +238,11 @@ Next: 149d Inventory screen.
 | 4 | The Team Items pane reaches 86 px lower, so the sale grid and its bar end level with the bottom of Inventory and Exit |
 | 5 | Cause of the clipped search bar and owned panel: that pane scroll (all of it moved as one). The pane is now overflow: clip, which code cannot scroll; the sale side and the owned panel stay separate boxes |
 Also: each opening of the Shop sends both scroll boxes back to the top.
+
+**149c feel-test round 2 (Jess 2026-11-17):**
+| # | Fix |
+|---|---|
+| 1 | Space under the sale grid's last row (one card gap), so the last cards show whole at the end of the scroll |
+| 2 | The owned panel is 377 wide, 4 px inside the pane, so a scaled-down stage never rounds its right rim away |
+| 3 | The search bars are cursor stops at the top of their areas: Up from an area's top item goes to its search bar, never the other grid; Up never leaves an area; Down with nothing below goes on to Inventory and Exit; Enter on a search bar starts typing (Enter or Esc gives the keys back) |
+| - | The sale side sits 6 px in from the pane's top and left, so the cursor on its search bar shows whole; its list still ends level with Inventory and Exit |

@@ -125,9 +125,11 @@
 .shop-items-pane,
 .shop-sale,
 .shop-owned,
-.shop-sale-search,
-.shop-owned-search {
-  position: absolute;
+.shop-search-host {
+  position: absolute; /* a cursor stop: the cursor's corners sit on this box, the search bar fills it */
+}
+.shop-search-host .hud-search {
+  display: block;
 }
 .shop-items-pane {
   inset: 0;
@@ -136,11 +138,9 @@
   color: #ffffff;
 }
 .shop-sale {
-  left: 0;
-  top: 0;
-  bottom: 0;
+  bottom: 0; /* left and top: gacha-ui.js (CURSOR_ROOM) */
 }
-.shop-sale-search {
+.shop-sale-search-host {
   left: 0;
   top: 0;
 }
@@ -186,7 +186,7 @@
 .shop-owned {
   top: 0;
 }
-.shop-owned-search {
+.shop-owned-search-host {
   left: 14px;
   top: 14px;
 }

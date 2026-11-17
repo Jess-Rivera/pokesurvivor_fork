@@ -98,7 +98,6 @@ G.GachaUI = (() => {
     searchWidth: 584,
     listTop: 56,
     listWidth: 584,
-    listHeight: 560, // its bottom level with the bottom of Inventory and Exit
     columns: 3,
     cardWidth: 186,
     cardHeight: 350, // room for a six-line description above Buy
@@ -116,10 +115,10 @@ G.GachaUI = (() => {
   SALE.buyWidth = SALE.buyArtWidth * EXIT.artPixel; // 174
   const OWNED = {
     left: 624,
-    width: 381,
+    width: 377, // 4 px short of the pane's right edge, so a scaled-down stage never rounds its rim away
     height: 530,
     inset: 14, // inside the panel's 2 px rim
-    searchWidth: 349,
+    searchWidth: 345,
     listTop: 70,
     columns: 4, // Jess 2026-11-17: four across; content updates will add many more team items, so it scrolls
     artSize: 30, // squares of 60 px, 30 px apart
@@ -131,12 +130,17 @@ G.GachaUI = (() => {
   // room inside the owned scroll box for the cursor's corners, which sit 4 px outside a square (Jess 2026-11-17: they
   // were clipped at the box's edges)
   const CURSOR_ROOM = 6;
+  // the sale side sits CURSOR_ROOM in from the pane's top and left (the cursor on its search bar shows whole); its list
+  // ends level with the bottom of Inventory and Exit, the pane's bottom (616)
+  SALE.listHeight = 616 - CURSOR_ROOM - SALE.listTop; // 554
   const INVENTORY_BUTTON = { artWidth: 64, gap: 16 }; // left of Exit on the Team Items tab
   INVENTORY_BUTTON.width = INVENTORY_BUTTON.artWidth * EXIT.artPixel; // 192
   const SCROLL_COLOURS = { track: '#303030', thumb: '#29ceff', thumbRim: '#29ceff' }; // the mockup's teal bar
   const OWNED_TIP_PLACE = { side: 'below' };
-  const SALE_ID = 'sale-', // cursor ids: a card's Buy, an owned square
-    OWNED_ID = 'own-';
+  const SALE_ID = 'sale-', // cursor ids: a card's Buy, an owned square, the two search bars
+    OWNED_ID = 'own-',
+    SALE_SEARCH = 'search-sale',
+    OWNED_SEARCH = 'search-owned';
 
   // ---------- state ----------
   const tab = signal(OPENING_TAB);
@@ -163,7 +167,9 @@ G.GachaUI = (() => {
     if (tab.value === 'items') {
       const view = teamItemsView();
       return [
+        SALE_SEARCH,
         ...(view.canAfford ? view.forSale.map((item) => SALE_ID + item.id) : []),
+        OWNED_SEARCH,
         ...view.owned.map((item) => OWNED_ID + item.id),
         'inventory',
         'exit',
@@ -270,6 +276,9 @@ G.GachaUI = (() => {
   /**
    * The arrows (149c): the nearest eligible item that way, measured between the items' centres on the screen, a step
    * across the way counting double; none that way keeps the cursor where it is. What it lands on scrolls into view.
+   * Up and down stay inside the item's own area (data-cursor-area: the sale side, the owned panel) while it has an
+   * item that way, so the top item's Up goes to that area's search bar, not the other grid (Jess 2026-11-17). Up never
+   * leaves an area (on its search bar it stays put); Down with nothing below in the area goes on to Inventory and Exit.
    */
   function stepFocus(directionX, directionY) {
     const from = cursorOn() || focus.value,
@@ -279,25 +288,31 @@ G.GachaUI = (() => {
       const rect = element.getBoundingClientRect();
       return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, width: rect.width };
     };
-    const start = centre(fromElement);
-    let best = null,
-      bestScore = Infinity;
-    for (const id of eligibleItems()) {
-      const element = id !== from && cursorElement(id);
-      if (!element) continue;
-      const point = centre(element);
-      if (!point.width) continue; // not drawn
-      const dx = point.x - start.x,
-        dy = point.y - start.y;
-      const along = dx * directionX + dy * directionY,
-        across = Math.abs(directionX ? dy : dx);
-      if (along <= 1) continue;
-      const score = along + 2 * across;
-      if (score < bestScore) {
-        bestScore = score;
-        best = { id, element };
+    const start = centre(fromElement),
+      fromArea = fromElement.dataset.cursorArea;
+    const nearestIn = (sameAreaOnly) => {
+      let best = null,
+        bestScore = Infinity;
+      for (const id of eligibleItems()) {
+        const element = id !== from && cursorElement(id);
+        if (!element || (sameAreaOnly && element.dataset.cursorArea !== fromArea)) continue;
+        const point = centre(element);
+        if (!point.width) continue; // not drawn
+        const dx = point.x - start.x,
+          dy = point.y - start.y;
+        const along = dx * directionX + dy * directionY,
+          across = Math.abs(directionX ? dy : dx);
+        if (along <= 1) continue;
+        const score = along + 2 * across;
+        if (score < bestScore) {
+          bestScore = score;
+          best = { id, element };
+        }
       }
-    }
+      return best;
+    };
+    const best =
+      directionY && fromArea ? nearestIn(true) || (directionY > 0 ? nearestIn(false) : null) : nearestIn(false);
     if (!best) return;
     focus.value = best.id;
     showInScrollBox(best.element);
@@ -327,6 +342,7 @@ G.GachaUI = (() => {
     if (!at) return;
     if (at === 'exit') return close();
     if (at === 'inventory') return openInventory();
+    if (at === SALE_SEARCH || at === OWNED_SEARCH) return cursorElement(at).querySelector('input').focus(); // type; Enter or Esc gives the keys back
     if (at.startsWith(SALE_ID)) return buyItem(at.slice(SALE_ID.length));
     const pocket = pockets().find((entry) => entry.id === at);
     if (pocket && pocket.canBuy) pocket.buy();
@@ -503,6 +519,7 @@ G.GachaUI = (() => {
       <div
         class="shop-button shop-card-buy"
         data-cursor-id=${id}
+        data-cursor-area="sale"
         style=${{
           left: px((SALE.cardInner - SALE.buyWidth) / 2),
           top: px(SALE.cardHeight - 4 - SALE.buyBottom - buyHeight),
@@ -542,6 +559,7 @@ G.GachaUI = (() => {
         className: 'shop-owned-slot',
         attrs: {
           'data-cursor-id': id,
+          'data-cursor-area': 'owned',
           onMouseEnter: (event) => {
             hover(id);
             tip.onMouseEnter(event);
@@ -557,6 +575,19 @@ G.GachaUI = (() => {
     });
   }
 
+  /** A search bar as a cursor stop at the top of its area: the cursor's corners sit on it; Enter there starts typing. */
+  function SearchStop({ id, area, at, className, children }) {
+    return html`<div
+      class=${'shop-search-host ' + className}
+      data-cursor-id=${id}
+      data-cursor-area=${area}
+      onMouseEnter=${() => hover(id)}
+      onMouseLeave=${() => hover(null)}
+    >
+      ${children} ${at === id ? html`<${Cursor} />` : null}
+    </div>`;
+  }
+
   function TeamItemsPane() {
     saveTick.value; // redraw after a purchase or a coin change
     if (!G.DB.save) return null;
@@ -568,14 +599,16 @@ G.GachaUI = (() => {
         ? 'No team item matches.'
         : null;
     return html`<div class="shop-items-pane">
-      <div class="shop-sale" style=${{ width: px(SALE.width) }}>
-        <${SearchBar}
-          value=${saleQuery.value}
-          onChange=${(text) => (saleQuery.value = text)}
-          placeholder="Search team items"
-          width=${SALE.searchWidth}
-          className="shop-sale-search"
-        />
+      <div class="shop-sale" style=${{ left: px(CURSOR_ROOM), top: px(CURSOR_ROOM), width: px(SALE.width) }}>
+        <${SearchStop} id=${SALE_SEARCH} area="sale" at=${at} className="shop-sale-search-host">
+          <${SearchBar}
+            value=${saleQuery.value}
+            onChange=${(text) => (saleQuery.value = text)}
+            placeholder="Search team items"
+            width=${SALE.searchWidth}
+            className="shop-sale-search"
+          />
+        </${SearchStop}>
         <${ScrollBox}
           box=${{ left: 0, top: SALE.listTop, width: SALE.listWidth, height: SALE.listHeight }}
           trackRight=${0}
@@ -584,7 +617,11 @@ G.GachaUI = (() => {
         >
           <div
             class="shop-sale-grid"
-            style=${{ gridTemplateColumns: `repeat(${SALE.columns}, ${px(SALE.cardWidth)})`, gap: px(SALE.cardGap) }}
+            style=${{
+              gridTemplateColumns: `repeat(${SALE.columns}, ${px(SALE.cardWidth)})`,
+              gap: px(SALE.cardGap),
+              paddingBottom: px(SALE.cardGap), // space under the last row, so its cards show whole at the end
+            }}
           >
             ${view.forSale.map(
               (item) =>
@@ -601,13 +638,15 @@ G.GachaUI = (() => {
         </${ScrollBox}>
       </div>
       <div class="shop-owned" style=${{ left: px(OWNED.left), width: px(OWNED.width), height: px(OWNED.height) }}>
-        <${SearchBar}
-          value=${ownedQuery.value}
-          onChange=${(text) => (ownedQuery.value = text)}
-          placeholder="Search owned"
-          width=${OWNED.searchWidth}
-          className="shop-owned-search"
-        />
+        <${SearchStop} id=${OWNED_SEARCH} area="owned" at=${at} className="shop-owned-search-host">
+          <${SearchBar}
+            value=${ownedQuery.value}
+            onChange=${(text) => (ownedQuery.value = text)}
+            placeholder="Search owned"
+            width=${OWNED.searchWidth}
+            className="shop-owned-search"
+          />
+        </${SearchStop}>
         <${ScrollBox}
           box=${{
             left: OWNED.inset - CURSOR_ROOM,
