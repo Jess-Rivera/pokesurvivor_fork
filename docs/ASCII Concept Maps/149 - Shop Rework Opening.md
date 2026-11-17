@@ -406,3 +406,5 @@ menu; decision 2026-11-17-unaffordable-buttons-take-the-cursor), #152 the pocket
 | 3 | No teal frame inside the window: the cards and slots sit in the window itself (30 px from its edges); Shop and Exit sit where the Shop's Exit does, so nothing moves between the two screens |
 | - | Filed: #153 the Main Menu selects with Enter or Space and moves with the arrows only; the Shop and Inventory select with Enter only and move with the arrows and WASD |
 smoke-ui: Shop pass 30 checks (the Inventory check now by Enter and by click); Inventory pass 20.
+
+**149d feel-test round 2 (Jess 2026-11-17):** the card list widens toward the slots: three cards 220 wide (the Shop keeps 186; ItemCard takes a width), search bar as wide as the list. The only issue found in that playtest.

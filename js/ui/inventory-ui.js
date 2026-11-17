@@ -44,10 +44,15 @@ G.InventoryUI = (() => {
   // Exit sit where the Shop's Exit does, so going between the two screens nothing moves.
   const WINDOW = { width: 1145, height: 670 },
     EDGE = 30, // from the window's left, top and right edges
-    CARDS = { width: 600, searchWidth: 584, listTop: 56, listWidth: 584, columns: 3 },
+    // three cards 220 wide (Jess 2026-11-17: the list reaches toward the slots; wider than the Shop's 186)
+    CARDS = { cardWidth: 220, listTop: 56, columns: 3 },
     SLOTS = { artWidth: 120, artPixel: 3, gap: 12 }, // 360 x 96 each (Jess 2026-11-17)
     SWAP_LINE = { gap: 14, height: 30 },
     BUTTONS = { shopArtWidth: 52, exitArtWidth: 52, gap: 16, bottom: 24 };
+  // the list holds the cards and their gaps with 2 px to spare, as the Shop's sale grid does; the search bar is as wide
+  CARDS.listWidth = CARDS.columns * CARDS.cardWidth + (CARDS.columns - 1) * CARD.gap + 2;
+  CARDS.searchWidth = CARDS.listWidth;
+  CARDS.width = CARDS.listWidth + 16; // room for the scroll bar right of the list
   // the card list ends level with the bottom of Shop and Exit (as the Shop's sale grid does)
   CARDS.listHeight = WINDOW.height - BUTTONS.bottom - EDGE - CARDS.listTop;
   SLOTS.width = SLOTS.artWidth * SLOTS.artPixel;
@@ -279,7 +284,7 @@ G.InventoryUI = (() => {
           <div
             class="inv-card-grid"
             style=${{
-              gridTemplateColumns: `repeat(${CARDS.columns}, ${px(CARD.width)})`,
+              gridTemplateColumns: `repeat(${CARDS.columns}, ${px(CARDS.cardWidth)})`,
               gap: px(CARD.gap),
               padding: px(CURSOR_ROOM) + ' 0 ' + px(CARD.gap), // the cursor's corners at the top, whole last cards
             }}
@@ -295,6 +300,7 @@ G.InventoryUI = (() => {
                   disabled=${false}
                   onPress=${() => pressCard(item.id)}
                   area="cards"
+                  width=${CARDS.cardWidth}
                 />`
             )}
           </div>

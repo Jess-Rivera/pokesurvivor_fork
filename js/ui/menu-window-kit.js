@@ -43,7 +43,7 @@ G.MenuWindowKit = (() => {
     buttonArtWidth: 58,
     buttonBottom: 10,
   };
-  CARD.inner = CARD.width - 4; // inside the card's 2 px rim
+  const CARD_RIM = 2; // the card's thin rim (css/bw-shop.css .shop-card)
   CARD.buttonWidth = CARD.buttonArtWidth * BUTTON.artPixel; // 174
   // room inside a scroll box for the cursor's corners, which sit 4 px outside an item (Jess 2026-11-17)
   const CURSOR_ROOM = 6;
@@ -271,16 +271,17 @@ G.MenuWindowKit = (() => {
 
   /**
    * A team item card (149c): thin #29ceff rim, #303030 body, icon, divider, name, description, and one button at the
-   * bottom (its id is the cursor's, in the given area).
+   * bottom (its id is the cursor's, in the given area). width: the Shop's 186 by default; the Inventory's are wider.
    */
-  function ItemCard({ cursor, item, buttonId, buttonLabel, disabled, onPress, area }) {
+  function ItemCard({ cursor, item, buttonId, buttonLabel, disabled, onPress, area, width = CARD.width }) {
+    const inner = width - 2 * CARD_RIM;
     return html`<div
       class="shop-card"
       data-item=${item.id}
       data-cursor-whole
-      style=${{ width: px(CARD.width), height: px(CARD.height) }}
+      style=${{ width: px(width), height: px(CARD.height) }}
     >
-      <div class="shop-card-icon" style=${{ left: px((CARD.inner - CARD.iconSize) / 2), top: px(CARD.iconTop) }}>
+      <div class="shop-card-icon" style=${{ left: px((inner - CARD.iconSize) / 2), top: px(CARD.iconTop) }}>
         <${IconCanvas} icon=${item.icon || item.id} size=${CARD.iconSize} />
       </div>
       <div
@@ -309,7 +310,7 @@ G.MenuWindowKit = (() => {
         className="shop-card-buy"
         area=${area}
         style=${{
-          left: px((CARD.inner - CARD.buttonWidth) / 2),
+          left: px((inner - CARD.buttonWidth) / 2),
           top: px(CARD.height - 4 - CARD.buttonBottom - BUTTON.height),
         }}
       />
