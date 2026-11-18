@@ -18,6 +18,10 @@ G.CHANGELOG = [
         'The belt button on the Poke Balls tab now reads Belt 2 10k.',
         'The belt button on the Poke Balls tab now reads Belt 2 10k.',
       ],
+      [
+        "The EV screen's panel now has the same dark outline as the other windows.",
+        "The EV screen's panel now has the same dark outline as the other windows.",
+      ],
     ],
     fix: [
       [

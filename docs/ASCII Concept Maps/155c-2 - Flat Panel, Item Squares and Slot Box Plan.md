@@ -132,3 +132,4 @@ Differences from the plan:
 - The team and inventory pause panels take panel-flat too; their existing "no background" rule still wins.
 - hud-kit.js now reads the two pattern ids from the pixels primitive (2 lines), so the ids have one home.
 
+Follow-up 2026-11-18 (155c-2b, Jess approved): the EV panel takes the whole panel.flat look, outline included.

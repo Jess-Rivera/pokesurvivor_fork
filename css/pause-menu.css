@@ -775,8 +775,7 @@ body.er-open .hud-overlay {
   top: 150px;
   width: 1520px;
   box-sizing: border-box;
-  padding: 24px 40px 32px;
-  box-shadow: none; /* the detail panel's back and frame (.panel-flat), without its outline */
+  padding: 24px 40px 32px; /* its look is .panel-flat (panel.flat), as the other windows */
 }
 .ev-head,
 .ev-row {
