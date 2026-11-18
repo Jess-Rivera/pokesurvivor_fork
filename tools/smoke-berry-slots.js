@@ -67,13 +67,17 @@ async function main() {
         text: button.textContent.trim(),
         disabled: button.disabled,
         refused: button.closest('.shop-button').classList.contains('refused'), // #151: refuses with a toast
+        // the next slot's price as the Shop's buttons write it (short from 1,000: "Buy 9k"), from the game's own rules
+        wanted:
+          'Buy ' +
+          G.U.compact(G.Grounds.berrySlotPrice(G.Grounds.berrySlots(G.DB.save) + 1), G.MenuWindowKit.SHORT_PRICE_FROM),
       };
     });
   const before = await berryPocket();
   ok(before.lit === 1 && before.total === 4, 'the Berry Pocket lights 1 of its 4 squares');
   ok(
-    !before.disabled && !before.refused && before.text === 'Buy 9,000',
-    'its Buy offers slot 2 for 9,000 (' + before.text + ')'
+    !before.disabled && !before.refused && before.text === before.wanted,
+    'its Buy offers slot 2 at its price (' + before.text + ')'
   );
 
   // Cancel spends nothing
@@ -103,8 +107,8 @@ async function main() {
   const after = await berryPocket();
   ok(after.lit === 2, 'the Berry Pocket lights 2 squares');
   ok(
-    after.text === 'Buy 23,000' && after.refused,
-    'slot 3 is next but unaffordable (refuses) at 1,000 (' + after.text + ')'
+    after.text === after.wanted && after.refused,
+    'slot 3 is next at its price but unaffordable (refuses) at 1,000 (' + after.text + ')'
   );
 
   // The buy function's own rules

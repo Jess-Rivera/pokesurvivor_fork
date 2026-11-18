@@ -18,7 +18,9 @@ G.ShopTmsPane = (() => {
     windowKit = G.MenuWindowKit;
   if (!kitOverlay || !kitOverlay.ready || !windowKit.ready || !G.TMs) return { ready: false };
   const { html, signal, ScrollBox, SearchBar, portraitSource, portraitFallback } = kitOverlay.kit;
-  const { CARD, CURSOR_ROOM, SCROLL_COLOURS, px, ItemCard, SearchStop, Dropdown, dropdownItems, nameHas } = windowKit;
+  const { CARD, CURSOR_ROOM, SCROLL_COLOURS, SHORT_PRICE_FROM, px, ItemCard, SearchStop, Dropdown, dropdownItems } =
+    windowKit;
+  const { nameHas } = windowKit;
 
   // ---------- sizes and places (pane pixels; the pane is 1005 x 616, down to the bottom of Exit) ----------
   const PANE_HEIGHT = 616;
@@ -55,7 +57,8 @@ G.ShopTmsPane = (() => {
     cannot: "Can't learn this TM.",
     none: 'Choose a Pokemon first.',
   };
-  const fmt = (n) => n.toLocaleString('en-US');
+  const fmt = (n) => n.toLocaleString('en-US'); // the whole number: asks, notes and toasts
+  const shortPrice = (n) => G.U.compact(n, SHORT_PRICE_FROM); // a button's price: "9k"
   const titled = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
   // a shift-click on Buy skips the question (mockup); a key press never does
@@ -319,7 +322,7 @@ G.ShopTmsPane = (() => {
         standing = G.TMs.standing(G.DB.save, copy && copy.pokemonUUID, moveId),
         price = G.TMs.price(moveId);
       const refusal = standing === 'buy' ? (coins >= price ? null : REFUSALS.poor) : REFUSALS[standing];
-      const label = standing === 'learned' ? 'Learned' : standing === 'known' ? 'Known' : 'Buy ' + fmt(price);
+      const label = standing === 'learned' ? 'Learned' : standing === 'known' ? 'Known' : 'Buy ' + shortPrice(price);
       return html`<${ItemCard}
         cursor=${cursor}
         item=${{ id: moveId, name: def.name, desc: G.MoveInfo.desc(moveId), icon: 'ps:tm.' + def.type }}

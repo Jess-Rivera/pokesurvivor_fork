@@ -65,11 +65,15 @@ G.U = {
     return m + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   },
 
-  /** "1,204" up to 9,999, then "41.2k" and "1.3M": one decimal, a trailing .0 dropped ("10k") (#91-3, 91d P4). */
-  compact(n) {
+  /**
+   * "1,204" below shortFrom (10,000 by default, the pause menu's stats: #91-3, 91d P4), then "41.2k" and "1.3M": one
+   * decimal, a trailing .0 dropped ("10k"). The Main Menu Shop's buttons shorten from 1,000
+   * (G.MenuWindowKit.SHORT_PRICE_FROM: "Buy 9k", "Buy 7.5k").
+   */
+  compact(n, shortFrom = 10000) {
     const value = Math.round(n || 0),
       size = Math.abs(value);
-    if (size < 10000) return value.toLocaleString('en-US');
+    if (size < shortFrom) return value.toLocaleString('en-US');
     const [unit, step] = size >= 999950 ? ['M', 1e6] : ['k', 1e3]; // 999,950 reads 1M, never 1000k
     return String(Math.round((value / step) * 10) / 10) + unit;
   },

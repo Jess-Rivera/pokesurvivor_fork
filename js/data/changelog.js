@@ -7,6 +7,26 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-18',
+    title: ['Shorter Shop prices', 'Shorter Shop prices'],
+    chg: [
+      [
+        'Shop buttons write prices of 1,000 and up short: Buy 9k, Unlock 15k, Buy 7.5k. The question before you buy still shows the whole price.',
+        'Shop buttons write prices of 1,000 and up short: Buy 9k, Unlock 15k, Buy 7.5k. The question before you buy still shows the whole price.',
+      ],
+      [
+        'The belt button on the Poke Balls tab now reads Belt 2 10k.',
+        'The belt button on the Poke Balls tab now reads Belt 2 10k.',
+      ],
+    ],
+    fix: [
+      [
+        'Poke Balls tab: the right column of ball cards is no longer cut off by the scroll bar.',
+        'Poke Balls tab: the right column of ball cards is no longer cut off by the scroll bar.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-17',
     title: ['TMs for good', 'TMs for good'],
     new: [

@@ -1342,8 +1342,22 @@ async function shopFlow(browser, query, tag) {
       };
     });
   const POCKET_KEYS = ['berry', 'item'];
-  // the price on a label: its last number ("Buy 50", "Unlock 5,000", "Buy Belt 2 10,000")
-  const priceOn = (label) => Number(label.trim().split(' ').pop().replace(/\D/g, ''));
+  // the price on a label: its last word, short from 1,000 ("Buy 50", "Unlock 5k", "Belt 2 10k", "Buy 7.5k")
+  const PRICE_UNITS = { k: 1e3, M: 1e6 };
+  const priceOn = (label) => {
+    const word = label.trim().split(' ').pop().replace(/,/g, ''),
+      unit = PRICE_UNITS[word.slice(-1)];
+    return unit ? Number(word.slice(0, -1)) * unit : Number(word);
+  };
+  // how the Shop's buttons write each price, asked of the game (G.U.compact from the windows' threshold), never typed
+  const shortPrices = (prices) =>
+    page.evaluate(
+      (list) =>
+        Object.fromEntries(list.map((price) => [price, G.U.compact(price, G.MenuWindowKit.SHORT_PRICE_FROM)])),
+      prices.filter(Boolean)
+    );
+  // a label shows a price: its last word is that price as the Shop's buttons write it
+  const showsPrice = (label, shorts, price) => price > 0 && label.trim().split(' ').pop() === shorts[price];
   // Enter on the item under the cursor, for a Buy that should refuse: the toast it shows, whether a dialog asked, and
   // the pockets afterwards (the toast is cleared first, so an older one cannot count)
   const refusedEnter = async () => {
@@ -1379,10 +1393,12 @@ async function shopFlow(browser, query, tag) {
     await page.click('[data-action="buy-' + key + '"]');
     await clickConfirm();
     const after = await pocketsNow();
+    const spent = before.coins - after.coins,
+      spentShort = await shortPrices([spent]);
     if (!(
       after[key].owned === before[key].owned + 1 &&
       after[key].lit === before[key].lit + 1 &&
-      before.coins - after.coins === priceOn(before[key].label) &&
+      showsPrice(before[key].label, spentShort, spent) &&
       gridsMatch(after)
     ))
       buysRight = false;
@@ -1470,7 +1486,7 @@ async function shopFlow(browser, query, tag) {
   // (G.Catch.isUnlocked) is lit and reads Buy and its price; a locked tier with an unlock price is dimmed and reads Unlock
   // and that price; every other ball is dimmed and reads Unlock. Three belts of six slots: bought ones = the save's
   // belts, the balls drawn = the save's balls; one Buy, at that belt's price. #137c: the belts sit against the pane's
-  // right edge, each numbered; the one "Buy Belt <n>" is on Exit's row, left of it; Sell sits right above Exit, its
+  // right edge, each numbered; the one "Belt <n>" button is on Exit's row, left of it; Sell sits right above Exit, its
   // width. The arrows reach every card button, that Buy, Sell and Exit
   const BALL_BELT = { size: 6, poke: 4, great: 0, ultra: 0, unlocked: [] };
   await setSave({ coins: 0, belt: { ...BALL_BELT } });
@@ -1512,6 +1528,10 @@ async function shopFlow(browser, query, tag) {
       };
     });
   const balls = await ballsNow();
+  const ballShorts = await shortPrices([
+    ...balls.catalog.flatMap((ball) => [ball.price, ball.unlockPrice]),
+    ...Object.values(await page.evaluate(() => G.BELT_PRICES)),
+  ]);
   const cardReadsRight = (card, ball) =>
     card.id === ball.id &&
     card.name === ball.name &&
@@ -1519,9 +1539,9 @@ async function shopFlow(browser, query, tag) {
     card.dimmed === !ball.unlocked &&
     !card.buttonLit && // no coins: no Unlock is lit
     (ball.unlocked
-      ? card.label.startsWith('Buy') && priceOn(card.label) === ball.price
+      ? card.label.startsWith('Buy') && showsPrice(card.label, ballShorts, ball.price)
       : ball.unlockPrice
-        ? card.label.startsWith('Unlock') && priceOn(card.label) === ball.unlockPrice
+        ? card.label.startsWith('Unlock') && showsPrice(card.label, ballShorts, ball.unlockPrice)
         : card.label === 'Unlock');
   ok(
     balls.cards.length === balls.catalog.length &&
@@ -1536,7 +1556,7 @@ async function shopFlow(browser, query, tag) {
       balls.lockedBelts === 3 - balls.boughtBelts &&
       balls.ballsDrawn === Math.min(balls.ballsOwned, balls.boughtBelts * 6) &&
       balls.beltBuys.length === 1 &&
-      priceOn(balls.beltBuys[0]) === balls.nextBeltPrice,
+      showsPrice(balls.beltBuys[0], ballShorts, balls.nextBeltPrice),
     tag +
       ": three belts of six; the bought ones hold the save's balls; one Buy, at the next belt's price (" +
       balls.ballsDrawn +
@@ -1555,6 +1575,14 @@ async function shopFlow(browser, query, tag) {
       sell = rect(pane.querySelector('.shop-sell')),
       buy = rect(pane.querySelector('.shop-belt-buy')),
       lastBelt = belts[belts.length - 1];
+    // the card list's scroll bar: its track and, when the cards overflow, its wider thumb
+    const barParts = [...pane.querySelectorAll('.shop-ball-list .hud-scroll-track, .shop-ball-list .hud-scroll-thumb')]
+      .map(rect)
+      .filter((part) => part.width > 0);
+    const barLeft = Math.min(...barParts.map((part) => part.left)),
+      barRight = Math.max(...barParts.map((part) => part.right)),
+      cards = [...pane.querySelectorAll('.shop-ball-list .shop-card')],
+      cardsRight = Math.max(...cards.map((card) => rect(card).right));
     return {
       rightPad: pane.offsetWidth - (lastBelt.offsetLeft + lastBelt.offsetWidth),
       inOrder: belts.every((belt, index) => !index || belt.offsetLeft > belts[index - 1].offsetLeft),
@@ -1566,6 +1594,8 @@ async function shopFlow(browser, query, tag) {
       buyOnExitRow: !!buy && Math.abs(buy.top - exit.top) < 1 && buy.right < exit.left,
       sellOverExit:
         !!sell && Math.abs(sell.right - exit.right) < 1 && sell.bottom < exit.top && sell.top > rect(lastBelt).bottom,
+      barClearsCards: barParts.length > 0 && barLeft > cardsRight,
+      buyClearsBar: !buy || (barParts.length > 0 && buy.left > barRight),
     };
   });
   ok(
@@ -1575,18 +1605,24 @@ async function shopFlow(browser, query, tag) {
       ballLayout.numbers.join() === '1,2,3' &&
       ballLayout.buyOnExitRow &&
       ballLayout.sellOverExit &&
-      ballLayout.labelsFit,
+      ballLayout.labelsFit &&
+      ballLayout.barClearsCards &&
+      ballLayout.buyClearsBar,
     tag +
       ': belts packed right (' +
       ballLayout.rightPad +
       ' px pad) and numbered ' +
       ballLayout.numbers.join() +
-      '; the belt Buy on Exit row, Sell above Exit, labels fit (' +
+      '; the belt Buy on Exit row, Sell above Exit, labels fit, the scroll bar clear of the cards and the belt Buy (' +
       ballLayout.buyOnExitRow +
       ', ' +
       ballLayout.sellOverExit +
       ', ' +
       ballLayout.labelsFit +
+      ', ' +
+      ballLayout.barClearsCards +
+      ', ' +
+      ballLayout.buyClearsBar +
       ')'
   );
   // the arrows: into the top-left card, then a snake down the 3-column grid, then on to the belt Buy, Sell and Exit
@@ -1685,10 +1721,12 @@ async function shopFlow(browser, query, tag) {
   await sleep(150);
   let after = await ballsNow();
   const pokeCard = (state) => state.cards.find((card) => card.id === 'poke');
+  let spent = before.coins - after.coins,
+    spentShort = await shortPrices([spent]);
   ok(
     after.counts.poke === before.counts.poke + 1 &&
       after.belt.slots.join() === 'poke,poke,poke,,,' &&
-      before.coins - after.coins === priceOn(pokeCard(before).label) &&
+      showsPrice(pokeCard(before).label, spentShort, spent) &&
       after.ballsDrawn === before.ballsDrawn + 1 &&
       !(await page.evaluate(() => G.UI.isOpen('scr-ask'))),
     tag +
@@ -1708,9 +1746,11 @@ async function shopFlow(browser, query, tag) {
   const beltTwoBalls = await page.evaluate(
     () => document.querySelectorAll('#shop-balls .shop-belt')[1].querySelectorAll('.catch-ball').length
   );
+  spent = (before.coins - after.coins) / 10;
+  spentShort = await shortPrices([spent]);
   ok(
     after.counts.poke === 10 &&
-      before.coins - after.coins === 10 * priceOn(pokeCard(before).label) &&
+      showsPrice(pokeCard(before).label, spentShort, spent) &&
       after.ballsDrawn === 10 &&
       beltTwoBalls === 4,
     tag +
@@ -1757,11 +1797,13 @@ async function shopFlow(browser, query, tag) {
   after = await ballsNow();
   const greatCard = (state) => state.cards.find((card) => card.id === 'great');
   const greatBall = after.catalog.find((ball) => ball.id === 'great');
+  spent = before.coins - after.coins;
+  spentShort = await shortPrices([spent]);
   ok(
     after.belt.unlocked.includes('great') &&
-      before.coins - after.coins === priceOn(greatCard(before).label) &&
+      showsPrice(greatCard(before).label, spentShort, spent) &&
       !greatCard(after).dimmed &&
-      priceOn(greatCard(after).label) === greatBall.price,
+      showsPrice(greatCard(after).label, ballShorts, greatBall.price),
     tag +
       ': Unlock asks, pays the price it showed, and the card turns to Buy at the ball price (' +
       greatCard(after).label +
@@ -1773,14 +1815,16 @@ async function shopFlow(browser, query, tag) {
   await page.keyboard.press('Enter');
   await clickConfirm();
   after = await ballsNow();
+  spent = before.coins - after.coins;
+  spentShort = await shortPrices([spent]);
   ok(
     after.belt.size === before.belt.size + 6 &&
-      before.coins - after.coins === priceOn(before.beltBuys[0]) &&
+      showsPrice(before.beltBuys[0], spentShort, spent) &&
       after.lockedBelts === before.lockedBelts - 1 &&
       after.beltBuys.length === 1 &&
-      priceOn(after.beltBuys[0]) === after.nextBeltPrice &&
-      before.beltBuys[0].startsWith('Buy Belt ' + (before.boughtBelts + 1) + ' ') &&
-      after.beltBuys[0].startsWith('Buy Belt ' + (after.boughtBelts + 1) + ' '),
+      showsPrice(after.beltBuys[0], ballShorts, after.nextBeltPrice) &&
+      before.beltBuys[0].startsWith('Belt ' + (before.boughtBelts + 1) + ' ') &&
+      after.beltBuys[0].startsWith('Belt ' + (after.boughtBelts + 1) + ' '),
     tag +
       ': a belt Buy asks, adds six slots for its price, and the next belt is for sale (' +
       after.beltBuys.join() +
@@ -2051,9 +2095,11 @@ async function shopFlow(browser, query, tag) {
   await page.click(tmButtonOf(tmTarget), { modifiers: ['Shift'] });
   await sleep(250);
   const tmBought = await tmsNow();
+  const tmSpent = tms.coins - tmBought.coins,
+    tmSpentShort = await shortPrices([tmSpent]);
   ok(
     tmPlainAsks &&
-      tms.coins - tmBought.coins === priceOn(tmTargetCard.label) &&
+      showsPrice(tmTargetCard.label, tmSpentShort, tmSpent) &&
       tmBought.learned.includes(tmTarget) &&
       tmBought.cards.find((card) => card.id === tmTarget).label === 'Learned',
     tag +

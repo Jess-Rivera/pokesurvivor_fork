@@ -8,7 +8,7 @@
  *           and refuse with "Coming soon.".
  *   belts   the catch screen's three belts of six slots, sized up, packed against the pane's right edge, each with its
  *           number on its top-left corner (#137c): bought belts (G.Catch.beltsBought) in the Poke Balls pocket colours
- *           holding the save's balls slot for slot (G.Catch.slots); the rest locked. One "Buy Belt <n> <price>" left of
+ *           holding the save's balls slot for slot (G.Catch.slots); the rest locked. One "Belt <n> <price>" left of
  *           Exit, on its row, buys the next belt (belts are bought in order) and is gone once every belt is bought.
  *   sell    #137c: "Sell Pokeball" above Exit (right-aligned with it) sells the ball you are holding (picked up by click or keys, or dragged onto
  *           it) for half its price (G.Catch.sellBall); with nothing held it refuses.
@@ -25,7 +25,7 @@ G.ShopBallsPane = (() => {
     windowKit = G.MenuWindowKit;
   if (!kitOverlay || !kitOverlay.ready || !windowKit.ready || !G.BALL_CATALOG) return { ready: false };
   const { html, signal, Box, ScrollBox, BallSprite, FAINTED_RIM } = kitOverlay.kit;
-  const { BUTTON, CARD, CURSOR_ROOM, SCROLL_COLOURS, px, CursorButton, ItemCard } = windowKit;
+  const { BUTTON, CARD, CURSOR_ROOM, SCROLL_COLOURS, SHORT_PRICE_FROM, px, CursorButton, ItemCard } = windowKit;
 
   // ---------- sizes and places (pane pixels; the pane is 1005 x 616, down to the bottom of Exit) ----------
   const PANE_WIDTH = 1005,
@@ -33,9 +33,10 @@ G.ShopBallsPane = (() => {
   // Exit (drawn by js/ui/gacha-ui.js, EXIT) sits in the pane's bottom right corner: its row is the pane's last 54 px
   const EXIT_PLACE = { artWidth: 52, top: PANE_HEIGHT - BUTTON.height };
   EXIT_PLACE.left = PANE_WIDTH - EXIT_PLACE.artWidth * BUTTON.artPixel; // 849
-  // the cards: the Team Items sale grid's sizes (3 cards of CARD.width and the scroll bar), CURSOR_ROOM in from the
-  // pane's top and left so the cursor's corners show whole
-  const GRID = { columns: 3, width: 584 };
+  // the cards: the Team Items sale side's width (3 cards of CARD.width and their gaps, 582, then the scroll bar 8 px
+  // clear of them; at 584 it covered the third card's rim, 2026-11-18), CURSOR_ROOM in from the pane's top and left so
+  // the cursor's corners show whole
+  const GRID = { columns: 3, width: 600 };
   GRID.height = PANE_HEIGHT - 2 * CURSOR_ROOM;
   // the ball on a card: frame 9 of its strip (the last frame before it opens; Jess 2026-11-17, E5), flipped, at 2x
   // (CARD.iconSize, 64 px)
@@ -48,9 +49,9 @@ G.ShopBallsPane = (() => {
   BELT.left = PANE_WIDTH - BELT.rightPad - BELT.count * BELT.width - (BELT.count - 1) * BELT.gap; // 665
   BELT.height = 2 * SLOT.top + BELT.slots * SLOT.size + (BELT.slots - 1) * SLOT.gap; // 486
   const BELT_NUMBER = { left: 2, top: -3 }; // the belt's number on its top-left rim corner, in the 14 px above slot 1
-  // the one belt Buy, left of Exit on its row, wide enough for "Buy Belt 3 15,000" (#137c)
-  const BELT_BUY = { artWidth: 78, gap: 12 };
-  BELT_BUY.width = BELT_BUY.artWidth * BUTTON.artPixel; // 234
+  // the one belt Buy, left of Exit on its row: "Belt 3 15k" (no "Buy", a short price; Jess 2026-11-18) at Sell's width
+  const BELT_BUY = { artWidth: 62, gap: 12 };
+  BELT_BUY.width = BELT_BUY.artWidth * BUTTON.artPixel; // 186
   BELT_BUY.left = EXIT_PLACE.left - BELT_BUY.gap - BELT_BUY.width;
   // Sell, right above Exit and right-aligned with it, a little wider so "Sell Pokeball" fits (#137c); its focus rim is
   // red (Jess 2026-11-17, P5)
@@ -76,7 +77,8 @@ G.ShopBallsPane = (() => {
     SLOT_ID = 'slot-',
     SELL_ID = 'sell';
   const DRAG_START_DISTANCE = 6; // px the pointer moves before a press becomes a drag (as the in-run Inventory)
-  const fmt = (n) => n.toLocaleString('en-US');
+  const fmt = (n) => n.toLocaleString('en-US'); // the whole number: asks, notes and toasts
+  const shortPrice = (n) => G.U.compact(n, SHORT_PRICE_FROM); // a button's price: "9k"
 
   // Shift on the press: by click or by key it buys up to SHIFT_BUY_COUNT balls (B6, B12); only a shift-click skips an
   // unlock's or a belt's question (B9; as on the TMs tab, a key press never does)
@@ -257,13 +259,13 @@ G.ShopBallsPane = (() => {
   function cardButton(ball) {
     if (G.Catch.isUnlocked(ball.id))
       return {
-        label: 'Buy ' + fmt(ball.price),
+        label: 'Buy ' + shortPrice(ball.price),
         refusal: G.Catch.room() <= 0 ? REFUSALS.full : coinsShort(ball.price),
         lit: true,
       };
     if (ball.unlockPrice) {
       const refusal = coinsShort(ball.unlockPrice);
-      return { label: 'Unlock ' + fmt(ball.unlockPrice), refusal, buttonLit: !refusal }; // #137c
+      return { label: 'Unlock ' + shortPrice(ball.unlockPrice), refusal, buttonLit: !refusal }; // #137c
     }
     return { label: 'Unlock', refusal: REFUSALS.soon };
   }
@@ -445,7 +447,7 @@ G.ShopBallsPane = (() => {
           ? html`<${CursorButton}
               cursor=${cursor}
               id=${BELT_ID + belt}
-              label=${'Buy Belt ' + belt + ' ' + fmt(G.BELT_PRICES[belt])}
+              label=${'Belt ' + belt + ' ' + shortPrice(G.BELT_PRICES[belt])}
               artWidth=${BELT_BUY.artWidth}
               refusal=${coinsShort(G.BELT_PRICES[belt])}
               onPress=${() => press(BELT_ID + belt)}

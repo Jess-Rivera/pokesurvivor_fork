@@ -47,6 +47,7 @@ G.GachaUI = (() => {
     CARD,
     CURSOR_ROOM,
     SCROLL_COLOURS,
+    SHORT_PRICE_FROM,
     px,
     createMenuCursor,
     CursorButton,
@@ -54,7 +55,8 @@ G.GachaUI = (() => {
     SearchStop,
     nameHas,
   } = windowKit;
-  const fmt = (n) => n.toLocaleString('en-US');
+  const fmt = (n) => n.toLocaleString('en-US'); // the whole number: asks, notes and toasts
+  const shortPrice = (n) => G.U.compact(n, SHORT_PRICE_FROM); // a button's price: "9k"
 
   // ---------- tabs (top to bottom on the rail): key, name, icon file; each key's pane is #shop-<key> ----------
   const TABS = [
@@ -402,7 +404,7 @@ G.GachaUI = (() => {
                   cursor=${cursor}
                   item=${item}
                   buttonId=${SALE_ID + item.id}
-                  buttonLabel=${'Buy ' + fmt(view.price)}
+                  buttonLabel=${'Buy ' + shortPrice(view.price)}
                   refusal=${view.canAfford ? null : UNAFFORDABLE}
                   onPress=${() => buyItem(item.id)}
                   area="sale"
@@ -557,7 +559,7 @@ G.GachaUI = (() => {
       <${CursorButton}
         cursor=${cursor}
         id=${pocket.id}
-        label=${pocket.full ? 'Full' : 'Buy ' + fmt(pocket.price)}
+        label=${pocket.full ? 'Full' : 'Buy ' + shortPrice(pocket.price)}
         artWidth=${POCKET.buyArtWidth}
         refusal=${pocket.refusal}
         onPress=${pocket.buy}
