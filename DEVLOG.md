@@ -257,3 +257,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Decided: decision 2026-11-17-137c-sell-balls-at-half-price. Sell is wider than Exit so its label fits.
 - Broke and fixed: Pane read a signal, so Preact skipped its redraws on save; Sell moved to its own component.
 - Checks: rescue-harness, smoke-ui, check.js all passed. Stopped at: #137 in Needs Playtest.
+
+## 2026-11-17 (Claude Code, home), #155 UI Library v2, step 155a
+- #137 feel test passed, closed. New dev-process slice #155 (child of #126): a library board as the shared UI language.
+  Opening, mockup and plan: docs/ASCII Concept Maps/UI Library v2 - Slice Opening.md and 155 - UI Library v2 Build Plan.md.
+- 155a: js/ui/lib/tokens/tokens.js holds every colour palette, font and page layer by name; the type colours moved there
+  (decision 2026-11-17-155-design-tokens-in-tokens-js). tools/library.html is the board (Tokens pages built).
+- No visible change. check.js, smoke-ui, smoke-ui-library all passed. The old page's script list was stale; resynced.
+- Stopped at: 155b (Buttons) next, on Jess's OK.

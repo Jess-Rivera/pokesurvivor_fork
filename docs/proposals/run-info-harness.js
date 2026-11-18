@@ -33,7 +33,7 @@ const ok = (condition, message) => {
 };
 global.window = global;
 global.location = { search: '' };
-const loads = ['js/core/util.js', 'js/ui/pause-run-info.js', 'js/systems/run-stats.js', 'js/systems/dps-history.js'];
+const loads = ['js/ui/lib/tokens/tokens.js', 'js/core/util.js', 'js/ui/pause-run-info.js', 'js/systems/run-stats.js', 'js/systems/dps-history.js'];
 for (const p of loads.concat('js/ui/pause-pokemon.js')) vm.runInThisContext(read(p), { filename: p });
 const RI = G.PauseRunInfo;
 if (!RI || RI.ready !== false || typeof RI.sections !== 'function') {

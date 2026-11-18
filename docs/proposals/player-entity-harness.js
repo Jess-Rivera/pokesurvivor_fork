@@ -84,7 +84,7 @@ global.G = new Proxy(base, {
     return true;
   },
 });
-for (const p of ['js/core/util.js', 'js/core/stats.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js']) {
+for (const p of ['js/ui/lib/tokens/tokens.js', 'js/core/util.js', 'js/core/stats.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js']) {
   try {
     load(p);
   } catch (e) {

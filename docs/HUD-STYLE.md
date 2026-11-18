@@ -174,7 +174,7 @@ B/W colours come in pairs (a bright fill over a dark shade). Keep the pairs toge
 
 - `[Approved]` **The Bulbapedia Scarlet/Violet palette is canonical for the HUD and all UI** (Jess, 2026-11-10).
   - Base for fills, Dark for shades and outlines, Light for highlights.
-  - Game-wide since #68: `G.U.TYPE_COLOR` (Base), `G.U.TYPE_COLOR_LIGHT`, `G.U.TYPE_COLOR_DARK` in js/core/util.js, checked against this table by tools/type_colors.js. The HUD kit reads them from there.
+  - Game-wide since #68: `G.U.TYPE_COLOR` (Base), `G.U.TYPE_COLOR_LIGHT`, `G.U.TYPE_COLOR_DARK`, checked against this table by tools/type_colors.js. Since #155 their home is the design tokens (js/ui/lib/tokens/tokens.js, `color.type.<type>.<tone>`); util.js reads them from there and the HUD kit reads util.js.
   - Type-coloured text drawn over the map (the horde countdown, the dev console log) uses Light; Base is too dark there for Ghost, Dark and Ground (Jess, 2026-11-11).
 
 | Type     | Light     | Base      | Dark      |

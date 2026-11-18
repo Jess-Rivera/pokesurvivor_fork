@@ -3,6 +3,7 @@
   // If a file fails to load (a mobile connection that drops), it is better
   // to warn than to boot halfway.
   const NEED = [
+    'Tokens',
     'U',
     'Stats',
     'Log',

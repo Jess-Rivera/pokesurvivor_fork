@@ -1,4 +1,5 @@
-// tools/smoke-ui-library.js: headless check for the UI Library dev page (tools/ui-library.html, #147). A check, not a harness:
+// tools/smoke-ui-library.js: headless check for the UI Library pages: the old page (tools/ui-library.html, #147) and, since
+// #155, the board (tools/library.html; its relations are listed above checkBoard). A check, not a harness:
 // check.js syntax-checks it. Playwright is NOT a repo dependency (PLAYWRIGHT_DIR, default C:\Users\boric\tools\playwright).
 // Usage from the repo root: node tools/smoke-ui-library.js
 // Relations checked (docs/TEST-FIRST.md): every colour docs/HUD-STYLE.md "Colour palette" and docs/UI-PALETTES.md list is shown on
@@ -32,6 +33,151 @@ const paletteStart = hudStyle.indexOf('\n## Colour palette');
 const paletteEnd = hudStyle.indexOf('\n## Shapes', paletteStart);
 const hudStyleColours = hexesIn(hudStyle.slice(paletteStart, paletteEnd));
 const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PALETTES.md'), 'utf8'));
+
+// ---------- the board, tools/library.html (#155) ----------
+// Relations (opening: docs/ASCII Concept Maps/UI Library v2 - Slice Opening.md): it loads from file:// with no errors and
+// none of the game's scripts; every token in tokens.js shows with its name; every HUD-STYLE and UI-PALETTES colour shows
+// (read from the docs, not from the board's copy); every font face loads, and the game's CSS loads the same font files
+// under the same families; no library CSS writes a raw colour instead of a token; every sidebar entry of Jess's mockup is
+// there and opens a page.
+const vm = require('vm');
+function loadTokens() {
+  const sandbox = { console };
+  sandbox.window = sandbox;
+  vm.createContext(sandbox);
+  const file = path.join(root, 'js', 'ui', 'lib', 'tokens', 'tokens.js');
+  vm.runInContext(fs.readFileSync(file, 'utf8'), sandbox, { filename: 'tokens.js' });
+  return sandbox.G.Tokens;
+}
+const filesUnder = (dir, test, out = []) => {
+  if (!fs.existsSync(dir)) return out;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) filesUnder(full, test, out);
+    else if (test(entry.name)) out.push(full);
+  }
+  return out;
+};
+/** Every @font-face in the game's CSS as "family|assets/fonts/file". */
+function gameFontFaces() {
+  const faces = new Set();
+  for (const file of filesUnder(path.join(root, 'css'), (name) => name.endsWith('.css')))
+    for (const [block] of fs.readFileSync(file, 'utf8').matchAll(/@font-face\s*\{[^}]*\}/g)) {
+      const family = (block.match(/font-family:\s*'([^']+)'/) || [])[1],
+        source = (block.match(/url\('\.\.\/([^']+)'\)/) || [])[1];
+      faces.add(family + '|' + source);
+    }
+  return faces;
+}
+
+async function checkBoard(browser) {
+  console.log('\n-- the board: tools/library.html --');
+  const tokens = loadTokens();
+  const boardFile = path.join(root, 'tools', 'library.html');
+  const boardScripts = [...fs.readFileSync(boardFile, 'utf8').matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]);
+  const notLibrary = boardScripts.filter((src) => !/^(\.\.\/js\/ui\/lib\/|\.\.\/js\/vendor\/|library\/)/.test(src));
+  ok(
+    boardScripts.length > 0 && notLibrary.length === 0,
+    `the board loads only library files (${boardScripts.length} scripts)` +
+      (notLibrary.length ? ', game scripts: ' + notLibrary.join(' ') : '')
+  );
+
+  const tokenFaces = new Set(tokens.fonts.map((font) => font.family + '|' + font.file));
+  const cssFaces = gameFontFaces();
+  const notInTokens = [...cssFaces].filter((face) => !tokenFaces.has(face)),
+    notInCss = [...tokenFaces].filter((face) => !cssFaces.has(face));
+  ok(
+    notInTokens.length === 0 && notInCss.length === 0,
+    `the game's CSS and the font tokens declare the same ${tokenFaces.size} faces` +
+      (notInTokens.length ? '; CSS only: ' + notInTokens.join(' ') : '') +
+      (notInCss.length ? '; tokens only: ' + notInCss.join(' ') : '')
+  );
+
+  const libraryCss = filesUnder(path.join(root, 'js', 'ui', 'lib'), (name) => name.endsWith('.css'));
+  const rawColours = libraryCss.filter((file) =>
+    /#[0-9a-f]{3,8}\b|\brgba?\(|\bhsla?\(/i.test(fs.readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''))
+  );
+  ok(
+    rawColours.length === 0,
+    `no library CSS writes a raw colour (${libraryCss.length} files)` +
+      (rawColours.length ? ': ' + rawColours.map((file) => path.relative(root, file)).join(' ') : '')
+  );
+
+  const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (error) => errors.push('pageerror: ' + error.message));
+  page.on('requestfailed', (request) => errors.push('requestfailed: ' + request.url()));
+  await page.goto(url.pathToFileURL(boardFile).href, { waitUntil: 'load' });
+  const fonts = await page.evaluate(() => window.libFontsReady);
+  const board = await page.evaluate(() => {
+    const texts = {};
+    for (const id of window.libPages) texts[id] = window.libShow(id);
+    for (const tab of window.libColourTabs) texts['tokens/colours:' + tab] = window.libShow('tokens/colours', tab);
+    return { texts, sidebar: document.getElementById('sidebar').innerText, stored: localStorage.length };
+  });
+  ok(errors.length === 0, 'the board loads with no errors' + (errors.length ? ': ' + errors.join('; ') : ''));
+
+  const MOCKUP_ENTRIES = [
+    'Tokens',
+    'Colours',
+    'Fonts',
+    'z-index layers',
+    'Primitives',
+    'Buttons',
+    'Panels',
+    'Bars',
+    'Modal',
+    'Composites',
+    'HUD',
+    'Menus',
+    'main.shop.pokeball',
+    'Basic Editor',
+  ];
+  const missingEntries = MOCKUP_ENTRIES.filter((entry) => !board.sidebar.includes(entry));
+  ok(
+    missingEntries.length === 0,
+    'the sidebar holds every entry of the mockup' +
+      (missingEntries.length ? ', missing ' + missingEntries.join(', ') : '')
+  );
+  const blank = Object.entries(board.texts)
+    .filter(([, text]) => text.trim().length < 20)
+    .map(([id]) => id);
+  ok(
+    blank.length === 0,
+    `every sidebar entry opens a page (${Object.keys(board.texts).length})` +
+      (blank.length ? ', blank: ' + blank.join(' ') : '')
+  );
+
+  const allText = Object.values(board.texts).join('\n');
+  const colourTokens = tokens.palettes.flatMap((palette) => palette.colours);
+  const unshown = [
+    ...colourTokens.filter((token) => !allText.includes(token.name) || !allText.includes(token.hex)).map((t) => t.name),
+    ...tokens.fonts.filter((font) => !allText.includes(font.name)).map((font) => font.name),
+    ...tokens.layers.filter((layer) => !allText.includes(layer.name)).map((layer) => layer.name),
+  ];
+  ok(
+    unshown.length === 0,
+    `every token shows with its name (${colourTokens.length} colours, ${tokens.fonts.length} fonts, ` +
+      `${tokens.layers.length} layers)` +
+      (unshown.length ? ', missing ' + unshown.join(' ') : '')
+  );
+
+  const shownHexes = hexesIn(allText);
+  const missingDoc = [...hudStyleColours, ...referenceColours].filter((hex) => !shownHexes.has(hex));
+  ok(
+    missingDoc.length === 0,
+    `every HUD-STYLE (${hudStyleColours.size}) and UI-PALETTES (${referenceColours.size}) colour shows` +
+      (missingDoc.length ? ', missing ' + [...new Set(missingDoc)].join(' ') : '')
+  );
+  const unloaded = fonts.filter(([, loaded]) => !loaded).map(([family]) => family);
+  ok(
+    fonts.length === tokens.fonts.length && unloaded.length === 0,
+    `all ${fonts.length} font faces load on the board` + (unloaded.length ? ', failed ' + unloaded.join(' ') : '')
+  );
+  ok(board.stored === 0, `the board writes nothing to localStorage (${board.stored} keys)`);
+  await context.close();
+}
 
 (async () => {
   ok(paletteStart > 0 && paletteEnd > paletteStart, 'HUD-STYLE has a "Colour palette" section before "Shapes"');
@@ -249,6 +395,8 @@ const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PAL
     unreadVars === 0,
     'every screen variable reads a value from the game CSS' + (unreadVars ? ` (${unreadVars} not found)` : '')
   );
+
+  await checkBoard(browser);
 
   await browser.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');

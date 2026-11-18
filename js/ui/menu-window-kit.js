@@ -50,7 +50,11 @@ G.MenuWindowKit = (() => {
   CARD.buttonWidth = CARD.buttonArtWidth * BUTTON.artPixel; // 174
   // room inside a scroll box for the cursor's corners, which sit 4 px outside an item (Jess 2026-11-17)
   const CURSOR_ROOM = 6;
-  const SCROLL_COLOURS = { track: '#303030', thumb: '#29ceff', thumbRim: '#29ceff' }; // the mockups' teal bar
+  const SCROLL_COLOURS = {
+    track: G.Tokens.color('color.scroll.track'),
+    thumb: G.Tokens.color('color.scroll.thumb'), // the mockups' teal bar
+    thumbRim: G.Tokens.color('color.scroll.thumbRim'),
+  };
 
   // the cursor moves with the arrows and with the movement keys (Jess 2026-11-17), as bound in Settings (WASD by default)
   const MOVE_ACTIONS = [

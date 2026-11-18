@@ -1,0 +1,324 @@
+<!doctype html>
+<!-- PokeSwarm UI Library: the board (dev tool, never ships; #155, Jess's mockup assets/excalidraw/pokeswarm-library-html.excalidraw).
+     The shared language between Jess and the assistant: every token and piece by name. It loads only the library's own files
+     (js/ui/lib/) and its data (tools/library/), never the game's scripts, and draws pieces with placeholder data.
+     Open it by double-click (file://). Checked by tools/smoke-ui-library.js. Plan: docs/ASCII Concept Maps/155 - UI Library v2 Build Plan.md.
+     Pages are linked by the address hash (#tokens/colours), so a page can be bookmarked or sent. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PokeSwarm UI Library</title>
+<style>
+  /* The board's own chrome: neutral greys, so the game's colours read true. */
+  :root { --lib-bg: #15171c; --lib-panel: #1e2128; --lib-line: #2e323b; --lib-text: #e4e6eb; --lib-dim: #8b919c;
+    --lib-accent: #6ea4ff; --lib-sidebar: 250px; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--lib-bg); color: var(--lib-text); font: 14px/1.45 system-ui, sans-serif; display: flex;
+    flex-direction: column; }
+  header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--lib-line); }
+  header h1 { font-size: 18px; margin: 0; }
+  header .lib-crumb { color: var(--lib-dim); font-size: 13px; }
+  button { font: inherit; color: inherit; }
+  .lib-body { flex: 1; display: flex; min-height: 0; }
+
+  /* ---------- sidebar ---------- */
+  nav#sidebar { width: var(--lib-sidebar); flex: none; border-right: 1px solid var(--lib-line); overflow-y: auto;
+    padding: 10px 8px 24px; }
+  body.sidebar-closed nav#sidebar { display: none; }
+  #toggle-sidebar { background: none; border: 1px solid var(--lib-line); border-radius: 4px; padding: 2px 8px;
+    cursor: pointer; color: var(--lib-dim); }
+  #toggle-sidebar:hover { color: var(--lib-text); }
+  .nav-group > summary { list-style: none; cursor: pointer; font-weight: 600; padding: 6px 8px; border: 1px solid var(--lib-line);
+    border-radius: 6px; margin: 8px 0 4px; display: flex; justify-content: space-between; }
+  .nav-group > summary::-webkit-details-marker { display: none; }
+  .nav-group > summary::after { content: '+'; color: var(--lib-dim); }
+  .nav-group[open] > summary::after { content: '\2212'; }
+  .nav-group .nav-group { margin-left: 12px; }
+  .nav-group .nav-group > summary { font-weight: 500; margin: 4px 0; }
+  .nav-item { display: block; width: calc(100% - 12px); margin: 3px 0 3px 12px; text-align: left; background: none;
+    border: 1px solid var(--lib-line); border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+  .nav-item:hover { border-color: var(--lib-accent); }
+  .nav-item[aria-current="page"] { background: var(--lib-panel); border-color: var(--lib-accent); }
+  .nav-item.is-later { color: var(--lib-dim); }
+  .nav-item.is-top { margin-left: 0; width: 100%; font-weight: 600; padding: 6px 8px; border-radius: 6px; margin-top: 8px; }
+
+  /* ---------- main area ---------- */
+  main { flex: 1; overflow-y: auto; padding: 16px 24px 48px; min-width: 0; }
+  main h2 { margin: 0 0 4px; font-size: 20px; }
+  main h3 { margin: 22px 0 4px; font-size: 16px; }
+  .lib-note { color: var(--lib-dim); margin: 0 0 10px; max-width: 900px; }
+  .lib-tabs { display: flex; gap: 4px; margin: 12px 0; }
+  .lib-tabs button { background: transparent; border: 1px solid var(--lib-line); border-radius: 4px; padding: 4px 12px;
+    cursor: pointer; color: var(--lib-dim); }
+  .lib-tabs button[aria-selected="true"] { color: var(--lib-text); background: var(--lib-panel); border-color: var(--lib-accent); }
+  .lib-later { border: 1px dashed var(--lib-line); border-radius: 8px; padding: 24px; color: var(--lib-dim); max-width: 700px; }
+
+  /* a token's name: click copies it */
+  .lib-name { font: 12px ui-monospace, monospace; color: var(--lib-accent); background: none; border: none; padding: 0;
+    cursor: copy; text-align: left; word-break: break-all; }
+  .lib-name:hover { text-decoration: underline; }
+  .lib-mono { font: 12px ui-monospace, monospace; }
+  .lib-dim { color: var(--lib-dim); }
+
+  /* colours */
+  .lib-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+  .lib-swatch { display: flex; gap: 8px; background: var(--lib-panel); border: 1px solid var(--lib-line); border-radius: 6px;
+    padding: 6px; }
+  .lib-chip { width: 44px; height: 44px; flex: none; border-radius: 4px; border: 1px solid #0006; }
+  .lib-swatch-text { min-width: 0; display: flex; flex-direction: column; gap: 1px; font-size: 12px; }
+  .lib-doc-row { display: grid; grid-template-columns: 28px 80px 1fr; gap: 8px; align-items: center; padding: 3px 0;
+    border-bottom: 1px solid var(--lib-line); font-size: 12px; }
+  .lib-doc-row .lib-chip { width: 24px; height: 24px; }
+  .lib-doc-tokens { grid-column: 3; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* fonts */
+  .lib-font { background: var(--lib-panel); border: 1px solid var(--lib-line); border-radius: 6px; padding: 10px 12px;
+    margin: 0 0 10px; }
+  .lib-font-sample { color: #fff; margin: 6px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    background: #0c0d10; padding: 4px 8px; border-radius: 4px; }
+  .lib-fail { color: #ff7b7b; }
+
+  /* layers */
+  .lib-layers { display: flex; flex-direction: column-reverse; gap: 4px; max-width: 900px; }
+  .lib-layer { display: grid; grid-template-columns: 60px 200px 1fr; gap: 10px; align-items: baseline;
+    background: var(--lib-panel); border: 1px solid var(--lib-line); border-left: 4px solid var(--lib-accent);
+    border-radius: 4px; padding: 6px 10px; }
+  .lib-layer b { font: 600 14px ui-monospace, monospace; }
+
+  #copied { position: fixed; bottom: 16px; right: 16px; background: var(--lib-panel); border: 1px solid var(--lib-accent);
+    border-radius: 6px; padding: 6px 12px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  #copied.shown { opacity: 1; }
+</style>
+<script src="../js/ui/lib/tokens/tokens.js"></script>
+<script src="library/doc-colours.js"></script>
+</head>
+<body>
+<header>
+  <button id="toggle-sidebar" type="button" title="Show or hide the sidebar">&larr;</button>
+  <h1>PokeSwarm UI Library</h1>
+  <span class="lib-crumb" id="crumb"></span>
+</header>
+<div class="lib-body">
+  <nav id="sidebar"></nav>
+  <main id="main"></main>
+</div>
+<div id="copied"></div>
+
+<script>
+'use strict';
+const ROOT = '../'; // the repo root, from tools/
+const $ = (id) => document.getElementById(id);
+const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const nameButton = (name) => `<button type="button" class="lib-name" data-copy="${esc(name)}">${esc(name)}</button>`;
+
+// ---------- the sidebar (Jess's mockup) ----------
+// later: the step or slice that builds the page; a later page shows that instead of content.
+const NAV = [
+  { title: 'Tokens', items: [
+    { id: 'tokens/colours', title: 'Colours' },
+    { id: 'tokens/fonts', title: 'Fonts' },
+    { id: 'tokens/layers', title: 'z-index layers' },
+  ] },
+  { title: 'Primitives', items: [
+    { id: 'primitives/buttons', title: 'Buttons', later: '#155 step 155b' },
+    { id: 'primitives/panels', title: 'Panels', later: '#155 step 155c' },
+    { id: 'primitives/bars', title: 'Bars', later: 'a later slice under #126' },
+    { id: 'primitives/modal', title: 'Modal', later: 'a later slice under #126' },
+  ] },
+  { title: 'Composites', groups: [
+    { title: 'HUD', items: [
+      { id: 'run.hud.healthBar', title: 'run.hud.healthBar', later: 'a later slice under #126' },
+      { id: 'run.hud.portrait', title: 'run.hud.portrait', later: 'a later slice under #126' },
+      { id: 'run.hud.teamSlot', title: 'run.hud.teamSlot', later: 'a later slice under #126' },
+    ] },
+    { title: 'Menus', items: [
+      { id: 'main.shop.pokeball', title: 'main.shop.pokeball', later: '#155 step 155d' },
+      { id: 'main.shop.character', title: 'main.shop.character', later: 'a later slice under #126' },
+    ] },
+  ] },
+];
+const EDITOR = { id: 'editor', title: 'Basic Editor', later: 'its own slice, after #155' };
+const pages = new Map();
+const addPages = (items) => items.forEach((item) => pages.set(item.id, item));
+NAV.forEach((group) => {
+  if (group.items) addPages(group.items);
+  (group.groups || []).forEach((sub) => addPages(sub.items));
+});
+pages.set(EDITOR.id, EDITOR);
+
+const navItem = (item, extra = '') =>
+  `<button type="button" class="nav-item${item.later ? ' is-later' : ''}${extra}" data-page="${esc(item.id)}">${esc(item.title)}</button>`;
+const navGroup = (group) => `<details class="nav-group" open><summary>${esc(group.title)}</summary>
+  ${(group.items || []).map((item) => navItem(item)).join('')}
+  ${(group.groups || []).map(navGroup).join('')}</details>`;
+$('sidebar').innerHTML = NAV.map(navGroup).join('') + navItem(EDITOR, ' is-top');
+
+// ---------- copy a name ----------
+function copyName(name) {
+  const done = () => {
+    const note = $('copied');
+    note.textContent = 'Copied ' + name;
+    note.classList.add('shown');
+    clearTimeout(copyName.timer);
+    copyName.timer = setTimeout(() => note.classList.remove('shown'), 1200);
+  };
+  const fallback = () => {
+    const field = document.createElement('textarea');
+    field.value = name;
+    document.body.appendChild(field);
+    field.select();
+    try { document.execCommand('copy'); } catch (error) { /* the toast still names it */ }
+    field.remove();
+    done();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(name).then(done, fallback);
+  else fallback();
+}
+
+// ---------- pages ----------
+const tokenHexes = new Map(); // hex -> colour token names, for the Style docs tab
+for (const palette of G.Tokens.palettes)
+  for (const token of palette.colours) {
+    const hex = token.hex.toLowerCase();
+    if (!tokenHexes.has(hex)) tokenHexes.set(hex, []);
+    tokenHexes.get(hex).push(token.name);
+  }
+
+function gamePalettes() {
+  return G.Tokens.palettes.map((palette) => `
+    <h3>${esc(palette.title)} <span class="lib-dim lib-mono">color.${esc(palette.id)}.*</span></h3>
+    <p class="lib-note">${esc(palette.job)}. <span class="lib-dim">Source: ${esc(palette.source)}</span></p>
+    <div class="lib-swatches">${palette.colours.map((token) => `
+      <div class="lib-swatch" data-token="${esc(token.name)}">
+        <div class="lib-chip" style="background:${esc(token.hex)}"></div>
+        <div class="lib-swatch-text">${nameButton(token.name)}
+          <span class="lib-mono">${esc(token.hex)}${token.value !== token.hex ? ' <span class="lib-dim">= ' + esc(token.value) + '</span>' : ''}</span>
+          <span class="lib-dim">${esc(token.job)}</span></div>
+      </div>`).join('')}</div>`).join('');
+}
+
+function docColours() {
+  const docs = [...new Set(LIBRARY_DOC_COLOURS.map((entry) => entry.doc))];
+  return docs.map((doc) => {
+    const entries = LIBRARY_DOC_COLOURS.filter((entry) => entry.doc === doc);
+    const sections = [...new Set(entries.map((entry) => entry.section))];
+    return `<h3>${esc(doc)}</h3>` + sections.map((section) => `
+      <h4 class="lib-dim">${esc(section)}</h4>
+      ${entries.filter((entry) => entry.section === section).map((entry) => `
+        <div class="lib-doc-row"><div class="lib-chip" style="background:${esc(entry.hex)}"></div>
+          <span class="lib-mono">${esc(entry.hex)}</span><span>${esc(entry.line)}</span>
+          ${tokenHexes.has(entry.hex) ? `<div class="lib-doc-tokens"><span class="lib-dim">token:</span>${tokenHexes.get(entry.hex).map(nameButton).join('')}</div>` : ''}
+        </div>`).join('')}`).join('');
+  }).join('');
+}
+
+const COLOUR_TABS = [
+  { id: 'game', title: 'Game palettes', draw: gamePalettes,
+    note: 'Every token palette the game reads (js/ui/lib/tokens/tokens.js). A value written as another token’s name always shows that token’s colour.' },
+  { id: 'docs', title: 'Style docs', draw: docColours,
+    note: 'Every colour in docs/HUD-STYLE.md "Colour palette" and docs/UI-PALETTES.md, with the line it is on. Colours that are already tokens show the token’s name.' },
+];
+function coloursPage(tab) {
+  const shown = COLOUR_TABS.find((entry) => entry.id === tab) || COLOUR_TABS[0];
+  return `<h2>Colours</h2>
+    <div class="lib-tabs" role="tablist">${COLOUR_TABS.map((entry) =>
+      `<button type="button" role="tab" data-tab="${entry.id}" aria-selected="${entry === shown}">${esc(entry.title)}</button>`).join('')}</div>
+    <p class="lib-note">${esc(shown.note)}</p>${shown.draw()}`;
+}
+
+const SAMPLE_TEXT = 'Pikachu used Thunderbolt! Lv 42 HP 87/120 0123456789';
+function fontsPage() {
+  return `<h2>Fonts</h2>
+    <p class="lib-note">Every face the game uses, with the sizes it is crisp at (HUD-STYLE "Fonts": whole multiples of the font's pixel grid only).</p>
+    ${G.Tokens.fonts.map((font) => {
+      const sizes = font.sizes.length ? font.sizes : [20, 32];
+      return `<div class="lib-font" data-font="${esc(font.family)}">
+        ${nameButton(font.name)} <span class="lib-mono">'${esc(font.family)}'</span>
+        <span class="lib-dim lib-mono">${esc(font.file)}</span> <span class="lib-font-status"></span>
+        <div>${esc(font.job)}</div>
+        <div class="lib-dim">Crisp sizes: ${font.sizes.length ? font.sizes.map((size) => size + ' px').join(', ') : 'any (smooth face)'}</div>
+        ${sizes.map((size) => `<p class="lib-font-sample" style="font-family:'${esc(font.family)}';font-size:${size}px">${size} px: ${esc(SAMPLE_TEXT)}</p>`).join('')}
+      </div>`;
+    }).join('')}`;
+}
+
+function layersPage() {
+  return `<h2>z-index layers</h2>
+    <p class="lib-note">The page-level stack, top of the list on top. Pieces inside one panel stack with small local numbers (0 to 5) and are not layers.
+      Today the CSS writes these numbers; it switches to the names in a later slice. Nothing but the tooltip layer may reach 1000.</p>
+    <div class="lib-layers">${G.Tokens.layers.map((layer) => `
+      <div class="lib-layer" data-token="${esc(layer.name)}"><b>${layer.value}</b>${nameButton(layer.name)}
+        <span>${esc(layer.job)} <span class="lib-dim lib-mono">${esc(layer.usedBy)}</span></span></div>`).join('')}</div>`;
+}
+
+function laterPage(item) {
+  return `<h2>${esc(item.title)}</h2><div class="lib-later">Not on the board yet: built in ${esc(item.later)}.</div>`;
+}
+
+const DRAW = { 'tokens/colours': coloursPage, 'tokens/fonts': fontsPage, 'tokens/layers': layersPage };
+
+/** Shows a page (and, on Colours, a tab). The address hash follows, so the page can be bookmarked. */
+function show(id, tab) {
+  const item = pages.get(id) || pages.get('tokens/colours');
+  const draw = DRAW[item.id];
+  $('main').innerHTML = draw && !item.later ? draw(tab) : laterPage(item);
+  $('main').dataset.page = item.id;
+  $('crumb').textContent = item.id;
+  document.querySelectorAll('.nav-item').forEach((button) =>
+    button.toggleAttribute('aria-current', button.dataset.page === item.id));
+  const hash = '#' + item.id + (tab ? ':' + tab : '');
+  if (location.hash !== hash) history.replaceState(null, '', hash);
+  if (item.id === 'tokens/fonts') markFonts();
+}
+
+// ---------- fonts: declared from the tokens, as the game's CSS declares them ----------
+const kebab = (key) => key.replace(/[A-Z]/g, (letter) => '-' + letter.toLowerCase());
+const faceStyle = document.createElement('style');
+faceStyle.textContent = G.Tokens.fonts.map((font) => `@font-face { font-family: '${font.family}'; src: url('${ROOT + font.file}') format('truetype');
+  font-display: block;${Object.entries(font.faceRules || {}).map(([key, value]) => ` ${kebab(key)}: ${value};`).join('')} }`).join('\n');
+document.head.appendChild(faceStyle);
+const fontResults = new Map();
+window.libFontsReady = Promise.all(G.Tokens.fonts.map((font) =>
+  document.fonts.load(`${font.sizes[0] || 20}px '${font.family}'`).then((faces) => faces.length > 0, () => false)
+    .then((loaded) => { fontResults.set(font.family, loaded); markFonts(); return [font.family, loaded]; })));
+function markFonts() {
+  for (const [family, loaded] of fontResults) {
+    const status = document.querySelector(`[data-font="${family}"] .lib-font-status`);
+    if (!status) continue;
+    status.textContent = loaded ? '' : 'did not load';
+    status.className = 'lib-font-status' + (loaded ? '' : ' lib-fail');
+  }
+}
+
+// ---------- wiring ----------
+document.addEventListener('click', (event) => {
+  const copy = event.target.closest('[data-copy]');
+  if (copy) return copyName(copy.dataset.copy);
+  const nav = event.target.closest('[data-page]');
+  if (nav) return show(nav.dataset.page);
+  const tab = event.target.closest('[data-tab]');
+  if (tab) return show($('main').dataset.page, tab.dataset.tab);
+});
+// The board writes nothing to localStorage: file:// pages share it with the game's save.
+function setSidebar(open) {
+  document.body.classList.toggle('sidebar-closed', !open);
+  $('toggle-sidebar').innerHTML = open ? '&larr;' : '&rarr;';
+}
+$('toggle-sidebar').addEventListener('click', () => setSidebar(document.body.classList.contains('sidebar-closed')));
+
+const fromHash = () => {
+  const [id, tab] = decodeURIComponent(location.hash.slice(1)).split(':');
+  show(id || 'tokens/colours', tab);
+};
+addEventListener('hashchange', fromHash);
+fromHash();
+
+// for tools/smoke-ui-library.js
+window.libPages = [...pages.keys()];
+window.libColourTabs = COLOUR_TABS.map((tab) => tab.id);
+window.libShow = (id, tab) => { show(id, tab); return $('main').innerText; };
+</script>
+</body>
+</html>

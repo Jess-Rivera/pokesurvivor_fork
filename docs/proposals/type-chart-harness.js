@@ -144,7 +144,7 @@ global.G = new Proxy(base, {
   },
 });
 for (const p of [
-  'js/core/util.js',
+  'js/ui/lib/tokens/tokens.js', 'js/core/util.js',
   'js/core/stats.js',
   'js/data/enemies.js',
   'js/data/types.js',

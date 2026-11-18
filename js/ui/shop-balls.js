@@ -57,10 +57,10 @@ G.ShopBallsPane = (() => {
   const SELL = { artWidth: 62, gap: 8 };
   SELL.left = PANE_WIDTH - SELL.artWidth * BUTTON.artPixel; // 819
   SELL.top = EXIT_PLACE.top - SELL.gap - BUTTON.height; // 500, 8 px under the belts' bottom (492)
-  const SELL_RIM = { light: '#ff8a90', base: '#e8202a', dark: '#7c1016' };
+  const SELL_RIM = G.Tokens.ramp('color.rim.sell');
   const SHIFT_BUY_COUNT = 10; // balls one Shift press buys (B6)
   // the Poke Balls pocket colours (docs/UI-PALETTES.md "Bag"), the catch screen's bought belt
-  const BELT_RIM = { light: '#DBB26E', base: '#C88820', dark: '#825815' };
+  const BELT_RIM = G.Tokens.ramp('color.rim.belt');
   // what a button that cannot buy says when pressed (#151); "Unable to Afford" is the Shop's other tabs' line
   const REFUSALS = {
     soon: 'Coming soon.',

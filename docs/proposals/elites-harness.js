@@ -11,7 +11,7 @@ global.window = global; global.location = { search: '?dev' };
 const base = { U: null, Sprites: { Animator: class { update() { } loop() { } play() { } busy() { return false; } }, bodyRadius: () => 10, bodyHeight: () => 20, hovers: () => false, preload() { }, animMeta: () => ({ ay: 40 }), PX: 2, dirFromAngle: () => 0 },
   Camera: { sees: () => false, outerRadius: () => 400, kick() { } }, Game: { player: { x: 0, y: 0 }, everyone: () => [{ level: 5 }] } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-['js/core/util.js'].forEach(p => { try { load(p); } catch (e) { } });
+['js/ui/lib/tokens/tokens.js', 'js/core/util.js'].forEach(p => { try { load(p); } catch (e) { } });
 if (!G.U || !G.U.clamp) { console.log('util failed'); process.exit(1); }
 ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/systems/elites.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });

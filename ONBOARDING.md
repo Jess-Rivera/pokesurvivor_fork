@@ -94,7 +94,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 ## 5. Module map
 
 ### `js/core/` (engine services)
-- `util.js` creates `G`, shared helpers. `stats.js` (`G.Stats`) the shared combat-stat formulas (HP, attack factor, damage).
+- `util.js` creates `G` (so does `js/ui/lib/tokens/tokens.js`, which loads first: the UI library's design tokens, `G.Tokens`, #155; util.js reads the type colours from it), shared helpers. `stats.js` (`G.Stats`) the shared combat-stat formulas (HP, attack factor, damage).
 - `simbus.js` (`G.SimBus`) the sim-to-presentation event bus (docs/SIM-PRESENT-BOUNDARY.md). `debug.js` (`G.Debug`) dev tools behind `?dev` (plus `debug-run-screens.js`, `debug-leader.js`, `debug-leader-trace.js` and `debug-run-trace.js` (#124, the run pace trace: `G.Debug.runTrace()`), which add their commands onto `G.Debug`; F6, 2026-11-14), including `G.Debug.newcombat(set)` (move test scenes; the name outlived the removed flag).
 - `db.js` the save layer (localStorage, salted SHA-256 passwords; also the merge logic). A save's Pokemon copies (`save.box`) are read only through `js/systems/copies.js` (G.Copies), rolled from the generated `js/data/species-traits.js` (`tools/species_traits.js`). The game font is the face GameFont in `css/style.css`, a trimmed Silver (`tools/subset_silver.py`).
 - `audio.js` Web Audio synthesizer + sound effects (scores live in `js/data/music.js`).

@@ -31,7 +31,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   Icons: { html: () => '' }, Ranking: { periodIds: () => ({ d: 'd-2026-10-31', w: 'w-2026-44' }) },
   Social: { me: null, profileData: () => ({ name: 'Tester', best: {}, medals: [] }) }, DB: { save: null, online: false, commit() { } } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-try { load('js/core/util.js'); } catch (e) { }
+try { load('js/ui/lib/tokens/tokens.js'); load('js/core/util.js'); } catch (e) { }
 if (!G.U || !G.U.TYPE_NAME) { console.log('util did not load'); process.exit(1); }
 ['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/enemy-classes.js',
  'js/data/enemies.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js',

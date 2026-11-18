@@ -19,34 +19,38 @@ G.HudKit = (() => {
   const html = htmFactory.bind(preact.h),
     { signal } = preactSignals;
 
-  // ---------- palette (HUD-STYLE "Colour palette"; every colour here has its job named there) ----------
-  const PALETTE = {
-    outline: '#101010', // text outline, shape outlines
-    body: '#181818', // panel body
-    frame: '#212121',
-    checker: '#303030',
-    slate: '#495151', // dividers, empty slots
-    trackShade: '#464646', // empty track (dark bar)
-    trackLight: '#7f7f7f',
-    typeBodyDark: '#292929', // the B2 type checker body
-    typeBodyLight: '#393939',
-    expFill: '#00baf3',
-    expShade: '#00799a',
-    lvFill: '#f3b200',
-    lvShade: '#9a6110',
-    lvDark: '#6d5000', // the Lv yellow at 45% (HUD-STYLE "Ramps for new colours"): the run item box's corner shade
-    cursor: '#fff000', // Title yellow: the B2 selection cursor
-    trackEdge: '#313131', // the roster HP track's frame (b2-lower Y16 to Z16)
-    paperEdge: '#848484', // the run item icon patch's edge (b2-lower AD4 to AG5)
-    paper: '#e7e7e7', // the run item icon patch
-  };
+  // ---------- palette (HUD-STYLE "Colour palette"): the design tokens color.hud.* (js/ui/lib/tokens/tokens.js), where
+  // each colour has its job ----------
+  const PALETTE = {};
+  for (const key of [
+    'outline',
+    'body',
+    'frame',
+    'checker',
+    'slate',
+    'trackShade',
+    'trackLight',
+    'typeBodyDark',
+    'typeBodyLight',
+    'expFill',
+    'expShade',
+    'lvFill',
+    'lvShade',
+    'lvDark',
+    'cursor',
+    'trackEdge',
+    'paperEdge',
+    'paper',
+  ])
+    PALETTE[key] = G.Tokens.color('color.hud.' + key);
   // A fainted roster row's rim: the greys of the panel, as a type ramp (HUD-STYLE "Roster rows").
-  const FAINTED_RIM = { light: PALETTE.trackLight, base: PALETTE.slate, dark: PALETTE.checker };
-  const HP_COLOURS = {
-    high: { fill: '#00fb49', shade: '#008a28' },
-    middle: { fill: '#f3b200', shade: '#9a6110' },
-    low: { fill: '#fb3041', shade: '#922030' },
-  };
+  const FAINTED_RIM = G.Tokens.ramp('color.rim.fainted');
+  const HP_COLOURS = {};
+  for (const band of ['high', 'middle', 'low'])
+    HP_COLOURS[band] = {
+      fill: G.Tokens.color('color.hp.' + band + '.fill'),
+      shade: G.Tokens.color('color.hp.' + band + '.shade'),
+    };
   // Bulbapedia Scarlet/Violet type colours (HUD-STYLE "Type colours"), the game-wide table in G.U: Base for fills, Dark
   // for shades and outlines, Light for highlights.
   const TYPE_COLOURS = {};
@@ -126,8 +130,8 @@ G.HudKit = (() => {
   // ---------- the menu button: the move slot shape at 1.5x (pause menu #88, End Run #103) ----------
   const SLOT_BUTTON = { artWidth: 105, artRows: 22, artPixel: 3 }; // 315 x 66 px (Jess, 2026-11-11)
   // Rim ramps (HUD-STYLE "Pause menu"): white at rest, green on focus.
-  const REST_RIM = { light: '#ffffff', base: PALETTE.paper, dark: PALETTE.paperEdge },
-    FOCUS_RIM = { light: '#9be895', base: '#38d030', dark: '#1d6c19' };
+  const REST_RIM = G.Tokens.ramp('color.rim.rest'),
+    FOCUS_RIM = G.Tokens.ramp('color.rim.focus');
   // Menu buttons never take the page's keyboard focus (#89, the Enter bug from #88): a focused page button turns Enter
   // into a click on itself, so after one click Enter pressed that button instead of the green one.
   const keepPageFocus = (event) => event.preventDefault();

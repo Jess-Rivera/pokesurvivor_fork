@@ -63,7 +63,7 @@ const base = {
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 console.warn = (m) => warns.push(String(m));
 try {
-  load('js/core/util.js');
+  load('js/ui/lib/tokens/tokens.js'); load('js/core/util.js');
 } catch (e) {
   /* it reads the DOM at the end; G.U is set before that */
 }

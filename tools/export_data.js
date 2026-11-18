@@ -53,7 +53,7 @@ sandbox.window = sandbox;
 vm.createContext(sandbox);
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), sandbox, { filename: f });
 const EN = {};
-for (const f of ['js/core/util.js', 'js/core/i18n.js']) load(f);
+for (const f of ['js/ui/lib/tokens/tokens.js', 'js/core/util.js', 'js/core/i18n.js']) load(f);
 // Captures the English dictionary (Spanish key).
 const add = G.I18n.add;
 G.I18n.add = (d) => {
