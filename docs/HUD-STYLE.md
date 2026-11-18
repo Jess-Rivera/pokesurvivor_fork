@@ -87,6 +87,19 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
 
 ## Fonts
 
+- `[Approved]` **Font scheme: four faces, three tiers** (Jess, 2026-11-18, decision
+  2026-11-18-155-font-scheme-three-tiers). Code differs, see TODO (#126); the board shows it first (#155 155e).
+
+  | Tier | Face | Crisp sizes | Covers |
+  | --- | --- | --- | --- |
+  | Meta | Michroma (`HudModule`) | any (smooth) | Menus, menu buttons, toasts, titles, modules, Main Menu, Settings, upgrades, item tooltips |
+  | Pokemon | Silver, 10 font pixels per em, one digit width | 20, 30, 40 (canvas 5, 10, 15) | Names, Lv, HP, moves, stats, EVs, catch screen, roster, move and stat tooltips |
+  | World numbers | BoldPixels (`HudDigits`) | 16, 32, 48 (canvas 8, 16, 24) | Timer, kills, World Level, counters; damage canvas 8, crits canvas 16 |
+  | World words | monogram | 16, 32, 48 (to confirm on the board) | Weather, map labels, region names |
+
+  Retired: Truth And Ideals, PokeBW, the second Michroma family. `[Legacy behavior]` every face rule below this one
+  describes the live game until #126 applies the scheme.
+
 - `[Approved]` **Crisp sizes only.** Whole pixels only, at whole multiples of each font's pixel grid, so every font
   renders crisp.
 
@@ -116,7 +129,9 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
 - `[Approved]` **Which face for what** (Jess, 2026-11-13): the pixel text face (Truth And Ideals, `HudText`) is for what is
   directly on or about a Pokemon (names, stats, HP, moves, EVs, its panels). Michroma (`HudModule`) is the game's own UI
   face ("this is the game talking"): module panels, titles like EXPEDITION OVER, and messages such as toasts.
-  `[Open]` the menu buttons (pause menu, End Run, EV screen) are game UI but use `HudText` 30 px today; Jess to rule.
+  `[Approved]` the menu buttons (pause menu, End Run, EV screen) are game UI, so they use `HudModule` (Jess, 2026-11-18,
+  decision 2026-11-18-155-menu-buttons-use-michroma); size set at the #126 feel test. Code differs, see TODO.
+  `[Legacy behavior]` they draw in `HudText` 30 px today; #126 removes it.
 
 - `[Approved]` **Catch screen in Silver, on its pixel grid** (Jess, 2026-11-16, feel-tested; the first screen of #99): every text on
   the catch screen is GameFont (Silver-game). Silver-game.ttf draws 19 font pixels per em and GameFont enlarges it 140%,

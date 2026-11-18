@@ -136,6 +136,9 @@ the main game font since 2026-11-03. The game loads a version trimmed to fewer
 characters (`assets/fonts/Silver-game.ttf`, `tools/subset_silver.py`). Free for
 personal and commercial use with attribution. If this production's budget passes
 100,000 USD in total spend or earnings, contact hello@poppy.works to license it.
+A modified version, "Silver 10px" (`assets/fonts/Silver-10px.ttf`, `tools/make_silver_font.py`), puts the
+same glyphs on a 10-pixel em, sets whole-pixel line metrics and gives every digit one width (2026-11-18, the
+UI library board only until #126).
 
 [Monogram](https://menez.io/) by Vinicius Menezio (Creative Commons Zero v1.0
 Universal, as stated in the font file), the Settings screen labels.

@@ -45,6 +45,7 @@ const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PAL
 // tokens.js), a refused label is fainter, disabled cannot be pressed, dimmed and fainted are fainter or darker, the life
 // bar's fill shrinks by band and a cut leaves a piece, a timer's length follows its fraction, one dialog button is
 // green, a portrait is the size asked for and its image loads. The sidebar holds Portraits and the Pause group.
+// The Fonts page (155e): see checkFontsPage.
 const vm = require('vm');
 function loadTokens() {
   const sandbox = { console };
@@ -185,8 +186,95 @@ async function checkBoard(browser) {
     `all ${fonts.length} font faces load on the board` + (unloaded.length ? ', failed ' + unloaded.join(' ') : '')
   );
   ok(board.stored === 0, `the board writes nothing to localStorage (${board.stored} keys)`);
+  await checkFontsPage(page, tokens);
   await checkPrimitivePages(page, tokens);
   await context.close();
+}
+
+// ---------- the Fonts page (155e; decision 2026-11-18-155-font-scheme-three-tiers) ----------
+// Relations: the scheme's own faces load; every font file in assets/fonts and every file the game's CSS loads is on
+// Unified or Reference Not in Game; every face the game's CSS names in a rule has a Fold Map row; each Unified crisp
+// size is a whole multiple of its face's grid, and a sample drawn at whole pixels has no half-lit pixel; each counter
+// face draws every digit at one width.
+const FONT_FILE = /\.(ttf|otf|woff2?)$/i;
+/** Every face the game's CSS names first in a rule's font-family (var(--font) is GameFont), @font-face blocks aside. */
+function gameRuleFamilies() {
+  const families = new Set();
+  const cssFiles = [
+    ...filesUnder(path.join(root, 'css'), (name) => name.endsWith('.css')),
+    ...filesUnder(path.join(root, 'js', 'ui', 'lib'), (name) => name.endsWith('.css')),
+  ];
+  for (const file of cssFiles) {
+    const text = fs
+      .readFileSync(file, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/@font-face\s*\{[^}]*\}/g, '');
+    for (const [, list] of text.matchAll(/font-family:\s*([^;]+);/g)) {
+      const first = list.split(',')[0].trim().replace(/['"]/g, '');
+      if (first !== 'inherit') families.add(first === 'var(--font)' ? 'GameFont' : first);
+    }
+  }
+  return families;
+}
+
+async function checkFontsPage(page, tokens) {
+  const scheme = await page.evaluate(async () => ({
+    ...window.libFontScheme,
+    loaded: await window.libSchemeFontsReady,
+    checks: await window.libFontChecks(),
+  }));
+  const unloaded = scheme.loaded.filter(([, loaded]) => !loaded).map(([family]) => family);
+  ok(
+    unloaded.length === 0,
+    `the scheme's own ${scheme.loaded.length} faces load on the board` +
+      (unloaded.length ? ', failed ' + unloaded.join(', ') + ' (Silver 10px: python tools/make_silver_font.py)' : '')
+  );
+
+  const onBoard = new Set(scheme.files);
+  const fontFiles = fs
+    .readdirSync(path.join(root, 'assets', 'fonts'))
+    .filter((name) => FONT_FILE.test(name))
+    .map((name) => 'assets/fonts/' + name);
+  const cssFiles = [...gameFontFaces()].map((face) => face.split('|')[1]);
+  const offBoard = [...new Set([...fontFiles, ...cssFiles])].filter((file) => !onBoard.has(file));
+  ok(
+    offBoard.length === 0,
+    `every font file and every file the game's CSS loads is on Unified or Reference (${onBoard.size} on the board)` +
+      (offBoard.length ? ', missing ' + offBoard.join(' ') : '')
+  );
+
+  const tokenOfFamily = new Map(tokens.fonts.map((font) => [font.family, font.name]));
+  const foldedToday = new Set(scheme.folds.flatMap((fold) => fold.today));
+  const families = [...gameRuleFamilies()];
+  const unfolded = families.filter((family) => !foldedToday.has(tokenOfFamily.get(family)));
+  ok(
+    unfolded.length === 0,
+    `every face the game's CSS names (${families.length}) has a Fold Map row` +
+      (unfolded.length ? ', none for ' + unfolded.join(' ') : '')
+  );
+
+  const offGrid = scheme.tiers
+    .filter((tier) => tier.grid)
+    .flatMap((tier) => tier.sizes.filter((size) => size % tier.grid).map((size) => `${tier.family} ${size}`));
+  ok(
+    offGrid.length === 0,
+    'every Unified crisp size is a whole multiple of its grid' + (offGrid.length ? ', off: ' + offGrid.join(', ') : '')
+  );
+  const blurred = scheme.checks.crisp.filter((sample) => sample.lit === 0 || sample.half > 0);
+  ok(
+    blurred.length === 0,
+    `every Unified crisp sample draws with no half-lit pixel (${scheme.checks.crisp.length} samples)` +
+      (blurred.length
+        ? ': ' + blurred.map((sample) => `${sample.family} ${sample.size}px (${sample.half} half-lit)`).join(', ')
+        : '')
+  );
+  const twitchy = Object.entries(scheme.checks.digits)
+    .filter(([, widths]) => !widths || new Set(widths).size !== 1)
+    .map(([family, widths]) => family + (widths ? ' ' + [...new Set(widths)].join('/') : ' (not loaded)'));
+  ok(
+    twitchy.length === 0,
+    'each counter face draws every digit at one width' + (twitchy.length ? ': ' + twitchy.join(', ') : '')
+  );
 }
 
 // ---------- the primitive pages (decision 2026-11-18-155-primitive-states-vs-props) ----------
