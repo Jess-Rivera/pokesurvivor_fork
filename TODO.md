@@ -4,24 +4,29 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-18 work session (Quick)
-1. Nothing from 2026-11-18 is committed yet. On the work machine: `npm run format`, `node tools/check.js` and the
-   smokes in STATE.md, then the three commits drafted at that session's end, then
-   `git push origin feature/128-acquisition`.
+## Getting up to date (either machine), from the 2026-11-18 evening work session (Quick)
+1. On the work machine: the glitch draft and handoff commits drafted at that session's end, then
+   `git push origin feature/128-acquisition`. Silver-10px.ttf needs `python tools/make_silver_font.py` (fonttools)
+   if it is not in the tree.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
    `node tools/check.js` (must end "check: all passed"). Say "catch me up".
 3. Before leaving a machine: commit and push.
 
-## Next (queue set by Jess 2026-11-15, updated 2026-11-18; gym leader AI parked)
-0. #155 UI Library v2: 155b to 155c-6 built 2026-11-18 (untested in a browser). Then, in order:
-   - Feel tests per step (each plan in docs/ASCII Concept Maps/155b to 155c-6 lists its own).
+## Next (queue set by Jess 2026-11-15, updated 2026-11-18 evening; gym leader AI parked)
+0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
+   - Feel test Tokens, Fonts (155e plan lists it): Michroma's size set, the 9 inferred Fold Map rows, the move and
+     stat tooltip size (Silver 20 or 10).
+   - Buttons, Glitch Draft: Jess is designing a possible new button one state at a time (rest and focus built).
+     Next states, then whether it replaces button.slanted and button.rounded.
+   - Feel tests for 155b to 155c-6.
    - Jess lists the poor UX calls in the 155c-4 ask dialog (look and keys) so they can be filed.
    - Colours: name the 7 UI colours and the greys (placeholders on the board); rebuild the rims from Unified.
    - Rewrite smoke-ui-library for the new Colours page (it still expects the retired tabs and fails).
    - 155d main.shop.pokeball composite; the Pause composites (pause.pokemonDetail and the rest).
    - #156 rename the button CSS classes. Then #126 applies the Unified colours (docs/decisions/2026-11-18-155-unified-
      palette.md, its Fold Map tab). For #126: the roster HP bar becomes `bar.life` at the roster's size (drops
-     `color.hud.trackEdge`).
+     `color.hud.trackEdge`); #126 also applies the font scheme (docs/decisions/2026-11-18-155-font-scheme-three-
+     tiers.md, the Fonts Fold Map) and fixes tokens.js's backwards pokeBW and michroma job text.
 1. #145 small and ready. #150 blocked on #97.
 2. #128 acquisition: #138 next, then #146 keep-or-sell list; order in
    docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
@@ -40,11 +45,11 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 11. Deferred hook (#91-2 C): Region Best's "gyms" must become gyms cleared on the final loop once #24 lands.
 12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op.
 
-## Open issues by area (numbers only, titles on GitHub, checked 2026-11-18, Quick)
-#135 to #156 confirmed 2026-11-18; #124 to #134 not returned this pull, left as checked earlier. #109 and #123 closed
-2026-11-15 (not returned this pull, left in place).
+## Open issues by area (numbers only, titles on GitHub, checked 2026-11-18 evening, Quick)
+Confirmed this pull: #102 #126 #145 #146 #150 #155 #156 open; #135 #136 #137 #147 to #149 #151 to #154 closed. The
+rest not returned this pull, left as checked earlier. #109 and #123 closed 2026-11-15 (not returned, left in place).
 - UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 (blocked by #97) #99 #100 #102 #105 #145 #146
-  #155 #156
+  #126 #155 #156
 - Gyms: #6 #9 #20 #21 #24 #49 #57 #58 #60 #107 #109 #111 (blocked by #109) #120 #122 (blocked by #111)
 - Moves: #11 #13 #14 #16 #18 #38 #44 #141 #150 (blocked by #97)
 - Enemies: #143

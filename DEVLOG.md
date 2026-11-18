@@ -275,3 +275,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   three-tone ramps); status chips take the canon type ramps; distances in CIEDE2000. Research report in docs.
 - Not run: check.js and every smoke (Quick cannot run node). smoke-ui-library will fail until rewritten.
 - Stopped at: nothing committed; checks, three commits and push owed; then the TODO #155 list.
+
+## 2026-11-18 evening (Quick, work), #155 155e fonts and the glitch button draft
+- Decided: the font scheme (Michroma meta, Silver 10px Pokemon, BoldPixels and monogram world; Truth And Ideals and
+  PokeBW retire); menu buttons use Michroma; damage at canvas 8, crits at 16. Two decision files, HUD-STYLE "Fonts".
+- Built: tools/make_silver_font.py (Silver-10px.ttf), the Fonts board tabs (Unified, Fold Map, Reference), six
+  smoke-ui-library font checks (committed 271920). Then Buttons, Glitch Draft tab: rest and focus swipe.
+- Nothing in js/ or css/ touched. check.js and the smokes not run from Quick; results of Jess's 155e run not recorded.
+- Stopped at: feel test of Fonts and the glitch draft; next glitch states. Tooltip size decided at the feel test.
