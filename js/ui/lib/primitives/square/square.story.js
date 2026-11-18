@@ -1,6 +1,7 @@
-/* ============ square.story.js: the board's stories for the item squares (G.Lib.SquareStories; 155c-2) ============
- * Placeholder data only: what tools/library.html draws on Primitives, Squares. The board has no icon code, so a picture
- * is a placeholder disc. The game never loads this file. Place names follow screen.panel.part.
+/* ============ square.story.js: the board's stories for the item squares (G.Lib.SquareStories; #155) ============
+ * Placeholder pictures only (the board has no icon code): what tools/library.html draws on Primitives, Squares. The
+ * game never loads this file. Each piece shows its states as tiles and its props in a table (decision
+ * 2026-11-18-155-primitive-states-vs-props).
  */
 G.Lib = G.Lib || {};
 G.Lib.SquareStories = (() => {
@@ -8,8 +9,7 @@ G.Lib.SquareStories = (() => {
   if (!square || !square.ready) return [];
   const html = window.htm.bind(window.preact.h);
   const picture = () => html`<div class="hud-item-icon lib-square-picture"></div>`;
-  const POCKET_ART_SIZE = 20, // the pause menu's Run Inventory squares (40 px)
-    OWNED_ART_SIZE = 30; // the Shop's owned team items (60 px)
+  const POCKET_ART_SIZE = 20; // the pause menu's Run Inventory squares (40 px)
   const slot = (key, kind) => ({
     key,
     filled: kind === 'filled',
@@ -21,20 +21,27 @@ G.Lib.SquareStories = (() => {
     name: 'square.item',
     component: 'ItemSquare',
     stageClass: 'lib-stage-square',
-    job:
-      'The B2 bag button: a square with chamfered corners, a rim and the checker body, with the item in its centre. ' +
-      'The Lv yellow rim when it holds something, slate when empty.',
+    job: 'The B2 bag button: a square with chamfered corners, a rim and the checker body, with the item in its centre.',
     files: 'js/ui/lib/primitives/square/square.js, square.css',
     tokens: ['color.hud.outline', 'color.hud.lvFill', 'color.hud.slate', 'color.hud.checker', 'color.hud.body'],
-    size: 'artSize 2 px art pixels square (20 is 40 px, the pockets; the run HUD and the Shop size it); 32 px picture',
+    size: 'artSize 2 px art pixels square; a 32 px picture',
     places: ['run.hud.heldItem', 'run.hud.berryBag', 'pause.inventory.berrySlot', 'pause.pokemonDetail.heldItem'],
     states: [
       {
         id: 'filled',
-        title: 'Filled (holds an item)',
+        title: 'Filled (the Lv yellow rim)',
         props: { artSize: POCKET_ART_SIZE, filled: true, picture: picture() },
       },
-      { id: 'empty', title: 'Empty', props: { artSize: POCKET_ART_SIZE, filled: false } },
+      { id: 'empty', title: 'Empty (the slate rim)', props: { artSize: POCKET_ART_SIZE, filled: false } },
+    ],
+    props: [
+      {
+        name: 'artSize',
+        values: '2 px art pixels',
+        does: 'Its size: 20 (40 px) in the pockets; the run HUD and the Shop size it',
+      },
+      { name: 'picture', values: 'content', does: "The item's icon, 32 px in the centre" },
+      { name: 'filled', values: 'true or false', does: 'Shows those states (above)' },
     ],
   };
 
@@ -43,11 +50,11 @@ G.Lib.SquareStories = (() => {
     component: 'ItemGrid',
     stageClass: 'lib-stage-square',
     job:
-      'Item squares in a grid, half a square apart, filling row by row. A slot not bought yet is locked (dimmed). ' +
-      'The screen adds each slot its tooltip and its handlers.',
+      'Item squares in a grid, half a square apart, filling row by row. Each slot is filled, empty, or locked (not ' +
+      'bought yet, dimmed). The screen adds each slot its tooltip and its handlers.',
     files: 'js/ui/lib/primitives/square/square.js, square.css',
     tokens: ['color.hud.lvFill', 'color.hud.slate'],
-    size: 'columns x artSize; two across in the pockets, four in the Shop',
+    size: 'columns x artSize',
     places: [
       'pause.inventory.berries',
       'pause.inventory.runItems',
@@ -58,24 +65,28 @@ G.Lib.SquareStories = (() => {
     ],
     states: [
       {
-        id: 'twoColumns',
-        title: 'Two across: filled, empty, locked (a pocket)',
+        id: 'rest',
+        title: 'At rest: filled, empty and locked slots',
         props: {
           artSize: POCKET_ART_SIZE,
+          columns: 2,
           slots: [slot(1, 'filled'), slot(2, 'filled'), slot(3, 'empty'), slot(4, 'locked')],
         },
       },
+    ],
+    props: [
       {
-        id: 'fourColumns',
-        title: "Four across (the Shop's owned team items)",
-        props: {
-          artSize: OWNED_ART_SIZE,
-          columns: 4,
-          slots: ['filled', 'filled', 'filled', 'empty', 'empty', 'empty', 'empty', 'empty'].map((kind, index) =>
-            slot(index, kind)
-          ),
-        },
+        name: 'slots',
+        values: '[{ key, filled, picture, locked, className, attrs, overlay }]',
+        does: 'Each slot: what it holds, locked, the tooltip handlers and a cursor',
       },
+      { name: 'artSize', values: '2 px art pixels (20 by default)', does: "Each square's size" },
+      {
+        name: 'columns',
+        values: 'a count (2 by default)',
+        does: "Squares per row: 2 in the pockets, 4 in the Shop's owned items",
+      },
+      { name: 'className', values: 'class', does: "The screen's class" },
     ],
   };
 

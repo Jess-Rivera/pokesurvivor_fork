@@ -5,13 +5,14 @@
  *   createMenuCursor  one screen's selection cursor: keys, mouse, arrows to the nearest item, areas, search stops,
  *                     scrolling into view, the delayed cursor tooltip
  *   CursorButton      the rounded button (button.rounded) at 3 px per art pixel inside a box the cursor can sit on
- *   ItemCard          a team item card: icon, divider, name, description and one button (Buy, Equip, Swap...)
+ *   ItemCard          a team item card (the library's card.vertical): icon, name, description, one button
  *   SearchStop        a search bar as a cursor stop at the top of its area
  *   Dropdown          a multi-select filter box whose grouped choices open in a list under it (#149 149f, the TMs tab)
  */
 G.MenuWindowKit = (() => {
-  const kitOverlay = G.HudOverlay;
-  if (!kitOverlay || !kitOverlay.ready) return { ready: false };
+  const kitOverlay = G.HudOverlay,
+    panel = G.Lib && G.Lib.Panel; // the card is the UI library's card.vertical (#155 155c)
+  if (!kitOverlay || !kitOverlay.ready || !panel || !panel.ready) return { ready: false };
   const {
     html,
     signal,
@@ -34,23 +35,9 @@ G.MenuWindowKit = (() => {
   // ---------- sizes (stage pixels) ----------
   const BUTTON = { artPixel: 3, artRows: 18 }; // the team menu button at 3 px per art pixel: 54 px tall
   BUTTON.height = BUTTON.artRows * BUTTON.artPixel;
-  // the item card (149c): 186 x 350, room for a six-line description above the button
-  const CARD = {
-    width: 186,
-    height: 350,
-    gap: 12,
-    textInset: 10,
-    iconSize: 64,
-    iconTop: 12,
-    dividerTop: 88,
-    nameTop: 100,
-    descriptionTop: 130,
-    buttonArtWidth: 58,
-    buttonBottom: 10,
-  };
-  const CARD_RIM = 2; // the card's thin rim (css/bw-shop.css .shop-card)
+  // the item card's sizes (149c, 186 x 350): the library's card.vertical owns them
+  const { CARD, cardButtonPlace, VerticalCard } = panel;
   const DROPDOWN_RIM = 2; // the open list's rim (css/bw-shop.css .shop-dropdown-list)
-  CARD.buttonWidth = CARD.buttonArtWidth * BUTTON.artPixel; // 174
   // room inside a scroll box for the cursor's corners, which sit 4 px outside an item (Jess 2026-11-17)
   const CURSOR_ROOM = 6;
   const SCROLL_COLOURS = {
@@ -297,11 +284,11 @@ G.MenuWindowKit = (() => {
   }
 
   /**
-   * A team item card (149c): thin #29ceff rim, #303030 body, icon, divider, name, description, and one button at the
-   * bottom (its id is the cursor's, in the given area). width: the Shop's 186 by default; the Inventory's are wider.
-   * refusal: as CursorButton's. picture: drawn in the icon box in place of the item's icon (the Shop's ball cards, 149e);
-   * dimmed: the whole card at the locked look (a ball not unlocked yet); buttonLit (#137c): with dimmed, everything but
-   * the button dims, so a locked ball you can afford shows an Unlock you can press.
+   * A team item card (149c): the library's card.vertical, handed the item's icon and a CursorButton at the bottom (its
+   * id is the cursor's, in the given area). width: the Shop's 186 by default; the Inventory's are wider. refusal: as
+   * CursorButton's. picture: drawn in the icon box in place of the item's icon (the Shop's ball cards, 149e); dimmed:
+   * the whole card at the locked look (a ball not unlocked yet); buttonLit (#137c): with dimmed, everything but the
+   * button dims, so a locked ball you can afford shows an Unlock you can press.
    */
   function ItemCard({
     cursor,
@@ -317,33 +304,15 @@ G.MenuWindowKit = (() => {
     dimmed,
     buttonLit,
   }) {
-    const inner = width - 2 * CARD_RIM;
-    return html`<div
-      class=${'shop-card' + (dimmed ? (buttonLit ? ' is-dimmed-but-button' : ' is-dimmed') : '')}
-      data-item=${item.id}
-      data-cursor-whole
-      style=${{ width: px(width), height: px(CARD.height) }}
-    >
-      <div class="shop-card-icon" style=${{ left: px((inner - CARD.iconSize) / 2), top: px(CARD.iconTop) }}>
-        ${picture || html`<${IconCanvas} icon=${item.icon || item.id} size=${CARD.iconSize} />`}
-      </div>
-      <div
-        class="shop-card-divider"
-        style=${{ left: px(CARD.textInset), right: px(CARD.textInset), top: px(CARD.dividerTop) }}
-      ></div>
-      <div
-        class="hud-text shop-card-name"
-        style=${{ left: px(CARD.textInset), right: px(CARD.textInset), top: px(CARD.nameTop) }}
-      >
-        ${item.name}
-      </div>
-      <div
-        class="hud-text shop-card-description"
-        style=${{ left: px(CARD.textInset), right: px(CARD.textInset), top: px(CARD.descriptionTop) }}
-      >
-        ${item.desc}
-      </div>
-      <${CursorButton}
+    return html`<${VerticalCard}
+      width=${width}
+      picture=${picture || html`<${IconCanvas} icon=${item.icon || item.id} size=${CARD.iconSize} />`}
+      name=${item.name}
+      description=${item.desc}
+      dimmed=${dimmed}
+      buttonLit=${buttonLit}
+      attrs=${{ 'data-item': item.id, 'data-cursor-whole': '' }}
+      button=${html`<${CursorButton}
         cursor=${cursor}
         id=${buttonId}
         label=${buttonLabel}
@@ -353,12 +322,9 @@ G.MenuWindowKit = (() => {
         onPress=${onPress}
         className="shop-card-buy"
         area=${area}
-        style=${{
-          left: px((inner - CARD.buttonWidth) / 2),
-          top: px(CARD.height - 4 - CARD.buttonBottom - BUTTON.height),
-        }}
-      />
-    </div>`;
+        style=${cardButtonPlace(width)}
+      />`}
+    />`;
   }
 
   /**

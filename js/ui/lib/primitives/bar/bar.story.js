@@ -1,14 +1,13 @@
-/* ============ bar.story.js: the board's stories for the bars (G.Lib.BarStories; #155 155c-3) ============
- * Placeholder values only: what tools/library.html draws on Primitives, Bars. The game never loads this file. Place
- * names follow screen.panel.part.
+/* ============ bar.story.js: the board's stories for the bars (G.Lib.BarStories; #155) ============
+ * Placeholder values only: what tools/library.html draws on Primitives, Bars. The game never loads this file. Each
+ * piece shows its states as tiles and its props in a table (decision 2026-11-18-155-primitive-states-vs-props).
  */
 G.Lib = G.Lib || {};
 G.Lib.BarStories = (() => {
   const bar = G.Lib.Bar;
   if (!bar || !bar.ready) return [];
-  // the character info panel's bar (231 art pixels at 2 px), and the boss bar shrunk for a small window
-  const LIFE = { artPixel: 2, artWidth: 231, labelTop: -6 },
-    NARROW_ART_WIDTH = 120;
+  // the character info panel's bar (231 art pixels at 2 px)
+  const LIFE = { artPixel: 2, artWidth: 231, labelTop: -6 };
   const fillAt = (fraction, alive = true) => bar.lifeBarFill(LIFE.artPixel, LIFE.artWidth, fraction, alive);
   const lifeProps = (fraction, band, extra) => ({
     ...LIFE,
@@ -24,8 +23,8 @@ G.Lib.BarStories = (() => {
     component: 'LifeBar',
     stageClass: 'lib-stage-bar',
     job:
-      'The B2 dark HP bar: the tab and its italic HP, the track, and a fill in the HP band colours (green over half, ' +
-      'yellow from a fifth, red below). A hit cuts the lost piece off; it holds a second, then falls. A heal grows.',
+      'The B2 dark HP bar: the tab and its italic HP, the track, and a fill in the HP band colours. A hit cuts the ' +
+      'lost piece off; it holds a second, then falls. A heal grows the fill.',
     files: 'js/ui/lib/primitives/bar/bar.js, bar.css; the per-frame state: js/ui/hud-kit-hp-bars.js createLifeBar',
     tokens: [
       'color.hp.high.fill',
@@ -38,7 +37,7 @@ G.Lib.BarStories = (() => {
       'color.hud.trackLight',
     ],
     font: { name: 'font.hudText', size: '20 px italic HP' },
-    size: 'artWidth x 12 art rows at 2 px (462 x 24 on the character panel); the boss bar shrinks with the window',
+    size: 'artWidth x 12 art rows at 2 px (462 x 24 on the character panel)',
     places: ['run.hud.lifeMeter', 'run.boss.lifeBar', 'pause.pokemonDetail.lifeBar'],
     states: [
       { id: 'high', title: 'Over half (green)', props: lifeProps(0.75, 'high') },
@@ -52,46 +51,60 @@ G.Lib.BarStories = (() => {
           pieces: [{ id: 1, left: fillAt(0.4), width: fillAt(0.75) - fillAt(0.4), band: 'high' }],
         }),
       },
+    ],
+    props: [
       {
-        id: 'narrow',
-        title: 'Narrow (the boss bar in a small window)',
-        props: lifeProps(0.75, 'high', {
-          artWidth: NARROW_ART_WIDTH,
-          fillPixels: bar.lifeBarFill(LIFE.artPixel, NARROW_ART_WIDTH, 0.75, true),
-        }),
+        name: 'artPixel, artWidth',
+        values: 'px per art pixel, art pixels',
+        does: 'Its size: the boss bar shrinks its width with a small window',
+      },
+      { name: 'labelTop', values: 'px', does: "The HP label's height on the tab (each panel sets its own)" },
+      { name: 'fillPixels', values: 'px (from lifeBarFill)', does: 'How much of the track the fill covers' },
+      { name: 'band', values: 'high, middle, low', does: 'Shows the HP band states (above)' },
+      { name: 'growing', values: 'true or false', does: 'A heal: the fill eases to its new length' },
+      {
+        name: 'pieces, onPieceFallen',
+        values: '[{ id, left, width, band }], a function',
+        does: 'The lost pieces falling; called when one has fallen',
       },
     ],
   };
 
-  const TIMER_WIDTH = 160;
-  const timerStyle = { left: '0px', top: '4px', width: TIMER_WIDTH + 'px' };
-  const weatherRamp = G.Tokens.ramp('color.type.water');
   const timer = {
     name: 'bar.timer',
     component: 'TimerBar',
     stageClass: 'lib-stage-timer',
-    job:
-      'A thin strip that drains as time runs out: white on the chips and the Shake Off prompt, two rows of the ' +
-      "weather's type colours on the weather card, which holds its right end at the screen edge.",
+    job: 'A thin strip that drains as time runs out: the status chips, the Shake Off prompt, the weather card.',
     files: 'js/ui/lib/primitives/bar/bar.js, bar.css',
     tokens: ['color.text.label', 'color.type.*'],
-    size: 'the screen sets its width: 2 px tall on a chip, 4 on the Shake Off prompt, 6 on the weather card',
+    size: 'the screen sets its width and height',
     places: ['run.hud.chipTimer', 'run.hud.shakeOffTimer', 'run.map.weatherTimer'],
     states: [
-      { id: 'chip', title: 'A chip (2 px, half left)', props: { fraction: 0.5, height: 2, style: timerStyle } },
-      { id: 'prompt', title: 'Shake Off (4 px, most left)', props: { fraction: 0.8, height: 4, style: timerStyle } },
       {
-        id: 'weather',
-        title: 'The weather card (6 px, two colours, drains toward the right)',
-        props: {
-          fraction: 0.6,
-          height: 6,
-          light: weatherRamp.light,
-          base: weatherRamp.base,
-          drainsRight: true,
-          style: timerStyle,
-        },
+        id: 'rest',
+        title: 'Draining (60% left)',
+        props: { fraction: 0.6, height: 4, style: { left: '0px', top: '4px', width: '160px' } },
       },
+    ],
+    props: [
+      { name: 'fraction', values: '0 to 1', does: 'The time left: how much of the strip shows' },
+      {
+        name: 'height',
+        values: 'px',
+        does: 'Its thickness: 2 on a chip, 4 on the Shake Off prompt, 6 on the weather card',
+      },
+      { name: 'colour', values: 'a colour (white by default)', does: 'One colour' },
+      {
+        name: 'light, base',
+        values: 'two colours',
+        does: "Two rows instead (the weather card: its type's Light over Base)",
+      },
+      {
+        name: 'drainsRight',
+        values: 'true or false',
+        does: 'Holds its right end and runs out toward it (the weather card at the screen edge)',
+      },
+      { name: 'className, style', values: 'class, place and width', does: "The screen's class; its place" },
     ],
   };
 

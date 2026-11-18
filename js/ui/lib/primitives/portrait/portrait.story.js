@@ -1,30 +1,24 @@
-/* ============ portrait.story.js: the board's stories for the portrait (G.Lib.PortraitStories; 155c-5) ============
- * Real portraits (Pikachu, and its shiny) from assets/pokemon, read from the board's folder (tools/). The game never
- * loads this file. Place names follow screen.panel.part.
+/* ============ portrait.story.js: the board's stories for the portrait (G.Lib.PortraitStories; #155) ============
+ * A real portrait (Pikachu) from assets/pokemon, read from the board's folder (tools/). The game never loads this file.
+ * Each piece shows its states as tiles and its props in a table (decision 2026-11-18-155-primitive-states-vs-props).
  */
 G.Lib = G.Lib || {};
 G.Lib.PortraitStories = (() => {
   const portrait = G.Lib.Portrait;
   if (!portrait || !portrait.ready) return [];
-  const PORTRAITS = '../assets/pokemon/';
-  const face = (dex, shiny) => ({ src: PORTRAITS + dex + (shiny ? '/s' : '') + '/Portrait.png', dex });
-  const PIKACHU = face(25, false);
-  // the sizes the game draws them at: the character panel and pause detail (with the ring), the boss circles, the
-  // roster cards, the catch and TMs owned faces (a 56 px cell less 4 px each side)
-  const SIZES = { exp: 116, leader: 48, roster: 44, owned: 48 },
-    STROKES = { exp: 4, leader: 4, roster: 2, owned: 2 };
-  const leader = (extra) => ({ ...PIKACHU, size: SIZES.leader, stroke: STROKES.leader, ...extra });
+  // a leader circle's numbers (48 px, a 4 px stroke) for every state
+  const PIKACHU = { src: '../assets/pokemon/25/Portrait.png', dex: 25, size: 48, stroke: 4 };
 
   const round = {
     name: 'portrait.round',
     component: 'RoundPortrait',
     stageClass: 'lib-stage-portrait',
     job:
-      "A Pokemon's face in a circle with a stroke in a rim colour; dimmed when fainted. With a ring (the EXP ring) " +
-      'it sits inside a band that fills clockwise from the top.',
-    files: 'js/ui/lib/primitives/portrait/portrait.js, portrait.css; which file to load: the kit\'s portraitSource',
+      "A Pokemon's face in a circle with a stroke in a rim colour. With a ring (the EXP ring) it sits inside a band " +
+      "that fills clockwise from the top.",
+    files: "js/ui/lib/primitives/portrait/portrait.js, portrait.css; which file to load: the kit's portraitSource",
     tokens: ['color.hud.outline', 'color.hud.expFill', 'color.hud.trackLight', 'color.type.*'],
-    size: '116 px with the ring (an 80 px face), 48 px leader circles, 44 px roster faces, 48 px owned faces',
+    size: 'the screen sets it: 116 px with the ring, 48 px leader circles and owned faces, 44 px roster faces',
     places: [
       'run.hud.portrait',
       'pause.pokemonDetail.portrait',
@@ -35,30 +29,42 @@ G.Lib.PortraitStories = (() => {
       'main.shop.tms.face',
     ],
     states: [
+      { id: 'rest', title: 'At rest (the dark stroke)', props: PIKACHU },
       {
-        id: 'exp',
-        title: 'With the EXP ring (60%)',
-        props: { ...PIKACHU, size: SIZES.exp, stroke: STROKES.exp, ring: { fraction: 0.6 } },
+        id: 'active',
+        title: "Active: the one out now (its type's rim)",
+        props: { ...PIKACHU, rim: G.Tokens.color('color.type.electric.base') },
       },
-      { id: 'leader', title: 'A leader circle', props: leader() },
+      { id: 'fainted', title: 'Fainted (darkly dimmed)', props: { ...PIKACHU, fainted: true } },
+    ],
+    props: [
+      { name: 'size', values: 'px across', does: "Its size: 116 with the ring, 48, 44; or the screen's CSS sizes it" },
       {
-        id: 'leaderActive',
-        title: "The leader out now (its type's rim)",
-        props: leader({ rim: G.Tokens.color('color.type.electric.base') }),
+        name: 'stroke',
+        values: 'px (2 by default)',
+        does: 'The stroke around the face: 4 on the leader circles and ringed faces, 2 elsewhere',
       },
-      { id: 'leaderFainted', title: 'A fainted leader', props: leader({ fainted: true }) },
-      { id: 'roster', title: 'A roster face', props: { ...PIKACHU, size: SIZES.roster, stroke: STROKES.roster } },
       {
-        id: 'owned',
-        title: 'An owned face (the catch screen, the TMs tab)',
-        props: {
-          ...PIKACHU,
-          size: SIZES.owned,
-          stroke: STROKES.owned,
-          rim: G.Tokens.color('color.type.normal.light'),
-        },
+        name: 'rim',
+        values: 'a colour (the outline by default)',
+        does: "The stroke's colour: a type colour when active, the light grey of the catch and TMs faces",
       },
-      { id: 'shiny', title: 'A shiny', props: { ...face(25, true), size: SIZES.roster, stroke: STROKES.roster } },
+      {
+        name: 'ring',
+        values: '{ fraction, fill, track }, or none',
+        does: 'The EXP ring: a band around the face, filled clockwise to fraction',
+      },
+      {
+        name: 'src, dex, onError, lazy',
+        values: 'an address, a dex number, a function, true or false',
+        does: "Which face (a shiny is a different address); the kit's fallback; load it lazily",
+      },
+      { name: 'fainted', values: 'true or false', does: 'Shows the fainted state (above)' },
+      {
+        name: 'className, faceClass, ringClass, style, attrs, children',
+        values: 'classes, place, attributes, content',
+        does: "The screen's classes and place; a cursor on top",
+      },
     ],
   };
 

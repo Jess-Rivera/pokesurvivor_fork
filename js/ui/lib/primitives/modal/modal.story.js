@@ -1,15 +1,21 @@
-/* ============ modal.story.js: the board's stories for the dialog (G.Lib.ModalStories; #155 155c-4) ============
- * Placeholder text only: what tools/library.html draws on Primitives, Modal. The game never loads this file. Place
- * names follow screen.panel.part.
+/* ============ modal.story.js: the board's stories for the dialog (G.Lib.ModalStories; #155) ============
+ * Placeholder text only: what tools/library.html draws on Primitives, Modal. The game never loads this file. Each
+ * piece shows its states as tiles and its props in a table (decision 2026-11-18-155-primitive-states-vs-props).
  */
 G.Lib = G.Lib || {};
 G.Lib.ModalStories = (() => {
   const modal = G.Lib.Modal;
   if (!modal || !modal.ready) return [];
-  const twoButtons = (ok, cancel) => [
-    { key: 'ok', label: ok },
-    { key: 'no', label: cancel },
-  ];
+  const sample = (focus) => ({
+    title: 'Buy TM',
+    message: 'Spend 7,000 PokéCoins on TM Thunderbolt?',
+    note: 'You will have 2,000 left.',
+    buttons: [
+      { key: 'ok', label: 'Buy' },
+      { key: 'no', label: 'Cancel' },
+    ],
+    focus,
+  });
   const dialog = {
     name: 'modal.dialog',
     component: 'ModalDialog',
@@ -38,54 +44,24 @@ G.Lib.ModalStories = (() => {
       'main.newSaveNotice',
     ],
     states: [
+      { id: 'focusConfirm', title: 'Confirm green (as it opens)', props: sample(0) },
+      { id: 'focusCancel', title: 'Cancel green (after Right, or the mouse)', props: sample(1) },
+    ],
+    props: [
+      { name: 'title', values: 'text', does: 'The heading' },
+      { name: 'message', values: 'text', does: 'The question; it wraps' },
+      { name: 'note', values: 'text, or none', does: 'A second line (what you will have left)' },
       {
-        id: 'confirm',
-        title: 'Confirm green',
-        props: {
-          title: 'Sell Pokémon',
-          message: 'Sell Pikachu for 300 PokéCoins?',
-          buttons: twoButtons('Sell', 'Cancel'),
-        },
+        name: 'buttons',
+        values: '[{ key, label, elementId }], one or two',
+        does: 'The answers: one for a notice (noCancel), two for a question',
       },
+      { name: 'focus', values: 'a button index', does: 'Shows those states (above)' },
+      { name: 'onPress, onHover', values: 'functions', does: 'A button pressed; the mouse over a button' },
       {
-        id: 'withNote',
-        title: "With a note (the Shop's buy ask)",
-        props: {
-          title: 'Buy TM',
-          message: 'Spend 7,000 PokéCoins on TM Thunderbolt?',
-          note: 'You will have 2,000 left.',
-          buttons: twoButtons('Buy', 'Cancel'),
-        },
-      },
-      {
-        id: 'cancelFocused',
-        title: 'Cancel green (after Right, or the mouse)',
-        props: {
-          title: 'Unsaved team',
-          message: 'Leave without saving your team?',
-          buttons: twoButtons('Discard', 'Keep editing'),
-          focus: 1,
-        },
-      },
-      {
-        id: 'notice',
-        title: 'A notice (one button)',
-        props: {
-          title: 'New save needed',
-          message: 'This version needs a new save. Your old one was kept.',
-          buttons: [{ key: 'ok', label: 'OK' }],
-        },
-      },
-      {
-        id: 'longMessage',
-        title: 'A long message wraps',
-        props: {
-          title: 'Let it go?',
-          message:
-            'Let this Pokemon go? It will run off and you will not see it again this run. Your Poke Balls stay on ' +
-            'your belt.',
-          buttons: twoButtons('Let it go', 'Keep trying'),
-        },
+        name: 'partIds',
+        values: '{ title, message, note }',
+        does: "Ids for the parts (the smokes' ask-title, ask-msg, ask-note)",
       },
     ],
   };
