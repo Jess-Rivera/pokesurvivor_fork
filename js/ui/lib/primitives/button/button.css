@@ -1,0 +1,50 @@
+/* button.css: the pixel-art buttons (G.Lib.Button; #155 155b). Moved unchanged from css/pause-menu.css (button.slot)
+   and css/hud-overlay.css (button.team), plus button.team's refused label (from css/bw-shop.css); the colours are
+   tokens of the same value. The shape is each button's SVG; each screen places and sizes the rest. Loaded before the
+   screens' stylesheets, so their rules still win at equal specificity. */
+
+/* ---------- button.slot (class pm-button): 315 x 66 px by default, the label centred ---------- */
+.pm-button {
+  position: relative;
+  width: 315px;
+  height: 66px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+.pm-button svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.pm-button .hud-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'HudText', monospace;
+  color: var(--color-text-label);
+}
+
+/* button.team (class hud-team-button): the shape is its SVG; the screen places and styles the label */
+.hud-team-button {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--color-text-label);
+}
+.hud-team-button svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+/* refused (#151, #152): a press only says why; the rim stays and the label goes to white at 45% */
+.hud-team-button.refused .hud-team-button-label {
+  color: var(--color-text-labelRefused);
+}

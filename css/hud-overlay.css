@@ -44,10 +44,7 @@
    * defined, so they stay visible when the pause menu hides the HUD layer (F2 fix, 2026-11-12). 0 x 0, paints nothing. */
   visibility: visible;
 }
-.hud-pixels {
-  display: block;
-  shape-rendering: crispEdges;
-}
+/* .hud-pixels (every pixel-art shape): js/ui/lib/primitives/pixels/pixels.css (#155 155b) */
 
 /* HUD text: 20 px body, white with eight hard shadows one font pixel out (HUD-STYLE "Fonts") */
 .hud-text {
@@ -412,22 +409,7 @@
   left: -2px;
   top: 4px;
 }
-/* the team menu's button in any colours (G.HudKit TeamButton, after assets/ui/team/btn.png): the shape is its SVG, the
-   screen places and styles the label */
-.hud-team-button {
-  position: relative;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  font: inherit;
-  color: #ffffff;
-}
-.hud-team-button svg {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
+/* the team menu's button (.hud-team-button, button.team): js/ui/lib/primitives/button/button.css (#155 155b) */
 .hud-cursor {
   position: absolute;
   width: 14px;

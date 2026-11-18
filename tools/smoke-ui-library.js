@@ -39,7 +39,9 @@ const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PAL
 // none of the game's scripts; every token in tokens.js shows with its name; every HUD-STYLE and UI-PALETTES colour shows
 // (read from the docs, not from the board's copy); every font face loads, and the game's CSS loads the same font files
 // under the same families; no library CSS writes a raw colour instead of a token; every sidebar entry of Jess's mockup is
-// there and opens a page.
+// there and opens a page. Primitives, Buttons (155b, docs/ASCII Concept Maps/155b - Buttons Plan.md): each button draws
+// in every state it has in the game; its rims are the rim tokens (read from tokens.js); a refused label is fainter than a
+// resting one; disabled cannot be pressed and refused can; each button lists its place names.
 const vm = require('vm');
 function loadTokens() {
   const sandbox = { console };
@@ -176,7 +178,88 @@ async function checkBoard(browser) {
     `all ${fonts.length} font faces load on the board` + (unloaded.length ? ', failed ' + unloaded.join(' ') : '')
   );
   ok(board.stored === 0, `the board writes nothing to localStorage (${board.stored} keys)`);
+  await checkButtonsPage(page, tokens);
   await context.close();
+}
+
+// The states each button has in the game (155b plan): the slot button has no disabled or refused today.
+const BUTTON_STATES = { 'button.slot': ['rest', 'focused'], 'button.team': ['rest', 'focused', 'refused', 'disabled'] };
+// The rim each state must show: refused keeps the resting rim.
+const BUTTON_RIMS = {
+  'button.slot:rest': 'rest',
+  'button.slot:focused': 'focus',
+  'button.team:rest': 'rest',
+  'button.team:focused': 'focus',
+  'button.team:refused': 'rest',
+};
+async function checkButtonsPage(page, tokens) {
+  const drawn = await page.evaluate(() => {
+    window.libShow('primitives/buttons');
+    const alphaOf = (colour) => {
+      const parts = colour.match(/[\d.]+/g) || [];
+      return parts.length > 3 ? Number(parts[3]) : 1;
+    };
+    const states = {};
+    for (const stage of document.querySelectorAll('[data-state]')) {
+      const button = stage.querySelector('button'),
+        label = button && button.querySelector('span'),
+        rectangles = [...stage.querySelectorAll('svg rect')];
+      states[stage.dataset.state] = {
+        rectangles: rectangles.length,
+        fills: rectangles.map((rectangle) => (rectangle.getAttribute('fill') || '').toLowerCase()),
+        disabled: !!button && button.disabled,
+        labelAlpha: label ? alphaOf(getComputedStyle(label).color) : null,
+      };
+    }
+    const stories = (G.Lib.ButtonStories || []).map((story) => ({ name: story.name, places: story.places }));
+    return { states, stories, text: document.getElementById('main').innerText };
+  });
+
+  const missing = Object.entries(BUTTON_STATES).flatMap(([name, states]) =>
+    states.filter((state) => !((drawn.states[name + ':' + state] || {}).rectangles > 0)).map((state) => name + ':' + state)
+  );
+  const stateCount = Object.values(BUTTON_STATES).flat().length;
+  ok(
+    missing.length === 0,
+    `the Buttons page draws each button in every state it has (${stateCount})` +
+      (missing.length ? ', missing ' + missing.join(' ') : '')
+  );
+
+  const restBase = tokens.ramp('color.rim.rest').base.toLowerCase(),
+    focusBase = tokens.ramp('color.rim.focus').base.toLowerCase();
+  const rimOf = (key) => {
+    const fills = (drawn.states[key] || {}).fills || [];
+    if (fills.includes(focusBase) && !fills.includes(restBase)) return 'focus';
+    if (fills.includes(restBase) && !fills.includes(focusBase)) return 'rest';
+    return 'neither';
+  };
+  const wrongRims = Object.entries(BUTTON_RIMS)
+    .filter(([key, rim]) => rimOf(key) !== rim)
+    .map(([key]) => key + ' shows ' + rimOf(key));
+  ok(
+    wrongRims.length === 0,
+    'the rims are the tokens: color.rim.rest at rest and refused, color.rim.focus focused' +
+      (wrongRims.length ? ': ' + wrongRims.join(', ') : '')
+  );
+
+  const team = (state) => drawn.states['button.team:' + state] || {};
+  ok(
+    team('refused').labelAlpha !== null && team('refused').labelAlpha < team('rest').labelAlpha,
+    `a refused label is fainter than a resting one (${team('refused').labelAlpha} vs ${team('rest').labelAlpha})`
+  );
+  ok(
+    team('disabled').disabled === true && team('refused').disabled === false,
+    'a disabled button cannot be pressed; a refused one still can (it says why)'
+  );
+
+  const placeless = drawn.stories
+    .filter((story) => !story.places.length || story.places.some((place) => !drawn.text.includes(place)))
+    .map((story) => story.name);
+  ok(
+    drawn.stories.length === Object.keys(BUTTON_STATES).length && placeless.length === 0,
+    `each button lists its place names (${drawn.stories.length} buttons)` +
+      (placeless.length ? ', missing on ' + placeless.join(' ') : '')
+  );
 }
 
 (async () => {

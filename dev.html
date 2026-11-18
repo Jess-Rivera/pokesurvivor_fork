@@ -90,6 +90,9 @@
       }
     </script>
     <!-- seo:end -->
+    <!-- UI library primitives (#155): first, so the screens' rules still win at equal specificity -->
+    <link rel="stylesheet" href="js/ui/lib/primitives/pixels/pixels.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/button/button.css" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/bw-menu.css" />
     <link rel="stylesheet" href="css/bw-team.css" />
@@ -826,6 +829,9 @@
     <script defer src="js/vendor/htm.min.js"></script>
     <script defer src="js/vendor/preact-signals-core.min.js"></script>
     <script defer src="js/vendor/preact-signals.min.js"></script>
+    <!-- UI library primitives (#155 155b): after Preact, before the HUD kit that passes them on -->
+    <script defer src="js/ui/lib/primitives/pixels/pixels.js"></script>
+    <script defer src="js/ui/lib/primitives/button/button.js"></script>
     <script defer src="js/core/stats.js"></script>
     <script defer src="js/core/simbus.js"></script>
     <script defer src="js/systems/log.js"></script>

@@ -270,30 +270,7 @@ body.er-open .hud-overlay {
 .pm-no-slide .pm-pocket-ask {
   transition: none !important;
 }
-.pm-button {
-  position: relative;
-  width: 315px;
-  height: 66px;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  font: inherit;
-}
-.pm-button svg {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-.pm-button .hud-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'HudText', monospace;
-  color: #ffffff;
-}
+/* the button itself (.pm-button, button.slot): js/ui/lib/primitives/button/button.css (#155 155b) */
 
 /* ---------- the four panels (Run Info and the Run Inventory are empty frames until #91 and #90) ---------- */
 .pm-panel {

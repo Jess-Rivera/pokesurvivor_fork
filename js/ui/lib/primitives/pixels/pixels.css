@@ -1,0 +1,5 @@
+/* pixels.css: the pixel-art shape (G.Lib.Pixels; #155 155b), crisp at any scale. Moved from css/hud-overlay.css. */
+.hud-pixels {
+  display: block;
+  shape-rendering: crispEdges;
+}

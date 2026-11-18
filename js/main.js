@@ -4,6 +4,7 @@
   // to warn than to boot halfway.
   const NEED = [
     'Tokens',
+    'Lib',
     'U',
     'Stats',
     'Log',

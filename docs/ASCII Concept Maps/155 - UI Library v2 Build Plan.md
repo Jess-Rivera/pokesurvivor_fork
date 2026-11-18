@@ -128,3 +128,26 @@ Differences from the plan:
 - The board does not remember the sidebar open or closed: file:// pages share localStorage with the game's save, so it
   writes nothing there (checked).
 - The old page's script list was nine scripts behind dev.html since #137 (its smoke was failing); resynced.
+
+## As built: 155b (2026-11-18, Quick)
+
+Step plan: docs/ASCII Concept Maps/155b - Buttons Plan.md (approved with part H skipped: itch.io on hold).
+
+| Planned | Built |
+| --- | --- |
+| Pixels primitive | js/ui/lib/primitives/pixels/ (pixels.js, pixels.css): PixelShape and letterRows, G.Lib.Pixels |
+| Button primitive | js/ui/lib/primitives/button/ (button.js, button.css): the move slot shape, button.slot, button.team, G.Lib.Button. button.team takes refused |
+| Story | button.story.js (G.Lib.ButtonStories): states, tokens, font, size, files and place names for both buttons |
+| Kit | hud-kit.js 395 to 220 lines; passes every old name on |
+| Tokens | New Text palette: color.text.label (#ffffff), color.text.labelRefused (white at 45%, written as rgba since smoke-ui reads 0.45) |
+| Loading | dev.html, main.js NEED (Lib), tools/ui-library.html mirrored |
+| Board | Primitives, Buttons draws each state with the real piece |
+| Tests | smoke-ui-library: 5 new Buttons page checks; raw-colour check now covers 2 library CSS files |
+| pack_itch.js | Skipped (part H). Until it is done, an itch zip would miss js/ui/lib/**/*.css |
+
+Differences from the step plan:
+- button.slot's story shows rest, focused and focused with its own rim (No). It has no disabled or refused in the game, so
+  it did not get those props (YAGNI); the smoke expects 2 states for it and 4 for button.team.
+- CursorButton keeps its box's refused class (smoke-ui and smoke-berry-slots read it), so that planned cleanup is dropped.
+  The grey label rule now keys on the button's own refused class.
+- No node here (Quick): syntax and a sandbox run of both buttons checked; check.js and the smokes are Jess's to run.

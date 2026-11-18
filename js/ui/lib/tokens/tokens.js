@@ -86,6 +86,16 @@ G.Tokens = (() => {
         ['thumbRim', 'color.scroll.thumb', 'Scroll thumb rim'],
       ],
     },
+    {
+      id: 'text',
+      title: 'Text',
+      job: 'Label colours of the pixel-art buttons',
+      source: 'js/ui/lib/primitives/button/button.css (from pause-menu.css, hud-overlay.css and bw-shop.css, 155b)',
+      colours: [
+        ['label', '#ffffff', 'A button label'],
+        ['labelRefused', 'rgba(255, 255, 255, 0.45)', 'The label of a button that refuses (#151): white at 45%'],
+      ],
+    },
   ];
 
   // The 18 type colours: the Bulbapedia Scarlet/Violet palette (HUD-STYLE "Type colours", checked against that table by

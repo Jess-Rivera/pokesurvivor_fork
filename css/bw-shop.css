@@ -110,7 +110,8 @@
   white-space: normal; /* wraps inside the card (the kit's .hud-text keeps one line) */
   line-height: 26px;
 }
-/* a button that cannot be pressed at all: dimmed (a Buy that refuses is .refused below, #151) */
+/* a button that cannot be pressed at all: dimmed (a Buy that refuses is button.team's refused, #151; its label rule
+   is in js/ui/lib/primitives/button/button.css) */
 .shop-button .hud-team-button[disabled] {
   opacity: 0.4;
   cursor: default;
@@ -193,11 +194,6 @@
 .shop-owned-search-host {
   left: 14px;
   top: 14px;
-}
-/* a Buy that refuses (cannot afford, or a Full pocket; #151, #152): the rim stays, the label goes to white at 45%
-   (the Team Items mockup's look, now every Buy's) */
-.shop-button.refused .hud-team-button-label {
-  color: rgba(255, 255, 255, 0.45);
 }
 
 /* ---------- Pokeballs (149e): the ball cards and the belts, drawn by js/ui/shop-balls.js into #shop-balls. The cards

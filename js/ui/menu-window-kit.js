@@ -28,6 +28,9 @@ G.MenuWindowKit = (() => {
   } = kitOverlay.kit;
 
   const px = (value) => value + 'px';
+  // the windows' buttons write a price from 1,000 up short (G.U.compact): "Buy 9k", "Belt 2 10k", "Buy 7.5k"; the ask
+  // before a buy, its note and the toasts keep the whole number (Jess 2026-11-18)
+  const SHORT_PRICE_FROM = 1000;
   // ---------- sizes (stage pixels) ----------
   const BUTTON = { artPixel: 3, artRows: 18 }; // the team menu button at 3 px per art pixel: 54 px tall
   BUTTON.height = BUTTON.artRows * BUTTON.artPixel;
@@ -249,7 +252,8 @@ G.MenuWindowKit = (() => {
    * The team menu button at 3 px per art pixel in a box the cursor can sit on (its corners sit on this box). A disabled
    * button never takes the cursor. refusal (#151, decision 2026-11-17-unaffordable-buttons-take-the-cursor): the toast a
    * press shows instead of acting ("Unable to Afford", or a Full pocket's line); the button still takes the cursor, keeps
-   * its rim and greys its label. style places the box; area puts it in a cursor area; action is the button's
+   * its rim and greys its label (button.team's refused, 155b; this box keeps its refused class, which the smokes read).
+   * style places the box; area puts it in a cursor area; action is the button's
    * data-action (the cursor id by default). focusRim: the rim's colours under the cursor (the kit's green by default).
    */
   function CursorButton({
@@ -285,6 +289,7 @@ G.MenuWindowKit = (() => {
         focusRim=${focusRim}
         focused=${focused}
         disabled=${disabled}
+        refused=${!!refusal}
         onPress=${() => (refusal ? refuse(refusal) : !disabled && onPress())}
       />
       ${cursor.cornersIf(focused)}
@@ -453,6 +458,7 @@ G.MenuWindowKit = (() => {
     CARD,
     CURSOR_ROOM,
     SCROLL_COLOURS,
+    SHORT_PRICE_FROM,
     px,
     createMenuCursor,
     CursorButton,
