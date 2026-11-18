@@ -182,17 +182,21 @@ async function checkBoard(browser) {
   await context.close();
 }
 
-// The states each button has in the game (155b plan): the slanted button has no disabled or refused today.
+// The states each button has in the game (155b plan): the slanted button has no disabled or refused today; both have
+// the red the game gives a button that takes something away (End, Destroy, Sell, Let It Go).
 const BUTTON_STATES = {
-  'button.slanted': ['rest', 'focused'],
-  'button.rounded': ['rest', 'focused', 'refused', 'disabled'],
+  'button.slanted': ['rest', 'focused', 'red', 'redFocused'],
+  'button.rounded': ['rest', 'focused', 'focusedRed', 'refused', 'disabled'],
 };
-// The rim each state must show: refused keeps the resting rim.
+// The rim each state must show: refused keeps the resting rim; a red button keeps its red when focused.
 const BUTTON_RIMS = {
   'button.slanted:rest': 'rest',
   'button.slanted:focused': 'focus',
+  'button.slanted:red': 'red',
+  'button.slanted:redFocused': 'red',
   'button.rounded:rest': 'rest',
   'button.rounded:focused': 'focus',
+  'button.rounded:focusedRed': 'red',
   'button.rounded:refused': 'rest',
 };
 async function checkButtonsPage(page, tokens) {
@@ -228,20 +232,23 @@ async function checkButtonsPage(page, tokens) {
       (missing.length ? ', missing ' + missing.join(' ') : '')
   );
 
-  const restBase = tokens.ramp('color.rim.rest').base.toLowerCase(),
-    focusBase = tokens.ramp('color.rim.focus').base.toLowerCase();
+  // each rim by its base colour, read from tokens.js; a state shows a rim when exactly that one base is drawn
+  const RIM_BASES = {
+    rest: tokens.ramp('color.rim.rest').base.toLowerCase(),
+    focus: tokens.ramp('color.rim.focus').base.toLowerCase(),
+    red: tokens.ramp('color.rim.sell').base.toLowerCase(),
+  };
   const rimOf = (key) => {
     const fills = (drawn.states[key] || {}).fills || [];
-    if (fills.includes(focusBase) && !fills.includes(restBase)) return 'focus';
-    if (fills.includes(restBase) && !fills.includes(focusBase)) return 'rest';
-    return 'neither';
+    const shown = Object.keys(RIM_BASES).filter((rim) => fills.includes(RIM_BASES[rim]));
+    return shown.length === 1 ? shown[0] : 'neither';
   };
   const wrongRims = Object.entries(BUTTON_RIMS)
     .filter(([key, rim]) => rimOf(key) !== rim)
     .map(([key]) => key + ' shows ' + rimOf(key));
   ok(
     wrongRims.length === 0,
-    'the rims are the tokens: color.rim.rest at rest and refused, color.rim.focus focused' +
+    'the rims are the tokens: color.rim.rest at rest and refused, color.rim.focus focused, color.rim.sell on red' +
       (wrongRims.length ? ': ' + wrongRims.join(', ') : '')
   );
 

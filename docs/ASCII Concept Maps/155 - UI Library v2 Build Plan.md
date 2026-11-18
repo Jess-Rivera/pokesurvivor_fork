@@ -156,3 +156,7 @@ Differences from the step plan:
 Renamed 2026-11-18 (decision 2026-11-18-155-library-pieces-named-by-look, plan 155b-2 - Button Shape Names Plan.md):
 `button.slot` / SlotButton is now `button.slanted` / SlantedButton, and `button.team` / TeamButton is now
 `button.rounded` / RoundedButton, everywhere in the code. The text above keeps the names it was written with.
+
+Added 2026-11-18: the red states on the Buttons page. button.slanted red and red focused (End, Destroy: rim kept, body
+its dark shade); button.rounded focused red (Sell, Let It Go). Both read the red from tokens (color.rim.sell, renamed by
+look in the colour pass). smoke-ui-library checks each red state draws that token's base and no other rim.

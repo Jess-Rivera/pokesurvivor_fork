@@ -9,6 +9,9 @@ G.Lib.ButtonStories = (() => {
   const MENU_ART_PIXEL = 3, // the Main Menu windows' team button (54 px tall)
     CARD_BUTTON_ART_WIDTH = 58, // the item cards' button: 174 px
     ANSWER_ART_WIDTH = 56; // the pause menu's End and No: 168 px
+  // the red rim the game gives a button that takes something away (Sell, Let It Go, End, Destroy); its token is still
+  // named color.rim.sell until the colour pass names the rims by look
+  const RED_RIM = G.Tokens.ramp('color.rim.sell');
   const roundedProps = (id, label, extra) => ({
     id,
     label,
@@ -26,9 +29,16 @@ G.Lib.ButtonStories = (() => {
     job:
       "The run screen's move slot shape at 1.5x, for the run screens' menus. White rim at rest, green under the " +
       'cursor; a screen may give its own rims and a focused body (the End and No answers keep their rim and darken ' +
-      'the body).',
+      'the body). Red for an answer that ends or destroys something (End, Destroy).',
     files: 'js/ui/lib/primitives/button/button.js, button.css',
-    tokens: ['color.hud.outline', 'color.hud.body', 'color.rim.rest', 'color.rim.focus', 'color.text.label'],
+    tokens: [
+      'color.hud.outline',
+      'color.hud.body',
+      'color.rim.rest',
+      'color.rim.focus',
+      'color.rim.sell',
+      'color.text.label',
+    ],
     font: { name: 'font.hudText', size: '30 px' },
     size: '315 x 66 px by default (105 x 22 art pixels at 3 px); End and No are 168 x 66',
     places: [
@@ -60,6 +70,24 @@ G.Lib.ButtonStories = (() => {
           focusBody: button.REST_RIM.dark,
         },
       },
+      {
+        id: 'red',
+        title: 'Red (End, Destroy)',
+        props: { id: 'story-slanted-red', label: 'End', artWidth: ANSWER_ART_WIDTH, rim: RED_RIM },
+      },
+      {
+        id: 'redFocused',
+        title: 'Red, focused: its rim kept, the body its dark shade',
+        props: {
+          id: 'story-slanted-red-focused',
+          label: 'Destroy',
+          artWidth: ANSWER_ART_WIDTH,
+          focused: true,
+          rim: RED_RIM,
+          focusRim: RED_RIM,
+          focusBody: RED_RIM.dark,
+        },
+      },
     ],
   };
 
@@ -69,13 +97,15 @@ G.Lib.ButtonStories = (() => {
     stageClass: 'lib-stage-rounded',
     job:
       "The team menu's button, for the catch screen and the Main Menu windows. Disabled cannot be pressed (the " +
-      'screen dims it); refused takes the press but only says why, keeping its rim with the label at 45%.',
+      'screen dims it); refused takes the press but only says why, keeping its rim with the label at 45%. A red ' +
+      'focus rim for a button that takes something away (Sell, Let It Go).',
     files: 'js/ui/lib/primitives/button/button.js, button.css',
     tokens: [
       'color.hud.outline',
       'color.hud.body',
       'color.rim.rest',
       'color.rim.focus',
+      'color.rim.sell',
       'color.text.label',
       'color.text.labelRefused',
     ],
@@ -95,6 +125,15 @@ G.Lib.ButtonStories = (() => {
     states: [
       { id: 'rest', title: 'At rest', props: roundedProps('story-rounded-rest', 'Exit') },
       { id: 'focused', title: 'Focused', props: roundedProps('story-rounded-focused', 'Buy 9k', { focused: true }) },
+      {
+        id: 'focusedRed',
+        title: 'Focused, red rim (Sell, Let It Go)',
+        props: roundedProps('story-rounded-focused-red', 'Sell Pokeball', {
+          artWidth: 62,
+          focused: true,
+          focusRim: RED_RIM,
+        }),
+      },
       { id: 'refused', title: 'Refused', props: roundedProps('story-rounded-refused', 'Buy 23k', { refused: true }) },
       { id: 'disabled', title: 'Disabled', props: roundedProps('story-rounded-disabled', 'Equip', { disabled: true }) },
     ],
