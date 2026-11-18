@@ -265,3 +265,13 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   (decision 2026-11-17-155-design-tokens-in-tokens-js). tools/library.html is the board (Tokens pages built).
 - No visible change. check.js, smoke-ui, smoke-ui-library all passed. The old page's script list was stale; resynced.
 - Stopped at: 155b (Buttons) next, on Jess's OK.
+
+## 2026-11-18 (Quick, work), #155 155b to 155c-6 and the unified colours
+- Built: the library primitives (buttons, panels, cards, squares, bars, the ask dialog, round portrait) with the
+  screens drawing from them; the Shop Pokeballs and TMs card clip fix and short prices; changelog lines.
+- Board: primitive pages show states as tiles and props in a table; Tokens, Colours is now Unified, Fold Map and
+  Reference Not in Game (the old Colours page and the other Colours 2.0 tabs retired).
+- Decided: pieces named by look; ask dialog keys; states vs props; the UI uses 28 non-canon colours (7 greys, 7
+  three-tone ramps); status chips take the canon type ramps; distances in CIEDE2000. Research report in docs.
+- Not run: check.js and every smoke (Quick cannot run node). smoke-ui-library will fail until rewritten.
+- Stopped at: nothing committed; checks, three commits and push owed; then the TODO #155 list.

@@ -4,38 +4,52 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-17 home session (seventh)
-1. `git status` must be clean. Push this session's work: `git push origin feature/128-acquisition`.
+## Getting up to date (either machine), from the 2026-11-18 work session (Quick)
+1. Nothing from 2026-11-18 is committed yet. On the work machine: `npm run format`, `node tools/check.js` and the
+   smokes in STATE.md, then the three commits drafted at that session's end, then
+   `git push origin feature/128-acquisition`.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
    `node tools/check.js` (must end "check: all passed"). Say "catch me up".
 3. Before leaving a machine: commit and push.
 
-## Next (queue set by Jess 2026-11-15, updated 2026-11-17; gym leader AI parked)
-0. #155 UI Library v2: 155b Buttons next (on Jess's OK), then 155c, 155d. #137 closed (feel test passed).
+## Next (queue set by Jess 2026-11-15, updated 2026-11-18; gym leader AI parked)
+0. #155 UI Library v2: 155b to 155c-6 built 2026-11-18 (untested in a browser). Then, in order:
+   - Feel tests per step (each plan in docs/ASCII Concept Maps/155b to 155c-6 lists its own).
+   - Jess lists the poor UX calls in the 155c-4 ask dialog (look and keys) so they can be filed.
+   - Colours: name the 7 UI colours and the greys (placeholders on the board); rebuild the rims from Unified.
+   - Rewrite smoke-ui-library for the new Colours page (it still expects the retired tabs and fails).
+   - 155d main.shop.pokeball composite; the Pause composites (pause.pokemonDetail and the rest).
+   - #156 rename the button CSS classes. Then #126 applies the Unified colours (docs/decisions/2026-11-18-155-unified-
+     palette.md, its Fold Map tab). For #126: the roster HP bar becomes `bar.life` at the roster's size (drops
+     `color.hud.trackEdge`).
 1. #145 small and ready. #150 blocked on #97.
 2. #128 acquisition: #138 next, then #146 keep-or-sell list; order in
    docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
 3. #97 full redesign, shipping with the new save: Jess answers the review's calls (docs/ASCII Concept Maps/
-   97 - Upgrade System Review.md). #131 Silver bonuses later, after a traced run reaches gym 1. 4. #126 UI unify (#61 first), then #127 Main Menu v3.0.
-5. #129 architecture review. 6. #130 regions and map selection. Parked: #111, then #122.
+   97 - Upgrade System Review.md). #131 Silver bonuses later, after a traced run reaches gym 1.
+4. #126 UI unify (#61 first), then #127 Main Menu v3.0. 5. #129 architecture review. 6. #130 regions and map selection.
+   Parked: #111, then #122.
 7. Leftovers from earlier: #49 close or umbrella; board by hand (#86 to Accepted, #29 out of Blocked, the Triage cards);
    drafts (leader reads your cards and items as seen; buffValue reads the whole kit; trace records the leader's level; 16i
    parity; #122 comment on early gates). Any time: #121, #120, #57, #58, #110.
-   Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107.
+   Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107 #156.
 8. Owner decisions: #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
 9. New issues to file: region type maps, PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing.
 10. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83; unknown local branch
-    refactor/damage-layer on the work machine.
+    refactor/damage-layer on the work machine; local balance/109 (754477f) differs from origin (a1dc095).
 11. Deferred hook (#91-2 C): Region Best's "gyms" must become gyms cleared on the final loop once #24 lands.
 12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op.
 
-## Open issues by area (numbers only, titles on GitHub, checked 2026-11-14 evening, Quick)
-#124 to #130 filed 2026-11-15 (the new queue). #109 and #123 closed 2026-11-15. Others as checked 2026-11-14.
-- UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 (blocked by #97) #99 #100 #102 #105
+## Open issues by area (numbers only, titles on GitHub, checked 2026-11-18, Quick)
+#135 to #156 confirmed 2026-11-18; #124 to #134 not returned this pull, left as checked earlier. #109 and #123 closed
+2026-11-15 (not returned this pull, left in place).
+- UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 (blocked by #97) #99 #100 #102 #105 #145 #146
+  #155 #156
 - Gyms: #6 #9 #20 #21 #24 #49 #57 #58 #60 #107 #109 #111 (blocked by #109) #120 #122 (blocked by #111)
-- Moves: #11 #13 #14 #16 #18 #38 #44
-- Engine: #8 #10 #12 #46 #48 #86 #97 #101 (day/night, parked) #121 #123
-- Items: #36
+- Moves: #11 #13 #14 #16 #18 #38 #44 #141 #150 (blocked by #97)
+- Enemies: #143
+- Engine: #8 #10 #12 #46 #48 #86 #97 #101 (day/night, parked) #121 #123 #138 #139 #142 #144 (deferred)
+- Items: #36 #140
 - Docs: #28 #29 #110
 
 ## Deferred (cloud and multiplayer phase, do not start)

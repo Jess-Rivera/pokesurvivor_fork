@@ -8,6 +8,10 @@ New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as befo
 
 - [2026-11-18, #155 the ask dialog's keys follow the menu windows: the green button is what Enter or Space presses, arrows move it, Esc cancels (Jess)](docs/decisions/2026-11-18-155-ask-dialog-keys.md)
 - [2026-11-18, #155 library pieces are named by their look (button.slanted, button.rounded), never by a screen or job (Jess)](docs/decisions/2026-11-18-155-library-pieces-named-by-look.md)
+- [2026-11-18, #155 a primitive's states are what it shows on its own; size, colours, text and content are props in a table, never tiles (Jess)](docs/decisions/2026-11-18-155-primitive-states-vs-props.md)
+- [2026-11-18, #155 every accent colour is a 3-tone ramp worked out from its base: light 35% to white, dark 55% (Jess)](docs/decisions/2026-11-18-155-accent-ramp-rule.md)
+- [2026-11-18, #155 the UI uses 28 non-canon colours: 7 greys plus red, green, blue, yellow, purple, pink and teal ramps (Jess)](docs/decisions/2026-11-18-155-unified-palette.md)
+- [2026-11-18, #155 status chips take canon type ramps (PAR Electric, FRZ Ice, BRN Fire, PSN Poison) or the unified colours (Jess)](docs/decisions/2026-11-18-155-status-chip-colours.md)
 - [2026-11-17, #155 the UI design tokens (colours, fonts, layers, the type colours too) live in one JS data file; type and place names (Jess)](docs/decisions/2026-11-17-155-design-tokens-in-tokens-js.md)
 - [2026-11-17, #137c balls sell back at half price; one belt Buy beside Exit; an affordable Unlock stays lit (Jess)](docs/decisions/2026-11-17-137c-sell-balls-at-half-price.md)
 - [2026-11-17, #137b each ball keeps its own slot: a buy fills the first empty slot; balls move by click, drag or keys in the Shop; a throw empties its slot (Jess)](docs/decisions/2026-11-17-137b-ball-slots-kept-and-arranged.md)
