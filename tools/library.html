@@ -56,10 +56,10 @@
   .lib-later { border: 1px dashed var(--lib-line); border-radius: 8px; padding: 24px; color: var(--lib-dim); max-width: 700px; }
 
   /* a token's name: click copies it */
-  .lib-name { font: 12px ui-monospace, monospace; color: var(--lib-accent); background: none; border: none; padding: 0;
+  .lib-name { font: 12px system-ui, sans-serif; color: var(--lib-accent); background: none; border: none; padding: 0;
     cursor: copy; text-align: left; word-break: break-all; }
   .lib-name:hover { text-decoration: underline; }
-  .lib-mono { font: 12px ui-monospace, monospace; }
+  .lib-mono { font: 12px system-ui, sans-serif; }
   .lib-dim { color: var(--lib-dim); }
 
   /* colours */
@@ -85,7 +85,7 @@
   .lib-layer { display: grid; grid-template-columns: 60px 200px 1fr; gap: 10px; align-items: baseline;
     background: var(--lib-panel); border: 1px solid var(--lib-line); border-left: 4px solid var(--lib-accent);
     border-radius: 4px; padding: 6px 10px; }
-  .lib-layer b { font: 600 14px ui-monospace, monospace; }
+  .lib-layer b { font: 600 14px system-ui, sans-serif; }
 
   /* stories: each state on a dark stage, the team button's label placed the Shop's way (css/bw-shop.css) */
   .lib-states { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0; }
@@ -119,6 +119,16 @@
   .lib-facts { display: grid; grid-template-columns: 90px 1fr; gap: 4px 12px; margin: 6px 0 0; max-width: 1000px; font-size: 13px; }
   .lib-facts dt { color: var(--lib-dim); }
   .lib-facts dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+  .lib-props { border-collapse: collapse; margin: 4px 0 10px; max-width: 1000px; font-size: 13px; }
+  .lib-props th, .lib-props td { border: 1px solid var(--lib-line); padding: 4px 8px; text-align: left; vertical-align: top; }
+  .lib-props th { color: var(--lib-dim); font-weight: 600; }
+  .lib-colour-table { max-width: none; }
+  .lib-colour-chip { width: 48px; height: 24px; border-radius: 4px; border: 1px solid var(--lib-line); }
+  .lib-colour-table td:nth-child(3) .lib-name { display: block; }
+  .lib-colour-code div { margin: 0 0 2px; }
+  .lib-colour-code b { color: var(--lib-dim); font-weight: 600; }
+  .lib-colour-code summary { cursor: pointer; color: var(--lib-dim); }
+  .lib-story h4 { margin: 10px 0 2px; font-size: 13px; font-weight: 600; }
 
   #copied { position: fixed; bottom: 16px; right: 16px; background: var(--lib-panel); border: 1px solid var(--lib-accent);
     border-radius: 6px; padding: 6px 12px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
@@ -133,6 +143,7 @@
 <link rel="stylesheet" href="../js/ui/lib/primitives/modal/modal.css">
 <link rel="stylesheet" href="../js/ui/lib/primitives/portrait/portrait.css">
 <link rel="stylesheet" href="../css/hud-overlay.css">
+<link rel="stylesheet" href="library/swatch.css">
 <script src="../js/ui/lib/tokens/tokens.js"></script>
 <script src="../js/vendor/preact.min.js"></script>
 <script src="../js/vendor/preact-hooks.min.js"></script>
@@ -243,55 +254,885 @@ function copyName(name) {
 }
 
 // ---------- pages ----------
-const tokenHexes = new Map(); // hex -> colour token names, for the Style docs tab
-for (const palette of G.Tokens.palettes)
-  for (const token of palette.colours) {
-    const hex = token.hex.toLowerCase();
-    if (!tokenHexes.has(hex)) tokenHexes.set(hex, []);
-    tokenHexes.get(hex).push(token.name);
-  }
-
-function gamePalettes() {
-  return G.Tokens.palettes.map((palette) => `
-    <h3>${esc(palette.title)} <span class="lib-dim lib-mono">color.${esc(palette.id)}.*</span></h3>
-    <p class="lib-note">${esc(palette.job)}. <span class="lib-dim">Source: ${esc(palette.source)}</span></p>
-    <div class="lib-swatches">${palette.colours.map((token) => `
-      <div class="lib-swatch" data-token="${esc(token.name)}">
-        <div class="lib-chip" style="background:${esc(token.hex)}"></div>
-        <div class="lib-swatch-text">${nameButton(token.name)}
-          <span class="lib-mono">${esc(token.hex)}${token.value !== token.hex ? ' <span class="lib-dim">= ' + esc(token.value) + '</span>' : ''}</span>
-          <span class="lib-dim">${esc(token.job)}</span></div>
-      </div>`).join('')}</div>`).join('');
-}
-
-function docColours() {
-  const docs = [...new Set(LIBRARY_DOC_COLOURS.map((entry) => entry.doc))];
-  return docs.map((doc) => {
-    const entries = LIBRARY_DOC_COLOURS.filter((entry) => entry.doc === doc);
-    const sections = [...new Set(entries.map((entry) => entry.section))];
-    return `<h3>${esc(doc)}</h3>` + sections.map((section) => `
-      <h4 class="lib-dim">${esc(section)}</h4>
-      ${entries.filter((entry) => entry.section === section).map((entry) => `
-        <div class="lib-doc-row"><div class="lib-chip" style="background:${esc(entry.hex)}"></div>
-          <span class="lib-mono">${esc(entry.hex)}</span><span>${esc(entry.line)}</span>
-          ${tokenHexes.has(entry.hex) ? `<div class="lib-doc-tokens"><span class="lib-dim">token:</span>${tokenHexes.get(entry.hex).map(nameButton).join('')}</div>` : ''}
-        </div>`).join('')}`).join('');
-  }).join('');
-}
-
-const COLOUR_TABS = [
-  { id: 'game', title: 'Game palettes', draw: gamePalettes,
-    note: 'Every token palette the game reads (js/ui/lib/tokens/tokens.js). A value written as another token’s name always shows that token’s colour.' },
-  { id: 'docs', title: 'Style docs', draw: docColours,
-    note: 'Every colour in docs/HUD-STYLE.md "Colour palette" and docs/UI-PALETTES.md, with the line it is on. Colours that are already tokens show the token’s name.' },
-];
-function coloursPage(tab) {
-  const shown = COLOUR_TABS.find((entry) => entry.id === tab) || COLOUR_TABS[0];
-  return `<h2>Colours</h2>
-    <div class="lib-tabs" role="tablist">${COLOUR_TABS.map((entry) =>
+/** A page with tabs along the top: the tab asked for (or the first), its note if it has one, then what it draws. */
+function tabbedPage(title, tabs, tab) {
+  const shown = tabs.find((entry) => entry.id === tab) || tabs[0];
+  return `<h2>${esc(title)}</h2>
+    <div class="lib-tabs" role="tablist">${tabs.map((entry) =>
       `<button type="button" role="tab" data-tab="${entry.id}" aria-selected="${entry === shown}">${esc(entry.title)}</button>`).join('')}</div>
-    <p class="lib-note">${esc(shown.note)}</p>${shown.draw()}`;
+    ${shown.note ? `<p class="lib-note">${esc(shown.note)}</p>` : ''}${shown.draw()}`;
 }
+// Colours (Jess 2026-11-18): two tabs, Unified (the scheme) and Fold Map (today's colours to Unified). The kits below
+// hold today's colours (the old Colours 2.0 Used in Game tab); the Fold Map reads them. The game reads nothing here.
+/** An rgba() colour as its #hex and alpha (labelRefused is white at 45%); null for a plain #hex. */
+function seeThrough(value) {
+  const parts = value.startsWith('rgba') ? value.match(/[\d.]+/g).map(Number) : null;
+  if (!parts) return null;
+  const hex = '#' + parts.slice(0, 3).map((channel) => channel.toString(16).padStart(2, '0')).join('');
+  return { hex, alpha: parts[3] };
+}
+/** A colour's HSL saturation and lightness (0 to 1). */
+function hslOf(hex) {
+  const see = seeThrough(hex);
+  if (see) return { saturation: 0, lightness: see.alpha };
+  const [r, g, b] = [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255);
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b),
+    lightness = (max + min) / 2;
+  const saturation = max === min ? 0 : (max - min) / (1 - Math.abs(2 * lightness - 1));
+  return { saturation, lightness };
+}
+// Under 6% saturation counts as a grey: the divider (#495151, 5.3%) is one; the Dark type's light tone (#998b8c, 6.4%)
+// is not, so its ramp stays in order
+const GREY_SATURATION = 0.06;
+/** Swatch order (Jess 2026-11-18): greys first, then the coloured ones, each dark to light by HSL lightness. */
+function swatchOrder(a, b) {
+  const one = hslOf(a.hex),
+    two = hslOf(b.hex);
+  const greyFirst = (one.saturation >= GREY_SATURATION) - (two.saturation >= GREY_SATURATION);
+  return greyFirst || one.lightness - two.lightness;
+}
+const SWATCH_COLOUR_WIDTH = 50, // px: the color.hudPanel baseline (350 px for 7); a colour is never thinner
+  SWATCH_MIN_WIDTH = 200; // px: the white bar's room for the longest name (.trackLight) and a #HEX
+/** A swatch (tools/library/swatch.css): its header (color.hudPanel.*), the colours side by side, dark to light, 50 px
+ *  each, then its story info (the job, and the tokens.js tokens it reads today), wrapped to the swatch's width.
+ *  Hovering a colour shows its name (.body) and #HEX in the white bar; clicking one copies its #HEX.
+ *  group: { label, job, colours: [[part, token, hex], ...] }; a part is the name after the label, in camelCase (body,
+ *  trackLight); hex, if given, is the prototype's new value in place of the token's (the info line shows both).
+ *  Order: greys first, then the coloured ones, each dark to light by HSL lightness (swatchOrder).
+ *  A colour the game writes as a raw hex has no token: [part, null, hex], and the group says where (written: 'file'). */
+/** What the white bar shows for a colour: its #hex, or "#ffffff 45%" for a see-through one. */
+const shown = (value) => {
+  const see = seeThrough(value);
+  return see ? see.hex + ' ' + Math.round(see.alpha * 100) + '%' : value;
+};
+/** Every Colours 2.0 swatch, kit by kit. */
+const allSwatches = () =>
+  [HUD_KIT_SWATCHES, HP_SWATCHES, RIM_SWATCHES, SCROLL_SWATCHES, TEXT_SWATCHES, STATUS_SWATCHES, STAT_SWATCHES,
+    EFFECT_SWATCHES, TYPE_SWATCHES].flat();
+/** Every Colours 2.0 colour by its full name (color.hudBonus.fill), built once when a page first draws. */
+let boardEntries = null;
+function boardEntry(name) {
+  if (!boardEntries) {
+    boardEntries = new Map();
+    for (const group of allSwatches()) for (const colour of group.colours) boardEntries.set(group.label + '.' + colour[0], colour);
+  }
+  return boardEntries.get(name);
+}
+/** A #hex at an alpha, written the way the game writes see-through colours ("rgba(255, 210, 63, 0.75)"). */
+const rgbaOf = (hex, alpha) =>
+  `rgba(${[1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16)).join(', ')}, ${alpha})`;
+/** A colour's value: [part, name, hex, alpha]. name is a tokens.js token or another Colours 2.0 colour (a shared one);
+ *  hex, if given, is the prototype's new value; alpha paints it see-through. */
+function valueOf([, name, hex, alpha]) {
+  const shared = !hex && name && boardEntry(name);
+  const value = (hex || (shared ? valueOf(shared) : G.Tokens.color(name))).toLowerCase();
+  return alpha == null ? value : rgbaOf(value, alpha);
+}
+function swatch(group) {
+  const entry = (colour) => ({ part: '.' + colour[0], token: colour[1], hex: valueOf(colour) });
+  const colours = group.colours.map(entry).sort(swatchOrder);
+  const listed = group.colours;
+  const head = `<div class="swatch-head">${group.heading ? esc(group.heading) : nameButton(group.label + '.*')}</div>`;
+  const named = listed.filter(([, token]) => token);
+  const today = group.from
+    ? group.from
+    : group.source
+    ? 'canon, ' + group.source
+    : !named.length
+    ? 'no token, written as raw hex in ' + group.written
+    : listed
+        .map(([, token, hex, alpha]) =>
+          !token ? (group.note ? 'new ' : 'no token ') + hex.toLowerCase()
+            : boardEntry(token) ? token + (alpha == null ? '' : ' at ' + Math.round(alpha * 100) + '%') + ' (Colours 2.0)'
+            : hex ? `${token} (${G.Tokens.color(token).toLowerCase()}, here ${hex.toLowerCase()})` : token)
+        .join(', ') + (group.written ? '; written as raw hex in ' + group.written : '') +
+      (group.note ? '; ' + group.note : '');
+  const info = `<p class="lib-note swatch-info">${esc(group.job)}.
+    <span class="lib-dim">Today: ${esc(today)}</span></p>`;
+  const width = Math.max(colours.length * SWATCH_COLOUR_WIDTH, SWATCH_MIN_WIDTH);
+  return `<div class="swatch-group" style="width:${width}px">` + head + `<div class="swatch">
+    <div class="swatch-palette">${colours.map((colour) => `
+      <div class="swatch-color" style="background:${esc(colour.hex)}" data-copy="${esc(colour.hex)}"
+        data-part="${esc(colour.part)}" data-show="${esc(shown(colour.hex))}"></div>`).join('')}</div>
+    <div class="swatch-stats"><span class="swatch-part"></span><span class="swatch-hex"></span></div>
+  </div>` + info + '</div>';
+}
+/** Swatches side by side, wrapping to the next row when the page runs out. */
+const swatchRow = (groups) => `<div class="swatch-row">${groups.map(swatch).join('')}</div>`;
+
+// Colours 2.0 groups: prototype names in camelCase (Jess, 2026-11-18), each colour read from today's tokens.js token
+const HUD_KIT_SWATCHES = [
+  {
+    label: 'color.hudPanel',
+    job:
+      'The colours every HUD and menu panel is drawn with: outlines, bodies, frames, dividers, ' +
+      "the menu windows' teal and the yellow selection cursor",
+    colours: [['outline', 'color.hud.outline'], ['body', 'color.hud.body'], ['frame', 'color.hud.frame'],
+      ['checker', 'color.hud.checker'], ['divider', 'color.hud.slate'], ['teal', 'color.hud.teal'],
+      ['cursor', 'color.hud.cursor']],
+  },
+  {
+    label: 'color.hudCheckerPattern',
+    job: 'The move slot grid: dark squares on light lines (from the B2 type checker)',
+    colours: [['dark', 'color.hud.typeBodyDark', '#303030'], ['light', 'color.hud.typeBodyLight', '#404040']],
+  },
+  {
+    label: 'color.hudLevel',
+    job: 'The Lv yellow: Lv and gold fill and shade, and the run item box corner shade',
+    colours: [['fill', 'color.hud.lvFill'], ['shade', 'color.hud.lvShade'], ['dark', 'color.hud.lvDark']],
+  },
+  {
+    label: 'color.hudBonus',
+    job:
+      "The bonus yellow: what a bonus adds (the stat hex's run band, the EV screen's adds, bonus and gold values) and " +
+      "the Pinap Berry chip (PIN). textPause.bonus, hudPauseHex.run and effectDrop point at it; shade is the chip's, " +
+      'at 55% of the fill',
+    written: 'css/pause-menu.css, css/hud-overlay.css, js/ui/hud-kit-chips.js (PIN, shade worked out by rampedShade)',
+    colours: [['fill', null, '#ffd23f'], ['shade', null, '#8c7423']],
+  },
+  {
+    label: 'color.hudWhite',
+    job: "The HUD's white: every white rim at rest (light, base, shade), the run item box's icon patch and its edge, " +
+      "the catch screen's flee ring",
+    colours: [['light', 'color.rim.rest.light'], ['base', 'color.hud.paper'], ['shade', 'color.hud.paperEdge']],
+  },
+  {
+    label: 'color.hudPauseRed',
+    job: "The pause menu's red: the Poke Ball's red cap the menu opens from, and the End Run title",
+    written: 'css/pause-menu.css (--pm-red and .er-title)',
+    colours: [['base', null, '#c8141c']],
+  },
+  {
+    label: 'color.hudPauseBall',
+    job:
+      'The Poke Ball the pause menu opens from: its outer ring, ring, black inside and slate bottom cap. It also ' +
+      'reuses hudPauseRed (the top cap), hudPanel.outline (the inner ring, the centre button stroke) and white (the ' +
+      "caps' edge, the centre button)",
+    written: 'css/pause-menu.css (.pm-ring-outer, .pm-ring, .pm-inside, --pm-slate)',
+    colours: [['ringOuter', null, '#747474'], ['ring', null, '#575757'], ['inside', null, '#000000'],
+      ['capSlate', null, '#313a46']],
+  },
+  {
+    label: 'color.hudPauseHex',
+    job:
+      "The pause menu's stat hex: its grid lines (16%) and outer ring (40%), the now band (60%) and its edge, and " +
+      "the run band (the bonus yellow at 75%). The start band is the Pokemon's first type at 60%",
+    written: 'css/pause-menu.css (.pm-hex-*)',
+    colours: [['line', null, 'rgba(244, 248, 255, 0.16)'], ['lineEdge', null, 'rgba(244, 248, 255, 0.4)'],
+      ['now', null, 'rgba(244, 248, 255, 0.6)'], ['nowEdge', null, '#f4f8ff'],
+      ['run', 'color.hudBonus.fill', null, 0.75]],
+  },
+  {
+    label: 'color.hudExp',
+    job: "The EXP blue: the EXP bar and ring fill and shade, and live run item text; empty is the ring's unfilled part",
+    colours: [['fill', 'color.hud.expFill'], ['shade', 'color.hud.expShade'], ['empty', 'color.hud.trackLight']],
+  },
+];
+const ramp = (token) => [['light', token + '.light'], ['base', token + '.base'], ['dark', token + '.dark']];
+// HP kit: the life meter fills by how much HP is left (bar.life, the roster bar, the boss bar)
+const HP_SWATCHES = [
+  ['High', 'high', 'over half: green'],
+  ['Middle', 'middle', 'from a fifth to half: yellow'],
+  ['Low', 'low', 'under a fifth: red'],
+].map(([title, band, when]) => ({
+  label: 'color.hp' + title,
+  job: 'HP ' + when + '. Fill for the bar, shade for its edge rows',
+  colours: [['fill', 'color.hp.' + band + '.fill'], ['shade', 'color.hp.' + band + '.shade']],
+}));
+// the empty track the fills slide along (moved from hudPanel, Jess 2026-11-18). trackLight also paints the EXP ring's
+// empty part (named color.hudExp.empty), the grey rim's light row (color.rim.fainted.light) and Run Info's scroll thumb
+// rim: those get their own names in the colour pass
+HP_SWATCHES.unshift({
+  label: 'color.hpTrack',
+  job: "The life bar's empty track behind the fill: shade for its top and bottom rows, light for its middle row",
+  colours: [['shade', 'color.hud.trackShade'], ['light', 'color.hud.trackLight']],
+});
+const RIM_SWATCHES = [
+  {
+    label: 'color.rimButtonRest',
+    job: 'A button at rest (and a refused one): the white rim',
+    colours: ramp('color.rim.rest'),
+  },
+  {
+    label: 'color.rimButtonFocusPositive',
+    job: 'A button under the cursor that moves forward or buys: the green rim',
+    colours: ramp('color.rim.focus'),
+  },
+  {
+    label: 'color.rimButtonFocusNegative',
+    job: 'A button under the cursor that takes something away (Sell, Let It Go, End, Destroy): the red rim',
+    colours: ramp('color.rim.sell'),
+  },
+  {
+    label: 'color.rimInactive',
+    job: 'A fainted roster row or pixel panel, and a locked belt: the grey rim',
+    colours: ramp('color.rim.fainted'),
+  },
+  {
+    label: 'color.rimBelt',
+    job: 'A bought ball belt in the Shop (the Poke Balls pocket colours): the gold rim',
+    colours: ramp('color.rim.belt'),
+  },
+  {
+    label: 'color.rimButtonNeutral',
+    job: "A button that neither moves forward nor takes away, at rest and under the cursor: the pocket prompt's No",
+    written: 'js/ui/pause-menu.js GREY_RIM',
+    colours: [['light', null, '#c4c4c4'], ['base', null, '#8c8c8c'], ['dark', null, '#4c4c4c']],
+  },
+  {
+    label: 'color.rimBond',
+    job: "Bonded moves: the run HUD's bonded move slots and the pause menu's bonded move groups (the bond pink)",
+    written: 'js/ui/hud-player-panel.js BOND_RIM; base also in pause-pokemon.js and pause-menu.css',
+    colours: [['light', null, '#ffd3f1'], ['base', null, '#ff8ad8'], ['dark', null, '#8c4c77']],
+  },
+  {
+    label: 'color.rimPocketBerry',
+    job: "The Shop's Upgrades tab: the Berry pocket card's green rim",
+    written: 'js/ui/gacha-ui.js BERRY_POCKET_RIM',
+    colours: [['light', null, '#6ec188'], ['base', null, '#20a048'], ['dark', null, '#15682f']],
+  },
+  {
+    label: 'color.rimPocketTeamItem',
+    job: "The Shop's Upgrades tab: the Team Item pocket card's pink rim",
+    written: 'js/ui/gacha-ui.js TEAM_ITEM_POCKET_RIM',
+    colours: [['light', null, '#d89db7'], ['base', null, '#c86890'], ['dark', null, '#82445e']],
+  },
+];
+// Scroll kit: the two scroll bars the game draws
+const SCROLL_SWATCHES = [
+  {
+    label: 'color.scrollMenu',
+    job: "The menu windows' scroll bar (Shop, Inventory, the pause menu's move list): a teal thumb on the checker",
+    // the thumb is the EXP shade, which moved to the canon SpA shade (Jess 2026-11-18), so it points there; its rim
+    // stays teal, so the rim reads the teal itself, not the thumb it aliases in tokens.js
+    colours: [['track', 'color.scroll.track'], ['thumb', 'color.statSpa.shade'], ['thumbRim', 'color.hud.teal']],
+  },
+  {
+    label: 'color.scrollRunInfo',
+    job: "Run Info's scroll bar: a slate thumb with a grey rim on the panel frame (written in pause-run-info.js, no token)",
+    colours: [['track', 'color.hud.frame'], ['thumb', 'color.hud.slate'], ['thumbRim', 'color.hud.trackLight']],
+  },
+];
+// Text kit: the menu windows' and library pieces' text, and the pause menu's text
+const TEXT_SWATCHES = [
+  {
+    label: 'color.textMenu',
+    job:
+      "Menu text: a button's label, a refused button's label (white at 45%, shown over the board), and secondary " +
+      "text (a card's name)",
+    colours: [['label', 'color.text.label'], ['labelRefused', 'color.text.labelRefused'], ['secondary', 'color.text.secondary']],
+  },
+  {
+    label: 'color.textPause',
+    job:
+      "The pause menu's text: body white; box titles and empty notes grey; the stat hex's names, move summaries and " +
+      "stat values blue; the hex edge's number; bonuses and gold yellow; Run Info's headers; ahead green and behind " +
+      "red; the EV screen's soft white. It also reuses the Lv yellow, the low HP red, the pause red (End Run title), " +
+      "the divider (a disabled EV step) and textMenu.secondary (Run Info values)",
+    written: 'css/pause-menu.css',
+    colours: [
+      ['body', 'color.text.label'],
+      ['title', 'color.hud.trackLight'],
+      ['soft', 'color.hud.paper'],
+      ['value', null, '#b9cbf0'],
+      ['edge', null, '#3d8ee0'],
+      ['bonus', 'color.hudBonus.fill'],
+      ['header', 'color.hud.cursor'],
+      ['ahead', 'color.rim.focus.base'],
+      ['behind', 'color.rim.sell.base'],
+    ],
+  },
+];
+// Status kit: the chips' colours (js/ui/hud-kit-chips.js), all raw hex today. Rows: the statuses, the stat chips, the
+// team's timed effects.
+const CHIPS = 'js/ui/hud-kit-chips.js';
+const chip = (label, job, written, fill, shade) => ({
+  label,
+  job,
+  written,
+  colours: [['fill', null, fill], ['shade', null, shade]],
+});
+const STATUS_SWATCHES = [
+  chip('color.statusSleep', 'Sleep (SLP)', CHIPS + ' CHIP_STYLES', '#848484', '#4a4a4a'),
+  chip('color.statusPoison', 'Poison (PSN)', CHIPS + ' CHIP_STYLES', '#d631de', '#6b2942'),
+  chip('color.statusToxic', 'Bad poison (PSN): the poison fill with a darker shade', CHIPS + ' CHIP_STYLES', '#d631de',
+    '#391042'),
+  chip('color.statusBurn', 'Burn (BRN)', CHIPS + ' CHIP_STYLES', '#e75a4a', '#b50000'),
+  chip('color.statusFreeze', 'Freeze (FRZ)', CHIPS + ' CHIP_STYLES', '#218cf7', '#005a8c'),
+  chip('color.statusParalysis', 'Paralysis (PAR)', CHIPS + ' CHIP_STYLES', '#efad00', '#ad6b00'),
+  {
+    label: 'color.statusMinor',
+    job:
+      'The minor statuses, shown only on the character panel: a hollow chip, the colour as its rim and its text over ' +
+      "a color.hudPanel.outline body (each colour is its animation's, assets/status/)",
+    written: CHIPS + ' CHIP_STYLES',
+    colours: [['confusion', null, '#d8b000'], ['daze', null, '#1f9fe7'], ['drowsy', null, '#e73963'],
+      ['trap', null, '#adb5bd']],
+  },
+];
+const STAT_SWATCHES = [
+  ['Atk', 'Attack (ATK)', '#efcc18', '#9b8510'],
+  ['Def', 'Defense (DEF); also the Kee Berry chip (KEE)', '#e86412', '#97410c'],
+  ['Spa', 'Special Attack (SPA)', '#14c3f1', '#0d7f9d'],
+  ['Spd', 'Special Defense (SPD); also the Maranga Berry chip (MAR)', '#4a6adf', '#304591'],
+  ['Spe', 'Speed (SPE)', '#d51dad', '#8b1370'],
+].map(([stat, job, fill, shade]) =>
+  chip('color.stat' + stat, job + ': a raise or drop chip (UI-PALETTES "Pokemon Stats" Base and Dark)',
+    CHIPS + ' STAT_CHIP_STYLES', fill, shade));
+const RAMPED = CHIPS + ' TEAM_EFFECT_STYLES (shade worked out at 55% of the fill, rampedShade)';
+const EFFECT_SWATCHES = [
+  chip('color.effectRegen', 'The team regenerating (REG)', RAMPED, '#5fe08a', '#347b4c'),
+  chip('color.effectCrit', 'The Lansat Berry: a raised critical hit rate (LAN)', RAMPED, '#ffb347', '#8c6227'),
+  {
+    label: 'color.effectDrop',
+    job: 'The Pinap Berry: more drops (PIN), in the shared bonus yellow',
+    colours: [['fill', 'color.hudBonus.fill'], ['shade', 'color.hudBonus.shade']],
+  },
+];
+// Type kit: one swatch per Pokemon type (color.typeFire.*), read from tokens.js color.type.<type>.<tone>, in the
+// type chart's order as tokens.js lists them
+const TYPE_NAMES = [
+  ...new Set(
+    G.Tokens.palettes.find((palette) => palette.id === 'type').colours.map((token) => token.name.split('.')[2])
+  ),
+];
+const TYPE_SWATCHES = TYPE_NAMES.map((type) => ({
+  label: 'color.type' + type[0].toUpperCase() + type.slice(1),
+  job: 'The ' + type + ' type: base for fills, light for highlights and text over the map, dark for shades and outlines',
+  colours: ramp('color.type.' + type),
+}));
+// ---------- the grey scale: the 18 greys of today folded onto 7 (Jess 2026-11-18); Unified shows it ----------
+// One grey per job you can see (Jess 2026-11-18: 7): ink, panel (the old frame #212121 folds into it, too close to tell
+// apart), raised, the slate, a mid grey, the paper and white.
+// Each of today's greys folds onto the nearest one. The Type kit's greys and the see-through ones are not on the scale.
+const GREY_DRAFT = {
+  label: 'color.grey',
+  job:
+    'Draft grey scale, dark to light: ink (outlines), panel (bodies and frames), raised (checker, dark shades), slate ' +
+    '(dividers, mid-dark shades), mid (tracks, light shades), paper and white',
+  written: 'tools/library.html only (a draft)',
+  colours: [
+    ['ink', 'color.hud.outline'],
+    ['panel', 'color.hud.body'],
+    ['raised', 'color.hud.checker'],
+    ['slate', 'color.hud.slate'],
+    ['mid', null, '#828282'], // the canon Status attack base (Jess 2026-11-18; 1.1 from the old #7f7f7f, one hex fewer)
+    ['paper', 'color.hud.paper'],
+    ['white', 'color.rim.rest.light'],
+  ],
+};
+// today's grey -> the draft grey it folds onto (the nearest)
+const GREY_FOLD = {
+  '#000000': 'ink',
+  '#101010': 'ink',
+  '#181818': 'panel',
+  '#212121': 'panel',
+  '#303030': 'raised',
+  '#404040': 'slate',
+  '#464646': 'slate',
+  '#4a4a4a': 'slate',
+  '#4c4c4c': 'slate',
+  '#495151': 'slate',
+  '#575757': 'slate',
+  '#747474': 'mid',
+  '#7f7f7f': 'mid',
+  '#848484': 'mid',
+  '#8c8c8c': 'mid',
+  '#c4c4c4': 'paper',
+  '#e7e7e7': 'paper',
+  '#ffffff': 'white',
+};
+/** A #hex in CIE Lab, to say how far apart two colours look. */
+function labOf(hex) {
+  const linear = (channel) => {
+    const value = channel / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  const [r, g, b] = [1, 3, 5].map((index) => linear(parseInt(hex.slice(index, index + 2), 16)));
+  const x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047,
+    y = 0.2126 * r + 0.7152 * g + 0.0722 * b,
+    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883;
+  const f = (value) => (value > 0.008856 ? Math.cbrt(value) : 7.787 * value + 16 / 116);
+  return [116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))];
+}
+/** How far apart two colours look: CIEDE2000 (Jess 2026-11-18, in place of CIE76, which overstates saturated colours
+ *  and understates greys). About 1 is the smallest step the eye notices; above 5 is clearly different. */
+function deltaE(one, two) {
+  const [L1, a1, b1] = labOf(one),
+    [L2, a2, b2] = labOf(two);
+  const rad = Math.PI / 180,
+    pow7 = (value) => value ** 7;
+  const meanChroma = (Math.hypot(a1, b1) + Math.hypot(a2, b2)) / 2;
+  const g = 0.5 * (1 - Math.sqrt(pow7(meanChroma) / (pow7(meanChroma) + pow7(25))));
+  const a1p = (1 + g) * a1,
+    a2p = (1 + g) * a2;
+  const C1p = Math.hypot(a1p, b1),
+    C2p = Math.hypot(a2p, b2);
+  const hue = (b, ap) => (b === 0 && ap === 0 ? 0 : (Math.atan2(b, ap) / rad + 360) % 360);
+  const h1p = hue(b1, a1p),
+    h2p = hue(b2, a2p);
+  let dhp = 0;
+  if (C1p * C2p !== 0) {
+    dhp = h2p - h1p;
+    if (dhp > 180) dhp -= 360;
+    else if (dhp < -180) dhp += 360;
+  }
+  const dLp = L2 - L1,
+    dCp = C2p - C1p,
+    dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin((dhp / 2) * rad);
+  const Lbp = (L1 + L2) / 2,
+    Cbp = (C1p + C2p) / 2;
+  let hbp = h1p + h2p;
+  if (C1p * C2p !== 0) {
+    if (Math.abs(h1p - h2p) <= 180) hbp = (h1p + h2p) / 2;
+    else hbp = h1p + h2p < 360 ? (h1p + h2p + 360) / 2 : (h1p + h2p - 360) / 2;
+  }
+  const T =
+    1 -
+    0.17 * Math.cos((hbp - 30) * rad) +
+    0.24 * Math.cos(2 * hbp * rad) +
+    0.32 * Math.cos((3 * hbp + 6) * rad) -
+    0.2 * Math.cos((4 * hbp - 63) * rad);
+  const dTheta = 30 * Math.exp(-(((hbp - 275) / 25) ** 2));
+  const RC = 2 * Math.sqrt(pow7(Cbp) / (pow7(Cbp) + pow7(25)));
+  const SL = 1 + (0.015 * (Lbp - 50) ** 2) / Math.sqrt(20 + (Lbp - 50) ** 2),
+    SC = 1 + 0.045 * Cbp,
+    SH = 1 + 0.015 * Cbp * T,
+    RT = -Math.sin(2 * dTheta * rad) * RC;
+  const l = dLp / SL,
+    c = dCp / SC,
+    h = dHp / SH;
+  return Math.sqrt(l * l + c * c + h * h + RT * c * h);
+}
+const SEEN_FROM = 1,
+  SLIGHT_UNDER = 5;
+const changeWords = (difference) =>
+  difference === 0 ? 'same' : difference < SEEN_FROM ? "can't see it" : difference < SLIGHT_UNDER ? 'slight' : 'visible';
+// ---------- Unified: the new colour scheme, one group at a time as Jess settles it (a draft; the game reads nothing) ----
+// The unified scheme (Jess 2026-11-18): every colour that is not canon Pokemon is one of 28. Neutrals: the 7 greys.
+// Colours: the 7 UI colours, red, green, blue, yellow, purple, pink and teal (Jess 2026-11-18: one group, no Special). Each colour is a 3-tone ramp (light, base, dark) worked out
+// from its base by the accent ramp rule (docs/decisions/2026-11-18-155-accent-ramp-rule.md). Everything else the UI
+// shows is canon (types, status and stat chips; Lv and HP middle use the canon paralysis yellow). Names come later.
+const RAMP_LIGHT = 0.35,
+  RAMP_DARK = 0.55;
+const rampChannels = (hex) => [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16));
+const rampHex = (channels) =>
+  '#' + channels.map((value) => Math.round(Math.min(255, Math.max(0, value))).toString(16).padStart(2, '0')).join('');
+const rampLight = (hex) => rampHex(rampChannels(hex).map((value) => value + (255 - value) * RAMP_LIGHT));
+const rampDark = (hex) => rampHex(rampChannels(hex).map((value) => value * RAMP_DARK));
+/** A 3-tone ramp: base is a token or Colours 2.0 name, or a #hex the game writes raw; light and dark come from the
+ *  rule unless a name is given for them. */
+function accentRamp(base, tones = {}) {
+  const raw = base.startsWith('#');
+  const value = raw ? base.toLowerCase() : valueOf(['base', base]);
+  const tone = (part, name, worked) =>
+    name ? (name.startsWith('#') ? [part, null, name.toLowerCase()] : [part, name]) : [part, null, worked];
+  return [
+    tone('light', tones.light, rampLight(value)),
+    raw ? ['base', null, value] : ['base', base],
+    tone('dark', tones.dark, rampDark(value)),
+  ];
+}
+const RAMP_NOTE = 'light and dark worked out by the ramp rule (35% to white, 55% of the base)';
+const unifiedRamp = (label, heading, job, colours, note = RAMP_NOTE) => ({ label, heading, job, colours, note });
+const UNIFIED_RED = unifiedRamp(
+  'unified.red',
+  'Red (name later)',
+  'Danger: the negative rim (Sell, End, Let It Go, Destroy), low HP, Run Info\'s behind value, the pause menu\'s red ' +
+    'cap and End Run title',
+  [['light', 'color.rim.sell.light'], ['base', 'color.hp.low.fill'], ['dark', 'color.hp.low.shade']],
+  'settled 2026-11-18 from the negative rim light and the low HP fill and shade'
+);
+const UNIFIED_GREEN = unifiedRamp(
+  'unified.green',
+  'Green (name later)',
+  'Positive: the focus rim, HP high, ahead values, the Berry pocket rim',
+  accentRamp('color.rim.focus.base')
+);
+const UNIFIED_BLUE = unifiedRamp(
+  'unified.blue',
+  'Blue (name later)',
+  "EXP: the EXP bar and ring, live run item text, the menu scroll thumb (dark), the menu windows' card rims",
+  accentRamp('color.hud.expFill', { light: '#66d8f6', dark: 'color.statSpa.shade' }),
+  'light and dark are the canon Special Attack light and shade (Jess 2026-11-18: one hex fewer each, and the light ' +
+    'moves off the Ice base, 1.9 to 3.4)'
+);
+const UNIFIED_YELLOW = unifiedRamp(
+  'unified.yellow',
+  'Yellow (name later)',
+  "The cursor's yellow: the selection cursor, Run Info's headers, bonus and gold values, the stat hex's run band, " +
+    'the Pinap chip',
+  accentRamp('color.hud.cursor')
+);
+const UNIFIED_PURPLE = unifiedRamp(
+  'unified.purple',
+  'Purple (name later)',
+  'The Epic rarity tier (Pokedex, Team screen, TMs filter); the one tier the other ramps did not cover',
+  accentRamp('#c47bff'),
+  RAMP_NOTE + '; base is the Epic rarity colour js/systems/copies.js writes raw'
+);
+const UNIFIED_PINK = unifiedRamp(
+  'unified.pink',
+  'Pink (name later)',
+  "Bond and team: bonded move slots and groups, the Team Item pocket rim",
+  accentRamp('#ff8ad8'),
+  RAMP_NOTE + '; base is the bond pink the game writes raw'
+);
+const UNIFIED_TEAL = unifiedRamp(
+  'unified.teal',
+  'Teal (name later)',
+  "Secondary text (a card's name, Run Info values); the menu scroll thumb's rim",
+  accentRamp('color.text.secondary')
+);
+// ---------- canon reference sets from docs/UI-PALETTES.md (Bulbapedia three-tone palettes; not counted) ----------
+const PALETTES_DOC = 'docs/UI-PALETTES.md';
+/** A canon set's swatch: [light, base, dark] as written in UI-PALETTES.md. */
+const canonRamp = (label, job, [lightHex, baseHex, darkHex], section) => ({
+  label,
+  job,
+  source: PALETTES_DOC + ' "' + section + '"',
+  colours: [['light', null, lightHex], ['base', null, baseHex], ['dark', null, darkHex]],
+});
+const ATTACK_SWATCHES = [
+  ['Physical', ['#F29173', '#EB5628', '#99381A']],
+  ['Special', ['#7D94CD', '#375AB2', '#243B74']],
+  ['Status', ['#AEAEAE', '#828282', '#555555']],
+].map(([name, ramp]) =>
+  canonRamp('color.attack' + name, name + ' moves (the damage class mark; Masters EX icons, white text)', ramp, 'Attacks')
+);
+// the Generation IV bag pockets only (UI-PALETTES "Bag" also lists Apricorn, Cologne, Ingredients, Treasures, Z-Crystals)
+const POCKET_SWATCHES = [
+  ['Items', 'Items pocket (today the Shop\'s Team Item pocket rim)', ['#D89DB7', '#C86890', '#82445E']],
+  ['KeyItems', 'Key Items pocket', ['#B788E6', '#9048D8', '#5E2F8C']],
+  ['Berries', 'Berries pocket (today the Shop\'s Berry pocket rim)', ['#6EC188', '#20A048', '#15682F']],
+  ['BattleItems', 'Battle Items pocket', ['#78A2EB', '#3070E0', '#1F4992']],
+  ['Mail', 'Mail pocket', ['#69B7CC', '#1890B0', '#105E72']],
+  ['Medicine', 'Medicine pocket', ['#EBA27E', '#E07038', '#924924']],
+  ['PokeBalls', 'Poke Balls pocket (today the bought ball belt rim)', ['#DBB26E', '#C88820', '#825815']],
+  ['TmsHms', 'TMs and HMs pocket', ['#ACC66E', '#80A820', '#536D15']],
+].map(([name, job, ramp]) => canonRamp('color.pocket' + name, job, ramp, 'Bag'));
+const STAT_CANON_SWATCHES = [
+  ['Hp', 'HP', ['#9EE865', '#69DC12', '#448F0C']],
+  ['Attack', 'Attack (today the ATK chip: base and dark)', ['#F5DE69', '#EFCC18', '#9B8510']],
+  ['Defense', 'Defense (today the DEF chip)', ['#F09A65', '#E86412', '#97410C']],
+  ['SpecialAttack', 'Special Attack (today the SPA chip)', ['#66D8F6', '#14C3F1', '#0D7F9D']],
+  ['SpecialDefense', 'Special Defense (today the SPD chip)', ['#899EEA', '#4A6ADF', '#304591']],
+  ['Speed', 'Speed (today the SPE chip)', ['#E46CCA', '#D51DAD', '#8B1370']],
+].map(([name, job, ramp]) => canonRamp('color.stat' + name, job + '; the Sun and Moon level-up screen', ramp, 'Pokemon Stats'));
+const TIME_SWATCHES = [
+  ['Morning', ['#A2DFEB', '#70CEE0', '#498692']],
+  ['Day', ['#AAD6FC', '#7CC0FA', '#517DA3']],
+  ['Evening', ['#EFBFA4', '#E79D73', '#96664B']],
+  ['Night', ['#CFC2EF', '#B5A1E6', '#766996']],
+].map(([name, ramp]) => canonRamp('color.time' + name, name + ' (Pokopia); a possible time-of-day tint', ramp, 'Time'));
+// Status chips (Jess 2026-11-18): from Generation VIII the paralysis, frozen, burned and poisoned icons match the
+// Electric, Ice, Fire and Poison type icons (Bulbapedia "Status condition"), so those chips take the type ramps: fill is
+// the base, shade the dark. The rest (Jess 2026-11-18): sleep takes the greys, bad poison a darker Poison, and the
+// hollow minor chips one colour each from the types or the 7 UI colours.
+const statusFromType = (status, tag, type) => ({
+  label: 'color.status' + status,
+  job: tag + ' chip: the canon ' + type + ' type ramp (fill = base, shade = dark)',
+  source: 'the ' + type + ' type (Bulbapedia: Gen VIII+ status icons match the type icons)',
+  colours: ramp('color.type.' + type.toLowerCase()),
+});
+/** A Unified grey's value by its part (mid, slate), read from the grey scale so the chips follow it. */
+const greyTone = (part) => valueOf(GREY_DRAFT.colours.find((colour) => colour[0] === part));
+const STATUS_TYPE_SWATCHES = [
+  statusFromType('Paralysis', 'PAR', 'Electric'),
+  statusFromType('Freeze', 'FRZ', 'Ice'),
+  statusFromType('Burn', 'BRN', 'Fire'),
+  statusFromType('Poison', 'PSN', 'Poison'),
+  {
+    label: 'color.statusSleep',
+    job: 'SLP chip: the greys (the Scarlet/Violet sleep icon is grey; no type matches it)',
+    from: 'grey.mid and grey.slate (Unified); no new colours',
+    colours: [['fill', null, greyTone('mid')], ['shade', null, greyTone('slate')]],
+  },
+  {
+    label: 'color.statusToxic',
+    job: "Bad PSN chip: darker than poison (Bulbapedia: from Gen V bad poison's flag is darker); fill is Poison's dark",
+    from: 'fill the Poison type dark; shade worked out by the ramp rule (55% of it), the one new colour',
+    colours: [['fill', 'color.type.poison.dark'], ['shade', null, rampDark(G.Tokens.color('color.type.poison.dark'))]],
+  },
+  {
+    label: 'color.statusMinor',
+    job:
+      'The hollow minor chips, character panel only: one colour each for the rim and the text, on the grey.ink body',
+    from: 'confusion yellow.base, daze blue.base (Unified); drowsy the Psychic base, trap the Normal light (types)',
+    colours: [
+      ['confusion', 'color.hud.cursor'],
+      ['daze', 'color.hud.expFill'],
+      ['drowsy', 'color.type.psychic.base'],
+      ['trap', 'color.type.normal.light'],
+    ],
+  },
+];
+// ---------- Reference Not in Game: the UI-PALETTES sets the game does not use (Jess 2026-11-18) ----------
+// Read from the board's doc data (doc-colours.js, generated from docs/UI-PALETTES.md), so the tab follows the doc.
+const unaccent = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const camelName = (text) =>
+  unaccent(text)
+    .split(/[^A-Za-z0-9]+/)
+    .filter(Boolean)
+    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .join('');
+/** A UI-PALETTES section's rows as [name, [light, base, dark]] (each row is listed once per hex in the doc data). */
+function paletteRows(section) {
+  const lines = (window.LIBRARY_DOC_COLOURS || [])
+    .filter((entry) => entry.doc === 'UI-PALETTES.md' && entry.section === section)
+    .map((entry) => entry.line);
+  return [...new Set(lines)]
+    .map((line) => line.split('|').map((cell) => cell.trim()))
+    .filter((cells) => cells.length >= 4 && cells[1].startsWith('#'))
+    .map(([name, lightHex, baseHex, darkHex]) => [name, [lightHex, baseHex, darkHex]]);
+}
+const referenceGroup = (title, section, prefix, use, keep = () => true) => ({
+  title,
+  swatches: paletteRows(section)
+    .filter(([name]) => keep(name))
+    .map(([name, tones]) =>
+      canonRamp(prefix + camelName(name.replace(/ pocket$/, '')), name + '; ' + use, tones, section)
+    ),
+});
+// the Generation IV pockets are on Unified (POCKET_SWATCHES); the rest of "Bag" is reference only
+const GEN4_POCKETS = ['Items', 'Key items', 'Berries', 'Battle items', 'Mail', 'Medicine', 'Poké Balls', 'TMs and HMs'];
+const isGen4Pocket = (name) => GEN4_POCKETS.includes(name.replace(/ pocket$/, ''));
+const REFERENCE_GROUPS = [
+  referenceGroup('Seasons', 'Seasons', 'color.season', 'a possible weather or season tint'),
+  referenceGroup('Regions', 'Regions', 'color.region', 'a candidate for the Map panel (#65) and region select'),
+  referenceGroup('Egg Groups', 'Egg Groups', 'color.eggGroup', 'no use yet'),
+  referenceGroup('Bag: pockets outside Generation IV', 'Bag', 'color.pocket', 'not a Generation IV pocket',
+    (name) => !isGen4Pocket(name)),
+  referenceGroup('Pokemon Stats: Generation I Special', 'Pokemon Stats', 'color.stat', 'the Gen I stat, no template',
+    (name) => name.startsWith('Special (Gen I)')),
+];
+/** Groups as headings over rows of swatches (the Unified and Reference tabs). */
+const groupsHtml = (groups) =>
+  groups.map((group) => `<h3>${esc(group.title)}</h3>` + swatchRow(group.swatches)).join('');
+function referencePage() {
+  const count = REFERENCE_GROUPS.reduce((sum, group) => sum + group.swatches.length * 3, 0);
+  return `<p class="lib-dim">${count} reference colours, none used by the game</p>` + groupsHtml(REFERENCE_GROUPS);
+}
+const UNIFIED_GROUPS = [
+  { title: 'Neutrals', swatches: [GREY_DRAFT] },
+  {
+    title: 'Colours',
+    swatches: [UNIFIED_RED, UNIFIED_GREEN, UNIFIED_BLUE, UNIFIED_YELLOW, UNIFIED_PURPLE, UNIFIED_PINK, UNIFIED_TEAL],
+  },
+  // the 18 canon type ramps (Scarlet/Violet), not counted in the UI total
+  { title: 'Types (canon, not counted)', swatches: TYPE_SWATCHES, canon: true },
+  { title: 'Status (canon, not counted)', swatches: STATUS_TYPE_SWATCHES, canon: true },
+  { title: 'Attacks (canon, not counted)', swatches: ATTACK_SWATCHES, canon: true },
+  { title: 'Bag: Generation IV pockets (canon, not counted)', swatches: POCKET_SWATCHES, canon: true },
+  { title: 'Pokemon Stats (canon, not counted)', swatches: STAT_CANON_SWATCHES, canon: true },
+  { title: 'Time (canon, not counted)', swatches: TIME_SWATCHES, canon: true },
+];
+function unifiedPage() {
+  const count = new Set(
+    UNIFIED_GROUPS.filter((group) => !group.canon)
+      .flatMap((group) => group.swatches)
+      .flatMap((group) => group.colours.map(valueOf))
+  ).size;
+  const ramps = UNIFIED_GROUPS.filter((group) => !group.canon && group.title !== 'Neutrals')
+    .reduce((sum, group) => sum + group.swatches.length, 0);
+  return `<p class="lib-dim">${count} non-canon colours: 7 neutrals and ${ramps} ramps of 3</p>` +
+    UNIFIED_GROUPS.map((group) => `<h3>${esc(group.title)}</h3>` + swatchRow(group.swatches)).join('');
+}
+
+// ---------- Fold Map: every colour the game uses today and where it lands on Unified (Jess 2026-11-18) ----------
+// Each colour resolves in this order: a decided fold (FOLD_TO, the status and stat chip rules), then an exact match on
+// Unified, then the grey scale (GREY_FOLD). Decisions: docs/decisions/2026-11-18-155-unified-palette.md,
+// -status-chip-colours.md, -accent-ramp-rule.md.
+const unifiedKey = (label, part) => label.replace(/^(color|unified)\./, '') + '.' + part;
+let unifiedIndex = null;
+function unifiedEntries() {
+  if (!unifiedIndex) {
+    unifiedIndex = [];
+    for (const group of UNIFIED_GROUPS)
+      for (const sw of group.swatches)
+        for (const colour of sw.colours)
+          unifiedIndex.push({ key: unifiedKey(sw.label, colour[0]), value: valueOf(colour), canon: !!group.canon });
+  }
+  return unifiedIndex;
+}
+const FOLD_TO = {
+  // red: one ramp for danger and low HP
+  'rimButtonFocusNegative.base': 'red.base',
+  'rimButtonFocusNegative.dark': 'red.dark',
+  'hudPauseRed.base': 'red.base',
+  'textPause.behind': 'red.base',
+  // green: the focus rim's ramp; HP high joins it
+  'rimButtonFocusPositive.light': 'green.light',
+  'rimButtonFocusPositive.dark': 'green.dark',
+  'hpHigh.fill': 'green.base',
+  'hpHigh.shade': 'green.dark',
+  'effectRegen.fill': 'green.light',
+  'effectRegen.shade': 'green.dark',
+  // blue: EXP, with the canon SpA light and shade; the old teal joins it
+  'hudExp.shade': 'blue.dark',
+  'hudPanel.teal': 'blue.light',
+  'scrollMenu.thumbRim': 'blue.light',
+  // pink
+  'rimBond.light': 'pink.light',
+  // Electric (canon): Lv, HP middle, the bonus yellow
+  'hudLevel.fill': 'typeElectric.base',
+  'hudLevel.shade': 'typeElectric.dark',
+  'hudLevel.dark': 'typeElectric.dark',
+  'hpMiddle.fill': 'typeElectric.base',
+  'hpMiddle.shade': 'typeElectric.dark',
+  'hudBonus.fill': 'typeElectric.light',
+  'hudBonus.shade': 'typeElectric.dark',
+  'effectDrop.fill': 'typeElectric.light',
+  'effectDrop.shade': 'typeElectric.dark',
+  'textPause.bonus': 'typeElectric.light',
+  'hudPauseHex.run': 'typeElectric.light@0.75',
+  // Fighting (canon): LAN
+  'effectCrit.fill': 'typeFighting.light',
+  'effectCrit.shade': 'typeFighting.dark',
+  // the pause menu's text blues and stat hex
+  'textPause.value': 'typeFlying.light',
+  'textPause.edge': 'typeWater.base',
+  'hudPauseHex.line': 'grey.white@0.16',
+  'hudPauseHex.lineEdge': 'grey.white@0.4',
+  'hudPauseHex.now': 'grey.white@0.6',
+  'hudPauseHex.nowEdge': 'grey.white',
+  'hudPauseBall.capSlate': 'grey.raised',
+  // greys that fold by name, not by value
+  'scrollRunInfo.track': 'grey.raised',
+  'textMenu.labelRefused': 'grey.white@0.45',
+};
+const STAT_NAMES = { Atk: 'Attack', Def: 'Defense', Spa: 'SpecialAttack', Spd: 'SpecialDefense', Spe: 'Speed' };
+const solidOf = (value) => (seeThrough(value) ? seeThrough(value).hex : value);
+/** Where one colour lands: { key, value } on Unified, or null when nothing resolves it. */
+function foldOf(name, value) {
+  const swatchName = name.slice(0, name.lastIndexOf('.')),
+    part = name.slice(name.lastIndexOf('.') + 1);
+  let to = FOLD_TO[name];
+  if (!to && /^status(Paralysis|Freeze|Burn|Poison)$/.test(swatchName))
+    to = swatchName + '.' + (part === 'fill' ? 'base' : 'dark');
+  const stat = swatchName.match(/^stat(Atk|Def|Spa|Spd|Spe)$/);
+  if (!to && stat) to = 'stat' + STAT_NAMES[stat[1]] + '.' + (part === 'fill' ? 'base' : 'dark');
+  if (!to && /^status(Sleep|Toxic|Minor)$/.test(swatchName)) to = name;
+  const entries = unifiedEntries();
+  if (to) {
+    const [key, alpha] = to.split('@');
+    const hit = entries.find((entry) => entry.key === key);
+    if (!hit) return null;
+    return alpha
+      ? { key: key + ' at ' + Math.round(Number(alpha) * 100) + '%', value: rgbaOf(solidOf(hit.value), Number(alpha)) }
+      : { key, value: hit.value };
+  }
+  const exact = entries.find((entry) => entry.value === value);
+  if (exact) return { key: exact.key, value: exact.value };
+  const step = GREY_FOLD[value];
+  if (step) return { key: 'grey.' + step, value: greyTone(step) };
+  return null;
+}
+// colours outside the kits that the scheme also covers (the old canvas HUD, copies.js) or leaves out
+const FOLD_OUTSIDE = [
+  ['epicRarity', '#c47bff', 'The Epic rarity tier (js/systems/copies.js)', 'purple.base'],
+  ['gymGateArrow.base', '#375ab2', 'Gym gate wayfinding arrow fill (hud.js)', 'attackSpecial.base'],
+  ['gymGateArrow.dark', '#243b74', 'Gym gate arrow outline', 'attackSpecial.dark'],
+  ['gymGateArrow.light', '#7d94cd', 'Gym gate arrow shine', 'attackSpecial.light'],
+  ['moveTrainerArrow.base', '#eb5628', 'Move Trainer and TM Mart arrow fill', 'attackPhysical.base'],
+  ['moveTrainerArrow.dark', '#99381a', 'Move Trainer arrow outline', 'attackPhysical.dark'],
+  ['moveTrainerArrow.light', '#f29173', 'Move Trainer arrow shine', 'attackPhysical.light'],
+  ['rescueArrow.light', '#8fdda5', 'Rescue arrow shine (#135, Proposed)', 'pocketBerries.light'],
+  ['rescueArrow.base', '#3fae5a', 'Rescue arrow fill', 'pocketBerries.base'],
+  ['rescueArrow.dark', '#22703a', 'Rescue arrow outline', 'pocketBerries.dark'],
+  ['inkShadow', '#00213a', 'Main Menu v2 ink shadow (bw-menu.css)', null, 'stays out: #127 Main Menu v3.0 redoes it'],
+  ['offWhiteTrack', '#f3f3f3', 'HUD-STYLE note: the B2 off-white track', null, 'stays out: a doc note'],
+  ['ripGrey', '#c6c6c6', 'HUD-STYLE note: a B2 rip grey', null, 'stays out: a doc note'],
+  ['kantoNote', '#80bb1d', 'UI-PALETTES note: Kanto, a candidate use', null, 'stays out: on Reference Not in Game'],
+];
+const FOLD_KITS = [
+  ['HUD kit', () => HUD_KIT_SWATCHES],
+  ['HP kit', () => HP_SWATCHES],
+  ['RIM kit', () => RIM_SWATCHES],
+  ['Scroll kit', () => SCROLL_SWATCHES],
+  ['Text kit', () => TEXT_SWATCHES],
+  ['Status kit', () => [...STATUS_SWATCHES, ...STAT_SWATCHES, ...EFFECT_SWATCHES]],
+  ['Type kit', () => TYPE_SWATCHES, true],
+];
+function foldMapPage() {
+  const chip = (value) => (value ? `<div class="lib-colour-chip" style="background:${esc(value)}"></div>` : '');
+  const tally = { same: 0, "can't see it": 0, slight: 0, visible: 0, out: 0, missing: [] };
+  const row = (name, value, where, landing, note) => {
+    let change = '',
+      words = note || '';
+    if (landing) {
+      const difference = deltaE(solidOf(value), solidOf(landing.value));
+      words = changeWords(Math.round(difference * 10) / 10 === 0 ? 0 : difference);
+      tally[words]++;
+      change = difference ? difference.toFixed(1) : '';
+    } else if (note) tally.out++;
+    else {
+      tally.missing.push(name);
+      words = 'NO HOME';
+    }
+    return `<tr><td>${chip(value)}</td><td class="lib-mono">${esc(shown(value))}</td><td>${esc(where)}</td>
+      <td>${chip(landing && landing.value)}</td>
+      <td>${landing ? nameButton(landing.key) + `<span class="lib-mono"> ${esc(shown(landing.value))}</span>` : ''}</td>
+      <td class="lib-mono">${change}</td><td>${esc(words)}</td></tr>`;
+  };
+  const head = '<thead><tr><th>Today</th><th>#HEX</th><th>Name today</th><th>Unified</th><th></th>' +
+    '<th>Change</th><th></th></tr></thead>';
+  const table = (rows) => `<table class="lib-props lib-colour-table">${head}<tbody>${rows.join('')}</tbody></table>`;
+  const sections = FOLD_KITS.map(([title, swatches, collapse]) => {
+    const rows = swatches().flatMap((sw) =>
+      sw.colours.map((colour) => {
+        const name = unifiedKey(sw.label, colour[0]),
+          value = valueOf(colour);
+        return row(name, value, name, foldOf(name, value));
+      })
+    );
+    return collapse
+      ? `<h3>${esc(title)}</h3><details><summary class="lib-dim">${rows.length} canon type colours, each unchanged
+          (show)</summary>${table(rows)}</details>`
+      : `<h3>${esc(title)}</h3>` + table(rows);
+  });
+  const entries = unifiedEntries();
+  const outside = FOLD_OUTSIDE.map(([name, value, where, key, note]) => {
+    const hit = key && entries.find((entry) => entry.key === key);
+    return row(name, value, where, hit ? { key, value: hit.value } : null, note);
+  });
+  sections.push('<h3>Outside the kits</h3>' + table(outside));
+  const total = tally.same + tally["can't see it"] + tally.slight + tally.visible;
+  const summary = `<p class="lib-dim">${total} colours land on Unified: ${tally.same} unchanged,
+    ${tally["can't see it"]} too close to see, ${tally.slight} slight, ${tally.visible} visible. ${tally.out} stay out on
+    purpose. ${tally.missing.length ? 'No home yet: ' + esc(tally.missing.join(', ')) : 'Every colour has a home.'}
+    Change is CIEDE2000 (about ${SEEN_FROM} is the smallest visible step, over ${SLIGHT_UNDER} clearly different).</p>`;
+  return summary + sections.join('');
+}
+const COLOUR_TABS = [
+  {
+    id: 'unified',
+    title: 'Unified',
+    note:
+      'The unified colour scheme: 7 neutrals and 7 UI colours (28 non-canon colours), then the canon sets the UI ' +
+      'reads. Nothing in the game changes until #126 applies it.',
+    draw: unifiedPage,
+  },
+  {
+    id: 'folds',
+    title: 'Fold Map',
+    note:
+      "Every colour the game uses today, kit by kit, and the Unified colour it becomes, with how far it moves. Read " +
+      'from the kits and the fold decisions, so it follows any change to either.',
+    draw: foldMapPage,
+  },
+  {
+    id: 'reference',
+    title: 'Reference Not in Game',
+    note:
+      'Every docs/UI-PALETTES.md set the game does not use: Seasons, Regions, Egg Groups, the bag pockets outside ' +
+      'Generation IV and the Gen I Special stat. Read from the doc, so it follows any edit there (rerun ' +
+      'tools/library_doc_colours.js).',
+    draw: referencePage,
+  },
+];
+const coloursPage = (tab) => tabbedPage('Colours', COLOUR_TABS, tab);
 
 const SAMPLE_TEXT = 'Pikachu used Thunderbolt! Lv 42 HP 87/120 0123456789';
 function fontsPage() {
@@ -322,8 +1163,14 @@ function laterPage(item) {
   return `<h2>${esc(item.title)}</h2><div class="lib-later">Not on the board yet: built in ${esc(item.later)}.</div>`;
 }
 
-// ---------- primitives: each story's states drawn by the real piece, with its tokens, font, size and places ----------
+// ---------- primitives: each piece's states drawn by the real piece, then its props, tokens, font, size and places ----
+// A state is a condition the piece shows; a prop is how a screen sets it up (decision
+// 2026-11-18-155-primitive-states-vs-props). States are tiles; props are a table.
 const libHtml = htm.bind(preact.h);
+const propsTable = (story) => `<table class="lib-props">
+    <thead><tr><th>Prop</th><th>Values</th><th>What it does</th></tr></thead>
+    <tbody>${(story.props || []).map((prop) => `<tr><td>${nameButton(prop.name)}</td><td class="lib-mono">${esc(prop.values)}</td>
+      <td>${esc(prop.does)}</td></tr>`).join('')}</tbody></table>`;
 function storyBlock(story) {
   const states = story.states.map((state) => `<figure class="lib-state">
       <div class="lib-stage ${esc(story.stageClass)}" data-state="${esc(story.name + ':' + state.id)}"></div>
@@ -331,7 +1178,10 @@ function storyBlock(story) {
   return `<section class="lib-story" data-story="${esc(story.name)}">
     <h3>${nameButton(story.name)} <span class="lib-dim lib-mono">${esc(story.component)}</span></h3>
     <p class="lib-note">${esc(story.job)}</p>
+    <h4 class="lib-dim">States</h4>
     <div class="lib-states">${states}</div>
+    <h4 class="lib-dim">Props (a screen sets these)</h4>
+    ${propsTable(story)}
     <dl class="lib-facts">
       <dt>Tokens</dt><dd>${story.tokens.map(nameButton).join('')}</dd>
       ${story.font ? `<dt>Font</dt><dd>${nameButton(story.font.name)}<span>${esc(story.font.size)}</span></dd>` : ''}
@@ -408,7 +1258,7 @@ const patternHost = document.createElement('div');
 document.body.appendChild(patternHost);
 preact.render(libHtml`<${G.Lib.Pixels.PixelPatterns} />`, patternHost);
 
-/** Shows a page (and, on Colours, a tab). The address hash follows, so the page can be bookmarked. */
+/** Shows a page (and, on a tabbed page, a tab). The address hash follows, so the page can be bookmarked. */
 function show(id, tab) {
   const item = pages.get(id) || pages.get('tokens/colours');
   const draw = DRAW[item.id];
@@ -447,10 +1297,26 @@ function markFonts() {
 document.addEventListener('click', (event) => {
   const copy = event.target.closest('[data-copy]');
   if (copy) return copyName(copy.dataset.copy);
-  const nav = event.target.closest('[data-page]');
-  if (nav) return show(nav.dataset.page);
+  // tabs first: the main area itself carries data-page (the page it shows), so a tab click also finds it
   const tab = event.target.closest('[data-tab]');
   if (tab) return show($('main').dataset.page, tab.dataset.tab);
+  const nav = event.target.closest('.nav-item[data-page]');
+  if (nav) return show(nav.dataset.page);
+});
+// a swatch's footer: the hovered colour's name and #HEX, cleared when the mouse leaves the colours
+document.addEventListener('pointerover', (event) => {
+  const colour = event.target.closest('.swatch-color');
+  if (!colour) return;
+  const footer = colour.closest('.swatch');
+  footer.querySelector('.swatch-part').textContent = colour.dataset.part;
+  footer.querySelector('.swatch-hex').textContent = colour.dataset.show || colour.dataset.copy;
+});
+document.addEventListener('pointerout', (event) => {
+  const palette = event.target.closest('.swatch-palette');
+  if (!palette || palette.contains(event.relatedTarget)) return;
+  const footer = palette.closest('.swatch');
+  footer.querySelector('.swatch-part').textContent = '';
+  footer.querySelector('.swatch-hex').textContent = '';
 });
 // The board writes nothing to localStorage: file:// pages share it with the game's save.
 function setSidebar(open) {
@@ -468,7 +1334,8 @@ fromHash();
 
 // for tools/smoke-ui-library.js
 window.libPages = [...pages.keys()];
-window.libColourTabs = COLOUR_TABS.map((tab) => tab.id);
+window.libTabs = Object.fromEntries(
+  [['tokens/colours', COLOUR_TABS]].map(([id, tabs]) => [id, tabs.map((tab) => tab.id)]));
 window.libShow = (id, tab) => { show(id, tab); return $('main').innerText; };
 </script>
 </body>

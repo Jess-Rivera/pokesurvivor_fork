@@ -39,24 +39,12 @@ const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PAL
 // none of the game's scripts; every token in tokens.js shows with its name; every HUD-STYLE and UI-PALETTES colour shows
 // (read from the docs, not from the board's copy); every font face loads, and the game's CSS loads the same font files
 // under the same families; no library CSS writes a raw colour instead of a token; every sidebar entry of Jess's mockup is
-// there and opens a page. Primitives, Buttons (155b, docs/ASCII Concept Maps/155b - Buttons Plan.md): each button draws
-// in every state it has in the game, each under its full name; its rims are the rim tokens (read from tokens.js); a
-// refused label is fainter than a plain one; disabled cannot be pressed and refused can; each lists its place names.
-// Primitives, Panels (155c, docs/ASCII Concept Maps/155c - Panels Plan.md): every state draws under its full name; a
-// pixel panel draws its ramp's base (from tokens.js) and a dual type blends two; a lighter body differs from the rest
-// one; a dimmed card is fainter than a lit one; a card dimmed with its button lit keeps the button at full; a refused
-// card button's label is fainter than a lit card's. 155c-2: a flat panel paints the body, frame and outline tokens; a
-// horizontal card's live text is the EXP token and its dimmed state fainter. Primitives, Squares: the board defines the
-// shared fills and a square paints one; a filled square's rim is the Lv token, an empty one slate; a locked slot is
-// fainter than a filled one; the grids lay out two and four across. Primitives, Bars (155c-3): every state draws under
-// its full name; the life bar's fill shrinks with its fraction and paints its band's fill token; a cut leaves a piece;
-// the shape paints the bar checker; a narrow bar is narrower; a timer's drawn length follows its fraction, and the
-// weather timer holds its right end and paints the two colours it was given. Primitives, Modal (155c-4): every state
-// draws under its full name; the box paints the panel.flat tokens; exactly one button is green and it draws the focus
-// rim; a notice has one button; the title, message and note show; a long message wraps to more lines. 155c-5: a
-// slanted panel paints its rim's base and its body (the slot grid or flat); Primitives, Portraits: every state draws
-// under its full name at the size asked for; only the ringed one draws a ring, in the EXP and track tokens; a fainted
-// leader is darker than a plain one; every portrait's image loads. The sidebar holds Portraits and the Pause group.
+// there and opens a page. The primitive pages (155b to 155c-5; decision 2026-11-18-155-primitive-states-vs-props): each
+// piece draws exactly its states (a condition it shows), each under its full name, and lists its props (how a screen
+// sets it up) in a table; then each state does what its name says: rims and fills are their tokens (read from
+// tokens.js), a refused label is fainter, disabled cannot be pressed, dimmed and fainted are fainter or darker, the life
+// bar's fill shrinks by band and a cut leaves a piece, a timer's length follows its fraction, one dialog button is
+// green, a portrait is the size asked for and its image loads. The sidebar holds Portraits and the Pause group.
 const vm = require('vm');
 function loadTokens() {
   const sandbox = { console };
@@ -130,7 +118,8 @@ async function checkBoard(browser) {
   const board = await page.evaluate(() => {
     const texts = {};
     for (const id of window.libPages) texts[id] = window.libShow(id);
-    for (const tab of window.libColourTabs) texts['tokens/colours:' + tab] = window.libShow('tokens/colours', tab);
+    for (const [id, tabs] of Object.entries(window.libTabs))
+      for (const tab of tabs) texts[id + ':' + tab] = window.libShow(id, tab);
     return { texts, sidebar: document.getElementById('sidebar').innerText, stored: localStorage.length };
   });
   ok(errors.length === 0, 'the board loads with no errors' + (errors.length ? ': ' + errors.join('; ') : ''));
@@ -196,348 +185,270 @@ async function checkBoard(browser) {
     `all ${fonts.length} font faces load on the board` + (unloaded.length ? ', failed ' + unloaded.join(' ') : '')
   );
   ok(board.stored === 0, `the board writes nothing to localStorage (${board.stored} keys)`);
-  await checkButtonsPage(page, tokens);
-  await checkPanelsPage(page, tokens);
-  await checkSquaresPage(page, tokens);
-  await checkBarsPage(page, tokens);
-  await checkModalPage(page, tokens);
-  await checkPortraitsPage(page, tokens);
+  await checkPrimitivePages(page, tokens);
   await context.close();
 }
 
-// The states each button has in the game (155b plan): the slanted button has no disabled or refused today; both have
-// the red the game gives a button that takes something away (End, Destroy, Sell, Let It Go).
-const BUTTON_STATES = {
-  'button.slanted': ['rest', 'focused', 'red', 'redFocused'],
-  'button.rounded': ['rest', 'focusPositive', 'focusNegative', 'refused', 'refusedFocus', 'disabled'],
+// ---------- the primitive pages (decision 2026-11-18-155-primitive-states-vs-props) ----------
+// A state is a condition a piece shows (at rest, focused, refused, disabled, dimmed, fainted, filled, empty, an HP
+// band); a prop is how a screen sets it up (size, stroke, colours, text, content). The board must draw exactly these
+// states, so a prop drawn as a tile fails here.
+const PRIMITIVE_STATES = {
+  'primitives/buttons': {
+    'button.slanted': ['rest', 'focusPositive', 'focusNegative'],
+    'button.rounded': ['rest', 'focusPositive', 'focusNegative', 'refused', 'refusedFocus', 'disabled'],
+  },
+  'primitives/panels': {
+    'panel.pixel': ['rest', 'fainted'],
+    'panel.thin': ['rest'],
+    'card.vertical': ['lit', 'dimmed', 'dimmedButtonLit'],
+    'panel.flat': ['rest'],
+    'card.horizontal': ['filled', 'empty', 'dimmed'],
+    'panel.slanted': ['rest'],
+  },
+  'primitives/squares': { 'square.item': ['filled', 'empty'], 'grid.item': ['rest'] },
+  'primitives/bars': { 'bar.life': ['high', 'middle', 'low', 'empty', 'cut'], 'bar.timer': ['rest'] },
+  'primitives/modal': { 'modal.dialog': ['focusConfirm', 'focusCancel'] },
+  'primitives/portraits': { 'portrait.round': ['rest', 'active', 'fainted'] },
 };
-// The rim each state must show: refused keeps the resting rim, and under the cursor takes the focus rim like any other
-// button; a red button keeps its red when focused.
+// The rim each button state must show: refused keeps the resting rim; a negative focus is red.
 const BUTTON_RIMS = {
   'button.slanted:rest': 'rest',
-  'button.slanted:focused': 'focus',
-  'button.slanted:red': 'red',
-  'button.slanted:redFocused': 'red',
+  'button.slanted:focusPositive': 'focus',
+  'button.slanted:focusNegative': 'red',
   'button.rounded:rest': 'rest',
   'button.rounded:focusPositive': 'focus',
   'button.rounded:focusNegative': 'red',
   'button.rounded:refused': 'rest',
   'button.rounded:refusedFocus': 'focus',
 };
-async function checkButtonsPage(page, tokens) {
-  const drawn = await page.evaluate(() => {
-    window.libShow('primitives/buttons');
-    const alphaOf = (colour) => {
-      const parts = colour.match(/[\d.]+/g) || [];
-      return parts.length > 3 ? Number(parts[3]) : 1;
-    };
-    const states = {};
-    for (const stage of document.querySelectorAll('[data-state]')) {
-      const button = stage.querySelector('button'),
-        label = button && button.querySelector('span'),
-        rectangles = [...stage.querySelectorAll('svg rect')];
-      states[stage.dataset.state] = {
-        rectangles: rectangles.length,
-        fills: rectangles.map((rectangle) => (rectangle.getAttribute('fill') || '').toLowerCase()),
-        disabled: !!button && button.disabled,
-        labelAlpha: label ? alphaOf(getComputedStyle(label).color) : null,
-      };
-    }
-    const stories = (G.Lib.ButtonStories || []).map((story) => ({ name: story.name, places: story.places }));
-    return { states, stories, text: document.getElementById('main').innerText };
-  });
-
-  const missing = Object.entries(BUTTON_STATES).flatMap(([name, states]) =>
-    states.filter((state) => !((drawn.states[name + ':' + state] || {}).rectangles > 0)).map((state) => name + ':' + state)
-  );
-  const stateCount = Object.values(BUTTON_STATES).flat().length;
-  ok(
-    missing.length === 0,
-    `the Buttons page draws each button in every state it has (${stateCount})` +
-      (missing.length ? ', missing ' + missing.join(' ') : '')
-  );
-
-  // each rim by its base colour, read from tokens.js; a state shows a rim when exactly that one base is drawn
-  const RIM_BASES = {
-    rest: tokens.ramp('color.rim.rest').base.toLowerCase(),
-    focus: tokens.ramp('color.rim.focus').base.toLowerCase(),
-    red: tokens.ramp('color.rim.sell').base.toLowerCase(),
-  };
-  const rimOf = (key) => {
-    const fills = (drawn.states[key] || {}).fills || [];
-    const shown = Object.keys(RIM_BASES).filter((rim) => fills.includes(RIM_BASES[rim]));
-    return shown.length === 1 ? shown[0] : 'neither';
-  };
-  const wrongRims = Object.entries(BUTTON_RIMS)
-    .filter(([key, rim]) => rimOf(key) !== rim)
-    .map(([key]) => key + ' shows ' + rimOf(key));
-  ok(
-    wrongRims.length === 0,
-    'the rims are the tokens: color.rim.rest at rest and refused, color.rim.focus focused, color.rim.sell on red' +
-      (wrongRims.length ? ': ' + wrongRims.join(', ') : '')
-  );
-
-  const rounded = (state) => drawn.states['button.rounded:' + state] || {};
-  const faint = (refused, plain) =>
-    rounded(refused).labelAlpha !== null && rounded(refused).labelAlpha < rounded(plain).labelAlpha;
-  ok(
-    faint('refused', 'rest') && faint('refusedFocus', 'focusPositive'),
-    'a refused label is fainter than a plain one, at rest and under the cursor (' +
-      `${rounded('refused').labelAlpha} vs ${rounded('rest').labelAlpha}, ` +
-      `${rounded('refusedFocus').labelAlpha} vs ${rounded('focusPositive').labelAlpha})`
-  );
-  ok(
-    rounded('disabled').disabled === true && !rounded('refused').disabled && !rounded('refusedFocus').disabled,
-    'a disabled button cannot be pressed; a refused one still can (it says why)'
-  );
-  const unnamed = Object.entries(BUTTON_STATES)
-    .flatMap(([name, states]) => states.map((state) => name + '.' + state))
-    .filter((stateName) => !drawn.text.includes(stateName));
-  ok(
-    unnamed.length === 0,
-    'every state shows its full name (button.rounded.focusPositive)' +
-      (unnamed.length ? ', missing ' + unnamed.join(' ') : '')
-  );
-
-  const placeless = drawn.stories
-    .filter((story) => !story.places.length || story.places.some((place) => !drawn.text.includes(place)))
-    .map((story) => story.name);
-  ok(
-    drawn.stories.length === Object.keys(BUTTON_STATES).length && placeless.length === 0,
-    `each button lists its place names (${drawn.stories.length} buttons)` +
-      (placeless.length ? ', missing on ' + placeless.join(' ') : '')
-  );
-}
-
-// The states each panel has in the game (155c plan)
-const PANEL_STATES = {
-  'panel.pixel': ['rest', 'type', 'dualType', 'lightBody', 'fainted'],
-  'panel.thin': ['rest'],
-  'card.vertical': ['lit', 'dimmed', 'dimmedButtonLit', 'refusedButton'],
-  'panel.flat': ['rest'],
-  'card.horizontal': ['filled', 'live', 'empty', 'dimmed', 'large'],
-  'panel.slanted': ['typeRim', 'empty', 'header'],
-};
+const LIFE_FROM_FULLEST = ['high', 'middle', 'low', 'empty'];
+const TIMER_SLACK = 0.02;
 /** A token's hex as the browser writes a computed colour ("rgb(24, 24, 24)"). */
 const rgbOf = (hex) => {
   const value = hex.replace('#', '');
   const channel = (index) => parseInt(value.slice(index, index + 2), 16);
   return `rgb(${channel(0)}, ${channel(2)}, ${channel(4)})`;
 };
-// The rim ramp each one-ramp pixel panel state must draw (its base colour, read from tokens.js)
-const PANEL_RIMS = { rest: 'color.rim.rest', type: 'color.type.fire', fainted: 'color.rim.fainted' };
-async function checkPanelsPage(page, tokens) {
-  const drawn = await page.evaluate(() => {
-    window.libShow('primitives/panels');
-    const alphaOf = (colour) => {
-      const parts = colour.match(/[\d.]+/g) || [];
-      return parts.length > 3 ? Number(parts[3]) : 1;
-    };
-    const opacityOf = (element) => (element ? Number(getComputedStyle(element).opacity) : null);
-    const states = {};
-    for (const stage of document.querySelectorAll('[data-state]')) {
-      const piece = stage.firstElementChild,
-        card = stage.querySelector('.shop-card'),
-        label = stage.querySelector('.hud-team-button-label'),
-        flat = stage.querySelector('.panel-flat'),
-        slotBox = stage.querySelector('.hud-run-item'),
-        slotText = stage.querySelector('.hud-run-text');
-      states[stage.dataset.state] = {
-        flat: flat && {
-          body: getComputedStyle(flat).backgroundColor,
-          frame: getComputedStyle(flat).borderTopColor,
-          outline: getComputedStyle(flat).boxShadow,
-        },
-        slotOpacity: opacityOf(slotBox),
-        slotTextColour: slotText ? getComputedStyle(slotText).color : null,
-        drawn: !!piece && piece.getBoundingClientRect().width > 0,
-        fills: [...stage.querySelectorAll('svg rect')].map((rect) => (rect.getAttribute('fill') || '').toLowerCase()),
-        gradients: stage.querySelectorAll('linearGradient').length,
-        cardOpacity: opacityOf(card),
-        nameOpacity: opacityOf(card && card.querySelector('.shop-card-name')),
-        buttonOpacity: opacityOf(card && card.querySelector('.shop-card-buy')),
-        labelAlpha: label ? alphaOf(getComputedStyle(label).color) : null,
-      };
-    }
-    return { states, text: document.getElementById('main').innerText };
-  });
-  const state = (name, id) => drawn.states[name + ':' + id] || {};
 
-  const missing = Object.entries(PANEL_STATES).flatMap(([name, ids]) =>
-    ids.filter((id) => !state(name, id).drawn || !drawn.text.includes(name + '.' + id)).map((id) => name + '.' + id)
-  );
-  ok(
-    missing.length === 0,
-    `the Panels page draws every state under its full name (${Object.values(PANEL_STATES).flat().length})` +
-      (missing.length ? ', missing ' + missing.join(' ') : '')
-  );
-
-  const wrongRims = Object.entries(PANEL_RIMS)
-    .filter(([id, ramp]) => !state('panel.pixel', id).fills.includes(tokens.ramp(ramp).base.toLowerCase()))
-    .map(([id, ramp]) => 'panel.pixel.' + id + ' lacks ' + ramp);
-  ok(
-    wrongRims.length === 0,
-    "each pixel panel draws its rim ramp's base from the tokens" + (wrongRims.length ? ': ' + wrongRims.join(', ') : '')
-  );
-  ok(
-    state('panel.pixel', 'dualType').gradients > 0 && state('panel.pixel', 'rest').gradients === 0,
-    'a dual-type pixel panel blends its two ramps; a one-ramp panel does not'
-  );
-  const restFills = new Set(state('panel.pixel', 'rest').fills);
-  ok(
-    state('panel.pixel', 'lightBody').fills.some((fill) => !restFills.has(fill) && fill.startsWith('#')),
-    'a lighter-body pixel panel draws a body colour the resting one does not'
-  );
-
-  const lit = state('card.vertical', 'lit'),
-    dimmed = state('card.vertical', 'dimmed'),
-    buttonLit = state('card.vertical', 'dimmedButtonLit'),
-    refused = state('card.vertical', 'refusedButton');
-  ok(
-    dimmed.cardOpacity < lit.cardOpacity,
-    `a dimmed card is fainter than a lit one (${dimmed.cardOpacity} vs ${lit.cardOpacity})`
-  );
-  ok(
-    buttonLit.buttonOpacity === lit.buttonOpacity && buttonLit.nameOpacity < lit.nameOpacity,
-    'a card dimmed with its button lit dims its text and keeps its button (' +
-      `${buttonLit.nameOpacity} text, ${buttonLit.buttonOpacity} button)`
-  );
-  ok(
-    refused.labelAlpha !== null && refused.labelAlpha < lit.labelAlpha,
-    `a refused card button's label is fainter than a lit card's (${refused.labelAlpha} vs ${lit.labelAlpha})`
-  );
-
-  const flat = state('panel.flat', 'rest').flat || {};
-  ok(
-    flat.body === rgbOf(tokens.color('color.hud.body')) &&
-      flat.frame === rgbOf(tokens.color('color.hud.frame')) &&
-      String(flat.outline).includes(rgbOf(tokens.color('color.hud.outline'))),
-    `a flat panel paints the body, frame and outline tokens (${flat.body}, ${flat.frame}, ${flat.outline})`
-  );
-  const slotFilled = state('card.horizontal', 'filled'),
-    slotLive = state('card.horizontal', 'live'),
-    slotDimmed = state('card.horizontal', 'dimmed');
-  ok(
-    slotLive.slotTextColour === rgbOf(tokens.color('color.hud.expFill')) &&
-      slotFilled.slotTextColour !== slotLive.slotTextColour,
-    `a horizontal card's live text is the EXP token and plain text is not (${slotLive.slotTextColour})`
-  );
-  ok(
-    slotDimmed.slotOpacity < slotFilled.slotOpacity,
-    `a dimmed horizontal card is fainter than a filled one (${slotDimmed.slotOpacity} vs ${slotFilled.slotOpacity})`
-  );
-
-  const slotGrid = 'url(#hud-slot-grid)',
-    flatBody = tokens.color('color.hud.body').toLowerCase(),
-    fireBase = tokens.ramp('color.type.fire').base.toLowerCase();
-  const slanted = (id) => state('panel.slanted', id).fills || [];
-  ok(
-    slanted('typeRim').includes(fireBase) &&
-      slanted('typeRim').includes(slotGrid) &&
-      ['empty', 'header'].every((id) => slanted(id).includes(flatBody) && !slanted(id).includes(slotGrid)),
-    "a slanted panel paints its rim's base and its body: the slot grid for a move, flat for the others"
-  );
-}
-
-// The portrait's states (155c-5 plan); the sizes are read from the stories, the ring and dim from the page
-const PORTRAIT_STATES = ['exp', 'leader', 'leaderActive', 'leaderFainted', 'roster', 'owned', 'shiny'];
-async function checkPortraitsPage(page, tokens) {
-  const drawn = await page.evaluate(async () => {
-    window.libShow('primitives/portraits');
-    const images = [...document.querySelectorAll('#main img')];
-    // each image settles (loads or fails) before it is read
+/** Opens a primitive page and reads each state's tile, each piece's props table, and what each state was given. */
+function readPrimitivePage(page, pageId) {
+  return page.evaluate(async (id) => {
+    window.libShow(id);
     const settled = (image) =>
       new Promise((done) => {
         image.addEventListener('load', done);
         image.addEventListener('error', done);
       });
+    const images = [...document.querySelectorAll('#main img')];
     await Promise.all(images.map((image) => (image.complete ? null : settled(image))));
-    const sizes = {};
-    for (const state of (G.Lib.PortraitStories[0] || { states: [] }).states) sizes[state.id] = state.props.size;
-    const states = {};
+    const alphaOf = (colour) => {
+      const parts = colour.match(/[\d.]+/g) || [];
+      return parts.length > 3 ? Number(parts[3]) : 1;
+    };
+    const opacityOf = (element) => (element ? Number(getComputedStyle(element).opacity) : null);
+    const fillsOf = (root, selector) =>
+      [...root.querySelectorAll(selector)].map((rect) => String(rect.getAttribute('fill')).toLowerCase());
+    const tiles = {};
     for (const stage of document.querySelectorAll('[data-state]')) {
+      const one = (selector) => stage.querySelector(selector);
       const outer = stage.firstElementChild,
-        face = stage.querySelector('.portrait-round'),
-        ring = stage.querySelector('.portrait-ring'),
-        image = stage.querySelector('img');
-      states[stage.dataset.state.split(':')[1]] = {
+        box = outer ? outer.getBoundingClientRect() : { width: 0, height: 0 },
+        label = one('.hud-team-button-label, button span'),
+        flat = one('.panel-flat'),
+        lifeFill = one('.hud-lifebar-fill'),
+        timer = one('.bar-timer'),
+        face = one('.portrait-round'),
+        image = one('img'),
+        slots = [...stage.querySelectorAll('.hud-grid-slot')],
+        dialogButtons = [...stage.querySelectorAll('.modal-button')];
+      const firstTop = slots.length ? Math.round(slots[0].getBoundingClientRect().top) : null;
+      tiles[stage.dataset.state] = {
+        drawn: box.width > 0 && box.height > 0,
         width: outer ? outer.offsetWidth : 0,
-        ring: ring ? getComputedStyle(ring).backgroundImage : null,
+        fills: fillsOf(stage, 'svg rect'),
+        labelAlpha: label ? alphaOf(getComputedStyle(label).color) : null,
+        disabled: !!one('button') && one('button').disabled,
+        cardOpacity: opacityOf(one('.shop-card')),
+        nameOpacity: opacityOf(one('.shop-card-name')),
+        buttonOpacity: opacityOf(one('.shop-card-buy')),
+        slotOpacity: opacityOf(one('.hud-run-item')),
+        slotNamed: !!one('.hud-run-name'),
+        lockedOpacity: opacityOf(one('.hud-grid-slot.is-locked')),
+        filledOpacity: opacityOf(one('.hud-grid-slot.is-filled')),
+        firstRow: slots.filter((slot) => Math.round(slot.getBoundingClientRect().top) === firstTop).length,
+        flat: flat && {
+          body: getComputedStyle(flat).backgroundColor,
+          frame: getComputedStyle(flat).borderTopColor,
+          outline: getComputedStyle(flat).boxShadow,
+        },
+        green: dialogButtons
+          .map((entry, index) => (entry.querySelector('.focused') ? index : -1))
+          .filter((index) => index >= 0),
+        greenFills: fillsOf(stage, '.modal-button .focused svg rect'),
+        fillDrawn: lifeFill ? lifeFill.getBoundingClientRect().width : null,
+        fillImage: lifeFill ? getComputedStyle(lifeFill).backgroundImage : '',
+        pieces: stage.querySelectorAll('.hud-lifebar-piece').length,
+        timerFraction: timer && timer.offsetWidth ? timer.getBoundingClientRect().width / timer.offsetWidth : null,
+        faceRim: face ? getComputedStyle(face).borderTopColor : null,
         dim: face ? Number(getComputedStyle(face, '::after').opacity) : null,
-        loaded: !!image && image.complete && image.naturalWidth > 0,
+        loaded: !image || (image.complete && image.naturalWidth > 0),
       };
     }
-    return { states, sizes, text: document.getElementById('main').innerText };
-  });
-  const state = (id) => drawn.states[id] || {};
-  const missing = PORTRAIT_STATES.filter((id) => !state(id).width || !drawn.text.includes('portrait.round.' + id));
-  ok(
-    missing.length === 0,
-    `the Portraits page draws every state under its full name (${PORTRAIT_STATES.length})` +
-      (missing.length ? ', missing ' + missing.join(' ') : '')
-  );
-  const wrongSize = PORTRAIT_STATES.filter((id) => state(id).width !== drawn.sizes[id]);
-  ok(
-    wrongSize.length === 0,
-    'each portrait is the size it was asked for' +
-      (wrongSize.length ? ': ' + wrongSize.map((id) => id + ' ' + state(id).width).join(', ') : '')
-  );
-  const ringed = PORTRAIT_STATES.filter((id) => state(id).ring);
-  ok(
-    ringed.join() === 'exp' &&
-      state('exp').ring.includes(rgbOf(tokens.color('color.hud.expFill'))) &&
-      state('exp').ring.includes(rgbOf(tokens.color('color.hud.trackLight'))),
-    `only the ringed portrait draws a ring, in the EXP and track tokens (${ringed.join()})`
-  );
-  ok(
-    state('leaderFainted').dim > state('leader').dim,
-    `a fainted leader is darker than a plain one (${state('leaderFainted').dim} vs ${state('leader').dim})`
-  );
-  const unloaded = PORTRAIT_STATES.filter((id) => !state(id).loaded);
-  ok(unloaded.length === 0, 'every portrait image loads' + (unloaded.length ? ': ' + unloaded.join(', ') : ''));
+    const tables = {};
+    for (const section of document.querySelectorAll('.lib-story'))
+      tables[section.dataset.story] = [...section.querySelectorAll('.lib-props tbody tr')].map((row) => ({
+        name: row.cells[0].innerText.trim(),
+        filled: [...row.cells].every((cell) => cell.innerText.trim().length > 0),
+      }));
+    const given = {},
+      declared = {};
+    for (const key of Object.keys(G.Lib).filter((name) => /Stories$/.test(name)))
+      for (const story of G.Lib[key]) {
+        declared[story.name] = (story.props || []).map((prop) => prop.name);
+        for (const state of story.states) {
+          const props = state.props || {};
+          given[story.name + ':' + state.id] = {
+            focus: props.focus || 0,
+            columns: props.columns,
+            fraction: props.fraction,
+            band: props.band,
+            size: props.size,
+            rim: typeof props.rim === 'string' ? props.rim : null,
+            title: props.title,
+            message: props.message,
+          };
+        }
+      }
+    const patterns = ['hud-bar-checker', 'hud-type-checker', 'hud-slot-grid'].filter((patternId) =>
+      document.getElementById(patternId)
+    );
+    return { tiles, tables, given, declared, patterns, text: document.getElementById('main').innerText };
+  }, pageId);
 }
 
-// The states each square piece has in the game (155c-2 plan)
-const SQUARE_STATES = { 'square.item': ['filled', 'empty'], 'grid.item': ['twoColumns', 'fourColumns'] };
-const GRID_COLUMNS = { twoColumns: 2, fourColumns: 4 };
-async function checkSquaresPage(page, tokens) {
-  const drawn = await page.evaluate(() => {
-    window.libShow('primitives/squares');
-    const states = {};
-    for (const stage of document.querySelectorAll('[data-state]')) {
-      const slots = [...stage.querySelectorAll('.hud-grid-slot')],
-        firstTop = slots.length ? Math.round(slots[0].getBoundingClientRect().top) : null,
-        opacityOf = (element) => (element ? Number(getComputedStyle(element).opacity) : null);
-      states[stage.dataset.state] = {
-        drawn: !!stage.firstElementChild && stage.firstElementChild.getBoundingClientRect().width > 0,
-        fills: [...stage.querySelectorAll('svg rect')].map((rect) => String(rect.getAttribute('fill')).toLowerCase()),
-        firstRow: slots.filter((slot) => Math.round(slot.getBoundingClientRect().top) === firstTop).length,
-        lockedOpacity: opacityOf(stage.querySelector('.hud-grid-slot.is-locked')),
-        filledOpacity: opacityOf(stage.querySelector('.hud-grid-slot.is-filled')),
-      };
-    }
-    const patternIds = ['hud-bar-checker', 'hud-type-checker', 'hud-slot-grid'],
-      patterns = patternIds.filter((id) => document.getElementById(id));
-    return { states, patterns, text: document.getElementById('main').innerText };
-  });
-  const state = (name, id) => drawn.states[name + ':' + id] || {};
+async function checkPrimitivePages(page, tokens) {
+  const pages = {};
+  for (const id of Object.keys(PRIMITIVE_STATES)) pages[id] = await readPrimitivePage(page, id);
+  const tile = (id, key) => pages[id].tiles[key] || {};
+  const given = (id, key) => pages[id].given[key] || {};
 
-  const missing = Object.entries(SQUARE_STATES).flatMap(([name, ids]) =>
-    ids.filter((id) => !state(name, id).drawn || !drawn.text.includes(name + '.' + id)).map((id) => name + '.' + id)
+  // every page: exactly its states, each under its full name; every declared prop in its table, filled in
+  const wrongStates = [],
+    badTables = [];
+  let stateCount = 0;
+  for (const [id, pieces] of Object.entries(PRIMITIVE_STATES)) {
+    const shown = pages[id];
+    for (const [name, states] of Object.entries(pieces)) {
+      stateCount += states.length;
+      const here = Object.keys(shown.tiles)
+        .filter((key) => key.startsWith(name + ':'))
+        .map((key) => key.split(':')[1]);
+      const shows = (state) =>
+        here.includes(state) && tile(id, name + ':' + state).drawn && shown.text.includes(name + '.' + state);
+      const missing = states.filter((state) => !shows(state));
+      const extra = here.filter((state) => !states.includes(state));
+      if (missing.length || extra.length)
+        wrongStates.push(
+          name + (missing.length ? ' missing ' + missing : '') + (extra.length ? ' extra ' + extra : '')
+        );
+      const table = shown.tables[name] || [],
+        declared = shown.declared[name] || [];
+      const unlisted = declared.filter((prop) => !table.some((row) => row.name === prop));
+      if (!declared.length || unlisted.length || table.some((row) => !row.filled)) badTables.push(name);
+    }
+  }
+  ok(
+    wrongStates.length === 0,
+    `every primitive page draws exactly its states, each under its full name (${stateCount})` +
+      (wrongStates.length ? ': ' + wrongStates.join('; ') : '')
   );
   ok(
-    missing.length === 0,
-    `the Squares page draws every state under its full name (${Object.values(SQUARE_STATES).flat().length})` +
-      (missing.length ? ', missing ' + missing.join(' ') : '')
+    badTables.length === 0,
+    'every piece lists its props in a table: name, values and what it does' +
+      (badTables.length ? ': not on ' + badTables.join(', ') : '')
+  );
+
+  // buttons: each state's rim is its token; refused is fainter and still pressable; disabled cannot be pressed
+  const button = (key) => tile('primitives/buttons', key);
+  const RIM_BASES = {
+    rest: tokens.ramp('color.rim.rest').base.toLowerCase(),
+    focus: tokens.ramp('color.rim.focus').base.toLowerCase(),
+    red: tokens.ramp('color.rim.sell').base.toLowerCase(),
+  };
+  const rimOf = (key) => {
+    const fills = button(key).fills || [];
+    const shown = Object.keys(RIM_BASES).filter((rim) => fills.includes(RIM_BASES[rim]));
+    return shown.length === 1 ? shown[0] : 'neither';
+  };
+  const wrongRims = Object.entries(BUTTON_RIMS)
+    .filter(([key, rim]) => rimOf(key) !== rim)
+    .map(([key]) => key.replace(':', '.') + ' shows ' + rimOf(key));
+  ok(
+    wrongRims.length === 0,
+    'the button rims are the tokens: rest at rest and refused, focus focused, red on a negative focus' +
+      (wrongRims.length ? ': ' + wrongRims.join(', ') : '')
+  );
+  const rounded = (state) => button('button.rounded:' + state);
+  const faint = (refused, plain) => rounded(refused).labelAlpha < rounded(plain).labelAlpha;
+  ok(
+    faint('refused', 'rest') && faint('refusedFocus', 'focusPositive'),
+    `a refused label is fainter than a plain one, at rest and under the cursor (${rounded('refused').labelAlpha})`
   );
   ok(
-    drawn.patterns.length === 3 && state('square.item', 'filled').fills.includes('url(#hud-bar-checker)'),
-    `the board defines the shared fills and a square paints one (${drawn.patterns.join(', ')})`
+    rounded('disabled').disabled && !rounded('refused').disabled && !rounded('refusedFocus').disabled,
+    'a disabled button cannot be pressed; a refused one still can (it says why)'
   );
+
+  // panels and cards
+  const panel = (key) => tile('primitives/panels', key);
+  const restBase = tokens.ramp('color.rim.rest').base.toLowerCase(),
+    faintedBase = tokens.ramp('color.rim.fainted').base.toLowerCase();
+  const pixelRest = panel('panel.pixel:rest').fills || [],
+    pixelFainted = panel('panel.pixel:fainted').fills || [];
+  ok(
+    pixelRest.includes(restBase) &&
+      !pixelRest.includes(faintedBase) &&
+      pixelFainted.includes(faintedBase) &&
+      !pixelFainted.includes(restBase),
+    'a pixel panel paints the rest rim at rest and the fainted rim when fainted'
+  );
+  const lit = panel('card.vertical:lit'),
+    dimmed = panel('card.vertical:dimmed'),
+    buttonLit = panel('card.vertical:dimmedButtonLit');
+  ok(
+    dimmed.cardOpacity < lit.cardOpacity &&
+      buttonLit.buttonOpacity === lit.buttonOpacity &&
+      buttonLit.nameOpacity < lit.nameOpacity,
+    'a dimmed card is fainter than a lit one; dimmed with its button lit, only its text dims'
+  );
+  const flat = panel('panel.flat:rest').flat || {};
+  ok(
+    flat.body === rgbOf(tokens.color('color.hud.body')) &&
+      flat.frame === rgbOf(tokens.color('color.hud.frame')) &&
+      String(flat.outline).includes(rgbOf(tokens.color('color.hud.outline'))),
+    `a flat panel paints the body, frame and outline tokens (${flat.body}, ${flat.frame})`
+  );
+  const slotFilled = panel('card.horizontal:filled'),
+    slotEmpty = panel('card.horizontal:empty'),
+    slotDimmed = panel('card.horizontal:dimmed');
+  ok(
+    slotFilled.slotNamed && !slotEmpty.slotNamed && slotDimmed.slotOpacity < slotFilled.slotOpacity,
+    'a filled horizontal card shows its item and an empty one none; a dimmed one is fainter'
+  );
+  const slanted = panel('panel.slanted:rest').fills || [];
+  ok(
+    slanted.includes(restBase) && slanted.includes('url(#hud-slot-grid)'),
+    'a slanted panel paints its rim and its body (the slot grid)'
+  );
+
+  // squares
+  const squares = pages['primitives/squares'],
+    square = (key) => tile('primitives/squares', key);
   const lvFill = tokens.color('color.hud.lvFill').toLowerCase(),
     slate = tokens.color('color.hud.slate').toLowerCase();
-  const filledFills = state('square.item', 'filled').fills,
-    emptyFills = state('square.item', 'empty').fills;
+  const filledFills = square('square.item:filled').fills || [],
+    emptyFills = square('square.item:empty').fills || [];
   ok(
     filledFills.includes(lvFill) &&
       !filledFills.includes(slate) &&
@@ -545,193 +456,78 @@ async function checkSquaresPage(page, tokens) {
       !emptyFills.includes(lvFill),
     "a filled square's rim is color.hud.lvFill and an empty one's color.hud.slate"
   );
-  const pocket = state('grid.item', 'twoColumns');
   ok(
-    pocket.lockedOpacity !== null && pocket.lockedOpacity < pocket.filledOpacity,
-    `a locked slot is fainter than a filled one (${pocket.lockedOpacity} vs ${pocket.filledOpacity})`
+    squares.patterns.length === 3 && filledFills.includes('url(#hud-bar-checker)'),
+    `the board defines the shared fills and a square paints one (${squares.patterns.join(', ')})`
   );
-  const wrongColumns = Object.entries(GRID_COLUMNS)
-    .filter(([id, columns]) => state('grid.item', id).firstRow !== columns)
-    .map(([id]) => id + ' has ' + state('grid.item', id).firstRow);
+  const grid = square('grid.item:rest');
   ok(
-    wrongColumns.length === 0,
-    'the grids lay out two and four across' + (wrongColumns.length ? ': ' + wrongColumns.join(', ') : '')
-  );
-}
-
-// The states each bar has in the game (155c-3 plan); the life bar's from fullest to emptiest
-const BAR_STATES = {
-  'bar.life': ['high', 'middle', 'low', 'empty', 'cut', 'narrow'],
-  'bar.timer': ['chip', 'prompt', 'weather'],
-};
-const LIFE_FROM_FULLEST = ['high', 'middle', 'low', 'empty'];
-async function checkBarsPage(page, tokens) {
-  const drawn = await page.evaluate(() => {
-    window.libShow('primitives/bars');
-    const props = {};
-    for (const story of G.Lib.BarStories || [])
-      for (const state of story.states) {
-        const { band, fraction, light, base, drainsRight } = state.props;
-        props[story.name + ':' + state.id] = { band, fraction, light, base, drainsRight: !!drainsRight };
-      }
-    const states = {};
-    for (const stage of document.querySelectorAll('[data-state]')) {
-      const fill = stage.querySelector('.hud-lifebar-fill'),
-        shape = stage.querySelector('.hud-lifebar svg'),
-        timer = stage.querySelector('.bar-timer');
-      states[stage.dataset.state] = {
-        drawn: !!stage.firstElementChild && stage.firstElementChild.getBoundingClientRect().height > 0,
-        fillDrawn: fill ? fill.getBoundingClientRect().width : null,
-        fillImage: fill ? getComputedStyle(fill).backgroundImage : '',
-        pieces: stage.querySelectorAll('.hud-lifebar-piece').length,
-        shapeWidth: shape ? shape.getBoundingClientRect().width : null,
-        shapeFills: [...stage.querySelectorAll('svg rect')].map((rect) => String(rect.getAttribute('fill'))),
-        timerDrawn: timer ? timer.getBoundingClientRect().width : null,
-        timerBox: timer ? timer.offsetWidth : null,
-        timerOriginX: timer ? parseFloat(getComputedStyle(timer).transformOrigin) : null,
-        timerImage: timer ? getComputedStyle(timer).backgroundImage : '',
-      };
-    }
-    return { states, props, text: document.getElementById('main').innerText };
-  });
-  const state = (name, id) => drawn.states[name + ':' + id] || {};
-  const given = (name, id) => drawn.props[name + ':' + id] || {};
-
-  const missing = Object.entries(BAR_STATES).flatMap(([name, ids]) =>
-    ids.filter((id) => !state(name, id).drawn || !drawn.text.includes(name + '.' + id)).map((id) => name + '.' + id)
-  );
-  ok(
-    missing.length === 0,
-    `the Bars page draws every state under its full name (${Object.values(BAR_STATES).flat().length})` +
-      (missing.length ? ', missing ' + missing.join(' ') : '')
+    grid.lockedOpacity < grid.filledOpacity && grid.firstRow === given('primitives/squares', 'grid.item:rest').columns,
+    `a grid lays out its columns and a locked slot is fainter (${grid.firstRow} across)`
   );
 
-  const fills = LIFE_FROM_FULLEST.map((id) => state('bar.life', id).fillDrawn);
+  // bars
+  const life = (state) => tile('primitives/bars', 'bar.life:' + state);
+  const fills = LIFE_FROM_FULLEST.map((state) => life(state).fillDrawn);
   ok(
     fills.every((width, index) => index === 0 || width < fills[index - 1]) && fills[fills.length - 1] === 0,
     `the life bar's fill shrinks from high to middle to low, and a fainted bar has none (${fills.join(', ')})`
   );
-  const wrongBands = ['high', 'middle', 'low', 'cut', 'narrow']
-    .filter((id) => {
-      const band = given('bar.life', id).band;
-      return !state('bar.life', id).fillImage.includes(rgbOf(tokens.color('color.hp.' + band + '.fill')));
-    })
-    .map((id) => 'bar.life.' + id);
+  const wrongBands = ['high', 'middle', 'low', 'cut'].filter((state) => {
+    const band = given('primitives/bars', 'bar.life:' + state).band;
+    return !life(state).fillImage.includes(rgbOf(tokens.color('color.hp.' + band + '.fill')));
+  });
   ok(
     wrongBands.length === 0,
-    "each life bar's fill paints its band's fill token" + (wrongBands.length ? ': ' + wrongBands.join(', ') : '')
+    "each life bar's fill paints its band's token" + (wrongBands.length ? ': ' + wrongBands : '')
   );
   ok(
-    state('bar.life', 'cut').pieces > 0 && state('bar.life', 'high').pieces === 0,
-    `a cut life bar shows the lost piece; a steady one shows none (${state('bar.life', 'cut').pieces})`
+    life('cut').pieces > 0 && life('high').pieces === 0 && (life('high').fills || []).includes('url(#hud-bar-checker)'),
+    'a cut life bar shows the lost piece and a steady one none; the shape paints the bar checker'
   );
+  const timer = tile('primitives/bars', 'bar.timer:rest'),
+    timerGiven = given('primitives/bars', 'bar.timer:rest');
   ok(
-    state('bar.life', 'high').shapeFills.includes('url(#hud-bar-checker)'),
-    "the life bar's shape paints the bar checker fill"
-  );
-  ok(
-    state('bar.life', 'narrow').shapeWidth < state('bar.life', 'high').shapeWidth,
-    'a narrow life bar is narrower (' +
-      `${state('bar.life', 'narrow').shapeWidth} vs ${state('bar.life', 'high').shapeWidth})`
+    timer.timerFraction !== null && Math.abs(timer.timerFraction - timerGiven.fraction) <= TIMER_SLACK,
+    `a timer's drawn length follows its fraction (${timer.timerFraction} for ${timerGiven.fraction})`
   );
 
-  const TIMER_SLACK = 0.02;
-  const offFraction = BAR_STATES['bar.timer']
-    .filter((id) => {
-      const shown = state('bar.timer', id);
-      const drawnFraction = shown.timerBox ? shown.timerDrawn / shown.timerBox : null;
-      return drawnFraction === null || Math.abs(drawnFraction - given('bar.timer', id).fraction) > TIMER_SLACK;
-    })
-    .map((id) => 'bar.timer.' + id);
-  ok(
-    offFraction.length === 0,
-    "each timer's drawn length follows its fraction" + (offFraction.length ? ': ' + offFraction.join(', ') : '')
-  );
-  const weather = state('bar.timer', 'weather'),
-    weatherGiven = given('bar.timer', 'weather'),
-    chip = state('bar.timer', 'chip');
-  ok(
-    weatherGiven.drainsRight && weather.timerOriginX === weather.timerBox && chip.timerOriginX === 0,
-    'the weather timer holds its right end; the chip timer its left (' +
-      `${weather.timerOriginX} of ${weather.timerBox}, ${chip.timerOriginX})`
-  );
-  ok(
-    weather.timerImage.includes(rgbOf(weatherGiven.light)) && weather.timerImage.includes(rgbOf(weatherGiven.base)),
-    `the weather timer paints the two colours it was given (${weather.timerImage})`
-  );
-}
-
-// The dialog's states (155c-4 plan)
-const MODAL_STATES = ['confirm', 'withNote', 'cancelFocused', 'notice', 'longMessage'];
-async function checkModalPage(page, tokens) {
-  const drawn = await page.evaluate(() => {
-    window.libShow('primitives/modal');
-    const props = {};
-    for (const state of (G.Lib.ModalStories[0] || { states: [] }).states) props[state.id] = state.props;
-    const states = {};
-    for (const stage of document.querySelectorAll('[data-state]')) {
-      const box = stage.querySelector('.modal-dialog'),
-        message = stage.querySelector('.modal-message'),
-        buttons = [...stage.querySelectorAll('.modal-button')];
-      states[stage.dataset.state.split(':')[1]] = {
-        drawn: !!box && box.getBoundingClientRect().height > 0,
-        body: box ? getComputedStyle(box).backgroundColor : '',
-        frame: box ? getComputedStyle(box).borderTopColor : '',
-        outline: box ? getComputedStyle(box).boxShadow : '',
-        text: stage.innerText,
-        buttons: buttons.length,
-        green: buttons
-          .map((entry, index) => (entry.querySelector('.focused') ? index : -1))
-          .filter((index) => index >= 0),
-        greenFills: [...stage.querySelectorAll('.modal-button .focused svg rect')].map((rect) =>
-          String(rect.getAttribute('fill')).toLowerCase()
-        ),
-        messageLines: message ? Math.round(message.offsetHeight / parseFloat(getComputedStyle(message).lineHeight)) : 0,
-      };
-    }
-    return { states, props, text: document.getElementById('main').innerText };
-  });
-  const state = (id) => drawn.states[id] || {};
-
-  const missing = MODAL_STATES.filter((id) => !state(id).drawn || !drawn.text.includes('modal.dialog.' + id));
-  ok(
-    missing.length === 0,
-    `the Modal page draws every state under its full name (${MODAL_STATES.length})` +
-      (missing.length ? ', missing ' + missing.join(' ') : '')
-  );
-  const box = state('confirm');
-  ok(
-    box.body === rgbOf(tokens.color('color.hud.body')) &&
-      box.frame === rgbOf(tokens.color('color.hud.frame')) &&
-      String(box.outline).includes(rgbOf(tokens.color('color.hud.outline'))),
-    `the dialog's box paints the panel.flat tokens (${box.body}, ${box.frame})`
-  );
+  // the dialog
   const focusBase = tokens.ramp('color.rim.focus').base.toLowerCase();
-  const wrongGreen = MODAL_STATES.filter((id) => {
-    const wanted = (drawn.props[id] && drawn.props[id].focus) || 0;
-    return state(id).green.join() !== String(wanted) || !state(id).greenFills.includes(focusBase);
+  const wrongGreen = PRIMITIVE_STATES['primitives/modal']['modal.dialog'].filter((state) => {
+    const key = 'modal.dialog:' + state;
+    const shown = tile('primitives/modal', key);
+    const wanted = String(given('primitives/modal', key).focus);
+    return String(shown.green) !== wanted || !shown.greenFills.includes(focusBase);
   });
+  const dialog = tile('primitives/modal', 'modal.dialog:focusConfirm'),
+    dialogGiven = given('primitives/modal', 'modal.dialog:focusConfirm');
   ok(
-    wrongGreen.length === 0,
-    'exactly one button is green, the one asked for, and it draws color.rim.focus' +
-      (wrongGreen.length ? ': ' + wrongGreen.join(', ') : '')
+    wrongGreen.length === 0 && pages['primitives/modal'].text.includes(dialogGiven.message),
+    'exactly one dialog button is green, the one asked for, in color.rim.focus; the message shows' +
+      (wrongGreen.length ? ': ' + wrongGreen : '')
   );
   ok(
-    state('notice').buttons === 1 && state('confirm').buttons === 2,
-    `a notice has one button, a question two (${state('notice').buttons}, ${state('confirm').buttons})`
+    (dialog.flat || {}).body === rgbOf(tokens.color('color.hud.body')),
+    `the dialog's box is a flat panel (${(dialog.flat || {}).body})`
   );
-  const unshown = MODAL_STATES.filter((id) => {
-    const given = drawn.props[id] || {};
-    return [given.title, given.message, given.note].filter(Boolean).some((text) => !state(id).text.includes(text));
-  });
+
+  // portraits
+  const portrait = (state) => tile('primitives/portraits', 'portrait.round:' + state);
+  const portraitStates = PRIMITIVE_STATES['primitives/portraits']['portrait.round'];
+  const wrongSize = portraitStates.filter(
+    (state) => portrait(state).width !== given('primitives/portraits', 'portrait.round:' + state).size
+  );
+  ok(wrongSize.length === 0, 'each portrait is the size it was asked for' + (wrongSize.length ? ': ' + wrongSize : ''));
+  const activeRim = given('primitives/portraits', 'portrait.round:active').rim;
   ok(
-    unshown.length === 0,
-    'every dialog shows its title, message and note' + (unshown.length ? ': missing on ' + unshown.join(', ') : '')
+    portrait('active').faceRim === rgbOf(activeRim) &&
+      portrait('rest').faceRim === rgbOf(tokens.color('color.hud.outline')) &&
+      portrait('fainted').dim > portrait('rest').dim,
+    'an active portrait takes its rim colour, a resting one the outline; a fainted one is darker'
   );
-  ok(
-    state('longMessage').messageLines > state('confirm').messageLines,
-    `a long message wraps to more lines (${state('longMessage').messageLines} vs ${state('confirm').messageLines})`
-  );
+  const unloaded = portraitStates.filter((state) => !portrait(state).loaded);
+  ok(unloaded.length === 0, 'every portrait image loads' + (unloaded.length ? ': ' + unloaded : ''));
 }
 
 (async () => {
