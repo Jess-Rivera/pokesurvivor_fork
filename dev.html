@@ -96,6 +96,7 @@
     <link rel="stylesheet" href="js/ui/lib/primitives/panel/panel.css" />
     <link rel="stylesheet" href="js/ui/lib/primitives/square/square.css" />
     <link rel="stylesheet" href="js/ui/lib/primitives/bar/bar.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/modal/modal.css" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/bw-menu.css" />
     <link rel="stylesheet" href="css/bw-team.css" />
@@ -754,17 +755,10 @@
     <!-- #136: the catch screen (js/ui/catch-ui.js, G.CatchUI, draws inside it from the HUD kit; css/bw-catch.css) -->
     <section id="scr-catch" class="scr dim hidden"></section>
 
-    <!-- In-game confirm dialog (G.UI.ask): replaces the browser confirm() for new screens. Not in the SCREENS list, so it sits on top of whatever is open. -->
+    <!-- In-game confirm dialog (G.UI.ask): the UI library's modal.dialog (#155 155c-4), drawn into the menu stage below.
+         Not in the SCREENS list, so it sits on top of whatever is open. -->
     <section id="scr-ask" class="scr dim hidden">
-      <div class="box center ask">
-        <h2 id="ask-title">Are you sure?</h2>
-        <p id="ask-msg" class="ask-msg"></p>
-        <p id="ask-note" class="sub ask-note"></p>
-        <div class="row" style="justify-content: center; margin-top: 12px">
-          <button id="ask-ok" class="btn gold" data-sfx="confirm">Confirm</button>
-          <button id="ask-no" class="btn">Cancel</button>
-        </div>
-      </div>
+      <div id="ask-stage" class="pm-stage"></div>
     </section>
 
     <section id="scr-pause" class="scr dim hidden">
@@ -838,6 +832,7 @@
     <script defer src="js/ui/lib/primitives/panel/panel.js"></script>
     <script defer src="js/ui/lib/primitives/square/square.js"></script>
     <script defer src="js/ui/lib/primitives/bar/bar.js"></script>
+    <script defer src="js/ui/lib/primitives/modal/modal.js"></script>
     <script defer src="js/core/stats.js"></script>
     <script defer src="js/core/simbus.js"></script>
     <script defer src="js/systems/log.js"></script>

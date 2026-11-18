@@ -106,3 +106,6 @@ ItemCard). Rows above that say `card.item` mean `card.vertical`.
 Updated 2026-11-18 (155c-3): the library has `bar.life` (LifeBarShape, LifeBarLabel, LifeBarFill, LifeBarPiece, LifeBar;
 the kit's createLifeBar keeps the per-frame state) and `bar.timer` (TimerBar: the chips', Shake Off and weather timers).
 Not yet in the library: the roster card's HP fill (part of run.hud.teamSlot) and the EXP ring.
+
+Updated 2026-11-18 (155c-4): `modal.dialog` (ModalDialog) is G.UI.ask's look; the old #scr-ask box and .btn buttons are
+gone. Decision 2026-11-18-155-ask-dialog-keys sets its keys.

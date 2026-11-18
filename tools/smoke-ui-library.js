@@ -51,7 +51,9 @@ const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PAL
 // fainter than a filled one; the grids lay out two and four across. Primitives, Bars (155c-3): every state draws under
 // its full name; the life bar's fill shrinks with its fraction and paints its band's fill token; a cut leaves a piece;
 // the shape paints the bar checker; a narrow bar is narrower; a timer's drawn length follows its fraction, and the
-// weather timer holds its right end and paints the two colours it was given.
+// weather timer holds its right end and paints the two colours it was given. Primitives, Modal (155c-4): every state
+// draws under its full name; the box paints the panel.flat tokens; exactly one button is green and it draws the focus
+// rim; a notice has one button; the title, message and note show; a long message wraps to more lines.
 const vm = require('vm');
 function loadTokens() {
   const sandbox = { console };
@@ -192,6 +194,7 @@ async function checkBoard(browser) {
   await checkPanelsPage(page, tokens);
   await checkSquaresPage(page, tokens);
   await checkBarsPage(page, tokens);
+  await checkModalPage(page, tokens);
   await context.close();
 }
 
@@ -578,6 +581,79 @@ async function checkBarsPage(page, tokens) {
   ok(
     weather.timerImage.includes(rgbOf(weatherGiven.light)) && weather.timerImage.includes(rgbOf(weatherGiven.base)),
     `the weather timer paints the two colours it was given (${weather.timerImage})`
+  );
+}
+
+// The dialog's states (155c-4 plan)
+const MODAL_STATES = ['confirm', 'withNote', 'cancelFocused', 'notice', 'longMessage'];
+async function checkModalPage(page, tokens) {
+  const drawn = await page.evaluate(() => {
+    window.libShow('primitives/modal');
+    const props = {};
+    for (const state of (G.Lib.ModalStories[0] || { states: [] }).states) props[state.id] = state.props;
+    const states = {};
+    for (const stage of document.querySelectorAll('[data-state]')) {
+      const box = stage.querySelector('.modal-dialog'),
+        message = stage.querySelector('.modal-message'),
+        buttons = [...stage.querySelectorAll('.modal-button')];
+      states[stage.dataset.state.split(':')[1]] = {
+        drawn: !!box && box.getBoundingClientRect().height > 0,
+        body: box ? getComputedStyle(box).backgroundColor : '',
+        frame: box ? getComputedStyle(box).borderTopColor : '',
+        outline: box ? getComputedStyle(box).boxShadow : '',
+        text: stage.innerText,
+        buttons: buttons.length,
+        green: buttons
+          .map((entry, index) => (entry.querySelector('.focused') ? index : -1))
+          .filter((index) => index >= 0),
+        greenFills: [...stage.querySelectorAll('.modal-button .focused svg rect')].map((rect) =>
+          String(rect.getAttribute('fill')).toLowerCase()
+        ),
+        messageLines: message ? Math.round(message.offsetHeight / parseFloat(getComputedStyle(message).lineHeight)) : 0,
+      };
+    }
+    return { states, props, text: document.getElementById('main').innerText };
+  });
+  const state = (id) => drawn.states[id] || {};
+
+  const missing = MODAL_STATES.filter((id) => !state(id).drawn || !drawn.text.includes('modal.dialog.' + id));
+  ok(
+    missing.length === 0,
+    `the Modal page draws every state under its full name (${MODAL_STATES.length})` +
+      (missing.length ? ', missing ' + missing.join(' ') : '')
+  );
+  const box = state('confirm');
+  ok(
+    box.body === rgbOf(tokens.color('color.hud.body')) &&
+      box.frame === rgbOf(tokens.color('color.hud.frame')) &&
+      String(box.outline).includes(rgbOf(tokens.color('color.hud.outline'))),
+    `the dialog's box paints the panel.flat tokens (${box.body}, ${box.frame})`
+  );
+  const focusBase = tokens.ramp('color.rim.focus').base.toLowerCase();
+  const wrongGreen = MODAL_STATES.filter((id) => {
+    const wanted = (drawn.props[id] && drawn.props[id].focus) || 0;
+    return state(id).green.join() !== String(wanted) || !state(id).greenFills.includes(focusBase);
+  });
+  ok(
+    wrongGreen.length === 0,
+    'exactly one button is green, the one asked for, and it draws color.rim.focus' +
+      (wrongGreen.length ? ': ' + wrongGreen.join(', ') : '')
+  );
+  ok(
+    state('notice').buttons === 1 && state('confirm').buttons === 2,
+    `a notice has one button, a question two (${state('notice').buttons}, ${state('confirm').buttons})`
+  );
+  const unshown = MODAL_STATES.filter((id) => {
+    const given = drawn.props[id] || {};
+    return [given.title, given.message, given.note].filter(Boolean).some((text) => !state(id).text.includes(text));
+  });
+  ok(
+    unshown.length === 0,
+    'every dialog shows its title, message and note' + (unshown.length ? ': missing on ' + unshown.join(', ') : '')
+  );
+  ok(
+    state('longMessage').messageLines > state('confirm').messageLines,
+    `a long message wraps to more lines (${state('longMessage').messageLines} vs ${state('confirm').messageLines})`
   );
 }
 

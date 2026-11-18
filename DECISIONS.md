@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-18, #155 the ask dialog's keys follow the menu windows: the green button is what Enter or Space presses, arrows move it, Esc cancels (Jess)](docs/decisions/2026-11-18-155-ask-dialog-keys.md)
 - [2026-11-18, #155 library pieces are named by their look (button.slanted, button.rounded), never by a screen or job (Jess)](docs/decisions/2026-11-18-155-library-pieces-named-by-look.md)
 - [2026-11-17, #155 the UI design tokens (colours, fonts, layers, the type colours too) live in one JS data file; type and place names (Jess)](docs/decisions/2026-11-17-155-design-tokens-in-tokens-js.md)
 - [2026-11-17, #137c balls sell back at half price; one belt Buy beside Exit; an affordable Unlock stays lit (Jess)](docs/decisions/2026-11-17-137c-sell-balls-at-half-price.md)

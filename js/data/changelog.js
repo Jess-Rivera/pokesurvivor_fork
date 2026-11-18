@@ -22,6 +22,10 @@ G.CHANGELOG = [
         "The EV screen's panel now has the same dark outline as the other windows.",
         "The EV screen's panel now has the same dark outline as the other windows.",
       ],
+      [
+        "Confirm windows now use the game's pixel-art look. Arrow keys pick the button, Enter or Space presses it, Esc cancels.",
+        "Confirm windows now use the game's pixel-art look. Arrow keys pick the button, Enter or Space presses it, Esc cancels.",
+      ],
     ],
     fix: [
       [

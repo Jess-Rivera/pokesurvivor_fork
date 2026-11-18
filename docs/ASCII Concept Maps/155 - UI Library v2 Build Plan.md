@@ -173,3 +173,6 @@ primitive, a Squares page. As built: docs/ASCII Concept Maps/155c-2 - Flat Panel
 
 155c-3 built 2026-11-18 (Quick): bar.life and bar.timer in js/ui/lib/primitives/bar/, the Bars page. As built:
 docs/ASCII Concept Maps/155c-3 - Bars Plan.md.
+
+155c-4 built 2026-11-18 (Quick): modal.dialog in js/ui/lib/primitives/modal/, drawn by G.UI.ask; the Modal page. Every
+primitive page on the board is now live. As built: docs/ASCII Concept Maps/155c-4 - Modal Plan.md.

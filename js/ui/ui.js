@@ -84,28 +84,59 @@ G.UI = (() => {
     toastT = 0;
   /** tone: 'bad' = red toast (a benched Pokemon fainted, slice E2b). */
   /**
-   * In-game confirm dialog (the matching-UI replacement for the browser confirm()). Resolves true on Confirm / Enter, false on Cancel / Esc.
+   * In-game confirm dialog (the matching-UI replacement for the browser confirm()), drawn as the UI library's
+   * modal.dialog on the menu stage (#155 155c-4). Resolves true on Confirm, false on Cancel or Esc.
    * @param o  { title, ok, cancel, note, noCancel }  (note = a small second line, e.g. what you will have left; noCancel = a notice with one button)
+   * Keys (decision 2026-11-18-155-ask-dialog-keys): one button is green, Confirm when it opens; Left and Right move it,
+   * the mouse over a button makes it green; Enter or Space presses the green one; Esc cancels.
    * It is NOT one of the SCREENS, so it opens on top of the current screen and leaves it as it was. A second call cancels the first.
    */
-  let askDone = null;
+  const ASK_PART_IDS = { title: 'ask-title', message: 'ask-msg', note: 'ask-note' }, // the smokes read these
+    ASK_STEPS = { ArrowLeft: -1, ArrowRight: 1 };
+  let askDone = null,
+    askFit = null; // the stage's fit to the window (the HUD kit's fitToStage), made the first time an ask opens
   function ask(msg, o = {}) {
     return new Promise((resolve) => {
       if (askDone) askDone(false);
       const scr = $('scr-ask'),
-        ok = $('ask-ok'),
-        no = $('ask-no');
-      $('ask-title').textContent = o.title || 'Are you sure?';
-      $('ask-msg').textContent = msg;
-      $('ask-note').textContent = o.note || '';
-      ok.textContent = o.ok || 'Confirm';
-      no.textContent = o.cancel || 'Cancel';
-      no.style.display = o.noCancel ? 'none' : '';
+        stage = $('ask-stage'),
+        html = window.htm.bind(window.preact.h);
+      const buttons = [{ key: 'ok', elementId: 'ask-ok', label: o.ok || 'Confirm' }];
+      if (!o.noCancel) buttons.push({ key: 'no', elementId: 'ask-no', label: o.cancel || 'Cancel' });
+      let focus = 0; // the green button
+      function draw() {
+        window.preact.render(
+          html`<${G.Lib.Modal.ModalDialog}
+            title=${o.title || 'Are you sure?'}
+            message=${msg}
+            note=${o.note}
+            buttons=${buttons}
+            focus=${focus}
+            onPress=${press}
+            onHover=${moveTo}
+            partIds=${ASK_PART_IDS}
+          />`,
+          stage
+        );
+      }
+      function moveTo(index) {
+        if (index === focus) return;
+        focus = index;
+        G.Audio.sfx('hover');
+        draw();
+      }
+      function press(index) {
+        G.Audio.sfx(index === 0 ? 'confirm' : 'click');
+        done(index === 0);
+      }
       const onKey = (e) => {
-        if (e.key !== 'Enter' && e.key !== 'Escape') return;
+        const step = ASK_STEPS[e.key];
+        if (step) moveTo(Math.max(0, Math.min(buttons.length - 1, focus + step)));
+        else if (e.key === 'Enter' || e.key === ' ') press(focus);
+        else if (e.key === 'Escape') done(false);
+        else return;
         e.preventDefault();
-        e.stopPropagation(); // the game must not also read this Esc / Enter
-        done(e.key === 'Enter');
+        e.stopPropagation(); // the game must not also read this key
       };
       const done = (v) => {
         if (askDone !== done) return;
@@ -115,8 +146,9 @@ G.UI = (() => {
         resolve(v);
       };
       askDone = done;
-      ok.onclick = () => done(true);
-      no.onclick = () => done(false);
+      if (askFit) askFit();
+      else askFit = G.HudKit.fitToStage(stage);
+      draw();
       addEventListener('keydown', onKey, true);
       scr.classList.remove('hidden');
     });

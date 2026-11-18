@@ -3373,19 +3373,9 @@ a.btn {
   background: rgba(255, 210, 63, 0.14);
 }
 
-/* ---- In-game confirm dialog (G.UI.ask) ---- */
+/* ---- In-game confirm dialog (G.UI.ask): its look is modal.dialog (js/ui/lib/primitives/modal/modal.css) ---- */
 #scr-ask {
   z-index: 62;
-}
-.box.ask {
-  width: min(440px, 100%);
-}
-.ask-msg {
-  font-size: 17px;
-  margin: 6px 0 4px;
-}
-.ask-note {
-  margin: 0;
 }
 
 /* Move Shop step 4: the Move Trainer and TM Mart screens (js/ui/shop-ui.js). Prefix mshop-, apart from the PokeCoin shop's shop- rules. */

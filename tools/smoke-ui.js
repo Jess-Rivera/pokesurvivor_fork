@@ -2534,6 +2534,76 @@ async function inventoryFlow(browser, query, tag) {
   await page.close();
 }
 
+// #155 155c-4: the ask dialog (G.UI.ask, drawn as modal.dialog). Keys (decision 2026-11-18-155-ask-dialog-keys): the
+// green button opens on Confirm; Enter or Space presses the green one; Right moves it to Cancel; Esc cancels; a second
+// ask cancels the first; a notice (noCancel) has one button; the ids the other smokes click are on the dialog.
+async function askFlow(browser, query, tag) {
+  const { page, errs } = await boot(browser, query);
+  await page.mouse.move(0, 0); // the pointer off the dialog, so no hover moves the green
+  const openAsk = (options) =>
+    page.evaluate((askOptions) => {
+      window.askAnswer = 'open';
+      G.UI.ask('Is this a test?', askOptions).then((answer) => (window.askAnswer = answer));
+    }, options);
+  const answerAfter = async (keys, options = { title: 'Test', ok: 'Yes', cancel: 'No', note: 'A note.' }) => {
+    await openAsk(options);
+    await page.waitForSelector('#scr-ask:not(.hidden)');
+    for (const key of keys) await page.keyboard.press(key);
+    await sleep(100);
+    return page.evaluate(() => ({ answer: window.askAnswer, open: G.UI.isOpen('scr-ask') }));
+  };
+  const answers = {
+    enter: await answerAfter(['Enter']),
+    rightEnter: await answerAfter(['ArrowRight', 'Enter']),
+    space: await answerAfter(['Space']),
+    escape: await answerAfter(['Escape']),
+  };
+  ok(
+    answers.enter.answer === true &&
+      answers.rightEnter.answer === false &&
+      answers.space.answer === true &&
+      answers.escape.answer === false &&
+      Object.values(answers).every((result) => !result.open),
+    tag + ': Enter and Space press the green button (Confirm at first), Right then Enter cancels, Esc cancels (' +
+      JSON.stringify(answers) +
+      ')'
+  );
+  await page.evaluate(() => {
+    window.firstAnswer = 'open';
+    G.UI.ask('First?').then((answer) => (window.firstAnswer = answer));
+    G.UI.ask('Second?').then((answer) => (window.secondAnswer = answer));
+  });
+  await sleep(50);
+  const shownSecond = await page.evaluate(() => document.getElementById('ask-msg').textContent);
+  await page.keyboard.press('Enter');
+  await sleep(100);
+  const pair = await page.evaluate(() => ({ first: window.firstAnswer, second: window.secondAnswer }));
+  ok(
+    pair.first === false && pair.second === true && shownSecond === 'Second?',
+    tag + ': a second ask cancels the first and shows itself (' + JSON.stringify(pair) + ')'
+  );
+  await openAsk({ title: 'Notice', ok: 'OK', note: 'A note.', noCancel: true });
+  await page.waitForSelector('#scr-ask:not(.hidden)');
+  const parts = await page.evaluate(() => ({
+    buttons: document.querySelectorAll('#scr-ask .modal-dialog .modal-button').length,
+    ids: ['ask-title', 'ask-msg', 'ask-note', 'ask-ok'].every((id) => {
+      const element = document.getElementById(id);
+      return !!element && !!element.closest('.modal-dialog');
+    }),
+    noCancel: !document.getElementById('ask-no'),
+  }));
+  await page.keyboard.press('Enter');
+  ok(
+    parts.buttons === 1 && parts.noCancel && parts.ids,
+    tag + ': a notice has one button, and the ask ids sit on the dialog (' + JSON.stringify(parts) + ')'
+  );
+  ok(
+    errs.length === 0,
+    tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')
+  );
+  await page.close();
+}
+
 async function onboardingFlow(browser, query, tag) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   const page = await ctx.newPage();
@@ -2629,6 +2699,7 @@ async function onboardingFlow(browser, query, tag) {
     await regionFlow(browser, '?dev', 'region');
     await loginFlow(browser, '?dev', 'login');
     await onboardingFlow(browser, '?dev', 'onboarding');
+    await askFlow(browser, '?dev', 'ask');
     await catchFlow(browser, '?dev', 'catch');
     await shopFlow(browser, '?dev', 'shop');
     await inventoryFlow(browser, '?dev', 'inventory');
