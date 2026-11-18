@@ -13,7 +13,7 @@ G.HudPlayerPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
   const { html, signal, hooks, PALETTE, SLOT_GRID, PixelShape, moveSlotRow, createLifeBar, typeColours } = overlay.kit;
-  const { ItemSquare, Cursor, Chip, hasChip, createEffectChipReader } = overlay.kit;
+  const { ItemSquare, Cursor, Chip, hasChip, createEffectChipReader, TimerBar } = overlay.kit;
   const { portraitSource, portraitFallback } = overlay.kit;
 
   // ---------- sizes and places (HUD-STYLE "Panel sizes at 1080p", character info panel) ----------
@@ -186,16 +186,16 @@ G.HudPlayerPanel = (() => {
       }
       ${
         artWidth && promptTimer.value != null
-          ? html`<div
-              class="hud-prompt-timer"
+          ? html`<${TimerBar}
+              fraction=${promptTimer.value}
+              height=${PROMPT_TIMER.heightArt * ART_PIXEL}
+              className="hud-prompt-timer"
               style=${{
                 left: PROMPT_TIMER.insetArt * ART_PIXEL + 'px',
                 width: (artWidth - 2 * PROMPT_TIMER.insetArt) * ART_PIXEL + 'px',
                 bottom: PROMPT_TIMER.bottomArt * ART_PIXEL + 'px',
-                height: PROMPT_TIMER.heightArt * ART_PIXEL + 'px',
-                transform: 'scaleX(' + promptTimer.value + ')',
               }}
-            ></div>`
+            />`
           : null
       }
       <span class="hud-text hud-prompt-text" ref=${textRef}>${text}</span>

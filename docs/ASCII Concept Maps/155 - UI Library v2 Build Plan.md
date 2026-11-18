@@ -170,3 +170,6 @@ As built: docs/ASCII Concept Maps/155c - Panels Plan.md. Next: 155d, the main.sh
 
 155c-2 built 2026-11-18 (Quick): panel.flat, card.horizontal, square.item and grid.item, the shared fills in the pixels
 primitive, a Squares page. As built: docs/ASCII Concept Maps/155c-2 - Flat Panel, Item Squares and Slot Box Plan.md.
+
+155c-3 built 2026-11-18 (Quick): bar.life and bar.timer in js/ui/lib/primitives/bar/, the Bars page. As built:
+docs/ASCII Concept Maps/155c-3 - Bars Plan.md.

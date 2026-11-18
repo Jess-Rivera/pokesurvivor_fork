@@ -102,3 +102,7 @@ flowchart TB
 Updated 2026-11-18 (155c, decision 2026-11-18-155-library-pieces-named-by-look): the library has `panel.pixel`
 (PixelPanel, the kit's Box), `panel.thin` (the cards' 2 px rim) and `card.vertical` (VerticalCard, the layout under
 ItemCard). Rows above that say `card.item` mean `card.vertical`.
+
+Updated 2026-11-18 (155c-3): the library has `bar.life` (LifeBarShape, LifeBarLabel, LifeBarFill, LifeBarPiece, LifeBar;
+the kit's createLifeBar keeps the per-frame state) and `bar.timer` (TimerBar: the chips', Shake Off and weather timers).
+Not yet in the library: the roster card's HP fill (part of run.hud.teamSlot) and the EXP ring.

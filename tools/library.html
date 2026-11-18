@@ -105,6 +105,9 @@
   .lib-square-picture { border-radius: 50%; background: var(--color-hud-paperEdge); }
   .lib-stage-card-h { font-family: 'HudText', monospace; font-synthesis: none; color: #ffffff; }
   .lib-stage-card-h .hud-run-item { position: relative; }
+  /* bars: the life bar's HP label is HUD text; a timer is placed in a box its width */
+  .lib-stage-bar { font-family: 'HudText', monospace; font-synthesis: none; color: #ffffff; padding-top: 20px; }
+  .lib-stage-timer { position: relative; width: 160px; height: 14px; box-sizing: content-box; }
   .lib-facts { display: grid; grid-template-columns: 90px 1fr; gap: 4px 12px; margin: 6px 0 0; max-width: 1000px; font-size: 13px; }
   .lib-facts dt { color: var(--lib-dim); }
   .lib-facts dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
@@ -118,6 +121,7 @@
 <link rel="stylesheet" href="../js/ui/lib/primitives/button/button.css">
 <link rel="stylesheet" href="../js/ui/lib/primitives/panel/panel.css">
 <link rel="stylesheet" href="../js/ui/lib/primitives/square/square.css">
+<link rel="stylesheet" href="../js/ui/lib/primitives/bar/bar.css">
 <link rel="stylesheet" href="../css/hud-overlay.css">
 <script src="../js/ui/lib/tokens/tokens.js"></script>
 <script src="../js/vendor/preact.min.js"></script>
@@ -130,6 +134,8 @@
 <script src="../js/ui/lib/primitives/panel/panel.story.js"></script>
 <script src="../js/ui/lib/primitives/square/square.js"></script>
 <script src="../js/ui/lib/primitives/square/square.story.js"></script>
+<script src="../js/ui/lib/primitives/bar/bar.js"></script>
+<script src="../js/ui/lib/primitives/bar/bar.story.js"></script>
 <script src="library/doc-colours.js"></script>
 </head>
 <body>
@@ -163,7 +169,7 @@ const NAV = [
     { id: 'primitives/buttons', title: 'Buttons' },
     { id: 'primitives/panels', title: 'Panels' },
     { id: 'primitives/squares', title: 'Squares' },
-    { id: 'primitives/bars', title: 'Bars', later: 'a later slice under #126' },
+    { id: 'primitives/bars', title: 'Bars' },
     { id: 'primitives/modal', title: 'Modal', later: 'a later slice under #126' },
   ] },
   { title: 'Composites', groups: [
@@ -336,6 +342,12 @@ const PRIMITIVE_PAGES = {
     pieces: () => G.Lib.Panel,
     note: 'The frames and the cards (js/ui/lib/primitives/panel/). Props only: the screen passes the size, rims and contents (a card gets its picture and its button). Placeholder data.',
   },
+  'primitives/bars': {
+    title: 'Bars',
+    stories: () => G.Lib.BarStories,
+    pieces: () => G.Lib.Bar,
+    note: 'The life bar and the timer strip (js/ui/lib/primitives/bar/). Props only: the screen passes the size, the fill and its band, the lost pieces, a timer\u2019s time left. Placeholder values.',
+  },
   'primitives/squares': {
     title: 'Squares',
     stories: () => G.Lib.SquareStories,
@@ -355,6 +367,7 @@ const DRAW = {
   'primitives/buttons': primitivePage('primitives/buttons'),
   'primitives/panels': primitivePage('primitives/panels'),
   'primitives/squares': primitivePage('primitives/squares'),
+  'primitives/bars': primitivePage('primitives/bars'),
 };
 // the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
 const patternHost = document.createElement('div');

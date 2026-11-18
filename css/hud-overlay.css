@@ -70,51 +70,8 @@
     -3px -3px 0 #101010;
 }
 
-/* ---------- the B2 life bar (both panels) ---------- */
-.hud-lifebar {
-  position: relative;
-}
-.hud-hp-label {
-  /* the "HP" label: 20 px text (2 px font pixel). Italic by the browser's own slant, as Word fakes it (the font has no
-     italic face; Jess, 2026-11-10) */
-  position: absolute;
-  font-size: 20px;
-  font-style: italic;
-  font-synthesis: style;
-  line-height: 24px;
-  text-shadow:
-    2px 0 0 #101010,
-    -2px 0 0 #101010,
-    0 2px 0 #101010,
-    0 -2px 0 #101010,
-    2px 2px 0 #101010,
-    -2px 2px 0 #101010,
-    2px -2px 0 #101010,
-    -2px -2px 0 #101010;
-}
-.hud-lifebar-fill,
-.hud-lifebar-piece {
-  position: absolute;
-}
-.hud-lifebar-fill {
-  transform-origin: 0 0;
-}
-.hud-lifebar-fill.is-growing {
-  transition: transform 0.3s linear; /* heals grow the fill */
-}
-.hud-lifebar-piece {
-  animation: hud-piece-fall 0.4s cubic-bezier(0.55, 0, 1, 0.45) 1s forwards; /* holds 1 s, then falls and fades */
-}
-@keyframes hud-piece-fall {
-  from {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-}
+/* the B2 life bar and its HP label (.hud-lifebar, .hud-hp-label; bar.life): js/ui/lib/primitives/bar/bar.css (#155
+   155c-3) */
 
 /* ---------- enemy name bar (#64) ---------- */
 .hud-boss {
@@ -267,12 +224,7 @@
   position: relative;
   top: -1px;
 }
-.hud-chip-timer {
-  position: absolute;
-  height: 2px;
-  background: #ffffff;
-  transform-origin: 0 0;
-}
+/* .hud-chip-timer (bar.timer): js/ui/lib/primitives/bar/bar.css (#155 155c-3) */
 .hud-chip-glow {
   position: absolute;
   inset: 0;
@@ -321,11 +273,7 @@
     opacity: 1;
   }
 }
-.hud-prompt-timer {
-  position: absolute;
-  background: #ffffff; /* the draining bar (Jess, 2026-11-11), steady while the badge flashes */
-  transform-origin: 0 0;
-}
+/* .hud-prompt-timer, the draining bar (Jess, 2026-11-11), steady while the badge flashes: bar.timer (bar.css) */
 .hud-prompt-text {
   position: absolute;
   left: 28px;
@@ -690,11 +638,8 @@
   left: 0;
   top: 0;
 }
-.hud-weather-timer {
-  height: 6px; /* two art rows just inside the lower rim: Light over Base */
-  background: linear-gradient(var(--timer-light) 0 3px, var(--timer-base) 3px 6px);
-  transform-origin: 100% 0; /* held at the screen edge: the left end runs out toward it (Jess, 2026-11-10) */
-}
+/* .hud-weather-timer, two art rows just inside the lower rim, Light over Base, held at the screen edge: bar.timer
+   draining right, bar.css (155c-3) */
 .hud-weather.is-enter {
   animation: hud-weather-enter 0.6s ease-out both;
 }

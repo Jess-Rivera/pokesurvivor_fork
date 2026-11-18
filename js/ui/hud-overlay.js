@@ -88,6 +88,7 @@ G.HudOverlay = (() => {
     'FOCUS_RIM',
     'fitToStage',
     'createButtonRow',
+    'TimerBar',
     'IconCanvas',
     'RunItemBox',
     'RUN_BOX_ROWS',

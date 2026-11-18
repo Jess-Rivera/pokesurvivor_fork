@@ -1,0 +1,58 @@
+/* bar.css: the bars (G.Lib.Bar; #155 155c-3). Moved from css/hud-overlay.css; the colours are tokens of the same
+   value. Loaded before the screens' stylesheets, so their rules still win at equal specificity. */
+
+/* ---------- bar.life (class hud-lifebar): both HUD panels and the pause menu's Pokemon detail ---------- */
+.hud-lifebar {
+  position: relative;
+}
+.hud-hp-label {
+  /* the "HP" label: 20 px text (2 px font pixel). Italic by the browser's own slant, as Word fakes it (the font has no
+     italic face; Jess, 2026-11-10). The roster card uses it too */
+  position: absolute;
+  font-size: 20px;
+  font-style: italic;
+  font-synthesis: style;
+  line-height: 24px;
+  text-shadow:
+    2px 0 0 var(--color-hud-outline),
+    -2px 0 0 var(--color-hud-outline),
+    0 2px 0 var(--color-hud-outline),
+    0 -2px 0 var(--color-hud-outline),
+    2px 2px 0 var(--color-hud-outline),
+    -2px 2px 0 var(--color-hud-outline),
+    2px -2px 0 var(--color-hud-outline),
+    -2px -2px 0 var(--color-hud-outline);
+}
+.hud-lifebar-fill,
+.hud-lifebar-piece {
+  position: absolute;
+}
+.hud-lifebar-fill {
+  transform-origin: 0 0;
+}
+.hud-lifebar-fill.is-growing {
+  transition: transform 0.3s linear; /* heals grow the fill */
+}
+.hud-lifebar-piece {
+  animation: hud-piece-fall 0.4s cubic-bezier(0.55, 0, 1, 0.45) 1s forwards; /* holds 1 s, then falls and fades */
+}
+@keyframes hud-piece-fall {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+/* ---------- bar.timer: a thin draining strip; its size and colours come from its props ---------- */
+.bar-timer {
+  position: absolute;
+  transform-origin: 0 0;
+}
+/* held at its right end: it runs out toward it (the weather card at the screen edge, Jess 2026-11-10) */
+.bar-timer.is-drain-right {
+  transform-origin: 100% 0;
+}

@@ -48,7 +48,10 @@ const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PAL
 // card button's label is fainter than a lit card's. 155c-2: a flat panel paints the body, frame and outline tokens; a
 // horizontal card's live text is the EXP token and its dimmed state fainter. Primitives, Squares: the board defines the
 // shared fills and a square paints one; a filled square's rim is the Lv token, an empty one slate; a locked slot is
-// fainter than a filled one; the grids lay out two and four across.
+// fainter than a filled one; the grids lay out two and four across. Primitives, Bars (155c-3): every state draws under
+// its full name; the life bar's fill shrinks with its fraction and paints its band's fill token; a cut leaves a piece;
+// the shape paints the bar checker; a narrow bar is narrower; a timer's drawn length follows its fraction, and the
+// weather timer holds its right end and paints the two colours it was given.
 const vm = require('vm');
 function loadTokens() {
   const sandbox = { console };
@@ -188,6 +191,7 @@ async function checkBoard(browser) {
   await checkButtonsPage(page, tokens);
   await checkPanelsPage(page, tokens);
   await checkSquaresPage(page, tokens);
+  await checkBarsPage(page, tokens);
   await context.close();
 }
 
@@ -472,6 +476,108 @@ async function checkSquaresPage(page, tokens) {
   ok(
     wrongColumns.length === 0,
     'the grids lay out two and four across' + (wrongColumns.length ? ': ' + wrongColumns.join(', ') : '')
+  );
+}
+
+// The states each bar has in the game (155c-3 plan); the life bar's from fullest to emptiest
+const BAR_STATES = {
+  'bar.life': ['high', 'middle', 'low', 'empty', 'cut', 'narrow'],
+  'bar.timer': ['chip', 'prompt', 'weather'],
+};
+const LIFE_FROM_FULLEST = ['high', 'middle', 'low', 'empty'];
+async function checkBarsPage(page, tokens) {
+  const drawn = await page.evaluate(() => {
+    window.libShow('primitives/bars');
+    const props = {};
+    for (const story of G.Lib.BarStories || [])
+      for (const state of story.states) {
+        const { band, fraction, light, base, drainsRight } = state.props;
+        props[story.name + ':' + state.id] = { band, fraction, light, base, drainsRight: !!drainsRight };
+      }
+    const states = {};
+    for (const stage of document.querySelectorAll('[data-state]')) {
+      const fill = stage.querySelector('.hud-lifebar-fill'),
+        shape = stage.querySelector('.hud-lifebar svg'),
+        timer = stage.querySelector('.bar-timer');
+      states[stage.dataset.state] = {
+        drawn: !!stage.firstElementChild && stage.firstElementChild.getBoundingClientRect().height > 0,
+        fillDrawn: fill ? fill.getBoundingClientRect().width : null,
+        fillImage: fill ? getComputedStyle(fill).backgroundImage : '',
+        pieces: stage.querySelectorAll('.hud-lifebar-piece').length,
+        shapeWidth: shape ? shape.getBoundingClientRect().width : null,
+        shapeFills: [...stage.querySelectorAll('svg rect')].map((rect) => String(rect.getAttribute('fill'))),
+        timerDrawn: timer ? timer.getBoundingClientRect().width : null,
+        timerBox: timer ? timer.offsetWidth : null,
+        timerOriginX: timer ? parseFloat(getComputedStyle(timer).transformOrigin) : null,
+        timerImage: timer ? getComputedStyle(timer).backgroundImage : '',
+      };
+    }
+    return { states, props, text: document.getElementById('main').innerText };
+  });
+  const state = (name, id) => drawn.states[name + ':' + id] || {};
+  const given = (name, id) => drawn.props[name + ':' + id] || {};
+
+  const missing = Object.entries(BAR_STATES).flatMap(([name, ids]) =>
+    ids.filter((id) => !state(name, id).drawn || !drawn.text.includes(name + '.' + id)).map((id) => name + '.' + id)
+  );
+  ok(
+    missing.length === 0,
+    `the Bars page draws every state under its full name (${Object.values(BAR_STATES).flat().length})` +
+      (missing.length ? ', missing ' + missing.join(' ') : '')
+  );
+
+  const fills = LIFE_FROM_FULLEST.map((id) => state('bar.life', id).fillDrawn);
+  ok(
+    fills.every((width, index) => index === 0 || width < fills[index - 1]) && fills[fills.length - 1] === 0,
+    `the life bar's fill shrinks from high to middle to low, and a fainted bar has none (${fills.join(', ')})`
+  );
+  const wrongBands = ['high', 'middle', 'low', 'cut', 'narrow']
+    .filter((id) => {
+      const band = given('bar.life', id).band;
+      return !state('bar.life', id).fillImage.includes(rgbOf(tokens.color('color.hp.' + band + '.fill')));
+    })
+    .map((id) => 'bar.life.' + id);
+  ok(
+    wrongBands.length === 0,
+    "each life bar's fill paints its band's fill token" + (wrongBands.length ? ': ' + wrongBands.join(', ') : '')
+  );
+  ok(
+    state('bar.life', 'cut').pieces > 0 && state('bar.life', 'high').pieces === 0,
+    `a cut life bar shows the lost piece; a steady one shows none (${state('bar.life', 'cut').pieces})`
+  );
+  ok(
+    state('bar.life', 'high').shapeFills.includes('url(#hud-bar-checker)'),
+    "the life bar's shape paints the bar checker fill"
+  );
+  ok(
+    state('bar.life', 'narrow').shapeWidth < state('bar.life', 'high').shapeWidth,
+    'a narrow life bar is narrower (' +
+      `${state('bar.life', 'narrow').shapeWidth} vs ${state('bar.life', 'high').shapeWidth})`
+  );
+
+  const TIMER_SLACK = 0.02;
+  const offFraction = BAR_STATES['bar.timer']
+    .filter((id) => {
+      const shown = state('bar.timer', id);
+      const drawnFraction = shown.timerBox ? shown.timerDrawn / shown.timerBox : null;
+      return drawnFraction === null || Math.abs(drawnFraction - given('bar.timer', id).fraction) > TIMER_SLACK;
+    })
+    .map((id) => 'bar.timer.' + id);
+  ok(
+    offFraction.length === 0,
+    "each timer's drawn length follows its fraction" + (offFraction.length ? ': ' + offFraction.join(', ') : '')
+  );
+  const weather = state('bar.timer', 'weather'),
+    weatherGiven = given('bar.timer', 'weather'),
+    chip = state('bar.timer', 'chip');
+  ok(
+    weatherGiven.drainsRight && weather.timerOriginX === weather.timerBox && chip.timerOriginX === 0,
+    'the weather timer holds its right end; the chip timer its left (' +
+      `${weather.timerOriginX} of ${weather.timerBox}, ${chip.timerOriginX})`
+  );
+  ok(
+    weather.timerImage.includes(rgbOf(weatherGiven.light)) && weather.timerImage.includes(rgbOf(weatherGiven.base)),
+    `the weather timer paints the two colours it was given (${weather.timerImage})`
   );
 }
 

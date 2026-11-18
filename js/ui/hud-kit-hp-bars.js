@@ -4,9 +4,11 @@
  * unchanged.
  */
 G.HudKitHpBars = (() => {
-  const coreKit = G.HudKit;
-  if (!coreKit.ready) return { ready: false };
-  const { html, signal, hooks: preactHooks, PALETTE, HP_COLOURS, hpBand, SLOT_GRID, BAR_CHECKER, PixelShape } = coreKit;
+  const coreKit = G.HudKit,
+    panel = G.Lib && G.Lib.Panel, // the box shape and Box are the UI library's panel.pixel (#155 155c)
+    bars = G.Lib && G.Lib.Bar; // the life bar and the timer strip are its bar.life and bar.timer (155c-3)
+  if (!coreKit.ready || !panel || !panel.ready || !bars || !bars.ready) return { ready: false };
+  const { html, signal, PALETTE, HP_COLOURS, hpBand, SLOT_GRID, PixelShape } = coreKit;
   const { portraitSource, portraitFallback, letterRows } = coreKit;
 
   // ---------- the roster card (b2-lower Y15 to AA16): the run screen's roster rows and the pause menu's team panel ----------
@@ -24,121 +26,48 @@ G.HudKitHpBars = (() => {
     ROSTER_TRACK_TOP = 2, // the track's frame rows: 2 and 5, its inside 3 and 4
     // the label's 24 px line centred on the track's frame
     ROSTER_LABEL_TOP = (ROSTER_BAR.artTop + ROSTER_TRACK_TOP) * ROSTER_ART_PIXEL + 2 * ROSTER_ART_PIXEL - 12;
-  // The left end of the rip's top 8 rows and one straight row, one letter per art pixel from the box's left edge; the
-  // rest of each row is its last letter's fill. The right end is the mirror, the bottom 8 rows the top's mirror.
-  //   o outline, D / B / L the rim's dark, base and light, G the body, space nothing.
-  const ROSTER_LEFT_END = [
-    ['      oooo', ' '], // the corner bump rises above the top edge
-    ['     oDBBDo', ' '],
-    ['    oDBooBD', 'o'],
-    ['   oDBoLBo', 'B'],
-    ['  oDBoLLL', 'o'],
-    [' oDBoLLLo', 'G'],
-    ['oDBoLLLo', 'G'],
-    ['oBoLLL', 'G'],
-  ];
-  const ROSTER_STRAIGHT_LEFT = ['oBoLLo', 'G'];
   /** The track's right frame column (from the bar's left edge) for a card artWidth wide: one pixel clear of the right rim. */
   const rosterBarRight = (artWidth) => artWidth - 8 - ROSTER_BAR.artLeft;
   /** The fill's width in art pixels for a card artWidth wide. */
   const rosterFillArtWidth = (artWidth) => rosterBarRight(artWidth) - ROSTER_LABEL_ART - 1;
   const ROSTER_FILL_LEFT = ROSTER_BAR.artLeft + ROSTER_LABEL_ART + 1;
 
-  /** The box as a grid of letters, one string per art row; withBar stamps the HP bar's track. Cached per size. */
+  /**
+   * The box as a grid of letters, one string per art row: the library's panel.pixel shape; withBar stamps the HP bar's
+   * track on it. Cached per size.
+   */
   const rosterGrids = new Map();
   function rosterBoxGrid(artWidth, artRows = ROSTER_ART_ROWS, withBar = true) {
-    const cacheKey = artWidth + 'x' + artRows + (withBar ? 'b' : '');
+    if (!withBar) return panel.pixelPanelRows(artWidth, artRows);
+    const cacheKey = artWidth + 'x' + artRows;
     if (rosterGrids.has(cacheKey)) return rosterGrids.get(cacheKey);
-    const rowOf = ([left, fill]) => {
-      const right = left.split('').reverse().join('');
-      return left + fill.repeat(artWidth - 2 * left.length) + right;
-    };
-    const grid = [];
-    for (let row = 0; row < artRows; row++) {
-      const fromTop = Math.min(row, artRows - 1 - row);
-      grid.push(rowOf(fromTop < ROSTER_LEFT_END.length ? ROSTER_LEFT_END[fromTop] : ROSTER_STRAIGHT_LEFT).split(''));
-    }
-    if (withBar) {
-      // stamp the HP bar's track: its frame and its empty inside (the label is text, drawn over it in the row)
-      const barRight = rosterBarRight(artWidth);
-      for (let trackRow = 0; trackRow < 4; trackRow++) {
-        const line = grid[ROSTER_BAR.artTop + ROSTER_TRACK_TOP + trackRow],
-          stamp = (column, letter) => (line[ROSTER_BAR.artLeft + column] = letter);
-        if (trackRow === 0 || trackRow === 3)
-          for (let column = ROSTER_LABEL_ART; column <= barRight; column++) stamp(column, 't');
-        else {
-          stamp(ROSTER_LABEL_ART, 't');
-          for (let column = ROSTER_LABEL_ART + 1; column < barRight; column++) stamp(column, 'f');
-          stamp(barRight, 't');
-        }
+    const grid = panel.pixelPanelRows(artWidth, artRows).map((line) => line.split(''));
+    // stamp the HP bar's track: its frame and its empty inside (the label is text, drawn over it in the row)
+    const barRight = rosterBarRight(artWidth);
+    for (let trackRow = 0; trackRow < 4; trackRow++) {
+      const line = grid[ROSTER_BAR.artTop + ROSTER_TRACK_TOP + trackRow],
+        stamp = (column, letter) => (line[ROSTER_BAR.artLeft + column] = letter);
+      if (trackRow === 0 || trackRow === 3)
+        for (let column = ROSTER_LABEL_ART; column <= barRight; column++) stamp(column, 't');
+      else {
+        stamp(ROSTER_LABEL_ART, 't');
+        for (let column = ROSTER_LABEL_ART + 1; column < barRight; column++) stamp(column, 'f');
+        stamp(barRight, 't');
       }
     }
     const lines = grid.map((line) => line.join(''));
     rosterGrids.set(cacheKey, lines);
     return lines;
   }
-  /** The letters' colours for a rim ramp; body is the box's inside (the slot grid on the run screen). */
+  /** The letters' colours for a rim ramp; body is the box's inside (the slot grid on the run screen); f and t the bar. */
   const rosterColours = (rim, body = SLOT_GRID) => ({
-    o: PALETTE.outline,
-    D: rim.dark,
-    B: rim.base,
-    L: rim.light,
-    G: body,
+    ...panel.pixelPanelColours(rim, body),
     f: PALETTE.frame,
     t: PALETTE.trackEdge,
   });
-  /**
-   * A box: the roster card's box at any size (2 px art pixels) with a flat body, rimmed in `rim`; its contents go inside.
-   * Moved here from the pause menu's detail panel (#89) for the catch screen (136b). rimRight (optional): a second ramp for
-   * the right side, the rim blending from rim to rimRight across the top and bottom (a dual-type Pokemon, Jess 2026-11-16).
-   * body (optional): the flat inside's colour, the panel body by default (the Shop's pocket cards use a lighter one, #149b).
-   */
-  let boxGradientCount = 0;
-  function Box({ left, top, width, height, rim, rimRight, body = PALETTE.body, className, children }) {
-    const artWidth = width / 2,
-      artRows = height / 2;
-    const gradientId = preactHooks.useMemo(() => 'hud-box-rim-' + ++boxGradientCount, []);
-    const blended = rimRight && (rimRight.base !== rim.base || rimRight.light !== rim.light);
-    const shade = (part) => (blended ? 'url(#' + gradientId + '-' + part + ')' : rim[part]);
-    const colours = {
-      ...rosterColours({ light: shade('light'), base: shade('base'), dark: shade('dark') }, body),
-    };
-    return html`<div
-      class=${'pm-box' + (className ? ' ' + className : '')}
-      style=${{ left: left + 'px', top: top + 'px', width: width + 'px', height: height + 'px' }}
-    >
-      ${
-        blended
-          ? html`<svg class="pm-box-gradients" width="0" height="0" aria-hidden="true">
-              <defs>
-                ${['light', 'base', 'dark'].map(
-                  (part) =>
-                    html`<linearGradient
-                      key=${part}
-                      id=${gradientId + '-' + part}
-                      gradientUnits="userSpaceOnUse"
-                      x1="0"
-                      y1="0"
-                      x2=${artWidth}
-                      y2="0"
-                    >
-                      <stop offset="0.1" stop-color=${rim[part]} />
-                      <stop offset="0.9" stop-color=${rimRight[part]} />
-                    </linearGradient>`
-                )}
-              </defs>
-            </svg>`
-          : null
-      }
-      <${PixelShape}
-        artWidth=${artWidth}
-        artRows=${artRows}
-        artPixel=${2}
-        paintRow=${letterRows(rosterBoxGrid(artWidth, artRows, false), colours)}
-      />
-      ${children}
-    </div>`;
-  }
+  // A box: the roster card's box at any size with a flat body (the pause menu's detail boxes, the catch screen, the
+  // Shop's pockets and belts): the library's panel.pixel, under the kit's name.
+  const Box = panel.PixelPanel;
   /** The HP fill for a card artWidth wide: whole art pixels as a fraction of the track, one pixel while alive. */
   function rosterFill(hpFraction, fainted, artWidth) {
     const fillArt = rosterFillArtWidth(artWidth),
@@ -218,80 +147,13 @@ G.HudKitHpBars = (() => {
     </div>`;
   }
 
-  // ---------- the B2 dark HP bar (b2-upper A1 to L3, HUD-STYLE "Enemy name bar"), at any art-pixel size ----------
-  // Each span: [rip row, left offset, right offset from the bar's right edge R]. R is the top row's last pixel.
-  const SHADOW_SPANS = [
-    [14, 4, 2],
-    [15, 4, 3],
-    [16, 4, 3],
-    [17, 4, 2],
-    [18, 4, 2],
-    [19, 6, 1],
-    [20, 7, 1],
-  ];
-  const OUTLINE_SPANS = [
-    [10, 2, 0],
-    [11, 1, 1],
-    [12, 1, 2],
-    [13, 0, 2],
-    [14, 0, 1],
-    [15, 1, 1],
-    [16, 2, 0],
-    [17, 3, 0],
-    [18, 4, -1],
-  ];
-  const CHECKER_SPANS = [
-    [11, 2, 0],
-    [12, 2, 1],
-    [13, 1, 1],
-    [14, 1, 0],
-    [15, 2, 0],
-    [16, 3, -1],
-  ];
-  const SOLID_BODY_SPANS = [[17, 4, -1]];
-  const BAR_ART_ROWS = 12, // rip rows 9 to 20: the HP tab, the bar and its drop shadow
-    LABEL_LEFT = 4, // art columns from the bar's left edge to the "HP" label
-    LABEL_PIXELS = 24, // "HP" is 11 font pixels of ink (22 px at 20 px text) plus a 2 px outline, less one shared
-    TRACK_RIGHT_INSET = 3; // the fill ends where the EXP track ends on the EXP version of the bar (b2-upper L6)
-
-  const barRightEdge = (barArtWidth) => barArtWidth - 4;
-
-  function barRectangles(barArtWidth, trackLeft) {
-    const right = barRightEdge(barArtWidth),
-      rectangles = [];
-    const addSpans = (spans, fill) => {
-      for (const [ripRow, leftOffset, rightOffset] of spans)
-        rectangles.push({ x: leftOffset, y: ripRow - 9, width: right + rightOffset - leftOffset + 1, height: 1, fill });
-    };
-    addSpans(SHADOW_SPANS, PALETTE.checker);
-    addSpans(OUTLINE_SPANS, PALETTE.outline);
-    addSpans(CHECKER_SPANS, BAR_CHECKER);
-    addSpans(SOLID_BODY_SPANS, PALETTE.body);
-    // the empty track: outline below and on both ends, shade, light, shade inside
-    const trackRight = right - TRACK_RIGHT_INSET;
-    rectangles.push({
-      x: trackLeft - 1,
-      y: 14 - 9,
-      width: trackRight - trackLeft + 2,
-      height: 1,
-      fill: PALETTE.outline,
-    });
-    rectangles.push({ x: trackLeft - 1, y: 11 - 9, width: 1, height: 3, fill: PALETTE.outline });
-    rectangles.push({ x: trackRight, y: 11 - 9, width: 1, height: 3, fill: PALETTE.outline });
-    [PALETTE.trackShade, PALETTE.trackLight, PALETTE.trackShade].forEach((fill, row) =>
-      rectangles.push({ x: trackLeft, y: 11 - 9 + row, width: trackRight - trackLeft, height: 1, fill })
-    );
-    return rectangles;
-  }
-
+  // ---------- the B2 life bar: the UI library's bar.life (155c-3); this keeps what changes frame to frame ----------
   /**
    * One B2 life bar: the shape, the italic "HP" label, the fill and the cut-and-fall pieces (HUD-STYLE "Motion").
    * artWidth is a signal (a panel may narrow it for a small window). update() runs once per frame from the panel's sync.
    */
   function createLifeBar({ artPixel, artWidth, labelTop }) {
-    const labelArt = Math.ceil(LABEL_PIXELS / artPixel),
-      trackLeft = LABEL_LEFT + labelArt + 1; // the fill starts right after the label and the track's left outline
-    const trackInnerArt = (widthArt) => barRightEdge(widthArt) - TRACK_RIGHT_INSET - trackLeft;
+    const { LifeBarShape, LifeBarLabel, LifeBarFill, LifeBarPiece, lifeBarFill, lifeBarLayout } = bars;
     const fillPixels = signal(0),
       fillBand = signal('high'),
       fillGrowing = signal(false),
@@ -302,69 +164,42 @@ G.HudKitHpBars = (() => {
       lastWidth = 0,
       nextPieceId = 1;
 
-    const stripes = (band) => {
-      const colours = HP_COLOURS[band],
-        row = artPixel;
-      return `linear-gradient(${colours.shade} 0 ${row}px, ${colours.fill} ${row}px ${2 * row}px, ${colours.shade} ${2 * row}px ${3 * row}px)`;
-    };
-    const trackStyle = (left, width, band) => ({
-      left: trackLeft * artPixel + left + 'px',
-      top: 2 * artPixel + 'px',
-      width: width + 'px',
-      height: 3 * artPixel + 'px',
-      background: stripes(band),
-    });
-
-    function Shape() {
-      const widthArt = artWidth.value;
-      const rectangles = barRectangles(widthArt, trackLeft).map(
-        (rect) => html`<rect x=${rect.x} y=${rect.y} width=${rect.width} height=${rect.height} fill=${rect.fill} />`
-      );
-      return html`<svg
-        class="hud-pixels"
-        width=${widthArt * artPixel}
-        height=${BAR_ART_ROWS * artPixel}
-        viewBox=${'0 0 ' + widthArt + ' ' + BAR_ART_ROWS}
-      >
-        ${rectangles}
-      </svg>`;
-    }
-
-    function Fill() {
-      const innerPixels = trackInnerArt(artWidth.value) * artPixel;
-      const style = trackStyle(0, innerPixels, fillBand.value);
-      style.transform = `scaleX(${innerPixels ? fillPixels.value / innerPixels : 0})`;
-      return html`<div class=${'hud-lifebar-fill' + (fillGrowing.value ? ' is-growing' : '')} style=${style}></div>`;
-    }
-
+    // each part reads only its own signals, so a hit redraws the fill and the pieces, never the shape
+    const Shape = () => html`<${LifeBarShape} artPixel=${artPixel} artWidth=${artWidth.value} />`;
+    const Fill = () =>
+      html`<${LifeBarFill}
+        artPixel=${artPixel}
+        artWidth=${artWidth.value}
+        fillPixels=${fillPixels.value}
+        band=${fillBand.value}
+        growing=${fillGrowing.value}
+      />`;
     function Pieces() {
       const removePiece = (id) => (pieces.value = pieces.value.filter((piece) => piece.id !== id));
       return pieces.value.map(
         (piece) =>
-          html`<div
+          html`<${LifeBarPiece}
             key=${piece.id}
-            class="hud-lifebar-piece"
-            style=${trackStyle(piece.left, piece.width, piece.band)}
-            onAnimationEnd=${() => removePiece(piece.id)}
-          ></div>`
+            artPixel=${artPixel}
+            left=${piece.left}
+            width=${piece.width}
+            band=${piece.band}
+            onFallen=${() => removePiece(piece.id)}
+          />`
       );
     }
 
     function View() {
       return html`<div class="hud-lifebar">
-        <${Shape} /><span class="hud-hp-label" style=${{ left: LABEL_LEFT * artPixel + 'px', top: labelTop + 'px' }}
-          >HP</span
-        ><${Fill} /><${Pieces} />
+        <${Shape} /><${LifeBarLabel} artPixel=${artPixel} labelTop=${labelTop} /><${Fill} /><${Pieces} />
       </div>`;
     }
 
     /** identity: who the bar shows; a change (a swap) or a resize restarts the bar with no piece. */
     function update(hp, maxHp, dead, identity) {
       const widthArt = artWidth.value,
-        innerArt = trackInnerArt(widthArt),
         fraction = maxHp > 0 ? Math.min(1, Math.max(0, hp / maxHp)) : 0,
-        artUnits = hp > 0 && !dead ? Math.max(1, Math.round(fraction * innerArt)) : 0, // whole art pixels, one while alive
-        pixels = artUnits * artPixel;
+        pixels = lifeBarFill(artPixel, widthArt, fraction, hp > 0 && !dead); // whole art pixels, one while alive
       if (identity !== lastIdentity || widthArt !== lastWidth) {
         lastIdentity = identity;
         lastWidth = widthArt;
@@ -389,8 +224,11 @@ G.HudKitHpBars = (() => {
       lastIdentity = null;
     }
 
-    return { View, update, reset, rightEdge: () => barRightEdge(artWidth.value) };
+    return { View, update, reset, rightEdge: () => lifeBarLayout(artPixel, artWidth.value).rightEdge };
   }
+
+  // the timer strip (the library's bar.timer), for the panels that draw one (the Shake Off prompt, the weather card)
+  const { TimerBar } = bars;
 
   return {
     ready: true,
@@ -401,6 +239,7 @@ G.HudKitHpBars = (() => {
     rosterColours,
     rosterFill,
     createLifeBar,
+    TimerBar,
     Box,
   };
 })();

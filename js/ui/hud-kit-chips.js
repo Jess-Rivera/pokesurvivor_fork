@@ -4,8 +4,11 @@
  * unchanged.
  */
 G.HudKitChips = (() => {
-  const coreKit = G.HudKit;
-  if (!coreKit.ready) return { ready: false };
+  const coreKit = G.HudKit,
+    bars = G.Lib && G.Lib.Bar; // a chip's timer is the UI library's bar.timer (155c-3)
+  if (!coreKit.ready || !bars || !bars.ready) return { ready: false };
+  const { TimerBar } = bars;
+  const CHIP_TIMER_HEIGHT = 2; // px, white
   const { html, PALETTE, typeColours, PixelShape } = coreKit;
 
   // ---------- status chips (HUD-STYLE "Status chips"): the major statuses plus poison, bad poison and burn, solid; ----------
@@ -95,10 +98,12 @@ G.HudKitChips = (() => {
       <div class="hud-chip-glow" style=${{ clipPath: CHIP_FILL_CLIP }}></div>
       ${
         chip.timer != null
-          ? html`<div
-              class="hud-chip-timer"
-              style=${{ ...CHIP_TIMER_PLACE, transform: `scaleX(${chip.timer})` }}
-            ></div>`
+          ? html`<${TimerBar}
+              fraction=${chip.timer}
+              height=${CHIP_TIMER_HEIGHT}
+              className="hud-chip-timer"
+              style=${CHIP_TIMER_PLACE}
+            />`
           : null
       }
     </div>`;
