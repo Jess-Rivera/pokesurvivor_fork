@@ -24,9 +24,11 @@ G.ShopTmsPane = (() => {
 
   // ---------- sizes and places (pane pixels; the pane is 1005 x 616, down to the bottom of Exit) ----------
   const PANE_HEIGHT = 616;
-  // the left side: the bar, then the cards (the Team Items sale grid's sizes), CURSOR_ROOM in from the pane's edges
+  // the left side: the bar, then the cards, CURSOR_ROOM in from the pane's edges. The card list is the Team Items sale
+  // side's width: 3 cards of CARD.width and their gaps (582), then the scroll bar 8 px clear of them (at 584 it covered
+  // the third card's rim, 2026-11-18) and 16 px clear of the Pokemon panel
   const BAR = { searchWidth: 250, typeLeft: 262, typeWidth: 170, toggleLeft: 446, toggleSize: 32, labelLeft: 486 };
-  const GRID = { columns: 3, width: 584, top: 56 };
+  const GRID = { columns: 3, width: 600, top: 56 };
   GRID.height = PANE_HEIGHT - CURSOR_ROOM - GRID.top;
   const TYPE_LIST = { top: 48, width: 220, height: 420 }; // the Type filter's open list, under its box
   // the Pokemon panel: the Team Items owned panel's place and size. Every portrait is a round face in its cell, the

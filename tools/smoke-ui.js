@@ -2063,6 +2063,36 @@ async function shopFlow(browser, query, tag) {
   await page.click('.shop-tms-box-grid .shop-tms-face-cell[data-uid="' + firstChoice + '"]');
   await sleep(150);
   const tms = await tmsNow();
+  // the card list's scroll bar (track, and the wider thumb when the cards overflow) starts right of every TM card, and
+  // the Pokemon panel starts right of the bar (2026-11-18: at 584 px the bar covered the third card's rim)
+  const tmLayout = await page.evaluate(() => {
+    const rect = (element) => element.getBoundingClientRect(),
+      list = document.querySelector('#shop-tms .shop-tms-list'),
+      barParts = [...list.querySelectorAll('.hud-scroll-track, .hud-scroll-thumb')]
+        .map(rect)
+        .filter((part) => part.width > 0),
+      cards = [...list.querySelectorAll('.shop-card')],
+      panel = document.querySelector('#shop-tms .shop-tms-panel');
+    const barLeft = Math.min(...barParts.map((part) => part.left)),
+      barRight = Math.max(...barParts.map((part) => part.right)),
+      cardsRight = Math.max(...cards.map((card) => rect(card).right));
+    return {
+      cards: cards.length,
+      barClearsCards: barParts.length > 0 && cards.length > 0 && barLeft > cardsRight,
+      panelClearsBar: barParts.length > 0 && !!panel && rect(panel).left > barRight,
+    };
+  });
+  ok(
+    tmLayout.barClearsCards && tmLayout.panelClearsBar,
+    tag +
+      ': the TM cards scroll bar is clear of the cards and of the Pokemon panel (' +
+      tmLayout.cards +
+      ' cards; ' +
+      tmLayout.barClearsCards +
+      ', ' +
+      tmLayout.panelClearsBar +
+      ')'
+  );
   ok(
     tms.uid === firstChoice &&
       tms.cards.length === tms.usable.length &&

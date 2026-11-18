@@ -24,6 +24,10 @@ G.CHANGELOG = [
         'Poke Balls tab: the right column of ball cards is no longer cut off by the scroll bar.',
         'Poke Balls tab: the right column of ball cards is no longer cut off by the scroll bar.',
       ],
+      [
+        'TMs tab: the right column of TM cards is no longer cut off by the scroll bar.',
+        'TMs tab: the right column of TM cards is no longer cut off by the scroll bar.',
+      ],
     ],
   },
   {
