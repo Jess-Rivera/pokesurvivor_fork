@@ -73,7 +73,7 @@ G.HudKit = (() => {
 
   // ---------- pixel shapes and the menu buttons: the UI library's primitives (js/ui/lib/primitives/, 155b) ----------
   const { PixelShape, letterRows } = pixels;
-  const { moveSlotRow, SLOT_BUTTON, REST_RIM, FOCUS_RIM, SlotButton, TeamButton } = buttons;
+  const { moveSlotRow, SLANTED_BUTTON, REST_RIM, FOCUS_RIM, SlantedButton, RoundedButton } = buttons;
 
   // ---------- the menu screens' stage (pause menu, End Run, EV screen): 1920 x 1080, scaled to fit, never up ----------
   const STAGE = { width: 1920, height: 1080 };
@@ -204,10 +204,10 @@ G.HudKit = (() => {
     PixelShape,
     letterRows,
     moveSlotRow,
-    SLOT_BUTTON,
+    SLANTED_BUTTON,
     REST_RIM,
-    SlotButton,
-    TeamButton,
+    SlantedButton,
+    RoundedButton,
     FOCUS_RIM,
     fitToStage,
     createButtonRow,

@@ -182,15 +182,18 @@ async function checkBoard(browser) {
   await context.close();
 }
 
-// The states each button has in the game (155b plan): the slot button has no disabled or refused today.
-const BUTTON_STATES = { 'button.slot': ['rest', 'focused'], 'button.team': ['rest', 'focused', 'refused', 'disabled'] };
+// The states each button has in the game (155b plan): the slanted button has no disabled or refused today.
+const BUTTON_STATES = {
+  'button.slanted': ['rest', 'focused'],
+  'button.rounded': ['rest', 'focused', 'refused', 'disabled'],
+};
 // The rim each state must show: refused keeps the resting rim.
 const BUTTON_RIMS = {
-  'button.slot:rest': 'rest',
-  'button.slot:focused': 'focus',
-  'button.team:rest': 'rest',
-  'button.team:focused': 'focus',
-  'button.team:refused': 'rest',
+  'button.slanted:rest': 'rest',
+  'button.slanted:focused': 'focus',
+  'button.rounded:rest': 'rest',
+  'button.rounded:focused': 'focus',
+  'button.rounded:refused': 'rest',
 };
 async function checkButtonsPage(page, tokens) {
   const drawn = await page.evaluate(() => {
@@ -242,13 +245,13 @@ async function checkButtonsPage(page, tokens) {
       (wrongRims.length ? ': ' + wrongRims.join(', ') : '')
   );
 
-  const team = (state) => drawn.states['button.team:' + state] || {};
+  const rounded = (state) => drawn.states['button.rounded:' + state] || {};
   ok(
-    team('refused').labelAlpha !== null && team('refused').labelAlpha < team('rest').labelAlpha,
-    `a refused label is fainter than a resting one (${team('refused').labelAlpha} vs ${team('rest').labelAlpha})`
+    rounded('refused').labelAlpha !== null && rounded('refused').labelAlpha < rounded('rest').labelAlpha,
+    `a refused label is fainter than a resting one (${rounded('refused').labelAlpha} vs ${rounded('rest').labelAlpha})`
   );
   ok(
-    team('disabled').disabled === true && team('refused').disabled === false,
+    rounded('disabled').disabled === true && rounded('refused').disabled === false,
     'a disabled button cannot be pressed; a refused one still can (it says why)'
   );
 

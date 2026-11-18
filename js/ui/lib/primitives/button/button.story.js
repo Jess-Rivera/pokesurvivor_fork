@@ -9,7 +9,7 @@ G.Lib.ButtonStories = (() => {
   const MENU_ART_PIXEL = 3, // the Main Menu windows' team button (54 px tall)
     CARD_BUTTON_ART_WIDTH = 58, // the item cards' button: 174 px
     ANSWER_ART_WIDTH = 56; // the pause menu's End and No: 168 px
-  const teamProps = (id, label, extra) => ({
+  const roundedProps = (id, label, extra) => ({
     id,
     label,
     artWidth: CARD_BUTTON_ART_WIDTH,
@@ -19,10 +19,10 @@ G.Lib.ButtonStories = (() => {
     ...extra,
   });
 
-  const slot = {
-    name: 'button.slot',
-    component: 'SlotButton',
-    stageClass: 'lib-stage-slot',
+  const slanted = {
+    name: 'button.slanted',
+    component: 'SlantedButton',
+    stageClass: 'lib-stage-slanted',
     job:
       "The run screen's move slot shape at 1.5x, for the run screens' menus. White rim at rest, green under the " +
       'cursor; a screen may give its own rims and a focused body (the End and No answers keep their rim and darken ' +
@@ -46,13 +46,13 @@ G.Lib.ButtonStories = (() => {
       'ev.menu.goHome',
     ],
     states: [
-      { id: 'rest', title: 'At rest', props: { id: 'story-slot-rest', label: 'Resume' } },
-      { id: 'focused', title: 'Focused', props: { id: 'story-slot-focused', label: 'Settings', focused: true } },
+      { id: 'rest', title: 'At rest', props: { id: 'story-slanted-rest', label: 'Resume' } },
+      { id: 'focused', title: 'Focused', props: { id: 'story-slanted-focused', label: 'Settings', focused: true } },
       {
         id: 'focusedOwnRim',
         title: 'Focused, own rim and body (No)',
         props: {
-          id: 'story-slot-own-rim',
+          id: 'story-slanted-own-rim',
           label: 'No',
           artWidth: ANSWER_ART_WIDTH,
           focused: true,
@@ -63,10 +63,10 @@ G.Lib.ButtonStories = (() => {
     ],
   };
 
-  const team = {
-    name: 'button.team',
-    component: 'TeamButton',
-    stageClass: 'lib-stage-team',
+  const rounded = {
+    name: 'button.rounded',
+    component: 'RoundedButton',
+    stageClass: 'lib-stage-rounded',
     job:
       "The team menu's button, for the catch screen and the Main Menu windows. Disabled cannot be pressed (the " +
       'screen dims it); refused takes the press but only says why, keeping its rim with the label at 45%.',
@@ -93,12 +93,12 @@ G.Lib.ButtonStories = (() => {
       'main.inventory.exit',
     ],
     states: [
-      { id: 'rest', title: 'At rest', props: teamProps('story-team-rest', 'Exit') },
-      { id: 'focused', title: 'Focused', props: teamProps('story-team-focused', 'Buy 9k', { focused: true }) },
-      { id: 'refused', title: 'Refused', props: teamProps('story-team-refused', 'Buy 23k', { refused: true }) },
-      { id: 'disabled', title: 'Disabled', props: teamProps('story-team-disabled', 'Equip', { disabled: true }) },
+      { id: 'rest', title: 'At rest', props: roundedProps('story-rounded-rest', 'Exit') },
+      { id: 'focused', title: 'Focused', props: roundedProps('story-rounded-focused', 'Buy 9k', { focused: true }) },
+      { id: 'refused', title: 'Refused', props: roundedProps('story-rounded-refused', 'Buy 23k', { refused: true }) },
+      { id: 'disabled', title: 'Disabled', props: roundedProps('story-rounded-disabled', 'Equip', { disabled: true }) },
     ],
   };
 
-  return [slot, team];
+  return [slanted, rounded];
 })();

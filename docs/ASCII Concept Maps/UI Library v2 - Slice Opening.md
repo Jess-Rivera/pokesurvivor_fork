@@ -102,6 +102,9 @@ flowchart LR
 The Buttons page lists every place a button type is used; the composite page lists every type it uses. Either name
 works in an Excalidraw note.
 
+Changed 2026-11-18 (decision 2026-11-18-155-library-pieces-named-by-look): a primitive is named by its look
+(`button.slanted`, `button.rounded`), not by a job like `button.menu`. Place names are unchanged.
+
 | # | Question | Default if no answer |
 | --- | --- | --- |
 | 1 | Where the library lives. It is game code (the game loads it), so not under tools/. | js/ui/lib/ with tokens/, primitives/, and later hud/ and menus/ as screens move in. library.html sits in tools/ (a dev page, never ships). |

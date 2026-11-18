@@ -61,8 +61,8 @@ flowchart TB
 
 | Name | Today | Shared? |
 | --- | --- | --- |
-| `button.menu` (states: rest, focus, pressed, disabled) | TeamButton, CursorButton | yes |
-| `button.slot` | SlotButton (move slots) | yes |
+| `button.rounded` (states: rest, focused, refused, disabled; was `button.menu`) | RoundedButton (was TeamButton), CursorButton | yes |
+| `button.slanted` (was `button.slot`) | SlantedButton (was SlotButton): pause menu, End Run, EV screen | yes |
 | `button.danger` | SellButton | no, Shop only |
 | `button.step` | StepButton (EV screen) | no |
 | `cursor` | Cursor, CursorCorner, CursorTip | yes |

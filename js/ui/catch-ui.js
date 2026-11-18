@@ -18,7 +18,7 @@ G.CatchUI = (() => {
   const overlay = G.HudOverlay,
     screen = document.getElementById('scr-catch'); // absent on pages that load the game's scripts without its screens
   if (!overlay || !overlay.ready || !screen) return { ready: false };
-  const { html, signal, hooks, preact, PALETTE, FAINTED_RIM, typeColours, Box, ScrollBox, Cursor, TeamButton } =
+  const { html, signal, hooks, preact, PALETTE, FAINTED_RIM, typeColours, Box, ScrollBox, Cursor, RoundedButton } =
     overlay.kit;
   const { REST_RIM, FOCUS_RIM, fitToStage, showTooltip, hideTooltip } = overlay.kit;
   const { portraitSource, portraitFallback, BallSprite } = overlay.kit;
@@ -452,7 +452,7 @@ G.CatchUI = (() => {
       letGoFocused = at.area === 'button' && at.index === 1;
     const place = (index) => ({ left: px(OWNED.left + 2), top: px(BUTTON_TOP[index]) });
     return html`<div class="catch-button" style=${place(0)}>
-        <${TeamButton}
+        <${RoundedButton}
           id="throw"
           label="Throw"
           artWidth=${BUTTON_ART_WIDTH}
@@ -465,7 +465,7 @@ G.CatchUI = (() => {
         ${throwFocused ? html`<${Cursor} />` : null}
       </div>
       <div class=${'catch-button catch-let-go' + (letGoFocused ? ' is-focused' : '')} style=${place(1)}>
-        <${TeamButton}
+        <${RoundedButton}
           id="let-go"
           label="Let It Go"
           artWidth=${BUTTON_ART_WIDTH}

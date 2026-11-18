@@ -23,7 +23,7 @@
 G.EvScreen = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
-  const { html, signal, preact, SlotButton, portraitSource, portraitFallback, fitToStage, createButtonRow } =
+  const { html, signal, preact, SlantedButton, portraitSource, portraitFallback, fitToStage, createButtonRow } =
     overlay.kit;
 
   const TEAM_SLOTS = 6;
@@ -186,7 +186,7 @@ G.EvScreen = (() => {
         <div class="ev-buttons">
           ${BUTTONS.map(
             (button, index) =>
-              html`<${SlotButton}
+              html`<${SlantedButton}
                 key=${button.id}
                 id=${button.id}
                 label=${button.label}

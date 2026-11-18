@@ -404,7 +404,7 @@ Every colour is an existing one given a job here (plan: docs/ASCII Concept Maps/
 | Locked belt rim                             | the fainted grey ramp at 45%  | Roster rows                       |
 | Pokemon owned rim (light, base, dark)       | `#C1C2C1` `#9FA19F` `#676967` | Normal type ramp                  |
 | Flee ring filled / empty                    | first type's Dark / `#e7e7e7` | Type colours / run item paper     |
-| Buttons                                     | the team menu's button shape (`assets/ui/team/btn.png`, kit `TeamButton`), 4 px per art pixel | Jess, 2026-11-16 |
+| Buttons                                     | the team menu's button shape (`assets/ui/team/btn.png`, kit `RoundedButton`), 4 px per art pixel | Jess, 2026-11-16 |
 | Button rim at rest / body                   | `#ffffff` `#e7e7e7` `#848484` / `#181818` | the pause menu's rest ramp, panel body |
 | Throw rim focused                           | `#9be895` `#38d030` `#1d6c19` | Pause menu button focus ramp      |
 | Let It Go text at rest                      | `#ffffff` at 45%              | mockup                            |

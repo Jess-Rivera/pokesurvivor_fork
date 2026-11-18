@@ -110,7 +110,7 @@
   white-space: normal; /* wraps inside the card (the kit's .hud-text keeps one line) */
   line-height: 26px;
 }
-/* a button that cannot be pressed at all: dimmed (a Buy that refuses is button.team's refused, #151; its label rule
+/* a button that cannot be pressed at all: dimmed (a Buy that refuses is button.rounded's refused, #151; its label rule
    is in js/ui/lib/primitives/button/button.css) */
 .shop-button .hud-team-button[disabled] {
   opacity: 0.4;

@@ -1,9 +1,9 @@
-/* button.css: the pixel-art buttons (G.Lib.Button; #155 155b). Moved unchanged from css/pause-menu.css (button.slot)
-   and css/hud-overlay.css (button.team), plus button.team's refused label (from css/bw-shop.css); the colours are
+/* button.css: the pixel-art buttons (G.Lib.Button; #155 155b). Moved unchanged from css/pause-menu.css (button.slanted)
+   and css/hud-overlay.css (button.rounded), plus button.rounded's refused label (from css/bw-shop.css); the colours are
    tokens of the same value. The shape is each button's SVG; each screen places and sizes the rest. Loaded before the
    screens' stylesheets, so their rules still win at equal specificity. */
 
-/* ---------- button.slot (class pm-button): 315 x 66 px by default, the label centred ---------- */
+/* ---------- button.slanted (class pm-button): 315 x 66 px by default, the label centred ---------- */
 .pm-button {
   position: relative;
   width: 315px;
@@ -29,7 +29,7 @@
   color: var(--color-text-label);
 }
 
-/* button.team (class hud-team-button): the shape is its SVG; the screen places and styles the label */
+/* button.rounded (class hud-team-button): the shape is its SVG; the screen places and styles the label */
 .hud-team-button {
   position: relative;
   padding: 0;

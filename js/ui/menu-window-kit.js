@@ -4,7 +4,7 @@
  * (149c) unchanged, so a later screen (#126) can take them too. Styles: css/bw-shop.css (the shop- class names stay).
  *   createMenuCursor  one screen's selection cursor: keys, mouse, arrows to the nearest item, areas, search stops,
  *                     scrolling into view, the delayed cursor tooltip
- *   CursorButton      the team menu button at 3 px per art pixel inside a box the cursor can sit on
+ *   CursorButton      the rounded button (button.rounded) at 3 px per art pixel inside a box the cursor can sit on
  *   ItemCard          a team item card: icon, divider, name, description and one button (Buy, Equip, Swap...)
  *   SearchStop        a search bar as a cursor stop at the top of its area
  *   Dropdown          a multi-select filter box whose grouped choices open in a list under it (#149 149f, the TMs tab)
@@ -19,7 +19,7 @@ G.MenuWindowKit = (() => {
     IconCanvas,
     Cursor,
     inputMode,
-    TeamButton,
+    RoundedButton,
     REST_RIM,
     FOCUS_RIM,
     showTooltip,
@@ -252,8 +252,8 @@ G.MenuWindowKit = (() => {
    * The team menu button at 3 px per art pixel in a box the cursor can sit on (its corners sit on this box). A disabled
    * button never takes the cursor. refusal (#151, decision 2026-11-17-unaffordable-buttons-take-the-cursor): the toast a
    * press shows instead of acting ("Unable to Afford", or a Full pocket's line); the button still takes the cursor, keeps
-   * its rim and greys its label (button.team's refused, 155b; this box keeps its refused class, which the smokes read).
-   * style places the box; area puts it in a cursor area; action is the button's
+   * its rim and greys its label (button.rounded's refused, 155b; this box keeps its refused class, which the smokes
+   * read). style places the box; area puts it in a cursor area; action is the button's
    * data-action (the cursor id by default). focusRim: the rim's colours under the cursor (the kit's green by default).
    */
   function CursorButton({
@@ -280,7 +280,7 @@ G.MenuWindowKit = (() => {
       onMouseEnter=${() => cursor.hover(disabled ? null : id)}
       onMouseLeave=${() => cursor.hover(null)}
     >
-      <${TeamButton}
+      <${RoundedButton}
         id=${action}
         label=${label}
         artWidth=${artWidth}

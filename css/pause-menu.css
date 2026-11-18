@@ -270,7 +270,7 @@ body.er-open .hud-overlay {
 .pm-no-slide .pm-pocket-ask {
   transition: none !important;
 }
-/* the button itself (.pm-button, button.slot): js/ui/lib/primitives/button/button.css (#155 155b) */
+/* the button itself (.pm-button, button.slanted): js/ui/lib/primitives/button/button.css (#155 155b) */
 
 /* ---------- the four panels (Run Info and the Run Inventory are empty frames until #91 and #90) ---------- */
 .pm-panel {

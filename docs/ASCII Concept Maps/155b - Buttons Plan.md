@@ -102,3 +102,8 @@ None of these changes what the game does; all are structure.
 ## Feel test after the build (hard reload, save untouched)
 Pause menu (hover, Enter, End's No), End Run, EV screen, catch screen (Throw, Let It Go faint until focused),
 Shop (Buy, an unaffordable Buy greys and toasts, a disabled button dims, Exit), Inventory (Equip, Swap), Gacha.
+
+
+Renamed 2026-11-18 (decision 2026-11-18-155-library-pieces-named-by-look, plan 155b-2 - Button Shape Names Plan.md):
+`button.slot` / SlotButton is now `button.slanted` / SlantedButton, and `button.team` / TeamButton is now
+`button.rounded` / RoundedButton, everywhere in the code. The text above keeps the names it was written with.

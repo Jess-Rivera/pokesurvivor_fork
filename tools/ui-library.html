@@ -761,7 +761,7 @@ $('reference-sets').innerHTML = REFERENCE_SETS.map((set) => `
   // G.HudOverlay (js/ui/hud-overlay.js) mounted its layer with the shared SVG patterns (slot grid, bar checker); no panel
   // files are loaded, so it shows nothing else. Every piece reads the kit there, as the game's panels do.
   const kit = G.HudOverlay.kit;
-  const { html, preact, signal, PALETTE, PixelShape, moveSlotRow, SLOT_GRID, SlotButton, REST_RIM, Cursor, typeColours, hpBand } = kit;
+  const { html, preact, signal, PALETTE, PixelShape, moveSlotRow, SLOT_GRID, SlantedButton, REST_RIM, Cursor, typeColours, hpBand } = kit;
   const { ItemSquare, ItemGrid, RosterCard, rosterFill, createLifeBar, Chip, FAINTED_RIM } = kit;
 
   // The move slot is private to js/ui/hud-player-panel.js (Slot); this rebuilds it from the same kit parts and numbers.
@@ -835,13 +835,13 @@ $('reference-sets').innerHTML = REFERENCE_SETS.map((set) => `
         ${MINOR_CHIPS.map(([label, colour], index) => html`<${Piece} caption=${label + ' (minor)'}><${Chip} chip=${{ key: label + index, label, fill: '#101010', shade: colour, text: colour, timer: null }} /><//>`)}
         ${STAT_CHIPS.map((style, index) => html`<${Piece} caption=${style[0] + ' stage'}><${Chip} chip=${chip(style, index)} /><//>`)}
       <//>
-      <${Group} title="Menu buttons" built="real: kit SlotButton"
+      <${Group} title="Menu buttons" built="real: kit SlantedButton"
         note="The pause menu, End Run and EV screen buttons: the move slot shape at 1.5x. White rim at rest, green on focus; End Run's answer is red.">
-        <${Piece} caption="At rest"><${SlotButton} id="a" label="Resume" /><//>
-        <${Piece} caption="Focused"><${SlotButton} id="b" label="Team" focused=${true} /><//>
-        <${Piece} caption="End, focused"><${SlotButton} id="c" label="End" artWidth=${60} focused=${true}
+        <${Piece} caption="At rest"><${SlantedButton} id="a" label="Resume" /><//>
+        <${Piece} caption="Focused"><${SlantedButton} id="b" label="Team" focused=${true} /><//>
+        <${Piece} caption="End, focused"><${SlantedButton} id="c" label="End" artWidth=${60} focused=${true}
           focusRim=${{ light: '#ff8a90', base: '#e8202a', dark: '#7c1016' }} focusBody="#7c1016" /><//>
-        <${Piece} caption="No, focused"><${SlotButton} id="d" label="No" artWidth=${60} focused=${true} focusRim=${REST_RIM} focusBody="#848484" /><//>
+        <${Piece} caption="No, focused"><${SlantedButton} id="d" label="No" artWidth=${60} focused=${true} focusRim=${REST_RIM} focusBody="#848484" /><//>
       <//>
       <${Group} title="Item squares" built="real: kit ItemSquare, ItemGrid"
         note="Held item (yellow rim when holding, slate when empty), the berry bag and the pause menu's Run Inventory (a 2 x 2 grid).">

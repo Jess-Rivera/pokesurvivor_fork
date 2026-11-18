@@ -39,7 +39,7 @@ G.PauseMenu = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
   const { html, signal, preact, PALETTE, PixelShape, moveSlotRow, hideTooltip, fitToStage } = overlay.kit;
-  const { SlotButton, SLOT_BUTTON, REST_RIM } = overlay.kit; // the shared menu button (also the End Run screen's)
+  const { SlantedButton, SLANTED_BUTTON, REST_RIM } = overlay.kit; // the shared menu button (also the End Run screen's)
 
   // Step lengths in ms: dim and closed ball in, then ball opens with the panels sliding in. Open is about 0.23 s (Jess,
   // 2026-11-11, third feel test: halfway between the 0.31 s open and the close) and close about 0.16 s. Each matches a
@@ -47,11 +47,11 @@ G.PauseMenu = (() => {
   const OPEN_MS = [55, 175],
     CLOSE_MS = [38, 118],
     STEPS = OPEN_MS.length;
-  // The buttons are the kit's SlotButton: the run screen's move slot shape at 1.5x (315 x 66 px, Jess 2026-11-11),
+  // The buttons are the kit's SlantedButton: the run screen's move slot shape at 1.5x (315 x 66 px, Jess 2026-11-11),
   // white rim at rest, green on focus (REST_RIM, FOCUS_RIM).
-  const BUTTON_ART_WIDTH = SLOT_BUTTON.artWidth,
-    BUTTON_ART_ROWS = SLOT_BUTTON.artRows,
-    BUTTON_ART_PIXEL = SLOT_BUTTON.artPixel;
+  const BUTTON_ART_WIDTH = SLANTED_BUTTON.artWidth,
+    BUTTON_ART_ROWS = SLANTED_BUTTON.artRows,
+    BUTTON_ART_PIXEL = SLANTED_BUTTON.artPixel;
   const END_RIM = { light: '#ff8a90', base: '#e8202a', dark: '#7c1016' }; // the End answer's red
   const ANSWER_ART_WIDTH = 56; // End and No: 168 x 66 px each, side by side in Settings' row inside the ball
   const ANSWERS = [
@@ -169,7 +169,7 @@ G.PauseMenu = (() => {
       <div class="pm-pocket-ask-row">
         ${POCKET_ANSWERS.map(
           (answer, index) =>
-            html`<${SlotButton}
+            html`<${SlantedButton}
               key=${answer.id}
               id=${'pocket-' + answer.id}
               label=${answer.label}
@@ -193,7 +193,7 @@ G.PauseMenu = (() => {
     return html`<div class="pm-buttons">
       ${buttonList().map(
         (button, index) =>
-          html`<${SlotButton}
+          html`<${SlantedButton}
             key=${button.id}
             id=${button.id}
             label=${button.label}
@@ -209,7 +209,7 @@ G.PauseMenu = (() => {
       <div class="pm-answers">
         ${ANSWERS.map(
           (answer, index) =>
-            html`<${SlotButton}
+            html`<${SlantedButton}
               key=${answer.id}
               id=${answer.id}
               label=${answer.label}

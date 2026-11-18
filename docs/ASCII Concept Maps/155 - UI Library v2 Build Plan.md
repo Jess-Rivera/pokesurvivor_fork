@@ -151,3 +151,8 @@ Differences from the step plan:
 - CursorButton keeps its box's refused class (smoke-ui and smoke-berry-slots read it), so that planned cleanup is dropped.
   The grey label rule now keys on the button's own refused class.
 - No node here (Quick): syntax and a sandbox run of both buttons checked; check.js and the smokes are Jess's to run.
+
+
+Renamed 2026-11-18 (decision 2026-11-18-155-library-pieces-named-by-look, plan 155b-2 - Button Shape Names Plan.md):
+`button.slot` / SlotButton is now `button.slanted` / SlantedButton, and `button.team` / TeamButton is now
+`button.rounded` / RoundedButton, everywhere in the code. The text above keeps the names it was written with.

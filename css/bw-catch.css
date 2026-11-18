@@ -207,7 +207,7 @@
   color: #9fa19f;
 }
 
-/* ---------- Throw and Let It Go: the team menu's button (the kit's TeamButton); Let It Go's text at 45% until focused ---------- */
+/* ---------- Throw and Let It Go: the kit's RoundedButton; Let It Go's text at 45% until focused ---------- */
 .catch-button {
   width: 280px;
   height: 72px;

@@ -409,7 +409,7 @@
   left: -2px;
   top: 4px;
 }
-/* the team menu's button (.hud-team-button, button.team): js/ui/lib/primitives/button/button.css (#155 155b) */
+/* the team menu's button (.hud-team-button, button.rounded): js/ui/lib/primitives/button/button.css (#155 155b) */
 .hud-cursor {
   position: absolute;
   width: 14px;
