@@ -35,15 +35,7 @@
   --name-size: 20px;
   --font-pixel: 2px;
 }
-.hud-defs {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-  /* the shared grid patterns live here and the pause menu uses them: a pattern takes its visibility from where it is
-   * defined, so they stay visible when the pause menu hides the HUD layer (F2 fix, 2026-11-12). 0 x 0, paints nothing. */
-  visibility: visible;
-}
+/* .hud-defs (the shared fills' patterns): js/ui/lib/primitives/pixels/pixels.css (#155 155c-2) */
 /* .hud-pixels (every pixel-art shape): js/ui/lib/primitives/pixels/pixels.css (#155 155b) */
 
 /* HUD text: 20 px body, white with eight hard shadows one font pixel out (HUD-STYLE "Fonts") */
@@ -246,23 +238,7 @@
   width: 40px;
   height: 40px;
 }
-.hud-item-square {
-  position: relative;
-}
-.hud-item-square svg {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-.hud-item-icon {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 32px;
-  height: 32px;
-  margin: -16px 0 0 -16px;
-  image-rendering: pixelated;
-}
+/* the item square (.hud-item-square, square.item): js/ui/lib/primitives/square/square.css (#155 155c-2) */
 
 /* status chips: the B2 capsule buttons (b2-lower Y17 to Z17), the fill inside a 4 px stepped shade rim drawn as pixels,
    with a timer bar and a sliding glow; the timer's place and the glow's clip come from the shape (hud-player-panel.js) */
@@ -580,16 +556,7 @@
   position: absolute;
 }
 
-/* ---------- the tight 2x2 item grid (#90): the berry bag and the pause menu's Run Inventory ---------- */
-.hud-item-grid {
-  display: grid;
-}
-.hud-grid-slot {
-  position: relative;
-}
-.hud-grid-slot.is-locked {
-  opacity: 0.3;
-}
+/* the tight 2x2 item grid (.hud-item-grid, grid.item; #90): js/ui/lib/primitives/square/square.css (#155 155c-2) */
 
 /* ---------- the shared tooltip layer (js/ui/hud-overlay.js TooltipLayer; Jess, 2026-11-12: every hover tooltip is
    the topmost layer). The layer is the stage's last child and sits above everything on it; nothing else on a stage
@@ -652,50 +619,7 @@
 .hud-run-items > * {
   position: absolute;
 }
-.hud-run-item > * {
-  position: absolute;
-}
-.hud-run-item > svg {
-  left: 0;
-  top: 0;
-}
-.hud-run-icon canvas {
-  display: block; /* at its own size: the box's icon size (32 px on the run screen) */
-  image-rendering: pixelated;
-}
-/* a slot not bought yet (the Main Menu Inventory, #149d): dimmed as the item grid's locked squares */
-.hud-run-item.is-dimmed {
-  opacity: 0.3;
-}
-/* the name inside the box's top band (#94): left aligned, squeezed sideways from its left edge when wider */
-.hud-run-name {
-  display: flex;
-  align-items: center;
-  overflow: visible;
-}
-.hud-run-name span {
-  display: inline-block;
-  transform-origin: 0 50%;
-}
-.hud-run-text {
-  line-height: 16px; /* two lines fit beside the patch under the name band */
-  display: flex;
-  align-items: center;
-  white-space: normal;
-  overflow: hidden;
-}
-.hud-run-text span {
-  /* at most two lines, cut with an ellipsis */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  padding: 2px; /* room for the text outline inside the clip */
-  line-clamp: 2;
-  overflow: hidden;
-}
-.hud-run-text.is-live {
-  color: #00baf3; /* a live tracker in the EXP blue, as the canvas column's cyan */
-}
+/* the box itself (.hud-run-item, card.horizontal): js/ui/lib/primitives/panel/panel.css (#155 155c-2) */
 
 /* level-up confetti (js/ui/confetti.js): its own layer above the screens (.scr is 20), never catching the pointer */
 .confetti-layer {

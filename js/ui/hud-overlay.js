@@ -27,25 +27,8 @@ G.HudOverlay = (() => {
   const panels = signal([]); // { id, View, sync }
   let hiddenByDebug = false;
 
-  function Defs() {
-    return html`<svg class="hud-defs" width="0" height="0" aria-hidden="true">
-      <defs>
-        <pattern id="hud-bar-checker" width="2" height="2" patternUnits="userSpaceOnUse">
-          <rect x="0" y="0" width="2" height="2" fill=${PALETTE.checker} />
-          <rect x="0" y="0" width="1" height="1" fill=${PALETTE.body} />
-          <rect x="1" y="1" width="1" height="1" fill=${PALETTE.body} />
-        </pattern>
-        <pattern id="hud-type-checker" width="3" height="3" patternUnits="userSpaceOnUse">
-          <rect x="0" y="0" width="3" height="3" fill=${PALETTE.typeBodyLight} />
-          <rect x="0" y="0" width="2" height="2" fill=${PALETTE.typeBodyDark} />
-        </pattern>
-        <pattern id="hud-slot-grid" width="4" height="4" patternUnits="userSpaceOnUse">
-          <rect x="0" y="0" width="4" height="4" fill=${PALETTE.typeBodyLight} />
-          <rect x="0" y="0" width="3" height="3" fill=${PALETTE.typeBodyDark} />
-        </pattern>
-      </defs>
-    </svg>`;
-  }
+  // the shared fills' patterns (the library's PixelPatterns, 155c-2), drawn once at the root
+  const Defs = G.Lib.Pixels.PixelPatterns;
 
   function Root() {
     return html`<${Defs} />${panels.value.map((panel) => html`<${panel.View} key=${panel.id} />`)}`;

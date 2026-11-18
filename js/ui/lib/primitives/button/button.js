@@ -171,5 +171,14 @@ G.Lib.Button = (() => {
     </button>`;
   }
 
-  return { ready: true, moveSlotRow, SLANTED_BUTTON, REST_RIM, FOCUS_RIM, SlantedButton, RoundedButton };
+  return {
+    ready: true,
+    moveSlotRow,
+    SLANTED_BUTTON,
+    ROUNDED_BUTTON,
+    REST_RIM,
+    FOCUS_RIM,
+    SlantedButton,
+    RoundedButton,
+  };
 })();

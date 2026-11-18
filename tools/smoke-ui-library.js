@@ -40,8 +40,15 @@ const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PAL
 // (read from the docs, not from the board's copy); every font face loads, and the game's CSS loads the same font files
 // under the same families; no library CSS writes a raw colour instead of a token; every sidebar entry of Jess's mockup is
 // there and opens a page. Primitives, Buttons (155b, docs/ASCII Concept Maps/155b - Buttons Plan.md): each button draws
-// in every state it has in the game; its rims are the rim tokens (read from tokens.js); a refused label is fainter than a
-// resting one; disabled cannot be pressed and refused can; each button lists its place names.
+// in every state it has in the game, each under its full name; its rims are the rim tokens (read from tokens.js); a
+// refused label is fainter than a plain one; disabled cannot be pressed and refused can; each lists its place names.
+// Primitives, Panels (155c, docs/ASCII Concept Maps/155c - Panels Plan.md): every state draws under its full name; a
+// pixel panel draws its ramp's base (from tokens.js) and a dual type blends two; a lighter body differs from the rest
+// one; a dimmed card is fainter than a lit one; a card dimmed with its button lit keeps the button at full; a refused
+// card button's label is fainter than a lit card's. 155c-2: a flat panel paints the body, frame and outline tokens; a
+// horizontal card's live text is the EXP token and its dimmed state fainter. Primitives, Squares: the board defines the
+// shared fills and a square paints one; a filled square's rim is the Lv token, an empty one slate; a locked slot is
+// fainter than a filled one; the grids lay out two and four across.
 const vm = require('vm');
 function loadTokens() {
   const sandbox = { console };
@@ -179,6 +186,8 @@ async function checkBoard(browser) {
   );
   ok(board.stored === 0, `the board writes nothing to localStorage (${board.stored} keys)`);
   await checkButtonsPage(page, tokens);
+  await checkPanelsPage(page, tokens);
+  await checkSquaresPage(page, tokens);
   await context.close();
 }
 
@@ -186,18 +195,20 @@ async function checkBoard(browser) {
 // the red the game gives a button that takes something away (End, Destroy, Sell, Let It Go).
 const BUTTON_STATES = {
   'button.slanted': ['rest', 'focused', 'red', 'redFocused'],
-  'button.rounded': ['rest', 'focused', 'focusedRed', 'refused', 'disabled'],
+  'button.rounded': ['rest', 'focusPositive', 'focusNegative', 'refused', 'refusedFocus', 'disabled'],
 };
-// The rim each state must show: refused keeps the resting rim; a red button keeps its red when focused.
+// The rim each state must show: refused keeps the resting rim, and under the cursor takes the focus rim like any other
+// button; a red button keeps its red when focused.
 const BUTTON_RIMS = {
   'button.slanted:rest': 'rest',
   'button.slanted:focused': 'focus',
   'button.slanted:red': 'red',
   'button.slanted:redFocused': 'red',
   'button.rounded:rest': 'rest',
-  'button.rounded:focused': 'focus',
-  'button.rounded:focusedRed': 'red',
+  'button.rounded:focusPositive': 'focus',
+  'button.rounded:focusNegative': 'red',
   'button.rounded:refused': 'rest',
+  'button.rounded:refusedFocus': 'focus',
 };
 async function checkButtonsPage(page, tokens) {
   const drawn = await page.evaluate(() => {
@@ -253,13 +264,25 @@ async function checkButtonsPage(page, tokens) {
   );
 
   const rounded = (state) => drawn.states['button.rounded:' + state] || {};
+  const faint = (refused, plain) =>
+    rounded(refused).labelAlpha !== null && rounded(refused).labelAlpha < rounded(plain).labelAlpha;
   ok(
-    rounded('refused').labelAlpha !== null && rounded('refused').labelAlpha < rounded('rest').labelAlpha,
-    `a refused label is fainter than a resting one (${rounded('refused').labelAlpha} vs ${rounded('rest').labelAlpha})`
+    faint('refused', 'rest') && faint('refusedFocus', 'focusPositive'),
+    'a refused label is fainter than a plain one, at rest and under the cursor (' +
+      `${rounded('refused').labelAlpha} vs ${rounded('rest').labelAlpha}, ` +
+      `${rounded('refusedFocus').labelAlpha} vs ${rounded('focusPositive').labelAlpha})`
   );
   ok(
-    rounded('disabled').disabled === true && rounded('refused').disabled === false,
+    rounded('disabled').disabled === true && !rounded('refused').disabled && !rounded('refusedFocus').disabled,
     'a disabled button cannot be pressed; a refused one still can (it says why)'
+  );
+  const unnamed = Object.entries(BUTTON_STATES)
+    .flatMap(([name, states]) => states.map((state) => name + '.' + state))
+    .filter((stateName) => !drawn.text.includes(stateName));
+  ok(
+    unnamed.length === 0,
+    'every state shows its full name (button.rounded.focusPositive)' +
+      (unnamed.length ? ', missing ' + unnamed.join(' ') : '')
   );
 
   const placeless = drawn.stories
@@ -269,6 +292,186 @@ async function checkButtonsPage(page, tokens) {
     drawn.stories.length === Object.keys(BUTTON_STATES).length && placeless.length === 0,
     `each button lists its place names (${drawn.stories.length} buttons)` +
       (placeless.length ? ', missing on ' + placeless.join(' ') : '')
+  );
+}
+
+// The states each panel has in the game (155c plan)
+const PANEL_STATES = {
+  'panel.pixel': ['rest', 'type', 'dualType', 'lightBody', 'fainted'],
+  'panel.thin': ['rest'],
+  'card.vertical': ['lit', 'dimmed', 'dimmedButtonLit', 'refusedButton'],
+  'panel.flat': ['rest'],
+  'card.horizontal': ['filled', 'live', 'empty', 'dimmed', 'large'],
+};
+/** A token's hex as the browser writes a computed colour ("rgb(24, 24, 24)"). */
+const rgbOf = (hex) => {
+  const value = hex.replace('#', '');
+  const channel = (index) => parseInt(value.slice(index, index + 2), 16);
+  return `rgb(${channel(0)}, ${channel(2)}, ${channel(4)})`;
+};
+// The rim ramp each one-ramp pixel panel state must draw (its base colour, read from tokens.js)
+const PANEL_RIMS = { rest: 'color.rim.rest', type: 'color.type.fire', fainted: 'color.rim.fainted' };
+async function checkPanelsPage(page, tokens) {
+  const drawn = await page.evaluate(() => {
+    window.libShow('primitives/panels');
+    const alphaOf = (colour) => {
+      const parts = colour.match(/[\d.]+/g) || [];
+      return parts.length > 3 ? Number(parts[3]) : 1;
+    };
+    const opacityOf = (element) => (element ? Number(getComputedStyle(element).opacity) : null);
+    const states = {};
+    for (const stage of document.querySelectorAll('[data-state]')) {
+      const piece = stage.firstElementChild,
+        card = stage.querySelector('.shop-card'),
+        label = stage.querySelector('.hud-team-button-label'),
+        flat = stage.querySelector('.panel-flat'),
+        slotBox = stage.querySelector('.hud-run-item'),
+        slotText = stage.querySelector('.hud-run-text');
+      states[stage.dataset.state] = {
+        flat: flat && {
+          body: getComputedStyle(flat).backgroundColor,
+          frame: getComputedStyle(flat).borderTopColor,
+          outline: getComputedStyle(flat).boxShadow,
+        },
+        slotOpacity: opacityOf(slotBox),
+        slotTextColour: slotText ? getComputedStyle(slotText).color : null,
+        drawn: !!piece && piece.getBoundingClientRect().width > 0,
+        fills: [...stage.querySelectorAll('svg rect')].map((rect) => (rect.getAttribute('fill') || '').toLowerCase()),
+        gradients: stage.querySelectorAll('linearGradient').length,
+        cardOpacity: opacityOf(card),
+        nameOpacity: opacityOf(card && card.querySelector('.shop-card-name')),
+        buttonOpacity: opacityOf(card && card.querySelector('.shop-card-buy')),
+        labelAlpha: label ? alphaOf(getComputedStyle(label).color) : null,
+      };
+    }
+    return { states, text: document.getElementById('main').innerText };
+  });
+  const state = (name, id) => drawn.states[name + ':' + id] || {};
+
+  const missing = Object.entries(PANEL_STATES).flatMap(([name, ids]) =>
+    ids.filter((id) => !state(name, id).drawn || !drawn.text.includes(name + '.' + id)).map((id) => name + '.' + id)
+  );
+  ok(
+    missing.length === 0,
+    `the Panels page draws every state under its full name (${Object.values(PANEL_STATES).flat().length})` +
+      (missing.length ? ', missing ' + missing.join(' ') : '')
+  );
+
+  const wrongRims = Object.entries(PANEL_RIMS)
+    .filter(([id, ramp]) => !state('panel.pixel', id).fills.includes(tokens.ramp(ramp).base.toLowerCase()))
+    .map(([id, ramp]) => 'panel.pixel.' + id + ' lacks ' + ramp);
+  ok(
+    wrongRims.length === 0,
+    "each pixel panel draws its rim ramp's base from the tokens" + (wrongRims.length ? ': ' + wrongRims.join(', ') : '')
+  );
+  ok(
+    state('panel.pixel', 'dualType').gradients > 0 && state('panel.pixel', 'rest').gradients === 0,
+    'a dual-type pixel panel blends its two ramps; a one-ramp panel does not'
+  );
+  const restFills = new Set(state('panel.pixel', 'rest').fills);
+  ok(
+    state('panel.pixel', 'lightBody').fills.some((fill) => !restFills.has(fill) && fill.startsWith('#')),
+    'a lighter-body pixel panel draws a body colour the resting one does not'
+  );
+
+  const lit = state('card.vertical', 'lit'),
+    dimmed = state('card.vertical', 'dimmed'),
+    buttonLit = state('card.vertical', 'dimmedButtonLit'),
+    refused = state('card.vertical', 'refusedButton');
+  ok(
+    dimmed.cardOpacity < lit.cardOpacity,
+    `a dimmed card is fainter than a lit one (${dimmed.cardOpacity} vs ${lit.cardOpacity})`
+  );
+  ok(
+    buttonLit.buttonOpacity === lit.buttonOpacity && buttonLit.nameOpacity < lit.nameOpacity,
+    'a card dimmed with its button lit dims its text and keeps its button (' +
+      `${buttonLit.nameOpacity} text, ${buttonLit.buttonOpacity} button)`
+  );
+  ok(
+    refused.labelAlpha !== null && refused.labelAlpha < lit.labelAlpha,
+    `a refused card button's label is fainter than a lit card's (${refused.labelAlpha} vs ${lit.labelAlpha})`
+  );
+
+  const flat = state('panel.flat', 'rest').flat || {};
+  ok(
+    flat.body === rgbOf(tokens.color('color.hud.body')) &&
+      flat.frame === rgbOf(tokens.color('color.hud.frame')) &&
+      String(flat.outline).includes(rgbOf(tokens.color('color.hud.outline'))),
+    `a flat panel paints the body, frame and outline tokens (${flat.body}, ${flat.frame}, ${flat.outline})`
+  );
+  const slotFilled = state('card.horizontal', 'filled'),
+    slotLive = state('card.horizontal', 'live'),
+    slotDimmed = state('card.horizontal', 'dimmed');
+  ok(
+    slotLive.slotTextColour === rgbOf(tokens.color('color.hud.expFill')) &&
+      slotFilled.slotTextColour !== slotLive.slotTextColour,
+    `a horizontal card's live text is the EXP token and plain text is not (${slotLive.slotTextColour})`
+  );
+  ok(
+    slotDimmed.slotOpacity < slotFilled.slotOpacity,
+    `a dimmed horizontal card is fainter than a filled one (${slotDimmed.slotOpacity} vs ${slotFilled.slotOpacity})`
+  );
+}
+
+// The states each square piece has in the game (155c-2 plan)
+const SQUARE_STATES = { 'square.item': ['filled', 'empty'], 'grid.item': ['twoColumns', 'fourColumns'] };
+const GRID_COLUMNS = { twoColumns: 2, fourColumns: 4 };
+async function checkSquaresPage(page, tokens) {
+  const drawn = await page.evaluate(() => {
+    window.libShow('primitives/squares');
+    const states = {};
+    for (const stage of document.querySelectorAll('[data-state]')) {
+      const slots = [...stage.querySelectorAll('.hud-grid-slot')],
+        firstTop = slots.length ? Math.round(slots[0].getBoundingClientRect().top) : null,
+        opacityOf = (element) => (element ? Number(getComputedStyle(element).opacity) : null);
+      states[stage.dataset.state] = {
+        drawn: !!stage.firstElementChild && stage.firstElementChild.getBoundingClientRect().width > 0,
+        fills: [...stage.querySelectorAll('svg rect')].map((rect) => String(rect.getAttribute('fill')).toLowerCase()),
+        firstRow: slots.filter((slot) => Math.round(slot.getBoundingClientRect().top) === firstTop).length,
+        lockedOpacity: opacityOf(stage.querySelector('.hud-grid-slot.is-locked')),
+        filledOpacity: opacityOf(stage.querySelector('.hud-grid-slot.is-filled')),
+      };
+    }
+    const patternIds = ['hud-bar-checker', 'hud-type-checker', 'hud-slot-grid'],
+      patterns = patternIds.filter((id) => document.getElementById(id));
+    return { states, patterns, text: document.getElementById('main').innerText };
+  });
+  const state = (name, id) => drawn.states[name + ':' + id] || {};
+
+  const missing = Object.entries(SQUARE_STATES).flatMap(([name, ids]) =>
+    ids.filter((id) => !state(name, id).drawn || !drawn.text.includes(name + '.' + id)).map((id) => name + '.' + id)
+  );
+  ok(
+    missing.length === 0,
+    `the Squares page draws every state under its full name (${Object.values(SQUARE_STATES).flat().length})` +
+      (missing.length ? ', missing ' + missing.join(' ') : '')
+  );
+  ok(
+    drawn.patterns.length === 3 && state('square.item', 'filled').fills.includes('url(#hud-bar-checker)'),
+    `the board defines the shared fills and a square paints one (${drawn.patterns.join(', ')})`
+  );
+  const lvFill = tokens.color('color.hud.lvFill').toLowerCase(),
+    slate = tokens.color('color.hud.slate').toLowerCase();
+  const filledFills = state('square.item', 'filled').fills,
+    emptyFills = state('square.item', 'empty').fills;
+  ok(
+    filledFills.includes(lvFill) &&
+      !filledFills.includes(slate) &&
+      emptyFills.includes(slate) &&
+      !emptyFills.includes(lvFill),
+    "a filled square's rim is color.hud.lvFill and an empty one's color.hud.slate"
+  );
+  const pocket = state('grid.item', 'twoColumns');
+  ok(
+    pocket.lockedOpacity !== null && pocket.lockedOpacity < pocket.filledOpacity,
+    `a locked slot is fainter than a filled one (${pocket.lockedOpacity} vs ${pocket.filledOpacity})`
+  );
+  const wrongColumns = Object.entries(GRID_COLUMNS)
+    .filter(([id, columns]) => state('grid.item', id).firstRow !== columns)
+    .map(([id]) => id + ' has ' + state('grid.item', id).firstRow);
+  ok(
+    wrongColumns.length === 0,
+    'the grids lay out two and four across' + (wrongColumns.length ? ': ' + wrongColumns.join(', ') : '')
   );
 }
 

@@ -8,16 +8,13 @@
   inset: 0;
   --pm-scale: 1;
 }
-/* the window: the Menu Popup Panel (mockup: #212121 frame, #181818 body), the catch window's look */
+/* the window: the Menu Popup Panel; its look is .panel-flat (panel.flat, js/ui/lib/primitives/panel/panel.css) */
 .shop-window {
   position: absolute;
   left: 115px;
   top: 205px;
   width: 1145px;
   height: 670px;
-  background: #181818;
-  border: 1px solid #212121;
-  box-shadow: 0 0 0 2px #101010;
 }
 /* the panes: right of the rail, above Exit; each scrolls on its own */
 .shop-panes {
@@ -155,37 +152,16 @@
 .shop-search-host .hud-search {
   font-family: 'GameFont', monospace; /* the menu windows' font (the kit's search box uses the HUD font) */
 }
-/* a card and the owned panel: the mockup's thin #29ceff rim on a #303030 body */
-.shop-card,
+/* the cards (.shop-card, card.vertical on panel.thin): js/ui/lib/primitives/panel/panel.css (#155 155c). The owned
+   panel keeps the same thin #29ceff rim on a #303030 body here until it moves onto panel.thin */
 .shop-owned {
   box-sizing: border-box;
   border: 2px solid #29ceff;
   background: #303030;
 }
-.shop-card {
-  position: relative;
-}
-.shop-card > * {
-  position: absolute;
-}
-.shop-card-icon canvas {
-  display: block;
-  image-rendering: pixelated;
-}
-.shop-card-divider {
-  height: 2px;
-  background: #495151; /* Slate divider, short of the rim */
-}
-.shop-card .shop-card-name,
-.shop-card .shop-card-description,
 .shop-empty {
-  white-space: normal; /* wraps inside the card (the kit's .hud-text keeps one line) */
+  white-space: normal; /* wraps (the kit's .hud-text keeps one line) */
   line-height: 24px;
-}
-.shop-card-name {
-  color: #8cfff7; /* Secondary text */
-}
-.shop-empty {
   padding: 12px 4px;
 }
 .shop-owned {
@@ -209,19 +185,7 @@
 .shop-belt {
   position: absolute;
 }
-/* a ball not unlocked yet: the whole card dimmed (mockup); its button still takes the cursor */
-.shop-card.is-dimmed {
-  opacity: 0.45;
-}
-/* #137c: a locked ball you can afford: the card looks as dimmed as above (its rim and body mixed 45% over the window's
-   #181818, its contents at 0.45), but its Unlock button stays lit */
-.shop-card.is-dimmed-but-button {
-  border-color: color-mix(in srgb, #29ceff 45%, #181818);
-  background: color-mix(in srgb, #303030 45%, #181818);
-}
-.shop-card.is-dimmed-but-button > :not(.shop-card-buy) {
-  opacity: 0.45;
-}
+/* a dimmed card, and one dimmed with its Unlock lit (#137c): card.vertical, js/ui/lib/primitives/panel/panel.css */
 /* #137c: Sell lines up with Exit, whose right end is 2 px past this pane's (1003 px wide inside the window's rim), so
    this pane shows what overflows it; its cards scroll in their own box */
 #shop-balls.shop-pane-fixed {

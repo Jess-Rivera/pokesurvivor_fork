@@ -235,14 +235,14 @@ G.PauseMenu = (() => {
   const pokemon = G.PausePokemon && G.PausePokemon.ready ? G.PausePokemon : null;
   const inventory = G.PauseInventory && G.PauseInventory.ready ? G.PauseInventory : null;
   function Panels() {
-    return html`<div class="pm-panel pm-panel-info" data-panel="runInfo">
+    return html`<div class="pm-panel panel-flat pm-panel-info" data-panel="runInfo">
         ${runInfo ? html`<${runInfo.Panel} />` : null}
       </div>
-      <div class="pm-panel pm-panel-detail" data-panel="detail">
+      <div class="pm-panel panel-flat pm-panel-detail" data-panel="detail">
         ${pokemon ? html`<${pokemon.DetailPanel} />` : null}
       </div>
-      <div class="pm-panel pm-panel-team" data-panel="team">${pokemon ? html`<${pokemon.TeamPanel} />` : null}</div>
-      <div class="pm-panel pm-panel-inventory" data-panel="inventory">
+      <div class="pm-panel panel-flat pm-panel-team" data-panel="team">${pokemon ? html`<${pokemon.TeamPanel} />` : null}</div>
+      <div class="pm-panel panel-flat pm-panel-inventory" data-panel="inventory">
         ${inventory && !reviewing.value ? html`<${inventory.InventoryPanel} />` : null}
       </div>`;
   }

@@ -68,8 +68,9 @@ G.HudKit = (() => {
   const hpBand = (fraction) => (fraction > 0.5 ? 'high' : fraction >= 0.2 ? 'middle' : 'low');
 
   // Shared SVG fills, referenced by id from any shape on the page.
-  const BAR_CHECKER = 'url(#hud-bar-checker)', // the B2 HP bar body: 1-pixel checker of the panel body and checker
-    SLOT_GRID = 'url(#hud-slot-grid)'; // the HUD move slots: the same grid with 3x3 dark squares (Jess, 2026-11-10)
+  // (the library's pixels primitive defines them, 155c-2)
+  const BAR_CHECKER = pixels.PATTERNS.barChecker, // the B2 HP bar body: 1-pixel checker of the panel body and checker
+    SLOT_GRID = pixels.PATTERNS.slotGrid; // the HUD move slots: the same grid with 3x3 dark squares
 
   // ---------- pixel shapes and the menu buttons: the UI library's primitives (js/ui/lib/primitives/, 155b) ----------
   const { PixelShape, letterRows } = pixels;

@@ -179,7 +179,7 @@ G.EvScreen = (() => {
   function Screen() {
     return html`<div class="er-dim"></div>
       <div class="pm-stage er-stage">
-        <div class="ev-panel">
+        <div class="ev-panel panel-flat">
           <${Head} />
           ${ROWS.map((row) => html`<${Row} key=${row.stat} row=${row} />`)}
         </div>

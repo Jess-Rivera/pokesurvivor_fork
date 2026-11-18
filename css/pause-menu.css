@@ -273,11 +273,9 @@ body.er-open .hud-overlay {
 /* the button itself (.pm-button, button.slanted): js/ui/lib/primitives/button/button.css (#155 155b) */
 
 /* ---------- the four panels (Run Info and the Run Inventory are empty frames until #91 and #90) ---------- */
+/* the look (.panel-flat, panel.flat): js/ui/lib/primitives/panel/panel.css (#155 155c-2) */
 .pm-panel {
   position: absolute;
-  background: #181818;
-  border: 1px solid #212121;
-  box-shadow: 0 0 0 2px #101010;
   opacity: 0;
   transition:
     transform 0.118s ease-in,
@@ -422,15 +420,8 @@ body.er-open .hud-overlay {
   top: 108px;
   color: #fb3041;
 }
-/* boxes: the roster card's box with a flat body, rimmed in the first type */
-.pm-box > svg {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-.pm-box > * {
-  position: absolute;
-}
+/* boxes: the roster card's box with a flat body, rimmed in the first type (.pm-box, panel.pixel:
+   js/ui/lib/primitives/panel/panel.css, #155 155c) */
 .pm-box-title {
   left: 16px;
   top: 16px;
@@ -785,8 +776,7 @@ body.er-open .hud-overlay {
   width: 1520px;
   box-sizing: border-box;
   padding: 24px 40px 32px;
-  background: #181818; /* the detail panel's back and frame */
-  border: 1px solid #212121;
+  box-shadow: none; /* the detail panel's back and frame (.panel-flat), without its outline */
 }
 .ev-head,
 .ev-row {

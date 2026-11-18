@@ -122,20 +122,38 @@ G.Lib.ButtonStories = (() => {
       'main.inventory.shop',
       'main.inventory.exit',
     ],
+    // named by intent (Jess 2026-11-18): positive moves forward or buys, negative takes something away
     states: [
       { id: 'rest', title: 'At rest', props: roundedProps('story-rounded-rest', 'Exit') },
-      { id: 'focused', title: 'Focused', props: roundedProps('story-rounded-focused', 'Buy 9k', { focused: true }) },
       {
-        id: 'focusedRed',
-        title: 'Focused, red rim (Sell, Let It Go)',
-        props: roundedProps('story-rounded-focused-red', 'Sell Pokeball', {
+        id: 'focusPositive',
+        title: 'Focus, positive (Buy, Throw, Exit)',
+        props: roundedProps('story-rounded-focus-positive', 'Buy 9k', { focused: true }),
+      },
+      {
+        id: 'focusNegative',
+        title: 'Focus, negative (Sell, Let It Go)',
+        props: roundedProps('story-rounded-focus-negative', 'Sell Pokeball', {
           artWidth: 62,
           focused: true,
           focusRim: RED_RIM,
         }),
       },
-      { id: 'refused', title: 'Refused', props: roundedProps('story-rounded-refused', 'Buy 23k', { refused: true }) },
-      { id: 'disabled', title: 'Disabled', props: roundedProps('story-rounded-disabled', 'Equip', { disabled: true }) },
+      {
+        id: 'refused',
+        title: 'Refused (cannot afford), at rest',
+        props: roundedProps('story-rounded-refused', 'Buy 23k', { refused: true }),
+      },
+      {
+        id: 'refusedFocus',
+        title: 'Refused, under the cursor (#151: it still takes the cursor)',
+        props: roundedProps('story-rounded-refused-focus', 'Buy 23k', { refused: true, focused: true }),
+      },
+      {
+        id: 'disabled',
+        title: 'Disabled (cannot be pressed)',
+        props: roundedProps('story-rounded-disabled', 'Equip', { disabled: true }),
+      },
     ],
   };
 

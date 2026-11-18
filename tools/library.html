@@ -97,6 +97,14 @@
     0 2px 0 var(--color-hud-outline), 0 -2px 0 var(--color-hud-outline), 2px 2px 0 var(--color-hud-outline),
     -2px 2px 0 var(--color-hud-outline), 2px -2px 0 var(--color-hud-outline), -2px -2px 0 var(--color-hud-outline); }
   .lib-stage-rounded .hud-team-button[disabled] { opacity: 0.4; cursor: default; }
+  /* panels: a pixel panel is placed by its screen, so it sits in the flow here; the card's text is the Shop's font */
+  .lib-stage-panel .pm-box { position: relative; }
+  .lib-stage-card { font-family: 'GameFont', monospace; font-synthesis: none; color: #ffffff; }
+  .lib-card-picture { width: 64px; height: 64px; border-radius: 50%; background: var(--color-hud-slate); }
+  /* squares and the run item box: placeholder pictures; the box is placed by its screen, so it sits in the flow here */
+  .lib-square-picture { border-radius: 50%; background: var(--color-hud-paperEdge); }
+  .lib-stage-card-h { font-family: 'HudText', monospace; font-synthesis: none; color: #ffffff; }
+  .lib-stage-card-h .hud-run-item { position: relative; }
   .lib-facts { display: grid; grid-template-columns: 90px 1fr; gap: 4px 12px; margin: 6px 0 0; max-width: 1000px; font-size: 13px; }
   .lib-facts dt { color: var(--lib-dim); }
   .lib-facts dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
@@ -108,13 +116,20 @@
 <!-- the library's styles, then the HUD text classes the slot button's label uses (until they move into the library) -->
 <link rel="stylesheet" href="../js/ui/lib/primitives/pixels/pixels.css">
 <link rel="stylesheet" href="../js/ui/lib/primitives/button/button.css">
+<link rel="stylesheet" href="../js/ui/lib/primitives/panel/panel.css">
+<link rel="stylesheet" href="../js/ui/lib/primitives/square/square.css">
 <link rel="stylesheet" href="../css/hud-overlay.css">
 <script src="../js/ui/lib/tokens/tokens.js"></script>
 <script src="../js/vendor/preact.min.js"></script>
+<script src="../js/vendor/preact-hooks.min.js"></script>
 <script src="../js/vendor/htm.min.js"></script>
 <script src="../js/ui/lib/primitives/pixels/pixels.js"></script>
 <script src="../js/ui/lib/primitives/button/button.js"></script>
 <script src="../js/ui/lib/primitives/button/button.story.js"></script>
+<script src="../js/ui/lib/primitives/panel/panel.js"></script>
+<script src="../js/ui/lib/primitives/panel/panel.story.js"></script>
+<script src="../js/ui/lib/primitives/square/square.js"></script>
+<script src="../js/ui/lib/primitives/square/square.story.js"></script>
 <script src="library/doc-colours.js"></script>
 </head>
 <body>
@@ -146,7 +161,8 @@ const NAV = [
   ] },
   { title: 'Primitives', items: [
     { id: 'primitives/buttons', title: 'Buttons' },
-    { id: 'primitives/panels', title: 'Panels', later: '#155 step 155c' },
+    { id: 'primitives/panels', title: 'Panels' },
+    { id: 'primitives/squares', title: 'Squares' },
     { id: 'primitives/bars', title: 'Bars', later: 'a later slice under #126' },
     { id: 'primitives/modal', title: 'Modal', later: 'a later slice under #126' },
   ] },
@@ -285,14 +301,14 @@ const libHtml = htm.bind(preact.h);
 function storyBlock(story) {
   const states = story.states.map((state) => `<figure class="lib-state">
       <div class="lib-stage ${esc(story.stageClass)}" data-state="${esc(story.name + ':' + state.id)}"></div>
-      <figcaption>${esc(state.title)}</figcaption></figure>`).join('');
+      <figcaption>${nameButton(story.name + '.' + state.id)}<br>${esc(state.title)}</figcaption></figure>`).join('');
   return `<section class="lib-story" data-story="${esc(story.name)}">
     <h3>${nameButton(story.name)} <span class="lib-dim lib-mono">${esc(story.component)}</span></h3>
     <p class="lib-note">${esc(story.job)}</p>
     <div class="lib-states">${states}</div>
     <dl class="lib-facts">
       <dt>Tokens</dt><dd>${story.tokens.map(nameButton).join('')}</dd>
-      <dt>Font</dt><dd>${nameButton(story.font.name)}<span>${esc(story.font.size)}</span></dd>
+      ${story.font ? `<dt>Font</dt><dd>${nameButton(story.font.name)}<span>${esc(story.font.size)}</span></dd>` : ''}
       <dt>Size</dt><dd>${esc(story.size)}</dd>
       <dt>Files</dt><dd class="lib-mono">${esc(story.files)}</dd>
       <dt>Used at</dt><dd>${story.places.map(nameButton).join('')}</dd>
@@ -306,18 +322,44 @@ function mountStories(stories, pieces) {
       preact.render(libHtml`<${pieces[story.component]} ...${state.props} />`, stage);
     }
 }
-function buttonsPage() {
-  return `<h2>Buttons</h2>
-    <p class="lib-note">The pixel-art buttons (js/ui/lib/primitives/button/). Props only: the screen passes the label, size, rims and state, and handles the press. Placeholder labels.</p>
-    ${G.Lib.ButtonStories.map(storyBlock).join('')}`;
-}
+// each primitive page: its stories, the pieces that draw them, and a note
+const PRIMITIVE_PAGES = {
+  'primitives/buttons': {
+    title: 'Buttons',
+    stories: () => G.Lib.ButtonStories,
+    pieces: () => G.Lib.Button,
+    note: 'The pixel-art buttons (js/ui/lib/primitives/button/). Props only: the screen passes the label, size, rims and state, and handles the press. Placeholder labels.',
+  },
+  'primitives/panels': {
+    title: 'Panels',
+    stories: () => G.Lib.PanelStories,
+    pieces: () => G.Lib.Panel,
+    note: 'The frames and the cards (js/ui/lib/primitives/panel/). Props only: the screen passes the size, rims and contents (a card gets its picture and its button). Placeholder data.',
+  },
+  'primitives/squares': {
+    title: 'Squares',
+    stories: () => G.Lib.SquareStories,
+    pieces: () => G.Lib.Square,
+    note: 'The item squares and their grid (js/ui/lib/primitives/square/). Props only: the screen passes each square its picture and each slot its tooltip. Placeholder pictures.',
+  },
+};
+const primitivePage = (id) => () => {
+  const page = PRIMITIVE_PAGES[id];
+  return `<h2>${esc(page.title)}</h2><p class="lib-note">${esc(page.note)}</p>${page.stories().map(storyBlock).join('')}`;
+};
 
 const DRAW = {
   'tokens/colours': coloursPage,
   'tokens/fonts': fontsPage,
   'tokens/layers': layersPage,
-  'primitives/buttons': buttonsPage,
+  'primitives/buttons': primitivePage('primitives/buttons'),
+  'primitives/panels': primitivePage('primitives/panels'),
+  'primitives/squares': primitivePage('primitives/squares'),
 };
+// the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
+const patternHost = document.createElement('div');
+document.body.appendChild(patternHost);
+preact.render(libHtml`<${G.Lib.Pixels.PixelPatterns} />`, patternHost);
 
 /** Shows a page (and, on Colours, a tab). The address hash follows, so the page can be bookmarked. */
 function show(id, tab) {
@@ -331,7 +373,8 @@ function show(id, tab) {
   const hash = '#' + item.id + (tab ? ':' + tab : '');
   if (location.hash !== hash) history.replaceState(null, '', hash);
   if (item.id === 'tokens/fonts') markFonts();
-  if (item.id === 'primitives/buttons') mountStories(G.Lib.ButtonStories, G.Lib.Button);
+  const primitive = PRIMITIVE_PAGES[item.id];
+  if (primitive && !item.later) mountStories(primitive.stories(), primitive.pieces());
 }
 
 // ---------- fonts: declared from the tokens, as the game's CSS declares them ----------

@@ -93,6 +93,8 @@
     <!-- UI library primitives (#155): first, so the screens' rules still win at equal specificity -->
     <link rel="stylesheet" href="js/ui/lib/primitives/pixels/pixels.css" />
     <link rel="stylesheet" href="js/ui/lib/primitives/button/button.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/panel/panel.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/square/square.css" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/bw-menu.css" />
     <link rel="stylesheet" href="css/bw-team.css" />
@@ -598,7 +600,7 @@
     <section id="scr-inventory" class="scr dim hidden">
       <div class="inv-host" translate="no">
         <div class="pm-stage inv-stage">
-          <div id="inv-window" class="shop-window"></div>
+          <div id="inv-window" class="shop-window panel-flat"></div>
         </div>
       </div>
     </section>
@@ -674,7 +676,7 @@
     <section id="scr-gacha" class="scr dim hidden">
       <div class="shop-host" translate="no">
         <div class="pm-stage shop-stage">
-          <div class="shop-window">
+          <div class="shop-window panel-flat">
             <div class="shop-panes">
               <!-- Pokeballs: the ball cards and the belts, drawn by js/ui/shop-balls.js (149e), which buys them too (#137) -->
               <div id="shop-balls" class="shop-pane shop-pane-fixed hidden"></div>
@@ -832,6 +834,8 @@
     <!-- UI library primitives (#155 155b): after Preact, before the HUD kit that passes them on -->
     <script defer src="js/ui/lib/primitives/pixels/pixels.js"></script>
     <script defer src="js/ui/lib/primitives/button/button.js"></script>
+    <script defer src="js/ui/lib/primitives/panel/panel.js"></script>
+    <script defer src="js/ui/lib/primitives/square/square.js"></script>
     <script defer src="js/core/stats.js"></script>
     <script defer src="js/core/simbus.js"></script>
     <script defer src="js/systems/log.js"></script>

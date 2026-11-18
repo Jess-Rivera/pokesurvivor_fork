@@ -36,6 +36,7 @@ G.Tokens = (() => {
         ['trackEdge', '#313131', 'The roster HP track frame'],
         ['paperEdge', '#848484', 'The run item icon patch edge'],
         ['paper', '#e7e7e7', 'The run item icon patch'],
+        ['teal', '#29ceff', "The menu windows' teal: card rims (panel.thin), the scroll thumb"],
       ],
     },
     {
@@ -82,18 +83,19 @@ G.Tokens = (() => {
       source: 'js/ui/menu-window-kit.js SCROLL_COLOURS',
       colours: [
         ['track', 'color.hud.checker', 'Scroll track'],
-        ['thumb', '#29ceff', 'Scroll thumb'],
+        ['thumb', 'color.hud.teal', 'Scroll thumb'],
         ['thumbRim', 'color.scroll.thumb', 'Scroll thumb rim'],
       ],
     },
     {
       id: 'text',
       title: 'Text',
-      job: 'Label colours of the pixel-art buttons',
-      source: 'js/ui/lib/primitives/button/button.css (from pause-menu.css, hud-overlay.css and bw-shop.css, 155b)',
+      job: "Text colours of the library's pieces",
+      source: 'js/ui/lib/primitives/button/button.css and panel/panel.css (from the screens\' stylesheets, 155b, 155c)',
       colours: [
         ['label', '#ffffff', 'A button label'],
         ['labelRefused', 'rgba(255, 255, 255, 0.45)', 'The label of a button that refuses (#151): white at 45%'],
+        ['secondary', '#8cfff7', "Secondary text: a card's name"],
       ],
     },
   ];

@@ -1,33 +1,15 @@
 /* ============ hud-kit-items.js: the HUD kit's tooltip layer, scroll box and item pieces (G.HudKitItems) ============
- * Part of the HUD kit (js/ui/hud-kit.js has the overview); it reads only G.HudKit. Panels and screens take these
- * from G.HudOverlay.kit. Split out of js/ui/hud-overlay.js on 2026-11-14 (structural review F1); the code is
- * unchanged.
+ * Part of the HUD kit (js/ui/hud-kit.js has the overview); it reads G.HudKit and the UI library (the item squares and
+ * the run item box are its square.item, grid.item and card.horizontal, 155c-2: this file draws their icons and wires
+ * their tooltips). Panels and screens take these from G.HudOverlay.kit. Split out of js/ui/hud-overlay.js on
+ * 2026-11-14 (structural review F1).
  */
 G.HudKitItems = (() => {
-  const coreKit = G.HudKit;
-  if (!coreKit.ready) return { ready: false };
-  const { html, signal, hooks: preactHooks, PALETTE, BAR_CHECKER, SLOT_GRID, PixelShape } = coreKit;
-
-  // ---------- the B2 bag button (b2-lower Y4 to AB5): a square with chamfered corners, a rim and the checker body ----------
-  function bagButtonRow(row, artSize, rimColour) {
-    const chamfer = row < 2 ? 2 - row : row > artSize - 3 ? row - (artSize - 3) : 0,
-      left = chamfer,
-      right = artSize - 1 - chamfer;
-    if (row === 0 || row === artSize - 1) return [[left, right - left + 1, PALETTE.outline]];
-    if (row === 1 || row === artSize - 2)
-      return [
-        [left, 1, PALETTE.outline],
-        [left + 1, right - left - 1, rimColour],
-        [right, 1, PALETTE.outline],
-      ];
-    return [
-      [left, 1, PALETTE.outline],
-      [left + 1, 1, rimColour],
-      [left + 2, right - left - 3, BAR_CHECKER],
-      [right - 1, 1, rimColour],
-      [right, 1, PALETTE.outline],
-    ];
-  }
+  const coreKit = G.HudKit,
+    square = G.Lib && G.Lib.Square, // the item squares are the UI library's square.item and grid.item (155c-2)
+    panel = G.Lib && G.Lib.Panel; // the run item box is its card.horizontal
+  if (!coreKit.ready || !square || !square.ready || !panel || !panel.ready) return { ready: false };
+  const { html, signal, hooks: preactHooks } = coreKit;
 
   /**
    * An item icon (Pokesprite cell or app icon, through G.Icons.draw) painted on a small canvas at 1x. It paints on a change,
@@ -52,57 +34,42 @@ G.HudKitItems = (() => {
   }
 
   /**
-   * The held item square: the bag button with the item's icon at 1x in its centre; the Lv yellow rim when it holds
-   * something, slate when empty (HUD-STYLE "Character info panel"). artSize is in 2 px art pixels.
+   * The held item square (the library's square.item): the item's icon at 1x in its centre; the Lv yellow rim when it
+   * holds something, slate when empty (HUD-STYLE "Character info panel"). artSize is in 2 px art pixels.
    */
   function ItemSquare({ icon, artSize }) {
-    const size = artSize * 2,
-      rim = icon ? PALETTE.lvFill : PALETTE.slate;
-    return html`<div class="hud-item-square" style=${{ width: size + 'px', height: size + 'px' }}>
-      <${PixelShape}
-        artWidth=${artSize}
-        artRows=${artSize}
-        artPixel=${2}
-        paintRow=${(row) => bagButtonRow(row, artSize, rim)}
-      />
-      ${icon ? html`<${IconCanvas} icon=${icon} size=${32} className="hud-item-icon" />` : null}
-    </div>`;
+    return html`<${square.ItemSquare}
+      artSize=${artSize}
+      filled=${!!icon}
+      picture=${icon ? html`<${IconCanvas} icon=${icon} size=${32} className="hud-item-icon" />` : null}
+    />`;
   }
 
   /**
-   * The tight 2x2 item grid (#90, HUD-STYLE "Berry bag"): item squares in two columns, half a square between them, filling
-   * row by row. Used by the run screen's berry bag and the pause menu's Run Inventory.
+   * The tight 2x2 item grid (#90, HUD-STYLE "Berry bag"; the library's grid.item): item squares in two columns, half a
+   * square between them, filling row by row. Used by the run screen's berry bag and the pause menu's Run Inventory.
    * slots: [{ key, icon, locked, tip: { name, desc }, className, attrs, overlay }]: icon null = empty; locked = dimmed
    * (not bought); tip = the hover tooltip (none on the run screen), drawn in the page's tooltip layer; attrs = extra
    * attributes for the slot's element (data-*, handlers); overlay = drawn over the square (a selection cursor).
    * tipPlace: where the tooltip opens (showTooltip's place; above by default). columns: squares per row (2 by default;
    * the Main Menu Shop's owned items use 4, #149c).
    */
-  function ItemGrid({ slots, artSize = 20, columns = 2, className, tipPlace }) {
-    const size = artSize * 2,
-      gap = size / 2;
-    return html`<div
-      class=${'hud-item-grid' + (className ? ' ' + className : '')}
-      style=${{ gridTemplateColumns: `repeat(${columns}, ${size}px)`, gap: gap + 'px' }}
-    >
-      ${slots.map(
-        (slot) =>
-          html`<div
-            key=${slot.key}
-            class=${
-              'hud-grid-slot' +
-              (slot.icon ? ' is-filled' : '') +
-              (slot.locked ? ' is-locked' : '') +
-              (slot.className ? ' ' + slot.className : '')
-            }
-            ...${slot.tip && slot.icon ? itemTipHandlers(slot.tip, tipPlace) : {}}
-            ...${slot.attrs || {}}
-          >
-            <${ItemSquare} icon=${slot.icon || null} artSize=${artSize} />
-            ${slot.overlay || null}
-          </div>`
-      )}
-    </div>`;
+  function ItemGrid({ slots, artSize, columns, className, tipPlace }) {
+    const librarySlots = slots.map((slot) => ({
+      key: slot.key,
+      filled: !!slot.icon,
+      picture: slot.icon ? html`<${IconCanvas} icon=${slot.icon} size=${32} className="hud-item-icon" />` : null,
+      locked: slot.locked,
+      className: slot.className,
+      overlay: slot.overlay,
+      attrs: { ...(slot.tip && slot.icon ? itemTipHandlers(slot.tip, tipPlace) : {}), ...(slot.attrs || {}) },
+    }));
+    return html`<${square.ItemGrid}
+      slots=${librarySlots}
+      artSize=${artSize}
+      columns=${columns}
+      className=${className}
+    />`;
   }
   const itemTipHandlers = (tip, place) =>
     tooltipHandlers({ name: tip.name, lines: tip.desc ? [tip.desc] : [], variant: 'item' }, place);
@@ -339,169 +306,30 @@ G.HudKitItems = (() => {
     />`;
   }
 
-  // ---------- the run item box (b2-lower AD4 to AG5): a team item slot ----------
-  // Moved here from js/ui/hud-run-items-panel.js for #149d (the run screen draws it at 2 px per art pixel and 140 wide;
-  // the Main Menu Inventory sizes it up). Look and numbers: docs/HUD-STYLE.md "Run items".
-  const RUN_BOX_ROWS = 32,
-    RUN_BOX_MIDDLE = (RUN_BOX_ROWS - 1) / 2,
-    // the name inside the box's top band (#94, Jess 2026-11-11): from just inside the top rim down to the patch, left
-    // aligned over the patch and running across the band, squeezed sideways when it is wider
-    RUN_NAME = { artTop: 4, inset: 1 }, // art rows: the rim's first inside row; art pixels: how far into the slant
-    RUN_PATCH = { artTop: 13, artWidth: 22 }, // the white patch: from the box's flat middle down to its bottom edge
-    RUN_TEXT = { gap: 4, bottom: 3, right: 10 }, // art pixels: the text area right of the patch, from the patch's top down
-    RUN_ICON_ART = 16, // the icon's size in art pixels (32 px at the run screen's 2)
-    RUN_PATCH_LEFT_INSET = 6; // the patch starts right inside the rim
-  /** The ends' slant: flat for 6 rows in the middle, then one pixel in for every three rows out (the rip's slope). */
-  const runBoxEdge = (row) => {
-    const out = Math.abs(row - RUN_BOX_MIDDLE) - 2.5;
-    return out <= 0 ? 0 : Math.ceil(out / 3);
-  };
-  // The left end of each row, one letter per art pixel from that row's edge; the rest of the row is its last letter's fill.
-  // The right end is the mirror, the bottom rows the top's mirror.
-  //   o outline, D / B / L the Lv yellow's dark, shade and fill, G the body grid, space nothing.
-  const RUN_BOX_TOP_ROWS = [
-    ['ooooo', ' '], // the corner bump
-    ['oBBBD', 'o'],
-    ['oBDooD', 'B'],
-    ['oBoLLo', 'o'],
-  ];
-  const RUN_BOX_BODY_ROW = ['oBoLLo', 'G'];
-  const RUN_BOX_COLOURS = {
-    o: PALETTE.outline,
-    D: PALETTE.lvDark,
-    B: PALETTE.lvShade,
-    L: PALETTE.lvFill,
-    G: SLOT_GRID,
-    P: PALETTE.paper,
-    e: PALETTE.paperEdge,
-  };
-
-  /** The box's letter grid, one string per art row, for a box artWidth art pixels wide. */
-  function runBoxGrid(artWidth) {
-    const rows = RUN_BOX_ROWS,
-      grid = [];
-    for (let row = 0; row < rows; row++) {
-      const fromTop = Math.min(row, rows - 1 - row),
-        [left, fill] = fromTop < RUN_BOX_TOP_ROWS.length ? RUN_BOX_TOP_ROWS[fromTop] : RUN_BOX_BODY_ROW,
-        edge = runBoxEdge(row),
-        right = left.split('').reverse().join('');
-      grid.push(
-        (' '.repeat(edge) + left + fill.repeat(artWidth - 2 * edge - 2 * left.length) + right + ' '.repeat(edge)).split(
-          ''
-        )
-      );
-    }
-    // the white patch: its top edge, the paper, a shaded right edge; it runs down through the bottom rim to the outline
-    for (let row = RUN_PATCH.artTop; row < rows - 1; row++) {
-      const left = runBoxEdge(row) + RUN_PATCH_LEFT_INSET,
-        right = left + RUN_PATCH.artWidth - 1;
-      for (let column = left; column <= right; column++)
-        grid[row][column] = row === RUN_PATCH.artTop || row === rows - 2 || column === right ? 'e' : 'P';
-    }
-    const bottomEdge = runBoxEdge(rows - 1);
-    for (let column = bottomEdge; column <= runBoxEdge(rows - 2) + RUN_PATCH_LEFT_INSET + RUN_PATCH.artWidth; column++)
-      grid[rows - 1][column] = 'o';
-    return grid.map((line) => line.join(''));
-  }
-
-  /** Everything a box of this width and art pixel needs (made once per size): its row painter and its places. */
-  const runBoxShapes = new Map();
-  function runBoxShape(artWidth, artPixel) {
-    const sizeKey = artWidth + 'x' + artPixel;
-    if (runBoxShapes.has(sizeKey)) return runBoxShapes.get(sizeKey);
-    const grid = runBoxGrid(artWidth);
-    const paintRow = (row) => {
-      const line = grid[row],
-        runs = [];
-      let start = 0;
-      for (let column = 1; column <= line.length; column++) {
-        if (column < line.length && line[column] === line[start]) continue;
-        if (line[start] !== ' ') runs.push([start, column - start, RUN_BOX_COLOURS[line[start]]]);
-        start = column;
-      }
-      return runs;
-    };
-    const width = artWidth * artPixel,
-      iconSize = RUN_ICON_ART * artPixel,
-      patchMiddleRow = Math.round((RUN_PATCH.artTop + 1 + RUN_BOX_ROWS - 3) / 2);
-    // The name band: its left edge lines up with the patch, kept clear of the slanted end at the band's top row.
-    const nameSide = Math.max(
-      (runBoxEdge(RUN_PATCH.artTop) + RUN_PATCH_LEFT_INSET) * artPixel,
-      (runBoxEdge(RUN_NAME.artTop) + RUN_PATCH_LEFT_INSET - RUN_NAME.inset) * artPixel
-    );
-    const shape = {
-      paintRow,
-      width,
-      height: RUN_BOX_ROWS * artPixel,
-      iconSize,
-      // the icon sits in the middle of the patch's paper (inside its top edge and the edges at the bottom)
-      iconPlace: {
-        left:
-          (runBoxEdge(patchMiddleRow) + RUN_PATCH_LEFT_INSET + (RUN_PATCH.artWidth - 1) / 2) * artPixel -
-          iconSize / 2 +
-          'px',
-        top: ((RUN_PATCH.artTop + 1 + RUN_BOX_ROWS - 2) / 2) * artPixel - iconSize / 2 + 'px',
-      },
-      namePlace: {
-        left: nameSide + 'px',
-        right: nameSide + 'px',
-        top: RUN_NAME.artTop * artPixel + 'px',
-        height: (RUN_PATCH.artTop - RUN_NAME.artTop) * artPixel + 'px',
-      },
-      nameRoom: width - 2 * nameSide,
-      textPlace: {
-        left: (RUN_PATCH_LEFT_INSET + RUN_PATCH.artWidth + RUN_TEXT.gap) * artPixel + 'px',
-        right: RUN_TEXT.right * artPixel + 'px',
-        top: RUN_PATCH.artTop * artPixel + 'px',
-        bottom: RUN_TEXT.bottom * artPixel + 'px',
-      },
-    };
-    runBoxShapes.set(sizeKey, shape);
-    return shape;
-  }
-
-  /** The item's name, squeezed sideways (held at its left edge) when it is wider than the band. */
-  function RunItemName({ text, place, room }) {
-    const ref = preactHooks.useRef(null);
-    preactHooks.useLayoutEffect(() => {
-      const element = ref.current;
-      if (!element) return;
-      element.style.transform = '';
-      const width = element.scrollWidth;
-      if (width > room) element.style.transform = `scaleX(${room / width})`;
-    });
-    return html`<div class="hud-text hud-run-name" style=${place}>
-      <span ref=${ref}>${text}</span>
-    </div>`;
-  }
-
+  // ---------- the run item box: a team item slot (the library's card.horizontal, 155c-2) ----------
+  // The run screen draws it at 2 px per art pixel and 140 wide; the Main Menu Inventory sizes it up (#149d).
+  const RUN_BOX_ROWS = panel.HORIZONTAL_CARD.artRows;
   /**
-   * One team item slot: the B2 box with the item's icon in its white patch, its name in the top band and its text (a live
-   * tracker or the short description) right of the patch. item: { name, icon, text, live } or null for an empty slot.
-   * artWidth and artPixel size it (the run screen: 140 and 2); dimmed draws a slot not bought yet; style places it;
-   * attrs adds attributes (data-*, handlers); overlay is drawn on top (a selection cursor).
+   * One team item slot: the item's icon in its white patch, its name in the top band and its text (a live tracker or
+   * the short description) right of the patch. item: { name, icon, text, live } or null for an empty slot. artWidth and
+   * artPixel size it (the run screen: 140 and 2); dimmed draws a slot not bought yet; style places it; attrs adds
+   * attributes (data-*, handlers); overlay is drawn on top (a selection cursor).
    */
   function RunItemBox({ artWidth, artPixel, item, dimmed, className, style, attrs, overlay }) {
-    const shape = runBoxShape(artWidth, artPixel);
-    return html`<div
-      class=${'hud-run-item' + (dimmed ? ' is-dimmed' : '') + (className ? ' ' + className : '')}
-      style=${{ ...style, width: shape.width + 'px', height: shape.height + 'px' }}
-      ...${attrs || {}}
-    >
-      <${PixelShape} artWidth=${artWidth} artRows=${RUN_BOX_ROWS} artPixel=${artPixel} paintRow=${shape.paintRow} />
-      ${
-        item
-          ? html`<${RunItemName} text=${item.name} place=${shape.namePlace} room=${shape.nameRoom} />
-              <div class="hud-run-icon" style=${shape.iconPlace}>
-                <${IconCanvas} icon=${item.icon} size=${shape.iconSize} />
-              </div>
-              <div class=${'hud-text hud-run-text' + (item.live ? ' is-live' : '')} style=${shape.textPlace}>
-                <span>${item.text}</span>
-              </div>`
-          : null
-      }
-      ${overlay || null}
-    </div>`;
+    const picture = item
+      ? html`<${IconCanvas} icon=${item.icon} size=${panel.HORIZONTAL_CARD.iconArt * artPixel} />`
+      : null;
+    return html`<${panel.HorizontalCard}
+      artWidth=${artWidth}
+      artPixel=${artPixel}
+      item=${item}
+      picture=${picture}
+      dimmed=${dimmed}
+      className=${className}
+      style=${style}
+      attrs=${attrs}
+      overlay=${overlay}
+    />`;
   }
 
   /**

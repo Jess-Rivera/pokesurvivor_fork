@@ -61,7 +61,7 @@ flowchart TB
 
 | Name | Today | Shared? |
 | --- | --- | --- |
-| `button.rounded` (states: rest, focused, refused, disabled; was `button.menu`) | RoundedButton (was TeamButton), CursorButton | yes |
+| `button.rounded` (states: rest, focusPositive, focusNegative, refused, refusedFocus, disabled; was `button.menu`) | RoundedButton (was TeamButton), CursorButton | yes |
 | `button.slanted` (was `button.slot`) | SlantedButton (was SlotButton): pause menu, End Run, EV screen | yes |
 | `button.danger` | SellButton | no, Shop only |
 | `button.step` | StepButton (EV screen) | no |
@@ -74,13 +74,14 @@ flowchart TB
 | `chip.type`, `chip.status`, `chip.effect` | typeChip, Chip | yes |
 | `bar.life`, `bar.stat` | LifeBar, LifeMeter, Bars | partly |
 | `belt.ball` | Belt (twice) | no |
-| `grid.item`, `square.item` | ItemGrid, ItemSquare | yes |
+| `grid.item`, `square.item` | ItemGrid, ItemSquare (library since 155c-2; the kit's names are adapters) | yes |
 | `scrollbox`, `searchbar`, `dropdown` | ScrollBox, SearchBar, Dropdown | yes |
 | `tabs.rail` | Tab, Rail (Shop) | no |
 | `tooltip` | TooltipLayer, showTooltip | yes |
 | `toast`, `dialog.ask` | G.UI.toast, G.UI.ask | yes (older DOM style) |
 | `ghost.carry` (dragged item) | CarryGhost (twice) | no |
-| `panel.window` (menu window frame) | per-screen CSS | no shared piece |
+| `panel.flat` (was `panel.window`, the window frame) | the panel-flat class / FlatPanel (155c-2): Run Info, Pokemon detail, Shop, Inventory, catch, EV | yes |
+| `card.horizontal` (the run item box) | HorizontalCard (155c-2); the kit's RunItemBox is its adapter | yes |
 
 ## What this suggests for the slice
 
@@ -97,3 +98,7 @@ flowchart TB
 | --- | --- |
 | 1 | Do the dotted names (`button.menu`, `color.focus`) read well in your Excalidraw notes, or do you want shorter ones? |
 | 2 | Should the library hold only pieces that exist, or also planned ones you draw in a mockup first? |
+
+Updated 2026-11-18 (155c, decision 2026-11-18-155-library-pieces-named-by-look): the library has `panel.pixel`
+(PixelPanel, the kit's Box), `panel.thin` (the cards' 2 px rim) and `card.vertical` (VerticalCard, the layout under
+ItemCard). Rows above that say `card.item` mean `card.vertical`.

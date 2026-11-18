@@ -513,7 +513,7 @@ G.CatchUI = (() => {
     const fl = flight.value;
     return html`<div class="pm-stage catch-stage" ref=${rootRef}>
       <div
-        class="catch-window"
+        class="catch-window panel-flat"
         style=${{
           left: px((1920 - WINDOW.width) / 2),
           top: px((1080 - WINDOW.height) / 2),

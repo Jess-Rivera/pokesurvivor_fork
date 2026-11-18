@@ -3,3 +3,14 @@
   display: block;
   shape-rendering: crispEdges;
 }
+
+/* the shared fills' definitions (PixelPatterns): 0 x 0, paints nothing. A pattern takes its visibility from where it is
+ * defined, so they stay visible when the pause menu hides the HUD layer (F2 fix, 2026-11-12). Moved from
+ * css/hud-overlay.css (155c-2). */
+.hud-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: visible;
+}

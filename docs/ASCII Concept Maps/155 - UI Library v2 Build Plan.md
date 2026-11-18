@@ -160,3 +160,13 @@ Renamed 2026-11-18 (decision 2026-11-18-155-library-pieces-named-by-look, plan 1
 Added 2026-11-18: the red states on the Buttons page. button.slanted red and red focused (End, Destroy: rim kept, body
 its dark shade); button.rounded focused red (Sell, Let It Go). Both read the red from tokens (color.rim.sell, renamed by
 look in the colour pass). smoke-ui-library checks each red state draws that token's base and no other rim.
+
+Renamed 2026-11-18: button.rounded's states are named by intent: rest, focusPositive, focusNegative, refused,
+refusedFocus (new: a refused button under the cursor, #151), disabled. The board shows each state's full name
+(button.rounded.focusPositive), click to copy. button.slanted's states are unchanged for now.
+
+155c built 2026-11-18 (Quick): panel.pixel, panel.thin and card.vertical in js/ui/lib/primitives/panel/, the Panels page.
+As built: docs/ASCII Concept Maps/155c - Panels Plan.md. Next: 155d, the main.shop.pokeball composite.
+
+155c-2 built 2026-11-18 (Quick): panel.flat, card.horizontal, square.item and grid.item, the shared fills in the pixels
+primitive, a Squares page. As built: docs/ASCII Concept Maps/155c-2 - Flat Panel, Item Squares and Slot Box Plan.md.

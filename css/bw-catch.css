@@ -41,16 +41,11 @@
 .catch-ball {
   position: absolute;
 }
-/* the window: the Run Info panel's background (pause-menu.css .pm-panel) */
+/* the window: its look is .panel-flat (panel.flat, js/ui/lib/primitives/panel/panel.css), as Run Info's */
 .catch-window {
   position: absolute;
-  background: #181818;
-  border: 1px solid #212121;
-  box-shadow: 0 0 0 2px #101010;
 }
-.pm-box-gradients {
-  position: absolute;
-}
+/* .pm-box-gradients (a dual-type rim): js/ui/lib/primitives/panel/panel.css (#155 155c) */
 
 /* ---------- the Pokemon: the flee ring (one step per miss, the first type's Dark), name, band ---------- */
 .catch-ring {
