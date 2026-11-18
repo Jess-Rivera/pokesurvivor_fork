@@ -125,3 +125,6 @@ Changed 2026-11-18 (decision 2026-11-18-155-library-pieces-named-by-look): a pri
 
 Tweak panel with "copy changes"; Excalidraw library export from the same data; promote the duplicates (`belt.ball`,
 `ghost.carry`); move the rest of the Shop, then the pause menu and HUD, piece by piece.
+
+Added 2026-11-18 (Jess): the sidebar's Composites gain a third group, Pause (pause.pokemonDetail, pause.runInfo,
+pause.inventory), beside HUD and Menus.

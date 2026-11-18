@@ -105,20 +105,9 @@
   gap: 6px;
   margin-top: 4px;
 }
+/* the leader circles (.hud-circle, portrait.round: js/ui/lib/primitives/portrait/portrait.css, #155 155c-5) */
 .hud-circle {
   position: relative;
-  width: 48px;
-  height: 48px;
-  box-sizing: border-box;
-  border: 4px solid #101010; /* 4 px stroke around the 40 px portrait (Jess, 2026-11-10) */
-  border-radius: 50%;
-  overflow: hidden;
-}
-.hud-circle img {
-  display: block;
-  width: 40px;
-  height: 40px;
-  image-rendering: pixelated;
 }
 .hud-circle.is-active {
   border-color: var(--ring-base);
@@ -136,15 +125,7 @@
   }
 }
 .hud-circle::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: #101010;
-  opacity: 0;
-  transition: opacity 0.3s linear;
-}
-.hud-circle.is-fainted::after {
-  opacity: 0.65; /* darkly dimmed */
+  transition: opacity 0.3s linear; /* the fainted dim fades in */
 }
 
 /* ---------- character info panel (#62): pieces placed from the screen's bottom centre ---------- */
@@ -158,37 +139,8 @@
   position: absolute;
 }
 
-/* portrait with the EXP ring: a 2 px outline, one 12 px band (the EXP blue over the empty track's grey, no shade; Jess,
-   2026-11-10), then the portrait's 4 px stroke */
-.hud-portrait {
-  width: 116px;
-  height: 116px;
-  border-radius: 50%;
-  background: #101010;
-}
-.hud-exp-ring {
-  position: absolute;
-  border-radius: 50%;
-}
-.hud-exp-ring {
-  inset: 2px;
-  background: conic-gradient(#00baf3 0 var(--exp), #7f7f7f var(--exp) 360deg);
-}
-.hud-portrait-face {
-  position: absolute;
-  inset: 14px;
-  box-sizing: border-box;
-  border: 4px solid #101010;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #101010;
-}
-.hud-portrait-face img {
-  display: block;
-  width: 80px; /* the 40 px portrait at exactly 2x */
-  height: 80px;
-  image-rendering: pixelated;
-}
+/* portrait with the EXP ring (.hud-portrait, .hud-exp-ring, .hud-portrait-face; portrait.round with its ring):
+   js/ui/lib/primitives/portrait/portrait.css (#155 155c-5) */
 
 /* held item: the B2 bag button with the item's icon at 1x (the kit's ItemSquare; the roster and berry bag use it too) */
 .hud-item {
@@ -281,11 +233,7 @@
 }
 
 /* move slots: the B2 move button, four wells, the key on the left point, the B2 selection cursor on the active one */
-.hud-slot svg {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
+/* .hud-slot's frame (panel.slanted): js/ui/lib/primitives/panel/panel.css (#155 155c-5) */
 .hud-well {
   position: absolute;
   top: 4px;
@@ -453,31 +401,7 @@
 .hud-roster-fill {
   transform-origin: 0 0;
 }
-.hud-roster-face {
-  /* the portrait in a circle: 40 px at 1x inside a 2 px stroke, as the leader circles */
-  box-sizing: border-box;
-  border: 2px solid #101010;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #101010;
-}
-.hud-roster-face img {
-  display: block;
-  width: 40px;
-  height: 40px;
-  image-rendering: pixelated;
-}
-.hud-roster-face::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: #101010;
-  opacity: 0;
-}
-.hud-roster-row.is-fainted .hud-roster-face::after {
-  opacity: 0.65; /* darkly dimmed, as the leader circles */
-}
+/* the roster face (.hud-roster-face, portrait.round): js/ui/lib/primitives/portrait/portrait.css (#155 155c-5) */
 .hud-roster-row.is-fainted .hud-roster-name {
   opacity: 0.5;
 }

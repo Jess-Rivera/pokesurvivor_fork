@@ -110,6 +110,12 @@
   .lib-stage-timer { position: relative; width: 160px; height: 14px; box-sizing: content-box; }
   /* the dialog sits in the flow here (the game centres it on the menu stage) */
   .lib-stage-modal .modal-dialog { position: relative; left: auto; top: auto; transform: none; }
+  /* the slanted panel and the portraits are placed by their screens, so they sit in the flow here */
+  .lib-stage-slanted-panel .panel-slanted, .lib-stage-portrait .portrait-round, .lib-stage-portrait .portrait-ringed {
+    position: relative; }
+  .lib-stage-slanted-panel { font-family: 'HudText', monospace; font-synthesis: none; color: #ffffff; }
+  .lib-slanted-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; line-height: 24px; }
   .lib-facts { display: grid; grid-template-columns: 90px 1fr; gap: 4px 12px; margin: 6px 0 0; max-width: 1000px; font-size: 13px; }
   .lib-facts dt { color: var(--lib-dim); }
   .lib-facts dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
@@ -125,6 +131,7 @@
 <link rel="stylesheet" href="../js/ui/lib/primitives/square/square.css">
 <link rel="stylesheet" href="../js/ui/lib/primitives/bar/bar.css">
 <link rel="stylesheet" href="../js/ui/lib/primitives/modal/modal.css">
+<link rel="stylesheet" href="../js/ui/lib/primitives/portrait/portrait.css">
 <link rel="stylesheet" href="../css/hud-overlay.css">
 <script src="../js/ui/lib/tokens/tokens.js"></script>
 <script src="../js/vendor/preact.min.js"></script>
@@ -141,6 +148,8 @@
 <script src="../js/ui/lib/primitives/bar/bar.story.js"></script>
 <script src="../js/ui/lib/primitives/modal/modal.js"></script>
 <script src="../js/ui/lib/primitives/modal/modal.story.js"></script>
+<script src="../js/ui/lib/primitives/portrait/portrait.js"></script>
+<script src="../js/ui/lib/primitives/portrait/portrait.story.js"></script>
 <script src="library/doc-colours.js"></script>
 </head>
 <body>
@@ -176,6 +185,7 @@ const NAV = [
     { id: 'primitives/squares', title: 'Squares' },
     { id: 'primitives/bars', title: 'Bars' },
     { id: 'primitives/modal', title: 'Modal' },
+    { id: 'primitives/portraits', title: 'Portraits' },
   ] },
   { title: 'Composites', groups: [
     { title: 'HUD', items: [
@@ -186,6 +196,11 @@ const NAV = [
     { title: 'Menus', items: [
       { id: 'main.shop.pokeball', title: 'main.shop.pokeball', later: '#155 step 155d' },
       { id: 'main.shop.character', title: 'main.shop.character', later: 'a later slice under #126' },
+    ] },
+    { title: 'Pause', items: [
+      { id: 'pause.pokemonDetail', title: 'pause.pokemonDetail', later: 'a later slice under #126' },
+      { id: 'pause.runInfo', title: 'pause.runInfo', later: 'a later slice under #126' },
+      { id: 'pause.inventory', title: 'pause.inventory', later: 'a later slice under #126' },
     ] },
   ] },
 ];
@@ -359,6 +374,12 @@ const PRIMITIVE_PAGES = {
     pieces: () => G.Lib.Modal,
     note: 'The dialog (js/ui/lib/primitives/modal/). Props only: the caller passes the text, the buttons and which one is green; G.UI.ask handles the keys and the answer. Placeholder text.',
   },
+  'primitives/portraits': {
+    title: 'Portraits',
+    stories: () => G.Lib.PortraitStories,
+    pieces: () => G.Lib.Portrait,
+    note: 'The round portrait (js/ui/lib/primitives/portrait/). Props only: the screen passes the face\u2019s address, size, stroke and rim, a ring\u2019s fill, fainted. Real portraits from assets/pokemon.',
+  },
   'primitives/squares': {
     title: 'Squares',
     stories: () => G.Lib.SquareStories,
@@ -380,6 +401,7 @@ const DRAW = {
   'primitives/squares': primitivePage('primitives/squares'),
   'primitives/bars': primitivePage('primitives/bars'),
   'primitives/modal': primitivePage('primitives/modal'),
+  'primitives/portraits': primitivePage('primitives/portraits'),
 };
 // the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
 const patternHost = document.createElement('div');

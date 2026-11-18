@@ -38,7 +38,7 @@
 G.PauseMenu = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
-  const { html, signal, preact, PALETTE, PixelShape, moveSlotRow, hideTooltip, fitToStage } = overlay.kit;
+  const { html, signal, preact, PALETTE, SlantedPanel, hideTooltip, fitToStage } = overlay.kit;
   const { SlantedButton, SLANTED_BUTTON, REST_RIM } = overlay.kit; // the shared menu button (also the End Run screen's)
 
   // Step lengths in ms: dim and closed ball in, then ball opens with the panels sliding in. Open is about 0.23 s (Jess,
@@ -157,15 +157,16 @@ G.PauseMenu = (() => {
   function PocketAsk() {
     const isAsking = pocketAsking.value;
     return html`<div class="pm-pocket-ask">
-      <div class="pm-pocket-header" style=${{ width: POCKET_HEADER_ART_WIDTH * BUTTON_ART_PIXEL + 'px' }}>
-        <${PixelShape}
-          artWidth=${POCKET_HEADER_ART_WIDTH}
-          artRows=${BUTTON_ART_ROWS}
-          artPixel=${BUTTON_ART_PIXEL}
-          paintRow=${(row) => moveSlotRow(row, POCKET_HEADER_ART_WIDTH, BUTTON_ART_ROWS, REST_RIM, PALETTE.body)}
-        />
+      <${SlantedPanel}
+        artWidth=${POCKET_HEADER_ART_WIDTH}
+        artRows=${BUTTON_ART_ROWS}
+        artPixel=${BUTTON_ART_PIXEL}
+        rim=${REST_RIM}
+        body=${PALETTE.body}
+        className="pm-pocket-header"
+      >
         <span class="hud-text">Destroy Items in Pocket?</span>
-      </div>
+      </${SlantedPanel}>
       <div class="pm-pocket-ask-row">
         ${POCKET_ANSWERS.map(
           (answer, index) =>

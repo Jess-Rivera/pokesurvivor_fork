@@ -248,11 +248,6 @@ body.er-open .hud-overlay {
   position: relative;
   height: 66px;
 }
-.pm-pocket-header svg {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
 .pm-pocket-header .hud-text {
   position: absolute;
   inset: 0;

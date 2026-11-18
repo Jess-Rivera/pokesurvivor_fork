@@ -6,14 +6,15 @@
 G.HudBossPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
-  const { html, signal, createLifeBar, typeColours, portraitSource, portraitFallback } = overlay.kit;
+  const { html, signal, createLifeBar, typeColours, portraitSource, portraitFallback, RoundPortrait } = overlay.kit;
 
   // ---------- sizes (HUD-STYLE "Panel sizes at 1080p", fixed CSS pixels) ----------
   const ART_PIXEL = 3, // the bar is drawn at 3 px per B2 art pixel
     BAR_FULL_ART_WIDTH = 232, // 696 px
     WINDOW_MARGIN = 40, // a narrow window shrinks the bar to keep this much space each side
     NAME_LINE_TOP = 43,
-    HP_LABEL_TOP = -4; // the label's outline top one bar row above the bar, as B2's tab
+    HP_LABEL_TOP = -4, // the label's outline top one bar row above the bar, as B2's tab
+    CIRCLE = { size: 48, stroke: 4 }; // a 4 px stroke around the 40 px portrait (Jess, 2026-11-10)
 
   // ---------- state the page shows (signals) ----------
   const visible = signal(false),
@@ -36,22 +37,16 @@ G.HudBossPanel = (() => {
     return html`<div class="hud-boss-circles">
       ${circles.value.map(
         (circle) =>
-          html`<div
+          html`<${RoundPortrait}
             key=${circle.key}
-            class=${
-              'hud-circle' +
-              (circle.active ? ' is-active' : '') +
-              (circle.pulsing ? ' is-pulsing' : '') +
-              (circle.fainted ? ' is-fainted' : '')
-            }
-          >
-            <img
-              src=${portraitSource(circle.dex, circle.shiny)}
-              data-dex=${circle.dex}
-              alt=""
-              onError=${portraitFallback}
-            />
-          </div>`
+            className=${'hud-circle' + (circle.active ? ' is-active' : '') + (circle.pulsing ? ' is-pulsing' : '')}
+            size=${CIRCLE.size}
+            stroke=${CIRCLE.stroke}
+            fainted=${circle.fainted}
+            src=${portraitSource(circle.dex, circle.shiny)}
+            dex=${circle.dex}
+            onError=${portraitFallback}
+          />`
       )}
     </div>`;
   }

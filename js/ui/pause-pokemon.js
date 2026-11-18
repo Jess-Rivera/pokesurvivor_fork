@@ -85,7 +85,7 @@ G.PausePokemon = (() => {
   if (!overlay || !overlay.ready) return { ready: false, runStatsNumbers, runStatsRows };
   const { html, signal, hooks, PALETTE, FAINTED_RIM, PixelShape, typeColours, hpBand } = overlay.kit;
   const { IconCanvas, Cursor, RosterCard, rosterBoxGrid, rosterColours, letterRows, rosterFill } = overlay.kit;
-  const { createLifeBar, portraitSource, portraitFallback, ItemGrid, ScrollBox, Box } = overlay.kit;
+  const { createLifeBar, portraitSource, portraitFallback, ItemGrid, ScrollBox, Box, RoundPortrait } = overlay.kit;
   const { tooltipHandlers, hideTooltip } = overlay.kit; // every tooltip is drawn in the menu's shared layer
   const inventory = G.PauseInventory && G.PauseInventory.ready ? G.PauseInventory : null; // held item moves (#90)
 
@@ -98,7 +98,7 @@ G.PausePokemon = (() => {
     HP_TEXT = { left: 340, top: 72 },
     COLUMN_LEFT = { x: 16, width: 200 },
     COLUMN_RIGHT = { x: 230, width: 390 },
-    PORTRAIT = { top: 124, size: 116 },
+    PORTRAIT = { top: 124, size: 116, stroke: 4 },
     HELD = { top: 256, artSize: 24 },
     RUN_STATS = { top: 44, rowHeight: 26 }, // #91-3: the rows start under the box title
     RUN_STATS_BOX = { top: 320, height: 200 },
@@ -555,24 +555,18 @@ G.PausePokemon = (() => {
         ${hp} / ${maxHp}
       </div>
       ${member.dead ? html`<div class="hud-text pm-detail-fainted">Fainted</div>` : null}
-      <div
-        class="hud-portrait pm-detail-portrait"
-        style=${{
-          left: COLUMN_LEFT.x + (COLUMN_LEFT.width - PORTRAIT.size) / 2 + 'px',
-          top: PORTRAIT.top + 'px',
-          '--exp': Math.round(expFraction * 360) + 'deg',
-        }}
-      >
-        <div class="hud-exp-ring"></div>
-        <div class="hud-portrait-face">
-          <img
-            src=${portraitSource(member.dex, member.shiny)}
-            data-dex=${member.dex}
-            alt=""
-            onError=${portraitFallback}
-          />
-        </div>
-      </div>
+      <${RoundPortrait}
+        className="hud-portrait pm-detail-portrait"
+        ringClass="hud-exp-ring"
+        faceClass="hud-portrait-face"
+        style=${{ left: COLUMN_LEFT.x + (COLUMN_LEFT.width - PORTRAIT.size) / 2 + 'px', top: PORTRAIT.top + 'px' }}
+        size=${PORTRAIT.size}
+        stroke=${PORTRAIT.stroke}
+        ring=${{ fraction: expFraction }}
+        src=${portraitSource(member.dex, member.shiny)}
+        dex=${member.dex}
+        onError=${portraitFallback}
+      />
       <div
         class="pm-detail-held"
         style=${{ left: COLUMN_LEFT.x + (COLUMN_LEFT.width - HELD.artSize * 2) / 2 + 'px', top: HELD.top + 'px' }}

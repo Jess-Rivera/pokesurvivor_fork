@@ -21,7 +21,7 @@ G.CatchUI = (() => {
   const { html, signal, hooks, preact, PALETTE, FAINTED_RIM, typeColours, Box, ScrollBox, Cursor, RoundedButton } =
     overlay.kit;
   const { REST_RIM, FOCUS_RIM, fitToStage, showTooltip, hideTooltip } = overlay.kit;
-  const { portraitSource, portraitFallback, BallSprite } = overlay.kit;
+  const { portraitSource, portraitFallback, BallSprite, RoundPortrait } = overlay.kit;
 
   // ---------- sizes and places (stage pixels; the window is centred on the 1920 x 1080 stage) ----------
   const WINDOW = { width: 980, height: 500 },
@@ -32,7 +32,7 @@ G.CatchUI = (() => {
     // six slots need, centred on the window's height
     SLOT = { size: 52, gap: 8, left: 16, top: 14, ballScale: 1.5 }, // a ball frame (32 px) drawn 1.5x, 48 px
     BELT = { firstLeft: 380, step: 96, width: 84, count: 3, slots: 6 },
-    OWNED = { left: 676, top: PAD, width: 284, height: 280, columns: 4, cell: 56, gap: 4, inset: 16 },
+    OWNED = { left: 676, top: PAD, width: 284, height: 280, columns: 4, cell: 56, gap: 4, inset: 16, faceStroke: 2 },
     BUTTON_ART_WIDTH = 70, // 280 x 72 px: the team menu's button at 4 px per art pixel
     BUTTON_TOP = [316, 400];
   BELT.height = 2 * SLOT.top + BELT.slots * SLOT.size + (BELT.slots - 1) * SLOT.gap; // 380
@@ -420,14 +420,14 @@ G.CatchUI = (() => {
         style=${{ left: px(column * (OWNED.cell + OWNED.gap)), top: px(row * (OWNED.cell + OWNED.gap)) }}
         onMouseEnter=${() => !busy.value && (focus.value = { area: 'owned', index })}
       >
-        <div class="catch-owned-face">
-          <img
-            src=${portraitSource(copy.speciesID, copy.isShiny)}
-            data-dex=${copy.speciesID}
-            alt=""
-            onError=${portraitFallback}
-          />
-        </div>
+        <${RoundPortrait}
+          className="catch-owned-face"
+          stroke=${OWNED.faceStroke}
+          rim=${OWNED_RIM.light}
+          src=${portraitSource(copy.speciesID, copy.isShiny)}
+          dex=${copy.speciesID}
+          onError=${portraitFallback}
+        />
         ${at.area === 'owned' && at.index === index ? html`<${Cursor} />` : null}
       </div>`;
     });

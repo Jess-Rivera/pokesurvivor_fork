@@ -1,0 +1,45 @@
+/* portrait.css: the round portrait (G.Lib.Portrait; #155 155c-5). Moved from css/hud-overlay.css, css/bw-catch.css and
+   css/bw-shop.css; the colours are tokens of the same value. Each screen places its portraits (position, size where
+   its CSS sets it) and keeps its own states; this file is loaded first, so their rules win at equal specificity. */
+
+/* ---------- the face: a circle with a stroke (--portrait-stroke) in a rim colour (--portrait-rim) ---------- */
+.portrait-round {
+  box-sizing: border-box;
+  border: var(--portrait-stroke, 2px) solid var(--portrait-rim, var(--color-hud-outline));
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--color-hud-outline);
+}
+.portrait-round img {
+  display: block;
+  width: 100%; /* the 40 px portrait at 1x, or 2x in the 116 px face */
+  height: 100%;
+  image-rendering: pixelated;
+}
+/* fainted: darkly dimmed */
+.portrait-round::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--color-hud-outline);
+  opacity: 0;
+  pointer-events: none;
+}
+.portrait-round.is-fainted::after {
+  opacity: 0.65;
+}
+
+/* ---------- with a ring: a 2 px outline, the band filling clockwise from the top (--exp), then the face ---------- */
+.portrait-ringed {
+  border-radius: 50%;
+  background: var(--color-hud-outline);
+}
+.portrait-ring {
+  position: absolute;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--ring-fill, var(--color-hud-expFill)) 0 var(--exp),
+    var(--ring-track, var(--color-hud-trackLight)) var(--exp) 360deg
+  );
+}

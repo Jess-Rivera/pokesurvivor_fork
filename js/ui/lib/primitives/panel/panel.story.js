@@ -186,5 +186,52 @@ G.Lib.PanelStories = (() => {
     ],
   };
 
-  return [pixel, thin, card, flat, horizontal];
+  // panel.slanted: a run HUD move slot (105 x 22 art pixels at 2 px) and the pause menu's pocket prompt (130 at 3 px)
+  const MOVE_SLOT = { artWidth: 105, artRows: 22, artPixel: 2 },
+    POCKET_HEADER = { artWidth: 130, artRows: 22, artPixel: 3 };
+  const hudColour = (key) => G.Tokens.color('color.hud.' + key);
+  const EMPTY_SLOT_RIM = { light: hudColour('checker'), base: hudColour('frame'), dark: hudColour('frame') };
+  const slanted = {
+    name: 'panel.slanted',
+    component: 'SlantedPanel',
+    stageClass: 'lib-stage-slanted-panel',
+    job:
+      "The move slot's frame (button.slanted's shape, not pressable): a rim ramp at both pointed ends and a body, " +
+      'the slot grid or flat. The run HUD fills it with move wells; the pause menu writes the pocket prompt in it.',
+    files: 'js/ui/lib/primitives/panel/panel.js, panel.css',
+    tokens: [
+      'color.hud.outline',
+      'color.hud.body',
+      'color.hud.checker',
+      'color.hud.frame',
+      'color.rim.rest',
+      'color.type.*',
+    ],
+    size: 'any size: 210 x 44 px for a move slot (2 px art pixels), 390 x 66 px for the pocket prompt (3 px)',
+    places: ['run.hud.moveSlot', 'pause.pocketAsk.header'],
+    states: [
+      {
+        id: 'typeRim',
+        title: "A move slot (its move's type rim, the slot grid)",
+        props: { ...MOVE_SLOT, rim: G.Tokens.ramp('color.type.fire'), body: G.Lib.Pixels.PATTERNS.slotGrid },
+      },
+      {
+        id: 'empty',
+        title: 'An empty slot (dim rim, flat body)',
+        props: { ...MOVE_SLOT, rim: EMPTY_SLOT_RIM, body: hudColour('body') },
+      },
+      {
+        id: 'header',
+        title: 'The pocket prompt (white rim, flat body, a line of text)',
+        props: {
+          ...POCKET_HEADER,
+          rim: G.Tokens.ramp('color.rim.rest'),
+          body: hudColour('body'),
+          children: html`<span class="hud-text lib-slanted-text">Destroy Items in Pocket?</span>`,
+        },
+      },
+    ],
+  };
+
+  return [pixel, thin, card, flat, horizontal, slanted];
 })();

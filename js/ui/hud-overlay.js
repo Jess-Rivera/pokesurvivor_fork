@@ -85,6 +85,8 @@ G.HudOverlay = (() => {
     'REST_RIM',
     'SlantedButton',
     'RoundedButton',
+    'SlantedPanel',
+    'RoundPortrait',
     'FOCUS_RIM',
     'fitToStage',
     'createButtonRow',

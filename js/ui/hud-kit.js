@@ -13,8 +13,19 @@ G.HudKit = (() => {
     htmFactory = window.htm,
     preactSignals = window.preactSignals,
     pixels = G.Lib && G.Lib.Pixels,
-    buttons = G.Lib && G.Lib.Button;
-  const libraryReady = !!(pixels && pixels.ready && buttons && buttons.ready);
+    buttons = G.Lib && G.Lib.Button,
+    panels = G.Lib && G.Lib.Panel,
+    portraits = G.Lib && G.Lib.Portrait;
+  const libraryReady = !!(
+    pixels &&
+    pixels.ready &&
+    buttons &&
+    buttons.ready &&
+    panels &&
+    panels.ready &&
+    portraits &&
+    portraits.ready
+  );
   const ready = !!(preact && preactHooks && htmFactory && preactSignals && libraryReady);
   if (!ready) {
     console.warn('[HudOverlay] Preact, htm, Signals or the UI library did not load; the canvas HUD keeps its pieces');
@@ -75,6 +86,9 @@ G.HudKit = (() => {
   // ---------- pixel shapes and the menu buttons: the UI library's primitives (js/ui/lib/primitives/, 155b) ----------
   const { PixelShape, letterRows } = pixels;
   const { moveSlotRow, SLANTED_BUTTON, REST_RIM, FOCUS_RIM, SlantedButton, RoundedButton } = buttons;
+  // the move slot's frame and the round portrait (155c-5)
+  const { SlantedPanel } = panels,
+    { RoundPortrait } = portraits;
 
   // ---------- the menu screens' stage (pause menu, End Run, EV screen): 1920 x 1080, scaled to fit, never up ----------
   const STAGE = { width: 1920, height: 1080 };
@@ -209,6 +223,8 @@ G.HudKit = (() => {
     REST_RIM,
     SlantedButton,
     RoundedButton,
+    SlantedPanel,
+    RoundPortrait,
     FOCUS_RIM,
     fitToStage,
     createButtonRow,

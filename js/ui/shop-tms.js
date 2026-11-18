@@ -17,7 +17,7 @@ G.ShopTmsPane = (() => {
   const kitOverlay = G.HudOverlay,
     windowKit = G.MenuWindowKit;
   if (!kitOverlay || !kitOverlay.ready || !windowKit.ready || !G.TMs) return { ready: false };
-  const { html, signal, ScrollBox, SearchBar, portraitSource, portraitFallback } = kitOverlay.kit;
+  const { html, signal, ScrollBox, SearchBar, portraitSource, portraitFallback, RoundPortrait } = kitOverlay.kit;
   const { CARD, CURSOR_ROOM, SCROLL_COLOURS, SHORT_PRICE_FROM, px, ItemCard, SearchStop, Dropdown, dropdownItems } =
     windowKit;
   const { nameHas } = windowKit;
@@ -42,6 +42,8 @@ G.ShopTmsPane = (() => {
   BOX_GRID.width = BOX_GRID.columns * BOX_GRID.cell + (BOX_GRID.columns - 1) * BOX_GRID.gap; // 334
   BOX_GRID.height = PANEL.height - BOX_GRID.top - PANEL.inset;
   const FILTER_LIST = { top: 224, width: 240, height: 296 }; // the Pokemon filter's open list, right-aligned to its box
+  // a portrait face: the catch screen's light grey rim (the Normal type's Light)
+  const FACE = { stroke: 2, rim: G.Tokens.color('color.type.normal.light') };
   // cursor ids
   const TM_SEARCH = 'tm-search',
     TM_TYPE = 'tm-type',
@@ -375,22 +377,18 @@ G.ShopTmsPane = (() => {
         <div class="hud-text shop-toggle-label" style=${{ left: px(BAR.labelLeft), top: px(2) }}>Able to<br />Learn</div>`;
     }
 
-    /** A round portrait face (the catch screen's look), filling its cell less the cursor's room. */
-    function Face({ dex, shiny }) {
-      return html`<div class="shop-tms-face">
-        ${
-          dex
-            ? html`<img
-                src=${portraitSource(dex, shiny)}
-                data-dex=${dex}
-                onError=${portraitFallback}
-                loading="lazy"
-                alt=""
-              />`
-            : null
-        }
-      </div>`;
-    }
+    /** A round portrait face (the catch screen's look, the library's portrait.round), filling its cell less the
+     *  cursor's room. */
+    const Face = ({ dex, shiny }) =>
+      html`<${RoundPortrait}
+        className="shop-tms-face"
+        stroke=${FACE.stroke}
+        rim=${FACE.rim}
+        src=${dex ? portraitSource(dex, shiny) : null}
+        dex=${dex}
+        onError=${portraitFallback}
+        lazy
+      />`;
 
     /** A Pokemon the cursor can choose: a team slot or a Pokebox cell. place: its left and top in the panel (team slots). */
     function FaceCell({ id, area, uid, dex, shiny, size, place, at, chosen }) {

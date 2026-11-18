@@ -339,20 +339,10 @@
   opacity: 0.45;
   cursor: default;
 }
+/* a face (portrait.round, js/ui/lib/primitives/portrait/portrait.css): fills its cell less the cursor's room */
 .shop-tms-face {
   position: absolute;
   inset: 4px;
-  box-sizing: border-box;
-  border: 2px solid #c1c2c1;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #101010;
-}
-.shop-tms-face img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
 }
 .shop-tms-face-cell.is-chosen .shop-tms-face,
 .shop-tms-chosen .shop-tms-face {

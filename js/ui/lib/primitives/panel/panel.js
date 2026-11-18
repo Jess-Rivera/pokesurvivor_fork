@@ -9,6 +9,8 @@
  *                  menu's Run Info and detail panels, the Shop and Inventory, the catch and EV screens; 155c-2)
  *   card.horizontal  HorizontalCard: the B2 run item box (a picture in a white patch, a name band, text beside it), any
  *                  width and art pixel; a team item slot (155c-2, moved from js/ui/hud-kit-items.js RunItemBox)
+ *   panel.slanted  SlantedPanel: the move slot's frame (button.slanted's shape, not pressable), any size, a rim ramp,
+ *                  a body (a colour or a pattern) and contents: the run HUD's move slots, the pocket prompt (155c-5)
  * Props only, never game state: the screen passes the picture and the button as content. Moved from
  * js/ui/hud-kit-hp-bars.js (Box, the roster box shape) and js/ui/menu-window-kit.js (ItemCard's layout, CARD), which
  * pass them on to the screens. Style: panel.css. Board: tools/library.html, Primitives, Panels (panel.story.js).
@@ -350,6 +352,26 @@ G.Lib.Panel = (() => {
   }
   const HORIZONTAL_CARD = { artRows: RUN_BOX_ROWS, iconArt: RUN_ICON_ART };
 
+  // ---------- panel.slanted: the move slot's frame (button.slanted's shape), not pressable ----------
+  /**
+   * A slanted panel artWidth x artRows art pixels at artPixel: the rim ramp ({ light, base, dark }) at both ends, body
+   * inside (a colour, or a pattern such as the slot grid). className and style place it; children go on top.
+   */
+  function SlantedPanel({ artWidth, artRows, artPixel, rim, body, className, style, children }) {
+    return html`<div
+      class=${'panel-slanted' + (className ? ' ' + className : '')}
+      style=${{ ...style, width: artWidth * artPixel + 'px', height: artRows * artPixel + 'px' }}
+    >
+      <${PixelShape}
+        artWidth=${artWidth}
+        artRows=${artRows}
+        artPixel=${artPixel}
+        paintRow=${(row) => buttons.moveSlotRow(row, artWidth, artRows, rim, body)}
+      />
+      ${children}
+    </div>`;
+  }
+
   return {
     ready: true,
     PIXEL_PANEL,
@@ -363,5 +385,6 @@ G.Lib.Panel = (() => {
     FlatPanel,
     HORIZONTAL_CARD,
     HorizontalCard,
+    SlantedPanel,
   };
 })();

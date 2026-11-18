@@ -113,3 +113,10 @@
 .hud-run-text.is-live {
   color: var(--color-hud-expFill); /* a live tracker in the EXP blue, as the canvas column's cyan */
 }
+
+/* ---------- panel.slanted: the move slot's frame; the screen places and sizes it, its SVG fills it ---------- */
+.panel-slanted > svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}

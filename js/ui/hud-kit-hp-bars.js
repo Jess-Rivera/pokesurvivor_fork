@@ -9,7 +9,7 @@ G.HudKitHpBars = (() => {
     bars = G.Lib && G.Lib.Bar; // the life bar and the timer strip are its bar.life and bar.timer (155c-3)
   if (!coreKit.ready || !panel || !panel.ready || !bars || !bars.ready) return { ready: false };
   const { html, signal, PALETTE, HP_COLOURS, hpBand, SLOT_GRID, PixelShape } = coreKit;
-  const { portraitSource, portraitFallback, letterRows } = coreKit;
+  const { portraitSource, portraitFallback, letterRows, RoundPortrait } = coreKit;
 
   // ---------- the roster card (b2-lower Y15 to AA16): the run screen's roster rows and the pause menu's team panel ----------
   // HUD-STYLE "Roster rows". The box is drawn at 2 px per art pixel, 32 rows tall; its width varies (the run screen's
@@ -17,7 +17,7 @@ G.HudKitHpBars = (() => {
   // the pause menu's detail boxes (any height).
   const ROSTER_ART_PIXEL = 2,
     ROSTER_ART_ROWS = 32,
-    ROSTER_FACE = { left: 14, top: 10, size: 44 }, // the portrait circle: a 40 px portrait inside a 2 px stroke
+    ROSTER_FACE = { left: 14, top: 10, size: 44, stroke: 2 }, // the portrait circle: a 40 px portrait in a 2 px stroke
     ROSTER_NAME = { left: 66, top: 17 }, // just right of the portrait, a little below the middle of the space above the bar
     ROSTER_BAR = { artLeft: 33, artTop: 19 }, // the HP bar: right of the portrait, along the bottom
     // The B2 small bar (b2-lower Y16 to Z16): the "HP" label is the life meter's (20 px italic HUD text), then the track's
@@ -129,17 +129,16 @@ G.HudKitHpBars = (() => {
         style=${{ left: ROSTER_BAR.artLeft * ROSTER_ART_PIXEL + 'px', top: ROSTER_LABEL_TOP + 'px' }}
         >HP</span
       >
-      <div
-        class=${'hud-roster-face' + (faceClass ? ' ' + faceClass : '')}
-        style=${{
-          left: ROSTER_FACE.left + 'px',
-          top: ROSTER_FACE.top + 'px',
-          width: ROSTER_FACE.size + 'px',
-          height: ROSTER_FACE.size + 'px',
-        }}
-      >
-        <img src=${portraitSource(dex, shiny)} data-dex=${dex} alt="" onError=${portraitFallback} />
-      </div>
+      <${RoundPortrait}
+        className=${'hud-roster-face' + (faceClass ? ' ' + faceClass : '')}
+        style=${{ left: ROSTER_FACE.left + 'px', top: ROSTER_FACE.top + 'px' }}
+        size=${ROSTER_FACE.size}
+        stroke=${ROSTER_FACE.stroke}
+        fainted=${fainted}
+        src=${portraitSource(dex, shiny)}
+        dex=${dex}
+        onError=${portraitFallback}
+      />
       <span class="hud-text hud-roster-name" style=${{ left: ROSTER_NAME.left + 'px', top: ROSTER_NAME.top + 'px' }}
         >${name}</span
       >

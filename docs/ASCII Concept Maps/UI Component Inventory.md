@@ -109,3 +109,7 @@ Not yet in the library: the roster card's HP fill (part of run.hud.teamSlot) and
 
 Updated 2026-11-18 (155c-4): `modal.dialog` (ModalDialog) is G.UI.ask's look; the old #scr-ask box and .btn buttons are
 gone. Decision 2026-11-18-155-ask-dialog-keys sets its keys.
+
+Updated 2026-11-18 (155c-5): `panel.slanted` (SlantedPanel: the run HUD's move slots, the pocket prompt header) and
+`portrait.round` (RoundPortrait: the EXP-ring portraits, boss circles, roster faces, catch and TMs owned faces). The
+board's composites gain a Pause group: pause.pokemonDetail, pause.runInfo, pause.inventory (later pages).

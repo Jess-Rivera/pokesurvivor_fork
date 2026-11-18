@@ -53,7 +53,10 @@ const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PAL
 // the shape paints the bar checker; a narrow bar is narrower; a timer's drawn length follows its fraction, and the
 // weather timer holds its right end and paints the two colours it was given. Primitives, Modal (155c-4): every state
 // draws under its full name; the box paints the panel.flat tokens; exactly one button is green and it draws the focus
-// rim; a notice has one button; the title, message and note show; a long message wraps to more lines.
+// rim; a notice has one button; the title, message and note show; a long message wraps to more lines. 155c-5: a
+// slanted panel paints its rim's base and its body (the slot grid or flat); Primitives, Portraits: every state draws
+// under its full name at the size asked for; only the ringed one draws a ring, in the EXP and track tokens; a fainted
+// leader is darker than a plain one; every portrait's image loads. The sidebar holds Portraits and the Pause group.
 const vm = require('vm');
 function loadTokens() {
   const sandbox = { console };
@@ -146,6 +149,9 @@ async function checkBoard(browser) {
     'HUD',
     'Menus',
     'main.shop.pokeball',
+    'Portraits',
+    'Pause',
+    'pause.pokemonDetail',
     'Basic Editor',
   ];
   const missingEntries = MOCKUP_ENTRIES.filter((entry) => !board.sidebar.includes(entry));
@@ -195,6 +201,7 @@ async function checkBoard(browser) {
   await checkSquaresPage(page, tokens);
   await checkBarsPage(page, tokens);
   await checkModalPage(page, tokens);
+  await checkPortraitsPage(page, tokens);
   await context.close();
 }
 
@@ -309,6 +316,7 @@ const PANEL_STATES = {
   'card.vertical': ['lit', 'dimmed', 'dimmedButtonLit', 'refusedButton'],
   'panel.flat': ['rest'],
   'card.horizontal': ['filled', 'live', 'empty', 'dimmed', 'large'],
+  'panel.slanted': ['typeRim', 'empty', 'header'],
 };
 /** A token's hex as the browser writes a computed colour ("rgb(24, 24, 24)"). */
 const rgbOf = (hex) => {
@@ -418,6 +426,75 @@ async function checkPanelsPage(page, tokens) {
     slotDimmed.slotOpacity < slotFilled.slotOpacity,
     `a dimmed horizontal card is fainter than a filled one (${slotDimmed.slotOpacity} vs ${slotFilled.slotOpacity})`
   );
+
+  const slotGrid = 'url(#hud-slot-grid)',
+    flatBody = tokens.color('color.hud.body').toLowerCase(),
+    fireBase = tokens.ramp('color.type.fire').base.toLowerCase();
+  const slanted = (id) => state('panel.slanted', id).fills || [];
+  ok(
+    slanted('typeRim').includes(fireBase) &&
+      slanted('typeRim').includes(slotGrid) &&
+      ['empty', 'header'].every((id) => slanted(id).includes(flatBody) && !slanted(id).includes(slotGrid)),
+    "a slanted panel paints its rim's base and its body: the slot grid for a move, flat for the others"
+  );
+}
+
+// The portrait's states (155c-5 plan); the sizes are read from the stories, the ring and dim from the page
+const PORTRAIT_STATES = ['exp', 'leader', 'leaderActive', 'leaderFainted', 'roster', 'owned', 'shiny'];
+async function checkPortraitsPage(page, tokens) {
+  const drawn = await page.evaluate(async () => {
+    window.libShow('primitives/portraits');
+    const images = [...document.querySelectorAll('#main img')];
+    // each image settles (loads or fails) before it is read
+    const settled = (image) =>
+      new Promise((done) => {
+        image.addEventListener('load', done);
+        image.addEventListener('error', done);
+      });
+    await Promise.all(images.map((image) => (image.complete ? null : settled(image))));
+    const sizes = {};
+    for (const state of (G.Lib.PortraitStories[0] || { states: [] }).states) sizes[state.id] = state.props.size;
+    const states = {};
+    for (const stage of document.querySelectorAll('[data-state]')) {
+      const outer = stage.firstElementChild,
+        face = stage.querySelector('.portrait-round'),
+        ring = stage.querySelector('.portrait-ring'),
+        image = stage.querySelector('img');
+      states[stage.dataset.state.split(':')[1]] = {
+        width: outer ? outer.offsetWidth : 0,
+        ring: ring ? getComputedStyle(ring).backgroundImage : null,
+        dim: face ? Number(getComputedStyle(face, '::after').opacity) : null,
+        loaded: !!image && image.complete && image.naturalWidth > 0,
+      };
+    }
+    return { states, sizes, text: document.getElementById('main').innerText };
+  });
+  const state = (id) => drawn.states[id] || {};
+  const missing = PORTRAIT_STATES.filter((id) => !state(id).width || !drawn.text.includes('portrait.round.' + id));
+  ok(
+    missing.length === 0,
+    `the Portraits page draws every state under its full name (${PORTRAIT_STATES.length})` +
+      (missing.length ? ', missing ' + missing.join(' ') : '')
+  );
+  const wrongSize = PORTRAIT_STATES.filter((id) => state(id).width !== drawn.sizes[id]);
+  ok(
+    wrongSize.length === 0,
+    'each portrait is the size it was asked for' +
+      (wrongSize.length ? ': ' + wrongSize.map((id) => id + ' ' + state(id).width).join(', ') : '')
+  );
+  const ringed = PORTRAIT_STATES.filter((id) => state(id).ring);
+  ok(
+    ringed.join() === 'exp' &&
+      state('exp').ring.includes(rgbOf(tokens.color('color.hud.expFill'))) &&
+      state('exp').ring.includes(rgbOf(tokens.color('color.hud.trackLight'))),
+    `only the ringed portrait draws a ring, in the EXP and track tokens (${ringed.join()})`
+  );
+  ok(
+    state('leaderFainted').dim > state('leader').dim,
+    `a fainted leader is darker than a plain one (${state('leaderFainted').dim} vs ${state('leader').dim})`
+  );
+  const unloaded = PORTRAIT_STATES.filter((id) => !state(id).loaded);
+  ok(unloaded.length === 0, 'every portrait image loads' + (unloaded.length ? ': ' + unloaded.join(', ') : ''));
 }
 
 // The states each square piece has in the game (155c-2 plan)

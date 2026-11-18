@@ -176,3 +176,6 @@ docs/ASCII Concept Maps/155c-3 - Bars Plan.md.
 
 155c-4 built 2026-11-18 (Quick): modal.dialog in js/ui/lib/primitives/modal/, drawn by G.UI.ask; the Modal page. Every
 primitive page on the board is now live. As built: docs/ASCII Concept Maps/155c-4 - Modal Plan.md.
+
+155c-5 built 2026-11-18 (Quick): panel.slanted and portrait.round; the Portraits page; the Pause composite group. As
+built: docs/ASCII Concept Maps/155c-5 - Slanted Panel and Round Portrait Plan.md.
