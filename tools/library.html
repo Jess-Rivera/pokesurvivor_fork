@@ -132,6 +132,20 @@
   .lib-colour-code b { color: var(--lib-dim); font-weight: 600; }
   .lib-colour-code summary { cursor: pointer; color: var(--lib-dim); }
   .lib-story h4 { margin: 10px 0 2px; font-size: 13px; font-weight: 600; }
+  /* the glitch button draft (from tools/library/idea-holding/glitch-button-base.css, Uiverse.io by namecho): a body with
+     its bottom-left corner cut at 45 degrees and a bar down its right side; colours set inline (the draft) */
+  .lib-glitch-button { position: relative; padding: 16px 20px; border: 0; outline: transparent; cursor: default;
+    font: 18px/1 'HudModule', sans-serif; letter-spacing: 3px; color: var(--glitch-text);
+    background: linear-gradient(45deg, transparent 5%, var(--glitch-body) 5%); box-shadow: 6px 0 0 var(--glitch-bar); }
+  /* focus: the same button in the focus colours on top, bar included, uncovered by one swipe from the right edge to
+     the left (bar, then body, then each letter as the edge passes it); leaving the cursor swipes it back */
+  .lib-glitch-button::after { content: attr(data-label); position: absolute; top: 0; bottom: 0; left: 0; right: -6px;
+    box-sizing: border-box; padding: 16px 26px 16px 20px; white-space: nowrap; text-align: center;
+    color: var(--glitch-focus-text);
+    background: linear-gradient(var(--glitch-focus-bar), var(--glitch-focus-bar)) right / 6px 100% no-repeat,
+      linear-gradient(45deg, transparent 5%, var(--glitch-focus-body) 5%) left / calc(100% - 6px) 100% no-repeat;
+    clip-path: inset(0 0 0 100%); transition: clip-path var(--glitch-swipe) linear; }
+  .lib-glitch-button:hover::after, .lib-glitch-button.focused::after { clip-path: inset(0); }
 
   #copied { position: fixed; bottom: 16px; right: 16px; background: var(--lib-panel); border: 1px solid var(--lib-accent);
     border-radius: 6px; padding: 6px 12px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
@@ -1501,16 +1515,85 @@ const PRIMITIVE_PAGES = {
     note: 'The item squares and their grid (js/ui/lib/primitives/square/). Props only: the screen passes each square its picture and each slot its tooltip. Placeholder pictures.',
   },
 };
-const primitivePage = (id) => () => {
+/** A primitive page's note and stories (a tab of Buttons, or a whole page). */
+const primitiveBody = (id) => {
   const page = PRIMITIVE_PAGES[id];
-  return `<h2>${esc(page.title)}</h2><p class="lib-note">${esc(page.note)}</p>${page.stories().map(storyBlock).join('')}`;
+  return `<p class="lib-note">${esc(page.note)}</p>${page.stories().map(storyBlock).join('')}`;
 };
+const primitivePage = (id) => () => `<h2>${esc(PRIMITIVE_PAGES[id].title)}</h2>${primitiveBody(id)}`;
+
+// ---------- Buttons, Glitch Draft (Jess 2026-11-18): a possible new button design, one state at a time ----------
+// The shape from tools/library/idea-holding/glitch-button-base.css with its colours swapped for Unified ones. Rest: the
+// red body becomes grey.raised, the teal bar and the text grey.white. Focus (under the cursor or the mouse): one swipe
+// from right to left turns the bar black (grey.ink), the body teal (the Unified teal base) and the text black. The
+// source's hover glitch layer is not drawn. Board only: not a library piece yet, so no story file and no game file.
+const GLITCH_REST = { body: greyTone('raised'), bar: greyTone('white'), text: greyTone('white') };
+const tealBase = valueOf(UNIFIED_TEAL.colours.find((colour) => colour[0] === 'base'));
+const GLITCH_FOCUS = { body: tealBase, bar: greyTone('ink'), text: greyTone('ink') };
+const GLITCH_STAGE = greyTone('panel'); // the box the draft buttons sit in (Jess 2026-11-18)
+const GLITCH_SWIPE_MS = 200; // the whole swipe, right edge to left edge (a draft, for the feel test)
+const GLITCH_LABELS = ['Resume', 'Settings', 'End Run'];
+const glitchColours = [
+  ['--glitch-body', GLITCH_REST.body],
+  ['--glitch-bar', GLITCH_REST.bar],
+  ['--glitch-text', GLITCH_REST.text],
+  ['--glitch-focus-body', GLITCH_FOCUS.body],
+  ['--glitch-focus-bar', GLITCH_FOCUS.bar],
+  ['--glitch-focus-text', GLITCH_FOCUS.text],
+  ['--glitch-swipe', GLITCH_SWIPE_MS + 'ms'],
+]
+  .map(([name, value]) => `${name}:${value}`)
+  .join(';');
+const glitchButtons = (focused) =>
+  GLITCH_LABELS.map((label) => `<button type="button" class="lib-glitch-button${focused ? ' focused' : ''}"
+    tabindex="-1" data-label="${esc(label)}" style="${glitchColours}">${esc(label)}</button>`).join('');
+const glitchTile = (state, title, focused) => `<figure class="lib-state">
+  <div class="lib-stage" data-state="button.glitch:${state}"
+    style="display:flex;gap:24px;background:${GLITCH_STAGE}">
+    ${glitchButtons(focused)}</div>
+  <figcaption>${nameButton('button.glitch.' + state)}<br>${esc(title)}</figcaption></figure>`;
+const glitchColour = (part, token, value) =>
+  `<dt>${esc(part)}</dt><dd>${nameButton(token)}<span>${esc(value)}</span></dd>`;
+function glitchDraftPage() {
+  return `<section class="lib-story" data-draft="button.glitch">
+    <h3>${nameButton('button.glitch')} <span class="lib-dim lib-mono">draft, board only</span></h3>
+    <h4 class="lib-dim">States</h4>
+    <div class="lib-states">
+      ${glitchTile('rest', 'At rest (hover one to play the swipe)', false)}
+      ${glitchTile('focus', 'Under the cursor, after the swipe', true)}
+    </div>
+    <dl class="lib-facts">
+      ${glitchColour('Behind', 'color.grey.panel', GLITCH_STAGE)}
+      ${glitchColour('Rest body', 'color.grey.raised', GLITCH_REST.body)}
+      ${glitchColour('Rest bar', 'color.grey.white', GLITCH_REST.bar)}
+      ${glitchColour('Rest text', 'color.grey.white', GLITCH_REST.text)}
+      ${glitchColour('Focus body', 'color.teal.base', GLITCH_FOCUS.body)}
+      ${glitchColour('Focus bar', 'color.grey.ink', GLITCH_FOCUS.bar)}
+      ${glitchColour('Focus text', 'color.grey.ink', GLITCH_FOCUS.text)}
+      <dt>Swipe</dt><dd>One hard edge from the right edge (the bar's) to the left, ${GLITCH_SWIPE_MS} ms, linear; the
+        bar, then the body and each letter change as it passes. Leaving swipes it back, left to right.</dd>
+      <dt>Font</dt><dd>${nameButton('font.michroma')}<span>18 px, letter spacing 3 px (the source's size)</span></dd>
+      <dt>Shape</dt><dd>Padding 16 x 20 px; bottom-left corner cut at 45 degrees (5% of the diagonal); a 6 px bar on the
+        right</dd>
+      <dt>Source</dt><dd class="lib-mono">tools/library/idea-holding/glitch-button-base.css (Uiverse.io by namecho)</dd>
+    </dl></section>`;
+}
+const BUTTON_TABS = [
+  { id: 'current', title: 'Current', draw: () => primitiveBody('primitives/buttons') },
+  {
+    id: 'glitch',
+    title: 'Glitch Draft',
+    note: 'A possible new button design, being worked out one state at a time: rest and focus so far.',
+    draw: glitchDraftPage,
+  },
+];
+const buttonsPage = (tab) => tabbedPage('Buttons', BUTTON_TABS, tab);
 
 const DRAW = {
   'tokens/colours': coloursPage,
   'tokens/fonts': fontsPage,
   'tokens/layers': layersPage,
-  'primitives/buttons': primitivePage('primitives/buttons'),
+  'primitives/buttons': buttonsPage,
   'primitives/panels': primitivePage('primitives/panels'),
   'primitives/squares': primitivePage('primitives/squares'),
   'primitives/bars': primitivePage('primitives/bars'),
@@ -1538,7 +1621,8 @@ function show(id, tab) {
     drawFontCanvas();
   }
   const primitive = PRIMITIVE_PAGES[item.id];
-  if (primitive && !item.later) mountStories(primitive.stories(), primitive.pieces());
+  const hasStories = $('main').querySelector('[data-story]');
+  if (primitive && !item.later && hasStories) mountStories(primitive.stories(), primitive.pieces());
 }
 
 // ---------- fonts: declared from the tokens, as the game's CSS declares them, then the board's own faces ----------
@@ -1640,7 +1724,11 @@ fromHash();
 // for tools/smoke-ui-library.js
 window.libPages = [...pages.keys()];
 window.libTabs = Object.fromEntries(
-  [['tokens/colours', COLOUR_TABS], ['tokens/fonts', FONT_TABS]].map(([id, tabs]) => [id, tabs.map((tab) => tab.id)]));
+  [
+    ['tokens/colours', COLOUR_TABS],
+    ['tokens/fonts', FONT_TABS],
+    ['primitives/buttons', BUTTON_TABS],
+  ].map(([id, tabs]) => [id, tabs.map((tab) => tab.id)]));
 window.libFontScheme = {
   tiers: FONT_TIERS,
   folds: FONT_FOLDS,
