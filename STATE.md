@@ -1,35 +1,34 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-19 afternoon, Quick (work machine). Branch: feature/128-acquisition. No branch rules file.
+Last updated: 2026-11-19 evening, Quick (work machine). Branch: feature/128-acquisition. No branch rules file.
 
 ## START HERE (next session, either tool)
-0. Commit and push if not yet done (two commits drafted 2026-11-19, see DEVLOG). Close #157 if not yet done.
-1. #155 board, Unified passes: Portraits next (the last primitive page). Then Fonts feel test, Colours names,
-   smoke-ui-library rewrite, 155d, Pause composites. #156 is likely moot: close or keep, Jess.
+0. `git status`; commit and push the evening commit (DEVLOG 2026-11-19 evening) if not done. #157 is closed.
+1. #155 board, HUD sets: write the decision for run.hud.playerActive.bar first (not written yet). Then
+   run.hud.playerActive (88 px ringless portrait, the bar, Lv; judges Portraits in place), then moveSlots.
+   After that: Fonts feel test, Colours names, smoke-ui-library rewrite, 155d, Pause composites. #156 likely moot.
 2. Then #128: #138, then #146. #145 small and ready.
 
-## Landed this session (2026-11-19, Quick, board and docs only)
-- Panels: one Unified tab (panel.clean, the detail background, panel.pixel, panel.slanted in Unified greys).
-- Squares: Unified tab (square.item with the slot grid body; square.clean filled, empty, locked) and Current.
-- Cursor page: cursor.bar (blink in menus, solid in a run, CRT move). Mouse behaviour left for #126.
-- Bars: Unified tab. The hit's cut piece flashes white 80 ms with a 4 px hop, goes grey (paper, mid rows) and falls
-  at once with an 8 px rightward drift; no 1 s hold.
-- Modal: Unified tab (panel.clean, Michroma, button.glitch, all three intents) and the new button.glitch.cancel state
-  (also on Buttons). Focus shows only with the keys; from the mouse the first key only reveals it.
-- Dialog rule (researched): only a loss you cannot earn back or redo gets a dialog (Sell, Delete account, Sign out as
-  guest, leftover EVs), opening on Cancel. Purchases and team edits do not ask. Pending: Let it go, Move Shop replace.
-- Decisions: panel.slanted move slot only; held item keeps square.item; bars and the hit flash; the dialog file.
+## Landed 2026-11-19 (Quick, board and docs only)
+- Morning and afternoon (pushed or in the morning commits): Unified tabs for Panels, Squares, Bars, Modal; the Cursor
+  page; button.glitch.cancel; the dialog rule; four decision files.
+- Portraits (pinned): portrait.round rest, active, selected (yellow plus the pause shimmer), fainted; ring is a prop.
+- run.hud.playerActive.bar (tools/library/hud-exp-draft.js; hud-health-draft.js keeps only the HP numbers): one
+  B2-style holder 462x36 for HP and EXP. HP tab and track, the EXP strip hanging under it, upright Silver labels.
+  EXP leaves the portrait ring (116 to 88 px face). HP numbers stay outside, right of the bar, centred on its height
+  (8 px up), current HP held still in a max-digits box. Tried and dropped: numbers inside the holder (needs 3 more
+  art rows at 20 px; 10 px too small).
 
 ## Watch
-- The game is unchanged: nothing in js/ or css/ edited (only the six story files moved out of js/ui/lib).
-- check.js and lint not run (Quick); eslint's board block covers tools/library/**. Run both before pushing.
-- smoke-ui-library: still failing on Colours; the tab changes and the story move may add failures.
-- The research report lives only in the Quick session workspace, not the repo.
-- Board drift: #29 in Blocked with no label; #155 card sits in Triage; #156 needs triage.
+- The game is unchanged: nothing in js/ or css/ edited today. check.js, lint, smokes not run (Quick).
+- smoke-ui-library still failing on Colours; the board's page renames may add failures.
+- At #126 the bar costs: hud-player-panel.js hpText (hold still), chips move up 12 px, portrait loses its ring on
+  the run HUD and pause detail. Open: the empty band right of EXP, the level-up moment.
+- Board drift: #29 in Blocked with no label; #155 card in Triage; #156 needs triage.
 
 ## Open owner decisions
-- #126: reveal-first and fewer dialogs change the menus and G.UI.ask (a game change, plan first); cursor.bar with
-  the mouse; the empty move slot reads faint. #97, #131, #49, #107, #86, #99, #93, #60, #139 candy amounts.
+- #126: reveal-first and fewer dialogs change menus and G.UI.ask (plan first); cursor.bar with the mouse.
+- Silver italic font (offered, not decided). #97, #131, #49, #107, #86, #99, #93, #60, #139 candy amounts.
 
 Rules: CLAUDE.md.

@@ -4,17 +4,21 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-19 morning work session (Quick)
-1. On the work machine: `git status`, the two drafted commits, then `git push origin feature/128-acquisition`.
+## Getting up to date (either machine), from the 2026-11-19 evening work session (Quick)
+1. On the work machine: `git status` (the morning commits may already be pushed), the evening commit drafted in
+   DEVLOG 2026-11-19 evening, then `git push origin feature/128-acquisition`.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
    `node tools/check.js` (must end "check: all passed") and `npm run lint`. Say "catch me up".
 3. Before leaving a machine: commit and push.
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-19; gym leader AI parked)
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
-   - Close #157 (comment drafted 2026-11-19). No follow-up issue (Jess): the clean places not drawn yet (belts, team
-     item cards, run item box, pocket boxes, the catch screen's Pokemon owned box, pocket prompt header, tooltip box,
-     a see-through HUD panel, the square.clean grid) get drawn in the #155 composites below and applied at #126.
+   - HUD sets: write the decision for run.hud.playerActive.bar (HP and EXP in one B2-style bar, EXP off the portrait
+     ring, numbers outside and centred, current HP held still). Then run.hud.playerActive (88 px ringless portrait, the
+     bar, Lv; judges Portraits in place), then run.hud.playerActive.moveSlots.
+   - #157 closed. The clean places not drawn yet (belts, team item cards, run item box, pocket boxes, the catch
+     screen's Pokemon owned box, pocket prompt header, tooltip box, a see-through HUD panel, the square.clean grid) get
+     drawn in the #155 composites below and applied at #126.
    - Feel test Tokens, Fonts: Michroma's size set, the 9 inferred Fold Map rows, the tooltip size (Silver 20 or 10).
    - Jess lists the poor UX calls in the 155c-4 ask dialog (look and keys) so they can be filed.
    - Colours: name the 7 UI colours and the greys (placeholders on the board); rebuild the rims from Unified.
@@ -45,11 +49,11 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op.
 13. Board cleanup (low): delete tools/library/stories/button.story.js and panel.story.js (no tab shows them).
 
-## Open issues by area (numbers only, titles on GitHub, checked 2026-11-19, Quick)
-Confirmed this pull: #138 to #146, #150, #155 to #157 open; #136, #137, #147 to #149, #151 to #154 closed. The pull
-stopped at #135; the rest left as checked earlier. #109 and #123 closed 2026-11-15 (not returned, left in place).
+## Open issues by area (numbers only, titles on GitHub, checked 2026-11-19 evening, Quick)
+Confirmed this pull: #138 to #146, #150, #155, #156 open; #136, #137, #147 to #149, #151 to #154, #157 closed. The
+pull stopped at #135; the rest left as checked earlier. #109 and #123 closed 2026-11-15 (not returned, left in place).
 - UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 (blocked by #97) #99 #100 #102 #105 #126 #145
-  #146 #155 #156 #157 (closing)
+  #146 #155 #156
 - Gyms: #6 #9 #20 #21 #24 #49 #57 #58 #60 #107 #109 #111 (blocked by #109) #120 #122 (blocked by #111)
 - Moves: #11 #13 #14 #16 #18 #38 #44 #141 #150 (blocked by #97)
 - Enemies: #143

@@ -312,3 +312,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Later: researched confirm dialogs (report in the Quick session workspace). New rule: only a loss you cannot earn back
   or redo gets a dialog (Sell, Delete account, Sign out as guest, leftover EVs); purchases and team edits do not ask.
   The modal designs stay whole (all three intents) for a later positive confirm; #126 changes only how they apply.
+
+## 2026-11-19 evening (Quick, work), #155 Portraits and run.hud.playerActive.bar
+- Built (board only): Portraits Unified tab (rest, active, selected in yellow with the shimmer, fainted), pinned.
+  run.hud.playerActive.bar: the healthBar and expBar sets merged into one B2-style bar (HP track, EXP strip under it,
+  upright Silver labels, EXP off the portrait ring). HP numbers outside, centred on the bar, current HP held still.
+- Decided (Jess): one bar for HP and EXP; numbers stay outside. Dropped: numbers inside the holder (no room at 20 px).
+- Nothing in js/ or css/ edited. check.js, lint and the smokes not run (Quick). Pages checked headless with stubs.
+- Stopped at: the bar's decision file (owed), then run.hud.playerActive and moveSlots. One commit to push.
