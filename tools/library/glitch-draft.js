@@ -5,7 +5,8 @@
 // The shape from tools/library/idea-holding/glitch-button-base.css with its colours swapped for Unified ones. Rest: the
 // red body becomes grey.raised, the teal bar and the text grey.white. Focus (under the cursor or the mouse): one swipe
 // from right to left turns the bar black (grey.ink), the body the kind's colour and the text black. The source's hover
-// glitch layer is not drawn. Board only: not a library piece yet, so no story file and no game file.
+// glitch layer is not drawn. Board only: not a library piece yet, so no story file and no game file. It replaces
+// button.slanted and button.rounded on every screen at #126 (decision 2026-11-18-155-button-glitch-replaces-slanted-and-rounded).
 const GLITCH_REST = { body: greyTone('raised'), bar: greyTone('white'), text: greyTone('white') };
 const rampBase = (ramp) => valueOf(ramp.colours.find((colour) => colour[0] === 'base'));
 // One piece, button.glitch, named by its look (decision 2026-11-18-155-library-pieces-named-by-look). Its intent
@@ -197,7 +198,15 @@ function glitchDraftPage() {
     </dl></section>`;
 }
 const BUTTON_TABS = [
-  { id: 'current', title: 'Current', draw: () => primitiveBody('primitives/buttons') },
+  {
+    id: 'current',
+    title: 'Current (retiring)',
+    note:
+      'Retiring: button.glitch replaces button.slanted and button.rounded on every screen at #126 (decision ' +
+      '2026-11-18-155-button-glitch-replaces-slanted-and-rounded). Shown until then because the game still draws them; ' +
+      'do not design against them.',
+    draw: () => primitiveBody('primitives/buttons'),
+  },
   {
     id: 'glitch',
     title: 'Glitch Draft',
