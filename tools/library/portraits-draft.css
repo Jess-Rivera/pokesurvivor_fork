@@ -1,0 +1,78 @@
+/* tools/library/portraits-draft.css: the Portraits, Unified tab (portraits-draft.js). Board only. A copy of
+   js/ui/lib/primitives/portrait/portrait.css with the pause menu's shimmer (css/pause-menu.css .pm-face-shown). */
+.lib-portrait-stage {
+  display: flex;
+  align-items: center;
+}
+.lib-portrait {
+  position: relative;
+  box-sizing: border-box;
+  border: var(--portrait-stroke, 2px) solid var(--portrait-rim);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--portrait-back);
+}
+.lib-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+/* fainted: an ink veil */
+.lib-portrait::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 50%;
+  background: var(--portrait-back);
+  opacity: var(--portrait-dim, 0);
+  pointer-events: none;
+}
+/* selected: a white band sliding top left to bottom right, then a pause (today's pause roster shimmer) */
+.lib-portrait.is-selected::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  z-index: 1;
+  background: linear-gradient(135deg, transparent 40%, var(--portrait-shimmer) 50%, transparent 60%);
+  animation: lib-portrait-shimmer 1.5s linear infinite;
+  pointer-events: none;
+}
+@keyframes lib-portrait-shimmer {
+  0% {
+    transform: translate(-60%, -60%);
+  }
+  50%,
+  100% {
+    transform: translate(60%, 60%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lib-portrait.is-selected::before {
+    animation: none;
+    opacity: 0;
+  }
+}
+/* the ringed face: a 2 px ink outline, the band filling clockwise from the top, then the face */
+.lib-portrait-ringed {
+  position: relative;
+  border-radius: 50%;
+  background: var(--portrait-back);
+}
+.lib-portrait-ring {
+  position: absolute;
+  border-radius: 50%;
+  background: conic-gradient(var(--ring-fill) 0 var(--ring-angle), var(--ring-track) var(--ring-angle) 360deg);
+}
+.lib-portrait-ring-face {
+  position: absolute;
+}
+.lib-portrait-ring-face .lib-portrait {
+  width: 100% !important;
+  height: 100% !important;
+}
+.lib-portrait-row {
+  display: flex;
+  gap: 16px;
+}

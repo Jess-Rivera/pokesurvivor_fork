@@ -1,0 +1,50 @@
+/* tools/library/hud-health-draft.css: the HUD set run.hud.playerActive.bar (hud-exp-draft.js, hud-health-draft.js). Board only.
+   The bar's own styles are bars-draft.css (Unified) and bar.css (Current). */
+.lib-hb-stage {
+  padding: 20px 16px 12px;
+}
+.lib-hb {
+  position: relative;
+  font-family: var(--hb-font), monospace;
+  font-synthesis: none;
+  color: #ffffff;
+}
+/* the HP label: upright Silver (Jess 2026-11-19: Silver has no italic, so no browser slant; matches the EXP bar set).
+   The Current tab draws the game's own label (.hud-hp-label), which keeps today's slant. */
+.lib-hb .lib-bar-label {
+  font-style: normal;
+}
+.lib-hb-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+/* the HP numbers: 20 px, white, eight hard shadows one font pixel out (the HUD's text) */
+.lib-hb-text {
+  position: absolute;
+  font-size: 20px;
+  line-height: 20px;
+  white-space: nowrap;
+  text-shadow:
+    2px 0 0 var(--hb-outline),
+    -2px 0 0 var(--hb-outline),
+    0 2px 0 var(--hb-outline),
+    0 -2px 0 var(--hb-outline),
+    2px 2px 0 var(--hb-outline),
+    -2px 2px 0 var(--hb-outline),
+    2px -2px 0 var(--hb-outline),
+    -2px -2px 0 var(--hb-outline);
+}
+/* the current HP: a box as wide as the max's digits, right-aligned, so the slash and the max never move */
+.lib-hb-current {
+  display: inline-block;
+  text-align: right;
+}
+/* the EXP strip grows on a gain, as a heal grows the HP */
+.lib-exp-fill.is-growing,
+.lib-exp-bar .lib-bar-track.is-growing {
+  transition: width 0.3s linear;
+}
+.lib-hb-demo .lib-bar-controls {
+  margin-top: 56px; /* room for a piece to fall 40 px */
+}

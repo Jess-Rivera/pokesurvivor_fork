@@ -12,7 +12,8 @@ const DRAW = {
   'primitives/squares': squaresPage,
   'primitives/bars': barsPage,
   'primitives/modal': modalPage,
-  'primitives/portraits': primitivePage('primitives/portraits'),
+  'primitives/portraits': portraitsPage,
+  'run.hud.playerActive.bar': activeBarPage,
 };
 // the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
 const patternHost = document.createElement('div');
