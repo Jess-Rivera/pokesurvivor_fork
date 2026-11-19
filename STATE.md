@@ -5,7 +5,8 @@ Last updated: 2026-11-19 morning, Quick (work machine). Branch: feature/128-acqu
 
 ## START HERE (next session, either tool)
 0. Commit and push if not yet done (two commits drafted 2026-11-19, see DEVLOG).
-1. #157: Jess closes it with the drafted comment; the places not drawn yet go in one follow-up issue (TODO item 0).
+1. #157: Jess closes it with the drafted comment; the places not drawn yet are covered by the #155 composites and
+   #126 (no follow-up issue).
 2. Then the rest of #155 (TODO item 0): Fonts feel test, Colours names, smoke-ui-library rewrite, 155d, Pause
    composites. #156 is likely moot (it renames the retiring buttons' classes): close or keep, Jess.
 3. Then #128: #138, then #146. #145 small and ready.

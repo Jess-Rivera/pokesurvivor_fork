@@ -301,4 +301,7 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Decided: panel.slanted stays, move slot only; the held item keeps square.item. Tried and dropped: a pixel slanted
   port, a card.horizontal slot, panel.pixel at held item size, the cut corner on panels.
 - Nothing in js/ or css/ edited (the story files moved out). check.js, lint and the smokes not run (Quick).
-- Stopped at: #157 closing (follow-up drafted for the places not drawn); next the rest of #155. Two commits to push.
+- Stopped at: #157 closing (places not drawn go to the #155 composites and #126); next the rest of #155. Two commits.
+- Later: Bars, Unified tab (tools/library/bars-draft.js, .css): bars in Unified colours; the hit's cut piece flashes
+  white 80 ms with a 4 px hop, goes grey (paper, mid rows) and falls at once with an 8 px rightward drift (no 1 s hold).
+  Decision 2026-11-19-155-bars-unified-and-the-hit-flash. Board only.

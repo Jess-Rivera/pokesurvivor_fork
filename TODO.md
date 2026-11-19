@@ -12,9 +12,9 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-19; gym leader AI parked)
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
-   - Close #157 (comment drafted 2026-11-19). File one follow-up for the clean places not drawn yet: both belts, the
-     team item cards, the run item box (card.horizontal), the pocket boxes, the catch screen's Pokemon owned box, the
-     pocket prompt header, the tooltip box and a see-through HUD overlay panel; plus the item grid of square.clean.
+   - Close #157 (comment drafted 2026-11-19). No follow-up issue (Jess): the clean places not drawn yet (belts, team
+     item cards, run item box, pocket boxes, the catch screen's Pokemon owned box, pocket prompt header, tooltip box,
+     a see-through HUD panel, the square.clean grid) get drawn in the #155 composites below and applied at #126.
    - Feel test Tokens, Fonts: Michroma's size set, the 9 inferred Fold Map rows, the tooltip size (Silver 20 or 10).
    - Jess lists the poor UX calls in the 155c-4 ask dialog (look and keys) so they can be filed.
    - Colours: name the 7 UI colours and the greys (placeholders on the board); rebuild the rims from Unified.
@@ -38,8 +38,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
    parity; #122 comment on early gates). Any time: #121, #120, #57, #58, #110.
    Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107 #156. #155 card sits in Triage (move it).
 8. Owner decisions: #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
-9. New issues to file: the #157 follow-up (item 0); region type maps, PARKED; Kanto T6 rolls no hordes;
-   tools/make_seo_pages.py is missing.
+9. New issues to file: region type maps, PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing.
 10. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83; unknown local branch
     refactor/damage-layer on the work machine; local balance/109 (754477f) differs from origin (a1dc095).
 11. Deferred hook (#91-2 C): Region Best's "gyms" must become gyms cleared on the final loop once #24 lands.
