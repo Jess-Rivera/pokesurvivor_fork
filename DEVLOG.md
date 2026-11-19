@@ -320,3 +320,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Decided (Jess): one bar for HP and EXP; numbers stay outside. Dropped: numbers inside the holder (no room at 20 px).
 - Nothing in js/ or css/ edited. check.js, lint and the smokes not run (Quick). Pages checked headless with stubs.
 - Stopped at: the bar's decision file (owed), then run.hud.playerActive and moveSlots. One commit to push.
+- Later: Chips page (tools/library/chips-draft.js, .css): one B2 capsule for the status, effect and type chips, text
+  Silver 20, so 16 art rows (32 px, was 24); colours read from the Fold Map. Type chips 112 px, no glow or timer.
+  Open: the height, type name casing (descenders reach the rim). Rendered headless against the real board files.
+  Then (Jess): chip.status goes to Silver 10 at 1 px per art pixel, 40 x 17, so font and chip pixels match; chip.type
+  keeps both scales, Silver 10 at 1 px (60 x 17) and Silver 20 at 2 px (116 x 32). Dropped: Silver 10 on a 2 px chip.
+  Type names in capitals (reverses 2026-11-11's "Ghost"). Decision 2026-11-19-155-chips-one-capsule-status-1px-type-two-scales.
+  Also audited the primitives against the game: missing are the tooltip, slider, text field, tabs and the see-through
+  HUD panel. Stopped at: the bar's decision file, then run.hud.playerActive with the 1 px chips. Chips commit to push.

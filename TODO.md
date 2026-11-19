@@ -4,9 +4,9 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-19 evening work session (Quick)
-1. On the work machine: `git status` (the morning commits may already be pushed), the evening commit drafted in
-   DEVLOG 2026-11-19 evening, then `git push origin feature/128-acquisition`.
+## Getting up to date (either machine), from the 2026-11-19 night work session (Quick)
+1. On the work machine: `git status` (should be clean once the chips commit is in), then
+   `git push origin feature/128-acquisition` if it is not pushed yet.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
    `node tools/check.js` (must end "check: all passed") and `npm run lint`. Say "catch me up".
 3. Before leaving a machine: commit and push.
@@ -15,7 +15,12 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
    - HUD sets: write the decision for run.hud.playerActive.bar (HP and EXP in one B2-style bar, EXP off the portrait
      ring, numbers outside and centred, current HP held still). Then run.hud.playerActive (88 px ringless portrait, the
-     bar, Lv; judges Portraits in place), then run.hud.playerActive.moveSlots.
+     bar, Lv, the 1 px chip.status bands; judges Portraits and the 1 px chips in place), then
+     run.hud.playerActive.moveSlots.
+   - Chips done (decision 2026-11-19-155-chips-one-capsule-status-1px-type-two-scales). Primitives still missing:
+     tooltip (next), then slider, text field, tabs (or a selected button.glitch) and the see-through HUD panel as the
+     screens that use them come up. Composites only where layout is new: playerActive, moveSlots, the level-up card,
+     pause.pokemonDetail; plain menus go straight from the primitives at #126.
    - #157 closed. The clean places not drawn yet (belts, team item cards, run item box, pocket boxes, the catch
      screen's Pokemon owned box, pocket prompt header, tooltip box, a see-through HUD panel, the square.clean grid) get
      drawn in the #155 composites below and applied at #126.
