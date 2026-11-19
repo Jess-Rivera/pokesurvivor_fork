@@ -283,3 +283,13 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   smoke-ui-library font checks (committed 271920). Then Buttons, Glitch Draft tab: rest and focus swipe.
 - Nothing in js/ or css/ touched. check.js and the smokes not run from Quick; results of Jess's 155e run not recorded.
 - Stopped at: feel test of Fonts and the glitch draft; next glitch states. Tooltip size decided at the feel test.
+
+## 2026-11-18 night (Claude Code, home), #155 button.glitch, toggle.power, board split
+- Built: the board split into tools/library/ (index.html, board.css, plain scripts in load order; the old file redirects).
+  button.glitch finished and feel-tested (CRT press, refused shake, disabled, a secret glitch with burst, gap, count);
+  toggle.power (ring off, bar on, the CRT on its side, fixed 22 px box). docs/META-NARRATIVE.md committed.
+- Decided: button.glitch replaces button.slanted and button.rounded at #126; pixel panels frame one Pokemon, shared
+  things and the code's interface go clean (#157 opened). Only Unified colours for new looks (Jess).
+- Broke and fixed: the split pointed the Pikachu portrait at tools/assets; lint jumped 212 errors (eslint block added).
+- Checks: check.js all passed, lint 0 errors; board pages loaded headless each step; smokes skipped (Jess).
+- Stopped at: #157 next. Six commits to push.

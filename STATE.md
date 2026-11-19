@@ -1,34 +1,33 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-18 evening, Quick (work machine). Branch: feature/128-acquisition. No branch rules file.
+Last updated: 2026-11-18 night, Claude Code (home). Branch: feature/128-acquisition. No branch rules file.
 
 ## START HERE (next session, either tool)
-0. Commit the glitch draft and the handoff (two commits drafted at session end), then push. If not yet done:
-   `python tools/make_silver_font.py` (needs fonttools), then `node tools/smoke-ui-library.js`.
+0. Push if not yet done: `git push origin feature/128-acquisition` (six local commits from 2026-11-18 night).
 1. #155 UI Library v2, board work (the 155 plan docs before 155e are stale; trust the code):
-   - Feel test Tokens, Fonts (155e): tier samples, ticking counters, the 2x canvas strip, pick Michroma's size set,
-     the Fold Map's 9 inferred rows, and the move and stat tooltip size (Silver 20 or 10).
-   - Primitives, Buttons, Glitch Draft tab: a possible new button design. Rest and focus built; next states
-     (pressed, refused, disabled, negative), then whether it replaces button.slanted and button.rounded.
-   - Then the TODO #155 list (colour names, rims, smoke rewrite, 155d, Pause composites).
+   - #157 clean panel in the button.glitch style (the places in decision 2026-11-18-155-pixel-panels-for-one-pokemon-
+     clean-for-the-rest), drafted on Primitives, Panels one state at a time, as the button was.
+   - Still owed from earlier: Fonts feel test (Michroma's size set, the 9 inferred Fold Map rows, tooltip Silver 20 or 10).
+   - Then the TODO #155 list (colour names, rims, smoke rewrite, 155d, Pause composites, #156).
 2. Then #128: #138, then #146. #145 small and ready.
 
-## Landed this session (2026-11-18 evening, untested in a browser)
-- Font scheme ruled (decision 2026-11-18-155-font-scheme-three-tiers): Michroma for meta, Silver re-gridded to 10 px
-  per em for Pokemon, BoldPixels for world numbers (damage canvas 8, crits 16), monogram for world words. Truth And
-  Ideals and PokeBW retire. Menu buttons use Michroma (decision 2026-11-18-155-menu-buttons-use-michroma).
-- tools/make_silver_font.py writes assets/fonts/Silver-10px.ttf (board only until #126). Committed 271920.
-- Board: Fonts has Unified, Fold Map (40 places) and Reference tabs; smoke-ui-library checkFontsPage (6 checks).
-- Board: Buttons has Current and Glitch Draft tabs. Glitch: grey.raised body, white bar and text on a grey.panel
-  box; focus is one right-to-left swipe to an ink bar, teal #8cfff7 body and ink text, 200 ms. Not committed.
+## Landed this session (2026-11-18 night, home)
+- Board moved to tools/library/index.html: board.css plus plain scripts in load order; tools/library.html redirects.
+  eslint has a block for the board's shared globals (lint 0 errors). Pikachu path fixed for the new folder.
+- Primitives, Buttons, Glitch Draft: `button.glitch`, done and feel-tested. States rest, refused, disabled, then per
+  intent (Neutral teal, Negative red.base, Positive green.base): focus (120 ms swipe), press (CRT off and on, ink),
+  refusedFocus (grey.mid body, the intent's colour on the bar; press shakes), glitch (secret: burst, gap, count).
+- Primitives, Toggles: `toggle.power`, off (ring, teal.dark) and on (bar, teal.base) only; flips are the CRT on its
+  side, in a fixed 22 px box.
+- Decisions: button.glitch replaces button.slanted and button.rounded at #126 (Current tab marked retiring); pixel
+  panels for one Pokemon, clean for the rest. docs/META-NARRATIVE.md committed. #126 has the swap list.
 
 ## Watch
-- The game still loads today's fonts; nothing in js/ or css/ changed this session.
-- tokens.js font job text for pokeBW and michroma is backwards (fix at #126, when both go).
-- tools/library.html is about 1,750 lines (over the 1,000-line mark; split is #129's call).
-- smoke-ui-library still fails its Colours checks until its rewrite. smoke-pause-menu: the known 401 px failure.
-- Board drift: #29 in Blocked with no blocked label; #156 needs triage and a type label.
+- The game is unchanged: js/ changes this session were formatting only, plus the board-only Pikachu path.
+- smoke-ui-library still fails its Colours checks until its rewrite; it was not run this session (Jess: board only).
+- smoke-pause-menu: the known 401 px failure. tokens.js pokeBW and michroma job text backwards (fix at #126).
+- Board drift: #29 in Blocked with no label; #155 card sits in Triage; #156 needs triage.
 
 ## Open owner decisions
 - Jess: the poor UX calls in the ask dialog. #97, #131, #49, #107, #86, #99, #93, #60, #139 candy amounts.

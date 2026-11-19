@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-18, #155 pixel panels frame one Pokemon and what it owns; shared things and the code's interface use a clean panel (Jess)](docs/decisions/2026-11-18-155-pixel-panels-for-one-pokemon-clean-for-the-rest.md)
 - [2026-11-18, #155 button.glitch replaces button.slanted and button.rounded on every screen, the catch screen's buttons included; its Pokemon text stays Silver (Jess)](docs/decisions/2026-11-18-155-button-glitch-replaces-slanted-and-rounded.md)
 - [2026-11-18, #155 four faces in three tiers: Michroma for meta, re-gridded Silver for Pokemon, BoldPixels and monogram for the world; Truth And Ideals and PokeBW retire (Jess)](docs/decisions/2026-11-18-155-font-scheme-three-tiers.md)
 - [2026-11-18, #155 the menu buttons (pause menu, End Run, EV screen) use Michroma (HudModule), the game's own UI face (Jess)](docs/decisions/2026-11-18-155-menu-buttons-use-michroma.md)

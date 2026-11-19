@@ -4,21 +4,19 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-18 evening work session (Quick)
-1. On the work machine: the glitch draft and handoff commits drafted at that session's end, then
-   `git push origin feature/128-acquisition`. Silver-10px.ttf needs `python tools/make_silver_font.py` (fonttools)
-   if it is not in the tree.
+## Getting up to date (either machine), from the 2026-11-18 night home session (Claude Code)
+1. On the home machine: `git push origin feature/128-acquisition` (six commits from that session), if not done.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
    `node tools/check.js` (must end "check: all passed"). Say "catch me up".
 3. Before leaving a machine: commit and push.
 
-## Next (queue set by Jess 2026-11-15, updated 2026-11-18 evening; gym leader AI parked)
+## Next (queue set by Jess 2026-11-15, updated 2026-11-18 night; gym leader AI parked)
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
    - Feel test Tokens, Fonts (155e plan lists it): Michroma's size set, the 9 inferred Fold Map rows, the move and
      stat tooltip size (Silver 20 or 10).
-   - Buttons, Glitch Draft: Jess is designing a possible new button one state at a time (rest and focus built).
-     Next states, then whether it replaces button.slanted and button.rounded.
-   - Feel tests for 155b to 155c-6.
+   - #157 clean panel in the button.glitch style (button.glitch and toggle.power are done on the board; button.glitch
+     replaces button.slanted and button.rounded at #126, see the swap list on #126).
+   - Feel tests for 155b to 155c-6 (the board now opens at tools/library/index.html).
    - Jess lists the poor UX calls in the 155c-4 ask dialog (look and keys) so they can be filed.
    - Colours: name the 7 UI colours and the greys (placeholders on the board); rebuild the rims from Unified.
    - Rewrite smoke-ui-library for the new Colours page (it still expects the retired tabs and fails).
@@ -26,7 +24,9 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
    - #156 rename the button CSS classes. Then #126 applies the Unified colours (docs/decisions/2026-11-18-155-unified-
      palette.md, its Fold Map tab). For #126: the roster HP bar becomes `bar.life` at the roster's size (drops
      `color.hud.trackEdge`); #126 also applies the font scheme (docs/decisions/2026-11-18-155-font-scheme-three-
-     tiers.md, the Fonts Fold Map) and fixes tokens.js's backwards pokeBW and michroma job text.
+     tiers.md, the Fonts Fold Map) and fixes tokens.js's backwards pokeBW and michroma job text. #126 also swaps the
+     buttons to button.glitch and the shared panels to #157's clean panel (decisions 2026-11-18-155-button-glitch-
+     replaces-slanted-and-rounded and 2026-11-18-155-pixel-panels-for-one-pokemon-clean-for-the-rest).
 1. #145 small and ready. #150 blocked on #97.
 2. #128 acquisition: #138 next, then #146 keep-or-sell list; order in
    docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
@@ -37,7 +37,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 7. Leftovers from earlier: #49 close or umbrella; board by hand (#86 to Accepted, #29 out of Blocked, the Triage cards);
    drafts (leader reads your cards and items as seen; buffValue reads the whole kit; trace records the leader's level; 16i
    parity; #122 comment on early gates). Any time: #121, #120, #57, #58, #110.
-   Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107 #156.
+   Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107 #156. #155 card sits in Triage (move it).
 8. Owner decisions: #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
 9. New issues to file: region type maps, PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing.
 10. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83; unknown local branch
