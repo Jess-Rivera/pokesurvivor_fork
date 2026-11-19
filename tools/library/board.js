@@ -29,6 +29,7 @@ const NAV = [
       { id: 'primitives/bars', title: 'Bars' },
       { id: 'primitives/modal', title: 'Modal' },
       { id: 'primitives/portraits', title: 'Portraits' },
+      { id: 'primitives/chips', title: 'Chips' },
     ],
   },
   {

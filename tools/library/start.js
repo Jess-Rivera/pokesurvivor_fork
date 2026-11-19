@@ -13,6 +13,7 @@ const DRAW = {
   'primitives/bars': barsPage,
   'primitives/modal': modalPage,
   'primitives/portraits': portraitsPage,
+  'primitives/chips': chipsPage,
   'run.hud.playerActive.bar': activeBarPage,
 };
 // the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
