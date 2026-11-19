@@ -332,12 +332,7 @@ G.Lib.Panel = (() => {
       style=${{ ...style, width: shape.width + 'px', height: shape.height + 'px' }}
       ...${attrs || {}}
     >
-      <${PixelShape}
-        artWidth=${artWidth}
-        artRows=${RUN_BOX_ROWS}
-        artPixel=${artPixel}
-        paintRow=${shape.paintRow}
-      />
+      <${PixelShape} artWidth=${artWidth} artRows=${RUN_BOX_ROWS} artPixel=${artPixel} paintRow=${shape.paintRow} />
       ${
         item
           ? html`<${HorizontalCardName} text=${item.name} place=${shape.namePlace} room=${shape.nameRoom} />

@@ -135,7 +135,7 @@ G.Lib.PanelStories = (() => {
     stageClass: 'lib-stage-panel',
     job:
       "The windows' flat frame: the panel body, a 1 px frame and a 2 px outline. Screens with their own markup add " +
-      "the panel-flat class.",
+      'the panel-flat class.',
     files: 'js/ui/lib/primitives/panel/panel.js, panel.css',
     tokens: ['color.hud.body', 'color.hud.frame', 'color.hud.outline'],
     size: 'any size; the screen sets it',

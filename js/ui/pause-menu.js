@@ -242,7 +242,9 @@ G.PauseMenu = (() => {
       <div class="pm-panel panel-flat pm-panel-detail" data-panel="detail">
         ${pokemon ? html`<${pokemon.DetailPanel} />` : null}
       </div>
-      <div class="pm-panel panel-flat pm-panel-team" data-panel="team">${pokemon ? html`<${pokemon.TeamPanel} />` : null}</div>
+      <div class="pm-panel panel-flat pm-panel-team" data-panel="team">
+        ${pokemon ? html`<${pokemon.TeamPanel} />` : null}
+      </div>
       <div class="pm-panel panel-flat pm-panel-inventory" data-panel="inventory">
         ${inventory && !reviewing.value ? html`<${inventory.InventoryPanel} />` : null}
       </div>`;

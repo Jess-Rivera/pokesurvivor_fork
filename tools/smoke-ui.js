@@ -1352,8 +1352,7 @@ async function shopFlow(browser, query, tag) {
   // how the Shop's buttons write each price, asked of the game (G.U.compact from the windows' threshold), never typed
   const shortPrices = (prices) =>
     page.evaluate(
-      (list) =>
-        Object.fromEntries(list.map((price) => [price, G.U.compact(price, G.MenuWindowKit.SHORT_PRICE_FROM)])),
+      (list) => Object.fromEntries(list.map((price) => [price, G.U.compact(price, G.MenuWindowKit.SHORT_PRICE_FROM)])),
       prices.filter(Boolean)
     );
   // a label shows a price: its last word is that price as the Shop's buttons write it
@@ -2564,7 +2563,8 @@ async function askFlow(browser, query, tag) {
       answers.space.answer === true &&
       answers.escape.answer === false &&
       Object.values(answers).every((result) => !result.open),
-    tag + ': Enter and Space press the green button (Confirm at first), Right then Enter cancels, Esc cancels (' +
+    tag +
+      ': Enter and Space press the green button (Confirm at first), Right then Enter cancels, Esc cancels (' +
       JSON.stringify(answers) +
       ')'
   );

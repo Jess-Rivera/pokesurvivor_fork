@@ -91,7 +91,7 @@ G.Tokens = (() => {
       id: 'text',
       title: 'Text',
       job: "Text colours of the library's pieces",
-      source: 'js/ui/lib/primitives/button/button.css and panel/panel.css (from the screens\' stylesheets, 155b, 155c)',
+      source: "js/ui/lib/primitives/button/button.css and panel/panel.css (from the screens' stylesheets, 155b, 155c)",
       colours: [
         ['label', '#ffffff', 'A button label'],
         ['labelRefused', 'rgba(255, 255, 255, 0.45)', 'The label of a button that refuses (#151): white at 45%'],

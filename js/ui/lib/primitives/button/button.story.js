@@ -27,8 +27,7 @@ G.Lib.ButtonStories = (() => {
     name: 'button.slanted',
     component: 'SlantedButton',
     stageClass: 'lib-stage-slanted',
-    job:
-      "The run screen's move slot shape at 1.5x, for the run screens' menus: Resume, Settings, End Run, the answers.",
+    job: "The run screen's move slot shape at 1.5x, for the run screens' menus: Resume, Settings, End Run, the answers.",
     files: 'js/ui/lib/primitives/button/button.js, button.css',
     tokens: [
       'color.hud.outline',
@@ -103,7 +102,7 @@ G.Lib.ButtonStories = (() => {
     component: 'RoundedButton',
     stageClass: 'lib-stage-rounded',
     job:
-      "The B/W bag button, for the catch screen and the Main Menu windows. Named by intent: positive moves forward " +
+      'The B/W bag button, for the catch screen and the Main Menu windows. Named by intent: positive moves forward ' +
       'or buys, negative takes something away.',
     files: 'js/ui/lib/primitives/button/button.js, button.css',
     tokens: [
