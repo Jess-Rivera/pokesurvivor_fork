@@ -10,7 +10,7 @@ const DRAW = {
   'primitives/cursor': cursorPage,
   'primitives/panels': panelsPage,
   'primitives/squares': squaresPage,
-  'primitives/bars': primitivePage('primitives/bars'),
+  'primitives/bars': barsPage,
   'primitives/modal': primitivePage('primitives/modal'),
   'primitives/portraits': primitivePage('primitives/portraits'),
 };

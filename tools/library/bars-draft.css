@@ -1,0 +1,98 @@
+/* tools/library/bars-draft.css: the Bars, Unified tab (bars-draft.js). Board only. */
+.lib-bar {
+  position: relative;
+  display: inline-block;
+}
+.lib-bar-label {
+  /* the italic "HP": 20 px HUD text, the browser's slant, an ink outline (bar.css .hud-hp-label, copied) */
+  position: absolute;
+  font-size: 20px;
+  font-style: italic;
+  font-synthesis: style;
+  line-height: 24px;
+  text-shadow:
+    2px 0 0 var(--bar-outline),
+    -2px 0 0 var(--bar-outline),
+    0 2px 0 var(--bar-outline),
+    0 -2px 0 var(--bar-outline),
+    2px 2px 0 var(--bar-outline),
+    -2px 2px 0 var(--bar-outline),
+    2px -2px 0 var(--bar-outline),
+    -2px -2px 0 var(--bar-outline);
+}
+.lib-bar-track {
+  position: absolute;
+}
+.lib-bar-fill.is-growing {
+  transition: width 0.3s linear; /* a heal eases the fill in */
+}
+/* the cut piece: a white flash while it hops up --bar-hop, then grey, falling as the flash ends (--bar-hold is the
+   flash's length). One animation, so the hop and the fall share the transform; 16.667% is the flash's share of the
+   whole (80 of 480 ms), a keyframe can't read a variable, so change it with the timings. */
+.lib-bar-piece.is-falling {
+  animation:
+    lib-bar-piece-fall calc(var(--bar-hold, 80ms) + var(--bar-fall, 400ms)) linear forwards,
+    lib-bar-piece-drift calc(var(--bar-hold, 80ms) + var(--bar-fall, 400ms)) linear forwards;
+}
+/* the flash: pure white over all three rows, cut off hard after --bar-flash-ms (it falls with the piece) */
+.lib-bar-piece.is-flashing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bar-flash, #ffffff);
+  animation: lib-bar-piece-flash var(--bar-flash-ms, 80ms) steps(1, end) forwards;
+}
+@keyframes lib-bar-piece-flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+/* the drift: a steady sideways slide over the hop and the fall (its own property, translate, so it stays linear while
+   the fall eases in: a thrown arc, not a slide). Always right, off the track's empty end (Jess 2026-11-19) */
+@keyframes lib-bar-piece-drift {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: var(--bar-drift, 8px) 0;
+  }
+}
+@keyframes lib-bar-piece-fall {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1); /* the hop: quick up, easing to a stop */
+  }
+  16.667% {
+    transform: translateY(calc(var(--bar-hop, 4px) * -1));
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); /* the fall: today's ease-in */
+  }
+  100% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+.lib-bar-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 56px; /* room for a piece to fall 40 px */
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  font-style: normal;
+}
+.lib-bar-timer-box {
+  position: relative;
+  width: 160px;
+  height: 14px;
+}
+.lib-bar-timer {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 160px;
+}
