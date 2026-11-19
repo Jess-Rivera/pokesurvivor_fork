@@ -7,7 +7,7 @@ G.Lib.PortraitStories = (() => {
   const portrait = G.Lib.Portrait;
   if (!portrait || !portrait.ready) return [];
   // a leader circle's numbers (48 px, a 4 px stroke) for every state
-  const PIKACHU = { src: '../assets/pokemon/25/Portrait.png', dex: 25, size: 48, stroke: 4 };
+  const PIKACHU = { src: '../../assets/pokemon/25/Portrait.png', dex: 25, size: 48, stroke: 4 };
 
   const round = {
     name: 'portrait.round',
@@ -15,7 +15,7 @@ G.Lib.PortraitStories = (() => {
     stageClass: 'lib-stage-portrait',
     job:
       "A Pokemon's face in a circle with a stroke in a rim colour. With a ring (the EXP ring) it sits inside a band " +
-      "that fills clockwise from the top.",
+      'that fills clockwise from the top.',
     files: "js/ui/lib/primitives/portrait/portrait.js, portrait.css; which file to load: the kit's portraitSource",
     tokens: ['color.hud.outline', 'color.hud.expFill', 'color.hud.trackLight', 'color.type.*'],
     size: 'the screen sets it: 116 px with the ring, 48 px leader circles and owned faces, 44 px roster faces',

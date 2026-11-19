@@ -57,6 +57,22 @@ module.exports = [
     rules,
   },
   {
+    // The UI Library board (#155): plain browser scripts that share their top-level names across files in load order
+    // (tools/library/index.html), which ESLint cannot see, so undefined and unused globals are not checked here.
+    files: ['tools/library/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'script',
+      globals: { ...globals.browser, G: 'writable', preact: 'readonly', htm: 'readonly' },
+    },
+    rules: {
+      ...rules,
+      'no-undef': 'off',
+      'no-redeclare': ['error', { builtinGlobals: false }],
+      'no-unused-vars': ['warn', { vars: 'local', args: 'none', caughtErrors: 'none' }],
+    },
+  },
+  {
     // The smokes carry page code that runs inside the headless browser.
     files: ['tools/smoke-*.js'],
     languageOptions: { globals: { ...globals.node, ...globals.browser, G: 'writable' } },

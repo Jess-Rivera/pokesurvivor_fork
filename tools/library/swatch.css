@@ -1,4 +1,4 @@
-/* ============ swatch.css: the board's colour swatch (tools/library.html, Tokens, Colours 2.0) ============
+/* ============ swatch.css: the board's colour swatch (tools/library/index.html, Tokens, Colours 2.0) ============
  * From the Uiverse.io swatch by arshshaikh06 (tools/library/idea-holding/color-swatch.html, .css), with its classes
  * prefixed and each colour set inline instead of by nth-child. Clicking a colour copies its #HEX. No shadows (the
  * original's light shadow glowed on the dark board). A header above names the group (color.hud.*); the group's story

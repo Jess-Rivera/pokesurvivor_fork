@@ -1,5 +1,5 @@
 // tools/smoke-ui-library.js: headless check for the UI Library pages: the old page (tools/ui-library.html, #147) and, since
-// #155, the board (tools/library.html; its relations are listed above checkBoard). A check, not a harness:
+// #155, the board (tools/library/index.html; its relations are listed above checkBoard). A check, not a harness:
 // check.js syntax-checks it. Playwright is NOT a repo dependency (PLAYWRIGHT_DIR, default C:\Users\boric\tools\playwright).
 // Usage from the repo root: node tools/smoke-ui-library.js
 // Relations checked (docs/TEST-FIRST.md): every colour docs/HUD-STYLE.md "Colour palette" and docs/UI-PALETTES.md list is shown on
@@ -34,7 +34,7 @@ const paletteEnd = hudStyle.indexOf('\n## Shapes', paletteStart);
 const hudStyleColours = hexesIn(hudStyle.slice(paletteStart, paletteEnd));
 const referenceColours = hexesIn(fs.readFileSync(path.join(root, 'docs', 'UI-PALETTES.md'), 'utf8'));
 
-// ---------- the board, tools/library.html (#155) ----------
+// ---------- the board, tools/library/index.html (#155) ----------
 // Relations (opening: docs/ASCII Concept Maps/UI Library v2 - Slice Opening.md): it loads from file:// with no errors and
 // none of the game's scripts; every token in tokens.js shows with its name; every HUD-STYLE and UI-PALETTES colour shows
 // (read from the docs, not from the board's copy); every font face loads, and the game's CSS loads the same font files
@@ -77,11 +77,13 @@ function gameFontFaces() {
 }
 
 async function checkBoard(browser) {
-  console.log('\n-- the board: tools/library.html --');
+  console.log('\n-- the board: tools/library/index.html --');
   const tokens = loadTokens();
-  const boardFile = path.join(root, 'tools', 'library.html');
+  const boardFile = path.join(root, 'tools', 'library', 'index.html');
   const boardScripts = [...fs.readFileSync(boardFile, 'utf8').matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]);
-  const notLibrary = boardScripts.filter((src) => !/^(\.\.\/js\/ui\/lib\/|\.\.\/js\/vendor\/|library\/)/.test(src));
+  const notLibrary = boardScripts.filter(
+    (src) => !/^(\.\.\/\.\.\/js\/ui\/lib\/|\.\.\/\.\.\/js\/vendor\/|[\w.-]+\.js$)/.test(src)
+  );
   ok(
     boardScripts.length > 0 && notLibrary.length === 0,
     `the board loads only library files (${boardScripts.length} scripts)` +

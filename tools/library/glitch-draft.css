@@ -1,0 +1,169 @@
+/* tools/library/glitch-draft.css: the Glitch Draft button's styles (the board, tools/library/index.html; #155) */
+/* the glitch button draft (from tools/library/idea-holding/glitch-button-base.css, Uiverse.io by namecho): a body with
+   its bottom-left corner cut at 45 degrees and a bar down its right side; colours set inline (the draft) */
+.lib-glitch-button {
+  position: relative;
+  padding: 16px 20px;
+  border: 0;
+  outline: transparent;
+  cursor: default;
+  font:
+    18px/1 'HudModule',
+    sans-serif;
+  letter-spacing: 3px;
+  color: var(--glitch-text);
+  background: linear-gradient(45deg, transparent 5%, var(--glitch-body) 5%);
+  box-shadow: 6px 0 0 var(--glitch-bar);
+}
+/* focus: the same button in the focus colours on top, bar included, uncovered by one swipe from the right edge to
+   the left (bar, then body, then each letter as the edge passes it); leaving the cursor swipes it back */
+.lib-glitch-button::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: -6px;
+  box-sizing: border-box;
+  padding: 16px 26px 16px 20px;
+  white-space: nowrap;
+  text-align: center;
+  color: var(--glitch-focus-text);
+  background:
+    linear-gradient(var(--glitch-focus-bar), var(--glitch-focus-bar)) right / 6px 100% no-repeat,
+    linear-gradient(45deg, transparent 5%, var(--glitch-focus-body) 5%) left / calc(100% - 6px) 100% no-repeat;
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path var(--glitch-swipe) linear;
+}
+.lib-glitch-button:hover::after,
+.lib-glitch-button.focused::after {
+  clip-path: inset(0);
+}
+/* press (Jess 2026-11-18): a CRT switching off. A copy of the label sits exactly over the focus label (which hides
+   while it plays): it collapses to a thin line while stretching a little wider, then shrinks
+   to a dot that stays while held. Release is the CRT switching on: the dot draws out to a line, the line opens into
+   text that overshoots, flickers once, then settles. All in the focus text colour (ink). The clip drops the letter spacing that trails
+   the last letter, so the line is exactly as wide as the word. */
+.lib-glitch-button::before {
+  content: attr(data-label);
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  white-space: nowrap;
+  color: var(--glitch-focus-text);
+  visibility: hidden;
+  clip-path: inset(0 3px 0 0);
+  transform: translate(-50%, -50%);
+}
+.lib-glitch-button:active::after,
+.lib-glitch-button.pressed::after,
+.lib-glitch-button.released::after {
+  color: transparent;
+}
+.lib-glitch-button:active::before,
+.lib-glitch-button.pressed::before {
+  visibility: visible;
+  animation: lib-crt-off var(--glitch-press) forwards;
+}
+.lib-glitch-button.released::before {
+  visibility: visible;
+  animation: lib-crt-on var(--glitch-release) forwards;
+}
+@keyframes lib-crt-off {
+  0% {
+    transform: translate(-50%, -50%) scale(1, 1);
+    animation-timing-function: ease-in;
+  }
+  40% {
+    transform: translate(-50%, -50%) scale(1.12, 0.1111);
+    color: var(--glitch-focus-text);
+    background-color: transparent;
+  }
+  41% {
+    transform: translate(-50%, -50%) scale(1.12, 0.1111);
+    color: transparent;
+    background-color: var(--glitch-focus-text);
+  }
+  55% {
+    transform: translate(-50%, -50%) scale(1.12, 0.1111);
+    color: transparent;
+    background-color: var(--glitch-focus-text);
+    animation-timing-function: ease-in;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.02, 0.1111);
+    color: transparent;
+    background-color: var(--glitch-focus-text);
+  }
+}
+@keyframes lib-crt-on {
+  0% {
+    transform: translate(-50%, -50%) scale(0.02, 0.1111);
+    color: transparent;
+    background-color: var(--glitch-focus-text);
+    animation-timing-function: ease-out;
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1.12, 0.1111);
+    color: transparent;
+    background-color: var(--glitch-focus-text);
+  }
+  36% {
+    transform: translate(-50%, -50%) scale(1.12, 0.1111);
+    color: var(--glitch-focus-text);
+    background-color: transparent;
+    animation-timing-function: ease-out;
+  }
+  65% {
+    transform: translate(-50%, -50%) scale(1, 1.15);
+    color: var(--glitch-focus-text);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(-50%, -50%) scale(1, 1);
+    opacity: 0.3;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1, 1);
+    color: var(--glitch-focus-text);
+    opacity: 1;
+  }
+}
+/* refused press (Jess 2026-11-18): no switch-off, the label stays; the button shakes sideways once, "no" */
+.lib-glitch-button.refused:active {
+  animation: lib-refused-shake var(--glitch-shake) linear;
+}
+@keyframes lib-refused-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+.lib-glitch-button.refused:active::after {
+  color: var(--glitch-focus-text);
+}
+.lib-glitch-button.refused:active::before {
+  visibility: hidden;
+  animation: none;
+}
+/* disabled (Jess 2026-11-18): the cursor skips it, so no focus layer and no press copy */
+.lib-glitch-button.disabled::after,
+.lib-glitch-button.disabled::before {
+  display: none;
+}
