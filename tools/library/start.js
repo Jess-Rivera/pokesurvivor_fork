@@ -11,7 +11,7 @@ const DRAW = {
   'primitives/panels': panelsPage,
   'primitives/squares': squaresPage,
   'primitives/bars': barsPage,
-  'primitives/modal': primitivePage('primitives/modal'),
+  'primitives/modal': modalPage,
   'primitives/portraits': primitivePage('primitives/portraits'),
 };
 // the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
