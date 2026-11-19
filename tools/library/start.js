@@ -6,6 +6,7 @@ const DRAW = {
   'tokens/fonts': fontsPage,
   'tokens/layers': layersPage,
   'primitives/buttons': buttonsPage,
+  'primitives/toggles': togglesPage,
   'primitives/panels': primitivePage('primitives/panels'),
   'primitives/squares': primitivePage('primitives/squares'),
   'primitives/bars': primitivePage('primitives/bars'),

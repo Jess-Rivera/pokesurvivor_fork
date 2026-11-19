@@ -167,3 +167,83 @@
 .lib-glitch-button.disabled::before {
   display: none;
 }
+/* glitch, the secret state (Jess 2026-11-18; from the source's hover layer): the focused look in slices that jump in
+   hard steps, the label split into two offset colour copies. Hidden until a burst: the board adds .bursting for one
+   run of the keyframes over the burst length (its script sets the duration and the gap). */
+.lib-glitch-slices {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: -6px;
+  box-sizing: border-box;
+  padding: 16px 26px 16px 20px;
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none;
+  color: var(--glitch-focus-text);
+  background:
+    linear-gradient(var(--glitch-focus-bar), var(--glitch-focus-bar)) right / 6px 100% no-repeat,
+    linear-gradient(
+        45deg,
+        transparent 3%,
+        var(--glitch-split-b) 3%,
+        var(--glitch-split-b) 5%,
+        var(--glitch-focus-body) 5%
+      )
+      left / calc(100% - 6px) 100% no-repeat;
+  text-shadow:
+    -3px -3px 0 var(--glitch-split-a),
+    3px 3px 0 var(--glitch-split-b);
+  clip-path: inset(50% 50% 50% 50%);
+}
+.lib-glitch-slices.bursting {
+  animation: lib-glitch-secret 1s steps(2, end) 1;
+}
+@keyframes lib-glitch-secret {
+  0% {
+    clip-path: inset(80% 0 0 0);
+    transform: translate(-20px, -10px);
+  }
+  10% {
+    clip-path: inset(10% 0 85% 0);
+    transform: translate(10px, 10px);
+  }
+  20% {
+    clip-path: inset(80% 0 0 0);
+    transform: translate(-10px, 10px);
+  }
+  30% {
+    clip-path: inset(10% 0 85% 0);
+    transform: translate(0, 5px);
+  }
+  40% {
+    clip-path: inset(50% 0 30% 0);
+    transform: translate(-5px, 0);
+  }
+  50% {
+    clip-path: inset(10% 0 85% 0);
+    transform: translate(5px, 0);
+  }
+  60% {
+    clip-path: inset(40% 0 43% 0);
+    transform: translate(5px, 10px);
+  }
+  70% {
+    clip-path: inset(50% 0 30% 0);
+    transform: translate(-10px, 10px);
+  }
+  80% {
+    clip-path: inset(80% 0 5% 0);
+    transform: translate(20px, -10px);
+  }
+  90% {
+    clip-path: inset(80% 0 0 0);
+    transform: translate(-10px, 0);
+  }
+  100% {
+    clip-path: inset(50% 50% 50% 50%);
+    transform: translate(0);
+  }
+}

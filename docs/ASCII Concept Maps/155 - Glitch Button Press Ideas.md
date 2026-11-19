@@ -91,9 +91,12 @@ flowchart LR
 
 ## Built (2026-11-18): the full button set
 
-Neutral (teal), negative (red.base, takes or gives away), positive (green.base, spends). Each: rest, focus, press (CRT),
+One piece, button.glitch (named by its look); the intent is in the state name (focusNeutral, focusNegative,
+focusPositive). Neutral (teal), negative (red.base, takes or gives away), positive (green.base, spends). States: rest, focus, press (CRT),
 refused (grey.mid bar and label), refused focus (grey.mid body, the kind's colour on the bar), refused press (a 120 ms
 sideways shake), disabled (refused's rest with ink text; the cursor skips it). Colours only from Tokens, Colours,
 Unified (Jess).
 
 Selected is not a button state: a toggle (and maybe tabs) is its own primitive, later.
+
+Secret state glitchNeutral, glitchNegative, glitchPositive: set by burst, gap and count (first time 400 ms once).

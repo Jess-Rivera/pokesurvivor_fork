@@ -22,6 +22,7 @@ const NAV = [
     title: 'Primitives',
     items: [
       { id: 'primitives/buttons', title: 'Buttons' },
+      { id: 'primitives/toggles', title: 'Toggles' },
       { id: 'primitives/panels', title: 'Panels' },
       { id: 'primitives/squares', title: 'Squares' },
       { id: 'primitives/bars', title: 'Bars' },

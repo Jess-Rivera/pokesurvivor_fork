@@ -8,28 +8,35 @@
 // glitch layer is not drawn. Board only: not a library piece yet, so no story file and no game file.
 const GLITCH_REST = { body: greyTone('raised'), bar: greyTone('white'), text: greyTone('white') };
 const rampBase = (ramp) => valueOf(ramp.colours.find((colour) => colour[0] === 'base'));
-// The three kinds (Jess 2026-11-18): the same button, only the focus body differs. Neutral is the standard; negative
-// takes or gives something away; positive spends something.
-const GLITCH_KINDS = [
+// One piece, button.glitch, named by its look (decision 2026-11-18-155-library-pieces-named-by-look). Its intent
+// (Jess 2026-11-18) is part of the state name, as in button.glitch.focusNegative: only the focus body differs. Neutral
+// is the standard; negative takes or gives something away; positive spends something.
+const GLITCH_INTENTS = [
   {
-    name: 'button.neutral',
+    intent: 'Neutral',
     job: 'The standard button',
     token: 'color.teal.base',
     focusBody: rampBase(UNIFIED_TEAL),
+    glitchSplit: [rampBase(UNIFIED_YELLOW), rampBase(UNIFIED_RED)],
+    splitToken: 'color.red.base',
     labels: ['Resume', 'Settings', 'Team'],
   },
   {
-    name: 'button.negative',
+    intent: 'Negative',
     job: 'Takes or gives something away',
     token: 'color.red.base',
     focusBody: rampBase(UNIFIED_RED),
+    glitchSplit: [rampBase(UNIFIED_YELLOW), rampBase(UNIFIED_TEAL)],
+    splitToken: 'color.teal.base',
     labels: ['End Run', 'Sell', 'Let It Go'],
   },
   {
-    name: 'button.positive',
+    intent: 'Positive',
     job: 'Spends something',
     token: 'color.green.base',
     focusBody: rampBase(UNIFIED_GREEN),
+    glitchSplit: [rampBase(UNIFIED_YELLOW), rampBase(UNIFIED_TEAL)],
+    splitToken: 'color.teal.base',
     labels: ['Buy 9k', 'Reroll', 'Upgrade'],
   },
 ];
@@ -48,6 +55,15 @@ const GLITCH_REFUSED = { bar: greyTone('mid'), text: greyTone('mid'), focusBody:
 // Disabled (Jess 2026-11-18): not an option at all, so the cursor skips it: rest only, no swipe and no press. Refused's
 // rest look with ink text, so it reads fainter than a refused button.
 const GLITCH_DISABLED = { bar: greyTone('mid'), text: greyTone('ink') };
+// Glitch, the secret state (Jess 2026-11-18): for the meta-narrative later, not used by any screen yet. The source's
+// glitch layer: slices of the focused button jump about in hard steps, its label split into two offset colour copies
+// (yellow.base up-left and a second Unified base down-right, which also draws the stripe at the cut corner).
+// Three settings (Jess 2026-11-18), the props it takes once it is a library piece: burst (how long one glitch lasts),
+// gap (the calm between bursts) and count (how many bursts; Infinity for forever). The board shows two setups.
+const GLITCH_BURSTS = {
+  first: { burst: 400, gap: 0, count: 1 }, // the first time the glitch happens: one short burst (Jess)
+  loop: { burst: 1000, gap: 1000, count: Infinity }, // a repeating glitch, looped so it can be watched
+};
 const glitchColours = (kind, refused, disabled) =>
   [
     ['--glitch-body', GLITCH_REST.body],
@@ -60,6 +76,8 @@ const glitchColours = (kind, refused, disabled) =>
     ['--glitch-press', GLITCH_PRESS_MS + 'ms'],
     ['--glitch-release', GLITCH_RELEASE_MS + 'ms'],
     ['--glitch-shake', GLITCH_SHAKE_MS + 'ms'],
+    ['--glitch-split-a', kind.glitchSplit[0]],
+    ['--glitch-split-b', kind.glitchSplit[1]],
   ]
     .map(([name, value]) => `${name}:${value}`)
     .join(';');
@@ -67,18 +85,49 @@ const glitchButtons = (kind, look) =>
   kind.labels
     .map(
       (label) => `<button type="button" class="lib-glitch-button${look ? ' ' + look : ''}"
-    tabindex="-1" data-label="${esc(label)}" style="${glitchColours(kind, / refused/.test(' ' + look), / disabled/.test(' ' + look))}">${esc(
-      label
-    )}</button>`
+    tabindex="-1" data-label="${esc(label)}" style="${glitchColours(kind, / refused/.test(' ' + look), / disabled/.test(' ' + look))}">${esc(label)}${
+      / secret/.test(' ' + look)
+        ? `<span class="lib-glitch-slices" aria-hidden="true" data-burst="${look.match(/secret-(\w+)/)[1]}">${esc(label)}</span>`
+        : ''
+    }</button>`
     )
     .join('');
 const glitchTile = (kind, state, title, look) => `<figure class="lib-state">
-  <div class="lib-stage" data-state="${kind.name}:${state}"
+  <div class="lib-stage" data-state="button.glitch:${state}"
     style="display:flex;gap:24px;background:${GLITCH_STAGE}">
     ${glitchButtons(kind, look)}</div>
-  <figcaption>${nameButton(kind.name + '.' + state)}<br>${esc(title)}</figcaption></figure>`;
+  <figcaption>${nameButton('button.glitch.' + state)}<br>${esc(title)}</figcaption></figure>`;
 const glitchColour = (part, token, value) =>
   `<dt>${esc(part)}</dt><dd>${nameButton(token)}<span>${esc(value)}</span></dd>`;
+// Plays a glitch layer's bursts: each burst runs the keyframes once over its burst length, then waits out the gap.
+// Stops when the page is redrawn (the layer leaves the document).
+function playGlitch(layer, { burst, gap, count }) {
+  let played = 0;
+  const next = () => {
+    if (!layer.isConnected || played >= count) return;
+    played++;
+    layer.style.animationDuration = burst + 'ms';
+    layer.classList.remove('bursting');
+    void layer.offsetWidth; // restart the keyframes
+    layer.classList.add('bursting');
+    setTimeout(next, burst + gap);
+  };
+  next();
+}
+const startGlitches = (root) =>
+  root.querySelectorAll('.lib-glitch-slices[data-burst]:not([data-playing])').forEach((layer) => {
+    layer.dataset.playing = '';
+    playGlitch(layer, GLITCH_BURSTS[layer.dataset.burst]);
+  });
+new MutationObserver(() => startGlitches(document)).observe(document.getElementById('main'), { childList: true });
+// a click on a first-time tile plays its one burst again
+document.addEventListener('click', (event) => {
+  const stage = event.target.closest('.lib-stage');
+  if (!stage) return;
+  stage
+    .querySelectorAll('.lib-glitch-slices[data-burst="first"]')
+    .forEach((layer) => playGlitch(layer, GLITCH_BURSTS.first));
+});
 // Release: CSS has no "just stopped being pressed" state, so the board marks the pressed button and plays the switch-on
 // as a class when the mouse comes up anywhere.
 let glitchHeld = null;
@@ -94,22 +143,31 @@ document.addEventListener('pointerup', () => {
   button.classList.add('released');
   setTimeout(() => button.classList.remove('released'), GLITCH_RELEASE_MS);
 });
-const glitchKindStory = (kind) => `<section class="lib-story" data-draft="${kind.name}">
-    <h3>${nameButton(kind.name)} <span class="lib-dim">${esc(kind.job)}</span>
-      <span class="lib-dim lib-mono">draft, board only</span></h3>
+// the states that look the same whatever the intent; hovering the rest tile plays the neutral swipe
+const glitchSharedStates = (neutral) => `<h4 class="lib-dim">Every intent</h4>
     <div class="lib-states">
-      ${glitchTile(kind, 'rest', 'At rest (hover one to play the swipe, hold the mouse to press)', '')}
-      ${glitchTile(kind, 'focus', 'Under the cursor, after the swipe', 'focused')}
-      ${glitchTile(kind, 'press', 'Held down, after the switch-off', 'focused pressed')}
-      ${glitchTile(kind, 'refused', 'Refused, at rest (hover one to play the swipe, press it to shake)', 'refused')}
-      ${glitchTile(kind, 'refusedFocus', 'Refused, under the cursor', 'refused focused')}
-      ${glitchTile(kind, 'disabled', 'Disabled: the cursor skips it, so hover and press do nothing', 'disabled')}
+      ${glitchTile(neutral, 'rest', 'At rest (hover one to play the neutral swipe, hold the mouse to press)', '')}
+      ${glitchTile(neutral, 'refused', 'Refused, at rest (hover one to play the swipe, press it to shake)', 'refused')}
+      ${glitchTile(neutral, 'disabled', 'Disabled: the cursor skips it, so hover and press do nothing', 'disabled')}
+    </div>`;
+const glitchIntentStates = (kind) => `<h4 class="lib-dim">${esc(kind.intent)}: ${esc(kind.job)}</h4>
+    <div class="lib-states">
+      ${glitchTile(kind, 'focus' + kind.intent, 'Under the cursor, after the swipe', 'focused')}
+      ${glitchTile(kind, 'press' + kind.intent, 'Held down, after the switch-off', 'focused pressed')}
+      ${glitchTile(kind, 'refusedFocus' + kind.intent, 'Refused, under the cursor', 'refused focused')}
+      ${glitchTile(kind, 'glitch' + kind.intent, 'Secret, the first time: one 400 ms burst (click it to replay)', 'secret secret-first')}
+      ${glitchTile(kind, 'glitch' + kind.intent, 'Secret, repeating: 1 s bursts with 1 s gaps, forever', 'secret secret-loop')}
     </div>
     <dl class="lib-facts">${glitchColour('Focus body', kind.token, kind.focusBody)}
-      ${glitchColour('Refused focus bar', kind.token, kind.focusBody)}</dl></section>`;
+      ${glitchColour('Refused focus bar', kind.token, kind.focusBody)}
+      ${glitchColour('Glitch split, up-left', 'color.yellow.base', kind.glitchSplit[0])}
+      ${glitchColour('Glitch split, down-right', kind.splitToken, kind.glitchSplit[1])}</dl>`;
 function glitchDraftPage() {
-  return `${GLITCH_KINDS.map(glitchKindStory).join('')}
-    <section class="lib-story"><h3>Shared by all three</h3>
+  return `<section class="lib-story" data-draft="button.glitch">
+    <h3>${nameButton('button.glitch')} <span class="lib-dim lib-mono">draft, board only</span></h3>
+    ${glitchSharedStates(GLITCH_INTENTS[0])}
+    ${GLITCH_INTENTS.map(glitchIntentStates).join('')}
+    <h4 class="lib-dim">Shared by every intent</h4>
     <dl class="lib-facts">
       ${glitchColour('Behind', 'color.grey.panel', GLITCH_STAGE)}
       ${glitchColour('Rest body', 'color.grey.raised', GLITCH_REST.body)}
@@ -129,6 +187,9 @@ function glitchDraftPage() {
         wider than the word, then shrinks to an ink dot that stays while held.</dd>
       <dt>Release</dt><dd>A CRT switching on, ${GLITCH_RELEASE_MS} ms: the dot draws out into an ink line, the line opens
         into the label, which overshoots, flickers once, then settles.</dd>
+      <dt>Glitch</dt><dd>The source's slice-and-jump layer over the focused look, in hard steps. Set by burst, gap and
+        count: the first time ${GLITCH_BURSTS.first.burst} ms once; repeating ${GLITCH_BURSTS.loop.burst} ms bursts with
+        ${GLITCH_BURSTS.loop.gap} ms gaps. Secret: no screen uses it until the meta-narrative.</dd>
       <dt>Font</dt><dd>${nameButton('font.michroma')}<span>18 px, letter spacing 3 px (the source's size)</span></dd>
       <dt>Shape</dt><dd>Padding 16 x 20 px; bottom-left corner cut at 45 degrees (5% of the diagonal); a 6 px bar on the
         right</dd>
@@ -141,8 +202,8 @@ const BUTTON_TABS = [
     id: 'glitch',
     title: 'Glitch Draft',
     note:
-      'A possible new button design, being worked out one state at a time: button.neutral, button.negative and ' +
-      'button.positive, at rest, focused and pressed so far.',
+      'A possible new button design, button.glitch: its states for every intent, then the ones that change with the ' +
+      'intent (neutral, negative, positive).',
     draw: glitchDraftPage,
   },
 ];
