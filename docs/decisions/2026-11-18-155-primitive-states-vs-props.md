@@ -15,5 +15,5 @@ Applied 2026-11-18 to every primitive page: portrait.round 7 tiles to 3 (rest, a
 (rest, focusPositive, focusNegative, the rounded button's intent names), and the panels, bars and dialog trimmed the
 same way (34 tiles in all). The game is unchanged: only the story files, tools/library.html and the smoke changed.
 
-Canonical: the story files' headers (js/ui/lib/primitives/*/\*.story.js). Plan and as-built: docs/ASCII Concept
+Canonical: the story files' headers (tools/library/stories/\*.story.js, moved from js/ui/lib/primitives/ 2026-11-19). Plan and as-built: docs/ASCII Concept
 Maps/155c-6 - Primitive States and Props Plan.md.

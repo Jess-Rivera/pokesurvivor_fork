@@ -293,3 +293,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Broke and fixed: the split pointed the Pikachu portrait at tools/assets; lint jumped 212 errors (eslint block added).
 - Checks: check.js all passed, lint 0 errors; board pages loaded headless each step; smokes skipped (Jess).
 - Stopped at: #157 next. Six commits to push.
+
+## 2026-11-19 morning (Quick, work), #157 clean panels, Unified Panels and Squares, the bar cursor
+- Built (board only): Panels and Squares Unified tabs as board copies in Unified colours (panel.clean, the detail
+  background, panel.pixel, panel.slanted, square.item, square.clean); a Cursor page (cursor.bar: blink, solid, CRT
+  move, arrow demo). Removed Buttons Current and Panels Clean Draft and Current. Stories moved to tools/library/stories/.
+- Decided: panel.slanted stays, move slot only; the held item keeps square.item. Tried and dropped: a pixel slanted
+  port, a card.horizontal slot, panel.pixel at held item size, the cut corner on panels.
+- Nothing in js/ or css/ edited (the story files moved out). check.js, lint and the smokes not run (Quick).
+- Stopped at: #157 closing (follow-up drafted for the places not drawn); next the rest of #155. Two commits to push.
