@@ -59,7 +59,7 @@ module.exports = [
   {
     // The UI Library board (#155): plain browser scripts that share their top-level names across files in load order
     // (tools/library/index.html), which ESLint cannot see, so undefined and unused globals are not checked here.
-    files: ['tools/library/*.js'],
+    files: ['tools/library/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'script',

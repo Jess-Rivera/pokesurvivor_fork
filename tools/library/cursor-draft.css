@@ -1,0 +1,96 @@
+/* tools/library/cursor-draft.css: the Cursor page's bar cursor draft (the board, tools/library/index.html) */
+/* the bar: button.glitch's 6 px bar on its own, to the right of the selected item, its full height; colour, timings and
+   the dot size are set inline (the draft) */
+.lib-cursor-host {
+  position: relative;
+  display: inline-block;
+}
+.lib-cursor-bar {
+  position: absolute;
+  width: 6px;
+  background: var(--cursor-colour);
+  pointer-events: none;
+  transform-origin: 50% 50%;
+}
+.lib-cursor-bar.is-off {
+  visibility: hidden;
+}
+/* at rest: a terminal cursor's blink, hard on and off (the blink class is never on during a CRT animation) */
+.lib-cursor-bar.is-blinking {
+  animation: lib-cursor-blink var(--cursor-blink) steps(1, end) infinite;
+}
+@keyframes lib-cursor-blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+/* CRT off, as the button's press: the bar squeezes to a short stub a little wider than itself, then to a dot */
+.lib-cursor-bar.crt-off {
+  animation: lib-cursor-off var(--cursor-off) forwards;
+}
+@keyframes lib-cursor-off {
+  0% {
+    transform: scale(1, 1);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: scale(1.33, calc(var(--dot) * 2));
+    animation-timing-function: ease-in;
+  }
+  100% {
+    transform: scale(0.67, calc(var(--dot) * 0.67));
+  }
+}
+/* CRT on, as the button's release: the dot draws out to the stub, opens past full height, flickers once, settles */
+.lib-cursor-bar.crt-on {
+  animation: lib-cursor-on var(--cursor-on) forwards;
+}
+@keyframes lib-cursor-on {
+  0% {
+    transform: scale(0.67, calc(var(--dot) * 0.67));
+    animation-timing-function: ease-out;
+  }
+  35% {
+    transform: scale(1.33, calc(var(--dot) * 2));
+    animation-timing-function: ease-out;
+  }
+  65% {
+    transform: scale(1, 1.12);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1, 1);
+    opacity: 0.3;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1, 1);
+    opacity: 1;
+  }
+}
+
+/* the demo: items laid out as a screen would, the cursor moves between them with the arrow keys */
+.lib-stage.lib-cursor-demo {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 32px 20px 20px;
+  outline: none;
+}
+.lib-cursor-demo:focus {
+  box-shadow: inset 0 0 0 1px #3a3d46;
+}
+.lib-cursor-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.lib-cursor-item {
+  position: relative;
+}

@@ -198,15 +198,8 @@ function glitchDraftPage() {
     </dl></section>`;
 }
 const BUTTON_TABS = [
-  {
-    id: 'current',
-    title: 'Current (retiring)',
-    note:
-      'Retiring: button.glitch replaces button.slanted and button.rounded on every screen at #126 (decision ' +
-      '2026-11-18-155-button-glitch-replaces-slanted-and-rounded). Shown until then because the game still draws them; ' +
-      'do not design against them.',
-    draw: () => primitiveBody('primitives/buttons'),
-  },
+  // The Current (retiring) tab is gone (Jess 2026-11-19): the board shows only the buttons in use going forward.
+  // button.slanted and button.rounded still ship in the game until #126 swaps them for button.glitch.
   {
     id: 'glitch',
     title: 'Glitch Draft',
