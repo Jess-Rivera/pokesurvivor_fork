@@ -305,3 +305,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Later: Bars, Unified tab (tools/library/bars-draft.js, .css): bars in Unified colours; the hit's cut piece flashes
   white 80 ms with a 4 px hop, goes grey (paper, mid rows) and falls at once with an 8 px rightward drift (no 1 s hold).
   Decision 2026-11-19-155-bars-unified-and-the-hit-flash. Board only.
+- Later: Modal, Unified tab (tools/library/modal-draft.js, .css): panel.clean, Michroma, button.glitch; the new
+  button.glitch.cancel state (also on Buttons); keyboard-only focus, the first key from mouse mode only reveals it.
+  Decision 2026-11-19-155-dialog-clean-cancel-state-and-input-modes; ask intents and opens-on-cancel still pending.
+  Then: reveal-first applies to the menus too at #126 (a game change); the keys start from the last button touched.
+- Later: researched confirm dialogs (report in the Quick session workspace). New rule: only a loss you cannot earn back
+  or redo gets a dialog (Sell, Delete account, Sign out as guest, leftover EVs); purchases and team edits do not ask.
+  The modal designs stay whole (all three intents) for a later positive confirm; #126 changes only how they apply.

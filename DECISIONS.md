@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-19, #155 the dialog is panel.clean, Michroma and button.glitch; button.glitch.cancel; focus shows only with the keyboard, and the first key from mouse mode only reveals it, in menus and dialogs (Jess)](docs/decisions/2026-11-19-155-dialog-clean-cancel-state-and-input-modes.md)
 - [2026-11-19, #155 the bars fold to the Unified colours; a hit's cut piece flashes white, hops, goes grey and falls with a rightward drift, no hold (Jess)](docs/decisions/2026-11-19-155-bars-unified-and-the-hit-flash.md)
 - [2026-11-19, #157 the held item keeps square.item, folded to the Unified colours; panel.pixel at 64 px not taken (Jess)](docs/decisions/2026-11-19-157-held-item-keeps-square-item.md)
 - [2026-11-19, #157 panel.slanted stays as it is, and its only place is the move slot (Jess)](docs/decisions/2026-11-19-157-panel-slanted-is-the-move-slot-only.md)
