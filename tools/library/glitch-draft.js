@@ -3,11 +3,12 @@
 'use strict';
 // ---------- Buttons, Glitch Draft (Jess 2026-11-18): a possible new button design, one state at a time ----------
 // The shape from tools/library/idea-holding/glitch-button-base.css with its colours swapped for Unified ones. Rest: the
-// red body becomes grey.raised, the teal bar and the text grey.white. Focus (under the cursor or the mouse): one swipe
+// body is transparent, so it matches whatever it sits on and the swipe is what draws the button (decision
+// 2026-11-20-155-button-glitch-rest-body-is-transparent; it was grey.raised); the bar and the text grey.white. Focus (under the cursor or the mouse): one swipe
 // from right to left turns the bar black (grey.ink), the body the kind's colour and the text black. The source's hover
 // glitch layer is not drawn. Board only: not a library piece yet, so no story file and no game file. It replaces
 // button.slanted and button.rounded on every screen at #126 (decision 2026-11-18-155-button-glitch-replaces-slanted-and-rounded).
-const GLITCH_REST = { body: greyTone('raised'), bar: greyTone('white'), text: greyTone('white') };
+const GLITCH_REST = { body: 'transparent', bar: greyTone('white'), text: greyTone('white') };
 const rampBase = (ramp) => valueOf(ramp.colours.find((colour) => colour[0] === 'base'));
 // One piece, button.glitch, named by its look (decision 2026-11-18-155-library-pieces-named-by-look). Its intent
 // (Jess 2026-11-18) is part of the state name, as in button.glitch.focusNegative: only the focus body differs. Neutral
@@ -54,8 +55,9 @@ const GLITCH_SHAKE_MS = 120; // refused press: a sideways shake, "no" (a draft, 
 // 2026-11-18; the screen still plays its sound and toast).
 const GLITCH_REFUSED = { bar: greyTone('mid'), text: greyTone('mid'), focusBody: greyTone('mid') };
 // Disabled (Jess 2026-11-18): not an option at all, so the cursor skips it: rest only, no swipe and no press. Refused's
-// rest look with ink text, so it reads fainter than a refused button.
-const GLITCH_DISABLED = { bar: greyTone('mid'), text: greyTone('ink') };
+// rest look with grey.slate text, so it reads fainter than a refused button (Jess 2026-11-20: ink text vanished once the
+// rest body went transparent over grey.panel).
+const GLITCH_DISABLED = { bar: greyTone('mid'), text: greyTone('slate') };
 // Cancel (Jess 2026-11-19): the answer that backs out of an ask. At rest it is exactly button.glitch.rest. Under the
 // cursor the same swipe uncovers the inverse of the intent's focus look: a grey.ink body with the intent's colour for
 // the bar and the text (a neutral cancel is teal on ink, a positive one green, a negative one red), where the confirm
@@ -193,7 +195,8 @@ function glitchDraftPage() {
     <h4 class="lib-dim">Shared by every intent</h4>
     <dl class="lib-facts">
       ${glitchColour('Behind', 'color.grey.panel', GLITCH_STAGE)}
-      ${glitchColour('Rest body', 'color.grey.raised', GLITCH_REST.body)}
+      <dt>Rest body</dt><dd>None (transparent): the button takes the colour of what it sits on, and the focus swipe draws
+        its body (Jess 2026-11-20)</dd>
       ${glitchColour('Rest bar', 'color.grey.white', GLITCH_REST.bar)}
       ${glitchColour('Rest text', 'color.grey.white', GLITCH_REST.text)}
       ${glitchColour('Focus bar', 'color.grey.ink', GLITCH_FOCUS.bar)}
@@ -201,7 +204,7 @@ function glitchDraftPage() {
       ${glitchColour('Refused bar and text', 'color.grey.mid', GLITCH_REFUSED.text)}
       ${glitchColour('Refused focus body', 'color.grey.mid', GLITCH_REFUSED.focusBody)}
       ${glitchColour('Disabled bar', 'color.grey.mid', GLITCH_DISABLED.bar)}
-      ${glitchColour('Disabled text', 'color.grey.ink', GLITCH_DISABLED.text)}
+      ${glitchColour('Disabled text', 'color.grey.slate', GLITCH_DISABLED.text)}
       ${glitchColour('Cancel focus body', 'color.grey.ink', GLITCH_CANCEL.focusBody)}
       <dt>Cancel</dt><dd>The answer that backs out of an ask (a dialog's Cancel, Keep, Keep editing). At rest exactly
         button.glitch.rest; under the cursor the same swipe uncovers the inverse of the intent's focus look (ink body,

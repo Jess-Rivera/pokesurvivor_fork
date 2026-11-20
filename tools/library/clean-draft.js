@@ -92,6 +92,40 @@ function cleanPanelSection() {
       <dt>Size</dt><dd>${CLEAN_PANEL.width} x ${CLEAN_PANEL.height} px here; any size, the screen sets it</dd>
     </dl></section>`;
 }
+// ---------- panel.shopCard (Jess 2026-11-20): panel.clean with a grey.raised body and a teal.base edge, every
+// main.shop.* card ----------
+const SHOP_CARD_PANEL = {
+  ...CLEAN_PANEL,
+  body: greyTone('raised'),
+  edge: unifiedTone(UNIFIED_TEAL, 'base'),
+  width: 186,
+  height: 224,
+};
+function shopCardPanelSection() {
+  const style = [
+    ['--clean-body', SHOP_CARD_PANEL.body],
+    ['--clean-edge', SHOP_CARD_PANEL.edge],
+    ['--clean-edge-width', SHOP_CARD_PANEL.edgeWidth + 'px'],
+    ['width', SHOP_CARD_PANEL.width + 'px'],
+    ['height', SHOP_CARD_PANEL.height + 'px'],
+  ]
+    .map(([name, value]) => `${name}:${value}`)
+    .join(';');
+  return `<section class="lib-story" data-draft="panel.shopCard">
+    <h3>${nameButton('panel.shopCard')} ${draftTag('panel.clean with a raised body and a teal edge: every Shop card')}</h3>
+    <div class="lib-states"><figure class="lib-state">
+      <div class="lib-stage" data-state="panel.shopCard:rest" style="background:${CLEAN_PANEL.body}">
+        <div class="lib-clean" style="${style}"></div></div>
+      <figcaption>${nameButton('panel.shopCard.rest')}<br>At rest, on the Shop window’s grey.panel</figcaption></figure></div>
+    <dl class="lib-facts">
+      ${cleanColour('Behind', 'color.grey.panel', CLEAN_PANEL.body)}
+      ${cleanColour('Body', 'color.grey.raised', SHOP_CARD_PANEL.body)}
+      ${cleanColour('Edge', 'color.teal.base', SHOP_CARD_PANEL.edge)}
+      <dt>Shape</dt><dd>panel.clean’s: a ${SHOP_CARD_PANEL.edgeWidth} px edge, square corners, no cut and no bar</dd>
+      <dt>Used by</dt><dd>Every card on main.shop.pokeball, main.shop.items and main.shop.tms (card.vertical)</dd>
+      <dt>Size</dt><dd>${SHOP_CARD_PANEL.width} x ${SHOP_CARD_PANEL.height} px here (the Pokeballs card); any size</dd>
+    </dl></section>`;
+}
 function detailSection() {
   const [top, bottom] = DETAIL_SAMPLE_TYPES;
   return `<section class="lib-story" data-draft="pause.pokemonDetail.background">
@@ -331,7 +365,7 @@ const PANEL_TABS = [
     note:
       'The panel set: clean for the interface and what the team shares, pixel for one Pokemon and what it owns ' +
       '(decision 2026-11-18-155-pixel-panels-for-one-pokemon-clean-for-the-rest).',
-    draw: () => cleanPanelSection() + detailSection() + pixelSection() + slantedSection(),
+    draw: () => cleanPanelSection() + shopCardPanelSection() + detailSection() + pixelSection() + slantedSection(),
   },
 ];
 const panelsPage = (tab) => tabbedPage('Panels', PANEL_TABS, tab);

@@ -1,12 +1,14 @@
 // tools/library/shop-draft.js: the Main Menu Shop's four tabs as composites in the Unified pieces (Jess 2026-11-20):
 // main.shop.pokeball, main.shop.character, main.shop.items and main.shop.tms. The window, the rail and every place are
 // today's (css/bw-shop.css; js/ui/gacha-ui.js, shop-balls.js, shop-tms.js, menu-window-kit.js); the rail keeps today's
-// icons and their alignment (Jess 2026-11-20). Only the pieces change: panel.clean for the window, the cards, the
-// pockets, the panels and the belts; button.glitch for every button; square.clean for every slot; field.text,
+// icons and their alignment (Jess 2026-11-20). Only the pieces change: panel.clean for the window and the panels; panel.shopCard
+// for every card; panel.pixel in a pocket ramp for the belts and the pockets; button.glitch for every button; square.clean or
+// a well for every slot; field.text,
 // field.dropdown and scroll.bar (inputs-draft.js); toggle.power; portrait.round; cursor.bar; the tooltip. Pictures are
 // placeholders. A plain script sharing the board's globals; it loads after every draft it uses. A board copy: nothing
 // here reads the game.
-// main.shop.pokeball is APPROVED (decision 2026-11-20-155-main-shop-pokeball-look). The other three are NOT APPROVED
+// main.shop.pokeball and main.shop.character are APPROVED (decisions 2026-11-20-155-main-shop-pokeball-look and
+// 2026-11-20-155-main-shop-character-look). main.shop.items and main.shop.tms are NOT APPROVED
 // (Jess 2026-11-20): rough first passes kept only as starting points, redone one tab at a time; nothing in them is a ruling.
 'use strict';
 // ---------- places: today's numbers ----------
@@ -41,8 +43,8 @@ const SHOP = {
     left: 40,
     top: 20,
     gap: 36,
-    width: 260,
-    height: 390,
+    width: 260, // 130 art px
+    height: 392, // 196 art px: panel.pixel takes even art sizes (today 390)
     square: 56,
     squareGap: 28,
     gridTop: 30,
@@ -166,7 +168,7 @@ const scrollArea = (left, top, width, height, inner, { fraction = 0.5, at = 0 } 
 const withCursor = (left, top, inner) =>
   `<div class="lib-cursor-host" style="${place(left, top)};${cursorStyle()}">${inner}${staticBar(false)}</div>`;
 
-// ---------- card.vertical on panel.clean ----------
+// ---------- card.vertical on panel.shopCard (clean-draft.js: panel.clean with a grey.raised body) ----------
 /** A card: the picture, a divider, the name, the description, its button. look: lit, dimmed, or dimmedButButton.
  *  card is its sizes (SHOP.card, or the Pokeballs tab's SHOP.ballCard). */
 function shopCard({ picture, name, description, button, look = 'lit', card = SHOP.card }) {
@@ -174,8 +176,8 @@ function shopCard({ picture, name, description, button, look = 'lit', card = SHO
     buttonTop = c.height - c.buttonBottom - c.buttonHeight,
     whole = look === 'dimmed' ? `opacity:${c.dimmed}` : '',
     part = look === 'dimmedButButton' ? `opacity:${c.dimmed}` : '';
-  return `<div class="lib-clean lib-shop-card" style="--clean-body:${SHOP_COLOURS.body};--clean-edge:${SHOP_COLOURS.edge};
-      --clean-edge-width:${px(CLEAN_PANEL.edgeWidth)};width:${px(c.width)};height:${px(c.height)};${whole}">
+  return `<div class="lib-clean lib-shop-card" style="--clean-body:${SHOP_CARD_PANEL.body};
+      --clean-edge:${SHOP_CARD_PANEL.edge};--clean-edge-width:${px(SHOP_CARD_PANEL.edgeWidth)};width:${px(c.width)};height:${px(c.height)};${whole}">
     <div class="lib-shop-picture" style="${place((c.width - c.iconSize) / 2, c.iconTop)};width:${px(c.iconSize)};
       height:${px(c.iconSize)};${part}">${picture}</div>
     ${divider(c.textInset, c.textInset, c.dividerTop, part)}
@@ -307,7 +309,13 @@ function shopPocket(pocket, index) {
       disabled: pocket.disabled,
       style: place((p.width - p.buyWidth) / 2, p.height - p.buyBottom - SHOP.buttonHeight),
     })}`;
-  return cleanBox(p.left + index * (p.width + p.gap), p.top, p.width, p.height, inner, { edge: pocketRamp(pocket.swatch).base });
+  // panel.pixel in the pocket's own ramp (Jess 2026-11-20), the berry pocket's and the belts' panel at the pocket's size;
+  // its body plain grey.raised, the Shop cards' body (panel.shopCard), no grid (Jess 2026-11-20: the grid on a panel
+  // this big is not pleasant)
+  const artPixel = TEAM_SLOT.box.artPixel,
+    frame = teamBoxSvg(pocketRamp(pocket.swatch), p.width / artPixel, p.height / artPixel, undefined, SHOP_CARD_PANEL.body);
+  return `<div class="lib-area-piece lib-shop-pocket" style="${place(p.left + index * (p.width + p.gap), p.top)};
+    width:${px(p.width)};height:${px(p.height)}">${frame}${inner}</div>`;
 }
 const upgradesPane = () => SHOP_POCKETS.map(shopPocket).join('');
 
@@ -461,7 +469,7 @@ const SHOP_PAGES = {
       'balls',
       'composite: the Pokeballs tab (a board copy)',
       ballsPane,
-      `<dt>Pieces</dt><dd>${nameButton('card.vertical')} on panel.clean in a 3-column grid, ${SHOP.ballCard.height} px
+      `<dt>Pieces</dt><dd>${nameButton('card.vertical')} on ${nameButton('panel.shopCard')} in a 3-column grid, ${SHOP.ballCard.height} px
         tall (today 350; every card fits, so no ${nameButton('scroll.bar')}). The belts as ${nameButton('panel.pixel')}
         in ${nameButton('color.pocketPokeBalls')} (a belt not bought: the fainted grey ramp, as today), sized to six
         ${SHOP.belt.well} px wells ${SHOP.belt.wellGap} px apart, the berry pocket’s wells (grey.panel inside; an
@@ -479,8 +487,8 @@ const SHOP_PAGES = {
       'upgrades',
       'composite: the Character Upgrades tab (a board copy)',
       upgradesPane,
-      `<dt>Pieces</dt><dd>Each pocket a panel.clean edged in its Bag pocket colour (${nameButton('color.pocketBerries.base')},
-        ${nameButton('color.pocketItems.base')}; today the same hues as a pixel rim), its 2x2 of ${SHOP.pocket.square} px
+      `<dt>Pieces</dt><dd>Each pocket a ${nameButton('panel.pixel')} in its Bag pocket ramp (${nameButton('color.pocketBerries')},
+        ${nameButton('color.pocketItems')}; today the same hues as a pixel rim; Jess 2026-11-20), its body plain grey.raised (the Shop cards\u2019 body) with no grid, its 2x2 of ${SHOP.pocket.square} px
         ${nameButton('square.clean')} (not bought: the locked 30%), a divider, its name in teal Michroma
         ${SHOP.text.pocketName}, its line, one Buy (Full once every slot is bought, disabled)</dd>`
     ),
@@ -490,7 +498,7 @@ const SHOP_PAGES = {
       'items',
       'composite: the Team Items tab (a board copy)',
       itemsPane,
-      `<dt>Pieces</dt><dd>${nameButton('field.text')} over the card grid; the owned panel as panel.clean with its own search
+      `<dt>Pieces</dt><dd>${nameButton('field.text')} over the card grid (cards on ${nameButton('panel.shopCard')}); the owned panel as panel.clean with its own search
         and a ${SHOP.owned.columns}-wide grid of ${SHOP.owned.square} px ${nameButton('square.clean')} (owned: the teal
         filled edge; empty: the locked 30%) and ${nameButton('scroll.bar')}. The cursor (${nameButton('cursor.bar')},
         blinking) on the first owned square, its ${nameButton('tooltip')} below it after the Tooltip Delay;
@@ -504,18 +512,24 @@ const SHOP_PAGES = {
       tmsPane,
       `<dt>Pieces</dt><dd>The bar: ${nameButton('field.text')}, the Type ${nameButton('field.dropdown')} and
         ${nameButton('toggle.power')} (its label at ${SHOP.tms.bar.labelSize} px to fit beside the panel; the toggle’s own
-        is 18). Cards with the type glyph (Learned and Known disabled). The Pokemon panel as panel.clean: the chosen
+        is 18). Cards on ${nameButton('panel.shopCard')} with the type glyph (Learned and Known
+        disabled). The Pokemon panel as panel.clean: the chosen
         Pokemon (${nameButton('portrait.round.selected')} at ${SHOP.tms.chosen.size} px, its name in Silver), the team of
         six at ${SHOP.tms.team.size} px (the chosen one selected), a divider, the search and Filter, the Pokebox grid at
         rest with the cursor bar on one face</dd>`
     ),
 };
-// main.shop.pokeball is approved (decision 2026-11-20-155-main-shop-pokeball-look); the other three are rough drafts
+// main.shop.pokeball and main.shop.character are approved (decisions 2026-11-20-155-main-shop-pokeball-look and
+// 2026-11-20-155-main-shop-character-look); the other two are rough drafts
 const SHOP_APPROVED = {
   'main.shop.pokeball': {
     title: 'Approved',
     note: 'APPROVED (Jess 2026-11-20): decision 2026-11-20-155-main-shop-pokeball-look. Layout (centring the balls on ' +
       'their art, the scroll bar at 17 balls) is the build\u2019s, at #126.',
+  },
+  'main.shop.character': {
+    title: 'Approved',
+    note: 'APPROVED (Jess 2026-11-20): decision 2026-11-20-155-main-shop-character-look.',
   },
 };
 const SHOP_DRAFT_NOTE = {

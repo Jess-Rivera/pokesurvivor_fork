@@ -122,8 +122,9 @@ const ditherThreshold = (x, row) =>
     0.5) /
   DITHER_BLOCK;
 /** panel.pixel as an SVG string (the roster box's size by default): the rim ramp on the rim letters, the slot grid (panel.slanted's) on the body.
- *  rimRight (a second ramp) dithers the rim left to right from rim to rimRight, for a two-type Pokemon. */
-function teamBoxSvg(rim, artWidth = TEAM_SLOT.box.artWidth, artRows = TEAM_SLOT.box.artRows, rimRight) {
+ *  rimRight (a second ramp) dithers the rim left to right from rim to rimRight, for a two-type Pokemon. body (a colour)
+ *  fills the body plain instead of the grid, for a big panel (the Shop's pockets; Jess 2026-11-20). */
+function teamBoxSvg(rim, artWidth = TEAM_SLOT.box.artWidth, artRows = TEAM_SLOT.box.artRows, rimRight, body) {
   const { artPixel } = TEAM_SLOT.box,
     gridId = 'board-team-grid-' + ++teamBoxCount,
     seam = Math.round(TEAM_SLOT.rimDither.seam * artWidth), // the dithered middle, in whole art px
@@ -132,7 +133,7 @@ function teamBoxSvg(rim, artWidth = TEAM_SLOT.box.artWidth, artRows = TEAM_SLOT.
     fillAt = (letter, x, row) => {
       if (letter === ' ') return null;
       if (letter === 'o') return TEAM_SLOT_COLOURS.outline;
-      if (letter === 'G') return `url(#${gridId})`;
+      if (letter === 'G') return body || `url(#${gridId})`;
       const ramp = rimRight && blendAt(x) > ditherThreshold(x, row) ? rimRight : rim;
       return ramp[parts[letter]];
     },
@@ -148,10 +149,10 @@ function teamBoxSvg(rim, artWidth = TEAM_SLOT.box.artWidth, artRows = TEAM_SLOT.
   });
   return `<svg width="${artWidth * artPixel}" height="${artRows * artPixel}" viewBox="0 0 ${artWidth} ${artRows}"
     shape-rendering="crispEdges" style="display:block;position:absolute;left:0;top:0">
-    <defs><pattern id="${gridId}" width="${SLANTED_GRID.tile}" height="${SLANTED_GRID.tile}" patternUnits="userSpaceOnUse">
+    ${body ? '' : `<defs><pattern id="${gridId}" width="${SLANTED_GRID.tile}" height="${SLANTED_GRID.tile}" patternUnits="userSpaceOnUse">
       <rect width="${SLANTED_GRID.tile}" height="${SLANTED_GRID.tile}" fill="${SLANTED_COLOURS.gridLine}" />
       <rect width="${SLANTED_GRID.square}" height="${SLANTED_GRID.square}" fill="${SLANTED_COLOURS.gridSquare}" />
-    </pattern></defs>${rects.join('')}</svg>`;
+    </pattern></defs>`}${rects.join('')}</svg>`;
 }
 
 // ---------- the pieces ----------

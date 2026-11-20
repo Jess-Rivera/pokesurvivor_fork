@@ -11,6 +11,8 @@
   button.glitch's refused look at full strength (refusedFocusPositive under the cursor, the shake on a press).
 - button.glitch under the cursor or the mouse draws its rest bar in the focus bar's colour too, so no 1 px sliver of
   the white rest bar shows past the focus bar (board fix in glitch-draft.css; the game's button.glitch needs the same).
+- Later the same day: button.glitch's rest body went transparent
+  (2026-11-20-155-button-glitch-rest-body-is-transparent), so these buttons show only their bar and label at rest.
 - Left to the build: each ball centred on its art's visible box (the art sits 1 art px off its frame's centre); the cards
   scroll in today's scroll box once all 17 balls are listed.
 - Board: tools/library/shop-draft.js (SHOP.ballCard, SHOP.belt, SHOP.sell). Applied at #126.

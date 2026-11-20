@@ -13,8 +13,8 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-20; gym leader AI parked)
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
-   - main.shop.* one tab at a time. main.shop.pokeball approved 2026-11-20 (2026-11-20-155-main-shop-pokeball-look).
-     Next **main.shop.character**; its draft and the Items and TMs drafts are NOT APPROVED, a starting point only.
+   - main.shop.* one tab at a time. main.shop.pokeball and main.shop.character approved 2026-11-20 (their decisions).
+     Next **main.shop.items**, then main.shop.tms; both drafts are NOT APPROVED, a starting point only.
      Open: card and owned-panel edge grey.slate or teal.
    - Primitives, Inputs (field.text, field.dropdown, scroll.bar): drafted 2026-11-20, kept, not reviewed yet.
    - Tooltip: look ruled (2026-11-20-155-tooltip-is-panel-clean-yellow-frame-three-states); the pin and close icons

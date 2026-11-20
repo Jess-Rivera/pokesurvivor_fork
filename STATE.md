@@ -5,8 +5,8 @@ Last updated: 2026-11-20 morning, Quick (work machine). Branch: feature/128-acqu
 
 ## START HERE (next session, either tool)
 0. `git status`; this session's two commits should be pushed (`git push origin feature/128-acquisition`).
-1. #155 main.shop.character: redo it on the board with Jess, one piece at a time. main.shop.pokeball is approved
-   (2026-11-20-155-main-shop-pokeball-look); the other three rough drafts are NOT APPROVED, a starting point only.
+1. #155 main.shop.items next, then main.shop.tms, one piece at a time on the board. main.shop.pokeball and
+   main.shop.character are approved (their 2026-11-20 decisions); the Items and TMs drafts are a starting point only.
 2. Then the other shop tabs, one at a time; then Fonts feel test, Colours names, the Pause composites. #156 likely moot.
 3. Then #128: #138, then #146. #145 small and ready.
 
