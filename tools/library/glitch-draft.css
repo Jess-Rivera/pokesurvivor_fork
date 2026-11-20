@@ -39,6 +39,13 @@
 .lib-glitch-button.focused::after {
   clip-path: inset(0);
 }
+/* under the focus layer, the rest bar takes the focus bar's colour (Jess 2026-11-20): the layer's 6 px bar and the rest
+   bar's shadow round to device pixels differently, so a 1 px sliver of the white rest bar showed on the focus bar's
+   right and bottom edges. The bar is the first thing the swipe uncovers, so nothing else changes */
+.lib-glitch-button:hover,
+.lib-glitch-button.focused {
+  box-shadow: 6px 0 0 var(--glitch-focus-bar);
+}
 /* press (Jess 2026-11-18): a CRT switching off. A copy of the label sits exactly over the focus label (which hides
    while it plays): it collapses to a thin line while stretching a little wider, then shrinks
    to a dot that stays while held. Release is the CRT switching on: the dot draws out to a line, the line opens into

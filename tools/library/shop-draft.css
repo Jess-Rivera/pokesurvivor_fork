@@ -51,15 +51,10 @@
 .lib-shop-picture > * {
   position: absolute;
 }
+/* a ball: one frame of its strip (today's art), sized inline */
 .lib-shop-ball {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
+  background-repeat: no-repeat;
   image-rendering: pixelated;
-}
-.lib-shop-ball.is-card {
-  width: 64px;
-  height: 64px;
 }
 .lib-shop-glyph {
   width: 64px;

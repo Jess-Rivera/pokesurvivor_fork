@@ -37,6 +37,10 @@
 .lib-modal-stage:not(.is-mouse) .lib-glitch-button:hover:not(.focused)::after {
   clip-path: inset(0 0 0 100%);
 }
+/* and its bar stays the rest bar (glitch-draft.css gives a hovered button the focus bar) */
+.lib-modal-stage:not(.is-mouse) .lib-glitch-button:hover:not(.focused) {
+  box-shadow: 6px 0 0 var(--glitch-bar);
+}
 .lib-modal-stage {
   outline: none;
 }

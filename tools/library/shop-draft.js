@@ -6,8 +6,8 @@
 // field.dropdown and scroll.bar (inputs-draft.js); toggle.power; portrait.round; cursor.bar; the tooltip. Pictures are
 // placeholders. A plain script sharing the board's globals; it loads after every draft it uses. A board copy: nothing
 // here reads the game.
-// NOT APPROVED (Jess 2026-11-20): a rough first pass, kept only as a starting point. None of the four tabs looks as Jess
-// imagined; each is redone one tab at a time, main.shop.character first. Nothing here is a ruling.
+// main.shop.pokeball is APPROVED (decision 2026-11-20-155-main-shop-pokeball-look). The other three are NOT APPROVED
+// (Jess 2026-11-20): rough first passes kept only as starting points, redone one tab at a time; nothing in them is a ruling.
 'use strict';
 // ---------- places: today's numbers ----------
 const SHOP = {
@@ -31,6 +31,7 @@ const SHOP = {
     nameTop: 100,
     descTop: 130,
     buttonWidth: 174,
+    buttonHeight: 54, // today's button
     buttonBottom: 10,
     dimmed: 0.45,
   },
@@ -52,9 +53,11 @@ const SHOP = {
     buyWidth: 228,
     buyBottom: 18,
   },
-  slot: { size: 68, gap: 10, inset: 14 }, // a belt's slots (shop-balls.js SLOT)
-  belt: { width: 96, gap: 20, rightPad: 12, count: 3, slots: 6 },
-  sell: { width: 186, gap: 8 }, // above Exit, right-aligned with it
+  // a belt (Jess 2026-11-20): panel.pixel in color.pocketPokeBalls (the berry pocket's panel, hud-team-slot-draft.js
+  // teamPocketPanel) holding six wells in a column, as the berry pocket and the move slots hold theirs. The well is
+  // 52 px so a ball at 2x (22 px of art in its 32 px frame, 44 px) fills most of its 48 px inside the 2 px ring.
+  belt: { well: 52, wellGap: 8, gap: 20, rightPad: 12, count: 3, wells: 6 },
+  sell: { width: 204, gap: 8 }, // above Exit, right-aligned with it; 204 so Sell Pokeball fits (Jess 2026-11-20)
   beltBuy: { width: 186, gap: 12 }, // left of Exit
   tms: {
     bar: { searchWidth: 250, typeLeft: 262, typeWidth: 170, toggleLeft: 446, labelSize: 12 },
@@ -66,9 +69,10 @@ const SHOP = {
     box: { top: 232, columns: 4, cell: 76, gap: 10, faceInset: 4 },
   },
   fonts: { meta: "'HudModule'", pokemon: "'Silver 10px'" },
-  text: { name: 14, line: 12, lineHeight: 16, pocketName: 16, beltNumber: 12, pokemonName: 20 },
+  text: { name: 14, line: 12, lineHeight: 16, pocketName: 16, beltNumber: 16, pokemonName: 20 },
 };
-SHOP.card.buttonTop = SHOP.card.height - SHOP.card.buttonBottom - SHOP.buttonHeight;
+// the Pokeballs tab's card (Jess 2026-11-20): shorter, its button sized to the card (button.glitch's look at any size)
+SHOP.ballCard = { ...SHOP.card, height: 224, nameTop: 98, descTop: 122, buttonWidth: 140, buttonHeight: 36, buttonFont: 14 };
 SHOP.exit.left = SHOP.pane.width - SHOP.exit.width;
 SHOP.buttonTop = SHOP.pane.height - SHOP.buttonHeight;
 const SHOP_COLOURS = {
@@ -80,6 +84,7 @@ const SHOP_COLOURS = {
   text: greyTone('white'),
   dimLabel: greyTone('mid'), // the toggle's label (today white at 60%)
   ownedEdge: unifiedTone(UNIFIED_TEAL, 'base'), // square.clean filled
+  outline: greyTone('ink'), // the belt number's 1 px stroke
 };
 const SHOP_TABS = [
   { key: 'balls', page: 'main.shop.pokeball', name: 'Pokeballs', icon: 'pokeball' },
@@ -92,9 +97,23 @@ const pocketRamp = (label) => {
   const swatch = POCKET_SWATCHES.find((entry) => entry.label === label);
   return Object.fromEntries(swatch.colours.map(([part, , hex]) => [part, hex.toLowerCase()]));
 };
-// placeholder pictures: Leftovers for every item, ball strips' extras for the balls, the type glyph for a TM
+// placeholder pictures: Leftovers for every item, the type glyph for a TM
 const SHOP_ITEM_SPRITE = { sprite: `${ROOT}assets/items/pokesprite-inventory.png`, at: '-1530px -136px' };
-const ballPicture = (index) => `${ROOT}assets/icons/pokeball/extras/ball_${String(index + 1).padStart(2, '0')}.png`;
+// the balls are today's art (js/data/ball-sprites.js, drawn by hud-kit-items.js BallSprite): one strip of 17 frames of
+// 32 px per ball; a card shows frame 9 flipped, a belt frame 0, both at 2x (shop-balls.js CARD_BALL and SLOT)
+const SHOP_BALL_STRIP = { size: 32, frames: 17, scale: 2, cardFrame: 9, beltFrame: 0 };
+// each frame's centring shift in art px, so the ball's filled pixels (not its 32 px frame) sit in the middle: the
+// frame's centre minus the centre of its opaque box, measured from assets/icons/pokeball/balls/ (Jess 2026-11-20).
+// Rounded to whole art px; Net is 23 px tall, so it sits half an art px low. A board copy: the game measures its own
+// at #126. { ball: { frame: [x, y] } }
+const SHOP_BALL_CENTRE = {
+  poke: { 0: [0, -1], 9: [0, -3] },
+  great: { 0: [-1, -1], 9: [-1, -3] },
+  ultra: { 0: [0, -1], 9: [0, -3] },
+  master: { 0: [-1, -1], 9: [-1, -3] },
+  safari: { 0: [-1, -1], 9: [-1, -3] },
+  net: { 0: [-1, 0], 9: [-1, -2] },
+};
 
 // ---------- small pieces ----------
 const px = (value) => value + 'px';
@@ -102,11 +121,26 @@ const place = (left, top) => `position:absolute;left:${px(left)};top:${px(top)}`
 const shopText = (text, size, colour, style = '', font = SHOP.fonts.meta) =>
   `<div class="lib-shop-text" style="font-family:${font},sans-serif;font-size:${px(size)};
     line-height:${px(size === SHOP.text.line ? SHOP.text.lineHeight : size + 4)};color:${colour};${style}">${esc(text)}</div>`;
-/** A button.glitch at a box width (its 6 px bar included): intent Neutral, Positive or Negative. */
-function shopButton(label, intent, width, { focused, refused, disabled, style = '' } = {}) {
-  return `<button type="button" class="lib-glitch-button lib-shop-button${focused ? ' focused' : ''}" tabindex="-1"
+/** A button.glitch at a box width (its 6 px bar included): intent Neutral, Positive or Negative. height and fontSize
+ *  size it (today's 54 px and button.glitch's own 18 px by default). */
+function shopButton(label, intent, width, { focused, refused, disabled, style = '', height = SHOP.buttonHeight, fontSize } = {}) {
+  const font = fontSize ? `font-size:${px(fontSize)};` : '',
+    // the state classes button.glitch reads: refused shakes on a press, disabled drops the focus and press layers
+    states = (focused ? ' focused' : '') + (refused ? ' refused' : '') + (disabled ? ' disabled' : '');
+  return `<button type="button" class="lib-glitch-button lib-shop-button${states}" tabindex="-1"
     data-label="${esc(label)}" style="${glitchColours(intentOf(intent), !!refused, !!disabled)};
-    width:${px(width - SHOP.barWidth)};height:${px(SHOP.buttonHeight)};${style}">${esc(label)}</button>`;
+    width:${px(width - SHOP.barWidth)};height:${px(height)};${font}${style}">${esc(label)}</button>`;
+}
+/** A ball from its strip at a frame, 2x, shifted so its filled pixels are centred in the frame; flipped mirrors it
+ *  (the card's), and its shift with it. */
+function ballSprite(ball, frame, { flipped = false, style = '' } = {}) {
+  const { size, frames, scale } = SHOP_BALL_STRIP,
+    drawn = size * scale,
+    [shiftX, shiftY] = (SHOP_BALL_CENTRE[ball] || {})[frame] || [0, 0],
+    transform = `translate(${px((flipped ? -shiftX : shiftX) * scale)}, ${px(shiftY * scale)})${flipped ? ' scaleX(-1)' : ''}`;
+  return `<div class="lib-shop-ball" style="width:${px(drawn)};height:${px(drawn)};
+    background-image:url('${ROOT}assets/icons/pokeball/balls/${ball}.png');background-size:${px(drawn * frames)} ${px(drawn)};
+    background-position:${px(-frame * drawn)} 0;transform:${transform};${style}"></div>`;
 }
 /** panel.clean at a place and size; edge defaults to grey.slate. */
 const cleanBox = (left, top, width, height, inner, { edge = SHOP_COLOURS.edge, className = '', style = '' } = {}) =>
@@ -133,9 +167,11 @@ const withCursor = (left, top, inner) =>
   `<div class="lib-cursor-host" style="${place(left, top)};${cursorStyle()}">${inner}${staticBar(false)}</div>`;
 
 // ---------- card.vertical on panel.clean ----------
-/** A card: the picture, a divider, the name, the description, its button. look: lit, dimmed, or dimmedButButton. */
-function shopCard({ picture, name, description, button, look = 'lit' }) {
-  const c = SHOP.card,
+/** A card: the picture, a divider, the name, the description, its button. look: lit, dimmed, or dimmedButButton.
+ *  card is its sizes (SHOP.card, or the Pokeballs tab's SHOP.ballCard). */
+function shopCard({ picture, name, description, button, look = 'lit', card = SHOP.card }) {
+  const c = card,
+    buttonTop = c.height - c.buttonBottom - c.buttonHeight,
     whole = look === 'dimmed' ? `opacity:${c.dimmed}` : '',
     part = look === 'dimmedButButton' ? `opacity:${c.dimmed}` : '';
   return `<div class="lib-clean lib-shop-card" style="--clean-body:${SHOP_COLOURS.body};--clean-edge:${SHOP_COLOURS.edge};
@@ -145,15 +181,17 @@ function shopCard({ picture, name, description, button, look = 'lit' }) {
     ${divider(c.textInset, c.textInset, c.dividerTop, part)}
     ${shopText(name, SHOP.text.name, SHOP_COLOURS.name, `${place(c.textInset, c.nameTop)};right:${px(c.textInset)};${part}`)}
     ${shopText(description, SHOP.text.line, SHOP_COLOURS.text, `${place(c.textInset, c.descTop)};right:${px(c.textInset)};${part}`)}
-    <div style="${place((c.width - c.buttonWidth) / 2, c.buttonTop)}">${button}</div></div>`;
+    <div style="${place((c.width - c.buttonWidth) / 2, buttonTop)}">${button}</div></div>`;
 }
-/** A grid of cards in a scroll box, at the pane's place. */
-function cardGrid(cards, left, top, height) {
+/** A grid of cards in a scroll box, at the pane's place; no scroll bar when every card fits. */
+function cardGrid(cards, left, top, height, card = SHOP.card) {
   const { columns, listWidth } = SHOP.grid,
     rows = Math.ceil(cards.length / columns),
-    contentHeight = rows * (SHOP.card.height + SHOP.card.gap);
-  const grid = `<div class="lib-shop-grid" style="grid-template-columns:repeat(${columns}, ${px(SHOP.card.width)});
-    gap:${px(SHOP.card.gap)}">${cards.join('')}</div>`;
+    contentHeight = rows * (card.height + card.gap) - card.gap;
+  const grid = `<div class="lib-shop-grid" style="grid-template-columns:repeat(${columns}, ${px(card.width)});
+    gap:${px(card.gap)}">${cards.join('')}</div>`;
+  if (contentHeight <= height)
+    return `<div class="lib-shop-scroll" style="${place(left, top)};width:${px(listWidth)};height:${px(height)}">${grid}</div>`;
   return scrollArea(left, top, listWidth, height, grid, { fraction: height / contentHeight, at: 0 });
 }
 
@@ -162,7 +200,8 @@ function shopWindow(tabKey, paneHtml) {
   const { window: frame, rail, pane, stagePad } = SHOP;
   const tabs = SHOP_TABS.map((entry, index) => {
     const selected = entry.key === tabKey;
-    return `<div class="lib-shop-tab" style="${place(0, rail.firstTop + index * rail.step)};width:${px(rail.cell)};
+    // 1 px in (the edge's width): the icon touches the window's edge instead of covering it (Jess 2026-11-20)
+    return `<div class="lib-shop-tab" style="${place(CLEAN_PANEL.edgeWidth, rail.firstTop + index * rail.step)};width:${px(rail.cell)};
       height:${px(rail.cell)}"><img src="${ROOT}assets/ui/shop_icons/${entry.icon}${selected ? '-selected' : ''}.png"
       alt="${esc(entry.name)}" style="transform:scale(${rail.iconScale})" /></div>`;
   }).join('');
@@ -179,48 +218,67 @@ function shopWindow(tabKey, paneHtml) {
 
 // ---------- main.shop.pokeball ----------
 const SHOP_BALLS = [
-  { name: 'Poke Ball', desc: 'The standard ball for catching rescued Pokemon.', label: 'Buy 50', look: 'lit', focused: true },
-  { name: 'Great Ball', desc: 'Catches 1.5x as well as a Poke Ball.', label: 'Unlock 5k', look: 'dimmedButButton' },
-  { name: 'Ultra Ball', desc: 'Catches 2x as well as a Poke Ball.', label: 'Unlock 15k', look: 'dimmed', refused: true },
-  { name: 'Master Ball', desc: 'Catches any Pokemon without fail.', label: 'Unlock', look: 'dimmed', refused: true },
-  { name: 'Safari Ball', desc: 'Coming soon.', label: 'Unlock', look: 'dimmed', refused: true },
-  { name: 'Net Ball', desc: 'Coming soon.', label: 'Unlock', look: 'dimmed', refused: true },
+  { id: 'poke', name: 'Poke Ball', desc: 'The standard ball for catching rescued Pokemon.', label: 'Buy 50', look: 'lit', focused: true },
+  { id: 'great', name: 'Great Ball', desc: 'Catches 1.5x as well as a Poke Ball.', label: 'Unlock 5k', look: 'dimmedButButton' },
+  { id: 'ultra', name: 'Ultra Ball', desc: 'Catches 2x as well as a Poke Ball.', label: 'Unlock 15k', look: 'dimmedButButton', refused: true },
+  { id: 'master', name: 'Master Ball', desc: 'Catches any Pokemon without fail.', label: 'Unlock', look: 'dimmedButButton', refused: true },
+  { id: 'safari', name: 'Safari Ball', desc: 'Coming soon.', label: 'Unlock', look: 'dimmedButButton', refused: true },
+  { id: 'net', name: 'Net Ball', desc: 'Coming soon.', label: 'Unlock', look: 'dimmedButButton', refused: true },
 ];
 // belt 1 holds four balls, belt 2 is bought and empty, belt 3 is not bought yet
-const SHOP_BELTS = [{ bought: true, balls: [0, 0, 1, 0] }, { bought: true, balls: [] }, { bought: false, balls: [] }];
+const SHOP_BELTS = [
+  { bought: true, balls: ['poke', 'poke', 'great', 'poke'] },
+  { bought: true, balls: [] },
+  { bought: false, balls: [] },
+];
+/** A belt: panel.pixel in the Poke Balls pocket ramp (not bought: the fainted grey ramp, today's FAINTED_RIM) holding a
+ *  column of wells. A well is the berry pocket's: grey.panel inside, an ink ring when empty, the pocket's base when it
+ *  holds a ball. */
 function shopBelt(belt, index) {
-  const { slot, belt: size } = SHOP,
+  const size = SHOP.belt,
     ramp = pocketRamp('color.pocketPokeBalls'),
-    height = 2 * slot.inset + size.slots * slot.size + (size.slots - 1) * slot.gap,
-    left = SHOP.pane.width - size.rightPad - (size.count - index) * size.width - (size.count - 1 - index) * size.gap,
-    slots = Array.from({ length: size.slots }, (_, slotIndex) => {
-      const ball = belt.balls[slotIndex],
-        icon = ball === undefined ? '' : `<img class="lib-shop-ball" src="${ballPicture(ball)}" alt="" />`;
-      return `<div style="${place(slot.inset, slot.inset + slotIndex * (slot.size + slot.gap))}">${shopSquare(slot.size, {
-        edge: ball === undefined ? undefined : ramp.base,
-      })}</div>`;
-    }).join('');
-  const number = shopText(String(index + 1), SHOP.text.beltNumber, SHOP_COLOURS.text, place(4, 0));
-  return cleanBox(left, 0, size.width, height, slots + number, {
-    edge: belt.bought ? ramp.base : SHOP_COLOURS.edge,
-    style: belt.bought ? '' : `opacity:${CLEAN_SQUARE.lockedOpacity}`,
-  });
+    rim = belt.bought ? ramp : TEAM_SLOT_COLOURS.fainted,
+    panel = teamPocketPanel(size.well, size.wells * size.well + (size.wells - 1) * size.wellGap, rim),
+    left = SHOP.pane.width - size.rightPad - (size.count - index) * panel.width - (size.count - 1 - index) * size.gap,
+    ballAt = (size.well - SHOP_BALL_STRIP.size * SHOP_BALL_STRIP.scale) / 2, // the frame centred; ballSprite centres the art
+    wells = Array.from({ length: size.wells }, (_, slot) => {
+      const ball = belt.balls[slot];
+      return `<div class="lib-area-well" style="left:${px(panel.offsetX)};
+        top:${px(panel.offsetY + slot * (size.well + size.wellGap))};width:${px(size.well)};height:${px(size.well)};
+        --well-fill:${AREA_COLOURS.wellEmpty};--well-ring:${ball ? ramp.base : AREA_COLOURS.outline}">${
+          ball ? ballSprite(ball, SHOP_BALL_STRIP.beltFrame, { style: `position:absolute;${place(ballAt, ballAt)}` }) : ''
+        }</div>`;
+    }).join(''),
+    // the number: Michroma 16 in white with a 1 px ink stroke, eight hard shadows as the HUD's text (Jess 2026-11-20)
+    stroke = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]
+      .map(([x, y]) => `${px(x)} ${px(y)} 0 ${SHOP_COLOURS.outline}`)
+      .join(','),
+    number = shopText(String(index + 1), SHOP.text.beltNumber, SHOP_COLOURS.text, `${place(4, 0)};text-shadow:${stroke}`);
+  return `<div class="lib-area-piece" style="${place(left, SHOP.cursorRoom)};width:${px(panel.width)};
+    height:${px(panel.height)}">${panel.svg}${wells}${number}</div>`;
 }
 function ballsPane() {
-  const cards = SHOP_BALLS.map((ball, index) =>
+  const card = SHOP.ballCard,
+    cards = SHOP_BALLS.map((ball) =>
       shopCard({
-        picture: `<img class="lib-shop-ball is-card" src="${ballPicture(index)}" alt="" />`,
+        picture: ballSprite(ball.id, SHOP_BALL_STRIP.cardFrame, { flipped: true }),
         name: ball.name,
         description: ball.desc,
         look: ball.look,
-        button: shopButton(ball.label, 'Positive', SHOP.card.buttonWidth, { focused: ball.focused, refused: ball.refused }),
+        card,
+        button: shopButton(ball.label, 'Positive', card.buttonWidth, {
+          focused: ball.focused,
+          refused: ball.refused,
+          height: card.buttonHeight,
+          fontSize: card.buttonFont,
+        }),
       })
     ),
     room = SHOP.cursorRoom,
     sellLeft = SHOP.pane.width - SHOP.sell.width,
     sellTop = SHOP.buttonTop - SHOP.sell.gap - SHOP.buttonHeight,
     beltBuyLeft = SHOP.exit.left - SHOP.beltBuy.gap - SHOP.beltBuy.width;
-  return `${cardGrid(cards, room, room, SHOP.pane.height - room)}
+  return `${cardGrid(cards, room, room, SHOP.pane.height - room, card)}
     ${SHOP_BELTS.map(shopBelt).join('')}
     ${shopButton('Sell Pokeball', 'Negative', SHOP.sell.width, { style: place(sellLeft, sellTop) })}
     ${shopButton('Belt 3 15k', 'Positive', SHOP.beltBuy.width, { style: place(beltBuyLeft, SHOP.buttonTop) })}`;
@@ -369,24 +427,28 @@ function tmsPane() {
 }
 
 // ---------- the pages ----------
-const SHOP_FIT = `<dt>Fit (measured, Michroma)</dt><dd>Every button label fits today’s box (button.glitch’s 18 px with 3 px
-    letter spacing, the bar inside the box) except <b>Sell Pokeball</b>: 183 px of text in a 180 px body, so it
-    overflows at today’s 186 px (options: 192 px like Inventory, or the label “Sell”). The longest card line is 5 lines
-    of 12 px text in a 9-line space, every item name one line at 14 px, both pocket lines 2 lines</dd>`;
+const SHOP_FIT = `<dt>Fit (measured, Michroma)</dt><dd>Every button label fits its box (button.glitch\u2019s 18 px with 3 px
+    letter spacing, the bar inside the box). <b>Sell Pokeball</b> (183 px of text) overflowed today\u2019s 186 px, so Sell
+    is ${SHOP.sell.width} px (Jess 2026-11-20). The longest card line is 5 lines of 12 px text, every item name one line
+    at 14 px, both pocket lines 2 lines</dd>`;
 const SHOP_COMMON_FACTS = `
   <dt>Window</dt><dd>${nameButton('panel.clean')}<span>${SHOP.window.width} x ${SHOP.window.height} px (today panel.flat),
     grey.slate edge</span></dd>
-  <dt>Rail</dt><dd>Today’s icons (assets/ui/shop_icons/, the chosen tab’s -selected art) and places: flush with the
-    window’s left edge, ${SHOP.rail.cell} px cells from ${SHOP.rail.firstTop} px down, ${SHOP.rail.step} px apart, drawn
-    ${SHOP.rail.iconScale}x (Jess 2026-11-20: unchanged)</dd>
-  <dt>Buttons</dt><dd>${nameButton('button.glitch')}<span>at today’s boxes, ${SHOP.buttonHeight} px tall: Buy and Unlock
+  <dt>Rail</dt><dd>Today’s icons (assets/ui/shop_icons/, the chosen tab’s -selected art) and places: 1 px in, touching
+    the window’s left edge instead of covering it, ${SHOP.rail.cell} px cells from ${SHOP.rail.firstTop} px down, ${SHOP.rail.step} px apart, drawn
+    ${SHOP.rail.iconScale}x (Jess 2026-11-20: unchanged but for the 1 px)</dd>
+  <dt>Buttons</dt><dd>${nameButton('button.glitch')}<span>its look at any size: today’s ${SHOP.buttonHeight} px boxes outside the cards; a card’s button
+    sized to its card (Pokeballs: ${SHOP.ballCard.buttonWidth} x ${SHOP.ballCard.buttonHeight} px, label
+    ${SHOP.ballCard.buttonFont} px). Buy and Unlock
     Positive, Sell Negative, Exit and Inventory Neutral; a Buy you cannot afford is refused, Full, Learned and Known
     disabled. The cursor on a button is its own focus swipe (cursor.bar hides on one)</span></dd>
   <dt>Text</dt><dd>${nameButton('font.michroma')}<span>names ${SHOP.text.name} px in teal.base, lines ${SHOP.text.line} px on
     ${SHOP.text.lineHeight} px; Pokemon names in ${nameButton('font.silver')} ${SHOP.text.pokemonName}</span></dd>
   ${SHOP_FIT}
   <dt>Places</dt><dd>Today’s, from css/bw-shop.css and the tab files; nothing moved</dd>
-  <dt>Pictures</dt><dd>Placeholders: Leftovers for every item, ball extras for the balls, the type glyph for a TM</dd>
+  <dt>Pictures</dt><dd>The balls are today’s (assets/icons/pokeball/balls/, frame ${SHOP_BALL_STRIP.cardFrame} flipped
+    on a card, frame ${SHOP_BALL_STRIP.beltFrame} in a well, both ${SHOP_BALL_STRIP.scale}x). Placeholders: Leftovers for
+    every item, the type glyph for a TM</dd>
   <dt>Board copy</dt><dd>Every value lives in tools/library/shop-draft.js; changing one changes only the board</dd>`;
 const shopSection = (page, tabKey, title, pane, facts) => `<section class="lib-story" data-draft="${page}">
     <h3>${nameButton(page)} ${draftTag(title)}</h3>
@@ -399,11 +461,17 @@ const SHOP_PAGES = {
       'balls',
       'composite: the Pokeballs tab (a board copy)',
       ballsPane,
-      `<dt>Pieces</dt><dd>${nameButton('card.vertical')} on panel.clean in a 3-column grid with ${nameButton('scroll.bar')};
-        the belts as panel.clean in the Poke Balls pocket colour (${nameButton('color.pocketPokeBalls.base')}, a belt not
-        bought: grey.slate at 30%) holding ${nameButton('square.clean')} slots, a slot holding a ball edged in the same
-        colour; the belt number in Michroma ${SHOP.text.beltNumber}. Cards: lit (Poke, under the cursor), dimmed with
-        its Unlock lit (Great), dimmed and refused (the rest)</dd>`
+      `<dt>Pieces</dt><dd>${nameButton('card.vertical')} on panel.clean in a 3-column grid, ${SHOP.ballCard.height} px
+        tall (today 350; every card fits, so no ${nameButton('scroll.bar')}). The belts as ${nameButton('panel.pixel')}
+        in ${nameButton('color.pocketPokeBalls')} (a belt not bought: the fainted grey ramp, as today), sized to six
+        ${SHOP.belt.well} px wells ${SHOP.belt.wellGap} px apart, the berry pocket’s wells (grey.panel inside; an
+        ink ring when empty, the pocket’s base when it holds a ball); the ball at 2x fills most of the well. The
+        belt number in Michroma ${SHOP.text.beltNumber}, white with a 1 px ink stroke. Cards: lit (Poke, under the
+        cursor), dimmed with its Unlock lit (Great), dimmed with its refused Unlock at full strength (the rest; Jess
+        2026-11-20: a dimmed card never dims its button)</dd>
+      <dt>For the build (#126)</dt><dd>Layout is the build\u2019s: the cards scroll in today\u2019s scroll box once all 17
+        balls are listed (6 rows). Each ball is centred on its filled pixels, not its 32 px frame (the board shifts it by
+        SHOP_BALL_CENTRE); the game measures the same shift from the art</dd>`
     ),
   'main.shop.character': () =>
     shopSection(
@@ -442,14 +510,19 @@ const SHOP_PAGES = {
         rest with the cursor bar on one face</dd>`
     ),
 };
-const shopTabsOf = (page) => [
-  {
-    id: 'unified',
-    title: 'Rough draft',
-    note:
-      'NOT APPROVED (Jess 2026-11-20): a rough first pass at this tab in the Unified pieces, kept as a starting point. ' +
-      'Redone one tab at a time, main.shop.character first.',
-    draw: SHOP_PAGES[page],
+// main.shop.pokeball is approved (decision 2026-11-20-155-main-shop-pokeball-look); the other three are rough drafts
+const SHOP_APPROVED = {
+  'main.shop.pokeball': {
+    title: 'Approved',
+    note: 'APPROVED (Jess 2026-11-20): decision 2026-11-20-155-main-shop-pokeball-look. Layout (centring the balls on ' +
+      'their art, the scroll bar at 17 balls) is the build\u2019s, at #126.',
   },
-];
+};
+const SHOP_DRAFT_NOTE = {
+  title: 'Rough draft',
+  note:
+    'NOT APPROVED (Jess 2026-11-20): a rough first pass at this tab in the Unified pieces, kept as a starting point. ' +
+    'Redone one tab at a time.',
+};
+const shopTabsOf = (page) => [{ id: 'unified', ...(SHOP_APPROVED[page] || SHOP_DRAFT_NOTE), draw: SHOP_PAGES[page] }];
 const shopPage = (page) => (tab) => tabbedPage(page, shopTabsOf(page), tab);

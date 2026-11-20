@@ -240,8 +240,9 @@ const berryRamp = () => {
 const teamBerryIcon = (berry, size) =>
   `<div class="lib-area-item-icon" style="left:${(size - 32) / 2}px;top:${(size - 32) / 2}px;
     background-image:url('${TEAM_SLOT_ITEM.sprite}');background-position:${berry.at}"></div>`;
-/** A panel.pixel in the berry pocket's ramp, sized to hold contentWidth x contentHeight px; where the content starts. */
-function teamPocketPanel(contentWidth, contentHeight) {
+/** A panel.pixel in a pocket's ramp (the berries' by default), sized to hold contentWidth x contentHeight px; where the
+ *  content starts. The Shop's ball belts use it too (shop-draft.js). */
+function teamPocketPanel(contentWidth, contentHeight, ramp = berryRamp()) {
   const { rimPx, padding } = TEAM_SLOT.berries,
     artPixel = TEAM_SLOT.box.artPixel,
     evenArt = (px) => 2 * Math.ceil(Math.ceil(px / artPixel) / 2), // art pixels, rounded up to an even number
@@ -254,7 +255,7 @@ function teamPocketPanel(contentWidth, contentHeight) {
     height,
     offsetX: (width - contentWidth) / 2,
     offsetY: (height - contentHeight) / 2,
-    svg: teamBoxSvg(berryRamp(), artWidth, artRows),
+    svg: teamBoxSvg(ramp, artWidth, artRows),
   };
 }
 /** The berry pocket: a panel.pixel in the berries ramp holding a 2x2 of circles, as the move slot's wells hold moves. */
