@@ -360,3 +360,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   slot's bands; both fixed. Tried and dropped: split / gradient / stepped strokes, a full-width dither, slot cursors.
 - Rough drafts of all four main.shop.* tabs: none looked right; kept as NOT APPROVED starting points.
 - Stopped at: redo main.shop.character one piece at a time. Nothing in js/ or css/; check.js not run (Quick).
+
+## 2026-11-20 afternoon (Quick, work), #155 main.shop.pokeball and main.shop.character approved, panel.shopCard
+- Board: Pokeballs redone to Jess's notes (rail 1 px in, 224 px cards with 140 x 36 buttons, today's ball art centred on
+  its filled pixels, belts as panel.pixel with six 52 px wells, belt numbers Michroma 16 with an ink stroke, Sell 204 px).
+  New panel.shopCard (grey.raised body, teal edge) on every shop card; Character Upgrades pockets panel.pixel, no grid.
+- Decided: both tabs approved; button.glitch's rest body is transparent so the swipe draws it (disabled text grey.slate);
+  a dimmed card never dims its button. Four 2026-11-20-155 decision files.
+- Broke: the focused button showed a 1 px white sliver of its rest bar (fixed); refused buttons lacked their state class.
+- Stopped at: main.shop.items next. Nothing in js/ or css/; check.js not run (Quick).
