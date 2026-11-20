@@ -14,9 +14,15 @@ const DRAW = {
   'primitives/modal': modalPage,
   'primitives/portraits': portraitsPage,
   'primitives/chips': chipsPage,
+  'primitives/tooltip': tooltipPage,
+  'primitives/inputs': inputsPage,
   'run.hud.playerActive.bar': activeBarPage,
   'run.hud.playerActive.area': areaPage,
   'run.hud.teamSlot': teamSlotPage,
+  'main.shop.pokeball': shopPage('main.shop.pokeball'),
+  'main.shop.character': shopPage('main.shop.character'),
+  'main.shop.items': shopPage('main.shop.items'),
+  'main.shop.tms': shopPage('main.shop.tms'),
 };
 // the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
 const patternHost = document.createElement('div');

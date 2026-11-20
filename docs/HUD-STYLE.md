@@ -92,11 +92,14 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
 
   | Tier | Face | Crisp sizes | Covers |
   | --- | --- | --- | --- |
-  | Meta | Michroma (`HudModule`) | any (smooth) | Menus, menu buttons, toasts, titles, modules, Main Menu, Settings, upgrades, item tooltips |
-  | Pokemon | Silver, 10 font pixels per em, one digit width | 20, 30, 40 (canvas 5, 10, 15) | Names, Lv, HP, moves, stats, EVs, catch screen, roster, move and stat tooltips |
+  | Meta | Michroma (`HudModule`) | any (smooth) | Menus, menu buttons, toasts, titles, modules, Main Menu, Settings, upgrades, every tooltip (items, moves, stats; Jess 2026-11-20) |
+  | Pokemon | Silver, 10 font pixels per em, one digit width | 20, 30, 40 (canvas 5, 10, 15) | Names, Lv, HP, moves, stats, EVs, catch screen, roster |
   | World numbers | BoldPixels (`HudDigits`) | 16, 32, 48 (canvas 8, 16, 24) | Timer, kills, World Level, counters; damage canvas 8, crits canvas 16 |
   | World words | monogram | 16, 32, 48 (to confirm on the board) | Weather, map labels, region names |
 
+  Tooltips: every tooltip is Michroma, the game talking, whatever it is about, the name at 20 px and the text at 12 px
+  (Jess, 2026-11-20, decision
+  2026-11-20-155-every-tooltip-is-michroma; move and stat tooltips were Silver on 2026-11-18).
   Retired: Truth And Ideals, PokeBW, the second Michroma family. `[Legacy behavior]` every face rule below this one
   describes the live game until #126 applies the scheme.
 

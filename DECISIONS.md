@@ -6,6 +6,10 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-20, #155 run.hud.playerActive.area: the inactive move slots are dimmed to 50%; 32 px wells clear the slot's bands; the badge sits inside the well; the bond count above Silver; the Shake Off prompt in Michroma 20, centred (Jess)](docs/decisions/2026-11-20-155-move-slots-dim-the-inactive-and-wells-clear-the-bands.md)
+- [2026-11-20, #155 the tooltip primitive: panel.clean with a yellow frame and name, three states (hover, pinning, pinned); icons still open (Jess)](docs/decisions/2026-11-20-155-tooltip-is-panel-clean-yellow-frame-three-states.md)
+- [2026-11-20, #155 every tooltip is Michroma, the game talking, whatever it is about; amends the 2026-11-18 font scheme for tooltips (Jess)](docs/decisions/2026-11-20-155-every-tooltip-is-michroma.md)
+- [2026-11-20, #155 run.hud.teamSlot: a two-type rim is first type left, second type right, the middle 25% dithered; the active stroke stays the first type (Jess)](docs/decisions/2026-11-20-155-two-type-team-slot-rim-dithered-middle-band.md)
 - [2026-11-19, #155 run.hud.teamSlot: bar.life's format without the background, a 2 px cursor gap, the berry pocket as a 2x2 of circles (Jess)](docs/decisions/2026-11-19-155-team-slot-hp-bar-cursor-gap-and-berry-pocket.md)
 - [2026-11-19, #155 bar.life keeps the B2 background and takes run.hud.playerActive.bar's HP part (Jess)](docs/decisions/2026-11-19-155-bar-life-keeps-the-b2-background-with-the-new-hp-part.md)
 - [2026-11-19, #155 the library board has no tests; tools/smoke-ui-library.js is removed (Jess)](docs/decisions/2026-11-19-155-no-tests-for-the-library-board.md)

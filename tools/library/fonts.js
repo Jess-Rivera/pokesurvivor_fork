@@ -17,7 +17,7 @@ const FONT_TIERS = [
     sizes: [14, 18, 24, 32],
     covers:
       'Menus, menu buttons, toasts, titles, module panels, the Main Menu, Settings, the upgrades screen, ' +
-      'item tooltips',
+      'every tooltip (Jess 2026-11-20)',
     sample: 'Resume  Settings  End Run  Potion: restores 20 HP',
     note:
       'Smooth, so any size is crisp; the sizes shown are candidates to pick a set from at the feel test. ' +
@@ -30,7 +30,7 @@ const FONT_TIERS = [
     file: 'assets/fonts/Silver-10px.ttf',
     grid: 10,
     sizes: [20, 30, 40],
-    covers: 'Names, Lv, HP, moves, stats, EVs, the catch screen, the roster, move and stat tooltips',
+    covers: 'Names, Lv, HP, moves, stats, EVs, the catch screen, the roster',
     sample: 'Pikachu Lv 42 HP 87/120 Thunderbolt',
     counter: true,
     note:
@@ -146,7 +146,7 @@ const FONT_FOLDS = [
     today: ['font.game'],
     size: '20',
     to: 'font.michroma',
-    toSize: '20',
+    toSize: '20 name, 12 text',
     how: 'ruled: item tooltips',
   },
   {
@@ -281,9 +281,9 @@ const FONT_FOLDS = [
     where: 'hud-overlay.css .hud-tip',
     today: ['font.game'],
     size: '20',
-    to: 'font.silver',
-    toSize: '20',
-    how: 'ruled; Silver 10px at 20 is the catch screen look, larger than today',
+    to: 'font.michroma',
+    toSize: '20 name, 12 text',
+    how: 'ruled 2026-11-20: a tooltip is always the game talking',
   },
   {
     place: 'Catch screen',
@@ -312,6 +312,15 @@ const FONT_FOLDS = [
     to: 'font.boldPixels',
     toSize: '16',
     how: 'scheme; nearest crisp',
+  },
+  {
+    place: 'Shake Off prompt',
+    where: 'hud-overlay.css .hud-prompt-text',
+    today: ['font.hudText'],
+    size: '30',
+    to: 'font.michroma',
+    toSize: '20',
+    how: 'ruled 2026-11-20: the game talking',
   },
   {
     place: 'Kill count',

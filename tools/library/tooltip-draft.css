@@ -1,0 +1,38 @@
+/* tools/library/tooltip-draft.css: the Tooltip page (tooltip-draft.js). Board only. The frame is panel.clean's
+   (.lib-clean, clean-draft.css); the tooltip sits on it. */
+.lib-tip {
+  display: inline-block;
+  font-family: var(--tip-font), monospace;
+  font-synthesis: none;
+  font-size: var(--tip-size);
+  line-height: var(--tip-size);
+}
+/* above panel.clean's body (its ::before) */
+.lib-tip > * {
+  position: relative;
+  z-index: 1;
+}
+.lib-tip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lib-tip-name {
+  white-space: nowrap;
+}
+.lib-tip-line {
+  white-space: normal;
+}
+.lib-tip-icon {
+  display: block;
+  flex: none;
+}
+.lib-tip > .lib-tip-bar {
+  position: absolute;
+  z-index: 2;
+}
+.lib-tip-icons {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}

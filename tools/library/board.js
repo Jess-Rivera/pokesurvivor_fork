@@ -30,6 +30,8 @@ const NAV = [
       { id: 'primitives/modal', title: 'Modal' },
       { id: 'primitives/portraits', title: 'Portraits' },
       { id: 'primitives/chips', title: 'Chips' },
+      { id: 'primitives/tooltip', title: 'Tooltip' },
+      { id: 'primitives/inputs', title: 'Inputs' },
     ],
   },
   {
@@ -48,8 +50,11 @@ const NAV = [
       {
         title: 'Menus',
         items: [
-          { id: 'main.shop.pokeball', title: 'main.shop.pokeball', later: '#155 step 155d' },
-          { id: 'main.shop.character', title: 'main.shop.character', later: 'a later slice under #126' },
+          // the Main Menu Shop's four tabs (Jess 2026-11-20), in the rail's order
+          { id: 'main.shop.pokeball', title: 'main.shop.pokeball' },
+          { id: 'main.shop.character', title: 'main.shop.character' },
+          { id: 'main.shop.items', title: 'main.shop.items' },
+          { id: 'main.shop.tms', title: 'main.shop.tms' },
         ],
       },
       {

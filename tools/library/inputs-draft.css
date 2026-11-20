@@ -1,0 +1,85 @@
+/* tools/library/inputs-draft.css: the Inputs page (inputs-draft.js). Board only. The field, list and tick boxes are
+   panel.clean (.lib-clean, clean-draft.css); their contents sit above its body. */
+.lib-input-stage {
+  display: flex;
+  align-items: flex-start;
+}
+.lib-field {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 var(--field-pad);
+  font-family: var(--field-font), sans-serif;
+  font-synthesis: none;
+  font-size: var(--field-size);
+  line-height: var(--field-size);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.lib-field > *,
+.lib-list-row > *,
+.lib-list > * {
+  position: relative;
+  z-index: 1;
+}
+.lib-field-label {
+  overflow: hidden;
+  text-overflow: clip;
+}
+.lib-field-chevron {
+  margin-left: auto;
+  padding-left: 8px;
+  flex: none;
+}
+/* the typing caret: cursor.bar's terminal blink */
+.lib-field-caret {
+  display: inline-block;
+  height: 60%;
+  margin-left: 2px;
+  animation: lib-cursor-blink var(--cursor-blink) steps(1, end) infinite;
+}
+.lib-list {
+  box-sizing: border-box;
+  font-family: var(--field-font), sans-serif;
+  font-synthesis: none;
+  font-size: var(--field-size);
+  line-height: var(--field-size);
+}
+.lib-list > .lib-list-rows {
+  position: absolute;
+  overflow: hidden;
+}
+.lib-list-group {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 6px 4px;
+  box-sizing: border-box;
+}
+.lib-list-row {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 6px;
+}
+.lib-check {
+  display: inline-block;
+  flex: none;
+}
+.lib-scroll {
+  position: absolute;
+}
+.lib-input-stage > .lib-scroll,
+.lib-stage > .lib-scroll {
+  position: relative;
+}
+.lib-scroll-track,
+.lib-scroll-thumb {
+  position: absolute;
+  top: 0;
+}
+.lib-scroll-track {
+  bottom: 0;
+}
+.lib-scroll-thumb {
+  left: 0;
+}
