@@ -6,6 +6,13 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-20, #155 catch.window: pixel Pokemon panel in its types, the shop's belts, clean owned box, glitch buttons; approved (Jess)](docs/decisions/2026-11-20-155-catch-window-look.md)
+- [2026-11-20, #155 catch screen: the throw's result is a toast; a smaller flee ring and a 424 px window; belts wide enough for the cursor (Jess)](docs/decisions/2026-11-20-155-catch-result-is-a-toast-and-the-window-is-shorter.md)
+- [2026-11-20, #155 catch screen: Let It Go keeps its ask and opens on Keep trying, both buttons red; changes the game at #126 (Jess)](docs/decisions/2026-11-20-155-catch-let-it-go-ask-opens-on-keep-trying.md)
+- [2026-11-20, #155 the run screen's top: gymLeader (bar.life bigger, circles under), worldInfo (map panel, today's look), runInfo (DPS-Upgrades, today's look); run.hud.portrait removed (Jess)](docs/decisions/2026-11-20-155-run-hud-gym-leader-world-info-run-info-look.md)
+- [2026-11-20, #155 run.hud.teamItems: both bags as pixel pockets stacked on the lower right; the HUD drops item names and trackers, the pause screen keeps them (Jess)](docs/decisions/2026-11-20-155-team-items-and-berries-stacked-pixel-pockets-lower-right.md)
+- [2026-11-20, #155 main.shop.tms: Learned and Known are disabled, not refused; changes the game's toast refusal at #126 (Jess)](docs/decisions/2026-11-20-155-tm-learned-and-known-are-disabled.md)
+- [2026-11-20, #155 main.shop.items: the Pokeballs card carried over at 256 px with each item's own art; the owned panel's body grey.raised, edge grey.slate (Jess)](docs/decisions/2026-11-20-155-main-shop-items-look.md)
 - [2026-11-20, #155 main.shop.character: each pocket panel.pixel in its Bag pocket ramp with a plain grey.raised body; contents as today (Jess)](docs/decisions/2026-11-20-155-main-shop-character-look.md)
 - [2026-11-20, #155 panel.shopCard: panel.clean with a grey.raised body and a teal edge for every Shop card; the pockets' body grey.raised, no grid (Jess)](docs/decisions/2026-11-20-155-panel-shopcard-raised-body-teal-edge.md)
 - [2026-11-20, #155 button.glitch: the rest body is transparent, so the focus swipe draws the button; disabled text grey.slate (Jess)](docs/decisions/2026-11-20-155-button-glitch-rest-body-is-transparent.md)

@@ -4,7 +4,7 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-20 afternoon work session (Quick)
+## Getting up to date (either machine), from the 2026-11-20 evening work session (Quick)
 1. On the work machine: `node tools/check.js` and `npm run format`, then this session's wrap-up commits,
    then `git push origin feature/128-acquisition`.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
@@ -13,13 +13,16 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-20; gym leader AI parked)
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
-   - main.shop.* one tab at a time. main.shop.pokeball and main.shop.character approved 2026-11-20 (their decisions).
-     Next **main.shop.items**, then main.shop.tms; both drafts are NOT APPROVED, a starting point only.
-     Open: card and owned-panel edge grey.slate or teal.
+   - Approved 2026-11-20: main.shop.pokeball, .character, .items; run.hud.gymLeader, .worldInfo, .runInfo;
+     catch.window (their decisions). run.hud.portrait removed.
+   - Next **main.shop.tms**: pick the Able to Learn label (12 px one line, 16 px two lines, or 18 px with a narrower
+     search), then approve. Then approve **run.hud.teamItems** (drafted: both bags stacked lower right).
+   - Then the shop menus Jess asked for 2026-11-20 (ask which screens).
+   - A toast page on the board (catch-draft.js draws today's toast in Unified first).
    - Primitives, Inputs (field.text, field.dropdown, scroll.bar): drafted 2026-11-20, kept, not reviewed yet.
    - Tooltip: look ruled (2026-11-20-155-tooltip-is-panel-clean-yellow-frame-three-states); the pin and close icons
      are open (Jess is drawing them). Pinnable tooltips filed as #158.
-   - Done 2026-11-20: two-type team slot rim, tooltip, every tooltip in Michroma (name 20, text 12), move slots and the
+   - Done earlier 2026-11-20: two-type team slot rim, tooltip, every tooltip in Michroma (name 20, text 12), move slots and the
      rest of run.hud.playerActive.area (decisions 2026-11-20-155-*). Still owed from the HUD sets: nothing.
    - Feel test Tokens, Fonts: Michroma's size set, the 9 inferred Fold Map rows, today's new rows (tooltips, Shake Off).
    - Jess lists the poor UX calls in the 155c-4 ask dialog (look and keys) so they can be filed.
@@ -47,7 +50,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op.
 13. Board cleanup (low): delete tools/library/stories/button.story.js and panel.story.js (no tab shows them).
 
-## Open issues by area (numbers only, titles on GitHub, checked 2026-11-20 afternoon, Quick)
+## Open issues by area (numbers only, titles on GitHub, checked 2026-11-20 evening, Quick)
 Confirmed this pull: #70 to #158. Older numbers left as checked earlier (unconfirmed).
 - UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 (blocked by #97) #99 #100 #102 #105 #126 #127
   #145 #146 #155 #156 #158

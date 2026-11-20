@@ -369,3 +369,13 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   a dimmed card never dims its button. Four 2026-11-20-155 decision files.
 - Broke: the focused button showed a 1 px white sliver of its rest bar (fixed); refused buttons lacked their state class.
 - Stopped at: main.shop.items next. Nothing in js/ or css/; check.js not run (Quick).
+
+## 2026-11-20 evening (Quick, work), #155 Team Items, the run screen's top, team items bags, catch.window
+- Board: main.shop.items (Pokeballs card at 256 px, item art) and the TMs cards (TM discs, real move lines); owned and
+  Pokemon panels grey.raised. New pages: run.hud.teamItems, run.hud.gymLeader, run.hud.worldInfo, run.hud.runInfo
+  (hud-top-draft.js), catch.window (catch-draft.js). run.hud.portrait removed; field.dropdown no longer clips y and p.
+- Decided: items, gymLeader, worldInfo, runInfo and catch.window approved; bags stacked lower right, HUD drops item
+  names and trackers; TM Learned and Known disabled; catch result a toast, window 1020 x 424, Let It Go opens on
+  Keep trying. Seven 2026-11-20-155 decision files.
+- Broke: the catch ask drew under the window's pieces; one-sided belts; the owned cursor read between faces (fixed).
+- Stopped at: main.shop.tms label, then approve it and run.hud.teamItems. Nothing in js/ or css/; check.js not run.
