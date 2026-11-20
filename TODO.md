@@ -13,8 +13,8 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-19; gym leader AI parked)
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
-   - HUD sets: write the decision for run.hud.playerActive.bar (HP and EXP in one B2-style bar, EXP off the portrait
-     ring, numbers outside and centred, current HP held still). Then run.hud.playerActive (88 px ringless portrait, the
+   - HUD sets: bar decision written (2026-11-19-155-hud-bar-one-bar-for-hp-and-exp). Next
+     run.hud.playerActive (88 px ringless portrait, the
      bar, Lv, the 1 px chip.status bands; judges Portraits and the 1 px chips in place), then
      run.hud.playerActive.moveSlots.
    - Chips done (decision 2026-11-19-155-chips-one-capsule-status-1px-type-two-scales). Primitives still missing:

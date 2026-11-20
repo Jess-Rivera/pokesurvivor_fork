@@ -5,7 +5,7 @@ Last updated: 2026-11-19 night, Quick (work machine). Branch: feature/128-acquis
 
 ## START HERE (next session, either tool)
 0. `git status`; the chips commit (DEVLOG 2026-11-19 evening, "Later: Chips") should be pushed. #157 is closed.
-1. #155 board, HUD sets: write the decision for run.hud.playerActive.bar first (still owed). Then
+1. #155 board, HUD sets: bar decision written (2026-11-19-155-hud-bar-one-bar-for-hp-and-exp). Next
    run.hud.playerActive: 88 px ringless portrait, the bar, Lv and the 1 px chip.status bands, in today's layout.
    It judges Portraits and the 1 px chips beside the HUD's 2 px art in place. Then moveSlots, then the tooltip.
 2. After that: Fonts feel test, Colours names, smoke-ui-library rewrite, 155d, Pause composites. #156 likely moot.
