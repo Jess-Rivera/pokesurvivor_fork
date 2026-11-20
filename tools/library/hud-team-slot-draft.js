@@ -23,7 +23,7 @@ const TEAM_SLOT = {
   // the berry pocket (Jess 2026-11-19): a small panel.pixel holding a 2x2 of 36 px circles, the move slot's wells; a circle
   // has a solid dark fill, an ink stroke when empty and the pocket's green when it holds a berry. Tight: 6 px between circles, the
   // inside padded 4 px past the rim.
-  berries: { gapAbove: 12, columns: 2, wellSize: 36, wellGap: 6, rimPx: 12, padding: 4 },
+  berries: { columns: 2, wellSize: 36, wellGap: 6, rimPx: 12, padding: 4 },
   // a two-type Pokemon's box rim (trial, Jess 2026-11-20): the first type pure on the left half, the second pure on the
   // right, joined by a dithered band across the middle (seam, a share of the width), each rim pixel one type's ramp part whole.
   // A long dither on the 1 px top and bottom rim read as dashes (Jess 2026-11-20), so the blend is a joint, not a fade.
@@ -259,35 +259,39 @@ function teamPocketPanel(contentWidth, contentHeight, ramp = berryRamp()) {
     svg: teamBoxSvg(ramp, artWidth, artRows),
   };
 }
-/** The berry pocket: a panel.pixel in the berries ramp holding a 2x2 of circles, as the move slot's wells hold moves. */
-function teamPocket(left, bottom) {
+/** A bag pocket: a panel.pixel in a pocket's ramp holding its bought slots as circles two to a row, as the move slot's
+ *  wells hold moves. contents is one entry per bought slot ({ at } holds an item, {} is empty); the berry pocket's by
+ *  default. The team items pocket (hud-team-items-draft.js) uses it too. */
+function teamPocket(left, bottom, contents = TEAM_SLOT_BERRIES, ramp = berryRamp()) {
   const { wellSize, wellGap, columns } = TEAM_SLOT.berries,
-    rows = Math.ceil(TEAM_SLOT_BERRIES.length / columns),
-    ramp = berryRamp(),
-    panel = teamPocketPanel(columns * wellSize + (columns - 1) * wellGap, rows * wellSize + (rows - 1) * wellGap),
-    wells = TEAM_SLOT_BERRIES.map((berry, index) => {
+    rows = Math.ceil(contents.length / columns),
+    panel = teamPocketPanel(columns * wellSize + (columns - 1) * wellGap, rows * wellSize + (rows - 1) * wellGap, ramp),
+    wells = contents.map((held, index) => {
       const x = panel.offsetX + (index % columns) * (wellSize + wellGap),
         y = panel.offsetY + Math.floor(index / columns) * (wellSize + wellGap),
-        filled = !!berry.at;
+        filled = !!held.at;
       return `<div class="lib-area-well lib-team-well" style="left:${x}px;top:${y}px;width:${wellSize}px;height:${wellSize}px;
-        --well-fill:${AREA_COLOURS.wellEmpty};--well-ring:${filled ? ramp.base : AREA_COLOURS.outline}">${filled ? teamBerryIcon(berry, wellSize) : ''}</div>`;
+        --well-fill:${AREA_COLOURS.wellEmpty};--well-ring:${filled ? ramp.base : AREA_COLOURS.outline}">${
+          filled ? teamBerryIcon(held, wellSize) : ''
+        }</div>`;
     }).join('');
   return {
+    width: panel.width,
     height: panel.height,
     html: `<div class="lib-area-piece" style="left:${left}px;bottom:${bottom}px;width:${panel.width}px;height:${panel.height}px">
       ${panel.svg}${wells}</div>`,
   };
 }
+// the berry pocket moved to the lower right beside the team items pocket (Jess 2026-11-20: both bags on the right, to
+// balance the run screen); it is drawn on run.hud.teamItems (hud-team-items-draft.js)
 function teamAreaHtml() {
   const count = TEAM_SLOT_SAMPLES.length,
     { left, bottom } = TEAM_SLOT.stage,
     width = left + teamSlotWidth() + TEAM_SLOT.held.gap + TEAM_SLOT.held.artSize * SQUARE_ART_PIXEL + 40,
-    pocketBottom = bottom + count * TEAM_SLOT.pitch - 4 + TEAM_SLOT.berries.gapAbove, // above the roster, as today
-    pocket = teamPocket(left, pocketBottom);
-  return `<div class="lib-area" data-state="run.hud.teamSlot:six" style="width:${width}px;height:${pocketBottom + pocket.height + 16}px;
+    height = bottom + count * TEAM_SLOT.pitch + 16;
+  return `<div class="lib-area" data-state="run.hud.teamSlot:six" style="width:${width}px;height:${height}px;
     background:${AREA_COLOURS.stage}">
     ${TEAM_SLOT_SAMPLES.map((sample, index) => teamSlotRow(sample, left, bottom + (count - 1 - index) * TEAM_SLOT.pitch)).join('')}
-    ${pocket.html}
   </div>`;
 }
 
@@ -303,7 +307,7 @@ function teamSlotSection() {
     <div class="lib-area-scroll">${teamZoomHtml({ ...TEAM_SLOT_TWO_TYPES }, 'zoomedActiveTwoTypes')}</div>
     <h4>A benched slot, zoomed ${TEAM_ZOOM.scale}x (a status chip)</h4>
     <div class="lib-area-scroll">${teamZoomHtml({ ...TEAM_SLOT_SAMPLES[1], cooldown: 0, chip: 'PAR' }, 'zoomedBenched')}</div>
-    <h4>The lower left of the run screen at 1x: the team of six and the berry pocket above it</h4>
+    <h4>The lower left of the run screen at 1x: the team of six (the berry pocket moved to run.hud.teamItems)</h4>
     <p class="lib-note">Row 1 is out now (the cursor bar), rows 2, 4 and 5 are under the swap cooldown shade, row 4 is on low HP
       with a chip, row 6 has fainted. A team of one shows no roster.</p>
     <div class="lib-area-scroll">${teamAreaHtml()}</div>
@@ -315,9 +319,10 @@ function teamSlotSection() {
         bottom right of the portrait, the item square 10 px right of the box (8 today, plus the cursor’s 2 px gap), rows 68 px apart, the lowest 42 px up</dd>
       <dt>HP bar</dt><dd>${nameButton('bar.life')}’s format without the holder: the HP tab (3 x 5 pixel letters on an ink
         plate) and the 5-row track, no checker, wings or shadow. Green, yellow and red bands as the bar</dd>
-      <dt>Berry pocket</dt><dd>${nameButton('panel.pixel.rest')} in the berries ramp (${nameButton('color.pocketBerries.light')},
-        ${nameButton('color.pocketBerries.base')}, ${nameButton('color.pocketBerries.dark')}), the slot grid for the body,
-        ${TEAM_SLOT.berries.gapAbove} px above the roster, only the purchased slots (three filled, one empty), no names.
+      <dt>Berry pocket</dt><dd>Moved to the lower right beside the team items pocket (Jess 2026-11-20), drawn on
+        ${nameButton('run.hud.teamItems')}. ${nameButton('panel.pixel.rest')} in the berries ramp
+        (${nameButton('color.pocketBerries.light')}, ${nameButton('color.pocketBerries.base')},
+        ${nameButton('color.pocketBerries.dark')}), the slot grid for the body, only the purchased slots, no names.
         A 2x2 of ${TEAM_SLOT.berries.wellSize} px circles as the move slot’s wells, ${TEAM_SLOT.berries.wellGap} px apart, the inside
         padded ${TEAM_SLOT.berries.padding} px past the rim. A solid dark fill (grey.panel, the move slot’s empty well) whether empty or not; an empty circle has the ink stroke, one holding a berry the
         stroke in ${nameButton('color.pocketBerries.base')}</dd>

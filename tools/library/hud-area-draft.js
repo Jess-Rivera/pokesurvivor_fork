@@ -50,6 +50,7 @@ const AREA_FONTS = {
   // font.boldPixels: the Silver count (a world number; fonts.js says 32 px) and the run timer (16)
   counter: "'HudDigits'",
   meta: "'HudModule'", // font.michroma: the Shake Off prompt (the game talking, Jess 2026-11-20)
+  world: "'Monogram 16px'", // font.monogram: world words (run.hud.runInfo's labels and weather, hud-top-draft.js)
 };
 const AREA_COLOURS = {
   stage: greyTone('raised'), // the board's stand-in for the map under the HUD
@@ -198,8 +199,10 @@ function areaLeftSide() {
 // ---------- pieces ----------
 const areaPlace = (x, y) => `left:${AREA.stage.width / 2 + x}px;bottom:${y}px`;
 const areaPlaceRight = (x, y) => `right:${AREA.stage.width / 2 - x}px;bottom:${y}px`;
-const areaText = (text, size, font, style, colour = AREA_COLOURS.text) =>
-  `<div class="lib-area-text" style="${style};--area-size:${size}px;--area-font:${font};--area-pixel:${size / 10}px;
+/** HUD text with its outline one font pixel out; grid is the face's font pixels per em (Silver's 10 by default;
+ *  BoldPixels and monogram are 16). */
+const areaText = (text, size, font, style, colour = AREA_COLOURS.text, grid = 10) =>
+  `<div class="lib-area-text" style="${style};--area-size:${size}px;--area-font:${font};--area-pixel:${size / grid}px;
     --area-outline:${AREA_COLOURS.outline};color:${colour}">${esc(text)}</div>`;
 
 function areaWell(move, index) {

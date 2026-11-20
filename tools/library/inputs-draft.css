@@ -25,6 +25,8 @@
 .lib-field-label {
   overflow: hidden;
   text-overflow: clip;
+  /* room for descenders: the field's line-height is the font size, so the clip cut the y and p (Jess 2026-11-20) */
+  line-height: calc(var(--field-size) * 1.5);
 }
 .lib-field-chevron {
   margin-left: auto;

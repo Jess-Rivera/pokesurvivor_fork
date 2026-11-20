@@ -43,8 +43,15 @@ const NAV = [
           // the active Pokemon's sets are named run.hud.playerActive.* (Jess 2026-11-19); HP and EXP are one bar
           { id: 'run.hud.playerActive.bar', title: 'run.hud.playerActive.bar' },
           { id: 'run.hud.playerActive.area', title: 'run.hud.playerActive.area' },
-          { id: 'run.hud.portrait', title: 'run.hud.portrait', later: 'a later slice under #126' },
+          // run.hud.portrait removed (Jess 2026-11-20): the portrait is part of run.hud.playerActive.area
           { id: 'run.hud.teamSlot', title: 'run.hud.teamSlot' },
+          // the lower right: the team items pocket and the berry pocket (Jess 2026-11-20)
+          { id: 'run.hud.teamItems', title: 'run.hud.teamItems' },
+          // the top of the run screen (Jess 2026-11-20): a gym fight's bar and circles, the map panel (worldInfo);
+          // run.hud.runInfo is the DPS-Upgrades panel, top left
+          { id: 'run.hud.gymLeader', title: 'run.hud.gymLeader' },
+          { id: 'run.hud.worldInfo', title: 'run.hud.worldInfo' },
+          { id: 'run.hud.runInfo', title: 'run.hud.runInfo' },
         ],
       },
       {
@@ -55,6 +62,8 @@ const NAV = [
           { id: 'main.shop.character', title: 'main.shop.character' },
           { id: 'main.shop.items', title: 'main.shop.items' },
           { id: 'main.shop.tms', title: 'main.shop.tms' },
+          // the catch screen (Jess 2026-11-20)
+          { id: 'catch.window', title: 'catch.window' },
         ],
       },
       {

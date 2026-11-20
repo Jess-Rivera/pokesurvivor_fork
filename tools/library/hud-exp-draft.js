@@ -262,7 +262,8 @@ function expUnifiedSection() {
     </dl>
     <dl class="lib-facts">
       <dt>What changes if this is taken</dt><dd>The portrait loses its EXP ring (116 px to an 88 px face with its 4 px
-        stroke) on ${nameButton('run.hud.portrait')} and ${nameButton('pause.pokemonDetail.portrait')}; the pause
+        stroke) on ${nameButton('run.hud.playerActive.area.portrait')} and
+        ${nameButton('pause.pokemonDetail.portrait')}; the pause
         detail panel's bar takes the EXP strip too. The holder is 12 px taller: on the run HUD its top would reach 176
         px, past the bad chip band at 172, so the chips move up 12 px (or the bar down). A game change at #126.</dd>
       <dt>Open</dt><dd>The empty band right of EXP, under the HP track (B2 prints the numbers there); the level-up

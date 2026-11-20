@@ -25,7 +25,7 @@ const PORTRAIT_COLOURS = {
 };
 const PORTRAIT_RING = { outline: 2, band: 12 }; // px, today's (js/ui/lib/primitives/portrait/portrait.js RING)
 const PORTRAIT_SIZES = [
-  { id: 'ringed', size: 116, stroke: 4, ring: 0.6, label: '116 px with the EXP ring', places: ['run.hud.portrait', 'pause.pokemonDetail.portrait'] },
+  { id: 'ringed', size: 116, stroke: 4, ring: 0.6, label: '116 px with the EXP ring', places: ['run.hud.playerActive.area.portrait', 'pause.pokemonDetail.portrait'] },
   { id: 'circle', size: 48, stroke: 4, label: '48 px', places: ['run.boss.leaderCircle', 'catch.window.ownedFace', 'main.shop.tms.face'] },
   { id: 'roster', size: 44, stroke: 2, label: '44 px', places: ['run.hud.teamSlot.face', 'pause.team.face'] },
 ];
@@ -45,12 +45,14 @@ function portraitFace({ size, stroke, sample, rim, selected, fainted }) {
   return `<div class="lib-portrait${selected ? ' is-selected' : ''}" style="${style}">
     <img src="${esc(sample.src)}" alt="" /></div>`;
 }
-/** The ringed face: a 2 px ink outline, the band filled clockwise to fraction, then the face inside. */
-function portraitRinged(state, size, stroke, fraction) {
+/** The ringed face: a 2 px ink outline, the band filled clockwise to fraction, then the face inside. ring sets the
+ *  band's fill and track (EXP's blue on grey.mid by default; the catch screen's flee ring passes its own). */
+function portraitRinged(state, size, stroke, fraction, ring = {}) {
   const inset = PORTRAIT_RING.outline + PORTRAIT_RING.band,
-    face = portraitFace({ ...state, size: size - 2 * inset, stroke });
+    face = portraitFace({ ...state, size: size - 2 * inset, stroke }),
+    { fill = PORTRAIT_COLOURS.ringFill, track = PORTRAIT_COLOURS.ringTrack } = ring;
   return `<div class="lib-portrait-ringed" style="width:${size}px;height:${size}px;--portrait-back:${PORTRAIT_COLOURS.outline};
-    --ring-fill:${PORTRAIT_COLOURS.ringFill};--ring-track:${PORTRAIT_COLOURS.ringTrack};--ring-angle:${Math.round(fraction * 360)}deg">
+    --ring-fill:${fill};--ring-track:${track};--ring-angle:${Math.round(fraction * 360)}deg">
     <div class="lib-portrait-ring" style="inset:${PORTRAIT_RING.outline}px"></div>
     <div class="lib-portrait-ring-face" style="inset:${inset}px">${face}</div></div>`;
 }

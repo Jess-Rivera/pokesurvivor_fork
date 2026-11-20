@@ -19,10 +19,15 @@ const DRAW = {
   'run.hud.playerActive.bar': activeBarPage,
   'run.hud.playerActive.area': areaPage,
   'run.hud.teamSlot': teamSlotPage,
+  'run.hud.teamItems': teamItemsPage,
+  'run.hud.gymLeader': gymLeaderPage,
+  'run.hud.worldInfo': worldInfoPage,
+  'run.hud.runInfo': runInfoPage,
   'main.shop.pokeball': shopPage('main.shop.pokeball'),
   'main.shop.character': shopPage('main.shop.character'),
   'main.shop.items': shopPage('main.shop.items'),
   'main.shop.tms': shopPage('main.shop.tms'),
+  'catch.window': catchPage,
 };
 // the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
 const patternHost = document.createElement('div');

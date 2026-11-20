@@ -20,7 +20,7 @@ G.Lib.PortraitStories = (() => {
     tokens: ['color.hud.outline', 'color.hud.expFill', 'color.hud.trackLight', 'color.type.*'],
     size: 'the screen sets it: 116 px with the ring, 48 px leader circles and owned faces, 44 px roster faces',
     places: [
-      'run.hud.portrait',
+      'run.hud.playerActive.area.portrait',
       'pause.pokemonDetail.portrait',
       'run.boss.leaderCircle',
       'run.hud.teamSlot.face',

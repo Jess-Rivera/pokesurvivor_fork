@@ -75,6 +75,10 @@ const SHOP = {
 };
 // the Pokeballs tab's card (Jess 2026-11-20): shorter, its button sized to the card (button.glitch's look at any size)
 SHOP.ballCard = { ...SHOP.card, height: 224, nameTop: 98, descTop: 122, buttonWidth: 140, buttonHeight: 36, buttonFont: 14 };
+// the Team Items tab's card (Jess 2026-11-20: the Pokeballs carry-over): the ball card's places and button, 256 px tall
+// so the longest line (5 lines of 12 px from 122, to 202) clears the button (from 210). 25 team items make 9 rows: two
+// full rows show, the third's top hints the scroll.
+SHOP.itemCard = { ...SHOP.ballCard, height: 256 };
 SHOP.exit.left = SHOP.pane.width - SHOP.exit.width;
 SHOP.buttonTop = SHOP.pane.height - SHOP.buttonHeight;
 const SHOP_COLOURS = {
@@ -99,7 +103,8 @@ const pocketRamp = (label) => {
   const swatch = POCKET_SWATCHES.find((entry) => entry.label === label);
   return Object.fromEntries(swatch.colours.map(([part, , hex]) => [part, hex.toLowerCase()]));
 };
-// placeholder pictures: Leftovers for every item, the type glyph for a TM
+// placeholder pictures: Leftovers for every owned item, the type glyph for a TM. A sale card shows its item's own art
+// (SHOP_TEAM_ITEMS art: the cell's top-left in the sheet, copied from js/data/pokesprite-index.js)
 const SHOP_ITEM_SPRITE = { sprite: `${ROOT}assets/items/pokesprite-inventory.png`, at: '-1530px -136px' };
 // the balls are today's art (js/data/ball-sprites.js, drawn by hud-kit-items.js BallSprite): one strip of 17 frames of
 // 32 px per ball; a card shows frame 9 flipped, a belt frame 0, both at 2x (shop-balls.js CARD_BALL and SLOT)
@@ -144,19 +149,23 @@ function ballSprite(ball, frame, { flipped = false, style = '' } = {}) {
     background-image:url('${ROOT}assets/icons/pokeball/balls/${ball}.png');background-size:${px(drawn * frames)} ${px(drawn)};
     background-position:${px(-frame * drawn)} 0;transform:${transform};${style}"></div>`;
 }
-/** panel.clean at a place and size; edge defaults to grey.slate. */
-const cleanBox = (left, top, width, height, inner, { edge = SHOP_COLOURS.edge, className = '', style = '' } = {}) =>
-  `<div class="lib-clean lib-shop-box ${className}" style="--clean-body:${SHOP_COLOURS.body};--clean-edge:${edge};
+/** panel.clean at a place and size; body defaults to grey.panel, edge to grey.slate. */
+const cleanBox = (left, top, width, height, inner, options = {}) => {
+  const { body = SHOP_COLOURS.body, edge = SHOP_COLOURS.edge, className = '', style = '' } = options;
+  return `<div class="lib-clean lib-shop-box ${className}" style="--clean-body:${body};--clean-edge:${edge};
     --clean-edge-width:${px(CLEAN_PANEL.edgeWidth)};${place(left, top)};width:${px(width)};height:${px(height)};${style}">
     ${inner}</div>`;
+};
 /** square.clean at any size: filled takes an edge colour; locked is the empty look at 30%. */
 const shopSquare = (size, { edge, locked, icon = '' } = {}) =>
   `<div class="lib-clean lib-shop-square" style="--clean-body:${SHOP_COLOURS.body};--clean-edge:${edge || SHOP_COLOURS.edge};
     --clean-edge-width:${px(CLEAN_PANEL.edgeWidth)};width:${px(size)};height:${px(size)};
     opacity:${locked ? CLEAN_SQUARE.lockedOpacity : 1}">${icon}</div>`;
-const itemIcon = (scale = 1) =>
+/** A 32 px cell of the item sheet at a scale; art is the cell's [x, y] (Leftovers by default). */
+const itemIcon = (scale = 1, art) =>
   `<div class="lib-shop-item-icon" style="background-image:url('${SHOP_ITEM_SPRITE.sprite}');
-    background-position:${SHOP_ITEM_SPRITE.at};transform:scale(${scale})"></div>`;
+    background-position:${art ? `${px(-art[0])} ${px(-art[1])}` : SHOP_ITEM_SPRITE.at};
+    transform:scale(${scale})"></div>`;
 const divider = (left, right, top, extra = '') =>
   `<div class="lib-shop-divider" style="left:${px(left)};right:${px(right)};top:${px(top)};height:${px(CLEAN_PANEL.edgeWidth)};
     background:${SHOP_COLOURS.divider};${extra}"></div>`;
@@ -320,14 +329,44 @@ function shopPocket(pocket, index) {
 const upgradesPane = () => SHOP_POCKETS.map(shopPocket).join('');
 
 // ---------- main.shop.items ----------
+// today's team items (js/data/items.js, tier 'run'): the seven that are not Stones and two of the 18 Stones (Fist
+// Stone carries the longest line). Each art is its icon's cell in the item sheet.
 const SHOP_TEAM_ITEMS = [
-  { name: 'Amulet Coin', desc: '+50% PokéCoins at the end of the run.', label: 'Buy 100k' },
-  { name: 'Lucky Egg', desc: '+30% experience.', label: 'Buy 100k', refused: true },
-  { name: 'Sharp Scissors', desc: 'The lower your team HP, the faster you move (up to 2x). Needs a team of 3+.', label: 'Buy 100k' },
-  { name: 'Brass Knuckles', desc: 'The lower your team HP, the more damage you deal (up to 2x). Needs a team of 3+.', label: 'Buy 100k' },
-  { name: 'Snowball Badge', desc: 'Every kill feeds the Snowball: +damage for the total HP of everything you have slain.', label: 'Buy 100k' },
-  { name: 'Re-Do', desc: 'When your last Pokemon faints, revive your whole team to full HP. Once per run.', label: 'Buy 100k' },
+  { name: 'Amulet Coin', art: [102, 136], desc: '+50% PokéCoins at the end of the run.', focused: true },
+  { name: 'Lucky Egg', art: [1666, 136], desc: '+30% experience.', refused: true },
+  {
+    name: 'Sharp Scissors',
+    art: [1224, 136],
+    desc: 'The lower your team HP, the faster you move (up to 2x). Needs a team of 3+.',
+  },
+  {
+    name: 'Brass Knuckles',
+    art: [1700, 136],
+    desc: 'The lower your team HP, the more damage you deal (up to 2x). Needs a team of 3+.',
+  },
+  {
+    name: 'Snowball Badge',
+    art: [748, 170],
+    desc: 'Every kill feeds the Snowball: +damage for the total HP of everything you have slain.',
+  },
+  {
+    name: 'Re-Do',
+    art: [816, 170],
+    desc: 'When your last Pokemon faints, revive your whole team to full HP. Once per run.',
+  },
+  { name: "Pikachu's Tear", art: [1598, 136], desc: 'Each fainted teammate boosts your damage and speed by 1.1x.' },
+  {
+    name: 'Fist Stone',
+    art: [1564, 102],
+    desc: 'Your Fighting attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+  },
+  {
+    name: 'Flame Stone',
+    art: [1598, 102],
+    desc: 'Your Fire attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+  },
 ];
+const SHOP_ITEM_PRICE = 'Buy 100k'; // every team item today (G.Items)
 const SHOP_OWNED = 7; // owned team items shown; dimmed empty squares fill the visible rows
 function ownedPanel() {
   const o = SHOP.owned,
@@ -343,17 +382,25 @@ function ownedPanel() {
   const inner = `${fieldText({ width: o.searchWidth, placeholder: 'Search owned', style: place(o.inset, o.inset) })}
     ${cells}
     ${scrollBar({ height: listHeight, fraction: 0.8, style: place(o.width - o.inset - INPUT.scroll.thumb + 6, o.listTop) })}`;
-  return cleanBox(o.left, 0, o.width, o.height, inner);
+  // its body the cards' grey.raised (panel.shopCard; Jess 2026-11-20); the squares keep grey.panel, as the pockets'
+  return cleanBox(o.left, 0, o.width, o.height, inner, { body: SHOP_CARD_PANEL.body });
 }
 function itemsPane() {
   const room = SHOP.cursorRoom,
     o = SHOP.owned,
+    card = SHOP.itemCard,
     cards = SHOP_TEAM_ITEMS.map((item) =>
       shopCard({
-        picture: `<div style="${place(0, 0)}">${itemIcon(2)}</div>`, // the 32 px icon at 2x fills the 64 px box
+        picture: `<div style="${place(0, 0)}">${itemIcon(2, item.art)}</div>`, // the 32 px icon at 2x fills the 64 px box
         name: item.name,
         description: item.desc,
-        button: shopButton(item.label, 'Positive', SHOP.card.buttonWidth, { refused: item.refused }),
+        card,
+        button: shopButton(SHOP_ITEM_PRICE, 'Positive', card.buttonWidth, {
+          focused: item.focused,
+          refused: item.refused,
+          height: card.buttonHeight,
+          fontSize: card.buttonFont,
+        }),
       })
     ),
     // the owned square under the cursor shows its tooltip below it, after the Tooltip Delay
@@ -362,7 +409,7 @@ function itemsPane() {
       text: 'Recover 1.5% of your max HP per second.',
     })}</div>`;
   return `${fieldText({ width: SHOP.grid.listWidth, placeholder: 'Search team items', style: place(room, room) })}
-    ${cardGrid(cards, room, room + SHOP.grid.listTop, SHOP.pane.height - room - SHOP.grid.listTop)}
+    ${cardGrid(cards, room, room + SHOP.grid.listTop, SHOP.pane.height - room - SHOP.grid.listTop, card)}
     ${ownedPanel()}
     ${shopButton('Inventory', 'Neutral', SHOP.inventory.width, {
       style: place(SHOP.exit.left - SHOP.inventory.gap - SHOP.inventory.width, SHOP.buttonTop),
@@ -371,13 +418,21 @@ function itemsPane() {
 }
 
 // ---------- main.shop.tms ----------
+// the TM cards carry the Team Items card over (Jess 2026-11-20): SHOP.itemCard, the type's TM disc from the item sheet
+// (ps:tm.<type>, its cell copied from js/data/pokesprite-index.js) and each move's line as G.MoveInfo.desc builds it
+// from js/data/moves-generated.js (traced by hand; the game builds its own). Able to Learn is off here, so a TM the
+// chosen Pokemon cannot learn shows: dimmed, its refused Buy at full strength (a dimmed card never dims its button).
 const SHOP_TMS = [
-  { name: 'Thunderbolt', type: 'electric', label: 'Buy 3k' },
-  { name: 'Flamethrower', type: 'fire', label: 'Learned', disabled: true },
-  { name: 'Surf', type: 'water', label: 'Known', disabled: true },
-  { name: 'Ice Beam', type: 'ice', label: 'Buy 12k', refused: true },
-  { name: 'Earthquake', type: 'ground', label: 'Buy 9k' },
-  { name: 'Psychic', type: 'psychic', label: 'Buy 9k' },
+  { name: 'Thunderbolt', art: [1394, 442], label: 'Buy 3k', focused: true,
+    desc: 'Chains between foes: damage, 10% paralysis, hops to more foes.' },
+  { name: 'Flamethrower', art: [1496, 442], label: 'Learned', disabled: true, desc: 'Cone: damage, 10% burn.' },
+  { name: 'Surf', art: [1870, 442], label: 'Known', disabled: true,
+    desc: 'Passive: no water or swamp slowdown, x1.25 speed in them.' },
+  { name: 'Ice Beam', art: [1666, 442], label: 'Buy 12k', refused: true,
+    desc: 'Beam: damage, 10% freeze, foe Speed -1.' },
+  { name: 'Earthquake', art: [1632, 442], label: 'Buy 9k', desc: 'Burst around you: damage.' },
+  { name: 'Psychic', art: [1768, 442], label: 'Buy 9k', refused: true, look: 'dimmedButButton',
+    desc: 'Shot: damage, 10% foe Sp. Def -1.' },
 ];
 const SHOP_TEAM_DEX = [25, 4, 7, 1, 94, 130];
 const SHOP_BOX_DEX = [133, 143, 147, 149, 150, 152, 155, 158, 172, 175, 196, 197];
@@ -411,26 +466,36 @@ function tmsPanel() {
     <div class="lib-shop-scroll" style="${place(0, t.box.top)};width:${px(p.width)};height:${px(boxHeight)}">
       <div style="position:relative;top:${px(-t.box.top)}">${cells}</div></div>
     ${scrollBar({ height: boxHeight, fraction: boxHeight / (boxRows * (t.box.cell + t.box.gap) + 200), style: place(p.width - p.inset + 2, t.box.top) })}`;
-  return cleanBox(p.left, 0, p.width, p.height, inner);
+  // its body the cards' grey.raised (panel.shopCard; Jess 2026-11-20), as the Team Items owned panel
+  return cleanBox(p.left, 0, p.width, p.height, inner, { body: SHOP_CARD_PANEL.body });
 }
 function tmsPane() {
   const t = SHOP.tms,
     room = SHOP.cursorRoom,
+    card = SHOP.itemCard,
     cards = SHOP_TMS.map((tm) =>
       shopCard({
-        picture: `<img class="lib-shop-glyph" src="${typeGlyph(tm.type)}" alt="" />`,
+        picture: `<div style="${place(0, 0)}">${itemIcon(2, tm.art)}</div>`, // the 32 px disc at 2x fills the 64 px box
         name: tm.name,
-        description: 'Placeholder: the move’s one line (G.MoveInfo.desc).',
-        button: shopButton(tm.label, 'Positive', SHOP.card.buttonWidth, { refused: tm.refused, disabled: tm.disabled }),
+        description: tm.desc,
+        look: tm.look,
+        card,
+        button: shopButton(tm.label, 'Positive', card.buttonWidth, {
+          focused: tm.focused,
+          refused: tm.refused,
+          disabled: tm.disabled,
+          height: card.buttonHeight,
+          fontSize: card.buttonFont,
+        }),
       })
     ),
     toggleTop = room + (INPUT.height - 22) / 2;
   return `${fieldText({ width: t.bar.searchWidth, placeholder: 'Search TMs', style: place(room, room) })}
     ${dropdownBox({ width: t.bar.typeWidth, label: 'Type', style: place(t.bar.typeLeft, room) })}
-    <button type="button" class="lib-toggle on lib-shop-toggle" tabindex="-1" aria-pressed="true"
+    <button type="button" class="lib-toggle lib-shop-toggle" tabindex="-1" aria-pressed="false"
       style="${toggleStyle};${place(t.bar.toggleLeft + 5, toggleTop)};font-size:${px(t.bar.labelSize)};letter-spacing:1px">
       <span class="lib-toggle-mark"><span></span></span>Able to Learn</button>
-    ${cardGrid(cards, room, room + SHOP.grid.listTop, SHOP.pane.height - room - SHOP.grid.listTop)}
+    ${cardGrid(cards, room, room + SHOP.grid.listTop, SHOP.pane.height - room - SHOP.grid.listTop, card)}
     ${tmsPanel()}`;
 }
 
@@ -455,8 +520,8 @@ const SHOP_COMMON_FACTS = `
   ${SHOP_FIT}
   <dt>Places</dt><dd>Today’s, from css/bw-shop.css and the tab files; nothing moved</dd>
   <dt>Pictures</dt><dd>The balls are today’s (assets/icons/pokeball/balls/, frame ${SHOP_BALL_STRIP.cardFrame} flipped
-    on a card, frame ${SHOP_BALL_STRIP.beltFrame} in a well, both ${SHOP_BALL_STRIP.scale}x). Placeholders: Leftovers for
-    every item, the type glyph for a TM</dd>
+    on a card, frame ${SHOP_BALL_STRIP.beltFrame} in a well, both ${SHOP_BALL_STRIP.scale}x). Item and TM cards show
+    today\u2019s item sheet art at 2x. Placeholder: Leftovers in every owned square</dd>
   <dt>Board copy</dt><dd>Every value lives in tools/library/shop-draft.js; changing one changes only the board</dd>`;
 const shopSection = (page, tabKey, title, pane, facts) => `<section class="lib-story" data-draft="${page}">
     <h3>${nameButton(page)} ${draftTag(title)}</h3>
@@ -498,7 +563,10 @@ const SHOP_PAGES = {
       'items',
       'composite: the Team Items tab (a board copy)',
       itemsPane,
-      `<dt>Pieces</dt><dd>${nameButton('field.text')} over the card grid (cards on ${nameButton('panel.shopCard')}); the owned panel as panel.clean with its own search
+      `<dt>Pieces</dt><dd>${nameButton('field.text')} over the card grid: ${nameButton('card.vertical')} on
+        ${nameButton('panel.shopCard')}, ${SHOP.itemCard.height} px tall with the Pokeballs card\u2019s places and its
+        ${SHOP.itemCard.buttonWidth} x ${SHOP.itemCard.buttonHeight} px Buy (label ${SHOP.itemCard.buttonFont}), each
+        item\u2019s own art (Jess 2026-11-20: the Pokeballs carry-over); the owned panel as panel.clean with its own search
         and a ${SHOP.owned.columns}-wide grid of ${SHOP.owned.square} px ${nameButton('square.clean')} (owned: the teal
         filled edge; empty: the locked 30%) and ${nameButton('scroll.bar')}. The cursor (${nameButton('cursor.bar')},
         blinking) on the first owned square, its ${nameButton('tooltip')} below it after the Tooltip Delay;
@@ -512,8 +580,11 @@ const SHOP_PAGES = {
       tmsPane,
       `<dt>Pieces</dt><dd>The bar: ${nameButton('field.text')}, the Type ${nameButton('field.dropdown')} and
         ${nameButton('toggle.power')} (its label at ${SHOP.tms.bar.labelSize} px to fit beside the panel; the toggle’s own
-        is 18). Cards on ${nameButton('panel.shopCard')} with the type glyph (Learned and Known
-        disabled). The Pokemon panel as panel.clean: the chosen
+        is 18; shown off). Cards: the Team Items card carried over (${SHOP.itemCard.height} px,
+        ${SHOP.itemCard.buttonWidth} x ${SHOP.itemCard.buttonHeight} px Buy, label ${SHOP.itemCard.buttonFont}) on
+        ${nameButton('panel.shopCard')}, the type\u2019s TM disc, the move\u2019s generated line (Learned and Known
+        disabled; a TM it cannot learn dimmed, its refused Buy at full strength). The Pokemon panel as panel.clean with
+        the cards\u2019 grey.raised body (Jess 2026-11-20): the chosen
         Pokemon (${nameButton('portrait.round.selected')} at ${SHOP.tms.chosen.size} px, its name in Silver), the team of
         six at ${SHOP.tms.team.size} px (the chosen one selected), a divider, the search and Filter, the Pokebox grid at
         rest with the cursor bar on one face</dd>`
@@ -530,6 +601,10 @@ const SHOP_APPROVED = {
   'main.shop.character': {
     title: 'Approved',
     note: 'APPROVED (Jess 2026-11-20): decision 2026-11-20-155-main-shop-character-look.',
+  },
+  'main.shop.items': {
+    title: 'Approved',
+    note: 'APPROVED (Jess 2026-11-20): decision 2026-11-20-155-main-shop-items-look.',
   },
 };
 const SHOP_DRAFT_NOTE = {
