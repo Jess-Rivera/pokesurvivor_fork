@@ -349,3 +349,14 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Broke the board three times (a load-time colour lookup, a missing pocketBerries token, a swapped template id); the last
   fix was checked in a stub-DOM harness first. No screenshots taken (the local server was not allowed), so nothing seen yet.
 - Stopped at: Jess's look at the team slot and bars pages. Board only; nothing in js/ or css/. check.js passes.
+
+## 2026-11-20 morning (Quick, work), #155 two-type rim, tooltip, area slot detail, rough shop drafts
+- Board: run.hud.teamSlot's two-type rim (first type left, second right, middle 25% dithered); Primitives, Tooltip
+  (new) and Inputs (new: field.text, field.dropdown, scroll.bar); run.hud.playerActive.area's slot detail (dimmed
+  inactive slots, 32 px wells, badges inside the well, cast flash), bond count above Silver, Shake Off, run timer.
+- Decided: every tooltip in Michroma (name 20, text 12); the tooltip look (icons open); four 2026-11-20-155 decision files.
+  Filed #158 (pinnable and nested tooltips). Fonts page gained the tooltip and Shake Off rows; HUD-STYLE font note updated.
+- Broke: the area page's bond count collapsed off-screen (a bare svg in a piece) and the first well size touched the
+  slot's bands; both fixed. Tried and dropped: split / gradient / stepped strokes, a full-width dither, slot cursors.
+- Rough drafts of all four main.shop.* tabs: none looked right; kept as NOT APPROVED starting points.
+- Stopped at: redo main.shop.character one piece at a time. Nothing in js/ or css/; check.js not run (Quick).

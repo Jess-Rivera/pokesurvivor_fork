@@ -4,35 +4,30 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-19 late night home session (Claude Code)
-1. On the home machine: `git status` (clean after tonight's commit), then `git push origin feature/128-acquisition`.
+## Getting up to date (either machine), from the 2026-11-20 morning work session (Quick)
+1. On the work machine: `node tools/check.js` and `npm run format`, then the two commits in this session's wrap-up,
+   then `git push origin feature/128-acquisition`.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
    `node tools/check.js` (must end "check: all passed"). Say "catch me up".
 3. Before leaving a machine: commit and push.
 
-## Next (queue set by Jess 2026-11-15, updated 2026-11-19; gym leader AI parked)
+## Next (queue set by Jess 2026-11-15, updated 2026-11-20; gym leader AI parked)
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
-   - HUD sets: the bar is tuned, run.hud.playerActive.area and run.hud.teamSlot are built (decisions 2026-11-19-155-hud-bar-one-bar-
-     for-hp-and-exp, -player-active-area-aligns-to-the-slots, -team-slot-hp-bar-cursor-gap-and-berry-pocket,
-     -bar-life-keeps-the-b2-background-with-the-new-hp-part). Next: Jess looks at the teamSlot and Bars pages (never seen
-     rendered), rules the active portrait stroke for two types, then run.hud.playerActive.moveSlots detail.
-   - Chips done (decision 2026-11-19-155-chips-one-capsule-status-1px-type-two-scales). Primitives still missing:
-     tooltip (next), then slider, text field, tabs (or a selected button.glitch) and the see-through HUD panel as the
-     screens that use them come up. Composites only where layout is new: playerActive, moveSlots, the level-up card,
-     pause.pokemonDetail; plain menus go straight from the primitives at #126.
-   - #157 closed. The clean places not drawn yet (belts, team item cards, run item box, pocket boxes, the catch
-     screen's Pokemon owned box, pocket prompt header, tooltip box, a see-through HUD panel, the square.clean grid) get
-     drawn in the #155 composites below and applied at #126.
-   - Feel test Tokens, Fonts: Michroma's size set, the 9 inferred Fold Map rows, the tooltip size (Silver 20 or 10).
+   - main.shop.* one tab at a time, **main.shop.character first**. The four rough drafts (tools/library/shop-draft.js,
+     marked NOT APPROVED) are only a starting point; none looked as Jess imagined. Open there: Sell Pokeball overflows
+     186 px in Michroma (192 px, or "Sell"); card and owned-panel edge grey.slate or teal.
+   - Primitives, Inputs (field.text, field.dropdown, scroll.bar): drafted 2026-11-20, kept, not reviewed yet.
+   - Tooltip: look ruled (2026-11-20-155-tooltip-is-panel-clean-yellow-frame-three-states); the pin and close icons
+     are open (Jess is drawing them). Pinnable tooltips filed as #158.
+   - Done 2026-11-20: two-type team slot rim, tooltip, every tooltip in Michroma (name 20, text 12), move slots and the
+     rest of run.hud.playerActive.area (decisions 2026-11-20-155-*). Still owed from the HUD sets: nothing.
+   - Feel test Tokens, Fonts: Michroma's size set, the 9 inferred Fold Map rows, today's new rows (tooltips, Shake Off).
    - Jess lists the poor UX calls in the 155c-4 ask dialog (look and keys) so they can be filed.
    - Colours: name the 7 UI colours and the greys (placeholders on the board); rebuild the rims from Unified.
-   - 155d main.shop.pokeball composite; the Pause composites (pause.pokemonDetail and the rest).
+   - Then the Pause composites (pause.pokemonDetail and the rest).
    - #156: likely moot (button.slanted and button.rounded retire at #126); Jess closes or keeps it.
-   - Then #126 applies the board: Unified colours and fonts, button.glitch, panel.clean, square.clean, square.item and
-     panel.slanted in Unified, the detail background, cursor.bar (decide its mouse behaviour then). Decisions:
-     2026-11-18-155-unified-palette, -font-scheme-three-tiers, -button-glitch-replaces-slanted-and-rounded,
-     -pixel-panels-for-one-pokemon-clean-for-the-rest; 2026-11-19-157-panel-slanted-is-the-move-slot-only,
-     -held-item-keeps-square-item. #126 also fixes tokens.js's backwards pokeBW and michroma job text.
+   - Then #126 applies the board (the 2026-11-18, -19 and -20 #155 decisions). #126 also fixes tokens.js's backwards
+     pokeBW and michroma job text, its tooltip font text, and line 139's smoke-ui-library comment.
 1. #145 small and ready. #150 blocked on #97.
 2. #128 acquisition: #138 next, then #146 keep-or-sell list; order in
    docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
@@ -43,7 +38,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 7. Leftovers from earlier: #49 close or umbrella; board by hand (#86 to Accepted, #29 out of Blocked, the Triage cards);
    drafts (leader reads your cards and items as seen; buffValue reads the whole kit; trace records the leader's level; 16i
    parity; #122 comment on early gates). Any time: #121, #120, #57, #58, #110.
-   Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107 #156. #155 card sits in Triage (move it).
+   Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107 #156 #158. #155 card sits in Triage (move it).
 8. Owner decisions: #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
 9. New issues to file: region type maps, PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing.
 10. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83; unknown local branch
@@ -52,11 +47,11 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op.
 13. Board cleanup (low): delete tools/library/stories/button.story.js and panel.story.js (no tab shows them).
 
-## Open issues by area (numbers only, titles on GitHub, checked 2026-11-19 evening, Quick)
-Confirmed this pull: #138 to #146, #150, #155, #156 open; #136, #137, #147 to #149, #151 to #154, #157 closed. The
-pull stopped at #135; the rest left as checked earlier. #109 and #123 closed 2026-11-15 (not returned, left in place).
+## Open issues by area (numbers only, titles on GitHub, checked 2026-11-20, Quick)
+Confirmed this pull: #138 to #146, #150, #155, #156, #158 open; #137, #147 to #149, #151 to #154, #157 closed. The
+pull stopped at #136; the rest left as checked earlier. #109 and #123 closed 2026-11-15 (not returned, left in place).
 - UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 (blocked by #97) #99 #100 #102 #105 #126 #145
-  #146 #155 #156
+  #146 #155 #156 #158
 - Gyms: #6 #9 #20 #21 #24 #49 #57 #58 #60 #107 #109 #111 (blocked by #109) #120 #122 (blocked by #111)
 - Moves: #11 #13 #14 #16 #18 #38 #44 #141 #150 (blocked by #97)
 - Enemies: #143
