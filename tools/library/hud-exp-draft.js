@@ -10,37 +10,46 @@
 // repeating a two-column slice of its middle, so the checker and the stripes stay in step. Then (Jess 2026-11-19): the
 // HP tab moved to the left end and the HP track grown both ways; B2's 5-pixel letters replaced by Silver 10px (the
 // Pokemon tier), upright since Silver has no italic, each letter ringed by a one-pixel ink outline (the HUD text's
-// eight shadows); EXP under the HP track's left end, one pixel lower; the EXP strip starting under the P of EXP, beside
-// its stem. The letters are drawn into the holder as pixel art, so the grid below is the whole bar, one letter per art
+// eight shadows). Later (Jess 2026-11-19): HP and EXP in 3 x 5 pixel letters, each on an ink plate; EXP left of the strip,
+// the strip (3 short of the HP track) beside the P's bowl, the bar's bottom flat; the HP track 5 rows thick (one shade row on top, two under), two checker rows down, the HP letters on its rows.
+// The letters are drawn into the holder as pixel art, so the grid below is the whole bar, one letter per art
 // pixel (o ink, b and c the checker, d the shadow, s and l the HP track, W the HP letters, E the EXP letters, m and p
-// the empty strip's stripes). Made with a script in the Quick session (2026-11-19); edit the grid by hand to change it.
+// the empty strip's two rows). Made with a script in the Quick session (2026-11-19); edit the grid by hand to change it.
 // A board copy: the game draws a ring today.
 const EXP_ROWS = [
-  '....ooooooooooooo......................................................................................................................................................................................................................',
-  '...ooWoooWoWWWWoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo......',
-  '..ocoWocoWoWoooWoossssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssocbo.....',
-  '..oboWoboWoWoboWoollllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllobcbo....',
-  '.obcoWoooWoWoooWoossssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssocbcbo...',
-  '.ocboWWWWWoWWWWoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooobcbcbo..',
-  'ocbcoWoooWoWoooobcooooooooocoooooooobcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbbo..',
-  'obcboWoboWoWobcbcboEEEEEoEoboEoEEEEoobcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbbod..',
-  '.obcoWocoWoWocbcbcoEoooooEoooEoEoooEocbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbbbodd.',
-  '..oboWoboWoWobcbcboEobcbooEoEooEoboEobcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcboddd.',
-  '...oooocooooocbcbcoEooooboEoEooEoooEocbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbbodd..',
-  '....obcbcbcbcbcbcboEEEEocooEoooEEEEoobcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbboddd..',
-  '.....obcbcbcbcbcbcoEooooboEoEooEoooobcbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbodd...',
-  '......oooooooooooooEooooooEoEooEoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooddd...',
-  '........dddoooooodoEoooooEoooEoEooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooodddd....',
-  '.........dddddddddoEEEEEoEo.oEoEopmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpodddd....',
-  '..................ooooooooo.ooooopmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpmpo........',
-  '................................ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo........'
+  '.......................................................................................................................................................................................................................',
+  '...oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo......',
+  '..ocbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbo.....',
+  '..obcooooooooocbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbo....',
+  '.obcboWoWoWWoossssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssocbcbo...',
+  '.ocbcoWoWoWoWollllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllobcbcbo..',
+  'ocbcboWWWoWWoollllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllocbcbbo..',
+  'obcbcoWoWoWooossssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssobcbbod..',
+  '.obcboWoWoWooossssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssocbbbodd.',
+  '..obcoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooobcboddd.',
+  '...obcbcbcbcbcbcbcbcoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooobcbcbbodd..',
+  '....obcbcbcbcbcbcbcboEEEoEoEoEEooppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppocbcbboddd..',
+  '.....obcbcbcbcbcbcbcoEoooEoEoEoEommmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmobbbbbodd...',
+  '......oooooooooooooooEEoooEooEEooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooddd...',
+  '........ddddddddddddoEoooEoEoEooodddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd....',
+  '.........dddddddddddoEEEoEoEoEooodddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd....',
+  '....................ooooooooooooo......................................................................................................................................................................................',
 ];
-const EXP_BAR = { artPixel: 2, artWidth: EXP_ROWS[0].length, artRows: EXP_ROWS.length, hpRow: 2, stripRow: 15 };
+const EXP_BAR = {
+  artPixel: 2,
+  artWidth: EXP_ROWS[0].length,
+  artRows: EXP_ROWS.length,
+  hpRow: 4,
+  hpRows: 5,
+  hpShadeTop: 1,
+  hpShadeBottom: 2,
+  stripRow: 11,
+};
 const spanOf = (row, letters) => {
   const cells = [...EXP_ROWS[row]].map((cell, x) => (letters.includes(cell) ? x : -1)).filter((x) => x >= 0);
   return { left: cells[0], width: cells[cells.length - 1] - cells[0] + 1 };
 };
-const EXP_HP_TRACK = spanOf(EXP_BAR.hpRow + 1, 'l'); // the HP track's light row
+const EXP_HP_TRACK = spanOf(EXP_BAR.hpRow + EXP_BAR.hpShadeTop, 'l'); // the HP track's first light row
 const EXP_STRIP = spanOf(EXP_BAR.stripRow, 'mp'); // the EXP strip
 // the art's letters in Unified colours (B2's own hex in the comment)
 const EXP_COLOURS = {
@@ -50,25 +59,24 @@ const EXP_COLOURS = {
   d: greyTone('raised'), // #313129 drop shadow (today's bar shadow is raised too)
   s: BAR_COLOURS.trackShade, // #464646 HP track shade, grey.slate
   l: BAR_COLOURS.trackLight, // #7f7f7f HP track light, grey.mid
-  W: greyTone('white'), // the HP letters (Silver 10px), white like the HUD text
-  E: unifiedTone(UNIFIED_BLUE, 'base'), // the EXP letters (Silver 10px); B2 #00bdf7
-  e: unifiedTone(UNIFIED_BLUE, 'dark'), // the full strip's dark stripe; B2 #006b9c
-  m: greyTone('mid'), // #9c9ca5 the empty EXP strip, dark stripe
-  p: greyTone('paper'), // #f7f7f7 the empty EXP strip, light stripe
+  W: greyTone('white'), // the HP letters (3 x 5 pixel art), white like the HUD text
+  E: unifiedTone(UNIFIED_BLUE, 'base'), // the EXP letters (3 x 5 pixel art); B2 #00bdf7
+  e: unifiedTone(UNIFIED_BLUE, 'dark'), // the full strip's dark (bottom) row; B2 #006b9c
+  m: greyTone('mid'), // #9c9ca5 the empty EXP strip, dark (bottom) row
+  p: greyTone('paper'), // #f7f7f7 the empty EXP strip, light (top) row
 };
-const EXP_FILL = { dark: EXP_COLOURS.e, light: EXP_COLOURS.E }; // the full strip: B2's two blue stripes
-// the checker (c on odd x + y, b on even, as the rip) and the empty strip's stripes (m on even x, p on odd) draw as
-// patterns, so a row is a few rectangles instead of one per pixel; the two-column stretch keeps both in step
+const EXP_FILL = { dark: EXP_COLOURS.e, light: EXP_COLOURS.E }; // the full strip: light blue on top, dark under
+// the checker (c on odd x + y, b on even, as the rip) draws as a pattern, so a row is a few rectangles instead of one
+// per pixel. The EXP strip is two flat rows (Jess 2026-11-19, no pin stripes): p, the lighter, on top; m under it
 const expToken = (cell, x, y) => {
   if ((cell === 'c' && (x + y) % 2 === 1) || (cell === 'b' && (x + y) % 2 === 0)) return 'X';
-  if ((cell === 'm' && x % 2 === 0) || (cell === 'p' && x % 2 === 1)) return 'Y';
   return cell;
 };
 let expShapeCount = 0;
 /** The holder as an SVG string: every row as runs of one colour or pattern. */
 function expShapeSvg() {
   const id = 'board-exp-' + ++expShapeCount,
-    fills = { ...EXP_COLOURS, X: `url(#${id}-checker)`, Y: `url(#${id}-stripe)` },
+    fills = { ...EXP_COLOURS, X: `url(#${id}-checker)` },
     rects = [];
   EXP_ROWS.forEach((row, y) => {
     let x = 0;
@@ -76,7 +84,8 @@ function expShapeSvg() {
       const token = expToken(row[x], x, y);
       let end = x;
       while (end + 1 < row.length && expToken(row[end + 1], end + 1, y) === token) end++;
-      if (token !== '.') rects.push(`<rect x="${x}" y="${y}" width="${end - x + 1}" height="1" fill="${fills[token]}" />`);
+      if (token !== '.')
+        rects.push(`<rect x="${x}" y="${y}" width="${end - x + 1}" height="1" fill="${fills[token]}" />`);
       x = end + 1;
     }
   });
@@ -85,30 +94,30 @@ function expShapeSvg() {
     shape-rendering="crispEdges" style="display:block"><defs>
       <pattern id="${id}-checker" width="2" height="2" patternUnits="userSpaceOnUse">
         <rect width="2" height="2" fill="${EXP_COLOURS.b}" /><rect x="1" width="1" height="1" fill="${EXP_COLOURS.c}" />
-        <rect y="1" width="1" height="1" fill="${EXP_COLOURS.c}" /></pattern>
-      <pattern id="${id}-stripe" width="2" height="1" patternUnits="userSpaceOnUse">
-        <rect width="2" height="1" fill="${EXP_COLOURS.m}" /><rect x="1" width="1" height="1" fill="${EXP_COLOURS.p}" />
-      </pattern></defs>${rects.join('')}</svg>`;
+        <rect y="1" width="1" height="1" fill="${EXP_COLOURS.c}" /></pattern></defs>${rects.join('')}</svg>`;
 }
 const EXP_PX = EXP_BAR.artPixel;
-const expHpPixels = (fraction) =>
-  (fraction > 0 ? Math.max(1, Math.round(fraction * EXP_HP_TRACK.width)) : 0) * EXP_PX;
+const expHpPixels = (fraction) => (fraction > 0 ? Math.max(1, Math.round(fraction * EXP_HP_TRACK.width)) : 0) * EXP_PX;
 const expStripPixels = (fraction) => Math.round(Math.max(0, Math.min(1, fraction)) * EXP_STRIP.width) * EXP_PX;
+// the HP track is 5 art rows here (the life bar's barStripes draws 3): one shade row, two fill rows, two shade rows
+const expHpStripes = (fill, shade) => {
+  const top = EXP_BAR.hpShadeTop * EXP_PX,
+    bottom = (EXP_BAR.hpRows - EXP_BAR.hpShadeBottom) * EXP_PX;
+  return `linear-gradient(${shade} 0 ${top}px, ${fill} ${top}px ${bottom}px, ${shade} ${bottom}px)`;
+};
 const expHpStyle = (left, width, background) =>
   `left:${EXP_HP_TRACK.left * EXP_PX + left}px;top:${EXP_BAR.hpRow * EXP_PX}px;width:${width}px;` +
-  `height:${3 * EXP_PX}px;background:${background}`;
+  `height:${EXP_BAR.hpRows * EXP_PX}px;background:${background}`;
 const expHpFillStyle = (fraction) => {
   const band = BAR_BANDS[bandOf(fraction)];
-  return expHpStyle(0, expHpPixels(fraction), barStripes(band.fill, band.shade));
+  return expHpStyle(0, expHpPixels(fraction), expHpStripes(band.fill, band.shade));
 };
-const expPieceStyle = (left, width) => expHpStyle(left, width, barStripes(BAR_COLOURS.piece, BAR_COLOURS.pieceShade));
+const expPieceStyle = (left, width) => expHpStyle(left, width, expHpStripes(BAR_COLOURS.piece, BAR_COLOURS.pieceShade));
 const expStripStyle = (fraction) => {
-  // B2's full strip: two blues in one-pixel stripes, the dark one on the columns the empty strip shows dark (m, even x)
-  const [first, second] = EXP_STRIP.left % 2 === 0 ? [EXP_FILL.dark, EXP_FILL.light] : [EXP_FILL.light, EXP_FILL.dark];
+  // the full strip: the light blue row on top, the dark one under it, as the empty strip's two greys
   return (
     `left:${EXP_STRIP.left * EXP_PX}px;top:${EXP_BAR.stripRow * EXP_PX}px;width:${expStripPixels(fraction)}px;` +
-    `height:${2 * EXP_PX}px;background:repeating-linear-gradient(90deg, ${first} 0 ${EXP_PX}px, ` +
-    `${second} ${EXP_PX}px ${2 * EXP_PX}px)`
+    `height:${2 * EXP_PX}px;background:linear-gradient(${EXP_FILL.light} 0 ${EXP_PX}px, ${EXP_FILL.dark} ${EXP_PX}px)`
   );
 };
 // the HP numbers: right of the bar as today, centred on the whole bar's height (Jess 2026-11-19: outside the bar, not
@@ -138,7 +147,13 @@ const EXP_STATES = [
   { id: 'middle', title: 'HP yellow, EXP nearly full', hp: 42, exp: 0.9 },
   { id: 'low', title: 'HP red, EXP just after a level-up', hp: 18, exp: 0.05 },
   { id: 'fainted', title: 'Fainted: no HP fill, the EXP strip stays', hp: 0, exp: 0.4 },
-  { id: 'cut', title: 'A hit just taken, 72 to 50: the cut piece is grey (a still)', hp: 50, exp: 0.4, cut: { from: 72, to: 50 } },
+  {
+    id: 'cut',
+    title: 'A hit just taken, 72 to 50: the cut piece is grey (a still)',
+    hp: 50,
+    exp: 0.4,
+    cut: { from: 72, to: 50 },
+  },
 ];
 const expTile = (state, title, inner) => `<figure class="lib-state">
   <div class="lib-stage lib-hb-stage" data-state="run.hud.playerActive.bar:${esc(state)}"
@@ -214,7 +229,9 @@ function expDemo() {
 }
 
 function expUnifiedSection() {
-  const tiles = EXP_STATES.map((state) => expTile(state.id, state.title, expSetHtml(state.hp, EXP_SET.max, state.exp, state.cut))).join('');
+  const tiles = EXP_STATES.map((state) =>
+    expTile(state.id, state.title, expSetHtml(state.hp, EXP_SET.max, state.exp, state.cut))
+  ).join('');
   const height = EXP_BAR.artRows * EXP_PX;
   return `<section class="lib-story" data-draft="run.hud.playerActive.bar">
     <h3>${nameButton('run.hud.playerActive.bar')} ${draftTag('pixel: the active Pokemon\u2019s HP and EXP (a board copy)')}</h3>
@@ -231,7 +248,7 @@ function expUnifiedSection() {
       ${cleanColour('HP letters', 'color.grey.white', EXP_COLOURS.W)}
       <dt>EXP</dt><dd>${nameButton('font.silver')}<span>the same, in blue, under the HP track's left end and hanging a
         little below the holder. The strip starts under the P, beside its stem: ${EXP_STRIP.width} art pixels, two
-        rows of one-pixel stripes</span></dd>
+        rows, light over dark</span></dd>
       ${cleanColour('EXP letters, strip full (light)', 'color.blue.base', EXP_COLOURS.E)}
       ${cleanColour('Strip full (dark)', 'color.blue.dark', EXP_COLOURS.e)}
       ${cleanColour('Strip empty (dark)', 'color.grey.mid', EXP_COLOURS.m)}

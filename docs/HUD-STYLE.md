@@ -14,7 +14,7 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
 **Related:**
 
 - Other mainline palettes for future use: [docs/UI-PALETTES.md](UI-PALETTES.md)
-- Everything in this file on one page: `tools/ui-library.html` (#147). A colour added to "Colour palette" must be added there too, or `tools/smoke-ui-library.js` fails.
+- Everything in this file on one page: `tools/ui-library.html` (#147). The board is design language only; no test checks it (decision 2026-11-19-155-no-tests-for-the-library-board).
 - Rulings: `2026-11-10-hud-fixed-sizes-from-the-1080p-mockup`, `2026-11-10-hud-on-preact-and-pngs-as-design-basis`,
   `2026-11-10-sv-type-palette-canonical-for-ui`
 

@@ -259,7 +259,7 @@ function slantedRow(row, { artWidth, artRows }, rim, bodyFill) {
 /** The slot as an SVG string, in art pixels scaled to 2 px; the grid is its own pattern, local to this SVG. */
 function slantedSvg(state) {
   const { artWidth, artRows, artPixel } = SLANTED_SLOT,
-    rim = SLANTED_RIMS[state.rim],
+    rim = typeof state.rim === 'string' ? SLANTED_RIMS[state.rim] : state.rim, // a name here, or a ramp (composites)
     gridId = 'board-slot-grid-' + state.id,
     body = state.grid ? `url(#${gridId})` : SLANTED_COLOURS.body,
     rects = [];

@@ -1,7 +1,7 @@
 // tools/library_doc_colours.js: copies every colour the style docs list into tools/library/doc-colours.js, for the
 // library board's "Style docs" colours tab (#155 155a). A page opened from disk cannot read the .md files, so the board
 // reads this copy; check.js runs this with --check, which fails when the copy is out of date.
-// Sources: docs/HUD-STYLE.md "Colour palette" (up to "Shapes", as smoke-ui-library reads it) and docs/UI-PALETTES.md.
+// Sources: docs/HUD-STYLE.md "Colour palette" (up to "Shapes") and docs/UI-PALETTES.md.
 // Usage: node tools/library_doc_colours.js            (writes the file)
 //        node tools/library_doc_colours.js --check    (exit 1 if the file differs from the docs)
 const fs = require('fs'),

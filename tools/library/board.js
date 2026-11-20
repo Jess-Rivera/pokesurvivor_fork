@@ -40,6 +40,7 @@ const NAV = [
         items: [
           // the active Pokemon's sets are named run.hud.playerActive.* (Jess 2026-11-19); HP and EXP are one bar
           { id: 'run.hud.playerActive.bar', title: 'run.hud.playerActive.bar' },
+          { id: 'run.hud.playerActive.area', title: 'run.hud.playerActive.area' },
           { id: 'run.hud.portrait', title: 'run.hud.portrait', later: 'a later slice under #126' },
           { id: 'run.hud.teamSlot', title: 'run.hud.teamSlot', later: 'a later slice under #126' },
         ],

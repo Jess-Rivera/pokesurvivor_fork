@@ -4,19 +4,17 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-19 night work session (Quick)
-1. On the work machine: `git status` (should be clean once the chips commit is in), then
-   `git push origin feature/128-acquisition` if it is not pushed yet.
+## Getting up to date (either machine), from the 2026-11-19 night home session (Claude Code)
+1. On the home machine: `git status` (clean after tonight's commit), then `git push origin feature/128-acquisition`.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
-   `node tools/check.js` (must end "check: all passed") and `npm run lint`. Say "catch me up".
+   `node tools/check.js` (must end "check: all passed"). Say "catch me up".
 3. Before leaving a machine: commit and push.
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-19; gym leader AI parked)
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
-   - HUD sets: bar decision written (2026-11-19-155-hud-bar-one-bar-for-hp-and-exp). Next
-     run.hud.playerActive (88 px ringless portrait, the
-     bar, Lv, the 1 px chip.status bands; judges Portraits and the 1 px chips in place), then
-     run.hud.playerActive.moveSlots.
+   - HUD sets: the bar is tuned and run.hud.playerActive.area is built (decisions 2026-11-19-155-hud-bar-one-bar-
+     for-hp-and-exp, -player-active-area-aligns-to-the-slots). Next: Jess rules the active portrait stroke for two
+     types, then run.hud.playerActive.moveSlots detail (cursor, family badges).
    - Chips done (decision 2026-11-19-155-chips-one-capsule-status-1px-type-two-scales). Primitives still missing:
      tooltip (next), then slider, text field, tabs (or a selected button.glitch) and the see-through HUD panel as the
      screens that use them come up. Composites only where layout is new: playerActive, moveSlots, the level-up card,
@@ -27,7 +25,6 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
    - Feel test Tokens, Fonts: Michroma's size set, the 9 inferred Fold Map rows, the tooltip size (Silver 20 or 10).
    - Jess lists the poor UX calls in the 155c-4 ask dialog (look and keys) so they can be filed.
    - Colours: name the 7 UI colours and the greys (placeholders on the board); rebuild the rims from Unified.
-   - Rewrite smoke-ui-library for the board as it is now (Colours, Panels and Squares tabs, the stories' new folder).
    - 155d main.shop.pokeball composite; the Pause composites (pause.pokemonDetail and the rest).
    - #156: likely moot (button.slanted and button.rounded retire at #126); Jess closes or keeps it.
    - Then #126 applies the board: Unified colours and fonts, button.glitch, panel.clean, square.clean, square.item and

@@ -328,3 +328,13 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   Type names in capitals (reverses 2026-11-11's "Ghost"). Decision 2026-11-19-155-chips-one-capsule-status-1px-type-two-scales.
   Also audited the primitives against the game: missing are the tooltip, slider, text field, tabs and the see-through
   HUD panel. Stopped at: the bar's decision file, then run.hud.playerActive with the 1 px chips. Chips commit to push.
+
+## 2026-11-19 night (Claude Code, home), #155 bar tuning and run.hud.playerActive.area
+- Recorded the bar decision Quick missed (2026-11-19-155-hud-bar-one-bar-for-hp-and-exp), then tuned the bar on the board:
+  3 x 5 HP and EXP letters on ink plates, a 5-row shaded HP track, an ink row under it, the EXP strip light over dark
+  beside the P, shorter than the track; the bar narrowed to the slots' 426 px.
+- Built run.hud.playerActive.area (tools/library/hud-area-draft.js, .css): slots and wells, portrait, Lv, bar, chip
+  bands, held item, Silver. Decided: it lines up on the slots, one 8 px stack gap, the item's 12 px gap on the left.
+- Decided: the library board has no tests; removed tools/smoke-ui-library.js and the board's test-only hooks.
+- Open: the active portrait stroke for two types. check.js passes.
+- Stopped at: Jess's stroke ruling, then moveSlots detail, the tooltip. Board only; nothing in js/ or css/.

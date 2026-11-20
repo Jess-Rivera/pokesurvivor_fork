@@ -1,0 +1,80 @@
+/* tools/library/hud-area-draft.css: the composite run.hud.playerActive.area (hud-area-draft.js). Board only. */
+.lib-area-scroll {
+  overflow-x: auto;
+}
+.lib-area {
+  position: relative;
+  overflow: hidden;
+}
+.lib-area-piece {
+  position: absolute;
+}
+.lib-area-piece > svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+/* text: white (or Lv yellow) with eight hard shadows one font pixel out, the HUD's text */
+.lib-area-text {
+  position: absolute;
+  font-family: var(--area-font), monospace;
+  font-synthesis: none;
+  font-size: var(--area-size);
+  line-height: var(--area-size);
+  white-space: nowrap;
+  text-shadow:
+    var(--area-pixel) 0 0 var(--area-outline),
+    calc(-1 * var(--area-pixel)) 0 0 var(--area-outline),
+    0 var(--area-pixel) 0 var(--area-outline),
+    0 calc(-1 * var(--area-pixel)) 0 var(--area-outline),
+    var(--area-pixel) var(--area-pixel) 0 var(--area-outline),
+    calc(-1 * var(--area-pixel)) var(--area-pixel) 0 var(--area-outline),
+    var(--area-pixel) calc(-1 * var(--area-pixel)) 0 var(--area-outline),
+    calc(-1 * var(--area-pixel)) calc(-1 * var(--area-pixel)) 0 var(--area-outline);
+}
+/* a move well: the type colour in a 2 px ink ring, the type glyph at half size, the cooldown wipe */
+.lib-area-well {
+  position: absolute;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--well-fill);
+  box-shadow: inset 0 0 0 2px var(--well-ring);
+}
+.lib-area-well img {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 32px;
+  height: 32px;
+}
+.lib-area-wipe {
+  position: absolute;
+  inset: 0;
+}
+/* the chip bands: the lower line fills first, left to right */
+.lib-area-band {
+  display: flex;
+  flex-wrap: wrap-reverse;
+}
+.lib-area-item-icon {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+/* the Silver coin: today's 8-frame sheet (16 px cells, 2 px pad) at 2x */
+.lib-area-coin {
+  width: 32px;
+  height: 32px;
+  background-size: 288px auto;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  animation: lib-area-coin 1s steps(8) infinite;
+}
+@keyframes lib-area-coin {
+  to {
+    background-position-x: -288px;
+  }
+}

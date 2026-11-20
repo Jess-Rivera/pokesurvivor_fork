@@ -15,6 +15,7 @@ const DRAW = {
   'primitives/portraits': portraitsPage,
   'primitives/chips': chipsPage,
   'run.hud.playerActive.bar': activeBarPage,
+  'run.hud.playerActive.area': areaPage,
 };
 // the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
 const patternHost = document.createElement('div');
@@ -150,54 +151,3 @@ const fromHash = () => {
 };
 addEventListener('hashchange', fromHash);
 fromHash();
-
-// for tools/smoke-ui-library.js
-window.libPages = [...pages.keys()];
-window.libTabs = Object.fromEntries(
-  [
-    ['tokens/colours', COLOUR_TABS],
-    ['tokens/fonts', FONT_TABS],
-    ['primitives/buttons', BUTTON_TABS],
-  ].map(([id, tabs]) => [id, tabs.map((tab) => tab.id)])
-);
-window.libFontScheme = {
-  tiers: FONT_TIERS,
-  folds: FONT_FOLDS,
-  files: [...FONT_TIERS, ...REFERENCE_FONTS].map((font) => font.file),
-};
-/** Each Unified crisp sample drawn at whole pixels (lit and half-lit pixel counts), and each counter face's digits. */
-window.libFontChecks = async () => {
-  await Promise.all([window.libFontsReady, window.libSchemeFontsReady]);
-  const canvas = document.createElement('canvas');
-  canvas.width = 1200;
-  canvas.height = 120;
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  const loaded = (family) => fontResults.get(family) === true;
-  const crisp = FONT_TIERS.filter((tier) => tier.grid).flatMap((tier) =>
-    tier.sizes.map((size) => {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.font = `${size}px '${tier.family}'`;
-      context.fillStyle = CANVAS_TEXT;
-      context.fillText(tier.sample, 4, 2 * size);
-      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-      let lit = 0,
-        half = 0;
-      for (let index = 3; index < pixels.length; index += 4) {
-        if (pixels[index] === 255) lit++;
-        else if (pixels[index] > 0) half++;
-      }
-      return { family: tier.family, size, lit: loaded(tier.family) ? lit : 0, half };
-    })
-  );
-  const digits = {};
-  for (const tier of FONT_TIERS.filter((entry) => entry.counter)) {
-    context.font = `${tier.sizes[0]}px '${tier.family}'`;
-    const widths = [...'0123456789'].map((digit) => context.measureText(digit).width);
-    digits[tier.family] = loaded(tier.family) ? widths : null;
-  }
-  return { crisp, digits };
-};
-window.libShow = (id, tab) => {
-  show(id, tab);
-  return $('main').innerText;
-};
