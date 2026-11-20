@@ -6,6 +6,8 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-19, #155 run.hud.teamSlot: bar.life's format without the background, a 2 px cursor gap, the berry pocket as a 2x2 of circles (Jess)](docs/decisions/2026-11-19-155-team-slot-hp-bar-cursor-gap-and-berry-pocket.md)
+- [2026-11-19, #155 bar.life keeps the B2 background and takes run.hud.playerActive.bar's HP part (Jess)](docs/decisions/2026-11-19-155-bar-life-keeps-the-b2-background-with-the-new-hp-part.md)
 - [2026-11-19, #155 the library board has no tests; tools/smoke-ui-library.js is removed (Jess)](docs/decisions/2026-11-19-155-no-tests-for-the-library-board.md)
 - [2026-11-19, #155 run.hud.playerActive.area lines up on the move slots: one 8 px stack gap upward, the held item's 12 px gap sideways (Jess)](docs/decisions/2026-11-19-155-player-active-area-aligns-to-the-slots.md)
 - [2026-11-19, #155 run.hud.playerActive.bar is one B2 bar for HP and EXP; EXP leaves the portrait ring; HP numbers outside, centred, current HP held still (Jess)](docs/decisions/2026-11-19-155-hud-bar-one-bar-for-hp-and-exp.md)

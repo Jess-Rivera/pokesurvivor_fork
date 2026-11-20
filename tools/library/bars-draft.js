@@ -8,6 +8,8 @@
 // keeping the band colour it had, so a green piece never hangs off a bar that has just turned yellow. It still holds
 // no longer: the piece falls the moment the flash ends (Jess 2026-11-19: today's 1 s hold felt awkward). bar.timer is
 // unchanged (its white is grey.white). A board copy: nothing here reads the game.
+// BAR_LIFE is today's life bar (its size and track inset, and the Current tab of run.hud.playerActive.bar mounts the
+// game's own); the Unified bar.life (LIFE_BAR below) keeps its background and takes that bar's HP tab and track.
 const BAR_LIFE = { artPixel: 2, artWidth: 231, artRows: 12, labelLeft: 4, labelPixels: 24, trackRightInset: 3, labelTop: -6 };
 const BAR_COLOURS = {
   outline: greyTone('ink'), // #101010, the same
@@ -39,68 +41,68 @@ const BAR_SPANS = {
   checker: [[11, 2, 0], [12, 2, 1], [13, 1, 1], [14, 1, 0], [15, 2, 0], [16, 3, -1]],
   body: [[17, 4, -1]],
 };
-const barTrackLeft = () => BAR_LIFE.labelLeft + Math.ceil(BAR_LIFE.labelPixels / BAR_LIFE.artPixel) + 1;
-const barRightEdge = () => BAR_LIFE.artWidth - 4;
-const barInnerArt = () => barRightEdge() - BAR_LIFE.trackRightInset - barTrackLeft();
-/** The fill in px for a fraction of HP: whole art pixels, at least one while alive, none once fainted. */
-const barFillPixels = (fraction) =>
-  (fraction > 0 ? Math.max(1, Math.round(fraction * barInnerArt())) : 0) * BAR_LIFE.artPixel;
-let barCount = 0;
-/** The bar's shape (tab, body, track, shadow) as an SVG string, its checker a pattern local to this SVG. */
-function barShapeSvg() {
-  const id = 'board-bar-checker-' + ++barCount,
-    right = barRightEdge(),
-    trackLeft = barTrackLeft(),
-    trackRight = right - BAR_LIFE.trackRightInset,
-    rects = [];
-  const rect = (x, y, width, height, fill) =>
-    rects.push(`<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${fill}" />`);
-  const spans = (list, fill) => {
+// bar.life, the HP bar on its own (Jess 2026-11-19): the B2 bar's background as the game draws it today (the outline, the
+// checker, the body row and the drop shadow of BAR_SPANS) with run.hud.playerActive.bar's HP part set in it: the HP tab (3 x 5
+// pixel letters on an ink plate) and the 5-row track. The background grows two rows to hold the thicker track (its
+// third row repeats). Built once, when a page first draws it, because the letters are read from that bar's grid
+// (hud-exp-draft.js, loaded after this file).
+const LIFE_BAR = { artPixel: 2, artWidth: 231, hpRow: 2, hpRows: 5, plateLeft: 8, trackLeft: 17 };
+const lifeTrackRight = () => LIFE_BAR.artWidth - 4 - BAR_LIFE.trackRightInset; // the track's right frame column
+const lifeTrackWidth = () => lifeTrackRight() - LIFE_BAR.trackLeft;
+let lifeRowsCache = null;
+function lifeRows() {
+  if (lifeRowsCache) return lifeRowsCache;
+  const { artWidth, hpRow, hpRows, plateLeft, trackLeft } = LIFE_BAR,
+    right = artWidth - 4,
+    original = Array.from({ length: BAR_LIFE.artRows }, () => Array(artWidth).fill('.'));
+  const paint = (list, letter) => {
     for (const [ripRow, leftOffset, rightOffset] of list)
-      rect(leftOffset, ripRow - 9, right + rightOffset - leftOffset + 1, 1, fill);
+      for (let x = leftOffset; x <= right + rightOffset; x++) original[ripRow - 9][x] = letter;
   };
-  spans(BAR_SPANS.shadow, BAR_COLOURS.checker);
-  spans(BAR_SPANS.outline, BAR_COLOURS.outline);
-  spans(BAR_SPANS.checker, `url(#${id})`);
-  spans(BAR_SPANS.body, BAR_COLOURS.body);
-  rect(trackLeft - 1, 5, trackRight - trackLeft + 2, 1, BAR_COLOURS.outline);
-  rect(trackLeft - 1, 2, 1, 3, BAR_COLOURS.outline);
-  rect(trackRight, 2, 1, 3, BAR_COLOURS.outline);
-  [BAR_COLOURS.trackShade, BAR_COLOURS.trackLight, BAR_COLOURS.trackShade].forEach((fill, row) =>
-    rect(trackLeft, 2 + row, trackRight - trackLeft, 1, fill)
+  paint(BAR_SPANS.shadow, 'd');
+  paint(BAR_SPANS.outline, 'o');
+  paint(BAR_SPANS.checker, 'c');
+  paint(BAR_SPANS.body, 'b');
+  // two more rows under the first: the background's third row repeats, so the edges keep their slant
+  const rows = [0, 1, 2, 3, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((index) => [...original[index]]);
+  const trackFrame = lifeTrackRight();
+  for (let row = 0; row < hpRows; row++) {
+    const y = hpRow + row,
+      plate = EXP_ROWS[EXP_BAR.hpRow + row].slice(5, 5 + trackLeft - plateLeft); // the tab's ink and letters
+    [...plate].forEach((letter, index) => (rows[y][plateLeft + index] = letter));
+    for (let x = trackLeft; x < trackFrame; x++) rows[y][x] = EXP_ROWS[EXP_BAR.hpRow + row][EXP_HP_TRACK.left];
+    rows[y][trackFrame] = 'o';
+  }
+  for (let x = plateLeft; x <= trackFrame; x++) rows[hpRow + hpRows][x] = 'o'; // under the plate and the track
+  rows.forEach((row, y) =>
+    row.forEach((letter, x) => {
+      if (letter === 'c') row[x] = (x + y) % 2 ? 'c' : 'b'; // the checker, in step with expShapeSvg's pattern
+    })
   );
-  const { artPixel, artWidth, artRows } = BAR_LIFE;
-  return `<svg width="${artWidth * artPixel}" height="${artRows * artPixel}" viewBox="0 0 ${artWidth} ${artRows}"
-    shape-rendering="crispEdges" style="display:block"><defs><pattern id="${id}" width="2" height="2"
-      patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="${BAR_COLOURS.checker}" />
-      <rect width="1" height="1" fill="${BAR_COLOURS.body}" /><rect x="1" y="1" width="1" height="1"
-      fill="${BAR_COLOURS.body}" /></pattern></defs>${rects.join('')}</svg>`;
+  lifeRowsCache = rows.map((row) => row.join(''));
+  return lifeRowsCache;
 }
-/** Three rows, shade, fill, shade, one art pixel each (the bar's fill and the cut piece). */
-const barStripes = (fill, shade) => {
-  const row = BAR_LIFE.artPixel;
-  return `linear-gradient(${shade} 0 ${row}px, ${fill} ${row}px ${2 * row}px, ${shade} ${2 * row}px ${3 * row}px)`;
-};
-const barTrackStyle = (left, width, background) =>
-  `left:${barTrackLeft() * BAR_LIFE.artPixel + left}px;top:${2 * BAR_LIFE.artPixel}px;width:${width}px;` +
-  `height:${3 * BAR_LIFE.artPixel}px;background:${background}`;
-const barFillStyle = (fraction) => {
+/** The fill's width in px: whole art pixels of the track, at least one while alive, none once fainted. */
+const lifeFillPixels = (fraction) =>
+  (fraction > 0 ? Math.max(1, Math.round(fraction * lifeTrackWidth())) : 0) * LIFE_BAR.artPixel;
+const lifeTrackStyle = (left, width, background) =>
+  `left:${LIFE_BAR.trackLeft * LIFE_BAR.artPixel + left}px;top:${LIFE_BAR.hpRow * LIFE_BAR.artPixel}px;width:${width}px;` +
+  `height:${LIFE_BAR.hpRows * LIFE_BAR.artPixel}px;background:${background}`;
+const lifeFillStyle = (fraction) => {
   const band = BAR_BANDS[bandOf(fraction)];
-  return barTrackStyle(0, barFillPixels(fraction), barStripes(band.fill, band.shade));
+  return lifeTrackStyle(0, lifeFillPixels(fraction), expHpStripes(band.fill, band.shade));
 };
-const barPieceStyle = (left, width) => barTrackStyle(left, width, barStripes(BAR_COLOURS.piece, BAR_COLOURS.pieceShade));
-/** The whole bar as a string: shape, label, fill, and a held piece (from, to) if given. */
+const lifePieceStyle = (left, width) => lifeTrackStyle(left, width, expHpStripes(BAR_COLOURS.piece, BAR_COLOURS.pieceShade));
+/** The whole bar as a string: the shape, the fill, and a held cut piece (from, to as fractions) if given. */
 function lifeBarHtml(fraction, cut, animated) {
   const piece = cut
-    ? `<div class="lib-bar-track lib-bar-piece${animated ? ' is-falling' : ''}" style="${barPieceStyle(
-        barFillPixels(cut.to),
-        barFillPixels(cut.from) - barFillPixels(cut.to)
+    ? `<div class="lib-bar-track lib-bar-piece${animated ? ' is-falling' : ''}" style="${lifePieceStyle(
+        lifeFillPixels(cut.to),
+        lifeFillPixels(cut.from) - lifeFillPixels(cut.to)
       )}"></div>`
     : '';
-  return `<div class="lib-bar" data-bar-life>${barShapeSvg()}
-    <span class="lib-bar-label" style="left:${BAR_LIFE.labelLeft * BAR_LIFE.artPixel}px;top:${BAR_LIFE.labelTop}px;
-      --bar-outline:${BAR_COLOURS.outline}">HP</span>
-    <div class="lib-bar-track lib-bar-fill" data-bar-fill style="${barFillStyle(fraction)}"></div>${piece}</div>`;
+  return `<div class="lib-bar" data-bar-life>${expShapeSvg(lifeRows())}
+    <div class="lib-bar-track lib-bar-fill" data-bar-fill style="${lifeFillStyle(fraction)}"></div>${piece}</div>`;
 }
 const barTile = (state, title, inner) => `<figure class="lib-state">
   <div class="lib-stage lib-stage-bar" data-state="${esc(state)}" style="background:${CLEAN_STAGE}">${inner}</div>
@@ -132,7 +134,7 @@ function startBarDemo() {
     readout = demo.querySelector('[data-bar-readout]');
   let hp = 1;
   const draw = () => {
-    fill.setAttribute('style', barFillStyle(hp));
+    fill.setAttribute('style', lifeFillStyle(hp));
     readout.textContent = Math.round(hp * 100) + '% (' + bandOf(hp) + ')';
   };
   function hit() {
@@ -142,7 +144,7 @@ function startBarDemo() {
     fill.classList.remove('is-growing'); // a hit cuts at once
     const piece = document.createElement('div');
     piece.className = 'lib-bar-track lib-bar-piece is-flashing is-falling';
-    piece.setAttribute('style', barPieceStyle(barFillPixels(hp), barFillPixels(from) - barFillPixels(hp)));
+    piece.setAttribute('style', lifePieceStyle(lifeFillPixels(hp), lifeFillPixels(from) - lifeFillPixels(hp)));
     // the flash's end fires here too (from ::after), so only the fall removes the piece
     piece.addEventListener('animationend', (event) => {
       if (event.animationName === 'lib-bar-piece-fall') piece.remove();
@@ -210,7 +212,8 @@ function lifeBarSection() {
     <h4 class="lib-dim">Try it: hit three times from full to watch a piece cut off a green bar as it turns yellow</h4>
     ${barDemo()}
     <dl class="lib-facts">
-      ${cleanColour('Outline, HP label outline', 'color.grey.ink', BAR_COLOURS.outline)}
+      ${cleanColour('Outline, the HP tab', 'color.grey.ink', BAR_COLOURS.outline)}
+      ${cleanColour('HP letters', 'color.grey.white', EXP_COLOURS.W)}
       ${cleanColour('Body', 'color.grey.panel', BAR_COLOURS.body)}
       ${cleanColour('Checker, shadow', 'color.grey.raised', BAR_COLOURS.checker)}
       ${cleanColour('Track shade', 'color.grey.slate', BAR_COLOURS.trackShade)}
@@ -231,8 +234,11 @@ function lifeBarSection() {
         Today it also keeps the band colour it had, so a
         green piece can hang off a yellow bar (Jess 2026-11-19).</dd>
       <dt>Heal</dt><dd>Unchanged: the fill eases to its new length over 0.3 s</dd>
-      <dt>Shape</dt><dd>Unchanged: the B2 dark HP bar, ${BAR_LIFE.artWidth} x ${BAR_LIFE.artRows} art pixels at
-        ${BAR_LIFE.artPixel} px</dd>
+      <dt>Shape</dt><dd>The B2 background as the game draws it today (outline, checker, body row, drop shadow),
+        ${LIFE_BAR.artWidth} x ${lifeRows().length} art pixels at ${LIFE_BAR.artPixel} px, two rows taller for the thicker track.
+        In it, ${nameButton('run.hud.playerActive.bar')}’s HP part: the HP tab (3 x 5 pixel letters on an ink plate) and the 5-row
+        track (one shade row, two light rows, two shade rows), ${lifeTrackWidth()} art pixels long. The fill is the track’s five
+        rows: shade, two fill rows, two shade rows</dd>
       <dt>Board copy</dt><dd>Every value lives in tools/library/bars-draft.js; changing one changes only the board</dd>
       <dt>Used at</dt><dd>${['run.hud.lifeMeter', 'run.boss.lifeBar', 'pause.pokemonDetail.lifeBar'].map(nameButton).join('')}</dd>
     </dl></section>`;

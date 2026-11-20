@@ -74,11 +74,11 @@ const expToken = (cell, x, y) => {
 };
 let expShapeCount = 0;
 /** The holder as an SVG string: every row as runs of one colour or pattern. */
-function expShapeSvg() {
+function expShapeSvg(shapeRows = EXP_ROWS) {
   const id = 'board-exp-' + ++expShapeCount,
     fills = { ...EXP_COLOURS, X: `url(#${id}-checker)` },
     rects = [];
-  EXP_ROWS.forEach((row, y) => {
+  shapeRows.forEach((row, y) => {
     let x = 0;
     while (x < row.length) {
       const token = expToken(row[x], x, y);
@@ -89,7 +89,9 @@ function expShapeSvg() {
       x = end + 1;
     }
   });
-  const { artPixel, artWidth, artRows } = EXP_BAR;
+  const { artPixel } = EXP_BAR,
+    artWidth = shapeRows[0].length,
+    artRows = shapeRows.length;
   return `<svg width="${artWidth * artPixel}" height="${artRows * artPixel}" viewBox="0 0 ${artWidth} ${artRows}"
     shape-rendering="crispEdges" style="display:block"><defs>
       <pattern id="${id}-checker" width="2" height="2" patternUnits="userSpaceOnUse">

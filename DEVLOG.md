@@ -338,3 +338,14 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Decided: the library board has no tests; removed tools/smoke-ui-library.js and the board's test-only hooks.
 - Open: the active portrait stroke for two types. check.js passes.
 - Stopped at: Jess's stroke ruling, then moveSlots detail, the tooltip. Board only; nothing in js/ or css/.
+
+## 2026-11-19 late night (Claude Code, home), #155 run.hud.teamSlot and bar.life
+- Built run.hud.teamSlot (tools/library/hud-team-slot-draft.js, .css): two zoomed slots (active with the cursor, benched
+  with a chip) and the team of six with the berry pocket, from today's roster numbers in Unified colours.
+- Updated Primitives, Bars: bar.life is now the playerActive bar's HP part inside the original B2 background. The team
+  slot's HP bar is the same without the background. Decisions: ...bar-life-keeps-the-b2-background..., ...team-slot-hp-bar-cursor-gap-and-berry-pocket.
+- Decided: held item 10 px off the box (2 px from the cursor), name 2 px up, berry pocket = small panel.pixel in the berries
+  ramp with a 2x2 of dark-filled circles whose stroke goes green when a berry is held.
+- Broke the board three times (a load-time colour lookup, a missing pocketBerries token, a swapped template id); the last
+  fix was checked in a stub-DOM harness first. No screenshots taken (the local server was not allowed), so nothing seen yet.
+- Stopped at: Jess's look at the team slot and bars pages. Board only; nothing in js/ or css/. check.js passes.

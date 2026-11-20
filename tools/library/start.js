@@ -16,6 +16,7 @@ const DRAW = {
   'primitives/chips': chipsPage,
   'run.hud.playerActive.bar': activeBarPage,
   'run.hud.playerActive.area': areaPage,
+  'run.hud.teamSlot': teamSlotPage,
 };
 // the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
 const patternHost = document.createElement('div');
