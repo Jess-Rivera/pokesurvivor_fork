@@ -80,7 +80,8 @@ Direction: the gacha goes. Luck should not hand out an end-game mon and make sta
 - W1 (2026-11-13): rescue star weights 8 / 4 / 2 / 1 (a Kanto run offers a 4 star about 1 time in 20).
 - NS3b (2026-11-13): the starter pick offers all 9 regions' trios.
 - NS3c (2026-11-13): starters stay in the rescue pool.
-- Hover filter (2026-11-13): dropped; floating species can be Lost Pokemon (pool 267 to 309). A code change: how floaters escort is set in the build plan.
+- Hover filter (2026-11-13): dropped; floating species can be Lost Pokemon (pool 267 to 309; 324 on 2026-11-21, #138 D8). How floaters escort: decision
+  2026-11-21-138-floater-escort-hover-and-water-spots.
 - EV4 (2026-11-13): no cap on rescues per run.
 - L3 (2026-11-13): the Lost Pokemon's nature shows on its toast.
 - A15 (2026-11-13): the 4 Paradoxes and the 21 mythicals are left out (no acquisition route for now).

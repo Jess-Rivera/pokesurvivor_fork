@@ -338,6 +338,7 @@ G.Rescue = (() => {
     pool,
     pickSpecies,
     rollNature,
+    natureName,
     onUberHit,
     onUberDown,
     fightLeft,

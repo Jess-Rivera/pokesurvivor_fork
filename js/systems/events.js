@@ -6,10 +6,13 @@
  *           same type (if your type beats them, it is your moment)
  *   gold    Golden hour: 30 s of golden enemies that give double the
  *           experience and sometimes drop coins
- *   lost    Lost Pokemon: you touch it, it follows you and you take it to the mark.
- *           Enemies damage it; if it falls (or you take more than 2 min), it leaves.
- *           Prize: heals half your health, coins, a jackpot coin and, 1 in
- *           5 times, it joins your collection.
+ *   lost    Lost Pokemon (#138, S7 of #128): a Stage 1 that can still evolve, of any region, floaters
+ *           included, its nature named on the toast. You touch it, it follows you and you take it to the
+ *           mark. Enemies damage it; if it falls (or you take more than 2 min), it leaves. Floaters hover
+ *           (no collision) and, on a map whose liquid does not hurt, may spawn and be marked on it
+ *           (decision 2026-11-21-138-floater-escort-hover-and-water-spots). Prize: heals half your
+ *           health, coins, and a recruit chance by star (RECRUIT_ODDS); a recruit is held like a catch
+ *           (G.Catch.hold) and becomes a copy when the run settles.
  *
  * Treasure imps (1-2 per game, see Enemy behavior 'thief'): a
  * Meowth loaded with coins (or, 1 in 4, a Gholdengo with a jackpot coin)
@@ -22,6 +25,8 @@ G.Events = (() => {
   const EVERY = [240, 300],
     DUR = 30,
     LOST_TIME = 120;
+  // #138: the chance a delivered Lost Pokemon joins you, by its star (pokedex rarity, 1 to 3). Tuned in BALANCE.md.
+  const RECRUIT_ODDS = { 1: 0.2, 2: 0.12, 3: 0.06 };
   const THIEF_FIRST = [120, 240],
     THIEF_NEXT = [240, 360],
     THIEF_LIFE = 15;
@@ -32,7 +37,7 @@ G.Events = (() => {
     last = null,
     thiefT = 0,
     thieves = 0;
-  let lost = null; // { dex, name, x, y, hp, maxHp, state, follow, tx, ty, t, anim, r, hitCd, netT, grant }
+  let lost = null; // { dex, name, nature, natureName, floats, x, y, hp, maxHp, state, follow, tx, ty, t, anim, r, ... }
 
   function reset() {
     nextT = G.U.rand(EVERY[0], EVERY[1]);
@@ -77,7 +82,7 @@ G.Events = (() => {
     start(G.U.pick(ids), time, players);
   }
 
-  function start(id, time, players) {
+  function start(id, time, players, dex = null) {
     last = id;
     if (id === 'horde') {
       const types = G.Enemies.hordeTypes(time);
@@ -91,7 +96,7 @@ G.Events = (() => {
       cur = { id, t: 0, dur: DUR };
       for (const e of G.EnemyMgr.all()) if (!e.remote) e.makeGolden();
     } else {
-      if (!spawnLost(players)) return;
+      if (!spawnLost(players, dex)) return;
       cur = { id, t: 0, dur: Infinity };
     }
     announce();
@@ -102,7 +107,12 @@ G.Events = (() => {
     if (!cur) return;
     if (cur.id === 'horde') say('¡Horda de tipo ' + G.U.TYPE_NAME[cur.type] + '!', 3, G.U.TYPE_COLOR[cur.type]);
     else if (cur.id === 'gold') say('¡Hora dorada! Doble de experiencia', 3, '#ffd23f');
-    else if (lost) say('¡Un ' + lost.name + ' se ha perdido! Búscalo y llévalo a la marca', 3.4, '#7dffb0');
+    else if (lost)
+      say(
+        'A ' + lost.natureName + ' ' + lost.name + ' is lost! Find it and take it to the green marker',
+        3.4,
+        '#7dffb0'
+      );
     G.Audio.sfx(cur.id === 'gold' ? 'shiny' : 'surge');
   }
 
@@ -163,11 +173,28 @@ G.Events = (() => {
 
   // ---------------- Lost Pokemon ----------------
 
-  function spawnLost(players) {
+  /** Who can be lost (#138): Stage 1s that can still evolve, rarity 1 to 3, non-legendary, with sprites, from any
+   *  region (not the run's, on purpose); floating species included. */
+  function pool() {
+    return G.DEX.filter(
+      (p) =>
+        p.rarity >= 1 &&
+        p.rarity <= 3 &&
+        !p.leg &&
+        G.SPRITE_META[p.dex] &&
+        G.StageOne.has(p.dex) &&
+        G.Evolvable.has(p.dex)
+    );
+  }
+
+  /** Starts one Lost Pokemon: a pool pick (or dex, from G.Debug.lost), its nature, a spawn spot and a mark. */
+  function spawnLost(players, dex = null) {
     const alive = players.filter((p) => !p.dead);
     const pl = G.U.pick(alive.length ? alive : players);
-    const pool = G.DEX.filter((p) => p.rarity <= 3 && !p.leg && G.SPRITE_META[p.dex] && !G.Sprites.hovers(p.dex));
-    const mon = G.U.pick(pool);
+    const mon = dex ? G.DEX_BY[dex] : G.U.pick(pool());
+    if (!mon) return false;
+    // #138 H2 and D1: a floater's spawn and mark may sit on liquid, when the map's liquid does not hurt
+    const mayUseLiquid = G.Sprites.hovers(mon.dex) && G.World.liquidIsSafe();
     let at = null,
       to = null;
     for (let i = 0; i < 20 && !at; i++) {
@@ -175,16 +202,17 @@ G.Events = (() => {
         d = G.U.rand(220, 300);
       const x = pl.x + Math.cos(a) * d,
         y = pl.y + Math.sin(a) * d * 0.8;
-      if (G.World.isFree(x, y, 16)) at = [x, y];
+      if (G.World.isFree(x, y, 16, mayUseLiquid)) at = [x, y];
     }
     for (let i = 0; i < 30 && at && !to; i++) {
       const a = Math.random() * 6.2832,
         d = G.U.rand(700, 850);
       const x = at[0] + Math.cos(a) * d,
         y = at[1] + Math.sin(a) * d * 0.85;
-      if (G.World.isFree(x, y, 30)) to = [x, y];
+      if (G.World.isFree(x, y, 30, mayUseLiquid)) to = [x, y];
     }
     if (!at || !to) return false;
+    const nature = G.Rescue.rollNature();
     makeLost({
       dex: mon.dex,
       x: at[0],
@@ -193,7 +221,8 @@ G.Events = (() => {
       ty: to[1],
       state: 'wait',
       hp: 100,
-      grant: Math.random() < 0.2,
+      nature,
+      natureName: G.Rescue.natureName(nature),
     });
     G.Sprites.preload([mon.dex]);
     return true;
@@ -209,6 +238,7 @@ G.Events = (() => {
         hitCd: 0,
         netT: 0,
         follow: null,
+        floats: G.Sprites.hovers(o.dex), // #138 H1: a floater escorts with hover movement
         anim: new G.Sprites.Animator(o.dex, 1),
         r: G.Sprites.bodyRadius(o.dex),
       },
@@ -230,7 +260,7 @@ G.Events = (() => {
       if (p) {
         L.state = 'follow';
         L.follow = p;
-        say('¡' + L.name + ' te sigue! Llévalo a la marca verde', 3, '#7dffb0');
+        say(L.name + ' is following you! Take it to the green marker', 3, '#7dffb0');
         G.Audio.sfx('confirm');
       }
       L.moving = false;
@@ -244,7 +274,7 @@ G.Events = (() => {
         const [nx, ny] = G.U.norm(p.x - L.x, p.y - L.y);
         L.x += nx * sp;
         L.y += ny * sp;
-        G.World.collide(L);
+        if (!L.floats) G.World.collide(L); // #138 H1 and D2: floaters skip collision, as hover enemies do
         L.anim.dir = G.Sprites.dirFromAngle(Math.atan2(ny, nx));
       }
       if (G.U.dist2(L.x, L.y, L.tx, L.ty) < 56 * 56) return rescued();
@@ -262,11 +292,11 @@ G.Events = (() => {
         );
         L.flash = 0.1;
         G.FX.burst(L.x, L.y - 10, '#ff5f6d', 4, 60);
-        if (L.hp <= 0) return gone('¡' + L.name + ' se ha asustado y ha huido…!');
+        if (L.hp <= 0) return gone(L.name + ' got scared and ran away!');
       }
     }
     if (L.flash > 0) L.flash -= dt;
-    if (L.t > LOST_TIME) return gone(L.name + ' se ha cansado de esperar y se ha ido…');
+    if (L.t > LOST_TIME) return gone(L.name + ' got tired of waiting and left.');
 
     if (G.Coop.isHost && (L.netT -= dt) <= 0) {
       L.netT = 0.1;
@@ -286,17 +316,22 @@ G.Events = (() => {
     }
   }
 
+  /** #138: does a delivered Lost Pokemon join you? One roll at its star's odds. */
+  const rollsRecruit = (dex) => Math.random() < (RECRUIT_ODDS[(G.DEX_BY[dex] || {}).rarity] || 0);
+
   function rescued() {
     const L = lost;
     G.Drops.roll('rescue', L.tx, L.ty);
-    if (G.Coop.isHost) G.Coop.broadcast(['ev', 'rw', L.dex, L.grant ? 1 : 0]);
-    reward(L.dex, L.grant);
+    const recruited = rollsRecruit(L.dex);
+    if (recruited) G.Catch.hold(L); // held like a catch, with the toast's nature; it settles when the run ends
+    if (G.Coop.isHost) G.Coop.broadcast(['ev', 'rw', L.dex, recruited ? 1 : 0]);
+    reward(L.dex, recruited);
     lost = null;
     end();
   }
 
-  /** On each computer: it heals, and if applicable, the Pokemon joins your collection. */
-  function reward(dex, grant) {
+  /** On each computer: it heals, and the thanks line says whether it joins you when the run ends. */
+  function reward(dex, recruited) {
     const pl = G.Game.player;
     if (pl && !pl.dead) {
       pl.heal(pl.maxHp * 0.5);
@@ -305,8 +340,10 @@ G.Events = (() => {
     const name = (G.DEX_BY[dex] || {}).name || '';
     G.FX.burst(lost ? lost.tx : pl.x, lost ? lost.ty - 10 : pl.y, '#7dffb0', 24, 180);
     G.Audio.sfx('legend');
-    if (grant && G.onRescue) G.onRescue(dex, name);
-    else say('¡Has llevado a ' + name + ' a casa! Te lo agradece', 3.2, '#7dffb0');
+    if (recruited) {
+      say('You brought ' + name + ' home! It will join you when the run ends.', 3.2, '#7dffb0');
+      G.Audio.sfx('shinyGet');
+    } else say('You brought ' + name + ' home! It thanks you.', 3.2, '#7dffb0');
   }
 
   function gone(msg) {
@@ -485,6 +522,7 @@ G.Events = (() => {
     reset,
     update,
     bag,
+    pool,
     onNet,
     drawables,
     drawHud,
@@ -497,6 +535,12 @@ G.Events = (() => {
     /** Para pruebas. */
     debugStart(id) {
       start(id, G.Game.st.time, G.Game.everyone());
+    },
+    /** Dev (G.Debug.lost): start a Lost Pokemon now, of that species when given. False when none started. */
+    debugLost(dex) {
+      if (cur || lost) return false;
+      start('lost', G.Game.st.time, G.Game.everyone(), dex);
+      return !!lost;
     },
     debugThief() {
       spawnThief(G.Game.everyone(), G.Game.st.time);

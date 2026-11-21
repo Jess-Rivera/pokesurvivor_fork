@@ -520,10 +520,6 @@ G.I18n.add({
 
   // ---------------- eventos y duendes (2026-10-10) ----------------
   '¡Horda de tipo {x}!': 'A {x}-type horde!', '¡Hora dorada! Doble de experiencia': 'Golden hour! Double experience',
-  '¡Un {x} se ha perdido! Búscalo y llévalo a la marca': 'A {x} is lost! Find it and take it to the marker',
-  '¡{x} te sigue! Llévalo a la marca verde': '{x} is following you! Take it to the green marker',
-  '¡{x} se ha asustado y ha huido…!': '{x} got scared and ran away…!', '{x} se ha cansado de esperar y se ha ido…': '{x} got tired of waiting and left…',
-  '¡Has llevado a {x} a casa! Te lo agradece': 'You brought {x} home! It thanks you', '¡{x} se une a tu equipo!': '{x} joins your team!',
   '¡{x} te da las gracias! (+150 monedas, ya lo tenías)': '{x} thanks you! (+150 coins, you already had it)',
   '¡Un {x} con un ticket ×10! ¡Atrápalo antes de que huya!': 'A {x} with a ×10 ticket! Catch it before it runs away!',
   '¡Un {x} cargado de monedas! ¡Atrápalo antes de que huya!': 'A {x} loaded with coins! Catch it before it runs away!',

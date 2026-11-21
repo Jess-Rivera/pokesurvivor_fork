@@ -142,12 +142,13 @@ Data facts are from pokedex.js, enemy-classes.js, sprites-meta.js and the pokeap
   The existing events.js event (picked with horde / gold every 240 to 300 s, never twice in a row;
   120 s to deliver) becomes the second recruit route.
   pool     Stage 1s THAT HAVE AN EVOLUTION, rarity 1 to 3, not legendary, from ANY region (not the run's
-           region, on purpose), floating species included (the hover filter is dropped): 309 species.
+           region, on purpose), floating species included (the hover filter is dropped): 309 species (324 on 2026-11-21, #138 D8).
   toast    names the nature: "A Timid Eevee is lost!" (the nature has no flee role here)
   delivery heal 50% HP + coins (the old ticket prize becomes coins) + a recruit chance by star:
            1 star 20% | 2 star 12% | 3 star 6%. A recruit is a new unique copy with the shown nature.
-  [Open]   build detail: floaters escort with ground collision or hover movement; spawn and mark points
-           for floaters (H1, H2 in v1).
+  [Approved] floaters hover (no collision, walls included); their spawn and mark may sit on water, swamp or
+           ice; all five lines in English (decision 2026-11-21-138-floater-escort-hover-and-water-spots). Built
+           2026-11-21 (#138).
 
 6. EVOLUTION (the only way past Stage 1)
 ----------------------------------------

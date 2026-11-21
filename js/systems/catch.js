@@ -24,7 +24,8 @@
  *            js/data/balls.js.
  *   held     every catch of a run is held, never placed mid-run. At the run end (settle): kept when the run ends with its EVs
  *            (a fall, a crash), all lost on a quit (End Run, signing out). Kept ones become copies (method rescue, the
- *            rescue's nature); a full box sells the overflow at the copy's price (G.DB.obtain).
+ *            rescue's nature); a full box sells the overflow at the copy's price (G.DB.obtain). A recruited Lost
+ *            Pokemon (#138, js/systems/events.js) is held the same way, through hold().
  * Checks: docs/proposals/rescue-harness.js (part 6).
  */
 G.Catch = (() => {
@@ -370,7 +371,7 @@ G.Catch = (() => {
     layout[slot] = null;
     lastThrow = rollThrow(c, ballId, rnd);
     if (lastThrow.caught) {
-      held.push({ dex: c.dex, name: c.name, nature: c.nature, natureName: c.natureName });
+      hold(c);
       session = null;
       return 'caught';
     }
@@ -380,6 +381,11 @@ G.Catch = (() => {
       return 'fled';
     }
     return 'miss';
+  }
+
+  /** Holds one Pokemon for the run (a catch, or a recruited Lost Pokemon, #138); it is placed when the run settles. */
+  function hold(mon) {
+    held.push({ dex: mon.dex, name: mon.name, nature: mon.nature, natureName: mon.natureName });
   }
 
   /** Letting it go (the screen's Let it go, after asking): it runs off, the belt keeps its balls. */
@@ -433,6 +439,7 @@ G.Catch = (() => {
     startRun,
     begin,
     throwBall,
+    hold,
     letGo,
     settle,
     get held() {

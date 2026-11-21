@@ -264,6 +264,12 @@ G.World = (() => {
     return e;
   }
 
+  /** Does this map's liquid leave you unharmed (water, swamp, ice)? Walkable, and where a floating Lost Pokemon may
+   *  spawn or be marked (#138). */
+  function liquidIsSafe() {
+    return !(LIQ[liquidKind()] || {}).dmg;
+  }
+
   function propAtTile(tx, ty) {
     const cx = Math.floor(tx / N),
       cy = Math.floor(ty / N);
@@ -275,7 +281,7 @@ G.World = (() => {
   function walkable(tx, ty) {
     const t = terrainAt(tx, ty);
     if (t === WALL) return false;
-    if (t === LIQUID && (LIQ[liquidKind()] || {}).dmg) return false; // lava, veneno, descarga
+    if (t === LIQUID && !liquidIsSafe()) return false; // lava, poison, spark
     const p = propAtTile(tx, ty);
     return !(p && p.solid);
   }
@@ -782,6 +788,7 @@ G.World = (() => {
     biomeName,
     liquidKind,
     liquidEffect,
+    liquidIsSafe,
     walkable,
     kindAt,
     isWall,

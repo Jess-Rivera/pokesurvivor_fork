@@ -480,23 +480,6 @@ G.Game = (() => {
   let awayBy = null;
   const awayText = () => 'Pausa: esperando a ' + awayBy + ' (anfitrión)…';
 
-  /** You took a lost Pokemon home and it joins you (events.js). */
-  G.onRescue = (dex, name) => {
-    if (!G.DB.save || !pl) return;
-    // Always a new copy, a repeat too (pokebox 3a-2); a repeat no longer pays +150 coins. Full boxes: sold on arrival (3a-4).
-    const got = G.DB.obtain(dex, false, 'rescue');
-    G.DB.commit(true);
-    G.Spawner.say(
-      got.sold
-        ? fullBoxLine(name, got.sold)
-        : got.isNew
-          ? '¡' + name + ' se une a tu equipo!'
-          : name + ' joined your box!',
-      4
-    );
-    G.Audio.sfx('shinyGet');
-  };
-
   /** A wild shiny goes down: you keep it, as one shiny copy (a repeat too; it no longer pays +300 coins). */
   G.onShinyCaught = (e) => {
     if (!G.DB.save || !pl) return;

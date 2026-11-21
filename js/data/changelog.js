@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['A new look for the Poke Balls shop and the catch screen', 'A new look for the Poke Balls shop and the catch screen'],
     new: [
       [
+        'Any Stage 1 Pokemon that can still evolve, from any region, can now be the Lost Pokemon, floating Pokemon included (like Gastly or Zubat). Floating ones follow you over rocks and walls, and on maps with water, swamp or ice they can wait for you or have their marker out on it.',
+        'Any Stage 1 Pokemon that can still evolve, from any region, can now be the Lost Pokemon, floating Pokemon included (like Gastly or Zubat). Floating ones follow you over rocks and walls, and on maps with water, swamp or ice they can wait for you or have their marker out on it.',
+      ],
+      [
         "The catch screen has a new look: a clean window, the Pokemon's types on its frame (both, for a two-type Pokemon), belts like the Shop's and new buttons. Under the cursor a slot or a face shows a yellow ring.",
         "The catch screen has a new look: a clean window, the Pokemon's types on its frame (both, for a two-type Pokemon), belts like the Shop's and new buttons. Under the cursor a slot or a face shows a yellow ring.",
       ],
@@ -20,6 +24,14 @@ G.CHANGELOG = [
       ],
     ],
     chg: [
+      [
+        "A Lost Pokemon's message now names its nature (\"A Timid Eevee is lost!\"), and all its messages are in English.",
+        "A Lost Pokemon's message now names its nature (\"A Timid Eevee is lost!\"), and all its messages are in English.",
+      ],
+      [
+        'Taking a Lost Pokemon home can now recruit it: 20% for a 1 star Pokemon, 12% for 2 star, 6% for 3 star. A recruit is held like a catch and joins your box when the run ends (kept when you fall, lost if you quit), with the nature its message named. It counts in Caught this run.',
+        'Taking a Lost Pokemon home can now recruit it: 20% for a 1 star Pokemon, 12% for 2 star, 6% for 3 star. A recruit is held like a catch and joins your box when the run ends (kept when you fall, lost if you quit), with the nature its message named. It counts in Caught this run.',
+      ],
       [
         'A throw now tells you how it went in a message at the bottom of the screen.',
         'A throw now tells you how it went in a message at the bottom of the screen.',

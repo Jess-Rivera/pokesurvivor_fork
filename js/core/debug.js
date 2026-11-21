@@ -14,6 +14,8 @@
  *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
  *   G.Debug.silver(n)  set this run's Silver to n (no arg: logs it). In a run only, not saved (Silver is run-only). For the Move Shop.
  *   G.Debug.rescue()   #135: start a rescue event now (the toast, the arrow, the UberElite). False when one is up or you are in a gym arena.
+ *   G.Debug.lost([dex])   #138: start a Lost Pokemon event now, of that species when given (92 Gastly floats,
+ *                      133 Eevee walks; default: a pool pick). False when another event is up or no spot was found.
  *   G.Debug.catch([dex])   #136: open the catch screen now for a won rescue of that species (default: a random rescue pick), as if
  *                      its UberElite fell with half the clock left. False when another screen is open or the belt is empty.
  *   G.Debug.catchMath([on])  #148: print a catch throw's math (every factor of the rate, the critical and shake chances, each
@@ -276,6 +278,21 @@ G.Debug = (() => {
     }
     const started = G.Rescue.debugFire();
     console.log('[Debug] rescue: ' + (started ? 'started' : 'not started (one is up, or you are in a gym arena)'));
+    return started;
+  }
+
+  /** #138: start a Lost Pokemon event now, of that species when given. In a run only. */
+  function lostPokemon(dex) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first.');
+      return false;
+    }
+    const started = G.Events.debugLost(dex);
+    console.log('[Debug] lost: ' + (started ? 'started' : 'not started (another event is up, or no species or spot)'));
     return started;
   }
 
@@ -1434,6 +1451,7 @@ G.Debug = (() => {
     silver,
     xpBoost,
     rescue,
+    lost: lostPokemon,
     catch: catchNow,
     catchMath,
     unlockitem,

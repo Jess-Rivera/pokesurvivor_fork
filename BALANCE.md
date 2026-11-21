@@ -307,3 +307,6 @@ feel with the interactive tuner over the real 966-species roster:
   badge cap penalty (0.85 per 4 World Levels over the cap, up to 6 steps) x early World Level bonus (max(1, (36 - 2 x WL) / 10)).
 - One throw: a critical catch first (sure; rate x 0.5 to 2.5 / 6 out of 256, from 31 species owned), else 3 shakes at (rate / 255) ^ 3/16.
 - Levers: the star multipliers, the badge caps, the time term's 2, the early bonus. Worked odds: docs/ASCII Concept Maps/148 - Catch Odds Slice Opening.md.
+
+## Lost Pokemon recruit (#138, built 2026-11-21; TUNE by feel)
+- Chance a delivered Lost Pokemon joins you, by star (pokedex rarity): 1 star 20% | 2 star 12% | 3 star 6% (js/systems/events.js RECRUIT_ODDS; spec section 5). Rolled once at delivery; a recruit is held like a catch.

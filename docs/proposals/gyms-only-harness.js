@@ -129,7 +129,8 @@ const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b))
   G.Enemies.setRegion(null); G.Enemies.rollRun();
   ok(!castLeg && !eliteLeg, 'legendaries drawn: cast ' + castLeg + ', elites ' + eliteLeg); // the timed boss slots were removed 2026-11-04
   const ev = fs.readFileSync(R + '/js/systems/events.js', 'utf8');
-  ok(/G\.DEX\.filter\(\(?p\)? => p\.rarity <= 3 && !p\.leg/.test(ev), 'the lost-Pokemon event pool still excludes legendaries');
+  // #138: the pool moved into its own function, pool() (its rule is checked in full by lost-pokemon-harness.js T1)
+  ok(/function pool\(\) \{\s*return G\.DEX\.filter\([\s\S]{0,160}!p\.leg &&/.test(ev), 'the lost-Pokemon event pool still excludes legendaries');
   console.log('5 pools: ' + draws + ' elite draws over 3 regions, no legendary; the lost-Pokemon pool keeps its leg filter'); }
 
 // 6. spawner, events and weather pause inside the gym arena (a control run outside it first, so the checks are not vacuous)

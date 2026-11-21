@@ -1,0 +1,487 @@
+<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'><title>Lost Pokemon Talk: Research and Build Path</title><style>
+:root{--bg:#f7f8fa;--card:#fff;--ink:#1c2230;--muted:#5b6475;--line:#dde2ea;--accent:#2f6fde;--accent2:#e8f0ff}
+@media (prefers-color-scheme:dark){:root{--bg:#14171d;--card:#1c2029;--ink:#e6e9ef;--muted:#9aa3b2;--line:#2c3240;--accent:#7aa7ff;--accent2:#22304a}}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 "Segoe UI",system-ui,sans-serif;margin:0}
+main{max-width:1080px;margin:0 auto;padding:32px 28px 60px}
+h1{font-size:26px;margin:0 0 6px}h2{font-size:19px;margin:36px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--accent)}
+p,li{color:var(--ink)}a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0 18px;background:var(--card);font-size:13.5px}
+th,td{border:1px solid var(--line);padding:7px 9px;vertical-align:top;text-align:left}
+th{background:var(--accent2)}
+tr:last-child td{font-weight:inherit}
+.diagram{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:14px 0;overflow-x:auto;text-align:center}
+pre.mermaid{margin:0;background:none}
+code{background:var(--accent2);padding:1px 5px;border-radius:4px}
+blockquote{border-left:3px solid var(--accent);margin:0;padding:4px 14px;color:var(--muted)}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>window.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:false,theme:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'default'});mermaid.run({querySelector:'pre.mermaid'});}});</script>
+</head><body><main><h1>Lost Pokemon Talk: Research and Build Path (deferred feature, 2026-11-21, DRAFT)</h1>
+<p>Feature: when you deliver a Lost Pokemon to the mark, a short Persona or SMT style exchange nudges whether it joins. It is deferred until #138 (S7) and #146 land. This file is research plus a build path, with no code. Every number tagged <code>[Proposed]</code> is a starting value to playtest.</p>
+<h2>1. The constraint that shapes everything</h2>
+<p>The repo's narrative rules forbid the obvious version, where the Pokemon asks you questions. Pokemon do not speak conversationally in this game [<a href="qw-file://workspace/attached_files/META-NARRATIVE.md">1</a>]. Wild Pokemon also must not hint at the code, while still behaving naturally within their personalities [<a href="qw-file://workspace/attached_files/META-NARRATIVE.md">1</a>].</p>
+<p>So the adaptation flips the SMT format:</p>
+<table>
+<thead>
+<tr>
+<th>SMT / Persona</th>
+<th>This game</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The demon asks, you answer</td>
+<td>The game narrates a moment ("Eevee hesitates at the mark."), and you pick an action</td>
+</tr>
+<tr>
+<td>The demon replies in speech</td>
+<td>The Pokemon reacts without words: an emote bubble, its cry, a hop or a recoil</td>
+</tr>
+<tr>
+<td>Personality is a hidden tone</td>
+<td>Personality is the nature, which the toast already names after S7</td>
+</tr>
+</tbody>
+</table>
+<p>That makes it closer to Undertale's ACT menu than to a conversation. In Undertale each monster has its own actions, and you can spare it once its conditions are met [<a href="https://steamcommunity.com/app/391540/discussions/0/458606248632863477/" target="_blank" rel="noopener noreferrer">2</a>].</p>
+<h2>2. How SMT does it</h2>
+<ul>
+<li><strong>Loop.</strong> You answer the demon's questions and meet its demands, and a satisfied demon then joins [<a href="https://megatenwiki.com/wiki/Negotiation" target="_blank" rel="noopener noreferrer">3</a>]. In SMT V that means 1 or 2 sets of dialogue, sometimes branching into a longer chain [<a href="https://megamitensei.fandom.com/wiki/Negotiation" target="_blank" rel="noopener noreferrer">4</a>].</li>
+<li><strong>Personality.</strong> It is hidden. Nocturne gives every demon invisible tone, gender and age properties [<a href="https://megamitensei.fandom.com/wiki/Negotiation" target="_blank" rel="noopener noreferrer">4</a>]. The same scenario can turn out differently depending on personality [<a href="https://megamitensei.fandom.com/wiki/Negotiation" target="_blank" rel="noopener noreferrer">4</a>].</li>
+<li><strong>Demands.</strong> After the talk, the demon asks for Macca, items, HP or MP until an invisible "enough" value is reached [<a href="https://megamitensei.fandom.com/wiki/Negotiation" target="_blank" rel="noopener noreferrer">4</a>]. It can also take your gifts and leave without giving anything back [<a href="https://megatenwiki.com/wiki/Negotiation" target="_blank" rel="noopener noreferrer">3</a>].</li>
+<li><strong>Modifiers.</strong> Moon phase shifts moods, and some demons are cheerful at full moon while others are irritable [<a href="https://game8.co/games/Shin-Megami-Tensei-V/archives/348793" target="_blank" rel="noopener noreferrer">5</a>]. A level gate means a weak protagonist is not worth allying with [<a href="https://megatenwiki.com/wiki/Negotiation" target="_blank" rel="noopener noreferrer">3</a>].</li>
+<li><strong>Numbers.</strong> No mainline SMT game documents how much one answer moves the mood. We have to author our own.</li>
+</ul>
+<h2>3. How Persona does it</h2>
+<p><strong>Persona 5 (the simple template).</strong> The Shadow's personality shows on screen: Upbeat, Timid, Irritable or Gloomy. Each one maps to a preferred answer type: Funny, Serious, Vague or Kind [<a href="https://www.polygon.com/persona-5-guide-walkthrough/2017/4/18/15342098/pr5-royal-negotiation-guide-tips-tricks/" target="_blank" rel="noopener noreferrer">6</a>]. Each personality has one liked type, one neutral type and two hated types [<a href="https://psnprofiles.com/trophy/10572-persona-5-royal/21-i-am-thou" target="_blank" rel="noopener noreferrer">7</a>]. You get two questions, and the answers carry no labels [<a href="https://www.polygon.com/persona-5-guide-walkthrough/2017/4/18/15342098/pr5-royal-negotiation-guide-tips-tricks/" target="_blank" rel="noopener noreferrer">6</a>]. Community lists say a success needs 2 liked answers, or 1 liked plus 1 neutral [<a href="https://gist.github.com/AgentKnopf/f81e49016dd3861240bf03c84d7826a2" target="_blank" rel="noopener noreferrer">8</a>]. A neutral second answer gets you an item instead of a recruit [<a href="https://megamitensei.fandom.com/wiki/Negotiation" target="_blank" rel="noopener noreferrer">4</a>].</p>
+<p><strong>Persona 2 Contact (the meter template).</strong> There are four reactions: Pleasure, Interest, Anger and Fear [<a href="https://tartarus.rpgclassics.com/persona2ep/Contact-Reactions.shtml" target="_blank" rel="noopener noreferrer">9</a>]. Each one shows as a colored aura and resolves after three hits. For example, three Fear reactions make the demon run [<a href="https://tartarus.rpgclassics.com/persona2ep/Contact-Reactions.shtml" target="_blank" rel="noopener noreferrer">9</a>]. Players found it tedious [<a href="https://www.almarsguides.com/retro/walkthroughs/PSP/Games/Persona2InnocentSin/Misc/ContactWithDemons/" target="_blank" rel="noopener noreferrer">10</a>].</p>
+<p><strong>Takeaway.</strong> P5's two questions and visible label are the right length for a pause inside a horde run. From P2, borrow only the wordless colored reaction.</p>
+<h2>4. What players hate, and what to borrow</h2>
+<table>
+<thead>
+<tr>
+<th>Complaint</th>
+<th>Source</th>
+<th>Our rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The personality is hidden and only readable from looks, so you end up on a wiki</td>
+<td>[<a href="https://megamitensei.fandom.com/wiki/Personality" target="_blank" rel="noopener noreferrer">11</a>]</td>
+<td>Show the nature and its stat arrows on the talk window</td>
+</tr>
+<tr>
+<td>Obtuse and unpredictable</td>
+<td>[<a href="https://www.giantbomb.com/forums/persona-5-5214/demon-negotiations-are-back-1809043/" target="_blank" rel="noopener noreferrer">12</a>]</td>
+<td>Reactions follow one rule, derived from mainline nature data</td>
+</tr>
+<tr>
+<td>Gifts don't guarantee a join</td>
+<td>[<a href="https://sonatano1.wordpress.com/2013/09/14/how-to-talk-to-a-demon/" target="_blank" rel="noopener noreferrer">13</a>]</td>
+<td>Talking costs nothing, and the delivery heal and coins always fire</td>
+</tr>
+<tr>
+<td>One or two line demons with no character</td>
+<td>[<a href="https://www.neogaf.com/threads/demon-negotiations-in-shin-megami-tensei-games-dont-add-fun.1536122/" target="_blank" rel="noopener noreferrer">14</a>]</td>
+<td>Several narration lines per temperament, with species type flavor where cheap</td>
+</tr>
+<tr>
+<td>Flat odds feel like a grind (DQV recruits by pure chance)</td>
+<td>[<a href="https://dragonquest.fandom.com/wiki/List_of_recruitable_monsters_in_Dragon_Quest_V" target="_blank" rel="noopener noreferrer">15</a>]</td>
+<td>The talk moves the S7 star odds visibly</td>
+</tr>
+</tbody>
+</table>
+<p>What players liked: P5's talk made combat a risk trade, since you skip the free finishing attack [<a href="https://www.giantbomb.com/forums/persona-5-5214/demon-negotiations-are-back-1809043/" target="_blank" rel="noopener noreferrer">12</a>]. Our version of that risk is the escort itself, so delivery quality feeds the talk.</p>
+<p><strong>Genre fit.</strong> Survivor-likes already pause often for picks, and that pause also relieves visual strain [<a href="https://jboger.substack.com/p/the-secret-sauce-of-vampire-survivors" target="_blank" rel="noopener noreferrer">16</a>]. So a paused two-prompt beat fits the genre. It must stay short so the reward cadence holds.</p>
+<h2>5. Side by side</h2>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Personality shown?</th>
+<th>Prompts per talk</th>
+<th>Feedback per answer</th>
+<th>Odds shown?</th>
+<th>On a bad talk</th>
+<th>Cost to try</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SMT V</td>
+<td>No, read from looks</td>
+<td>1 to 2 sets, may branch</td>
+<td>Not found</td>
+<td>No, hidden cap</td>
+<td>Attacks, leaves, or takes goods</td>
+<td>Macca, items, HP, MP</td>
+</tr>
+<tr>
+<td>Persona 5 / Royal</td>
+<td>Yes, a label</td>
+<td>2</td>
+<td>Reaction visuals</td>
+<td>No</td>
+<td>Item instead, or attack</td>
+<td>The free All-Out Attack</td>
+</tr>
+<tr>
+<td>Persona 2 Contact</td>
+<td>Via a chart, not in game (Not found in game)</td>
+<td>Until one emotion hits 3</td>
+<td>Colored aura</td>
+<td>No</td>
+<td>Flees or attacks</td>
+<td>Battle turns</td>
+</tr>
+<tr>
+<td>Undertale ACT</td>
+<td>Through the actions offered</td>
+<td>Varies per monster</td>
+<td>Monster's own text</td>
+<td>N/A, deterministic spare</td>
+<td>Fight continues</td>
+<td>Turns</td>
+</tr>
+<tr>
+<td>Dragon Quest V</td>
+<td>N/A, no talk</td>
+<td>0</td>
+<td>None</td>
+<td>No, fixed tiers [<a href="https://www.woodus.com/forums/topic/14740-mechanics-of-recruiting-monsters-in-v/" target="_blank" rel="noopener noreferrer">17</a>]</td>
+<td>Not recruited</td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>Proposed here</strong></td>
+<td>Yes, nature and stat arrows</td>
+<td>2</td>
+<td>Emote, cry, aura tint</td>
+<td>Yes, the catch band</td>
+<td>Leaves after its thanks, rewards kept</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h2>6. The design: nature drives everything</h2>
+<p>Mainline data already encodes a personality. A nature's liked flavor matches the stat it raises, and its disliked flavor matches the stat it lowers [<a href="http://bulbapedia.bulbagarden.net/wiki/Natures" target="_blank" rel="noopener noreferrer">18</a>]. The game already stores each nature as a name plus raised and lowered stat positions, in js/data/species-traits.js NATURES (generated from pokeapi). All 25 rows check out against the repo's pokeapi-master natures.csv. <strong>So the reaction table is derived, never hand authored.</strong></p>
+<div class="diagram"><pre class="mermaid">flowchart LR
+  N[&quot;Rolled nature&lt;br/&gt;(S7 already rolls it)&quot;] --&gt; R[&quot;raised stat&quot;]
+  N --&gt; L[&quot;lowered stat&quot;]
+  R --&gt; LA[&quot;its approach and its berry&lt;br/&gt;react LIKE&quot;]
+  L --&gt; DA[&quot;its approach and its berry&lt;br/&gt;react DISLIKE&quot;]
+  N --&gt; O[&quot;the other 3 stats&lt;br/&gt;react NEUTRAL&quot;]
+  N -- &quot;neutral nature&lt;br/&gt;(Hardy, Docile, Serious, Bashful, Quirky)&quot; --&gt; NB[&quot;LIKE = the species&#x27; highest&lt;br/&gt;non-HP base stat; no DISLIKE&quot;]
+</pre></div>
+<table>
+<thead>
+<tr>
+<th>Stat</th>
+<th>Temperament label</th>
+<th>Approach (the action you pick)</th>
+<th>Berry flavor</th>
+<th>Natures that raise it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Atk</td>
+<td>Fierce</td>
+<td>Spar with it</td>
+<td>Spicy</td>
+<td>Lonely, Brave, Adamant, Naughty</td>
+</tr>
+<tr>
+<td>Def</td>
+<td>Steady</td>
+<td>Sit and wait</td>
+<td>Sour</td>
+<td>Bold, Relaxed, Impish, Lax</td>
+</tr>
+<tr>
+<td>SpA</td>
+<td>Curious</td>
+<td>Show it something</td>
+<td>Dry</td>
+<td>Modest, Mild, Quiet, Rash</td>
+</tr>
+<tr>
+<td>SpD</td>
+<td>Gentle</td>
+<td>Kneel, speak softly</td>
+<td>Bitter</td>
+<td>Calm, Gentle, Sassy, Careful</td>
+</tr>
+<tr>
+<td>Spe</td>
+<td>Restless</td>
+<td>Play chase</td>
+<td>Sweet</td>
+<td>Timid, Hasty, Jolly, Naive</td>
+</tr>
+</tbody>
+</table>
+<p>Labels and approach names are <code>[Proposed]</code> English text (CLAUDE.md i18n: new strings English only).</p>
+<p><strong>Two prompts (the P5 length).</strong>
+1. <em>Approach.</em> Narration sets the scene, then you pick one of 3 approaches drawn from the 5. The liked one is always among them (D3).
+2. <em>Offer.</em> You pick one of 3 berry flavors. The berries are flavor only and come from no inventory, so nothing is paid and refused.</p>
+<p><strong>Favor and odds <code>[Proposed]</code>.</strong> Like +1, Neutral 0, Dislike -1 per prompt. Delivering the Pokemon above half HP adds +1 (escort bonus), so favor runs from -2 to +3. The final chance is the S7 star base times a favor multiplier:</p>
+<table>
+<thead>
+<tr>
+<th>Favor</th>
+<th>x</th>
+<th>1 star (base 20%)</th>
+<th>2 star (base 12%)</th>
+<th>3 star (base 6%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-2</td>
+<td>0.25</td>
+<td>5</td>
+<td>3</td>
+<td>1.5</td>
+</tr>
+<tr>
+<td>-1</td>
+<td>0.5</td>
+<td>10</td>
+<td>6</td>
+<td>3</td>
+</tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>20</td>
+<td>12</td>
+<td>6</td>
+</tr>
+<tr>
+<td>+1</td>
+<td>1.5</td>
+<td>30</td>
+<td>18</td>
+<td>9</td>
+</tr>
+<tr>
+<td>+2</td>
+<td>2.25</td>
+<td>45</td>
+<td>27</td>
+<td>13.5</td>
+</tr>
+<tr>
+<td>+3</td>
+<td>3</td>
+<td>60</td>
+<td>36</td>
+<td>18</td>
+</tr>
+</tbody>
+</table>
+<p>Favor 0 reproduces today's S7 odds exactly, and star order holds on every row. So S7's T2 relation survives unchanged.</p>
+<p><strong>Feedback.</strong> After each pick, an emote shows over the portrait: a note for Like, a sweat drop for Neutral, a scowl for Dislike. The P5 icon idea comes from the community lists [<a href="https://gist.github.com/AgentKnopf/f81e49016dd3861240bf03c84d7826a2" target="_blank" rel="noopener noreferrer">8</a>]. The cry plays at a pitch that follows the reaction, and the portrait rim tints like a P2 aura. After each reaction the band moves, using the same band the catch window already shows [<a href="qw-file://workspace/attached_files/catch.js">19</a>].</p>
+<p><strong>Overlap to watch.</strong> catch.js already groups natures into flee buckets (easy, default, hard) as <code>[Open]</code> playtest values [<a href="qw-file://workspace/attached_files/catch.js">19</a>]. Those buckets don't follow raised stats. A Timid Pokemon is "hard" to catch there but would love Play chase here. That may be fine (skittish but friendly), but it is two nature models side by side. Flag it at the #148 tuning pass.</p>
+<h2>7. Flow and state machine</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+  A[&quot;Lost Pokemon toast:&lt;br/&gt;A Timid Eevee is lost!&quot;] --&gt; B[&quot;Touch it: it follows you&quot;]
+  B --&gt; C{&quot;Reach the mark in 120 s&lt;br/&gt;and it survives?&quot;}
+  C -- no --&gt; X[&quot;It leaves (unchanged)&quot;]
+  C -- yes --&gt; D[&quot;Delivery: 50% heal and coins&lt;br/&gt;fire first (unchanged)&quot;]
+  D --&gt; E[&quot;Run pauses, talk window opens&quot;]
+  E --&gt; F[&quot;Prompt 1: approach&quot;]
+  F --&gt; G[&quot;Reaction, band moves&quot;]
+  G --&gt; H[&quot;Prompt 2: berry&quot;]
+  H --&gt; I[&quot;Reaction, band moves&quot;]
+  I --&gt; J{&quot;One roll at the final chance&quot;}
+  J -- join --&gt; K[&quot;Held recruit (G.Catch held),&lt;br/&gt;settled at run end&quot;]
+  J -- no --&gt; M[&quot;It thanks you and leaves&quot;]
+  K --&gt; Z[&quot;Run resumes&quot;]
+  M --&gt; Z
+</pre></div>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+  [*] --&gt; Opening: delivered
+  Opening --&gt; AskApproach
+  AskApproach --&gt; ReactApproach: pick
+  ReactApproach --&gt; AskOffer
+  AskOffer --&gt; ReactOffer: pick
+  ReactOffer --&gt; Resolve
+  Resolve --&gt; Joined: roll passes
+  Resolve --&gt; Left: roll fails
+  AskApproach --&gt; Resolve: Esc, skip at current favor
+  AskOffer --&gt; Resolve: Esc, skip at current favor
+  Joined --&gt; [*]
+  Left --&gt; [*]
+</pre></div>
+<p>Skipping (Esc) resolves at the current favor, never worse, so a player who doesn't want the beat loses nothing against S7. Everything lives only for the run, so there is no new save field and no migration.</p>
+<h2>8. Step-by-step build path</h2>
+<p>Each slice opens with goal, done and test agreed first (CLAUDE.md slice shape), then a prose plan, then the build.</p>
+<div class="diagram"><pre class="mermaid">flowchart LR
+  P0[&quot;Prereqs&lt;br/&gt;#138 S7, #146&quot;] --&gt; T1[&quot;T1 Rules, headless&quot;]
+  T1 --&gt; T2[&quot;T2 Talk window&quot;]
+  T2 --&gt; T3[&quot;T3 Wire into delivery&quot;]
+  T3 --&gt; T4[&quot;T4 Tune and docs&quot;]
+  T3 -.-&gt; DF[&quot;Co-op hook:&lt;br/&gt;deferred issue&quot;]
+</pre></div>
+<table>
+<thead>
+<tr>
+<th>Slice</th>
+<th>Goal</th>
+<th>Files (new or touched)</th>
+<th>Done when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T1 Rules</td>
+<td>Talk rules exist with no screen: temperament derivation, prompt draw, favor, odds, seeded roll</td>
+<td>New js/systems/lost-talk.js (G.LostTalk) and js/data/lost-talk.js (prompt bank, English narration); both go in the dev.html script block and the NEED array in js/main.js; new docs/proposals/lost-talk-harness.js registered in tools/check.js</td>
+<td>Harness relations R1 to R6 pass inside check.js, mutants killed, clean run prints one line</td>
+</tr>
+<tr>
+<td>T2 Window</td>
+<td>A paused talk window you can play from a debug call</td>
+<td>New js/ui/lost-talk-ui.js (G.LostTalkUI), a talk.window built from the UI library pieces catch-ui.js uses (panel.clean, portrait, button.glitch, cursor rules); a board draft under tools/library/ like catch-draft.js; emote glyphs and the cry pitch through G.Audio; new #scr-talk</td>
+<td>Jess opens it with a debug command for a chosen nature and feel tests keys, mouse, Esc</td>
+</tr>
+<tr>
+<td>T3 Wire</td>
+<td>Delivery opens the talk and the result feeds S7's held recruit</td>
+<td>js/systems/events.js rescued() opens the talk after the heal and coins, in place of S7's direct star roll; G.Game gets an openTalk beside openCatch; js/core/debug.js gets a "lost at the mark with nature X" command</td>
+<td>R7 and R8 pass; Jess escorts, talks and sees the recruit in the Pokebox only after the run</td>
+</tr>
+<tr>
+<td>T4 Tune</td>
+<td>Numbers playtested and written down</td>
+<td>BALANCE.md (favor table), js/data/changelog.js, spec section 5, GLOSSARY (Lost talk, temperament), one docs/decisions/ file</td>
+<td>Card goes to Needs Playtest, then Shipped on Jess's OK</td>
+</tr>
+</tbody>
+</table>
+<p><strong>End-goal test relations (TEST-FIRST: relations, not values).</strong></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Relation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td>For every non-neutral nature, the approach and berry of its raised stat react Like, those of its lowered stat react Dislike, and the other three react Neutral</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>For neutral natures, Like is the species' highest non-HP base stat, and nothing reacts Dislike</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>The chance never falls as favor rises and never goes above the cap</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>At every favor value, 1 star beats 2 star, and 2 star beats 3 star</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>Favor 0 matches S7's 20 / 12 / 6% within tolerance over seeded runs</td>
+</tr>
+<tr>
+<td>R6</td>
+<td>The liked approach and the liked berry are always among the 3 options offered (if D3 is a)</td>
+</tr>
+<tr>
+<td>R7</td>
+<td>Delivery heal and coins are identical whatever the answers, including Esc</td>
+</tr>
+<tr>
+<td>R8</td>
+<td>A join adds one held catch with the toast's nature, and the Pokebox only changes at settle (S7 T3 still passes)</td>
+</tr>
+<tr>
+<td>R9</td>
+<td>No prompt or reaction string is quoted speech from the Pokemon (META-NARRATIVE rule), and every string is English</td>
+</tr>
+</tbody>
+</table>
+<h2>9. Decisions needed before T1</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Question</th>
+<th>Options</th>
+<th>Pick</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>When does the talk happen?</td>
+<td>a. at delivery / b. at first touch, before the escort</td>
+<td><strong>a</strong>: it is already S7's roll moment, and the escort can feed favor</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Neutral natures</td>
+<td>a. all Neutral, escort bonus only / b. Like = highest base stat / c. a hidden random Like</td>
+<td><strong>b</strong>: readable from the species, so no guessing</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Is the liked option always offered?</td>
+<td>a. yes / b. random 3 of 5</td>
+<td><strong>a</strong>: it makes the talk a read-the-nature puzzle, not luck</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>Show the stat arrows?</td>
+<td>a. "Timid (+Spe -Atk)" / b. name only</td>
+<td><strong>a</strong>: P5 shows its label, and SMT's hidden one sends players to wikis</td>
+</tr>
+<tr>
+<td>D5</td>
+<td>How the chance shows</td>
+<td>a. reuse the catch band / b. a pip mood meter</td>
+<td><strong>a</strong>: one way to show odds across the game</td>
+</tr>
+<tr>
+<td>D6</td>
+<td>Does a bad talk ever cost the delivery rewards?</td>
+<td>a. never / b. two Dislikes forfeit the coins</td>
+<td><strong>a</strong>: it is a rescue, and the "paid but refused" feeling is the top complaint</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Deferred hooks.</strong> Co-op guests would only see the host's result. That is a <code>deferred</code> issue, not built. A Pokedex memory of reactions per species (like SMT if... loyalty) would be a new save field with a null default. It is optional and not in T1 to T4.</p>
+<p><strong>Gaps in the research.</strong> SMT IV and IV Apocalypse are barely documented. P5's exact scoring is community readings only. Pokemon Mystery Dungeon, Cassette Beasts and Disco Elysium were not covered.</p></main>
+
+<h2>References</h2>
+<ul>
+  <li>[1] META-NARRATIVE.md</li>
+  <li>[2] <a href="https://steamcommunity.com/app/391540/discussions/0/458606248632863477/" target="_blank" rel="noopener noreferrer">https://steamcommunity.com/app/391540/discussions/0/458606248632863477/</a></li>
+  <li>[3] <a href="https://megatenwiki.com/wiki/Negotiation" target="_blank" rel="noopener noreferrer">https://megatenwiki.com/wiki/Negotiation</a></li>
+  <li>[4] <a href="https://megamitensei.fandom.com/wiki/Negotiation" target="_blank" rel="noopener noreferrer">https://megamitensei.fandom.com/wiki/Negotiation</a></li>
+  <li>[5] <a href="https://game8.co/games/Shin-Megami-Tensei-V/archives/348793" target="_blank" rel="noopener noreferrer">https://game8.co/games/Shin-Megami-Tensei-V/archives/348793</a></li>
+  <li>[6] <a href="https://www.polygon.com/persona-5-guide-walkthrough/2017/4/18/15342098/pr5-royal-negotiation-guide-tips-tricks/" target="_blank" rel="noopener noreferrer">https://www.polygon.com/persona-5-guide-walkthrough/2017/4/18/15342098/pr5-royal-negotiation-guide-tips-tricks/</a></li>
+  <li>[7] <a href="https://psnprofiles.com/trophy/10572-persona-5-royal/21-i-am-thou" target="_blank" rel="noopener noreferrer">https://psnprofiles.com/trophy/10572-persona-5-royal/21-i-am-thou</a></li>
+  <li>[8] <a href="https://gist.github.com/AgentKnopf/f81e49016dd3861240bf03c84d7826a2" target="_blank" rel="noopener noreferrer">https://gist.github.com/AgentKnopf/f81e49016dd3861240bf03c84d7826a2</a></li>
+  <li>[9] <a href="https://tartarus.rpgclassics.com/persona2ep/Contact-Reactions.shtml" target="_blank" rel="noopener noreferrer">https://tartarus.rpgclassics.com/persona2ep/Contact-Reactions.shtml</a></li>
+  <li>[10] <a href="https://www.almarsguides.com/retro/walkthroughs/PSP/Games/Persona2InnocentSin/Misc/ContactWithDemons/" target="_blank" rel="noopener noreferrer">https://www.almarsguides.com/retro/walkthroughs/PSP/Games/Persona2InnocentSin/Misc/ContactWithDemons/</a></li>
+  <li>[11] <a href="https://megamitensei.fandom.com/wiki/Personality" target="_blank" rel="noopener noreferrer">https://megamitensei.fandom.com/wiki/Personality</a></li>
+  <li>[12] <a href="https://www.giantbomb.com/forums/persona-5-5214/demon-negotiations-are-back-1809043/" target="_blank" rel="noopener noreferrer">https://www.giantbomb.com/forums/persona-5-5214/demon-negotiations-are-back-1809043/</a></li>
+  <li>[13] <a href="https://sonatano1.wordpress.com/2013/09/14/how-to-talk-to-a-demon/" target="_blank" rel="noopener noreferrer">https://sonatano1.wordpress.com/2013/09/14/how-to-talk-to-a-demon/</a></li>
+  <li>[14] <a href="https://www.neogaf.com/threads/demon-negotiations-in-shin-megami-tensei-games-dont-add-fun.1536122/" target="_blank" rel="noopener noreferrer">https://www.neogaf.com/threads/demon-negotiations-in-shin-megami-tensei-games-dont-add-fun.1536122/</a></li>
+  <li>[15] <a href="https://dragonquest.fandom.com/wiki/List_of_recruitable_monsters_in_Dragon_Quest_V" target="_blank" rel="noopener noreferrer">https://dragonquest.fandom.com/wiki/List_of_recruitable_monsters_in_Dragon_Quest_V</a></li>
+  <li>[16] <a href="https://jboger.substack.com/p/the-secret-sauce-of-vampire-survivors" target="_blank" rel="noopener noreferrer">https://jboger.substack.com/p/the-secret-sauce-of-vampire-survivors</a></li>
+  <li>[17] <a href="https://www.woodus.com/forums/topic/14740-mechanics-of-recruiting-monsters-in-v/" target="_blank" rel="noopener noreferrer">https://www.woodus.com/forums/topic/14740-mechanics-of-recruiting-monsters-in-v/</a></li>
+  <li>[18] <a href="http://bulbapedia.bulbagarden.net/wiki/Natures" target="_blank" rel="noopener noreferrer">http://bulbapedia.bulbagarden.net/wiki/Natures</a></li>
+  <li>[19] catch.js</li>
+</ul>
+</body></html>
