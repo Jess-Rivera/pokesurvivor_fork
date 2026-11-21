@@ -2,9 +2,11 @@
    the colour is the Unified yellow.base, the timings come inline from cursor.js. */
 
 /* ---------- cursor.ring: a ring around a round piece, outside its rim; cursor.js sets its width and reach ------- */
+/* it draws under the piece it rings, so its CRT passes behind it (decision
+   2026-11-21-cursor-ring-draws-under-what-it-rings): the piece raises itself over it (well.css, a face's z-index) */
 .cursor-ring {
   position: absolute;
-  z-index: 2;
+  z-index: 0;
   box-sizing: border-box;
   border-style: solid;
   border-color: var(--color-yellow-base);

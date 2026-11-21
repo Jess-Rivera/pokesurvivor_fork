@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-21, cursor.ring draws under the piece it rings, so its CRT passes behind the ball or face (Jess)](docs/decisions/2026-11-21-cursor-ring-draws-under-what-it-rings.md)
 - [2026-11-21, ball centring keeps the wobble's lean: the tilt frames centre only up and down (Jess)](docs/decisions/2026-11-21-ball-centring-keeps-wobble-lean.md)
 - [2026-11-21, cursor.ring is 2 px thick, as the board draws it (Jess)](docs/decisions/2026-11-21-cursor-ring-2px.md)
 - [2026-11-21, during the UI unify, what a slice touches is built or renamed into its final library piece, whole (Jess)](docs/decisions/2026-11-21-unify-work-builds-final-building-blocks.md)

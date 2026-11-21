@@ -757,6 +757,10 @@
 /* each belt's number on its top-left rim corner: Michroma 16, white with a 1 px ink stroke (eight hard shadows, as the
    HUD's text; Jess 2026-11-20) */
 /* the ball belt (hud-kit-items.js BallBelt; the Shop and the catch screen, #128) */
+/* the belt places itself: it takes its left and top, so it never depends on the screen's CSS for its position */
+.ball-belt {
+  position: absolute;
+}
 .ball-belt-number {
   position: absolute;
   left: 4px;

@@ -10,7 +10,7 @@ then the feel test.
 
 | Where the build differs from this plan | Why |
 |---|---|
-| The Move Shop's ask is negative when the buy replaces a move, positive otherwise | Decision 2026-11-20-155-move-shop-replace-a-move-asks-replace-or-go-back makes the replace a loss (no refund). |
+| The Move Shop's ask is negative when the buy replaces a move, positive otherwise | Decision 2026-11-20-155-move-shop-replace-a-move-asks-replace-or-go-back makes the replace a loss (no refund). Confirmed by Jess after the build (2026-11-21). |
 | The Pokemon owned scroll box is a cursor ring's reach (4 px) bigger all round | So the ring is never clipped; the faces sit where the board puts them. |
 | smoke-pause-menu.js's toast check changed | It compared the bad toast's edge to the old red; it now reads the red.base token. |
 | tools/library/stories/modal.story.js updated | The board's Modal story takes the dialog's new props (intent, byKeys). |

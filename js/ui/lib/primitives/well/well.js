@@ -6,8 +6,10 @@
  *         berry pocket and move slot wells (decision 2026-11-19-155-team-slot-hp-bar-cursor-gap-and-berry-pocket),
  *         named by its look (decision 2026-11-18-155-library-pieces-named-by-look). First on the Main Menu Shop's
  *         ball belts; the berry pocket, the catch belts and the move slots move onto it at #126.
- * Props only: the screen places it, sizes it and gives what it holds. A cursor.ring goes beside it, in a host of the
- * well's size, never inside (the well clips). Style: well.css. Board: tools/library/hud-area-draft.css (lib-area-well).
+ * Props only: the screen places it, sizes it and gives what it holds. Three layers, bottom to top: the inside and its
+ * ring, the screen's cursor (cursor.ring, passed as cursor), then what it holds, clipped to the circle. So a cursor.ring
+ * playing its CRT passes behind the ball (decision 2026-11-21-cursor-ring-draws-under-what-it-rings). Style: well.css.
+ * Board: tools/library/hud-area-draft.css (lib-area-well).
  */
 G.Lib = G.Lib || {};
 G.Lib.Well = (() => {
@@ -17,15 +19,16 @@ G.Lib.Well = (() => {
   const html = htmFactory.bind(preact.h);
 
   /** A well size px across, at the top left of its host. ring: the colour of its ring while it holds something (pass
-   *  null when empty, for the ink ring); fill: the inside's colour when not grey.panel (selected); children: what it
-   *  holds. */
-  function Well({ size, ring = null, fill = null, className, children }) {
+   *  null when empty, for the ink ring); fill: the inside's colour when not grey.panel (selected); cursor: the
+   *  screen's cursor.ring, drawn under what the well holds; children: what it holds. */
+  function Well({ size, ring = null, fill = null, cursor = null, className, children }) {
     const colours = { ...(ring ? { '--well-ring': ring } : {}), ...(fill ? { '--well-fill': fill } : {}) };
     return html`<div
       class=${'well' + (ring ? ' is-holding' : '') + (fill ? ' is-selected' : '') + (className ? ' ' + className : '')}
       style=${{ width: size + 'px', height: size + 'px', ...colours }}
     >
-      ${children}
+      ${cursor}
+      <div class="well-contents">${children}</div>
     </div>`;
   }
 

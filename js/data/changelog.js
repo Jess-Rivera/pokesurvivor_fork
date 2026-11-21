@@ -59,6 +59,10 @@ G.CHANGELOG = [
     ],
     fix: [
       [
+        "The yellow ring's flicker as the cursor moves now passes behind the Poke Ball in its slot and behind a Pokemon's face.",
+        "The yellow ring's flicker as the cursor moves now passes behind the Poke Ball in its slot and behind a Pokemon's face.",
+      ],
+      [
         'The ball no longer blinks out for a moment when you throw it.',
         'The ball no longer blinks out for a moment when you throw it.',
       ],

@@ -426,11 +426,15 @@ G.CatchUI = (() => {
         onClick=${() => !locked && select(belt, index)}
         onDblClick=${() => !locked && throwNow(belt, index)}
       >
-        <${Well} size=${BALL_BELT.well} ring=${ringColour} fill=${ball && chosen ? BELT_RIM.dark : null}>
+        <${Well}
+          size=${BALL_BELT.well}
+          ring=${ringColour}
+          fill=${ball && chosen ? BELT_RIM.dark : null}
+          cursor=${ring.at === id ? html`<${CursorRing} phase=${ring.phase} />` : null}
+        >
           ${ball ? html`<${BeltBall} ball=${ball.id} />` : null}
         </${Well}>
         ${numbered ? html`<span class="catch-silver catch-silver-20 catch-slot-key">${index + 1}</span>` : null}
-        ${ring.at === id ? html`<${CursorRing} phase=${ring.phase} />` : null}
       </div>`;
     };
     return html`<${BallBelt}

@@ -7,10 +7,21 @@
   top: 0;
   box-sizing: border-box;
   border-radius: 50%;
-  overflow: hidden;
   background: var(--well-fill, var(--color-grey-panel));
   box-shadow: inset 0 0 0 2px var(--well-ring, var(--color-grey-ink));
 }
-.well > * {
+/* the layers (decision 2026-11-21-cursor-ring-draws-under-what-it-rings): the cursor over the inside, what the well
+   holds over the cursor, clipped to the circle (the cursor is not, so its ring shows outside the rim) */
+.well > .cursor-ring {
+  z-index: 1;
+}
+.well-contents {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.well-contents > * {
   position: absolute;
 }

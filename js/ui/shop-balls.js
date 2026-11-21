@@ -395,10 +395,13 @@ G.ShopBallsPane = (() => {
         onMouseLeave=${() => cursor.hover(null)}
         onPointerDown=${(event) => !locked && onSlotPointerDown(event, position)}
       >
-        <${Well} size=${BALL_BELT.well} ring=${ball ? BELT_RIM.base : null}>
+        <${Well}
+          size=${BALL_BELT.well}
+          ring=${ball ? BELT_RIM.base : null}
+          cursor=${ring.at === id ? html`<${CursorRing} phase=${ring.phase} />` : null}
+        >
           ${ball ? html`<${BeltBall} ball=${ball} />` : null}
         </${Well}>
-        ${ring.at === id ? html`<${CursorRing} phase=${ring.phase} />` : null}
       </div>`;
     };
     return html`<${BallBelt}

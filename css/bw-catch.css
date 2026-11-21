@@ -13,7 +13,10 @@
 .catch-stage {
   color: var(--color-grey-white);
 }
+/* every piece sits at the place catch-ui.js gives it (the Pokemon panel is panel.pixel, which leaves its own
+   positioning to the screen) */
 .catch-window,
+.catch-mon,
 .catch-owned,
 .catch-button,
 .catch-ball {
@@ -102,6 +105,7 @@
   position: absolute;
   left: 0;
   top: 0;
+  z-index: 1; /* over its cursor.ring, so the ring's CRT passes behind the face */
 }
 .catch-owned .catch-owned-none {
   left: 0;
