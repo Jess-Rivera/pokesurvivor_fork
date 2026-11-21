@@ -14,7 +14,8 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-21; gym leader AI parked)
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
    - Approved 2026-11-20: main.shop.pokeball, .character, .items; run.hud.gymLeader, .worldInfo, .runInfo;
-     catch.window. Approved 2026-11-21: run.hud.moveMart, .trMart, .forgetMove (decisions 2026-11-21-155-*).
+     catch.window. Approved 2026-11-21: run.hud.moveMart, .trMart, .forgetMove, .bondSelection
+     (decisions 2026-11-21-155-*).
    - Feel test: the Ancient Power description ("10% team all stats +1") on a card and in the pause sheet.
    - First next **main.shop.tms**: pick the Able to Learn label (12 px one line, 16 px two lines, or 18 px with a narrower
      search), then approve. Then approve **run.hud.teamItems** (drafted: both bags stacked lower right).

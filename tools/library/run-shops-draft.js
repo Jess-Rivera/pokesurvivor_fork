@@ -164,8 +164,9 @@ const runShopStage = (state, width, height, inner, extra = '') =>
 // ---------- the team rows: both shops ----------
 /** One team row: run.hud.teamSlot's box, portrait and name, the Pokemon's type chips in the HP bar's place. chosen
  *  selects it with cursor.ring (the Move Trainer); status puts the TR Mart's symbol at the right end, and a dimmed
- *  status dims the rest of the row (the symbol stays whole so it reads). */
-function runShopTeamRow(member, left, top, { chosen = false, status } = {}) {
+ *  status dims the rest of the row (the symbol stays whole so it reads). brightness darkens the whole row, as the
+ *  HUD's inactive slots (run.hud.bondSelection's rows). */
+function runShopTeamRow(member, left, top, { chosen = false, status, brightness = 1 } = {}) {
   const { face } = TEAM_SLOT,
     row = RUN_SHOP.teamRow,
     height = runShopRowHeight(),
@@ -178,10 +179,12 @@ function runShopTeamRow(member, left, top, { chosen = false, status } = {}) {
       : `<div style="${place(row.faceLeft, faceTop)}">${portrait}</div>`,
     chips = member.types.map((type) => chipHtml(typeChip(type))).join(''),
     dim = status && status.dimmed ? `opacity:${SHOP.card.dimmed}` : '',
+    dark = brightness === 1 ? '' : `;filter:brightness(${brightness})`,
     symbolTop = (height - row.statusSize - 4) / 2, // shopText's line is the size plus 4
     symbolPlace = `position:absolute;right:${px(row.statusRight)};top:${px(symbolTop)}`,
     symbol = status ? shopText(status.symbol, row.statusSize, status.colour, symbolPlace, SHOP.fonts.pokemon) : '';
-  return `<div class="lib-area-piece" style="${place(left, top)};width:${px(teamSlotWidth())};height:${px(height)}">
+  return `<div class="lib-area-piece" style="${place(left, top)};width:${px(teamSlotWidth())};
+    height:${px(height)}${dark}">
     <div style="position:absolute;inset:0;${dim}">
       ${teamBoxSvg(typeRamp(member.types[0]), undefined, row.artRows, rimRight)}
       ${facePiece}
@@ -292,13 +295,17 @@ function forgetSlots(left, top) {
     return forgetSlot(slot, index, x, y) + ring;
   }).join('');
 }
-/** The wide card under the slots: the move under the ring, its type well, its name and its line (panel.shopCard). */
-function forgetCard(left, top) {
-  const c = RUN_SHOP.popup.card,
-    move = RUN_SHOP_FORGET.find((slot) => slot.replace).moves[0],
+/** The wide card under the slots: the move under the ring, its type well, its name and its line (panel.shopCard).
+ *  run.hud.bondSelection passes its own move, line and width (its slots sit in one row). */
+function forgetCard(left, top, options = {}) {
+  const {
+      move = RUN_SHOP_FORGET.find((slot) => slot.replace).moves[0],
+      line = move.desc,
+      width = forgetSlotsWidth(),
+    } = options,
+    c = RUN_SHOP.popup.card,
     well = RUN_SHOP.typeWell.card,
     textLeft = c.inset + well + c.textGap,
-    width = forgetSlotsWidth(),
     textStyle = (textTop) => `${place(textLeft, textTop)};right:${px(c.inset)}`;
   return cleanBox(
     left,
@@ -307,7 +314,7 @@ function forgetCard(left, top) {
     c.height,
     `${moveTypeWell(move.type, well, `position:absolute;left:${px(c.inset)};top:${px((c.height - well) / 2)}`)}
     ${shopText(move.name, SHOP.text.name, SHOP_COLOURS.name, textStyle(c.nameTop))}
-    ${shopText(move.desc, SHOP.text.line, SHOP_COLOURS.text, textStyle(c.lineTop))}`,
+    ${shopText(line, SHOP.text.line, SHOP_COLOURS.text, textStyle(c.lineTop))}`,
     { body: SHOP_CARD_PANEL.body, edge: SHOP_CARD_PANEL.edge }
   );
 }

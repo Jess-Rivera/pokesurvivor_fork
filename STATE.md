@@ -22,10 +22,12 @@ Last updated: 2026-11-21 morning, Quick (work machine). Branch: feature/128-acqu
   sheet (Ancient Power, 126 to 47 characters). Harness checks plus a 100-character fit check; two mutants; changelog.
 - New dev tool tools/move_desc_lengths.js (the longest descriptions).
 - Board helper: panel.slanted (clean-draft.js) takes an optional height.
+- run.hud.bondSelection APPROVED (decision 2026-11-21-155-run-hud-bond-selection-look): team rows, then the four slots
+  in one row with a wide card, pink first-pick ring, Bond (Positive) or Cancel ask. Board: tools/library/bond-draft.js.
 
 ## Game changes owed at #126 (ruled)
-- The three run shops as approved. TM Learned and Known disabled. Team items HUD drops names and trackers. Catch result
-  a toast, window 980 x 424, Let It Go ask. Cursor ring and no blink. G.UI.ask takes the confirm's intent only.
+- The three run shops and the bond popup as approved. TM Learned and Known disabled. Team items HUD drops names and
+  trackers. Catch result a toast, window 980 x 424, Let It Go ask. Cursor ring and no blink. G.UI.ask takes the confirm's intent only.
 
 ## Watch
 - Board drift: #29 in Blocked with no label; #155, #86, #110, #111, #120, #121 in Triage; #156 and #158 need triage;

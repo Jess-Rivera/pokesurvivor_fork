@@ -26,6 +26,7 @@ const DRAW = {
   'run.hud.moveMart': moveMartPage,
   'run.hud.trMart': trMartPage,
   'run.hud.forgetMove': forgetMovePage,
+  'run.hud.bondSelection': bondSelectionPage,
   'main.shop.pokeball': shopPage('main.shop.pokeball'),
   'main.shop.character': shopPage('main.shop.character'),
   'main.shop.items': shopPage('main.shop.items'),

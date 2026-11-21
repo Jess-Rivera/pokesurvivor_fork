@@ -56,6 +56,8 @@ const NAV = [
           { id: 'run.hud.moveMart', title: 'run.hud.moveMart' },
           { id: 'run.hud.trMart', title: 'run.hud.trMart' },
           { id: 'run.hud.forgetMove', title: 'run.hud.forgetMove' },
+          // the popup that spends a gym win's bond (Jess 2026-11-21)
+          { id: 'run.hud.bondSelection', title: 'run.hud.bondSelection' },
         ],
       },
       {
