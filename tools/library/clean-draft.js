@@ -290,15 +290,17 @@ function slantedRow(row, { artWidth, artRows }, rim, bodyFill) {
     [right, 1, outline],
   ];
 }
-/** The slot as an SVG string, in art pixels scaled to 2 px; the grid is its own pattern, local to this SVG. */
+/** The slot as an SVG string, in art pixels scaled to 2 px; the grid is its own pattern, local to this SVG.
+ *  state.artRows makes it taller than the HUD's 22 rows (run.hud.forgetMove's, so cursor.ring fits inside the rim). */
 function slantedSvg(state) {
-  const { artWidth, artRows, artPixel } = SLANTED_SLOT,
+  const { artWidth, artPixel } = SLANTED_SLOT,
+    artRows = state.artRows || SLANTED_SLOT.artRows,
     rim = typeof state.rim === 'string' ? SLANTED_RIMS[state.rim] : state.rim, // a name here, or a ramp (composites)
     gridId = 'board-slot-grid-' + state.id,
     body = state.grid ? `url(#${gridId})` : SLANTED_COLOURS.body,
     rects = [];
   for (let row = 0; row < artRows; row++)
-    for (const [x, width, fill] of slantedRow(row, SLANTED_SLOT, rim, body))
+    for (const [x, width, fill] of slantedRow(row, { artWidth, artRows }, rim, body))
       if (width > 0) rects.push(`<rect x="${x}" y="${row}" width="${width}" height="1" fill="${fill}" />`);
   return `<svg width="${artWidth * artPixel}" height="${artRows * artPixel}" viewBox="0 0 ${artWidth} ${artRows}"
     shape-rendering="crispEdges" style="display:block">

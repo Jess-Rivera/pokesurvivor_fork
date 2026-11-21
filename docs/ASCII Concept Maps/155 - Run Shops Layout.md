@@ -128,6 +128,31 @@ flowchart TB
 - Status at the right end of each row in Silver 30; a dimmed status dims the row, not the symbol.
 - The TR price placement question is settled: the coin and number line on the card, as the Move Trainer.
 
+## run.hud.forgetMove v2: the four move slots and a wide card (Jess 2026-11-21, APPROVED: decision 2026-11-21-155-run-hud-forget-move-look)
+
+```mermaid
+flowchart TB
+  subgraph P[Popup panel.clean over the shop, screen dimmed]
+    direction TB
+    H[Title: Replace which move? / teal line: Pikachu knows four moves...]
+    S[Four move slots 2 x 2, as run.hud.playerActive.area: I J on top, K L under]
+    C[Wide panel.shopCard: the ringed move's type well, name, line; updates as the ring moves]
+    X[Cancel]
+    H --> S --> C --> X
+  end
+```
+
+- cursor.ring sits on the well of the move to replace. Its slot draws normally; the other three are dimmed
+  (brightness 50%, the HUD's inactive slots), so the ring decides active and inactive.
+- A bond slot is disabled: the ring never lands on it, and it is darker than an inactive slot (brightness 25%, Jess
+  2026-11-21).
+- Slots are 6 art rows taller than the HUD's (28 rows, 56 px), wells 12 px down, so the ring has 4 px of air inside
+  the dark bands (Jess 2026-11-21: at 2 px the ring still read as touching). No key labels. panel.slanted takes a height for this.
+- Cancel is the shops' Leave size (156 px), Neutral, at the popup's bottom right; not full width.
+- Picking a move opens the Replace or Go Back ask (2026-11-20-155-move-shop-replace-a-move-asks-replace-or-go-back).
+- Opens from either shop. The popup is as wide as the slot grid plus its padding.
+- ~~Open: a disabled bond's own look~~ Darker than inactive (above).
+
 Open (Jess):
 1. ~~Stacked for the TR Mart too~~ Yes, mirrored top to bottom (above).
 2. ~~What a wide team row holds~~ Ruled above.
@@ -135,7 +160,7 @@ Open (Jess):
 
 ## Open before the build
 
-1. The forget panel's name on the board (suggested: `run.hud.forgetMove`).
+1. ~~The forget panel's name~~ `run.hud.forgetMove` stays (2026-11-21).
 2. The dialog's words: title "Replace move?", message "Replace X with Y?" (X and Y are move names), buttons Replace and Go Back.
 
 ## Slice opening (Jess to edit)

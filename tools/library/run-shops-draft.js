@@ -38,7 +38,18 @@ const RUN_SHOP = {
   typeWell: { card: 64, popup: 40 }, // the move's type glyph in its circle (the move slot's well), on a card and a row
   silver: { coin: 32, gap: 8, top: 14 },
   buttons: { reroll: 220, leave: 156, gap: 16 },
-  popup: { width: 460, padding: 28, rowHeight: 54, rowGap: 12 },
+  // run.hud.forgetMove (Jess 2026-11-21): the four move slots 2 x 2 as run.hud.playerActive.area, then a wide card on
+  // the move under cursor.ring; the popup is as wide as the slot grid plus its padding. A slot is 6 art rows taller
+  // than the HUD's (28, 56 px) and its wells 6 px lower (12 px down), so the ring (4 px past the 32 px well) has 4 px
+  // of air inside the dark bands above and below (2 px read as touching, Jess 2026-11-21). No key. A disabled bond is
+  // darker than an inactive slot.
+  popup: {
+    padding: 28,
+    slotsTop: 108,
+    gap: 16,
+    slot: { artRows: 28, wellTop: 12, disabledBrightness: 0.25 },
+    card: { height: 96, inset: 16, textGap: 14, nameTop: 18, lineTop: 42 },
+  },
 };
 // today's sample: Pikachu's roster and four moves, the Move Trainer's offers and the TR Mart's TRs alike. disc is the
 // TR Mart's placeholder TM disc, its cell in the item sheet (js/data/pokesprite-index.js, as main.shop.tms)
@@ -72,12 +83,27 @@ const RUN_SHOP_STATUS = {
 };
 // for Thunderbolt, by mainline TM learnsets: Pikachu knows it, Gengar learns it, Gyarados is all bonds
 const RUN_SHOP_ROSTER_STATUS = ['knows', 'cannot', 'cannot', 'cannot', 'learn', 'full'];
-// the Pokemon's four moves the popup lists: a loose move is a choice, a bond is fixed and disabled
+// the Pokemon's four slots the popup shows, in the HUD's order (I and J on top, K and L under them), as
+// run.hud.playerActive.area's sample: a slot with one move is a choice, a bond (2 to 4 moves) is fixed and disabled.
+// replace marks the slot under cursor.ring, the one the wide card describes
 const RUN_SHOP_FORGET = [
-  { name: 'Quick Attack', type: 'normal', focused: true },
-  { name: 'Thunder Shock', type: 'electric' },
-  { name: 'Iron Tail', type: 'steel', bond: true },
-  { name: 'Surf', type: 'water' },
+  {
+    key: 'I',
+    replace: true,
+    moves: [{ name: 'Quick Attack', type: 'normal', family: 'melee', desc: 'Dash at a foe: damage.' }],
+  },
+  {
+    key: 'J',
+    moves: [{ name: 'Thunder Shock', type: 'electric', family: 'projectile', desc: 'Bolt: damage, 10% paralysis.' }],
+  },
+  {
+    key: 'K',
+    moves: [
+      { name: 'Iron Tail', type: 'steel', family: 'melee' },
+      { name: 'Thunder', type: 'electric', family: 'beam' },
+    ],
+  }, // a bond
+  { key: 'L', moves: [{ name: 'Surf', type: 'water', family: 'nova', desc: 'Wave around you: damage.' }] },
 ];
 
 // ---------- the window: both shops' size, frame and buttons ----------
@@ -235,33 +261,75 @@ function trMartWindow() {
     }))}`);
 }
 
-// ---------- run.hud.forgetMove: the popup over the Move Trainer, one loose move to replace ----------
+// ---------- run.hud.forgetMove: the popup over the shop, the four slots and the move to replace ----------
+const forgetSlotHeight = () => RUN_SHOP.popup.slot.artRows * SLANTED_SLOT.artPixel;
+const forgetSlotsWidth = () => 2 * slotWidth() + AREA.slots.columnGap;
+const forgetSlotsHeight = () => 2 * forgetSlotHeight() + AREA.slots.rowGap;
+/** One slot, taller than the HUD's and with no key: panel.slanted in its move's type (a bond in the bond pink) and
+ *  the HUD's wells and badges, moved down to the taller slot's well line. The slot under the ring draws normally, the
+ *  others dim to the HUD's inactive brightness, a bond (disabled) darker still. The popup opens only on a full
+ *  roster, so no slot is empty. */
+function forgetSlot(slot, index, left, top) {
+  const look = RUN_SHOP.popup.slot,
+    bond = slot.moves.length > 1,
+    rim = bond ? 'bond' : typeRamp(slot.moves[0].type),
+    wells = Array.from({ length: AREA.wells.perSlot }, (_, well) => areaWell(slot.moves[well], well)).join(''),
+    brightness = bond ? look.disabledBrightness : slot.replace ? 1 : AREA.inactiveBrightness;
+  return `<div class="lib-area-piece" style="${place(left, top)};width:${px(slotWidth())};
+    height:${px(forgetSlotHeight())};filter:brightness(${brightness})">
+    ${slantedSvg({ id: 'forget-' + index, rim, grid: true, artRows: look.artRows })}
+    <div style="${place(0, look.wellTop - AREA.wells.top)};width:100%;height:${px(slotHeight())}">${wells}</div></div>`;
+}
+/** The four slots 2 x 2 (run.hud.playerActive.area's order), cursor.ring on the well of the move to replace. A bond is
+ *  disabled, so the ring never lands on it. */
+function forgetSlots(left, top) {
+  const size = AREA.wells.size;
+  return RUN_SHOP_FORGET.map((slot, index) => {
+    const x = left + (index % 2) * (slotWidth() + AREA.slots.columnGap),
+      y = top + Math.floor(index / 2) * (forgetSlotHeight() + AREA.slots.rowGap),
+      ringLeft = x + AREA.wells.first - size / 2,
+      ring = slot.replace ? withRing(ringLeft, y + RUN_SHOP.popup.slot.wellTop, size, '') : '';
+    return forgetSlot(slot, index, x, y) + ring;
+  }).join('');
+}
+/** The wide card under the slots: the move under the ring, its type well, its name and its line (panel.shopCard). */
+function forgetCard(left, top) {
+  const c = RUN_SHOP.popup.card,
+    move = RUN_SHOP_FORGET.find((slot) => slot.replace).moves[0],
+    well = RUN_SHOP.typeWell.card,
+    textLeft = c.inset + well + c.textGap,
+    width = forgetSlotsWidth(),
+    textStyle = (textTop) => `${place(textLeft, textTop)};right:${px(c.inset)}`;
+  return cleanBox(
+    left,
+    top,
+    width,
+    c.height,
+    `${moveTypeWell(move.type, well, `position:absolute;left:${px(c.inset)};top:${px((c.height - well) / 2)}`)}
+    ${shopText(move.name, SHOP.text.name, SHOP_COLOURS.name, textStyle(c.nameTop))}
+    ${shopText(move.desc, SHOP.text.line, SHOP_COLOURS.text, textStyle(c.lineTop))}`,
+    { body: SHOP_CARD_PANEL.body, edge: SHOP_CARD_PANEL.edge }
+  );
+}
 function forgetMovePopup() {
   const p = RUN_SHOP.popup,
-    w = runShopWidth(),
-    height = runShopHeight(),
-    rows = RUN_SHOP_FORGET.map((move, index) =>
-      `<div style="${place(p.padding, 108 + index * (p.rowHeight + p.rowGap))};display:flex;gap:12px;align-items:center">
-        ${moveTypeWell(move.type, RUN_SHOP.typeWell.popup, `flex:none;opacity:${move.bond ? SHOP.card.dimmed : 1}`)}
-        ${shopButton(move.bond ? `${move.name} (bond)` : move.name, 'Neutral', p.width - 2 * p.padding - 52, {
-          focused: move.focused,
-          disabled: move.bond,
-          style: 'position:relative',
-        })}</div>`
-    ).join(''),
-    bottom = 108 + RUN_SHOP_FORGET.length * (p.rowHeight + p.rowGap) + 8,
-    popupHeight = bottom + SHOP.buttonHeight + p.padding;
+    popupWidth = forgetSlotsWidth() + 2 * p.padding,
+    cardTop = p.slotsTop + forgetSlotsHeight() + p.gap,
+    cancelTop = cardTop + p.card.height + p.gap,
+    popupHeight = cancelTop + SHOP.buttonHeight + p.padding,
+    cancelWidth = RUN_SHOP.buttons.leave; // the shops' Leave size, at the bottom right as theirs
   const popup = cleanBox(
-    (w - p.width) / 2,
-    (height - popupHeight) / 2,
-    p.width,
+    (runShopWidth() - popupWidth) / 2,
+    (runShopHeight() - popupHeight) / 2,
+    popupWidth,
     popupHeight,
     `${shopText('Replace which move?', 24, SHOP_COLOURS.text, place(p.padding, p.padding - 4))}
-    ${shopText('Pikachu has four moves. Pick one to replace with Thunderbolt.', SHOP.text.line, SHOP_COLOURS.name,
-      `${place(p.padding, p.padding + 36)};width:${px(p.width - 2 * p.padding)}`)}
+    ${shopText('Pikachu knows four moves. Pick one to replace with Thunderbolt.', SHOP.text.line, SHOP_COLOURS.name,
+      `${place(p.padding, p.padding + 36)};width:${px(popupWidth - 2 * p.padding)}`)}
     ${divider(p.padding, p.padding, 92)}
-    ${rows}
-    ${shopButton('Cancel', 'Neutral', p.width - 2 * p.padding, { style: place(p.padding, bottom) })}`
+    ${forgetSlots(p.padding, p.slotsTop)}
+    ${forgetCard(p.padding, cardTop)}
+    ${shopButton('Cancel', 'Neutral', cancelWidth, { style: place(popupWidth - p.padding - cancelWidth, cancelTop) })}`
   );
   return `<div style="position:absolute;inset:0;background:${rgbaOf(greyTone('ink'), 0.6)};z-index:10"></div>
     <div style="position:absolute;inset:0;z-index:11">${popup}</div>`;
@@ -322,19 +390,25 @@ function forgetMoveSection() {
     <div class="lib-area-scroll">${runShopStage('run.hud.forgetMove:default', runShopWidth(), runShopHeight(),
       `${moveMartWindow()}${forgetMovePopup()}`)}</div>
     <dl class="lib-facts">
-      ${runShopFact('Pieces', `${nameButton('panel.clean')} over the shop, the screen under it dimmed (ink at 60%) as the catch
-        screen’s ask. Its title in Michroma 24 and a teal.base line; the Pokemon’s four moves as Neutral
-        ${nameButton('button.glitch')} rows with the move’s type glyph, the first focused; a bonded move is disabled and
-        marked (bond); Cancel below`)}
-      ${runShopFact('Next', `Choosing a move opens the Modal page’s Negative ask, “Replace X with Y?”: Replace (red) and Go
-        Back (teal), opening on Go Back. Decision 2026-11-20-155-move-shop-replace-a-move-asks-replace-or-go-back`)}
-      ${runShopFact('Opens when', `A buy into a full roster. A free slot learns the move at once, with no popup and no ask`)}
+      ${runShopFact('Pieces', `${nameButton('panel.clean')} over the shop, the screen under it dimmed (ink at 60%) as
+        the catch screen’s ask. Its title in Michroma 24 and a teal.base line. The Pokemon’s four slots 2 x 2 as
+        ${nameButton('run.hud.playerActive.area')} draws them (${nameButton('panel.slanted')}, the wells and family
+        badges), 6 art rows taller so the ring clears the rim, no keys: ${nameButton('cursor.ring')} on the move
+        to replace, its slot drawn normally and the others dimmed, as the HUD’s active slot; a bond is disabled,
+        darker than the dimmed slots, and the ring skips it. Under them, a wide
+        ${nameButton('panel.shopCard')} on the move under the ring: its type well, name and line, updating as the ring
+        moves. Cancel (Neutral) at the bottom right, the shops' Leave size`)}
+      ${runShopFact('Next', `Choosing a move opens the Modal page’s Negative ask, “Replace X with Y?”: Replace
+        (red) and Go Back (teal), opening on Go Back. Decision
+        2026-11-20-155-move-shop-replace-a-move-asks-replace-or-go-back`)}
+      ${runShopFact('Opens when', `A buy into a full roster, from either shop. A free slot learns the move at once, with
+        no popup and no ask`)}
     </dl></section>`;
 }
 const runShopTabs = (note, draw) => [{ id: 'unified', title: 'Rough draft', note, draw }];
-const RUN_SHOP_NOTE = 'NOT APPROVED (Jess 2026-11-20): a first pass from the Main Menu Shop’s pieces.';
+const FORGET_MOVE_NOTE = 'APPROVED (Jess 2026-11-21): decision 2026-11-21-155-run-hud-forget-move-look.';
 const TR_MART_NOTE = 'APPROVED (Jess 2026-11-21): decision 2026-11-21-155-run-hud-tr-mart-look.';
 const MOVE_MART_NOTE = 'APPROVED (Jess 2026-11-21): decision 2026-11-21-155-run-hud-move-mart-look.';
 const moveMartPage = (tab) => tabbedPage('run.hud.moveMart', runShopTabs(MOVE_MART_NOTE, moveMartSection), tab);
 const trMartPage = (tab) => tabbedPage('run.hud.trMart', runShopTabs(TR_MART_NOTE, trMartSection), tab);
-const forgetMovePage = (tab) => tabbedPage('run.hud.forgetMove', runShopTabs(RUN_SHOP_NOTE, forgetMoveSection), tab);
+const forgetMovePage = (tab) => tabbedPage('run.hud.forgetMove', runShopTabs(FORGET_MOVE_NOTE, forgetMoveSection), tab);
