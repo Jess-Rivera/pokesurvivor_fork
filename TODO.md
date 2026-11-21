@@ -4,35 +4,29 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-21 morning session (Quick, work)
-1. On this machine: run `node tools/check.js` and `npm run format` (not run from Quick), commit, then
+## Getting up to date (either machine), from the 2026-11-21 midday session (Quick, work)
+1. On this machine: `git status`, then `node tools/check.js` and `npm run format` (not run from Quick), commit, then
    `git push origin feature/128-acquisition`.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
    `node tools/check.js` (must end "check: all passed"). Say "catch me up".
 3. Before leaving a machine: commit and push.
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-21; gym leader AI parked)
-0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
-   - Approved 2026-11-20: main.shop.pokeball, .character, .items; run.hud.gymLeader, .worldInfo, .runInfo;
-     catch.window. Approved 2026-11-21: run.hud.moveMart, .trMart, .forgetMove, .bondSelection
-     (decisions 2026-11-21-155-*).
+0. #155 is done (decision 2026-11-21-155-board-ends-at-primitives). Jess closes it and files the two new issues from
+   docs/ASCII Concept Maps/155 - Close-out Drafts.md (Team menu rebuild; box buying as a character upgrade).
+   Carried to #126:
    - Feel test: the Ancient Power description ("10% team all stats +1") on a card and in the pause sheet.
-   - First next **main.shop.tms**: pick the Able to Learn label (12 px one line, 16 px two lines, or 18 px with a narrower
-     search), then approve. Then approve **run.hud.teamItems** (drafted: both bags stacked lower right).
-   - Then the shop menus Jess asked for 2026-11-20 (ask which screens).
-   - A toast page on the board (catch-draft.js draws today's toast in Unified first).
-   - Primitives, Inputs (field.text, field.dropdown, scroll.bar): drafted 2026-11-20, kept, not reviewed yet.
-   - Tooltip: look ruled (2026-11-20-155-tooltip-is-panel-clean-yellow-frame-three-states); the pin and close icons
-     are open (Jess is drawing them). Pinnable tooltips filed as #158.
-   - Done earlier 2026-11-20: two-type team slot rim, tooltip, every tooltip in Michroma (name 20, text 12), move slots and the
-     rest of run.hud.playerActive.area (decisions 2026-11-20-155-*). Still owed from the HUD sets: nothing.
-   - Feel test Tokens, Fonts: Michroma's size set, the 9 inferred Fold Map rows, today's new rows (tooltips, Shake Off).
+   - Primitives, Inputs (field.text, field.dropdown, scroll.bar): drafted 2026-11-20, not reviewed yet.
+   - Tooltip pin and close icons (Jess is drawing them); pinnable tooltips are #158.
+   - Feel test Tokens, Fonts: Michroma's size set, the 9 inferred Fold Map rows, the tooltip and Shake Off rows.
    - Jess lists the poor UX calls in the 155c-4 ask dialog (look and keys) so they can be filed.
    - Colours: name the 7 UI colours and the greys (placeholders on the board); rebuild the rims from Unified.
-   - Then the Pause composites (pause.pokemonDetail and the rest).
+   - The toast's look (catch-draft.js draws today's toast in Unified).
    - #156: likely moot (button.slanted and button.rounded retire at #126); Jess closes or keeps it.
-   - Then #126 applies the board (the 2026-11-18, -19 and -20 #155 decisions). #126 also fixes tokens.js's backwards
-     pokeBW and michroma job text, its tooltip font text, and line 139's smoke-ui-library comment.
+   - #126 applies the approved board (the #155 decisions, 2026-11-18 to 2026-11-21) and builds the other screens in
+     the game from the primitives: pause, Team (decision 2026-11-21-team-menu-rebuild-rulings), Pokedex, the other
+     main screens, the level-up draft. It also fixes tokens.js's backwards pokeBW and michroma job text, its tooltip
+     font text, and line 139's smoke-ui-library comment.
 1. #145 small and ready. #150 blocked on #97.
 2. #128 acquisition: #138 next, then #146 keep-or-sell list; order in
    docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (#132 to #143).
@@ -43,7 +37,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 7. Leftovers from earlier: #49 close or umbrella; board by hand (#86 to Accepted, #29 out of Blocked, the Triage cards);
    drafts (leader reads your cards and items as seen; buffValue reads the whole kit; trace records the leader's level; 16i
    parity; #122 comment on early gates). Any time: #121, #120, #57, #58, #110.
-   Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107 #156 #158. #155 card sits in Triage (move it).
+   Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107 #156 #158.
 8. Owner decisions: #49, #97 (blocks #95), #86, #99, #93, #60 (Bait), #107.
 9. New issues to file: region type maps, PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing.
 10. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since #83; unknown local branch
@@ -52,8 +46,8 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op.
 13. Board cleanup (low): delete tools/library/stories/button.story.js and panel.story.js (no tab shows them).
 
-## Open issues by area (numbers only, titles on GitHub, checked 2026-11-21, Quick)
-Confirmed this pull: #70 to #158. Older numbers left as checked earlier (unconfirmed).
+## Open issues by area (numbers only, titles on GitHub, checked 2026-11-21 midday, Quick)
+Confirmed this pull: all 64 open issues, #6 to #158. No change since the morning.
 - UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 (blocked by #97) #99 #100 #102 #105 #126 #127
   #145 #146 #155 #156 #158
 - Gyms: #6 #9 #20 #21 #24 #49 #57 #58 #60 #107 #111 (parked) #120 #122 (blocked by #111)

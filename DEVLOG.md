@@ -396,3 +396,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Game: js/ui/move-info.js folds five matching stat raises into "all stats" (Ancient Power 126 to 47 chars), sheet
   too; harness relations, a 100-character fit check, two mutants; changelog. New tools/move_desc_lengths.js.
 - Not run from Quick: check.js, format, the ui-readers harness and mutants. Stopped at: main.shop.tms label.
+
+## 2026-11-21 midday (Quick, work), #155 closes: bond popup, TMs bar, the board ends at primitives
+- Board: run.hud.bondSelection approved (team rows, four slots in one row, the first pick's rim bond pink, a Bond or
+  Cancel ask); main.shop.tms (Able to Learn 12 px on two lines, one bar row) and run.hud.teamItems approved.
+- Decided: the board stops at the primitives and the approved composites; the rest is built in the game at #126. The
+  main.team first pass and the Pause placeholders were removed. Team menu mockup and rulings kept for #126.
+- Broke: nothing known. Nothing in js/ or css/; check.js and format not run, board pages not rendered from Quick.
+- Stopped at: closing #155 (drafts in docs/ASCII Concept Maps/155 - Close-out Drafts.md).
