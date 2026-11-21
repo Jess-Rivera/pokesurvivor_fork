@@ -76,8 +76,7 @@ const TEAM_ITEMS_TABS = [
   {
     id: 'unified',
     title: 'Unified',
-    note:
-      'Rough draft (Jess 2026-11-20): both bags stacked on the lower right, the berry pocket\u2019s set up for each.',
+    note: 'APPROVED (Jess 2026-11-21): decision 2026-11-20-155-team-items-and-berries-stacked-pixel-pockets-lower-right.',
     draw: teamItemsSection,
   },
 ];

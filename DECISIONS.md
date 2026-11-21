@@ -6,7 +6,10 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
-- [2026-11-21, #155 run.hud.bondSelection: team rows, then the four move slots in one row with a wide card, a pink first-pick ring, then a Bond (Positive) or Cancel ask; approved (Jess)](docs/decisions/2026-11-21-155-run-hud-bond-selection-look.md)
+- [2026-11-21, #155 the board ends at the primitives and the approved composites; pause, Team and the rest are built in the game at #126 (Jess)](docs/decisions/2026-11-21-155-board-ends-at-primitives.md)
+- [2026-11-21, the Team menu rebuild: the mockup, picking and keys, portraits only, box buying becomes a character upgrade (Jess)](docs/decisions/2026-11-21-team-menu-rebuild-rulings.md)
+- [2026-11-21, #155 main.shop.tms: the TMs tab as drawn, Able to Learn label at 12 px on two lines; approved (Jess)](docs/decisions/2026-11-21-155-main-shop-tms-look.md)
+- [2026-11-21, #155 run.hud.bondSelection: team rows, then the four move slots in one row with a wide card, the first pick's rim turned bond pink (one ring), then a Bond (Positive) or Cancel ask; approved (Jess)](docs/decisions/2026-11-21-155-run-hud-bond-selection-look.md)
 - [2026-11-21, #155 run.hud.forgetMove: the four move slots (taller, no keys) with cursor.ring on the move to replace, the rest dimmed, a bond darker and skipped; a wide card on the ringed move; approved (Jess)](docs/decisions/2026-11-21-155-run-hud-forget-move-look.md)
 - [2026-11-21, #155 run.hud.trMart: the Move Trainer mirrored top to bottom (TR cards on top, team rows with a status below), TM disc pictures, cursor.ring on the picked disc; approved (Jess)](docs/decisions/2026-11-21-155-run-hud-tr-mart-look.md)
 - [2026-11-21, #155 run.hud.moveMart: stacked (team rows on top, offers below), teamSlot rows with type chips, no Buy button, price on the card; approved (Jess)](docs/decisions/2026-11-21-155-run-hud-move-mart-look.md)

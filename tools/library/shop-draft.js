@@ -7,9 +7,8 @@
 // field.dropdown and scroll.bar (inputs-draft.js); toggle.power; portrait.round; cursor.bar; the tooltip. Pictures are
 // placeholders. A plain script sharing the board's globals; it loads after every draft it uses. A board copy: nothing
 // here reads the game.
-// main.shop.pokeball and main.shop.character are APPROVED (decisions 2026-11-20-155-main-shop-pokeball-look and
-// 2026-11-20-155-main-shop-character-look). main.shop.items and main.shop.tms are NOT APPROVED
-// (Jess 2026-11-20): rough first passes kept only as starting points, redone one tab at a time; nothing in them is a ruling.
+// All four tabs are APPROVED: main.shop.pokeball, .character and .items (decisions 2026-11-20-155-main-shop-*-look)
+// and main.shop.tms (decision 2026-11-21-155-main-shop-tms-look).
 'use strict';
 // ---------- places: today's numbers ----------
 const SHOP = {
@@ -62,7 +61,9 @@ const SHOP = {
   sell: { width: 204, gap: 8 }, // above Exit, right-aligned with it; 204 so Sell Pokeball fits (Jess 2026-11-20)
   beltBuy: { width: 186, gap: 12 }, // left of Exit
   tms: {
-    bar: { searchWidth: 250, typeLeft: 262, typeWidth: 170, toggleLeft: 446, labelSize: 12 },
+    // the bar (Jess 2026-11-21): one row as wide as the card grid, the toggle right-justified at its end and its label
+    // (12 px, two lines) left-justified; the search grows to fill what the Type box and the toggle leave
+    bar: { gap: 6, toggleGap: 16, typeWidth: 170, labelSize: 12, labelLineHeight: 14 },
     panel: { left: 624, width: 377, height: 530, inset: 14 },
     chosen: { top: 44, size: 88, nameTop: 12 },
     team: { left: 144, top: 44, size: 52, gap: 10, columns: 3 },
@@ -496,12 +497,16 @@ function tmsPane() {
         }),
       })
     ),
-    toggleTop = room + (INPUT.height - 22) / 2;
-  return `${fieldText({ width: t.bar.searchWidth, placeholder: 'Search TMs', style: place(room, room) })}
-    ${dropdownBox({ width: t.bar.typeWidth, label: 'Type', style: place(t.bar.typeLeft, room) })}
+    toggleStyleHere = `position:relative;flex:none;margin-left:${px(t.bar.toggleGap - t.bar.gap)};
+      font-size:${px(t.bar.labelSize)};letter-spacing:1px`;
+  return `<div style="${place(room, room)};width:${px(SHOP.grid.listWidth)};height:${px(INPUT.height)};display:flex;
+      align-items:center;gap:${px(t.bar.gap)}">
+    ${fieldText({ width: 0, placeholder: 'Search TMs', style: 'position:relative;flex:1 1 0;min-width:0' })}
+    ${dropdownBox({ width: t.bar.typeWidth, label: 'Type', style: 'position:relative;flex:none' })}
     <button type="button" class="lib-toggle lib-shop-toggle" tabindex="-1" aria-pressed="false"
-      style="${toggleStyle};${place(t.bar.toggleLeft + 5, toggleTop)};font-size:${px(t.bar.labelSize)};letter-spacing:1px">
-      <span class="lib-toggle-mark"><span></span></span>Able to Learn</button>
+      style="${toggleStyle};${toggleStyleHere}">
+      <span class="lib-toggle-mark"><span></span></span><span style="line-height:${px(t.bar.labelLineHeight)};
+        text-align:left">Able to<br />Learn</span></button></div>
     ${cardGrid(cards, room, room + SHOP.grid.listTop, SHOP.pane.height - room - SHOP.grid.listTop, card)}
     ${tmsPanel()}`;
 }
@@ -587,8 +592,9 @@ const SHOP_PAGES = {
       'composite: the TMs tab (a board copy)',
       tmsPane,
       `<dt>Pieces</dt><dd>The bar: ${nameButton('field.text')}, the Type ${nameButton('field.dropdown')} and
-        ${nameButton('toggle.power')} (its label at ${SHOP.tms.bar.labelSize} px to fit beside the panel; the toggle’s own
-        is 18; shown off). Cards: the Team Items card carried over (${SHOP.itemCard.height} px,
+        ${nameButton('toggle.power')} (its label at ${SHOP.tms.bar.labelSize} px on two lines, left-justified; the
+        toggle right-justified at the card grid's right edge, the search growing to fill the rest; the toggle’s own
+        label is 18; shown off). Cards: the Team Items card carried over (${SHOP.itemCard.height} px,
         ${SHOP.itemCard.buttonWidth} x ${SHOP.itemCard.buttonHeight} px Buy, label ${SHOP.itemCard.buttonFont}) on
         ${nameButton('panel.shopCard')}, the type\u2019s TM disc, the move\u2019s generated line (Learned and Known
         disabled; a TM it cannot learn dimmed, its refused Buy at full strength). The Pokemon panel as panel.clean with
@@ -598,8 +604,8 @@ const SHOP_PAGES = {
         rest with the cursor ring on one face</dd>`
     ),
 };
-// main.shop.pokeball and main.shop.character are approved (decisions 2026-11-20-155-main-shop-pokeball-look and
-// 2026-11-20-155-main-shop-character-look); the other two are rough drafts
+// all four tabs are approved (decisions 2026-11-20-155-main-shop-pokeball-look, -character-look, -items-look and
+// 2026-11-21-155-main-shop-tms-look)
 const SHOP_APPROVED = {
   'main.shop.pokeball': {
     title: 'Approved',
@@ -613,6 +619,10 @@ const SHOP_APPROVED = {
   'main.shop.items': {
     title: 'Approved',
     note: 'APPROVED (Jess 2026-11-20): decision 2026-11-20-155-main-shop-items-look.',
+  },
+  'main.shop.tms': {
+    title: 'Approved',
+    note: 'APPROVED (Jess 2026-11-21): decision 2026-11-21-155-main-shop-tms-look.',
   },
 };
 const SHOP_DRAFT_NOTE = {

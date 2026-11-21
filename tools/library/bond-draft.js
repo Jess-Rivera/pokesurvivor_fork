@@ -17,8 +17,8 @@ const BOND_LOOK = {
 // each team row on the move step: the chosen Pokemon lit, the others dimmed, a member with no option (its slots are
 // all bonds or skills) disabled
 const BOND_TEAM_LOOKS = ['lit', 'dimmed', 'dimmed', 'dimmed', 'dimmed', 'disabled'];
-// Pikachu's four loose moves (a first gym win: two join a new bond). pick marks the first move picked (it keeps a
-// bond-pink ring, B2) and the move under cursor.ring, the one the wide card describes
+// Pikachu's four loose moves (a first gym win: two join a new bond). pick marks the first move picked (its rim turns
+// bond pink, Jess 2026-11-21: one ring only) and the move under cursor.ring, the one the wide card describes
 const BOND_SLOTS = [
   {
     key: 'I',
@@ -59,14 +59,12 @@ const bondBackTop = () => bondCardTop() + RUN_SHOP.popup.card.height + RUN_SHOP.
 const bondHeight = () => bondBackTop() + SHOP.buttonHeight + RUN_SHOP.inset;
 
 // ---------- the move slots ----------
-/** A first pick's ring: cursor.ring in the bond pink, so it stays while the yellow ring moves on (B2). */
-const bondFirstRing = (left, top, size) =>
-  `<div class="lib-cursor-host" style="${place(left, top)};width:${px(size)};height:${px(size)};${cursorStyle()};
-    --cursor-colour:${pinkRamp('base')}">${staticRing()}</div>`;
-/** One slot, as run.hud.forgetMove's (taller, no key): lit when it is picked or under the ring, dimmed otherwise. */
+/** One slot, as run.hud.forgetMove's (taller, no key): lit when it is picked or under the ring, dimmed otherwise. A
+ *  bond and the first pick (the bond it is about to join) take the bond pink rim, so only one ring is on screen. */
 function bondSlot(slot, id, left, top) {
   const look = RUN_SHOP.popup.slot,
-    rim = slot.moves.length > 1 ? 'bond' : typeRamp(slot.moves[0].type),
+    pink = slot.moves.length > 1 || slot.pick === 'first',
+    rim = pink ? 'bond' : typeRamp(slot.moves[0].type),
     wells = Array.from({ length: AREA.wells.perSlot }, (_, well) => areaWell(slot.moves[well], well)).join(''),
     brightness = slot.pick ? BOND_LOOK.lit : BOND_LOOK.dimmed;
   return `<div class="lib-area-piece" style="${place(left, top)};width:${px(slotWidth())};
@@ -74,8 +72,8 @@ function bondSlot(slot, id, left, top) {
     ${slantedSvg({ id, rim, grid: true, artRows: look.artRows })}
     <div style="${place(0, look.wellTop - AREA.wells.top)};width:100%;height:${px(slotHeight())}">${wells}</div></div>`;
 }
-/** The four slots in one row, centred under the team: the yellow ring on the move under the cursor, the pink one on
- *  the first pick. stageId keeps the slots' pattern ids apart when the page draws the popup twice. */
+/** The four slots in one row, centred under the team, cursor.ring on the move under the cursor. stageId keeps the
+ *  slots' pattern ids apart when the page draws the popup twice. */
 function bondSlots(stageId) {
   const size = AREA.wells.size,
     left = (runShopWidth() - bondRowWidth()) / 2,
@@ -83,12 +81,8 @@ function bondSlots(stageId) {
   return BOND_SLOTS.map((slot, index) => {
     const x = left + index * (slotWidth() + AREA.slots.columnGap),
       ringLeft = x + AREA.wells.first - size / 2,
-      ringTop = y + RUN_SHOP.popup.slot.wellTop,
-      rings = {
-        ring: () => withRing(ringLeft, ringTop, size, ''),
-        first: () => bondFirstRing(ringLeft, ringTop, size),
-      };
-    return bondSlot(slot, `bond-${stageId}-${index}`, x, y) + (slot.pick ? rings[slot.pick]() : '');
+      ring = slot.pick === 'ring' ? withRing(ringLeft, y + RUN_SHOP.popup.slot.wellTop, size, '') : '';
+    return bondSlot(slot, `bond-${stageId}-${index}`, x, y) + ring;
   }).join('');
 }
 
@@ -127,7 +121,7 @@ function bondSelectionSection() {
     height = bondHeight();
   return `<section class="lib-story" data-draft="run.hud.bondSelection">
     <h3>${nameButton('run.hud.bondSelection')} ${draftTag('popup: spend a gym win\u2019s bond (a board copy)')}</h3>
-    <h4>The move step: Pikachu picked, Quick Attack picked first, the ring on Thunder Shock</h4>
+    <h4>The move step: Pikachu picked, Quick Attack picked first (pink rim), the ring on Thunder Shock</h4>
     <div class="lib-area-scroll">${runShopStage('run.hud.bondSelection:default', width, height,
       bondPopup('step'))}</div>
     <h4>The last pick asks</h4>
@@ -145,9 +139,9 @@ function bondSelectionSection() {
         (${BOND_LOOK.disabled * 100}%) and the ring skips it. Under the slots the ${nameButton('panel.shopCard')}, as
         wide as the row, on the ringed move says what it will cast with. Back (Neutral) at the bottom right, the
         shops\u2019 Leave size`)}
-      ${bondFact('Two picks', `No bond yet (a first gym win): two loose moves join a new slot. The first pick keeps a
-        bond-pink ${nameButton('cursor.ring')} while the yellow one moves to the second. The picked and ringed slots
-        are lit, the rest dimmed. A skill never bonds, so its slot is disabled`)}
+      ${bondFact('Two picks', `No bond yet (a first gym win): two loose moves join a new slot. The first pick\u2019s rim
+        turns bond pink (the bond it will join) while ${nameButton('cursor.ring')} moves to the second; one ring only.
+        The picked and ringed slots are lit, the rest dimmed. A skill never bonds, so its slot is disabled`)}
       ${bondFact('Adding', `A bond of 2 or 3 moves already: one loose move joins it (4 at most). The bond is lit as the
         target in its pink rim but cannot be picked; the ring moves over the loose moves only`)}
       ${bondFact('Ask', `The last pick opens the Modal page\u2019s dialog: \u201cBond move?\u201d with Bond (Positive, a

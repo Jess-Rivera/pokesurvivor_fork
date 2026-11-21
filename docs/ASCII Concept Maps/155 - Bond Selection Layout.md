@@ -45,7 +45,7 @@ flowchart LR
   P -- no --> MV
   S --> MV[Ring jumps to its move slots]
   MV --> K{Mode}
-  K -- Pair --> F1[Pick the first move: it stays marked] --> F2[Pick the second move]
+  K -- Pair --> F1[Pick the first move: its rim turns bond pink] --> F2[Pick the second move]
   K -- Add --> F3[Pick the move that joins the bond]
   F2 --> Q[Dialog: Bond move?]
   F3 --> Q
@@ -58,7 +58,7 @@ flowchart LR
 | # | Question | Ruling |
 |---|---|---|
 | B1 | Bond's intent in the ask. It is the first ask whose confirm is a gain; the dialog rule asks it because it cannot be undone | Positive (green), opening on Cancel (Neutral) |
-| B2 | Pair mode takes two picks. How does the first pick show while the ring moves on? | The first well keeps a bond-pink ring; the ask comes after the second pick |
+| B2 | Pair mode takes two picks. How does the first pick show while the ring moves on? | ~~A bond-pink ring~~ Revised: the first pick's rim turns bond pink, one ring only; the ask comes after the second pick |
 | B3 | In Add mode, the existing bond slot | Drawn in bond pink as the target, not pickable; the ring moves over the loose moves only |
 | B4 | Leaving without bonding | No leave, as today. Back steps from moves to team (hidden when the team step was skipped) |
 | B5 | The team row piece | moveMart's team row (portrait, name, type chips); a member that cannot bond darker (25%), the ring skips it |
@@ -76,3 +76,6 @@ Feel pass 1 (Jess 2026-11-21): the four slots in one row, not 2 x 2. 4 x 210 + 3
 exactly the window inside its 24 px insets, so the row lines up with the team grid's edges; the card spans it too.
 
 APPROVED (Jess 2026-11-21): decision 2026-11-21-155-run-hud-bond-selection-look.
+
+Revised after approval (Jess 2026-11-21): B2's pink ring read as a second cursor. The first pick's rim turns bond
+pink instead (a preview of the bond), so only the yellow ring is ever on screen.

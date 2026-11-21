@@ -14,5 +14,6 @@
   to it, or the tracker is lost.
 - Supersedes HUD-STYLE.md "Run items: the B2 item box" (the name band, patch and tracker) once #126 applies it.
 - Board: tools/library/hud-team-items-draft.js; the bag is teamPocket in hud-team-slot-draft.js.
+- APPROVED as drawn (Jess 2026-11-21): the board page's two states, both bags lower right.
 
 Canonical: this file until #126 applies it; then docs/HUD-STYLE.md "Roster, berry bag and run items".

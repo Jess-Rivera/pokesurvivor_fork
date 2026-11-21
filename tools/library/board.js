@@ -72,14 +72,8 @@ const NAV = [
           { id: 'catch.window', title: 'catch.window' },
         ],
       },
-      {
-        title: 'Pause',
-        items: [
-          { id: 'pause.pokemonDetail', title: 'pause.pokemonDetail', later: 'a later slice under #126' },
-          { id: 'pause.runInfo', title: 'pause.runInfo', later: 'a later slice under #126' },
-          { id: 'pause.inventory', title: 'pause.inventory', later: 'a later slice under #126' },
-        ],
-      },
+      // no Pause group: the board ends at the primitives and the approved composites (decision
+      // 2026-11-21-155-board-ends-at-primitives); #126 builds the pause screens in the game
     ],
   },
 ];

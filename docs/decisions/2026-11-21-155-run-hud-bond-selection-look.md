@@ -9,7 +9,8 @@
 - The four slots in ONE row (Jess, feel pass 1), drawn as run.hud.forgetMove's (28 art rows, no keys): 4 x 210 plus the
   HUD's 6 px gaps is 858 px, the window inside its insets. Under them a panel.shopCard as wide as the row on the ringed
   move, its line "Casts together with X."
-- Pair (no bond yet): the first pick keeps a bond-pink cursor.ring while the yellow one moves to the second. Add (a bond
+- Pair (no bond yet): the first pick's rim turns bond pink (the bond it will join) while cursor.ring moves to the
+  second. One ring only (Jess 2026-11-21, after approval: two rings read as two cursors). Add (a bond
   of 2 or 3): the bond is lit in its pink rim as the target, not pickable; the ring moves over loose moves only.
 - The last pick asks "Bond move?": Bond (Positive, a gain) and Cancel (Neutral), opening on Cancel since a bond cannot
   be undone. Cancel returns to the slots. Back (Neutral, Leave size, bottom right) returns to the team and is hidden
