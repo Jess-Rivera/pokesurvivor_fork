@@ -4,20 +4,19 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-20 night session (Claude Code, home)
-1. On this machine the check and format passed and the work is committed: `git push origin feature/128-acquisition`.
+## Getting up to date (either machine), from the 2026-11-21 morning session (Quick, work)
+1. On this machine: run `node tools/check.js` and `npm run format` (not run from Quick), commit, then
+   `git push origin feature/128-acquisition`.
 2. On the other machine: `git fetch origin`, `git checkout feature/128-acquisition`, `git pull --ff-only`, then
    `node tools/check.js` (must end "check: all passed"). Say "catch me up".
 3. Before leaving a machine: commit and push.
 
-## Next (queue set by Jess 2026-11-15, updated 2026-11-20; gym leader AI parked)
+## Next (queue set by Jess 2026-11-15, updated 2026-11-21; gym leader AI parked)
 0. #155 UI Library v2 (the 155b to 155c-6 plan docs are stale; trust the code). In order:
    - Approved 2026-11-20: main.shop.pokeball, .character, .items; run.hud.gymLeader, .worldInfo, .runInfo;
-     catch.window (their decisions). run.hud.portrait removed.
-   - First next: redraw run.hud.moveMart, run.hud.trMart, run.hud.forgetMove to Jess's mockups
-     (assets/excalidraw/move-trainer.excalidraw, tr-mart.excalidraw); the rough drafts in run-shops-draft.js do not match.
-     Plan: docs/ASCII Concept Maps/155 - Run Shops Layout.md.
-   - Next **main.shop.tms**: pick the Able to Learn label (12 px one line, 16 px two lines, or 18 px with a narrower
+     catch.window. Approved 2026-11-21: run.hud.moveMart, .trMart, .forgetMove (decisions 2026-11-21-155-*).
+   - Feel test: the Ancient Power description ("10% team all stats +1") on a card and in the pause sheet.
+   - First next **main.shop.tms**: pick the Able to Learn label (12 px one line, 16 px two lines, or 18 px with a narrower
      search), then approve. Then approve **run.hud.teamItems** (drafted: both bags stacked lower right).
    - Then the shop menus Jess asked for 2026-11-20 (ask which screens).
    - A toast page on the board (catch-draft.js draws today's toast in Unified first).
@@ -52,7 +51,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op.
 13. Board cleanup (low): delete tools/library/stories/button.story.js and panel.story.js (no tab shows them).
 
-## Open issues by area (numbers only, titles on GitHub, checked 2026-11-20 evening, Quick)
+## Open issues by area (numbers only, titles on GitHub, checked 2026-11-21, Quick)
 Confirmed this pull: #70 to #158. Older numbers left as checked earlier (unconfirmed).
 - UI and HUD: #25 #61 #72 (deferred) #74 #75 #79 (deferred) #93 #95 (blocked by #97) #99 #100 #102 #105 #126 #127
   #145 #146 #155 #156 #158

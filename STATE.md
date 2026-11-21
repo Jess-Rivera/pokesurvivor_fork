@@ -1,42 +1,38 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-20 night, Claude Code (home). Branch: feature/128-acquisition. No branch rules file.
+Last updated: 2026-11-21 morning, Quick (work machine). Branch: feature/128-acquisition. No branch rules file.
 
 ## START HERE (next session, either tool)
-0. `git status`; push this session's commit (`git push origin feature/128-acquisition`). check.js and format passed.
-1. Redraw run.hud.moveMart, run.hud.trMart and run.hud.forgetMove to Jess's mockups: assets/excalidraw/move-trainer.excalidraw
-   and tr-mart.excalidraw (found at wrap-up, not read while drafting). They show a small window (about 635 px wide), the
-   team as six panel.pixel rows (193 x 57), 2 x 2 cards (177 x 154) with a type or TR icon, and two buttons below. The
-   current rough drafts (run-shops-draft.js) use a 1145 px window and a portrait grid: wrong shape.
-2. Then #155: main.shop.tms (Able to Learn label, then approve), run.hud.teamItems, the shop menus Jess named (ask
-   which), Fonts feel test, Colours names, the Pause composites. #156 likely moot.
-3. Then #128: #138, then #146. #145 small and ready.
+0. `git status`; push this session's commits (`git push origin feature/128-acquisition`). Confirm check.js, the
+   ui-readers harness and its mutate runner passed (the assistant could not run them from Quick).
+1. Feel test the Ancient Power line ("10% team all stats +1") on its card and in the pause sheet; then a needs-playtest
+   look at the three run-shop pages on the board.
+2. #155: main.shop.tms (pick the Able to Learn label: 12, 16 or 18 px, then approve), then run.hud.teamItems.
+3. Then the rest of #155 (TODO.md item 0), then #128: #138, then #146. #145 small and ready.
 
-## Landed 2026-11-20 night (board, docs and tools only)
-- cursor.ring (cursor-draft.js): 3 px, 2 px off the rim, for round pieces; neither cursor blinks; the ring plays the CRT.
-  On main.shop.pokeball (belt ball), main.shop.tms (Pokebox face), catch.window (belts and owned). Catch belts back to
-  84 px, window 980 px wide.
-- Dialog rule: a binary ask's answers never share an intent; the confirm takes the action's intent, the back-out is
-  always Neutral; button.glitch.cancel retired. Let It Go: red Let it go, teal Keep trying, opens on Keep trying.
-- Run shops ruled (docs/ASCII Concept Maps/155 - Run Shops Layout.md): mirrored (choose left, answer right); TR Mart
-  statuses use game Silver's root, multiplication sign and equals; refusals toast on Enter or click, not on cursor
-  move; no purchase ask; replace-a-move is pick, popup, then a Replace or Go Back ask.
-- Decision files: 2026-11-20-155-dialog-answers-never-share-an-intent, -cursor-ring-for-round-pieces-and-no-blink,
-  -move-shop-replace-a-move-asks-replace-or-go-back.
+## Landed 2026-11-21 morning (Quick)
+- Run shops, all three APPROVED on the board (decisions 2026-11-21-155-run-hud-move-mart-look, -tr-mart-look,
+  -forget-move-look). moveMart: team rows on top (teamSlot's pixel box 6 art rows taller, type chips where the HP bar
+  was, cursor.ring), four offer cards below with a Silver price line and no Buy button. trMart: the same, mirrored top to
+  bottom (TR cards on top with TM discs, cursor.ring on the picked disc; team rows with a status symbol). forgetMove: the
+  four move slots (28 art rows, no keys), ring on the move to replace, others dimmed, bonds darker and skipped, a wide
+  card on the ringed move, Cancel at the shops' size. Reroll is Positive.
+- Game code (approved): js/ui/move-info.js folds five matching stat raises into "all stats" in the description and the
+  sheet (Ancient Power, 126 to 47 characters). Harness checks plus a 100-character fit check; two mutants; changelog.
+- New dev tool tools/move_desc_lengths.js (the longest descriptions).
+- Board helper: panel.slanted (clean-draft.js) takes an optional height.
 
 ## Game changes owed at #126 (ruled)
-- TM Learned and Known disabled, not refused. Team items: HUD drops names and trackers; berry pocket lower right.
-  Catch: result is a toast, window 980 x 424, Let It Go ask as above. Cursor ring and no blink everywhere. G.UI.ask
-  takes the confirm's intent only. Run shops redrawn mirrored.
+- The three run shops as approved. TM Learned and Known disabled. Team items HUD drops names and trackers. Catch result
+  a toast, window 980 x 424, Let It Go ask. Cursor ring and no blink. G.UI.ask takes the confirm's intent only.
 
 ## Watch
-- Nothing in js/ or css/ edited. The run-shop pages were never rendered by the assistant.
 - Board drift: #29 in Blocked with no label; #155, #86, #110, #111, #120, #121 in Triage; #156 and #158 need triage;
   #137 #151 #152 #153 closed but still needs-playtest.
 
 ## Open owner decisions
-- Tooltip pin and close icons (Jess drawing). Run shops: TR price placement; forgetMove's name.
+- Tooltip pin and close icons (Jess drawing). #156 close or keep.
 - #126: reveal-first and fewer dialogs; cursor.bar with the mouse. Silver italic font (offered).
 - #97, #131, #49, #107, #86, #99, #93, #60, #139 candy amounts.
 

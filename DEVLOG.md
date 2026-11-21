@@ -388,3 +388,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Broke: the ring did not blink (rule named only the bar; moot once blink was removed). check.js and format pass.
 - Stopped at: Jess's move-trainer and tr-mart mockups (assets/excalidraw) were found at wrap-up and differ from the
   drafts; redraw to them next. The run-shop pages were never rendered by the assistant. Nothing in js/ or css/.
+
+## 2026-11-21 morning (Quick, work), #155 run shops approved, Ancient Power description fold
+- Board: run.hud.moveMart stacked (teamSlot rows with type chips, cards with a Silver price line, no Buy), trMart its
+  top-to-bottom mirror (TM discs, ring on the picked disc, status per row), forgetMove (four taller slots, ring on the
+  move, bonds darker and skipped, wide card). Shared shop helpers; panel.slanted takes a height. All three approved.
+- Game: js/ui/move-info.js folds five matching stat raises into "all stats" (Ancient Power 126 to 47 chars), sheet
+  too; harness relations, a 100-character fit check, two mutants; changelog. New tools/move_desc_lengths.js.
+- Not run from Quick: check.js, format, the ui-readers harness and mutants. Stopped at: main.shop.tms label.
