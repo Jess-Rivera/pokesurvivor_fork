@@ -32,7 +32,7 @@ G.Lib.Panel = (() => {
   if (!preact || !preactHooks || !htmFactory || !pixels || !pixels.ready || !buttons || !buttons.ready)
     return { ready: false };
   const html = htmFactory.bind(preact.h),
-    { PixelShape, letterRows, PATTERNS } = pixels;
+    { PixelShape, letterRows, twoTypeLetterRows, PATTERNS } = pixels;
   const HUD_COLOUR = (key) => G.Tokens.color('color.hud.' + key);
   const OUTLINE = G.Tokens.color('color.hud.outline'),
     BODY = G.Tokens.color('color.hud.body');
@@ -74,49 +74,25 @@ G.Lib.Panel = (() => {
 
   /**
    * A pixel panel at any size (width and height in px, even): rimmed in `rim`, its contents go inside. rimRight
-   * (optional): a second ramp for the right side, the rim blending from rim to rimRight across the top and bottom (a
-   * dual-type Pokemon, Jess 2026-11-16). body: the flat inside's colour, the panel body by default.
+   * (optional): the second type's ramp, the rim taking it on the right, dithered across the middle (a two-type Pokemon;
+   * decision 2026-11-20-155-two-type-team-slot-rim-dithered-middle-band, #128 catch.window). body: the flat inside's
+   * colour, the panel body by default.
    */
-  let panelGradientCount = 0;
   function PixelPanel({ left, top, width, height, rim, rimRight, body = BODY, className, children }) {
     const artWidth = width / PIXEL_PANEL.artPixel,
-      artRows = height / PIXEL_PANEL.artPixel;
-    const gradientId = preactHooks.useMemo(() => 'hud-box-rim-' + ++panelGradientCount, []);
-    const blended = rimRight && (rimRight.base !== rim.base || rimRight.light !== rim.light);
-    const shade = (part) => (blended ? 'url(#' + gradientId + '-' + part + ')' : rim[part]);
-    const colours = pixelPanelColours({ light: shade('light'), base: shade('base'), dark: shade('dark') }, body);
+      artRows = height / PIXEL_PANEL.artPixel,
+      grid = pixelPanelRows(artWidth, artRows),
+      colours = pixelPanelColours(rim, body),
+      twoTypes = rimRight && (rimRight.base !== rim.base || rimRight.light !== rim.light);
     return html`<div
       class=${'pm-box' + (className ? ' ' + className : '')}
       style=${{ left: left + 'px', top: top + 'px', width: width + 'px', height: height + 'px' }}
     >
-      ${
-        blended
-          ? html`<svg class="pm-box-gradients" width="0" height="0" aria-hidden="true">
-              <defs>
-                ${['light', 'base', 'dark'].map(
-                  (part) =>
-                    html`<linearGradient
-                      key=${part}
-                      id=${gradientId + '-' + part}
-                      gradientUnits="userSpaceOnUse"
-                      x1="0"
-                      y1="0"
-                      x2=${artWidth}
-                      y2="0"
-                    >
-                      <stop offset="0.1" stop-color=${rim[part]} />
-                      <stop offset="0.9" stop-color=${rimRight[part]} />
-                    </linearGradient>`
-                )}
-              </defs>
-            </svg>`
-          : null
-      }
       <${PixelShape}
         artWidth=${artWidth}
         artRows=${artRows}
         artPixel=${PIXEL_PANEL.artPixel}
-        paintRow=${letterRows(pixelPanelRows(artWidth, artRows), colours)}
+        paintRow=${twoTypes ? twoTypeLetterRows(grid, colours, rimRight) : letterRows(grid, colours)}
       />
       ${children}
     </div>`;

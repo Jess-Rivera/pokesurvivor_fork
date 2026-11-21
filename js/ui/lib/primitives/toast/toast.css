@@ -1,0 +1,39 @@
+/* toast.css: the toast (#128 catch.window; decision 2026-11-20-155-catch-result-is-a-toast-and-the-window-is-shorter).
+   G.UI.toast (js/ui/ui.js) draws one element with the class toast, plus bad for bad news; this is its look, moved from
+   css/style.css (decision 2026-11-13-104c-learn-toast-and-shared-toast-look) into the Unified pieces: panel.clean's
+   grey.panel body with a 1 px edge, teal.base for news and red.base for bad news, a 2 px grey.ink outline round it,
+   Michroma 20 on 30 px lines in grey.white, at the bottom centre. CSS only: the element is G.UI.toast's.
+   Board: tools/library/catch-draft.js (catchToast). */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  z-index: var(--layer-toast);
+  box-sizing: border-box;
+  max-width: min(720px, calc(100vw - 40px));
+  padding: 12px 24px;
+  background: var(--color-grey-panel);
+  border: 1px solid var(--color-teal-base);
+  box-shadow: 0 0 0 2px var(--color-grey-ink);
+  font-family: 'HudModule', sans-serif;
+  font-size: 20px;
+  line-height: 30px;
+  color: var(--color-grey-white);
+  text-align: center;
+  white-space: normal;
+  animation: toast-pop 0.2s ease-out;
+}
+.toast.bad {
+  border-color: var(--color-red-base);
+}
+@keyframes toast-pop {
+  from {
+    transform: translateX(-50%) scale(0.94);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%);
+    opacity: 1;
+  }
+}

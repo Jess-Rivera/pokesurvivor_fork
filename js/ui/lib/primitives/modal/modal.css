@@ -1,40 +1,34 @@
-/* modal.css: the dialog (G.Lib.Modal; #155 155c-4). Its frame is panel.flat (panel.css); the colours are tokens. */
+/* modal.css: the dialog (G.Lib.Modal; #155 155c-4, rebuilt #128 catch.window). Its frame is panel.clean (panel.css),
+   its buttons button.glitch (button.css); the sizes are the board's (tools/library/modal-draft.js MODAL). */
 
-/* ---------- modal.dialog: centred on the menu stage, 720 px wide ---------- */
+/* ---------- modal.dialog: centred on the menu stage, 720 px wide, every line in Michroma (font.hudModule) ---------- */
 .modal-dialog {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   width: 720px;
-  box-sizing: border-box;
   padding: 32px 40px 36px;
-  color: var(--color-text-label);
+  color: var(--color-grey-white);
   text-align: center;
-}
-/* the title: Michroma, the game talking (font.hudModule) */
-.modal-title {
   font-family: 'HudModule', sans-serif;
-  font-size: 30px;
-  line-height: 38px;
 }
-/* the message: the Shop's font, crisp at 27.1429 px (font.game) */
+.modal-title {
+  font-size: 24px;
+  line-height: 1.4;
+}
 .modal-message {
   margin: 20px 0 0;
-  font-family: 'GameFont', monospace;
-  font-synthesis: none;
-  font-size: 27.1429px;
-  line-height: 34px;
+  font-size: 18px;
+  line-height: 1.6;
   white-space: normal;
 }
-/* the note (what you will have left): 20 px, secondary text */
+/* the note (what you will have left): teal.base, the secondary text */
 .modal-note {
   margin: 8px 0 0;
-  font-family: 'GameFont', monospace;
-  font-synthesis: none;
-  font-size: 20px;
-  line-height: 26px;
-  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-teal-base);
 }
 .modal-buttons {
   display: flex;
@@ -45,25 +39,11 @@
 .modal-button {
   position: relative;
 }
-/* the button's label, centred (button.rounded leaves its label to the screen) */
-.modal-button .hud-team-button-label {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 12px;
-  font-family: 'GameFont', monospace;
-  font-synthesis: none;
-  font-size: 27.1429px;
-  line-height: 30px;
-  white-space: nowrap;
-  text-align: center;
-  text-shadow:
-    2px 0 0 var(--color-hud-outline),
-    -2px 0 0 var(--color-hud-outline),
-    0 2px 0 var(--color-hud-outline),
-    0 -2px 0 var(--color-hud-outline),
-    2px 2px 0 var(--color-hud-outline),
-    -2px 2px 0 var(--color-hud-outline),
-    2px -2px 0 var(--color-hud-outline),
-    -2px -2px 0 var(--color-hud-outline);
+/* with the keys, only the focused button shows its focus: a pointer resting on the other does not swipe it, and its
+   bar stays the rest bar (button.css gives a hovered button the focus bar) */
+.modal-dialog.is-keys .glitch-button:hover:not(.focused)::after {
+  clip-path: inset(0 0 0 100%);
+}
+.modal-dialog.is-keys .glitch-button:hover:not(.focused) {
+  box-shadow: 6px 0 0 var(--glitch-bar);
 }

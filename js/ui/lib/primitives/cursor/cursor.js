@@ -1,8 +1,9 @@
 /* ============ cursor.js: the selection cursors (G.Lib.Cursor; #128 S6) ============
  * The library's cursors, named by their look (decision 2026-11-18-155-library-pieces-named-by-look):
  *   cursor.ring  CursorRing: a ring around a round piece, CURSOR_RING.width thick, CURSOR_RING.gap off its rim, in
- *                yellow.base (decision 2026-11-20-155-cursor-ring-for-round-pieces-and-no-blink). Steady at rest, no
- *                blink. On a move it plays the CRT drawn on a circle: the ring it leaves flattens to a line, then a dot
+ *                yellow.base (decisions 2026-11-20-155-cursor-ring-for-round-pieces-and-no-blink and
+ *                2026-11-21-cursor-ring-2px). Steady at rest, no blink. On a move it plays the CRT drawn on a circle:
+ *                the ring it leaves flattens to a line, then a dot
  *                (CRT off); the ring it reaches opens from the dot to the line, past full size, flickers once and
  *                settles (CRT on). useRingTravel runs that move for a screen. First on the Main Menu Shop's ball
  *                belts; the catch screen's wells and faces and the TMs box move onto it at #126.
@@ -19,9 +20,9 @@ G.Lib.Cursor = (() => {
   if (!preact || !preactHooks || !htmFactory || !buttons || !buttons.ready) return { ready: false };
   const html = htmFactory.bind(preact.h);
 
-  // px: the ring's thickness and its air off the piece's rim (the decision's numbers; the board draft draws it 2 px)
-  const CURSOR_RING = { width: 3, gap: 2 };
-  CURSOR_RING.reach = CURSOR_RING.width + CURSOR_RING.gap; // 5: how far the ring sits outside its piece
+  // px: the ring's thickness and its air off the piece's rim (the board's CURSOR_RING; Jess 2026-11-21, 2 px not 3)
+  const CURSOR_RING = { width: 2, gap: 2 };
+  CURSOR_RING.reach = CURSOR_RING.width + CURSOR_RING.gap; // 4: how far the ring sits outside its piece
   // the ring's CRT plays on button.glitch's press and release (the board's CURSOR offMs and onMs)
   const RING_CRT = { offMs: buttons.GLITCH_TIMING.pressMs, onMs: buttons.GLITCH_TIMING.releaseMs };
 

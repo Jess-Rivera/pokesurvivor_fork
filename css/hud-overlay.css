@@ -753,3 +753,27 @@
   cursor: grab; /* the thumb can be dragged (#91-2 DD1) */
   touch-action: none;
 }
+
+/* each belt's number on its top-left rim corner: Michroma 16, white with a 1 px ink stroke (eight hard shadows, as the
+   HUD's text; Jess 2026-11-20) */
+/* the ball belt (hud-kit-items.js BallBelt; the Shop and the catch screen, #128) */
+.ball-belt-number {
+  position: absolute;
+  left: 4px;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+  font-family: 'HudModule', sans-serif;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--color-grey-white);
+  text-shadow:
+    1px 0 0 var(--color-grey-ink),
+    -1px 0 0 var(--color-grey-ink),
+    0 1px 0 var(--color-grey-ink),
+    0 -1px 0 var(--color-grey-ink),
+    1px 1px 0 var(--color-grey-ink),
+    -1px 1px 0 var(--color-grey-ink),
+    1px -1px 0 var(--color-grey-ink),
+    -1px -1px 0 var(--color-grey-ink);
+}

@@ -76,6 +76,10 @@
   background: linear-gradient(45deg, transparent 5%, var(--glitch-body) 5%);
   box-shadow: 6px 0 0 var(--glitch-bar);
 }
+/* fitted to its label (no width given): the board's padding round the label (glitch-draft.css) */
+.glitch-button.glitch-fit {
+  padding: 16px 20px;
+}
 /* the intents: the focus body and the secret state's second split colour */
 .glitch-neutral {
   --glitch-intent: var(--color-teal-base);

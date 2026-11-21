@@ -8,10 +8,11 @@
  *           (positive). An unlocked tier (G.Catch.isUnlocked) is lit with "Buy <price>"; a locked Great or Ultra is
  *           dimmed with "Unlock <price>"; the other balls are dimmed and refuse with "Coming soon.". A dimmed card
  *           never dims its button: one you cannot press yet shows button.glitch's refused look.
- *   belts   three belts of six wells packed against the pane's right edge, each numbered on its top-left corner: a
- *           panel.pixel in the Poke Balls pocket ramp (color.rim.belt) over the Unified slot grid when bought, the
- *           fainted ramp when not. A bought belt's wells hold the save's balls slot for slot (G.Catch.slots); a well
- *           holding a ball rings in the belt's base colour, an empty one in ink. The cursor on a well is cursor.ring.
+ *   belts   three of the kit's ball belts (BallBelt, shared with the catch screen) packed against the pane's right
+ *           edge, each numbered on its top-left corner, bought ones in the Poke Balls pocket ramp (color.rim.belt),
+ *           the rest the fainted ramp. A bought belt's wells hold the save's balls slot for slot (G.Catch.slots);
+ *           a well holding a ball rings in the belt's base colour, an empty one in ink. The cursor on a well is
+ *           cursor.ring.
  *           One "Belt <n> <price>" button left of Exit, on its row, buys the next belt (in order); gone once all are.
  *   sell    #137c: "Sell Pokeball" (button.glitch, negative) above Exit, right-aligned with it, sells the ball you are
  *           holding (picked up by click or keys, or dragged onto it) for half its price (G.Catch.sellBall); with
@@ -29,13 +30,12 @@ G.ShopBallsPane = (() => {
   const kitOverlay = G.HudOverlay,
     windowKit = G.MenuWindowKit,
     library = G.Lib || {};
-  const pieces = [library.Panel, library.Pixels, library.Cursor, library.Well];
+  const pieces = [library.Cursor, library.Well];
   const piecesReady = pieces.every((piece) => piece && piece.ready);
   if (!kitOverlay || !kitOverlay.ready || !windowKit.ready || !G.BALL_CATALOG || !piecesReady) return { ready: false };
-  const { html, signal, ScrollBox, BallSprite, FAINTED_RIM } = kitOverlay.kit;
+  const { html, signal, ScrollBox, BallSprite, BALL_BELT, BallBelt, BeltBall } = kitOverlay.kit;
   const { BUTTON, CARD, CURSOR_ROOM, SCROLL_COLOURS, SHORT_PRICE_FROM, px, CursorButton, ItemCard } = windowKit;
-  const { PixelPanel } = library.Panel,
-    { CursorRing, useRingTravel } = library.Cursor,
+  const { CursorRing, useRingTravel } = library.Cursor,
     { Well } = library.Well;
 
   // ---------- sizes and places (pane pixels; the pane is 1005 x 616, down to the bottom of Exit) ----------
@@ -64,19 +64,12 @@ G.ShopBallsPane = (() => {
   };
   // the ball on a card: frame 9 of its strip (the last frame before it opens; Jess 2026-11-17, E5), flipped, at 2x
   const CARD_BALL = { frame: 9, scale: 2 };
-  const BALL_FRONT = G.BALL_SPRITES.animations.front[0]; // a ball in a well, and a carried one
-  // a well (Jess 2026-11-20): 52 px, 8 px apart, the ball at 2x filling most of it (the well clips it), its 64 px
-  // frame centred on the well
-  const WELL = { size: 52, gap: 8, ballScale: 2 };
-  WELL.ballAt = (WELL.size - G.BALL_SPRITES.size * WELL.ballScale) / 2; // -6
-  // the belts: a panel.pixel sized to six wells, their inset the rim's 12 px plus 4 px of padding (the board's
-  // teamPocketPanel, 84 x 384); three belts 20 px apart, belt 3 ending 12 px in from the pane's right edge
-  const BELT = { inset: 16, gap: 20, rightPad: 12, count: 3, slots: 6 };
-  BELT.width = WELL.size + 2 * BELT.inset; // 84
-  BELT.height = BELT.slots * WELL.size + (BELT.slots - 1) * WELL.gap + 2 * BELT.inset; // 384
-  BELT.step = BELT.width + BELT.gap;
-  BELT.left = PANE_WIDTH - BELT.rightPad - BELT.count * BELT.width - (BELT.count - 1) * BELT.gap; // 701
-  const BELT_NUMBER = { left: 4, top: 0 }; // the belt's number on its top-left corner (Michroma 16, bw-shop.css)
+  const BALL_FRONT = G.BALL_SPRITES.animations.front[0]; // a carried ball
+  // the belts: the kit's BallBelt (84 x 384, six 52 px wells 8 px apart, 16 px in); three belts 20 px apart, belt 3
+  // ending 12 px in from the pane's right edge
+  const BELT = { gap: 20, rightPad: 12, count: 3, slots: BALL_BELT.slots };
+  BELT.step = BALL_BELT.width + BELT.gap;
+  BELT.left = PANE_WIDTH - BELT.rightPad - BELT.count * BALL_BELT.width - (BELT.count - 1) * BELT.gap; // 701
   // the one belt Buy, left of Exit on its row: "Belt 3 15k" (no "Buy", a short price; Jess 2026-11-18)
   const BELT_BUY = { width: 186, gap: 12 };
   BELT_BUY.left = EXIT_PLACE.left - BELT_BUY.gap - BELT_BUY.width; // 651
@@ -85,9 +78,8 @@ G.ShopBallsPane = (() => {
   SELL.left = PANE_WIDTH - SELL.width; // 801
   SELL.top = EXIT_PLACE.top - SELL.gap - BUTTON.height; // 500, under the belts' bottom (390)
   const SHIFT_BUY_COUNT = 10; // balls one Shift press buys (B6)
-  // the Poke Balls pocket colours (docs/UI-PALETTES.md "Bag", kept canon), the belt's body the Unified slot grid
-  const BELT_RIM = G.Tokens.ramp('color.rim.belt'),
-    BELT_BODY = library.Pixels.PATTERNS.slotGridUnified;
+  // the Poke Balls pocket colours (docs/UI-PALETTES.md "Bag", kept canon): a holding well's ring
+  const BELT_RIM = G.Tokens.ramp('color.rim.belt');
   // what a button that cannot buy says when pressed (#151); "Unable to Afford" is the Shop's other tabs' line
   const REFUSALS = {
     soon: 'Coming soon.',
@@ -153,8 +145,8 @@ G.ShopBallsPane = (() => {
     return {
       belt,
       row,
-      x: BELT.left + belt * BELT.step + BELT.inset + WELL.size / 2,
-      y: CURSOR_ROOM + BELT.inset + row * (WELL.size + WELL.gap) + WELL.size / 2,
+      x: BELT.left + belt * BELT.step + BALL_BELT.inset + BALL_BELT.well / 2,
+      y: CURSOR_ROOM + BALL_BELT.inset + row * (BALL_BELT.well + BALL_BELT.gap) + BALL_BELT.well / 2,
     };
   }
   /** The slot position under a page point, or null. */
@@ -272,7 +264,7 @@ G.ShopBallsPane = (() => {
       at = slotPlace(+on.slice(SLOT_ID.length));
     }
     return html`<div class="shop-carry-ghost" style=${{ left: px(at.x), top: px(at.y) }}>
-      <${BallSprite} ball=${holding.ball} frame=${BALL_FRONT} scale=${WELL.ballScale} />
+      <${BallSprite} ball=${holding.ball} frame=${BALL_FRONT} scale=${BALL_BELT.ballScale} />
     </div>`;
   }
 
@@ -380,60 +372,43 @@ G.ShopBallsPane = (() => {
     settle(G.Catch.sellBall(G.DB.save, holding.from), (result) => `Sold a ${ball.name} for ${fmt(result.refund)}.`);
   }
 
-  /** One belt: a panel.pixel holding a column of wells; ring is the pane's cursor.ring ({ at, phase }). */
+  /** One belt: the kit's BallBelt with this tab's wells; ring is the pane's cursor.ring ({ at, phase }). */
   function Belt({ cursor, number, balls, ring }) {
     const locked = number > G.Catch.beltsBought(),
       firstSlot = (number - 1) * BELT.slots,
       holding = carried.value;
-    return html`<${PixelPanel}
+    const slot = (index, place) => {
+      const position = firstSlot + index,
+        ball = locked ? null : balls[position],
+        id = SLOT_ID + position,
+        lifted = holding && holding.from === position;
+      return html`<div
+        key=${index}
+        class=${'shop-belt-slot' + (ball ? ' is-full' : '') + (lifted ? ' is-lifted' : '')}
+        data-belt=${number}
+        data-ball-slot=${locked ? undefined : position}
+        data-cursor-id=${locked ? undefined : id}
+        data-cursor-area=${'belt-' + number}
+        data-cursor-shown=${!locked && cursor.isShownOn(id) ? '' : undefined}
+        style=${place}
+        onMouseEnter=${() => !locked && cursor.hover(id)}
+        onMouseLeave=${() => cursor.hover(null)}
+        onPointerDown=${(event) => !locked && onSlotPointerDown(event, position)}
+      >
+        <${Well} size=${BALL_BELT.well} ring=${ball ? BELT_RIM.base : null}>
+          ${ball ? html`<${BeltBall} ball=${ball} />` : null}
+        </${Well}>
+        ${ring.at === id ? html`<${CursorRing} phase=${ring.phase} />` : null}
+      </div>`;
+    };
+    return html`<${BallBelt}
       left=${BELT.left + (number - 1) * BELT.step}
       top=${CURSOR_ROOM}
-      width=${BELT.width}
-      height=${BELT.height}
-      rim=${locked ? FAINTED_RIM : BELT_RIM}
-      body=${BELT_BODY}
-      className=${'shop-belt' + (locked ? ' is-locked' : '')}
-    >
-      <div class="shop-belt-number" style=${{ left: px(BELT_NUMBER.left), top: px(BELT_NUMBER.top) }}>${number}</div>
-      ${Array.from({ length: BELT.slots }, (_, slot) => {
-        const position = firstSlot + slot,
-          ball = locked ? null : balls[position],
-          id = SLOT_ID + position,
-          lifted = holding && holding.from === position;
-        return html`<div
-          key=${slot}
-          class=${'shop-belt-slot' + (ball ? ' is-full' : '') + (lifted ? ' is-lifted' : '')}
-          data-belt=${number}
-          data-ball-slot=${locked ? undefined : position}
-          data-cursor-id=${locked ? undefined : id}
-          data-cursor-area=${'belt-' + number}
-          data-cursor-shown=${!locked && cursor.isShownOn(id) ? '' : undefined}
-          style=${{
-            left: px(BELT.inset),
-            top: px(BELT.inset + slot * (WELL.size + WELL.gap)),
-            width: px(WELL.size),
-            height: px(WELL.size),
-          }}
-          onMouseEnter=${() => !locked && cursor.hover(id)}
-          onMouseLeave=${() => cursor.hover(null)}
-          onPointerDown=${(event) => !locked && onSlotPointerDown(event, position)}
-        >
-          <${Well} size=${WELL.size} ring=${ball ? BELT_RIM.base : null}>
-            ${
-              ball
-                ? html`<${BallSprite}
-                    ball=${ball}
-                    frame=${BALL_FRONT}
-                    scale=${WELL.ballScale}
-                    style=${{ left: px(WELL.ballAt), top: px(WELL.ballAt) }}
-                  />`
-                : null
-            }
-          </${Well}>
-          ${ring.at === id ? html`<${CursorRing} phase=${ring.phase} />` : null}
-        </div>`;
-      })}
-    </${PixelPanel}>`;
+      number=${number}
+      locked=${locked}
+      className="shop-belt"
+      slot=${slot}
+    />`;
   }
 
   /** The tab: cards on the left, the belts on the right, Sell above Exit and the belt Buy left of it. openCount sends

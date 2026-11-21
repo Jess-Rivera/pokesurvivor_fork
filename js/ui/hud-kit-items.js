@@ -7,8 +7,10 @@
 G.HudKitItems = (() => {
   const coreKit = G.HudKit,
     square = G.Lib && G.Lib.Square, // the item squares are the UI library's square.item and grid.item (155c-2)
-    panel = G.Lib && G.Lib.Panel; // the run item box is its card.horizontal
-  if (!coreKit.ready || !square || !square.ready || !panel || !panel.ready) return { ready: false };
+    panel = G.Lib && G.Lib.Panel, // the run item box is its card.horizontal; the ball belt its panel.pixel
+    pixels = G.Lib && G.Lib.Pixels; // the ball belt's body is its Unified slot grid
+  if (!coreKit.ready || !square || !square.ready || !panel || !panel.ready || !pixels || !pixels.ready)
+    return { ready: false };
   const { html, signal, hooks: preactHooks } = coreKit;
 
   /**
@@ -360,11 +362,63 @@ G.HudKitItems = (() => {
     ></div>`;
   }
 
+  // ---------- the ball belt (main.shop.pokeball's, decision 2026-11-20-155-main-shop-pokeball-look; the catch screen
+  // draws the same belt, decision 2026-11-20-155-catch-window-look; #128) ----------
+  // A panel.pixel sized to six wells over the slot grid in the Unified greys, rimmed in the Poke Balls pocket ramp
+  // (color.rim.belt, kept canon) when bought and the fainted ramp when not, its number on the top-left corner (Michroma
+  // 16, white with an ink stroke; hud-overlay.css). Each screen draws its own slots (their wells, balls, keys, cursor
+  // and input) in the places the belt gives.
+  const BALL_BELT = { slots: 6, well: 52, gap: 8, inset: 16, ballScale: 2 };
+  BALL_BELT.width = BALL_BELT.well + 2 * BALL_BELT.inset; // 84
+  BALL_BELT.height =
+    BALL_BELT.slots * BALL_BELT.well + (BALL_BELT.slots - 1) * BALL_BELT.gap + 2 * BALL_BELT.inset; // 384
+  // -6: the ball's frame centred on the well
+  BALL_BELT.ballAt = (BALL_BELT.well - G.BALL_SPRITES.size * BALL_BELT.ballScale) / 2;
+  /** Slot index's place in its belt, px: { left, top, width, height }, the well's own box. */
+  const beltSlotPlace = (index) => ({
+    left: BALL_BELT.inset + 'px',
+    top: BALL_BELT.inset + index * (BALL_BELT.well + BALL_BELT.gap) + 'px',
+    width: BALL_BELT.well + 'px',
+    height: BALL_BELT.well + 'px',
+  });
+  const BELT_RIM = G.Tokens.ramp('color.rim.belt');
+  /**
+   * One belt at left, top (px in its parent): number (1 to 3) on its corner; locked when not bought (the fainted ramp,
+   * class is-locked); className adds the screen's class. slot(index, place) draws each of the six slots, place being
+   * its box in the belt (beltSlotPlace), for the slot's own element's style.
+   */
+  function BallBelt({ left, top, number, locked, className, slot }) {
+    const { PixelPanel } = panel;
+    return html`<${PixelPanel}
+      left=${left}
+      top=${top}
+      width=${BALL_BELT.width}
+      height=${BALL_BELT.height}
+      rim=${locked ? coreKit.FAINTED_RIM : BELT_RIM}
+      body=${pixels.PATTERNS.slotGridUnified}
+      className=${'ball-belt' + (locked ? ' is-locked' : '') + (className ? ' ' + className : '')}
+    >
+      <div class="ball-belt-number">${number}</div>
+      ${Array.from({ length: BALL_BELT.slots }, (_, index) => slot(index, beltSlotPlace(index)))}
+    </${PixelPanel}>`;
+  }
+  /** A ball in a belt well: its front frame at the belt's scale, its frame centred on the well (the well clips it). */
+  const BeltBall = ({ ball }) =>
+    html`<${BallSprite}
+      ball=${ball}
+      frame=${G.BALL_SPRITES.animations.front[0]}
+      scale=${BALL_BELT.ballScale}
+      style=${{ left: BALL_BELT.ballAt + 'px', top: BALL_BELT.ballAt + 'px' }}
+    />`;
+
   return {
     ready: true,
     RunItemBox,
     RUN_BOX_ROWS,
     BallSprite,
+    BALL_BELT,
+    BallBelt,
+    BeltBall,
     IconCanvas,
     ItemSquare,
     ItemGrid,

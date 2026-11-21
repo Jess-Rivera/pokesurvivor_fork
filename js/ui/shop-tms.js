@@ -302,6 +302,7 @@ G.ShopTmsPane = (() => {
         const yes = await G.UI.ask(`Teach ${pokemonName} ${moveName}?`, {
           title: 'Buy TM',
           ok: 'Buy',
+          intent: 'positive', // a purchase: it opens on Buy (decision 2026-11-21, until #126 drops it)
           note: `${fmt(price)} PokéCoins. You will have ${fmt(Math.max(0, save.coins - price))} left.`,
         });
         if (!yes) return;

@@ -228,7 +228,8 @@ G.Lib.Button = (() => {
   }
 
   /**
-   * One button.glitch at a fixed size: width (px, its bar included) and height; fontSize the label's px. intent:
+   * One button.glitch: at a fixed size (width in px, its bar included, and height), or with no width as wide and tall
+   * as its label and the board's padding (the dialog's answers; class glitch-fit); fontSize the label's px. intent:
    * neutral, negative or positive. focused: under the cursor (the screen decides, by keys or the mouse). refused: a
    * press only says why (the screen's sound and toast); disabled: it cannot be pressed at all. pressCount: the screen
    * bumps it each time a key presses this button, so it plays its press by keys too. secret: one of GLITCH_BURSTS, or
@@ -283,16 +284,17 @@ G.Lib.Button = (() => {
       if (secret && slices.current) playGlitchBursts(slices.current, secret);
     }, [secret]);
     preactHooks.useEffect(() => () => clearTimeout(timer.current), []);
-    const classes = ['glitch-button', 'glitch-' + intent, focused && 'focused', refused && 'refused']
-      .concat(disabled ? 'disabled' : [], phase || [])
+    const fitted = width == null,
+      size = fitted ? {} : { width: px(width - GLITCH.barWidth), height: px(height) };
+    const states = [fitted && 'glitch-fit', focused && 'focused', refused && 'refused', disabled && 'disabled', phase];
+    const classes = ['glitch-button', 'glitch-' + intent, ...states]
       .filter(Boolean)
       .join(' ');
     return html`<button
       type="button"
       class=${classes}
       style=${{
-        width: px(width - GLITCH.barWidth),
-        height: px(height),
+        ...size,
         fontSize: px(fontSize),
         '--glitch-swipe': GLITCH_TIMING.swipeMs + 'ms',
         '--glitch-press': GLITCH_TIMING.pressMs + 'ms',

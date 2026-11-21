@@ -409,34 +409,32 @@ to E14 and F15 to J18; values picked by eye, not sampled.
 
 ---
 
-#### `[Approved]` Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)
+#### `[Approved]` Catch screen (catch.window, #128; decisions 2026-11-20-155-catch-window-look and -catch-result-is-a-toast-and-the-window-is-shorter)
 
-Every colour is an existing one given a job here (plan: docs/ASCII Concept Maps/136b - Catch Screen Redesign Plan.md).
+Built from the UI library's pieces (js/ui/catch-ui.js, css/bw-catch.css; board tools/library/catch-draft.js). The
+#136b colour table is history (docs/ASCII Concept Maps/136b - Catch Screen Redesign Plan.md).
 
-| Role                                        | Colour                        | Source                            |
-| ------------------------------------------- | ----------------------------- | --------------------------------- |
-| Window background                           | `#181818`, frame `#212121`    | the Run Info panel                |
-| Pokemon panel rim                           | its type ramps, left first type, right second, blended along top and bottom | Type colours |
-| Belt rim (light, base, dark)                | `#DBB26E` `#C88820` `#825815` | UI-PALETTES Bag, Poke Balls pocket |
-| Belt slot edge / selected slot body         | `#825815` / `#825815` with a `#DBB26E` edge | the same ramp   |
-| Locked belt rim                             | the fainted grey ramp at 45%  | Roster rows                       |
-| Pokemon owned rim (light, base, dark)       | `#C1C2C1` `#9FA19F` `#676967` | Normal type ramp                  |
-| Flee ring filled / empty                    | first type's Dark / `#e7e7e7` | Type colours / run item paper     |
-| Buttons                                     | the team menu's button shape (`assets/ui/team/btn.png`, kit `RoundedButton`), 4 px per art pixel | Jess, 2026-11-16 |
-| Button rim at rest / body                   | `#ffffff` `#e7e7e7` `#848484` / `#181818` | the pause menu's rest ramp, panel body |
-| Throw rim focused                           | `#9be895` `#38d030` `#1d6c19` | Pause menu button focus ramp      |
-| Let It Go text at rest                      | `#ffffff` at 45%              | mockup                            |
-| Let It Go rim and body focused              | `#ff8a90` `#e8202a` `#7c1016`, body `#7c1016` | Pause menu End answer |
-| Result line                                 | `#f3b200`                     | the Lv yellow                     |
+| Role | Piece and colour |
+| --- | --- |
+| Window | panel.clean (grey.panel, 1 px grey.slate edge), 980 x 424 |
+| The Pokemon | panel.pixel in its types: first type left, second right, the middle 25% dithered; a plain grey.raised body |
+| Flee ring | portrait.round's ring at 160 px: the first type's dark over grey.paper, one step per miss |
+| Name, band, ball line, slot keys | font.silver 30, 40, 30 and 20, white with a one font pixel grey.ink outline |
+| Belts | the kit's ball belt (the Shop's): color.rim.belt, not bought the fainted ramp; Unified slot grid inside |
+| Wells | well: empty grey.ink ring, holding the belt base, selected the belt dark inside its light ring |
+| Pokemon owned | panel.clean on grey.raised; 48 px portrait.round faces, grey.ink stroke |
+| Cursor | cursor.ring (yellow.base) on wells and faces, with the keys only; buttons show their own focus |
+| Buttons | button.glitch 280 x 54: Throw positive, Let It Go negative |
+| Result | a toast (below): caught is news, a miss, a flee and out of balls bad news |
+| Let It Go ask | modal.dialog, negative: opens on Keep trying (neutral), Let it go red |
 
 ---
 
-#### `[Approved]` Toasts (G.UI.toast, every screen; Jess, 2026-11-13, #104c)
-- Body `#181818` and a 2 px rim `#29ceff`: the main menu top and bottom bars' charcoal and teal line (bw-menu.css
-  `--bw-charcoal`, `--bw-line`), with a 2 px `#101010` outline. Bad news (`tone 'bad'`): the same with the pause menu
-  red `#c8141c` rim.
-- Text: Michroma (`HudModule`) 20 px on 30 px lines, white, the module panels' soft shadow ("Fonts": which face for
-  what); long messages wrap at about 720 px. Bottom centre.
+#### `[Approved]` Toasts (G.UI.toast, every screen; the UI library's toast, js/ui/lib/primitives/toast/toast.css, #128)
+- panel.clean's grey.panel body with a 1 px edge: teal.base for news, red.base for bad news (`tone 'bad'`), and a
+  2 px grey.ink outline round it (decision 2026-11-20-155-catch-result-is-a-toast-and-the-window-is-shorter). Before
+  #128: a `#181818` body with a 2 px `#29ceff` rim (#104c), bad news `#c8141c`.
+- Text: Michroma (`HudModule`) 20 px on 30 px lines, grey.white; long messages wrap at about 720 px. Bottom centre.
 
 ## Shapes
 

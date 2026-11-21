@@ -1,7 +1,8 @@
-/* ============ bw-catch.css: the catch screen (#136, redesign 136b; js/ui/catch-ui.js) ============
- * Mockup: assets/excalidraw/Catch Pokemon Popup.svg. The pause menu's stage (pause-menu.css .pm-stage, scaled by --pm-scale)
- * inside #scr-catch; boxes, buttons, cursor and tooltip are the HUD kit's (hud-overlay.css, pause-menu.css). Places and sizes
- * come from catch-ui.js (stage pixels); only the looks are here.
+/* ============ bw-catch.css: the catch screen (#136, redesign 136b, catch.window #128; js/ui/catch-ui.js) ============
+ * Look: catch.window (decision 2026-11-20-155-catch-window-look; board tools/library/catch-draft.js). The pause menu's
+ * stage (pause-menu.css .pm-stage, scaled by --pm-scale) inside #scr-catch. The pieces are the UI library's and the HUD
+ * kit's: panel.clean, panel.pixel, portrait.round, the ball belt and its wells, button.glitch, cursor.ring. Places and
+ * sizes come from catch-ui.js (stage pixels); only the looks are here.
  */
 .catch-host {
   position: absolute;
@@ -10,209 +11,109 @@
   --pm-scale: 1;
 }
 .catch-stage {
-  font-family: 'GameFont', monospace;
-  font-synthesis: none;
-  color: #ffffff;
+  color: var(--color-grey-white);
 }
-/* Text (#99 pilot, Jess 2026-11-16): Silver (GameFont) on its pixel grid. Silver-game.ttf draws 19 font pixels per em and
-   GameFont enlarges it 140%, so 27.1429 px is exactly 2 screen pixels per font pixel and 40.7143 px exactly 3; whole sizes
-   such as 20 or 28 fall between and blur. The outline is one font pixel. */
-.catch-text,
-.catch-button .hud-team-button-label {
-  position: absolute;
-  font-size: 27.1429px;
-  line-height: 30px;
-  white-space: nowrap;
-  text-shadow:
-    2px 0 0 #101010,
-    -2px 0 0 #101010,
-    0 2px 0 #101010,
-    0 -2px 0 #101010,
-    2px 2px 0 #101010,
-    -2px 2px 0 #101010,
-    2px -2px 0 #101010,
-    -2px -2px 0 #101010;
-}
-.catch-stage .pm-box,
-.catch-ring,
-.catch-slot,
-.catch-owned-cell,
+.catch-window,
+.catch-owned,
 .catch-button,
 .catch-ball {
   position: absolute;
 }
-/* the window: its look is .panel-flat (panel.flat, js/ui/lib/primitives/panel/panel.css), as Run Info's */
-.catch-window {
-  position: absolute;
-}
-/* .pm-box-gradients (a dual-type rim): js/ui/lib/primitives/panel/panel.css (#155 155c) */
 
-/* ---------- the Pokemon: the flee ring (one step per miss, the first type's Dark), name, band ---------- */
-.catch-ring {
-  border-radius: 50%;
-  background: conic-gradient(var(--flee-fill) 0 var(--flee), var(--flee-empty) var(--flee) 360deg);
-}
-.catch-face {
+/* ---------- Silver (font.silver, the Pokemon tier): crisp at 20, 30 and 40, a one font pixel ink outline ---------- */
+.catch-silver {
   position: absolute;
-  box-sizing: border-box;
-  border: 4px solid #101010;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #101010;
-  transition:
-    transform 0.2s ease-in,
-    opacity 0.2s linear;
+  font-family: 'Silver 10px', monospace;
+  font-synthesis: none;
+  font-size: var(--silver-size);
+  line-height: var(--silver-size);
+  white-space: nowrap;
+  color: var(--color-grey-white);
+  text-shadow:
+    var(--silver-pixel) 0 0 var(--color-grey-ink),
+    calc(-1 * var(--silver-pixel)) 0 0 var(--color-grey-ink),
+    0 var(--silver-pixel) 0 var(--color-grey-ink),
+    0 calc(-1 * var(--silver-pixel)) 0 var(--color-grey-ink),
+    var(--silver-pixel) var(--silver-pixel) 0 var(--color-grey-ink),
+    calc(-1 * var(--silver-pixel)) var(--silver-pixel) 0 var(--color-grey-ink),
+    var(--silver-pixel) calc(-1 * var(--silver-pixel)) 0 var(--color-grey-ink),
+    calc(-1 * var(--silver-pixel)) calc(-1 * var(--silver-pixel)) 0 var(--color-grey-ink);
 }
+.catch-silver-20 {
+  --silver-size: 20px;
+  --silver-pixel: 2px;
+}
+.catch-silver-30 {
+  --silver-size: 30px;
+  --silver-pixel: 3px;
+}
+.catch-silver-40 {
+  --silver-size: 40px;
+  --silver-pixel: 4px;
+}
+
+/* ---------- the Pokemon: the flee ring's face, the name, the band and the ball line, centred ---------- */
+.catch-mon .catch-name,
+.catch-mon .catch-band,
+.catch-mon .catch-ball-name {
+  left: 20px;
+  right: 20px;
+  white-space: normal;
+  text-align: center;
+}
+/* the face goes into the ball on a throw, comes back on a miss, and fades when it flees */
 .catch-face img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
+  transition: transform 0.2s ease-out;
 }
 .catch-face.is-absorbed img {
   transform: scale(0);
   transition: transform 0.2s ease-in;
 }
-.catch-face img {
-  transition: transform 0.2s ease-out;
-}
 .catch-face.is-fled img {
   opacity: 0;
   transition: opacity 0.6s linear;
 }
-.catch-mon .catch-name {
-  left: 20px;
-  right: 20px;
-  top: 232px;
-  white-space: normal;
-  text-align: center;
-}
-.catch-mon .catch-band {
-  left: 0;
-  right: 0;
-  top: 306px;
-  text-align: center;
-  font-size: 40.7143px;
-  line-height: 44px;
-  color: #ffffff;
-  text-shadow:
-    3px 0 0 #101010,
-    -3px 0 0 #101010,
-    0 3px 0 #101010,
-    0 -3px 0 #101010,
-    3px 3px 0 #101010,
-    -3px 3px 0 #101010,
-    3px -3px 0 #101010,
-    -3px -3px 0 #101010;
-}
-.catch-mon .catch-ball-name {
-  left: 0;
-  right: 0;
-  top: 356px;
-  text-align: center;
-}
-.catch-mon .catch-note {
-  left: 20px;
-  right: 20px;
-  top: 394px;
-  white-space: normal;
-  text-align: center;
-  color: #f3b200;
-}
 
-/* ---------- the belts: six slots each, belt 1 in the Poke Balls pocket colours, 2 and 3 locked ---------- */
-.catch-slot {
-  box-sizing: border-box;
-  border: 2px solid #825815;
-  background: #101010;
-}
+/* ---------- the belts' slots (the kit's ball belt and its wells) ---------- */
 .catch-slot.is-full {
   cursor: pointer;
 }
-.catch-slot.is-selected.is-full {
-  border-color: #dbb26e;
-  background: #825815;
-}
-.catch-slot .catch-ball {
-  left: 0;
-  top: 0;
+.catch-slot .catch-slot-key {
+  right: 0;
+  bottom: -2px;
 }
 .catch-ball {
   image-rendering: pixelated;
   background-repeat: no-repeat;
   pointer-events: none;
 }
-.catch-slot .catch-slot-key {
-  right: 0;
-  bottom: -4px;
-  line-height: 27px;
-}
-.catch-belt.is-locked {
-  opacity: 0.45;
-}
-.catch-belt.is-locked .catch-slot {
-  border-color: #495151;
-}
 
-/* ---------- Pokemon owned: Normal's colours, a 4 x 4 window that scrolls ---------- */
+/* ---------- Pokemon owned: panel.clean on the cards' grey.raised body, 48 px faces that scroll ---------- */
+.catch-owned.panel-clean {
+  background: var(--color-grey-raised);
+}
 .catch-owned-grid {
   position: relative;
 }
 .catch-owned-cell {
-  width: 56px;
-  height: 56px;
+  position: absolute;
 }
-/* the cursor sits on the cell's edge here (4 px out elsewhere): the scroll box clips anything outside a cell */
-.catch-owned-cell .hud-cursor-top-left {
-  left: 0;
-  top: 0;
-}
-.catch-owned-cell .hud-cursor-top-right {
-  right: 0;
-  top: 0;
-}
-.catch-owned-cell .hud-cursor-bottom-left {
-  left: 0;
-  bottom: 0;
-}
-.catch-owned-cell .hud-cursor-bottom-right {
-  right: 0;
-  bottom: 0;
-}
-/* an owned face (portrait.round, js/ui/lib/primitives/portrait/portrait.css): fills its cell less the cursor's room */
 .catch-owned-face {
   position: absolute;
-  inset: 4px;
+  left: 0;
+  top: 0;
 }
 .catch-owned .catch-owned-none {
   left: 0;
   right: 0;
-  top: 128px;
+  top: 112px;
   text-align: center;
-  color: #9fa19f;
-}
-
-/* ---------- Throw and Let It Go: the kit's RoundedButton; Let It Go's text at 45% until focused ---------- */
-.catch-button {
-  width: 280px;
-  height: 72px;
-}
-.catch-button .hud-team-button {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-.catch-button .hud-team-button-label {
-  left: 28px; /* the team menu's 14 px left padding at this button's 2x size */
-  top: 21px;
-}
-.catch-let-go:not(.is-focused) .hud-team-button-label {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--color-grey-mid);
 }
 
 /* ---------- the ball in the air ---------- */
 .catch-flight {
-  z-index: 2;
+  z-index: 3;
 }
 .catch-flight.is-caught {
   animation: catch-click 0.3s ease-out;

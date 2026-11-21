@@ -279,6 +279,7 @@ G.EvScreen = (() => {
         title: 'Discard leftover EVs?',
         ok: 'Yes',
         cancel: 'Cancel',
+        intent: 'negative',
       });
       if (!yes) return;
     }
@@ -292,7 +293,12 @@ G.EvScreen = (() => {
   }
 
   async function goHome() {
-    const yes = await G.UI.ask('Discard all EVs and return?', { title: 'Go Home', ok: 'Yes', cancel: 'Cancel' });
+    const yes = await G.UI.ask('Discard all EVs and return?', {
+      title: 'Go Home',
+      ok: 'Yes',
+      cancel: 'Cancel',
+      intent: 'negative',
+    });
     if (yes) leave(); // saves nothing
   }
 

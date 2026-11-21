@@ -192,26 +192,6 @@
 #shop-balls.shop-pane-fixed {
   overflow: visible;
 }
-/* each belt's number on its top-left rim corner: Michroma 16, white with a 1 px ink stroke (eight hard shadows, as the
-   HUD's text; Jess 2026-11-20) */
-.shop-belt-number {
-  position: absolute;
-  z-index: 2;
-  pointer-events: none;
-  font-family: 'HudModule', sans-serif;
-  font-size: 16px;
-  line-height: 1;
-  color: var(--color-grey-white);
-  text-shadow:
-    1px 0 0 var(--color-grey-ink),
-    -1px 0 0 var(--color-grey-ink),
-    0 1px 0 var(--color-grey-ink),
-    0 -1px 0 var(--color-grey-ink),
-    1px 1px 0 var(--color-grey-ink),
-    -1px 1px 0 var(--color-grey-ink),
-    1px -1px 0 var(--color-grey-ink),
-    -1px -1px 0 var(--color-grey-ink);
-}
 
 /* ---------- the kit's Dropdown (149f, js/ui/menu-window-kit.js): a box like the search bar, its grouped choices in a
    list under it; a click outside the list closes it. The keys' cursor shows its corners; the mouse a green rim ---------- */

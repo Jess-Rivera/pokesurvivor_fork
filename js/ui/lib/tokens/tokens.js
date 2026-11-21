@@ -224,6 +224,15 @@ G.Tokens = (() => {
       job: 'Tooltips (20) and the catch screen (crisp only at multiples of 13.5714: 27.1429 and 40.7143)',
     },
     {
+      name: 'font.silver',
+      family: 'Silver 10px',
+      file: 'assets/fonts/Silver-10px.ttf',
+      sizes: [20, 30, 40],
+      job:
+        'The Pokemon tier: what is on or about a Pokemon (the catch screen first, #128; the rest at #126). ' +
+        'Silver on a 10 px grid, crisp at 20, 30 and 40, with a one font pixel ink outline',
+    },
+    {
       name: 'font.monogram',
       family: 'Monogram',
       file: 'assets/fonts/monogram-extended.ttf',

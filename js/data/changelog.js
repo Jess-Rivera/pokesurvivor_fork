@@ -8,8 +8,12 @@
 G.CHANGELOG = [
   {
     d: '2026-11-21',
-    title: ['A new look for the Poke Balls shop', 'A new look for the Poke Balls shop'],
+    title: ['A new look for the Poke Balls shop and the catch screen', 'A new look for the Poke Balls shop and the catch screen'],
     new: [
+      [
+        "The catch screen has a new look: a clean window, the Pokemon's types on its frame (both, for a two-type Pokemon), belts like the Shop's and new buttons. Under the cursor a slot or a face shows a yellow ring.",
+        "The catch screen has a new look: a clean window, the Pokemon's types on its frame (both, for a two-type Pokemon), belts like the Shop's and new buttons. Under the cursor a slot or a face shows a yellow ring.",
+      ],
       [
         'The Poke Balls tab of the Shop has a new look: cleaner cards, new buttons, and belts with round slots for your balls. Under the cursor a slot shows a yellow ring.',
         'The Poke Balls tab of the Shop has a new look: cleaner cards, new buttons, and belts with round slots for your balls. Under the cursor a slot shows a yellow ring.',
@@ -17,6 +21,22 @@ G.CHANGELOG = [
     ],
     chg: [
       [
+        'A throw now tells you how it went in a message at the bottom of the screen.',
+        'A throw now tells you how it went in a message at the bottom of the screen.',
+      ],
+      [
+        'Questions that would lose you something now start on the safe answer (Keep trying, Cancel), so a stray Enter loses nothing. Questions about buying start on Buy.',
+        'Questions that would lose you something now start on the safe answer (Keep trying, Cancel), so a stray Enter loses nothing. Questions about buying start on Buy.',
+      ],
+      [
+        'Questions and messages have a new clean look. With the mouse, a question shows no selected button; your first key press shows it.',
+        'Questions and messages have a new clean look. With the mouse, a question shows no selected button; your first key press shows it.',
+      ],
+      [
+        'In a run, a Pokemon with two types shows both colours on the frame of its team row.',
+        'In a run, a Pokemon with two types shows both colours on the frame of its team row.',
+      ],
+      [
         'Unlocking a ball and buying a belt no longer ask first: like buying balls, they happen as soon as you press.',
         'Unlocking a ball and buying a belt no longer ask first: like buying balls, they happen as soon as you press.',
       ],
@@ -35,6 +55,12 @@ G.CHANGELOG = [
       [
         'A move that raises every stat by the same amount now says so once: Ancient Power reads "10% team all stats +1".',
         'A move that raises every stat by the same amount now says so once: Ancient Power reads "10% team all stats +1".',
+      ],
+    ],
+    fix: [
+      [
+        'The ball no longer blinks out for a moment when you throw it.',
+        'The ball no longer blinks out for a moment when you throw it.',
       ],
     ],
   },

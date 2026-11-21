@@ -94,7 +94,10 @@ def cut_strips():
 
 def centre_shifts(strips):
     """Each frame's [x, y] shift in whole art px: the frame's centre minus the centre of its filled (opaque) box. Halves
-    round up, as JavaScript's Math.round does (a 23 px tall ball sits half an art px low). An empty frame stays put."""
+    round up, as JavaScript's Math.round does (a 23 px tall ball sits half an art px low). An empty frame stays put.
+    The wobble's tilt frames (every wobble frame but the front face) keep their sideways lean: their x shift is 0, and
+    only y centres them, so the ball does not bob as the wobble passes through the front face (Jess 2026-11-21)."""
+    tilt_frames = set(ANIMATIONS["wobble"]) - set(ANIMATIONS["front"])
     shifts = {}
     for ball, data in strips.items():
         alpha = Image.open(io.BytesIO(data)).getchannel("A")
@@ -105,9 +108,10 @@ def centre_shifts(strips):
                 frames.append((0, 0))
                 continue
             left, top, right, bottom = box
-            frames.append(
-                tuple(math.floor(FRAME / 2 - (low + high) / 2 + 0.5) for low, high in ((left, right), (top, bottom)))
+            shift_x, shift_y = (
+                math.floor(FRAME / 2 - (low + high) / 2 + 0.5) for low, high in ((left, right), (top, bottom))
             )
+            frames.append((0 if row in tilt_frames else shift_x, shift_y))
         shifts[ball] = frames
     return shifts
 

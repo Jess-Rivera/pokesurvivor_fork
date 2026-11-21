@@ -6,8 +6,10 @@
 G.HudKitHpBars = (() => {
   const coreKit = G.HudKit,
     panel = G.Lib && G.Lib.Panel, // the box shape and Box are the UI library's panel.pixel (#155 155c)
+    pixels = G.Lib && G.Lib.Pixels, // a two-type card's rim (#128 catch.window)
     bars = G.Lib && G.Lib.Bar; // the life bar and the timer strip are its bar.life and bar.timer (155c-3)
-  if (!coreKit.ready || !panel || !panel.ready || !bars || !bars.ready) return { ready: false };
+  if (!coreKit.ready || !panel || !panel.ready || !bars || !bars.ready || !pixels || !pixels.ready)
+    return { ready: false };
   const { html, signal, PALETTE, HP_COLOURS, hpBand, SLOT_GRID, PixelShape } = coreKit;
   const { portraitSource, portraitFallback, letterRows, RoundPortrait } = coreKit;
 
@@ -81,11 +83,14 @@ G.HudKitHpBars = (() => {
   /**
    * One roster card: the box rimmed in `rim`, the HP fill (fill from rosterFill, band from hpBand), the "HP" label, the
    * portrait in its circle and the name. Extra pieces (chips, the cooldown shade, the key, the cursor) come as children.
-   * faceClass adds a class to the portrait circle (the pause menu's selected card).
+   * faceClass adds a class to the portrait circle (the pause menu's selected card). rimRight: a two-type Pokemon's
+   * second ramp, its rim taking it on the right, dithered across the middle (decision
+   * 2026-11-20-155-two-type-team-slot-rim-dithered-middle-band; the run HUD roster, #128 catch.window).
    */
   function RosterCard({
     artWidth,
     rim,
+    rimRight,
     fill,
     band,
     dex,
@@ -111,7 +116,11 @@ G.HudKitHpBars = (() => {
         artWidth=${artWidth}
         artRows=${ROSTER_ART_ROWS}
         artPixel=${ROSTER_ART_PIXEL}
-        paintRow=${letterRows(rosterBoxGrid(artWidth), rosterColours(rim))}
+        paintRow=${
+          rimRight
+            ? pixels.twoTypeLetterRows(rosterBoxGrid(artWidth), rosterColours(rim), rimRight)
+            : letterRows(rosterBoxGrid(artWidth), rosterColours(rim))
+        }
       />
       <div
         class="hud-roster-fill"

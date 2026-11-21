@@ -64,6 +64,7 @@ G.HudRosterPanel = (() => {
     return html`<${RosterCard}
         artWidth=${ROW.artWidth}
         rim=${row.rim}
+        rimRight=${row.rimRight}
         fill=${row.fill}
         band=${row.band}
         dex=${row.dex}
@@ -139,7 +140,9 @@ G.HudRosterPanel = (() => {
     if (!chipReaders.has(slot)) chipReaders.set(slot, createChipReader());
     const chipRead = chipReaders.get(slot)(member); // read every frame, so the peaks stay current while active
     const fraction = member.maxHp > 0 ? Math.min(1, Math.max(0, member.hp / member.maxHp)) : 0;
-    const type = (member.mon && member.mon.types && member.mon.types[0]) || 'normal';
+    const types = (member.mon && member.mon.types) || [],
+      type = types[0] || 'normal',
+      secondType = !fainted && types[1]; // a two-type rim (#128 catch.window); fainted stays grey
     const heldDef = member.item && G.Items.BY[member.item];
     return {
       key: 'slot' + slot,
@@ -148,7 +151,8 @@ G.HudRosterPanel = (() => {
       shiny: !!member.shiny,
       name: (member.mon && member.mon.name) || '',
       rim: fainted ? FAINTED_RIM : typeColours(type),
-      rimKey: fainted ? 'fainted' : type,
+      rimRight: secondType ? typeColours(secondType) : null,
+      rimKey: fainted ? 'fainted' : type + (secondType ? '/' + secondType : ''),
       active: isActive && !fainted,
       fainted,
       fill: rosterFill(member.hp > 0 ? fraction : 0, fainted, ROW.artWidth),

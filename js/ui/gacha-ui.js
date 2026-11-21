@@ -465,6 +465,7 @@ G.GachaUI = (() => {
     const yes = await G.UI.ask(`Spend ${fmt(price)} PokéCoins on ${it.name}?`, {
       title: 'Buy team item',
       ok: 'Buy',
+      intent: 'positive', // a purchase: it opens on Buy (decision 2026-11-21, until #126 drops it)
       note: `You will have ${fmt(Math.max(0, G.DB.save.coins - price))} left.`,
     });
     if (!yes) return;
@@ -594,6 +595,7 @@ G.GachaUI = (() => {
     const yes = await G.UI.ask(`Spend ${fmt(price)} PokéCoins on berry slot ${slotNumber}?`, {
       title: 'Buy berry slot',
       ok: 'Buy',
+      intent: 'positive', // a purchase: it opens on Buy (decision 2026-11-21, until #126 drops it)
       note: `You will have ${fmt(Math.max(0, G.DB.save.coins - price))} left.`,
     });
     if (!yes) return;
@@ -615,6 +617,7 @@ G.GachaUI = (() => {
     const yes = await G.UI.ask(`Spend ${fmt(price)} PokéCoins on team item slot ${k}?`, {
       title: 'Buy team item slot',
       ok: 'Buy',
+      intent: 'positive', // a purchase: it opens on Buy (decision 2026-11-21, until #126 drops it)
       note: `You will have ${fmt(Math.max(0, G.DB.save.coins - price))} left.`,
     });
     if (!yes) return;

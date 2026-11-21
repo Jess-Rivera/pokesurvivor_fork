@@ -1,6 +1,7 @@
 /* ============ well.js: the round slot (G.Lib.Well; #128 S6) ============
  *   well  Well: a round slot that holds one thing (a ball; later a berry or a move's type glyph). A grey.panel inside
- *         and a 2 px ring: grey.ink when it is empty, the holder's colour when it holds something. What it holds is
+ *         and a 2 px ring: grey.ink when it is empty, the holder's colour when it holds something; selected (the catch
+ *         screen's chosen ball, #128 catch.window) takes the holder's own fill and ring colours. What it holds is
  *         clipped to the circle, so a picture may be drawn larger than the well (a ball fills most of it). The board's
  *         berry pocket and move slot wells (decision 2026-11-19-155-team-slot-hp-bar-cursor-gap-and-berry-pocket),
  *         named by its look (decision 2026-11-18-155-library-pieces-named-by-look). First on the Main Menu Shop's
@@ -16,11 +17,13 @@ G.Lib.Well = (() => {
   const html = htmFactory.bind(preact.h);
 
   /** A well size px across, at the top left of its host. ring: the colour of its ring while it holds something (pass
-   *  null when empty, for the ink ring); children: what it holds. */
-  function Well({ size, ring = null, className, children }) {
+   *  null when empty, for the ink ring); fill: the inside's colour when not grey.panel (selected); children: what it
+   *  holds. */
+  function Well({ size, ring = null, fill = null, className, children }) {
+    const colours = { ...(ring ? { '--well-ring': ring } : {}), ...(fill ? { '--well-fill': fill } : {}) };
     return html`<div
-      class=${'well' + (ring ? ' is-holding' : '') + (className ? ' ' + className : '')}
-      style=${{ width: size + 'px', height: size + 'px', ...(ring ? { '--well-ring': ring } : {}) }}
+      class=${'well' + (ring ? ' is-holding' : '') + (fill ? ' is-selected' : '') + (className ? ' ' + className : '')}
+      style=${{ width: size + 'px', height: size + 'px', ...colours }}
     >
       ${children}
     </div>`;

@@ -319,7 +319,15 @@ G.ShopUI = (() => {
         ' · ' +
         fmt(G.Silver.whole - c.cost) +
         ' left',
-      opts = { title: G.Shops.nameOf(cur.shop.kind), ok: 'Buy', cancel: 'Cancel', note },
+      // a buy that replaces a move is a loss (no refund; decision 2026-11-20-155-move-shop-replace-a-move-asks-replace-
+      // or-go-back), so it opens on Cancel; a buy into a free slot is a purchase and opens on Buy
+      opts = {
+        title: G.Shops.nameOf(cur.shop.kind),
+        ok: 'Buy',
+        cancel: 'Cancel',
+        note,
+        intent: old != null ? 'negative' : 'positive',
+      },
       shop = cur.shop;
     cur.asking = true;
     G.Audio.sfx('select');

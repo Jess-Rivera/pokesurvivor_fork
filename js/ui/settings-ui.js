@@ -511,6 +511,7 @@ G.SettingsUI = (() => {
       !(await G.UI.ask(G.T('Eres invitado: se perderá todo el progreso. ¿Salir?'), {
         title: 'Sign out',
         ok: 'Sign out',
+        intent: 'negative',
       }))
     )
       return;

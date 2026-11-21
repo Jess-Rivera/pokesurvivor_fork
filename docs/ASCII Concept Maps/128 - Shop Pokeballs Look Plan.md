@@ -15,11 +15,10 @@ Built in one step. Owed by Jess: `node tools/check.js`, `npm run format`, `node 
 | The menu cursor gained isShownOn, ringOn and keyPressCountOf | The marks a self-drawn cursor needs (data-cursor-shown, which the smoke reads), the ring's target, and a key press counter so button.glitch plays its press by keys too. |
 | The well's slot class is shop-belt-slot, not catch-slot | catch-slot carries the catch screen's square border and black fill. The smoke reads the new name. |
 
-Flagged for Jess (see the chat):
-- cursor.ring is 3 px thick per decision 2026-11-20-155-cursor-ring-for-round-pieces-and-no-blink; the board draft
-  draws it 2 px (CURSOR_RING in cursor-draft.js). One number in js/ui/lib/primitives/cursor/cursor.js.
-- D2 was offered as "about 1 art px". The still frames are 1 to 3 art px, but the catch screen's wobble frames
-  (11 to 16) shift up to 4 art px sideways (8 px at 2x), which takes some of the lean out of the wobble.
+Resolved after the build (Jess 2026-11-21):
+- cursor.ring is 2 px, as the board draws it (decision 2026-11-21-cursor-ring-2px).
+- The wobble's tilt frames keep their lean: no sideways centring, up and down only, so no bob (decision
+  2026-11-21-ball-centring-keeps-wobble-lean). The harness checks it.
 
 ```mermaid
 flowchart LR

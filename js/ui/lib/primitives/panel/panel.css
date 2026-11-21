@@ -12,10 +12,6 @@
 .pm-box > * {
   position: absolute;
 }
-/* a dual-type rim's gradients: 0 x 0, paints nothing */
-.pm-box-gradients {
-  position: absolute;
-}
 
 /* ---------- panel.thin: the menu windows' thin teal rim on the checker body ---------- */
 .panel-thin {

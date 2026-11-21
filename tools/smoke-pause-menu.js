@@ -1577,13 +1577,19 @@ async function main() {
     evState.state === 'ui' && learnTook >= 1900 && learnTook < 3500,
     'Learn: home after about 2 s (' + learnTook + ' ms, state ' + evState.state + ')'
   );
+  // the bad tone's edge is the Unified red (the toast primitive, #128 catch.window), read off the token, not copied
   const badToast = await page.evaluate(() => {
     G.UI.toast('Smoke check', 400, 'bad');
-    return getComputedStyle(document.querySelector('.toast')).borderTopColor;
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--color-red-base)';
+    document.body.appendChild(probe);
+    const red = getComputedStyle(probe).color;
+    probe.remove();
+    return { edge: getComputedStyle(document.querySelector('.toast')).borderTopColor, red };
   });
   ok(
-    badToast === 'rgb(200, 20, 28)',
-    "the shared toast's bad tone keeps the shape with the red rim (" + badToast + ')'
+    badToast.edge === badToast.red,
+    "the shared toast's bad tone keeps the shape with the red edge (" + JSON.stringify(badToast) + ')'
   );
   await sleep(450);
   const toastDrift = await page.evaluate(async () => {

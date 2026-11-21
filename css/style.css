@@ -15,6 +15,13 @@
   descent-override: 19%;
   line-gap-override: 0%;
 }
+/* font.silver (js/ui/lib/tokens/tokens.js; #128 catch.window): Silver re-gridded to 10 font pixels per em
+   (tools/make_silver_font.py), so 20, 30 and 40 px land on whole screen pixels */
+@font-face {
+  font-family: 'Silver 10px';
+  src: url('../assets/fonts/Silver-10px.ttf') format('truetype');
+  font-display: block;
+}
 @font-face {
   font-family: 'Monogram';
   src: url('../assets/fonts/monogram-extended.ttf') format('truetype');
@@ -1057,48 +1064,7 @@ kbd {
   text-shadow: none;
 }
 
-/* The shared toast (G.UI.toast, every screen; Jess, 2026-11-13, #104c): the main menu bars' charcoal with their teal
-   line as the rim (bw-menu.css :root), in Michroma, the game's own UI face, with the module panels' soft shadow (HUD-STYLE
-   "Fonts": the pixel font is only for what is on or about a Pokemon). .bad keeps the shape, with the pause menu red. */
-.toast {
-  position: fixed;
-  left: 50%;
-  bottom: 30px;
-  transform: translateX(-50%);
-  z-index: 60;
-  box-sizing: border-box;
-  max-width: min(720px, calc(100vw - 40px));
-  padding: 12px 20px;
-  background: var(--bw-charcoal, #181818);
-  border: 2px solid var(--bw-line, #29ceff);
-  box-shadow: 0 0 0 2px #101010;
-  font-family: 'HudModule', 'Michroma', sans-serif;
-  font-size: 20px;
-  line-height: 30px;
-  color: #ffffff;
-  text-align: center;
-  white-space: normal;
-  text-shadow:
-    0 0 2px #101010,
-    1px 1px 0 #101010,
-    0 1px 2px #101010;
-  animation: toast-pop 0.2s ease-out;
-}
-.toast.bad {
-  border-color: #c8141c;
-}
-/* the shared pop, but keeping the centring shift: pop's transform replaced translateX(-50%) while it ran, so the
-   toast showed right of centre for 0.2 s and then snapped (Jess, 2026-11-13) */
-@keyframes toast-pop {
-  from {
-    transform: translateX(-50%) scale(0.94);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(-50%);
-    opacity: 1;
-  }
-}
+/* the toast (G.UI.toast): its look is the UI library's toast (js/ui/lib/primitives/toast/toast.css, #128) */
 
 ::-webkit-scrollbar {
   width: 10px;

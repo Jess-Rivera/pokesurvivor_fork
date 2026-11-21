@@ -113,7 +113,12 @@ G.MenuTeam = (() => {
   async function rosBack() {
     if (
       rosDirty() &&
-      !(await G.UI.ask('Discard your team changes?', { title: 'Unsaved team', ok: 'Discard', cancel: 'Keep editing' }))
+      !(await G.UI.ask('Discard your team changes?', {
+        title: 'Unsaved team',
+        ok: 'Discard',
+        cancel: 'Keep editing',
+        intent: 'negative',
+      }))
     )
       return;
     G.MenuUI.open();
@@ -270,6 +275,7 @@ G.MenuTeam = (() => {
     const yes = await G.UI.ask(`Spend ${rosCoins(price)} PokéCoins on Box ${n}?`, {
       title: 'Buy box',
       ok: 'Buy',
+      intent: 'positive', // a purchase: it opens on Buy (decision 2026-11-21, until #126 drops it)
       note: `You have ${rosCoins(s.coins)}. You will have ${rosCoins(s.coins - price)} left.`,
     });
     if (!yes) return;

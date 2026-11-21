@@ -629,11 +629,12 @@ async function catchFlow(browser, query, tag) {
     page.evaluate(() => {
       const root = document.getElementById('scr-catch'),
         session = G.Catch.session,
-        cursorAt = root.querySelector('.hud-cursor'),
+        // the keys' cursor (#128 catch.window): cursor.ring on a well or a face, a button's own focus; each control the
+        // keys' cursor is on marks itself data-cursor-shown, and the old B2 corners never show
+        host = root.querySelector('[data-cursor-shown]'),
         faceImage = root.querySelector('.catch-face img');
-      const host = cursorAt && cursorAt.closest('[data-slot], [data-owned-index], .catch-button');
       const ring = root.querySelector('.catch-ring'),
-        ringDeg = ring ? parseFloat(ring.style.getPropertyValue('--flee')) : NaN;
+        ringDeg = ring ? parseFloat(ring.style.getPropertyValue('--exp')) : NaN;
       const tip = document.querySelector('.hud-tip-layer .hud-tip'), // the page's one tooltip layer
         frame = root.querySelector('.catch-window'); // absent while the screen is closed
       let cursor = 'none';
@@ -643,9 +644,9 @@ async function catchFlow(browser, query, tag) {
       return {
         open: G.UI.isOpen('scr-catch'),
         paused: G.Game.state === 'choice',
-        name: (root.querySelector('.catch-name') || {}).textContent || '',
+        name: ((root.querySelector('.catch-name') || {}).textContent || '').trim(),
         portrait: faceImage ? faceImage.getAttribute('src') || '' : '',
-        band: (root.querySelector('.catch-band') || {}).textContent || '',
+        band: ((root.querySelector('.catch-band') || {}).textContent || '').trim(),
         truth: session ? Math.round(G.Catch.odds(session, 'poke') * 100) : null,
         reach: G.Catch.K.bandAccuracy,
         beltBalls: root.querySelectorAll('[data-belt="0"].is-full').length,
@@ -655,11 +656,15 @@ async function catchFlow(browser, query, tag) {
         owned: root.querySelectorAll('[data-owned-index]').length,
         ownedInBox: session ? G.Copies.all(G.DB.save).filter((c) => c.speciesID === session.dex).length : null,
         cursor,
+        corners: root.querySelectorAll('.hud-cursor').length,
+        rings: root.querySelectorAll('.cursor-ring').length,
+        ringOnCursor: !!host && !!host.querySelector('.cursor-ring'),
         tipRightOfWindow: !!tip && !!frame && tip.getBoundingClientRect().left >= frame.getBoundingClientRect().right,
         misses: session ? session.misses : null,
         allowed: session ? session.allowed : null,
         ringShare: ringDeg / 360,
         selected: (root.querySelector('.catch-slot.is-selected') || { dataset: {} }).dataset.slot,
+        noteLine: !!root.querySelector('.catch-note'),
         asking: G.UI.isOpen('scr-ask'),
         // why a catch did not open: the run's state and the screens up
         why:
@@ -706,12 +711,50 @@ async function catchFlow(browser, query, tag) {
     shown.owned === shown.ownedInBox && shown.owned >= 5,
     tag + ': Pokemon owned shows every copy of the species in the box (' + shown.owned + ')'
   );
+  // #128 catch.window: the look from the library's pieces. The window is panel.clean, as tall as a belt plus the belt's
+  // distance from its top at both ends; the Pokemon panel's rim holds both its types' base colours (the dither) with no
+  // gradient; three ball belts of six wells; the selected ball's well is in the selected state
+  const look = await page.evaluate(() => {
+    const root = document.getElementById('scr-catch'),
+      frame = root.querySelector('.catch-window'),
+      belts = [...root.querySelectorAll('.catch-belt.ball-belt')],
+      mon = root.querySelector('.catch-mon'),
+      types = G.DEX_BY[G.Catch.session.dex].types,
+      fills = new Set([...mon.querySelectorAll(':scope > svg rect')].map((rect) => rect.getAttribute('fill').toLowerCase()));
+    return {
+      clean: frame.classList.contains('panel-clean'),
+      heightFitsBelt: Math.abs(frame.clientHeight - (2 * belts[0].offsetTop + belts[0].offsetHeight)) < 1,
+      types: types.length,
+      bothTypes: types.every((type) => fills.has(G.U.TYPE_COLOR[type].toLowerCase())),
+      gradient: !!mon.querySelector('linearGradient'),
+      wells: belts.map((belt) => belt.querySelectorAll('.catch-slot > .well').length),
+      selectedWell: !!root.querySelector('.catch-slot.is-selected > .well.is-selected'),
+    };
+  });
+  ok(
+    look.clean &&
+      look.heightFitsBelt &&
+      look.types === 2 &&
+      look.bothTypes &&
+      !look.gradient &&
+      look.wells.join() === '6,6,6' &&
+      look.selectedWell,
+    tag +
+      ': the window is panel.clean and a belt tall; the two-type rim holds both types (dithered, no gradient); three ' +
+      'belts of six wells; the selected ball\'s well is selected (' +
+      JSON.stringify(look) +
+      ')'
+  );
   // the cursor: down the belt, right into the owned grid (tooltip right of the window), down to Throw and Let It Go
-  const path = [];
+  const path = [],
+    cursorLooks = [];
   for (const code of ['ArrowDown', 'ArrowRight', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowUp']) {
     await key(code);
+    await page.waitForTimeout(150); // past cursor.ring's CRT
     const now = await screen();
     path.push(now.cursor + (now.cursor.startsWith('owned') ? (now.tipRightOfWindow ? ' tip' : ' no tip') : ''));
+    const round = now.cursor.startsWith('slot') || now.cursor.startsWith('owned');
+    cursorLooks.push(!now.corners && (round ? now.ringOnCursor && now.rings === 1 : now.rings === 0));
   }
   ok(
     path.join(', ') === 'slot 0.1, owned 0 tip, owned 4 tip, throw, let go, throw',
@@ -720,12 +763,44 @@ async function catchFlow(browser, query, tag) {
       path.join(', ') +
       ')'
   );
+  ok(
+    cursorLooks.every(Boolean),
+    tag + ': by keys the cursor is cursor.ring on wells and faces, a button shows its own focus, no corners anywhere'
+  );
   await key('Escape');
-  ok((await screen()).asking, tag + ': Esc asks before letting it go');
-  await page.click('#ask-no');
-  await page.waitForTimeout(150);
+  const letGoAsk = await page.evaluate(() => ({
+    open: G.UI.isOpen('scr-ask'),
+    onKeepTrying: !!document.querySelector('#ask-no .glitch-button.focused'),
+    keepTryingNeutral: !!document.querySelector('#ask-no .glitch-neutral'),
+    letGoNegative: !!document.querySelector('#ask-ok .glitch-negative'),
+  }));
+  ok(
+    letGoAsk.open && letGoAsk.onKeepTrying && letGoAsk.keepTryingNeutral && letGoAsk.letGoNegative,
+    tag + ': Esc asks before letting it go, and the ask opens on Keep trying (neutral), Let it go red (' +
+      JSON.stringify(letGoAsk) +
+      ')'
+  );
+  await key('Enter'); // a stray Enter keeps the Pokemon (decision 2026-11-20-155-catch-let-it-go-ask-opens-on-keep-trying)
   shown = await screen();
-  ok(shown.open && !shown.asking, tag + ': Keep trying keeps the catch open');
+  ok(shown.open && !shown.asking, tag + ': Enter on the opened ask keeps trying: the catch stays open');
+  // #128 S6: every frame the thrown ball shows, from here through the double-click catch below, is recorded off its
+  // drawn strip position, so a frame outside the strip fails (the first animation frame once picked spin frame -1)
+  await page.evaluate(() => {
+    window.__flightFrames = [];
+    const record = () => {
+      const ball = document.querySelector('#scr-catch .catch-flight');
+      if (!ball || !ball.offsetWidth) return;
+      const frame = -parseFloat(getComputedStyle(ball).backgroundPositionX) / ball.offsetWidth;
+      if (window.__flightFrames[window.__flightFrames.length - 1] !== frame) window.__flightFrames.push(frame);
+    };
+    window.__flightRecorder = new MutationObserver(record);
+    window.__flightRecorder.observe(document.getElementById('scr-catch'), {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['style'],
+    });
+  });
   // Enter on Throw: a sure miss; the selected slot empties and the ring fills by misses / allowed, after the break-out
   const before = shown;
   await forceRandom(0.9999);
@@ -738,6 +813,27 @@ async function catchFlow(browser, query, tag) {
   );
   await page.waitForFunction(() => !G.CatchUI.busy, null, { timeout: 6000 }).catch(() => {});
   shown = await screen();
+  // #128 catch.window: the result is a toast, not a line in the panel: a miss is bad news, the red edge
+  const toastNow = () =>
+    page.evaluate(() => {
+      const toast = document.querySelector('.toast'),
+        probe = document.createElement('span');
+      document.body.appendChild(probe);
+      const tokenColour = (name) => {
+        probe.style.color = 'var(' + name + ')';
+        return getComputedStyle(probe).color;
+      };
+      const colours = { red: tokenColour('--color-red-base'), teal: tokenColour('--color-teal-base') };
+      probe.remove();
+      if (!toast || toast.style.display === 'none') return null;
+      const edge = getComputedStyle(toast).borderTopColor;
+      return { text: toast.textContent.trim(), bad: toast.classList.contains('bad'), red: edge === colours.red, teal: edge === colours.teal };
+    });
+  const missToast = await toastNow();
+  ok(
+    !!missToast && missToast.text === 'Oh no! It broke free.' && missToast.bad && missToast.red && !shown.noteLine,
+    tag + ': a miss shows the bad-news toast with the red edge; the panel has no result line (' + JSON.stringify(missToast) + ')'
+  );
   const printed = await page.evaluate(() => {
     const tables = [],
       realTable = console.table;
@@ -787,6 +883,11 @@ async function catchFlow(browser, query, tag) {
   await slot.dblclick();
   await realRandom();
   await page.waitForFunction(() => !G.UI.isOpen('scr-catch'), null, { timeout: 8000 }).catch(() => {});
+  const caughtToast = await toastNow();
+  ok(
+    !!caughtToast && /was caught!/.test(caughtToast.text) && !caughtToast.bad && caughtToast.teal,
+    tag + ': a catch shows the news toast with the teal edge (' + JSON.stringify(caughtToast) + ')'
+  );
   const after = await page.evaluate(() => ({
     open: G.UI.isOpen('scr-catch'),
     state: G.Game.state,
@@ -801,6 +902,22 @@ async function catchFlow(browser, query, tag) {
       after.left === shown.total - 1 &&
       after.box === box0,
     tag + ': a double click throws one ball, the catch is held (not boxed) and the run plays on'
+  );
+  const flightFrames = await page.evaluate(() => {
+    window.__flightRecorder.disconnect();
+    return { frames: window.__flightFrames, count: G.BALL_SPRITES.frames };
+  });
+  const badFrames = flightFrames.frames.filter(
+    (frame) => !Number.isInteger(frame) || frame < 0 || frame >= flightFrames.count
+  );
+  ok(
+    flightFrames.frames.length > 1 && !badFrames.length,
+    tag +
+      ': a thrown ball only ever shows frames its strip has (' +
+      flightFrames.frames.length +
+      ' frame changes over two throws' +
+      (badFrames.length ? '; outside the strip: ' + badFrames.join(', ') : '') +
+      ')'
   );
   await page.evaluate(() => G.Game.quit());
   await page.waitForFunction(() => G.Game.state === 'over', null, { timeout: 5000 }).catch(() => {});
@@ -1601,7 +1718,7 @@ async function shopFlow(browser, query, tag) {
           label = button.querySelector('span');
         return label.getBoundingClientRect().width <= button.getBoundingClientRect().width;
       }),
-      numbers: belts.map((belt) => (belt.querySelector('.shop-belt-number') || { textContent: '' }).textContent.trim()),
+      numbers: belts.map((belt) => (belt.querySelector('.ball-belt-number') || { textContent: '' }).textContent.trim()),
       buyOnExitRow: !!buy && Math.abs(buy.top - exit.top) < 1 && buy.right < exit.left,
       sellOverExit:
         !!sell && Math.abs(sell.right - exit.right) < 1 && sell.bottom < exit.top && sell.top > rect(lastBelt).bottom,
@@ -2689,45 +2806,104 @@ async function inventoryFlow(browser, query, tag) {
   await page.close();
 }
 
-// #155 155c-4: the ask dialog (G.UI.ask, drawn as modal.dialog). Keys (decision 2026-11-18-155-ask-dialog-keys): the
-// green button opens on Confirm; Enter or Space presses the green one; Right moves it to Cancel; Esc cancels; a second
-// ask cancels the first; a notice (noCancel) has one button; the ids the other smokes click are on the dialog.
+// #155 155c-4, rebuilt #128 catch.window: the ask dialog (G.UI.ask, drawn as modal.dialog on panel.clean and
+// button.glitch). Decisions 2026-11-19-155-dialog-clean-cancel-state-and-input-modes and
+// 2026-11-20-155-dialog-answers-never-share-an-intent: a negative ask (the default) opens on its back-out, a positive
+// one on its confirm; the confirm takes the intent, the back-out is neutral; Left and Right move the focus, Enter or
+// Space presses it, Esc cancels; with the mouse no focus shows and the first key only reveals it; a second ask cancels
+// the first; a notice (noCancel) has one neutral button; the ids the other smokes click are on the dialog.
 async function askFlow(browser, query, tag) {
   const { page, errs } = await boot(browser, query);
-  await page.mouse.move(0, 0); // the pointer off the dialog, so no hover moves the green
+  await page.keyboard.press('Shift'); // the keys in use: the focus shows
   const openAsk = (options) =>
     page.evaluate((askOptions) => {
       window.askAnswer = 'open';
       G.UI.ask('Is this a test?', askOptions).then((answer) => (window.askAnswer = answer));
     }, options);
-  const answerAfter = async (keys, options = { title: 'Test', ok: 'Yes', cancel: 'No', note: 'A note.' }) => {
+  const askNow = () =>
+    page.evaluate(() => ({
+      answer: window.askAnswer,
+      open: G.UI.isOpen('scr-ask'),
+      focused: ['ask-ok', 'ask-no'].filter((id) => {
+        const button = document.querySelector('#' + id + ' .glitch-button');
+        return button && button.classList.contains('focused');
+      }),
+      intents: ['ask-ok', 'ask-no'].map((id) => {
+        const button = document.querySelector('#' + id + ' .glitch-button');
+        return button ? [...button.classList].find((name) => /^glitch-(neutral|negative|positive)$/.test(name)) : null;
+      }),
+      clean: !!document.querySelector('#scr-ask .modal-dialog.panel-clean'),
+    }));
+  const QUESTION = { title: 'Test', ok: 'Yes', cancel: 'No', note: 'A note.' };
+  const answerAfter = async (keys, options) => {
     await openAsk(options);
     await page.waitForSelector('#scr-ask:not(.hidden)');
+    const opened = await askNow();
     for (const key of keys) await page.keyboard.press(key);
     await sleep(100);
-    return page.evaluate(() => ({ answer: window.askAnswer, open: G.UI.isOpen('scr-ask') }));
+    return { opened, ...(await askNow()) };
   };
-  const answers = {
-    enter: await answerAfter(['Enter']),
-    rightEnter: await answerAfter(['ArrowRight', 'Enter']),
-    space: await answerAfter(['Space']),
-    escape: await answerAfter(['Escape']),
+  const negative = {
+    enter: await answerAfter(['Enter'], QUESTION),
+    leftEnter: await answerAfter(['ArrowLeft', 'Enter'], QUESTION),
+    space: await answerAfter(['Space'], QUESTION),
+    escape: await answerAfter(['Escape'], QUESTION),
   };
   ok(
-    answers.enter.answer === true &&
-      answers.rightEnter.answer === false &&
-      answers.space.answer === true &&
-      answers.escape.answer === false &&
-      Object.values(answers).every((result) => !result.open),
+    negative.enter.opened.focused.join() === 'ask-no' &&
+      negative.enter.opened.intents.join() === 'glitch-negative,glitch-neutral' &&
+      negative.enter.opened.clean &&
+      negative.enter.answer === false &&
+      negative.leftEnter.answer === true &&
+      negative.space.answer === false &&
+      negative.escape.answer === false &&
+      Object.values(negative).every((result) => !result.open),
     tag +
-      ': Enter and Space press the green button (Confirm at first), Right then Enter cancels, Esc cancels (' +
-      JSON.stringify(answers) +
+      ': a negative ask (the default) is clean, opens on its neutral back-out, its confirm red; Enter and Space press ' +
+      'the focus, Left then Enter confirms, Esc cancels (' +
+      JSON.stringify(negative) +
       ')'
   );
+  const positive = {
+    enter: await answerAfter(['Enter'], { ...QUESTION, intent: 'positive' }),
+    rightEnter: await answerAfter(['ArrowRight', 'Enter'], { ...QUESTION, intent: 'positive' }),
+  };
+  ok(
+    positive.enter.opened.focused.join() === 'ask-ok' &&
+      positive.enter.opened.intents.join() === 'glitch-positive,glitch-neutral' &&
+      positive.enter.answer === true &&
+      positive.rightEnter.answer === false,
+    tag + ': a positive ask opens on its confirm (green), Right then Enter backs out (' + JSON.stringify(positive) + ')'
+  );
+  // the mouse: no focus shows; the first Enter only reveals it (the back-out), the second presses it
+  await openAsk(QUESTION);
+  await page.waitForSelector('#scr-ask:not(.hidden)');
+  await page.mouse.move(20, 20);
+  await page.mouse.move(120, 140, { steps: 6 });
+  await sleep(100);
+  const byMouse = await askNow();
+  await page.keyboard.press('Enter');
+  await sleep(100);
+  const revealed = await askNow();
+  await page.keyboard.press('Enter');
+  await sleep(100);
+  const pressed = await askNow();
+  ok(
+    !byMouse.focused.length &&
+      revealed.open &&
+      revealed.focused.join() === 'ask-no' &&
+      !pressed.open &&
+      pressed.answer === false,
+    tag +
+      ': with the mouse no focus shows; the first Enter only reveals it, the second presses it (' +
+      JSON.stringify({ byMouse, revealed, pressed }) +
+      ')'
+  );
+  await page.keyboard.press('Shift');
   await page.evaluate(() => {
     window.firstAnswer = 'open';
     G.UI.ask('First?').then((answer) => (window.firstAnswer = answer));
-    G.UI.ask('Second?').then((answer) => (window.secondAnswer = answer));
+    G.UI.ask('Second?', { intent: 'positive' }).then((answer) => (window.secondAnswer = answer));
   });
   await sleep(50);
   const shownSecond = await page.evaluate(() => document.getElementById('ask-msg').textContent);
@@ -2742,6 +2918,7 @@ async function askFlow(browser, query, tag) {
   await page.waitForSelector('#scr-ask:not(.hidden)');
   const parts = await page.evaluate(() => ({
     buttons: document.querySelectorAll('#scr-ask .modal-dialog .modal-button').length,
+    neutral: !!document.querySelector('#ask-ok .glitch-neutral'),
     ids: ['ask-title', 'ask-msg', 'ask-note', 'ask-ok'].every((id) => {
       const element = document.getElementById(id);
       return !!element && !!element.closest('.modal-dialog');
@@ -2750,8 +2927,8 @@ async function askFlow(browser, query, tag) {
   }));
   await page.keyboard.press('Enter');
   ok(
-    parts.buttons === 1 && parts.noCancel && parts.ids,
-    tag + ': a notice has one button, and the ask ids sit on the dialog (' + JSON.stringify(parts) + ')'
+    parts.buttons === 1 && parts.neutral && parts.noCancel && parts.ids,
+    tag + ': a notice has one neutral button, and the ask ids sit on the dialog (' + JSON.stringify(parts) + ')'
   );
   ok(
     errs.length === 0,

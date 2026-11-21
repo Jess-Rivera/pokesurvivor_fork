@@ -1,8 +1,9 @@
 // Ball sprites (#128 S6) offline checks (Node only). Usage from the repo root:  node docs/proposals/ball-sprites-harness.js
 // Shape checks on the GENERATED js/data/ball-sprites.js (tools/make_ball_sprites.py), so a bad regeneration fails here
 // instead of drawing balls off-centre: every ball has a centreShift for every frame, each a whole number of art pixels
-// that moves the ball less than half a frame, and the table names exactly the strips' balls; every animation names
-// frames the strips have. Whether the shifts really centre the art is measured from the pixels by tools/smoke-ui.js
+// that moves the ball less than half a frame, and the table names exactly the strips' balls; the wobble's tilt frames
+// (every wobble frame but the front face) keep their lean, so their x shift is 0 (Jess 2026-11-21); every animation
+// names frames the strips have. Whether the shifts really centre the art is measured from the pixels by tools/smoke-ui.js
 // (the Pokeballs tab), never from this table.
 const fs = require('fs'),
   vm = require('vm');
@@ -46,6 +47,15 @@ for (const [name, frames] of Object.entries(sprites.animations || {}))
     frames.length > 0 && frames.every((frame) => Number.isInteger(frame) && frame >= 0 && frame < sprites.frames),
     'animation ' + name + ' names only frames the strips have'
   );
+const animations = sprites.animations || {},
+  front = new Set(animations.front || []),
+  tiltFrames = [...new Set(animations.wobble || [])].filter((frame) => !front.has(frame));
+ok(tiltFrames.length > 0, 'the wobble has tilt frames');
+for (const ball of balls)
+  for (const frame of tiltFrames) {
+    const shift = (shifts[ball] || [])[frame];
+    ok(!!shift && shift[0] === 0, ball + ' tilt frame ' + frame + ' keeps its lean: no sideways shift (' + JSON.stringify(shift) + ')');
+  }
 
 console.log(fail ? 'ball-sprites harness: ' + fail + ' FAILED of ' + n : 'ball-sprites harness: ' + n + '/' + n + ' checks passed');
 process.exit(fail ? 1 : 0);

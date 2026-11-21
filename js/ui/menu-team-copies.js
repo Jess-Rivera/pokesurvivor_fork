@@ -109,6 +109,7 @@ G.MenuTeamCopies = (() => {
     const yes = await G.UI.ask(`Sell ${name} for ${rosCoins(price)} PokéCoins?`, {
       title: 'Sell Pokémon',
       ok: 'Sell',
+      intent: 'negative',
       note:
         (c.isFavorite ? `${p.name} is a favorite. ` : '') +
         (c.evTotal ? `It has ${c.evTotal} EVs. They are lost. ` : '') +
@@ -245,6 +246,7 @@ G.MenuTeamCopies = (() => {
     const yes = await G.UI.ask(`Sell ${ids.length} Pokémon for ${rosCoins(coins)} PokéCoins?`, {
       title: 'Sell Pokémon',
       ok: 'Sell',
+      intent: 'negative',
       note:
         'Team, locked and favorite Pokémon are never part of a batch.' +
         (ids.some((id) => (G.Copies.get(s, id) || { tmsLearned: [] }).tmsLearned.length)
