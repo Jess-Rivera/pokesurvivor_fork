@@ -531,7 +531,9 @@ G.HUD = (() => {
   // The gym building's roof above the gate point, world px (gym-arena.js: 248 px art at GATE_ART_SCALE 0.5, drawn 4 px low).
   const GATE_ROOF_WORLD_PX = 120;
   const GYM_WAYFINDER = { light: '#7D94CD', base: '#375AB2', dark: '#243B74' }, // Attacks / Special
-    SHOP_WAYFINDER = { light: '#F29173', base: '#EB5628', dark: '#99381A' }; // Attacks / Physical
+    SHOP_WAYFINDER = { light: '#F29173', base: '#EB5628', dark: '#99381A' }, // Attacks / Physical
+    RESCUE_WAYFINDER = { light: '#8FDDA5', base: '#3FAE5A', dark: '#22703A' }; // #135, green, picked by eye (HUD-STYLE Wayfinding arrows)
+  const RESCUE_BLINK = 10; // s left when the rescue label starts to blink, as the shops'
   const TEXT_WHITE = '#ffffff',
     TEXT_OUTLINE = '#101010'; // HUD-STYLE Text
   // HUD-STYLE Fonts: Truth And Ideals (HudText, css/hud-overlay.css) at 20 px, outline one font pixel (2 px) of hard shadows.
@@ -956,6 +958,29 @@ G.HUD = (() => {
           ctx.save();
           ctx.globalAlpha = ta;
           wayfindingLabel(ctx, s.name + '·' + secs, sx, (s.y - s.h - cam.top()) * cam.scale - 10, 'center');
+          ctx.restore();
+        }
+      }
+    }
+    // The rescue (js/systems/rescue.js, #135): the same arrow as the shops in green. Off screen: "Rescue·11m·34s" (the seconds left
+    // to reach it, then the fight clock); on screen the label floats over the guard, whose own tag shows the fight clock. After a
+    // win (#136) it points at the waiting Stage 1 as "Catch".
+    {
+      const rescue = G.Rescue.hudTarget();
+      if (rescue) {
+        const label = rescue.phase === 'catch' ? 'Catch' : 'Rescue',
+          now = performance.now() / 1000,
+          sx = (rescue.x - cam.left()) * cam.scale,
+          sy = (rescue.y - cam.top()) * cam.scale,
+          ta = rescue.left <= RESCUE_BLINK && Math.floor(now * 4) % 2 === 0 ? 0.35 : 1,
+          secs = Math.ceil(rescue.left) + 's';
+        if (sx < 0 || sx > w || sy < 0 || sy > h) {
+          const m = Math.round(G.U.dist(pl.x, pl.y, rescue.x, rescue.y) / 32) + 'm';
+          floatArrow(ctx, cam, pl, rescue.x, rescue.y, RESCUE_WAYFINDER, label + '·' + m + '·' + secs, ta);
+        } else {
+          ctx.save();
+          ctx.globalAlpha = ta;
+          wayfindingLabel(ctx, label + '·' + secs, sx, sy - (rescue.phase === 'catch' ? 70 : 110), 'center');
           ctx.restore();
         }
       }

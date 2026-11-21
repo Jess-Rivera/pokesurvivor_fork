@@ -35,19 +35,8 @@
   --name-size: 20px;
   --font-pixel: 2px;
 }
-.hud-defs {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-  /* the shared grid patterns live here and the pause menu uses them: a pattern takes its visibility from where it is
-   * defined, so they stay visible when the pause menu hides the HUD layer (F2 fix, 2026-11-12). 0 x 0, paints nothing. */
-  visibility: visible;
-}
-.hud-pixels {
-  display: block;
-  shape-rendering: crispEdges;
-}
+/* .hud-defs (the shared fills' patterns): js/ui/lib/primitives/pixels/pixels.css (#155 155c-2) */
+/* .hud-pixels (every pixel-art shape): js/ui/lib/primitives/pixels/pixels.css (#155 155b) */
 
 /* HUD text: 20 px body, white with eight hard shadows one font pixel out (HUD-STYLE "Fonts") */
 .hud-text {
@@ -81,51 +70,8 @@
     -3px -3px 0 #101010;
 }
 
-/* ---------- the B2 life bar (both panels) ---------- */
-.hud-lifebar {
-  position: relative;
-}
-.hud-hp-label {
-  /* the "HP" label: 20 px text (2 px font pixel). Italic by the browser's own slant, as Word fakes it (the font has no
-     italic face; Jess, 2026-11-10) */
-  position: absolute;
-  font-size: 20px;
-  font-style: italic;
-  font-synthesis: style;
-  line-height: 24px;
-  text-shadow:
-    2px 0 0 #101010,
-    -2px 0 0 #101010,
-    0 2px 0 #101010,
-    0 -2px 0 #101010,
-    2px 2px 0 #101010,
-    -2px 2px 0 #101010,
-    2px -2px 0 #101010,
-    -2px -2px 0 #101010;
-}
-.hud-lifebar-fill,
-.hud-lifebar-piece {
-  position: absolute;
-}
-.hud-lifebar-fill {
-  transform-origin: 0 0;
-}
-.hud-lifebar-fill.is-growing {
-  transition: transform 0.3s linear; /* heals grow the fill */
-}
-.hud-lifebar-piece {
-  animation: hud-piece-fall 0.4s cubic-bezier(0.55, 0, 1, 0.45) 1s forwards; /* holds 1 s, then falls and fades */
-}
-@keyframes hud-piece-fall {
-  from {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-}
+/* the B2 life bar and its HP label (.hud-lifebar, .hud-hp-label; bar.life): js/ui/lib/primitives/bar/bar.css (#155
+   155c-3) */
 
 /* ---------- enemy name bar (#64) ---------- */
 .hud-boss {
@@ -159,20 +105,9 @@
   gap: 6px;
   margin-top: 4px;
 }
+/* the leader circles (.hud-circle, portrait.round: js/ui/lib/primitives/portrait/portrait.css, #155 155c-5) */
 .hud-circle {
   position: relative;
-  width: 48px;
-  height: 48px;
-  box-sizing: border-box;
-  border: 4px solid #101010; /* 4 px stroke around the 40 px portrait (Jess, 2026-11-10) */
-  border-radius: 50%;
-  overflow: hidden;
-}
-.hud-circle img {
-  display: block;
-  width: 40px;
-  height: 40px;
-  image-rendering: pixelated;
 }
 .hud-circle.is-active {
   border-color: var(--ring-base);
@@ -190,15 +125,7 @@
   }
 }
 .hud-circle::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: #101010;
-  opacity: 0;
-  transition: opacity 0.3s linear;
-}
-.hud-circle.is-fainted::after {
-  opacity: 0.65; /* darkly dimmed */
+  transition: opacity 0.3s linear; /* the fainted dim fades in */
 }
 
 /* ---------- character info panel (#62): pieces placed from the screen's bottom centre ---------- */
@@ -212,60 +139,15 @@
   position: absolute;
 }
 
-/* portrait with the EXP ring: a 2 px outline, one 12 px band (the EXP blue over the empty track's grey, no shade; Jess,
-   2026-11-10), then the portrait's 4 px stroke */
-.hud-portrait {
-  width: 116px;
-  height: 116px;
-  border-radius: 50%;
-  background: #101010;
-}
-.hud-exp-ring {
-  position: absolute;
-  border-radius: 50%;
-}
-.hud-exp-ring {
-  inset: 2px;
-  background: conic-gradient(#00baf3 0 var(--exp), #7f7f7f var(--exp) 360deg);
-}
-.hud-portrait-face {
-  position: absolute;
-  inset: 14px;
-  box-sizing: border-box;
-  border: 4px solid #101010;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #101010;
-}
-.hud-portrait-face img {
-  display: block;
-  width: 80px; /* the 40 px portrait at exactly 2x */
-  height: 80px;
-  image-rendering: pixelated;
-}
+/* portrait with the EXP ring (.hud-portrait, .hud-exp-ring, .hud-portrait-face; portrait.round with its ring):
+   js/ui/lib/primitives/portrait/portrait.css (#155 155c-5) */
 
 /* held item: the B2 bag button with the item's icon at 1x (the kit's ItemSquare; the roster and berry bag use it too) */
 .hud-item {
   width: 40px;
   height: 40px;
 }
-.hud-item-square {
-  position: relative;
-}
-.hud-item-square svg {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-.hud-item-icon {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 32px;
-  height: 32px;
-  margin: -16px 0 0 -16px;
-  image-rendering: pixelated;
-}
+/* the item square (.hud-item-square, square.item): js/ui/lib/primitives/square/square.css (#155 155c-2) */
 
 /* status chips: the B2 capsule buttons (b2-lower Y17 to Z17), the fill inside a 4 px stepped shade rim drawn as pixels,
    with a timer bar and a sliding glow; the timer's place and the glow's clip come from the shape (hud-player-panel.js) */
@@ -294,12 +176,7 @@
   position: relative;
   top: -1px;
 }
-.hud-chip-timer {
-  position: absolute;
-  height: 2px;
-  background: #ffffff;
-  transform-origin: 0 0;
-}
+/* .hud-chip-timer (bar.timer): js/ui/lib/primitives/bar/bar.css (#155 155c-3) */
 .hud-chip-glow {
   position: absolute;
   inset: 0;
@@ -348,11 +225,7 @@
     opacity: 1;
   }
 }
-.hud-prompt-timer {
-  position: absolute;
-  background: #ffffff; /* the draining bar (Jess, 2026-11-11), steady while the badge flashes */
-  transform-origin: 0 0;
-}
+/* .hud-prompt-timer, the draining bar (Jess, 2026-11-11), steady while the badge flashes: bar.timer (bar.css) */
 .hud-prompt-text {
   position: absolute;
   left: 28px;
@@ -360,11 +233,7 @@
 }
 
 /* move slots: the B2 move button, four wells, the key on the left point, the B2 selection cursor on the active one */
-.hud-slot svg {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
+/* .hud-slot's frame (panel.slanted): js/ui/lib/primitives/panel/panel.css (#155 155c-5) */
 .hud-well {
   position: absolute;
   top: 4px;
@@ -412,6 +281,7 @@
   left: -2px;
   top: 4px;
 }
+/* the team menu's button (.hud-team-button, button.rounded): js/ui/lib/primitives/button/button.css (#155 155b) */
 .hud-cursor {
   position: absolute;
   width: 14px;
@@ -531,31 +401,7 @@
 .hud-roster-fill {
   transform-origin: 0 0;
 }
-.hud-roster-face {
-  /* the portrait in a circle: 40 px at 1x inside a 2 px stroke, as the leader circles */
-  box-sizing: border-box;
-  border: 2px solid #101010;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #101010;
-}
-.hud-roster-face img {
-  display: block;
-  width: 40px;
-  height: 40px;
-  image-rendering: pixelated;
-}
-.hud-roster-face::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: #101010;
-  opacity: 0;
-}
-.hud-roster-row.is-fainted .hud-roster-face::after {
-  opacity: 0.65; /* darkly dimmed, as the leader circles */
-}
+/* the roster face (.hud-roster-face, portrait.round): js/ui/lib/primitives/portrait/portrait.css (#155 155c-5) */
 .hud-roster-row.is-fainted .hud-roster-name {
   opacity: 0.5;
 }
@@ -582,31 +428,26 @@
   position: absolute;
 }
 
-/* ---------- the tight 2x2 item grid (#90): the berry bag and the pause menu's Run Inventory ---------- */
-.hud-item-grid {
-  display: grid;
-}
-.hud-grid-slot {
-  position: relative;
-}
-.hud-grid-slot.is-locked {
-  opacity: 0.3;
-}
+/* the tight 2x2 item grid (.hud-item-grid, grid.item; #90): js/ui/lib/primitives/square/square.css (#155 155c-2) */
 
 /* ---------- the shared tooltip layer (js/ui/hud-overlay.js TooltipLayer; Jess, 2026-11-12: every hover tooltip is
    the topmost layer). The layer is the stage's last child and sits above everything on it; nothing else on a stage
    may use a z-index of 100 or more. ---------- */
+/* the page's one tooltip layer (G.HudKit tooltips, decision 2026-11-16-one-universal-tooltip-layer): over the whole window,
+   above everything; nothing else on the page may reach z-index 1000 */
 .hud-tip-layer {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 1000;
   pointer-events: none;
 }
 /* the look every tooltip shares (Jess, 2026-11-11): the game's UI font (GameFont, more readable than the pixel HUD
    font at this size), a yellow frame, the name in yellow */
 .hud-tip {
   position: absolute;
+  transform-origin: 0 0; /* placed at its anchor point, then scaled to its screen's size (hud-kit-items.js) */
   font-family: var(--font);
+  color: #ffffff;
   background: #181818;
   border: 2px solid #f3b200;
   box-shadow: 0 0 0 2px #101010;
@@ -650,48 +491,7 @@
 .hud-run-items > * {
   position: absolute;
 }
-.hud-run-item > * {
-  position: absolute;
-}
-.hud-run-item > svg {
-  left: 0;
-  top: 0;
-}
-.hud-run-icon canvas {
-  display: block;
-  width: 32px;
-  height: 32px;
-  image-rendering: pixelated;
-}
-/* the name inside the box's top band (#94): left aligned, squeezed sideways from its left edge when wider */
-.hud-run-name {
-  display: flex;
-  align-items: center;
-  overflow: visible;
-}
-.hud-run-name span {
-  display: inline-block;
-  transform-origin: 0 50%;
-}
-.hud-run-text {
-  line-height: 16px; /* two lines fit beside the patch under the name band */
-  display: flex;
-  align-items: center;
-  white-space: normal;
-  overflow: hidden;
-}
-.hud-run-text span {
-  /* at most two lines, cut with an ellipsis */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  padding: 2px; /* room for the text outline inside the clip */
-  line-clamp: 2;
-  overflow: hidden;
-}
-.hud-run-text.is-live {
-  color: #00baf3; /* a live tracker in the EXP blue, as the canvas column's cyan */
-}
+/* the box itself (.hud-run-item, card.horizontal): js/ui/lib/primitives/panel/panel.css (#155 155c-2) */
 
 /* level-up confetti (js/ui/confetti.js): its own layer above the screens (.scr is 20), never catching the pointer */
 .confetti-layer {
@@ -762,11 +562,8 @@
   left: 0;
   top: 0;
 }
-.hud-weather-timer {
-  height: 6px; /* two art rows just inside the lower rim: Light over Base */
-  background: linear-gradient(var(--timer-light) 0 3px, var(--timer-base) 3px 6px);
-  transform-origin: 100% 0; /* held at the screen edge: the left end runs out toward it (Jess, 2026-11-10) */
-}
+/* .hud-weather-timer, two art rows just inside the lower rim, Light over Base, held at the screen edge: bar.timer
+   draining right, bar.css (155c-3) */
 .hud-weather.is-enter {
   animation: hud-weather-enter 0.6s ease-out both;
 }
@@ -924,6 +721,26 @@
 .hud-scroll-box::-webkit-scrollbar {
   display: none;
 }
+/* the search box (#149c, G.HudKit SearchBar): HUD text on the panel body, a thin white rim, green while typing */
+.hud-search {
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 12px;
+  font-family: 'HudText', monospace;
+  font-size: 20px;
+  line-height: 20px;
+  color: #ffffff;
+  background: #181818;
+  border: 2px solid #ffffff;
+  border-radius: 0;
+  outline: none;
+}
+.hud-search::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+.hud-search:focus {
+  border-color: #38d030; /* Focus green */
+}
 .hud-scroll-track {
   position: absolute;
   width: 8px;
@@ -935,4 +752,32 @@
   border: 2px solid;
   cursor: grab; /* the thumb can be dragged (#91-2 DD1) */
   touch-action: none;
+}
+
+/* each belt's number on its top-left rim corner: Michroma 16, white with a 1 px ink stroke (eight hard shadows, as the
+   HUD's text; Jess 2026-11-20) */
+/* the ball belt (hud-kit-items.js BallBelt; the Shop and the catch screen, #128) */
+/* the belt places itself: it takes its left and top, so it never depends on the screen's CSS for its position */
+.ball-belt {
+  position: absolute;
+}
+.ball-belt-number {
+  position: absolute;
+  left: 4px;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+  font-family: 'HudModule', sans-serif;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--color-grey-white);
+  text-shadow:
+    1px 0 0 var(--color-grey-ink),
+    -1px 0 0 var(--color-grey-ink),
+    0 1px 0 var(--color-grey-ink),
+    0 -1px 0 var(--color-grey-ink),
+    1px 1px 0 var(--color-grey-ink),
+    -1px 1px 0 var(--color-grey-ink),
+    1px -1px 0 var(--color-grey-ink),
+    -1px -1px 0 var(--color-grey-ink);
 }

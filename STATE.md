@@ -1,32 +1,36 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-15 evening, Claude Code (home). Branch: balance/124-economy-xp (off main, not merged). No branch rules file.
+Last updated: 2026-11-21 afternoon, Quick (work machine). Branch: feature/128-acquisition. No branch rules file.
 
 ## START HERE (next session, either tool)
-1. #124 and #125 closed 2026-11-15 (Jess). Queue: #97 upgrades (full redesign pass; review in docs/ASCII Concept Maps/
-   97 - Upgrade System Review.md), #128 acquisition, #126 UI, #127 menu, #129 architecture, #130 regions. #131 (Silver
-   bonuses and the shops 2 to 4 check, needs a gym 1 trace) later. #111 and #122 wait behind it.
-2. #97 next: Jess sets its purpose (catch-up power, sidegrades or unlocks; per species or account-wide), then the slice
-   opening (goal, done, end-goal test). Question 2 leans on #128.
-3. Branch balance/124-economy-xp is done: Jess merges it into main and pushes.
+1. #128 S6 Pokeballs look and catch.window: feel tested by Jess 2026-11-21, committed. #137 playtest cleared.
+2. Next on #128: #138 S7 (open: floater escort H1, H2), #146, then #139 S8 (open: candy CD1 to CD4,
+   friendship minutes), which gates #140 to #143. #128's body lists stale open decisions; check it.
+3. #145 small and ready (not #128). Feel test the Ancient Power line.
 
-## What just landed on balance/124-economy-xp
-- Silver: 0 at the start, 1 per kill. Move price by slots filled: Trainer 60 / 120 / 240 / 300, TM Mart 150 / 300 / 400 / 450;
-  a replacement pays the base; no run time or level in it. Decision 2026-11-15-124-move-price-by-slots-filled.
-- Opening XP boost OFF by default; only ?dev G.Debug.xpBoost(true) turns it on (decision 2026-11-15-125-opening-xp-boost-off-by-default).
-- Dev tools: G.Debug.runTrace (pace, shop pairs, visits), tools/run-pace-summary.js, G.Debug.xpBoost(on).
-- Docs: 124 - Economy Slice Opening, 124 - Run Pace Trace Plan, 124 - Economy Rule Built, 125 - XP Boost Comparison.
-- check.js clean (60 harnesses); silver 17/17, shop-screens 35/35, shops 15/15 mutations; smoke-ui and smoke-run-trace 22/22 pass.
+## Landed 2026-11-21 (Quick)
+- Library: Unified tokens (matching old tokens alias them), button.glitch (whole), panel.clean, panel.shopCard,
+  cursor.ring (2 px), well, toast, modal.dialog rebuilt, panel.pixel's two-type dither, font.silver; kit BallBelt.
+- Screens: the Shop window, rail, Exit and Pokeballs tab; the catch screen. Ball centreShift generated.
+- Ruled: unify-work-builds-final-building-blocks, cursor-ring-2px, ball-centring-keeps-wobble-lean, board ends at
+  the primitives, Team menu rulings. #155 closed; its drafts not filed (Jess).
+- Fixed: the catch throw's first frame (spin frame -1); catch panel and belts placement; cursor.ring under the ball.
+- Ruled: cursor-ring-draws-under-what-it-rings.
+
+## Game changes still owed at #126 (ruled)
+- The run shops, the bond popup, the TMs tab, team items HUD without names or trackers, cursor.bar, the tooltip
+  (#158), reveal-first in the menu windows, dropping the purchase asks.
+- Build from the primitives: pause screens, Team, Pokedex, the other main screens, the level-up draft. Box buying
+  moves to Character Upgrades.
 
 ## Watch
-- Boost finding: +2.1 levels over the world at 3:00 with it, +0.7 without (model fitted to 2 short traces, 4:15 max).
-- smoke-ui timed out once mid-run, then passed in full (flaky, not price related).
-- Untracked, not ours: assets/excalidraw/PMD style Main Menu.png, docs/ASCII Concept Maps/tactics-conversion-uplift.md.
-- From before: trace lacks the leader's level; Misty "Kite" label; 16i parity; Brock/Misty card stacks (#122).
+- Canvas HUD holdouts in js/ui/hud.js: left on the canvas for now (Jess 2026-11-21), no issue.
+- Board drift: #29 in Blocked with no label; #86, #110, #111, #120, #121 in Triage; #156 and #158 need triage;
+  #137 #151 #152 #153 closed but still needs-playtest.
 
 ## Open owner decisions
-- #97 purpose and shape (see the review). #131 bonus sizes (after a gym 1 trace). #49, #107, #86, #99, #93, #97 (blocks #95), #60.
-  Acquisition: Accelgor, Kingambit, Gholdengo, R1 Shedinja, R4 Alcremie N, ball tiers, UberElite time limit.
+- Tooltip pin and close icons (Jess drawing). #156 close or keep. Silver italic font (offered).
+- #97, #131, #49, #107, #86, #99, #93, #60, #139 candy amounts.
 
 Rules: CLAUDE.md.

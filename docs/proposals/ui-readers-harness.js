@@ -73,6 +73,20 @@ const DESC = {
 ok(I.desc('no-such-move') === '', 'desc of an unknown move id is empty, not a throw (legacy() was removed in 7b)');
 for (const id in DESC) ok(I.desc(id) === DESC[id], 'desc ' + id + ': "' + I.desc(id) + '"');
 ok(I.effects(D.discharge).join() === 'damage,30% paralysis', 'effects walk an emitted child (Discharge: damage from the parent power, 30% paralysis)');
+// the stat fold (Jess 2026-11-21): five matching raises that cover every stat print once; anything less stays apart.
+// Made-up defs, relations only: the counts compare the folded and unfolded lists, never a copied phrase.
+{ const raise = (stat, chance = 10) => ({ t: 'stat', stat, stages: 1, side: 'self', scope: 'team', chance });
+  const made = (stats) => ({ power: 40, payload: [{ t: 'damage' }].concat(stats) });
+  const FIVE = ['atk', 'def', 'spAtk', 'spDef', 'spd'].map(s => raise(s));
+  const statPhrases = (d) => I.effects(d).length - 1; // everything but damage
+  ok(statPhrases(made(FIVE)) === 1, 'five matching raises over every stat print as one phrase');
+  ok(statPhrases(made(FIVE.slice(0, 4))) === 4, 'four matching raises stay four phrases');
+  ok(statPhrases(made(FIVE.slice(0, 4).concat(raise('spd', 20)))) === 5, 'a raise at another chance keeps all five apart');
+  ok(statPhrases(made(FIVE.slice(0, 4).concat(raise('atk')))) === 4, 'five raises that miss a stat do not fold (a repeat is dropped as before)');
+  ok(I.effects(made(FIVE))[1].startsWith(I.effects(made([FIVE[0]]))[1].split(' Attack')[0]), 'the folded phrase keeps the chance and side of the raises it folds');
+  // shape: every real description fits the run shops' card text (about 100 characters, docs/ASCII Concept Maps/155 - Move Description Length.md)
+  const CARD_DESC_ROOM = 100, long = IDS.filter(id => I.desc(id).length > CARD_DESC_ROOM);
+  ok(long.length === 0, 'every description fits the shop card: ' + long.map(id => id + ' ' + I.desc(id).length).join(', ')); }
 console.log('3 descriptions');
 
 // ===== 4. the parity tables (plan 3a) =====

@@ -14,6 +14,7 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
 **Related:**
 
 - Other mainline palettes for future use: [docs/UI-PALETTES.md](UI-PALETTES.md)
+- Everything in this file on one page: `tools/ui-library.html` (#147). The board is design language only; no test checks it (decision 2026-11-19-155-no-tests-for-the-library-board).
 - Rulings: `2026-11-10-hud-fixed-sizes-from-the-1080p-mockup`, `2026-11-10-hud-on-preact-and-pngs-as-design-basis`,
   `2026-11-10-sv-type-palette-canonical-for-ui`
 
@@ -86,6 +87,22 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
 
 ## Fonts
 
+- `[Approved]` **Font scheme: four faces, three tiers** (Jess, 2026-11-18, decision
+  2026-11-18-155-font-scheme-three-tiers). Code differs, see TODO (#126); the board shows it first (#155 155e).
+
+  | Tier | Face | Crisp sizes | Covers |
+  | --- | --- | --- | --- |
+  | Meta | Michroma (`HudModule`) | any (smooth) | Menus, menu buttons, toasts, titles, modules, Main Menu, Settings, upgrades, every tooltip (items, moves, stats; Jess 2026-11-20) |
+  | Pokemon | Silver, 10 font pixels per em, one digit width | 20, 30, 40 (canvas 5, 10, 15) | Names, Lv, HP, moves, stats, EVs, catch screen, roster |
+  | World numbers | BoldPixels (`HudDigits`) | 16, 32, 48 (canvas 8, 16, 24) | Timer, kills, World Level, counters; damage canvas 8, crits canvas 16 |
+  | World words | monogram | 16, 32, 48 (to confirm on the board) | Weather, map labels, region names |
+
+  Tooltips: every tooltip is Michroma, the game talking, whatever it is about, the name at 20 px and the text at 12 px
+  (Jess, 2026-11-20, decision
+  2026-11-20-155-every-tooltip-is-michroma; move and stat tooltips were Silver on 2026-11-18).
+  Retired: Truth And Ideals, PokeBW, the second Michroma family. `[Legacy behavior]` every face rule below this one
+  describes the live game until #126 applies the scheme.
+
 - `[Approved]` **Crisp sizes only.** Whole pixels only, at whole multiples of each font's pixel grid, so every font
   renders crisp.
 
@@ -115,19 +132,29 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
 - `[Approved]` **Which face for what** (Jess, 2026-11-13): the pixel text face (Truth And Ideals, `HudText`) is for what is
   directly on or about a Pokemon (names, stats, HP, moves, EVs, its panels). Michroma (`HudModule`) is the game's own UI
   face ("this is the game talking"): module panels, titles like EXPEDITION OVER, and messages such as toasts.
-  `[Open]` the menu buttons (pause menu, End Run, EV screen) are game UI but use `HudText` 30 px today; Jess to rule.
+  `[Approved]` the menu buttons (pause menu, End Run, EV screen) are game UI, so they use `HudModule` (Jess, 2026-11-18,
+  decision 2026-11-18-155-menu-buttons-use-michroma); size set at the #126 feel test. Code differs, see TODO.
+  `[Legacy behavior]` they draw in `HudText` 30 px today; #126 removes it.
+
+- `[Approved]` **Catch screen in Silver, on its pixel grid** (Jess, 2026-11-16, feel-tested; the first screen of #99): every text on
+  the catch screen is GameFont (Silver-game). Silver-game.ttf draws 19 font pixels per em and GameFont enlarges it 140%,
+  so it is crisp only at multiples of 13.5714 px (one screen pixel per font pixel): 27.1429 px (2 per font pixel) for
+  what HudText shows at 20 and 30 px, 40.7143 px (3) for what it shows at 40 px. Whole sizes such as 20 or 28 fall
+  between steps and blur. The outline is one font pixel (2 px, or 3 px at 40.7143). HudText, for comparison, is 10
+  font pixels per em, hence its 20, 30 and 40 px. The rest of #99 stays open.
 
 - `[Approved]` **Tooltips use the game's UI font** (Jess, 2026-11-11, #90): GameFont (`var(--font)`, Silver-game) at
   20 px, more readable than Truth And Ideals for sentences. Every pause menu tooltip (items, the stat hex corners, the
   move rows) shares one look: `#181818` body, a 2 px `#f3b200` frame, the name in `#ffd23f`, white text with the hard
   outline. A hovered tooltip is always on top of its neighbours.
-- `[Approved]` **Every hover tooltip is the topmost layer of its screen** (Jess, 2026-11-12). In the pause menu every
-  tooltip is drawn in one shared layer, the kit's `TooltipLayer` (js/ui/hud-kit-items.js), mounted as the stage's last
-  child at z-index 100; no tooltip lives inside its panel (there it was trapped under later panels and clipped by scroll
-  boxes). Nothing else on a stage may use a z-index of 100 or more. New tooltips use `tooltipHandlers` or `showTooltip`,
-  never a hidden child shown on `:hover`. The smokes check each one is the top element across its whole box.
-  `[Legacy behavior]` Outside the pause menu (the old team sheet's move tooltips, the browser `title` tips) this is
-  not done yet: #102.
+- `[Approved]` **Every hover tooltip is in the page's one tooltip layer, on top of everything** (Jess, 2026-11-16,
+  decision 2026-11-16-one-universal-tooltip-layer; replaces "the topmost layer of its screen", 2026-11-12). The HUD kit
+  puts one layer on the page (js/ui/hud-kit-items.js): fixed over the whole window, the body's last child, z-index
+  1000, never catching the pointer. Screens do not mount their own. Nothing else on the page may reach z-index 1000. A
+  tooltip is drawn at its screen's scale, follows its anchor each frame and hides when the anchor goes away. New
+  tooltips use `tooltipHandlers` or `showTooltip`, never a hidden child shown on `:hover`. The smokes check each one is
+  the top element across its whole box. Nested tooltips (Path of Exile style) are planned on this layer, not built.
+  `[Legacy behavior]` The old team sheet's move tooltips and the browser `title` tips do not use it yet: #102.
 
 - `[Approved]` **No PokeBW in the HUD.** It has only 81 characters (no plus, minus, accented capitals, female or male
   signs).
@@ -165,7 +192,7 @@ B/W colours come in pairs (a bright fill over a dark shade). Keep the pairs toge
 
 - `[Approved]` **The Bulbapedia Scarlet/Violet palette is canonical for the HUD and all UI** (Jess, 2026-11-10).
   - Base for fills, Dark for shades and outlines, Light for highlights.
-  - Game-wide since #68: `G.U.TYPE_COLOR` (Base), `G.U.TYPE_COLOR_LIGHT`, `G.U.TYPE_COLOR_DARK` in js/core/util.js, checked against this table by tools/type_colors.js. The HUD kit reads them from there.
+  - Game-wide since #68: `G.U.TYPE_COLOR` (Base), `G.U.TYPE_COLOR_LIGHT`, `G.U.TYPE_COLOR_DARK`, checked against this table by tools/type_colors.js. Since #155 their home is the design tokens (js/ui/lib/tokens/tokens.js, `color.type.<type>.<tone>`); util.js reads them from there and the HUD kit reads util.js.
   - Type-coloured text drawn over the map (the horde countdown, the dev console log) uses Light; Base is too dark there for Ghost, Dark and Ground (Jess, 2026-11-11).
 
 | Type     | Light     | Base      | Dark      |
@@ -350,7 +377,9 @@ The chevrons floating off the character toward an off-screen target. Adopted fro
 | ------------------------ | -------- | ----------- | -------------- | ------------- |
 | Gym gate                 | Special  | `#375AB2`   | `#243B74`      | `#7D94CD`     |
 | Move Trainer and TM Mart | Physical | `#EB5628`   | `#99381A`      | `#F29173`     |
+| Rescue (#135)            | Green    | `#3FAE5A`   | `#22703A`      | `#8FDDA5`     |
 
+- `[Proposed]` The Rescue green is a first pick by eye (#135), until Jess's feel test.
 - A `#101010` line outside the Dark one keeps the blue readable over water.
 - No halo or aura behind the chevrons (Jess, 2026-11-10).
 - The border runs all the way around each chevron, ends included (square caps on every layer).
@@ -380,12 +409,32 @@ to E14 and F15 to J18; values picked by eye, not sampled.
 
 ---
 
-#### `[Approved]` Toasts (G.UI.toast, every screen; Jess, 2026-11-13, #104c)
-- Body `#181818` and a 2 px rim `#29ceff`: the main menu top and bottom bars' charcoal and teal line (bw-menu.css
-  `--bw-charcoal`, `--bw-line`), with a 2 px `#101010` outline. Bad news (`tone 'bad'`): the same with the pause menu
-  red `#c8141c` rim.
-- Text: Michroma (`HudModule`) 20 px on 30 px lines, white, the module panels' soft shadow ("Fonts": which face for
-  what); long messages wrap at about 720 px. Bottom centre.
+#### `[Approved]` Catch screen (catch.window, #128; decisions 2026-11-20-155-catch-window-look and -catch-result-is-a-toast-and-the-window-is-shorter)
+
+Built from the UI library's pieces (js/ui/catch-ui.js, css/bw-catch.css; board tools/library/catch-draft.js). The
+#136b colour table is history (docs/ASCII Concept Maps/136b - Catch Screen Redesign Plan.md).
+
+| Role | Piece and colour |
+| --- | --- |
+| Window | panel.clean (grey.panel, 1 px grey.slate edge), 980 x 424 |
+| The Pokemon | panel.pixel in its types: first type left, second right, the middle 25% dithered; a plain grey.raised body |
+| Flee ring | portrait.round's ring at 160 px: the first type's dark over grey.paper, one step per miss |
+| Name, band, ball line, slot keys | font.silver 30, 40, 30 and 20, white with a one font pixel grey.ink outline |
+| Belts | the kit's ball belt (the Shop's): color.rim.belt, not bought the fainted ramp; Unified slot grid inside |
+| Wells | well: empty grey.ink ring, holding the belt base, selected the belt dark inside its light ring |
+| Pokemon owned | panel.clean on grey.raised; 48 px portrait.round faces, grey.ink stroke |
+| Cursor | cursor.ring (yellow.base) on wells and faces, with the keys only; buttons show their own focus |
+| Buttons | button.glitch 280 x 54: Throw positive, Let It Go negative |
+| Result | a toast (below): caught is news, a miss, a flee and out of balls bad news |
+| Let It Go ask | modal.dialog, negative: opens on Keep trying (neutral), Let it go red |
+
+---
+
+#### `[Approved]` Toasts (G.UI.toast, every screen; the UI library's toast, js/ui/lib/primitives/toast/toast.css, #128)
+- panel.clean's grey.panel body with a 1 px edge: teal.base for news, red.base for bad news (`tone 'bad'`), and a
+  2 px grey.ink outline round it (decision 2026-11-20-155-catch-result-is-a-toast-and-the-window-is-shorter). Before
+  #128: a `#181818` body with a 2 px `#29ceff` rim (#104c), bad news `#c8141c`.
+- Text: Michroma (`HudModule`) 20 px on 30 px lines, grey.white; long messages wrap at about 720 px. Bottom centre.
 
 ## Shapes
 

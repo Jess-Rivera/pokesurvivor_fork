@@ -123,9 +123,11 @@ for (const [name, args, show] of [
   ['gym_contact.js', ['--check'], /current/],
   ['gym_colors.js', ['--check'], /current/],
   ['type_colors.js', [], /current/],
+  ['library_doc_colours.js', ['--check'], /current/],
   ['species_names.js', [], /current/],
   ['items_report.js', ['--check'], /current/],
   ['evolvable_data.js', ['--check'], /current/],
+  ['stage_one_data.js', ['--check'], /current/],
   ['species_traits.js', ['--check'], /current/],
   ['status_anims.js', ['--check'], /current/],
 ]) {

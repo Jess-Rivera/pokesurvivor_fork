@@ -1,0 +1,96 @@
+/* tools/library/chips-draft.css: the Chips page (chips-draft.js). Board only. The game's chips are css/hud-overlay.css
+   (.hud-chip) and css/style.css (.type). */
+.lib-chip-stage {
+  padding: 16px;
+}
+/* a band: 6 chips to a line, as the HUD's (chipRow sets the width and the gap) */
+.lib-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+.lib-chip {
+  position: relative;
+  flex: none;
+}
+.lib-chip-shape {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+}
+/* the label, placed by hand so the capitals land on whole pixels: the scale sets the face, size, line, top and the
+   font pixel; white (a hollow chip: its colour) with eight hard shadows one font pixel out */
+.lib-chip-text {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--chip-text-top);
+  font-family: var(--chip-font), monospace;
+  font-size: var(--chip-size);
+  line-height: var(--chip-line);
+  font-synthesis: none;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--chip-text);
+  --fp: var(--chip-font-pixel);
+  text-shadow:
+    var(--fp) 0 0 var(--chip-outline),
+    calc(-1 * var(--fp)) 0 0 var(--chip-outline),
+    0 var(--fp) 0 var(--chip-outline),
+    0 calc(-1 * var(--fp)) 0 var(--chip-outline),
+    var(--fp) var(--fp) 0 var(--chip-outline),
+    calc(-1 * var(--fp)) var(--fp) 0 var(--chip-outline),
+    var(--fp) calc(-1 * var(--fp)) 0 var(--chip-outline),
+    calc(-1 * var(--fp)) calc(-1 * var(--fp)) 0 var(--chip-outline);
+}
+/* today's sliding glow at the chip's scale: a white band at 45%, moved by transform only, clipped to the fill */
+.lib-chip-glow {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.lib-chip-glow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--chip-glow-left);
+  width: var(--chip-glow-width);
+  background: rgba(255, 255, 255, 0.45);
+  transform: translateX(0) skewX(-20deg);
+  animation: lib-chip-glow 1.6s linear infinite;
+}
+@keyframes lib-chip-glow {
+  0% {
+    transform: translateX(0) skewX(-20deg);
+  }
+  40%,
+  100% {
+    transform: translateX(var(--chip-glow-travel)) skewX(-20deg);
+  }
+}
+/* the timer drains on a loop on the board; the inline steps() keep it to whole art pixels */
+.lib-chip-timer {
+  position: absolute;
+  transform-origin: 0 0;
+  animation-name: lib-chip-drain;
+  animation-iteration-count: infinite;
+}
+@keyframes lib-chip-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.lib-chip-table {
+  border-collapse: collapse;
+  margin: 8px 0 12px;
+}
+.lib-chip-table th,
+.lib-chip-table td {
+  padding: 2px 8px;
+  text-align: left;
+  vertical-align: middle;
+}

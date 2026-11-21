@@ -1,0 +1,49 @@
+/* modal.css: the dialog (G.Lib.Modal; #155 155c-4, rebuilt #128 catch.window). Its frame is panel.clean (panel.css),
+   its buttons button.glitch (button.css); the sizes are the board's (tools/library/modal-draft.js MODAL). */
+
+/* ---------- modal.dialog: centred on the menu stage, 720 px wide, every line in Michroma (font.hudModule) ---------- */
+.modal-dialog {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 720px;
+  padding: 32px 40px 36px;
+  color: var(--color-grey-white);
+  text-align: center;
+  font-family: 'HudModule', sans-serif;
+}
+.modal-title {
+  font-size: 24px;
+  line-height: 1.4;
+}
+.modal-message {
+  margin: 20px 0 0;
+  font-size: 18px;
+  line-height: 1.6;
+  white-space: normal;
+}
+/* the note (what you will have left): teal.base, the secondary text */
+.modal-note {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-teal-base);
+}
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 28px;
+}
+.modal-button {
+  position: relative;
+}
+/* with the keys, only the focused button shows its focus: a pointer resting on the other does not swipe it, and its
+   bar stays the rest bar (button.css gives a hovered button the focus bar) */
+.modal-dialog.is-keys .glitch-button:hover:not(.focused)::after {
+  clip-path: inset(0 0 0 100%);
+}
+.modal-dialog.is-keys .glitch-button:hover:not(.focused) {
+  box-shadow: 6px 0 0 var(--glitch-bar);
+}

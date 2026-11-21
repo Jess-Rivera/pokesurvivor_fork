@@ -1,0 +1,97 @@
+<!doctype html>
+<!-- PokeSwarm UI Library: the board (dev tool, never ships; #155, Jess's mockup assets/excalidraw/pokeswarm-library-html.excalidraw).
+     The shared language between Jess and the assistant: every token and piece by name. It loads only the library's own files
+     (js/ui/lib/) and its own files (this folder), never the game's scripts, and draws pieces with placeholder data.
+     Open it by double-click (file://); tools/library.html redirects here. Design language only: no test checks it (Jess 2026-11-19). Plan: docs/ASCII Concept Maps/155 - UI Library v2 Build Plan.md.
+     Pages are linked by the address hash (#tokens/colours), so a page can be bookmarked or sent. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PokeSwarm UI Library</title>
+<link rel="stylesheet" href="board.css">
+<link rel="stylesheet" href="glitch-draft.css">
+<link rel="stylesheet" href="toggle-draft.css">
+<link rel="stylesheet" href="clean-draft.css">
+<link rel="stylesheet" href="cursor-draft.css">
+<link rel="stylesheet" href="bars-draft.css">
+<link rel="stylesheet" href="modal-draft.css">
+<link rel="stylesheet" href="portraits-draft.css">
+<link rel="stylesheet" href="chips-draft.css">
+<link rel="stylesheet" href="hud-health-draft.css">
+<link rel="stylesheet" href="hud-area-draft.css">
+<link rel="stylesheet" href="hud-team-slot-draft.css">
+<link rel="stylesheet" href="tooltip-draft.css">
+<link rel="stylesheet" href="inputs-draft.css">
+<link rel="stylesheet" href="shop-draft.css">
+<!-- the library's styles, then the HUD text classes the slot button's label uses (until they move into the library) -->
+<link rel="stylesheet" href="../../js/ui/lib/primitives/pixels/pixels.css">
+<link rel="stylesheet" href="../../js/ui/lib/primitives/button/button.css">
+<link rel="stylesheet" href="../../js/ui/lib/primitives/panel/panel.css">
+<link rel="stylesheet" href="../../js/ui/lib/primitives/square/square.css">
+<link rel="stylesheet" href="../../js/ui/lib/primitives/bar/bar.css">
+<link rel="stylesheet" href="../../js/ui/lib/primitives/modal/modal.css">
+<link rel="stylesheet" href="../../js/ui/lib/primitives/portrait/portrait.css">
+<link rel="stylesheet" href="../../css/hud-overlay.css">
+<link rel="stylesheet" href="swatch.css">
+<script src="../../js/ui/lib/tokens/tokens.js"></script>
+<script src="../../js/vendor/preact.min.js"></script>
+<script src="../../js/vendor/preact-hooks.min.js"></script>
+<script src="../../js/vendor/htm.min.js"></script>
+<script src="../../js/ui/lib/primitives/pixels/pixels.js"></script>
+<script src="../../js/ui/lib/primitives/button/button.js"></script>
+<script src="stories/button.story.js"></script>
+<script src="../../js/ui/lib/primitives/panel/panel.js"></script>
+<script src="stories/panel.story.js"></script>
+<script src="../../js/ui/lib/primitives/square/square.js"></script>
+<script src="stories/square.story.js"></script>
+<script src="../../js/ui/lib/primitives/bar/bar.js"></script>
+<script src="stories/bar.story.js"></script>
+<script src="../../js/ui/lib/primitives/modal/modal.js"></script>
+<script src="stories/modal.story.js"></script>
+<script src="../../js/ui/lib/primitives/portrait/portrait.js"></script>
+<script src="stories/portrait.story.js"></script>
+<script src="doc-colours.js"></script>
+</head>
+<body>
+<header>
+  <button id="toggle-sidebar" type="button" title="Show or hide the sidebar">&larr;</button>
+  <h1>PokeSwarm UI Library</h1>
+  <span class="lib-crumb" id="crumb"></span>
+</header>
+<div class="lib-body">
+  <nav id="sidebar"></nav>
+  <main id="main"></main>
+</div>
+<div id="copied"></div>
+<script src="board.js"></script>
+<script src="colours-today.js"></script>
+<script src="colours-greys-unified.js"></script>
+<script src="colours-canon.js"></script>
+<script src="colours-pages.js"></script>
+<script src="fonts.js"></script>
+<script src="primitives.js"></script>
+<script src="glitch-draft.js"></script>
+<script src="toggle-draft.js"></script>
+<script src="clean-draft.js"></script>
+<script src="squares-draft.js"></script>
+<script src="cursor-draft.js"></script>
+<script src="bars-draft.js"></script>
+<script src="modal-draft.js"></script>
+<script src="portraits-draft.js"></script>
+<script src="chips-draft.js"></script>
+<script src="tooltip-draft.js"></script>
+<script src="hud-health-draft.js"></script>
+<script src="hud-exp-draft.js"></script>
+<script src="hud-area-draft.js"></script>
+<script src="hud-team-slot-draft.js"></script>
+<script src="inputs-draft.js"></script>
+<script src="shop-draft.js"></script>
+<script src="hud-team-items-draft.js"></script>
+<script src="hud-top-draft.js"></script>
+<script src="catch-draft.js"></script>
+<script src="run-shops-draft.js"></script>
+<script src="bond-draft.js"></script>
+<script src="start.js"></script>
+</body>
+</html>

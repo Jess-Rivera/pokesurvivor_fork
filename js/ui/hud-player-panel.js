@@ -12,8 +12,9 @@
 G.HudPlayerPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
-  const { html, signal, hooks, PALETTE, SLOT_GRID, PixelShape, moveSlotRow, createLifeBar, typeColours } = overlay.kit;
-  const { ItemSquare, Cursor, Chip, hasChip, createEffectChipReader } = overlay.kit;
+  const { html, signal, hooks, PALETTE, SLOT_GRID, PixelShape, createLifeBar, typeColours } = overlay.kit;
+  const { ItemSquare, Cursor, Chip, hasChip, createEffectChipReader, TimerBar, SlantedPanel, RoundPortrait } =
+    overlay.kit;
   const { portraitSource, portraitFallback } = overlay.kit;
 
   // ---------- sizes and places (HUD-STYLE "Panel sizes at 1080p", character info panel) ----------
@@ -34,7 +35,8 @@ G.HudPlayerPanel = (() => {
     PROMPT = { centreX: -21, y: 304, artRows: 24, padArt: 14 }, // above the four chip lines (#76)
     // the draining bar (Jess, 2026-11-11): white, on the two lowest shade rows inside the outline, clear of the pointed ends
     PROMPT_TIMER = { bottomArt: 1, heightArt: 2, insetArt: 11 },
-    PORTRAIT = { centreX: -281, y: 36, size: 116 },
+    PORTRAIT = { centreX: -281, y: 36, size: 116, stroke: 4 },
+    FULL_TURN = 360, // degrees: the EXP ring's angle is kept in degrees
     ITEM = { x: 222, y: 74, artSize: 20, nameY: 48 }, // right of the slots (Jess, 2026-11-10: swapped with Lv)
     SILVER = { right: -260, coinY: 160, coinSize: 32 }, // 12 px below the chips' line (Jess, 2026-11-10)
     // Lv: left of the portrait, right-aligned 12 px clear of its ring (Jess, 2026-11-10: swapped with the held item). The
@@ -85,10 +87,9 @@ G.HudPlayerPanel = (() => {
   const placeRight = (x, y) => ({ right: -x + 'px', bottom: y + 'px' });
 
   // ---------- shapes ----------
-  /** The B2 move button (the kit's moveSlotRow): the B2 grid with its dark squares 50% larger (Jess, 2026-11-10); flat
-   *  black for an empty slot. */
-  const slotRow = (row, rim) =>
-    moveSlotRow(row, SLOT_ART_WIDTH, SLOT_ART_ROWS, rim, rim === EMPTY_RIM ? PALETTE.body : SLOT_GRID);
+  /** The B2 move button's body (the library's panel.slanted): the B2 grid with its dark squares 50% larger (Jess,
+   *  2026-11-10); flat black for an empty slot. */
+  const slotBody = (rim) => (rim === EMPTY_RIM ? PALETTE.body : SLOT_GRID);
 
   /** The B2 "FIGHT!" badge (b2-lower B12 to D12): pointed ends, an outline, a shade rim and a shade band at the bottom. */
   function promptRow(row, artWidth, fill, shade) {
@@ -113,15 +114,18 @@ G.HudPlayerPanel = (() => {
   // ---------- components ----------
   function Portrait() {
     const { dex, shiny } = portrait.value;
-    return html`<div
-      class="hud-portrait"
-      style=${{ ...place(PORTRAIT.centreX - PORTRAIT.size / 2, PORTRAIT.y), '--exp': expAngle.value + 'deg' }}
-    >
-      <div class="hud-exp-ring"></div>
-      <div class="hud-portrait-face">
-        ${dex ? html`<img src=${portraitSource(dex, shiny)} data-dex=${dex} alt="" onError=${portraitFallback} />` : null}
-      </div>
-    </div>`;
+    return html`<${RoundPortrait}
+      className="hud-portrait"
+      ringClass="hud-exp-ring"
+      faceClass="hud-portrait-face"
+      style=${place(PORTRAIT.centreX - PORTRAIT.size / 2, PORTRAIT.y)}
+      size=${PORTRAIT.size}
+      stroke=${PORTRAIT.stroke}
+      ring=${{ fraction: expAngle.value / FULL_TURN }}
+      src=${dex ? portraitSource(dex, shiny) : null}
+      dex=${dex}
+      onError=${portraitFallback}
+    />`;
   }
 
   function HeldItem() {
@@ -186,16 +190,16 @@ G.HudPlayerPanel = (() => {
       }
       ${
         artWidth && promptTimer.value != null
-          ? html`<div
-              class="hud-prompt-timer"
+          ? html`<${TimerBar}
+              fraction=${promptTimer.value}
+              height=${PROMPT_TIMER.heightArt * ART_PIXEL}
+              className="hud-prompt-timer"
               style=${{
                 left: PROMPT_TIMER.insetArt * ART_PIXEL + 'px',
                 width: (artWidth - 2 * PROMPT_TIMER.insetArt) * ART_PIXEL + 'px',
                 bottom: PROMPT_TIMER.bottomArt * ART_PIXEL + 'px',
-                height: PROMPT_TIMER.heightArt * ART_PIXEL + 'px',
-                transform: 'scaleX(' + promptTimer.value + ')',
               }}
-            ></div>`
+            />`
           : null
       }
       <span class="hud-text hud-prompt-text" ref=${textRef}>${text}</span>
@@ -260,20 +264,19 @@ G.HudPlayerPanel = (() => {
         </div>`
       );
     }
-    return html`<div
-      class=${'hud-slot' + (slot.active ? ' is-active' : '')}
-      style=${{ ...place(left, bottom), width: width + 'px', height: height + 'px' }}
+    return html`<${SlantedPanel}
+      artWidth=${SLOT_ART_WIDTH}
+      artRows=${SLOT_ART_ROWS}
+      artPixel=${ART_PIXEL}
+      rim=${slot.rim}
+      body=${slotBody(slot.rim)}
+      className=${'hud-slot' + (slot.active ? ' is-active' : '')}
+      style=${place(left, bottom)}
     >
-      <${PixelShape}
-        artWidth=${SLOT_ART_WIDTH}
-        artRows=${SLOT_ART_ROWS}
-        artPixel=${ART_PIXEL}
-        paintRow=${(slotRowIndex) => slotRow(slotRowIndex, slot.rim)}
-      />
       ${wells}
       <span class="hud-text hud-slot-key">${slot.keyLabel}</span>
       ${slot.active ? html`<${Cursor} />` : null}
-    </div>`;
+    </${SlantedPanel}>`;
   }
 
   function Slots() {

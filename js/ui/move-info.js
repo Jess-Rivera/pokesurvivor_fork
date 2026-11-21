@@ -71,7 +71,10 @@ G.MoveInfo = (() => {
     spd: 'Speed',
     spa: 'Sp. Atk',
     spe: 'Speed',
+    all: 'all stats',
   };
+  // the five stats a fold must cover, by their labels (STAT has two keys for some)
+  const EVERY_STAT = ['Attack', 'Defense', 'Sp. Atk', 'Sp. Def', 'Speed'];
   const AIL = {
     burn: 'burn',
     paralysis: 'paralysis',
@@ -155,6 +158,19 @@ G.MoveInfo = (() => {
         return null;
     }
   }
+  /** A payload with its stat changes folded: five that share side, scope, chance and stages and cover every stat
+   *  print as one 'all stats' change in the first one's place (Ancient Power, Jess 2026-11-21). Fewer stay apart. */
+  function foldStats(payload) {
+    const stats = payload.filter((fx) => fx.t === 'stat');
+    if (stats.length !== EVERY_STAT.length) return payload;
+    const first = stats[0],
+      matches = (fx) =>
+        fx.side === first.side && fx.scope === first.scope && fx.chance === first.chance && fx.stages === first.stages,
+      covered = new Set(stats.map((fx) => STAT[fx.stat]));
+    if (!stats.every(matches) || !EVERY_STAT.every((label) => covered.has(label))) return payload;
+    const folded = Object.assign({}, first, { stat: 'all' });
+    return payload.filter((fx) => fx.t !== 'stat' || fx === first).map((fx) => (fx === first ? folded : fx));
+  }
   /** Short effect phrases for a def and its emitted children, once each. */
   function effects(d) {
     const out = [];
@@ -165,7 +181,7 @@ G.MoveInfo = (() => {
     (function walk(x, seen) {
       if (!x || seen.has(x)) return;
       seen.add(x);
-      for (const fx of x.payload || []) {
+      for (const fx of foldStats(x.payload || [])) {
         if (fx.t === 'emit') continue;
         add(fx, x);
       }

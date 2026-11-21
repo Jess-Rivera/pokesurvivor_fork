@@ -8,11 +8,11 @@
  *           experience and sometimes drop coins
  *   lost    Lost Pokemon: you touch it, it follows you and you take it to the mark.
  *           Enemies damage it; if it falls (or you take more than 2 min), it leaves.
- *           Prize: heals half your health, coins, a ticket and, 1 in
+ *           Prize: heals half your health, coins, a jackpot coin and, 1 in
  *           5 times, it joins your collection.
  *
  * Treasure imps (1-2 per game, see Enemy behavior 'thief'): a
- * Meowth loaded with coins (or, 1 in 4, a Gholdengo with an x10 ticket)
+ * Meowth loaded with coins (or, 1 in 4, a Gholdengo with a jackpot coin)
  * that flees and escapes at 15 s if you do not catch it.
  *
  * Co-op: the host decides and announces with 'ev' (see coop.js). Everyone sees what
@@ -138,7 +138,7 @@ G.Events = (() => {
       spd: 92,
       dmg: 0,
       xp: 10,
-      loot: gold ? 'ticket10' : 'coins',
+      loot: gold ? 'jackpot' : 'coins',
     };
     for (let i = 0; i < 12; i++) {
       const a = Math.random() * 6.2832,

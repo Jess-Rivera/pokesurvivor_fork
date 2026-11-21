@@ -321,6 +321,17 @@ G.SettingsUI = (() => {
         'No'
       ) +
       heading('Keyboard') +
+      choiceRow(
+        'cursorTooltipDelay',
+        'Tooltip Delay',
+        'How long the selection cursor rests on an item before its tooltip shows, when you use the keys. The mouse shows tooltips at once.',
+        [
+          [0.5, '0.5 s'],
+          [1, '1 s'],
+          [1.5, '1.5 s'],
+          [2, '2 s'],
+        ]
+      ) +
       optRow(
         'Key Layout',
         'Compact: WASD move, I J K L skills. Full: WASD move, Num1-4 skills. Space is kept for the dodge.',
@@ -500,6 +511,7 @@ G.SettingsUI = (() => {
       !(await G.UI.ask(G.T('Eres invitado: se perderá todo el progreso. ¿Salir?'), {
         title: 'Sign out',
         ok: 'Sign out',
+        intent: 'negative',
       }))
     )
       return;

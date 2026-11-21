@@ -75,6 +75,9 @@ function svBase() {
   const sandbox = { G: {} };
   sandbox.window = sandbox;
   vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync(path.join(root, 'js/ui/lib/tokens/tokens.js'), 'utf8'), sandbox, {
+    filename: 'tokens.js',
+  });
   vm.runInContext(fs.readFileSync(path.join(root, 'js/core/util.js'), 'utf8'), sandbox, { filename: 'util.js' });
   return sandbox.G.U.TYPE_COLOR;
 }

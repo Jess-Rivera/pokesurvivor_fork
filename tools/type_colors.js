@@ -27,6 +27,9 @@ function gameTables() {
   sandbox.window = sandbox;
   sandbox.G = {};
   vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync(path.join(root, 'js/ui/lib/tokens/tokens.js'), 'utf8'), sandbox, {
+    filename: 'tokens.js',
+  });
   vm.runInContext(fs.readFileSync(path.join(root, 'js/core/util.js'), 'utf8'), sandbox, { filename: 'util.js' });
   const utilities = (sandbox.G && sandbox.G.U) || (sandbox.window.G && sandbox.window.G.U);
   if (!utilities) throw new Error('js/core/util.js did not define G.U');

@@ -19,8 +19,6 @@ G.Pickups = (() => {
     magnet: { color: '#ff9ed8', glow: '#b03d84', r: 6.5 },
     bomb: { color: '#ff7b3d', glow: '#b03d10', r: 6.5 },
     coin: { color: '#ffd23f', glow: '#b8860b', r: 5.5 },
-    ticket: { color: '#ffd23f', glow: '#c08a10', r: 8 },
-    ticket10: { color: '#c47bff', glow: '#8a3fd0', r: 8 },
     item: { color: '#ffd23f', glow: '#c08a10', r: 9 }, // value = id del objeto
     ground: { color: '#ffffff', glow: '#9fe8ff', r: 8 }, // ground item (data/ground-items.js), value = its id
   };
@@ -263,9 +261,8 @@ G.Pickups = (() => {
         ctx.fill();
       } else {
         // Berry, magnet and bomb: their pixel-art icon.
-        const ICON = { heal: 'berry', magnet: 'magnet', bomb: 'bomb', ticket: 'ticket', ticket10: 'ticket10' };
-        const sz =
-          p.kind === 'ticket10' || p.kind === 'ticket' || p.kind === 'item' ? 32 : p.kind === 'ground' ? 22 : 18;
+        const ICON = { heal: 'berry', magnet: 'magnet', bomb: 'bomb' };
+        const sz = p.kind === 'item' ? 32 : p.kind === 'ground' ? 22 : 18;
         if (p.kind === 'ground') {
           // Ground item: a soft white pulse under its Pokesprite icon.
           ctx.globalAlpha = 0.18 + Math.sin(p.t * 1.5) * 0.08;

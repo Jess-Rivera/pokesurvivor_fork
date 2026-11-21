@@ -1,0 +1,339 @@
+/* button.css: the pixel-art buttons (G.Lib.Button; #155 155b). Moved unchanged from css/pause-menu.css (button.slanted)
+   and css/hud-overlay.css (button.rounded), plus button.rounded's refused label (from css/bw-shop.css); the colours are
+   tokens of the same value. The shape is each button's SVG; each screen places and sizes the rest. Loaded before the
+   screens' stylesheets, so their rules still win at equal specificity. button.glitch (#128 S6) is ported from the board
+   (tools/library/glitch-draft.css, its fixed-box form from shop-draft.css), its colours the Unified tokens; the
+   timings come inline from button.js GLITCH_TIMING. */
+
+/* ---------- button.slanted (class pm-button): 315 x 66 px by default, the label centred ---------- */
+.pm-button {
+  position: relative;
+  width: 315px;
+  height: 66px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+.pm-button svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.pm-button .hud-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'HudText', monospace;
+  color: var(--color-text-label);
+}
+
+/* button.rounded (class hud-team-button): the shape is its SVG; the screen places and styles the label */
+.hud-team-button {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--color-text-label);
+}
+.hud-team-button svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+/* refused (#151, #152): a press only says why; the rim stays and the label goes to white at 45% */
+.hud-team-button.refused .hud-team-button-label {
+  color: var(--color-text-labelRefused);
+}
+
+/* ---------- button.glitch (class glitch-button): a body with its bottom-left corner cut at 45 degrees and a 6 px bar
+   outside its right side (the box-shadow); button.js sets its width (bar excluded), height and label size ---------- */
+.glitch-button {
+  --glitch-body: transparent; /* rest: the body takes the colour of whatever it sits on */
+  --glitch-bar: var(--color-grey-white);
+  --glitch-text: var(--color-grey-white);
+  --glitch-focus-body: var(--glitch-intent);
+  --glitch-focus-bar: var(--color-grey-ink);
+  --glitch-focus-text: var(--color-grey-ink);
+  --glitch-split-a: var(--color-yellow-base);
+  position: relative;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  outline: transparent;
+  cursor: pointer;
+  font-family: 'HudModule', sans-serif;
+  line-height: 1;
+  letter-spacing: 3px;
+  white-space: nowrap;
+  text-align: center;
+  color: var(--glitch-text);
+  background: linear-gradient(45deg, transparent 5%, var(--glitch-body) 5%);
+  box-shadow: 6px 0 0 var(--glitch-bar);
+}
+/* fitted to its label (no width given): the board's padding round the label (glitch-draft.css) */
+.glitch-button.glitch-fit {
+  padding: 16px 20px;
+}
+/* the intents: the focus body and the secret state's second split colour */
+.glitch-neutral {
+  --glitch-intent: var(--color-teal-base);
+  --glitch-split-b: var(--color-red-base);
+}
+.glitch-negative {
+  --glitch-intent: var(--color-red-base);
+  --glitch-split-b: var(--color-teal-base);
+}
+.glitch-positive {
+  --glitch-intent: var(--color-green-base);
+  --glitch-split-b: var(--color-teal-base);
+}
+/* refused: grey.mid at rest; under the cursor a grey.mid body, the bar keeping the intent's colour */
+.glitch-button.refused {
+  --glitch-bar: var(--color-grey-mid);
+  --glitch-text: var(--color-grey-mid);
+  --glitch-focus-body: var(--color-grey-mid);
+  --glitch-focus-bar: var(--glitch-intent);
+}
+/* disabled: rest only, a grey.slate label so it reads fainter than refused */
+.glitch-button.disabled {
+  --glitch-bar: var(--color-grey-mid);
+  --glitch-text: var(--color-grey-slate);
+  cursor: default;
+}
+/* focus: the same button in the focus colours on top, bar included, uncovered by one swipe from the right edge to the
+   left (bar, then body, then each letter as the edge passes it); leaving swipes it back */
+.glitch-button::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: -6px;
+  box-sizing: border-box;
+  padding: 0 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  color: var(--glitch-focus-text);
+  background:
+    linear-gradient(var(--glitch-focus-bar), var(--glitch-focus-bar)) right / 6px 100% no-repeat,
+    linear-gradient(45deg, transparent 5%, var(--glitch-focus-body) 5%) left / calc(100% - 6px) 100% no-repeat;
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path var(--glitch-swipe) linear;
+}
+.glitch-button:not(.disabled):hover::after,
+.glitch-button.focused:not(.disabled)::after {
+  clip-path: inset(0);
+}
+/* under the focus layer the rest bar takes the focus bar's colour (Jess 2026-11-20): the layer's 6 px bar and the rest
+   bar's shadow round to device pixels differently, so a 1 px sliver of the white rest bar showed */
+.glitch-button:not(.disabled):hover,
+.glitch-button.focused:not(.disabled) {
+  box-shadow: 6px 0 0 var(--glitch-focus-bar);
+}
+/* press: a CRT switching off. A copy of the label sits exactly over the focus label (which hides while it plays): it
+   collapses to a thin line while stretching a little wider, then shrinks to a dot that stays while held. Release is the
+   CRT switching on: the dot draws out to a line, the line opens into text that overshoots, flickers once, settles. The
+   clip drops the letter spacing that trails the last letter, so the line is exactly as wide as the word. */
+.glitch-button::before {
+  content: attr(data-label);
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  white-space: nowrap;
+  color: var(--glitch-focus-text);
+  visibility: hidden;
+  clip-path: inset(0 3px 0 0);
+  transform: translate(-50%, -50%);
+}
+.glitch-button.pressed::after,
+.glitch-button.released::after {
+  color: transparent;
+}
+.glitch-button.pressed::before {
+  visibility: visible;
+  animation: glitch-crt-off var(--glitch-press) forwards;
+}
+.glitch-button.released::before {
+  visibility: visible;
+  animation: glitch-crt-on var(--glitch-release) forwards;
+}
+.glitch-button.disabled::after,
+.glitch-button.disabled::before {
+  display: none;
+}
+@keyframes glitch-crt-off {
+  0% {
+    transform: translate(-50%, -50%) scale(1, 1);
+    animation-timing-function: ease-in;
+  }
+  40% {
+    transform: translate(-50%, -50%) scale(1.12, 0.1111);
+    color: var(--glitch-focus-text);
+    background-color: transparent;
+  }
+  41% {
+    transform: translate(-50%, -50%) scale(1.12, 0.1111);
+    color: transparent;
+    background-color: var(--glitch-focus-text);
+  }
+  55% {
+    transform: translate(-50%, -50%) scale(1.12, 0.1111);
+    color: transparent;
+    background-color: var(--glitch-focus-text);
+    animation-timing-function: ease-in;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.02, 0.1111);
+    color: transparent;
+    background-color: var(--glitch-focus-text);
+  }
+}
+@keyframes glitch-crt-on {
+  0% {
+    transform: translate(-50%, -50%) scale(0.02, 0.1111);
+    color: transparent;
+    background-color: var(--glitch-focus-text);
+    animation-timing-function: ease-out;
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1.12, 0.1111);
+    color: transparent;
+    background-color: var(--glitch-focus-text);
+  }
+  36% {
+    transform: translate(-50%, -50%) scale(1.12, 0.1111);
+    color: var(--glitch-focus-text);
+    background-color: transparent;
+    animation-timing-function: ease-out;
+  }
+  65% {
+    transform: translate(-50%, -50%) scale(1, 1.15);
+    color: var(--glitch-focus-text);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(-50%, -50%) scale(1, 1);
+    opacity: 0.3;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1, 1);
+    color: var(--glitch-focus-text);
+    opacity: 1;
+  }
+}
+/* a refused press: no switch-off, the label stays; the button shakes sideways once, "no" */
+.glitch-button.shaking {
+  animation: glitch-refused-shake var(--glitch-shake) linear;
+}
+@keyframes glitch-refused-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+/* the secret state: the focused look in slices that jump in hard steps, the label split into two offset colour copies
+   (yellow.base up-left, the intent's second colour down-right, which also draws the stripe at the cut corner). Hidden
+   until a burst: button.js adds .bursting for one run of the keyframes over the burst length. */
+.glitch-slices {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: -6px;
+  box-sizing: border-box;
+  padding: 0 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  pointer-events: none;
+  color: var(--glitch-focus-text);
+  background:
+    linear-gradient(var(--glitch-focus-bar), var(--glitch-focus-bar)) right / 6px 100% no-repeat,
+    linear-gradient(
+        45deg,
+        transparent 3%,
+        var(--glitch-split-b) 3%,
+        var(--glitch-split-b) 5%,
+        var(--glitch-focus-body) 5%
+      )
+      left / calc(100% - 6px) 100% no-repeat;
+  text-shadow:
+    -3px -3px 0 var(--glitch-split-a),
+    3px 3px 0 var(--glitch-split-b);
+  clip-path: inset(50% 50% 50% 50%);
+}
+.glitch-slices.bursting {
+  animation: glitch-secret 1s steps(2, end) 1;
+}
+@keyframes glitch-secret {
+  0% {
+    clip-path: inset(80% 0 0 0);
+    transform: translate(-20px, -10px);
+  }
+  10% {
+    clip-path: inset(10% 0 85% 0);
+    transform: translate(10px, 10px);
+  }
+  20% {
+    clip-path: inset(80% 0 0 0);
+    transform: translate(-10px, 10px);
+  }
+  30% {
+    clip-path: inset(10% 0 85% 0);
+    transform: translate(0, 5px);
+  }
+  40% {
+    clip-path: inset(50% 0 30% 0);
+    transform: translate(-5px, 0);
+  }
+  50% {
+    clip-path: inset(10% 0 85% 0);
+    transform: translate(5px, 0);
+  }
+  60% {
+    clip-path: inset(40% 0 43% 0);
+    transform: translate(5px, 10px);
+  }
+  70% {
+    clip-path: inset(50% 0 30% 0);
+    transform: translate(-10px, 10px);
+  }
+  80% {
+    clip-path: inset(80% 0 5% 0);
+    transform: translate(20px, -10px);
+  }
+  90% {
+    clip-path: inset(80% 0 0 0);
+    transform: translate(-10px, 0);
+  }
+  100% {
+    clip-path: inset(50% 50% 50% 50%);
+    transform: translate(0);
+  }
+}

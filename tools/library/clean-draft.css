@@ -1,0 +1,15 @@
+/* tools/library/clean-draft.css: the Clean Draft panel's styles (the board, tools/library/index.html; #157) */
+/* panel.clean: a plain panel. Square corners, no cut and no bar (Jess 2026-11-19: both stay the button's). The edge
+   is the panel's own background showing past a body inset by the edge width. Colours and size are set inline (the
+   draft). */
+.lib-clean {
+  position: relative;
+  box-sizing: border-box;
+  background: var(--clean-edge);
+}
+.lib-clean::before {
+  content: '';
+  position: absolute;
+  inset: var(--clean-edge-width);
+  background: var(--clean-body);
+}

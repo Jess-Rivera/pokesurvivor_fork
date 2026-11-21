@@ -1,8 +1,10 @@
-/* ============ shop-ui.js: the Move Trainer and TM Mart screens (G.ShopUI, Move Shop step 4) ============
+/* ============ shop-ui.js: the Move Trainer and TR Shop screens (G.ShopUI, Move Shop step 4) ============
+ * The TR Shop was the TM Mart until #149 149f (decision 2026-11-17-tm-for-good-tr-for-one-run): a move bought in a run is a
+ * TR, kept for that run; a TM (Main Menu Shop) is learned for good. Code ids keep 'mart'.
  * Opened by G.Game.openShop when you walk into a shop (js/systems/shops.js), with the run paused. Plan: docs/ASCII Concept Maps/
  * Move Shop step 4 - Shop screens.txt. All buying rules live in G.Shops (offers, check, buy); this file only draws and routes input.
  *   Move Trainer  team keys pick WHO you shop for (it never swaps your active Pokemon), attack keys buy one of its 4 offers.
- *   TM Mart       attack keys pick a TM, team keys (or a click on a Pokemon) buy it for that Pokemon.
+ *   TR Shop       attack keys pick a TR, team keys (or a click on a Pokemon) buy it for that Pokemon.
  *   Forget step   slots full (or a third buff): attack keys pick the LOOSE move to forget; bonds are fixed and greyed out.
  *                 Esc or Cancel: nothing bought, nothing paid.
  *   Confirm       (step 4b, Jess 2026-11-05) every purchase asks first, in the in-game dialog (G.UI.ask), at the moment you would
@@ -83,7 +85,7 @@ G.ShopUI = (() => {
     // #124: the price depends on the member (its slots filled), so the header shows the balance only
     $('mshop-silver').innerHTML = coin + ' ' + fmt(G.Silver.whole) + ' Silver';
     $('mshop-hint').textContent = mart
-      ? 'Pick a TM, then the Pokemon to teach it. R rerolls the TMs. A new move gets its own slot: press its number key in a run to use it.'
+      ? 'Pick a TR, then the Pokemon to teach it. R rerolls the TRs. A new move gets its own slot: press its number key in a run to use it.'
       : 'R rerolls the offers. A new move gets its own slot: press its number key in a run to use it. Bonds are fixed.';
     $('mshop-back').classList.toggle('hidden', !cur.forget);
     $('mshop-leave').classList.toggle('hidden', !!cur.forget);
@@ -147,7 +149,7 @@ G.ShopUI = (() => {
     $('mshop-sub').textContent =
       cur.note ||
       (mart
-        ? 'Four TMs, each can be bought any number of times.'
+        ? 'Four TRs, each can be bought any number of times.'
         : f
           ? f.dead
             ? f.mon.name + ' has fainted: pick another Pokemon.'
@@ -276,7 +278,7 @@ G.ShopUI = (() => {
       G.Audio.sfx('back');
     } else {
       if (mart) cur.tm = 0;
-      cur.note = mart ? 'Rerolled: 4 new TMs.' : 'Rerolled: new moves for ' + f.mon.name + '.';
+      cur.note = mart ? 'Rerolled: 4 new TRs.' : 'Rerolled: new moves for ' + f.mon.name + '.';
       G.Audio.sfx('select');
     }
     render();
@@ -317,7 +319,15 @@ G.ShopUI = (() => {
         ' · ' +
         fmt(G.Silver.whole - c.cost) +
         ' left',
-      opts = { title: G.Shops.nameOf(cur.shop.kind), ok: 'Buy', cancel: 'Cancel', note },
+      // a buy that replaces a move is a loss (no refund; decision 2026-11-20-155-move-shop-replace-a-move-asks-replace-
+      // or-go-back), so it opens on Cancel; a buy into a free slot is a purchase and opens on Buy
+      opts = {
+        title: G.Shops.nameOf(cur.shop.kind),
+        ok: 'Buy',
+        cancel: 'Cancel',
+        note,
+        intent: old != null ? 'negative' : 'positive',
+      },
       shop = cur.shop;
     cur.asking = true;
     G.Audio.sfx('select');

@@ -104,6 +104,7 @@ G.PauseRunInfo = (() => {
         { label: 'Silver', value: silver },
         { label: 'Items picked up', value: number(snap.items) },
         { label: 'Shinies', value: 'seen ' + snap.shiniesSeen + ', caught ' + snap.shiniesCaught },
+        { label: 'Caught this run', value: number(snap.caughtThisRun) }, // #136 FB6: held until the run ends
       ],
     };
   }
@@ -200,6 +201,7 @@ G.PauseRunInfo = (() => {
       items: stats ? stats.items : 0,
       shiniesSeen: stats ? stats.shinies : 0,
       shiniesCaught: game.shiniesCaught,
+      caughtThisRun: G.Catch.held.length,
       evs: G.Copies.wholeEvs(game.evBank),
       best,
       pace: G.RunStats.pace(G.Gym.splits, time, best),

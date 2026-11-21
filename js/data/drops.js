@@ -5,14 +5,14 @@
  * The size of a kill's XP orb is a formula and not a chance, so Pickups.dropXp still builds it, then rolls the wild table.
  *
  * Entry fields:
- *   pickup   pickup kind ('coin', 'ticket', 'ticket10', 'magnet', 'bomb', 'ground', 'item'), or 'xp' (goes through Pickups.dropXp)
+ *   pickup   pickup kind ('coin', 'magnet', 'bomb', 'ground', 'item'), or 'xp' (goes through Pickups.dropXp)
  *   p        chance 0..1 (a number, or a function of ctx); omitted = guaranteed
  *   n        how many (default 1), each rolled on its own; [min, max] = a random count
  *   value    pickup value (default 0, or a function of ctx); 'ground' = a ground item id, 'item' = an item id (see `run`)
  *   run      only with value 'item': chance the item is a RUN item instead of a Pokemon item
  *   dx, dy   fixed offset from the drop spot;  jx, jy   random +/- spread on top of it
  *   oneOf    a list of entries of which at most one drops (a single shared roll, in order)
- * Sources: wild, elite, boss, gym, golden, thief, thiefTicket, rescue, grass, rock, chest, bigchest.
+ * Sources: wild, elite, boss, gym, golden, thief, thiefJackpot, rescue, grass, rock, chest, bigchest.
  */
 G.Drops = (() => {
   const K = {
@@ -20,14 +20,17 @@ G.Drops = (() => {
     eliteItem: 0.5, // chance of a Pokemon item from an elite (its Berry is guaranteed)
     runBoss: 0.05, // placeholder chance a boss item is a RUN item (boss will become run-only later)
     runGym: 0.1, // placeholder chance a gym item is a RUN item
-    ticket: 1 / 400, // x2 ticket off a wild kill (was 1/260; rarer since 2026-10-10)
+    // The gacha tickets are gone (#133, decision 2026-11-15-133-tickets-pay-coins). Where a ticket dropped, a coin pickup of what
+    // it was worth drops now: an x1 ticket was one pull, about 38 coins of sell value; an x10 ticket ten pulls with a 4 star
+    // guaranteed, about 400. Provisional until #97 settles what PokeCoins buy. Missions and achievements use ticketCoins().
+    ticketCoins: 40,
+    ticket10Coins: 400,
     golden: 0.35, // a golden enemy's extra coin
   };
 
   const TABLES = {
     // Every non-elite, non-gym kill (bosses included) and every world XP orb (rocks, chests), through Pickups.dropXp.
     wild: [
-      { pickup: 'ticket', p: K.ticket, value: 1, jx: 6 },
       {
         oneOf: [
           // Playtest cut (Jess 2026-11-04): Oran 0.55% to 0.2%, Sitrus 0.4% to 0.1%, magnet 0.8% to 0.4%, bomb 0.6% to 0.1%.
@@ -61,13 +64,13 @@ G.Drops = (() => {
     ],
     golden: [{ pickup: 'coin', p: K.golden, value: 3, dx: 6, dy: -4 }],
     thief: [{ pickup: 'coin', n: 20, value: 5, jx: 36, jy: 26 }], // Meowth
-    thiefTicket: [
+    thiefJackpot: [
       { pickup: 'coin', n: 6, value: 5, jx: 36, jy: 26 },
-      { pickup: 'ticket10', value: 1, dy: -12 },
+      { pickup: 'coin', value: K.ticket10Coins, dy: -12 },
     ], // Gholdengo
     rescue: [
       { pickup: 'coin', n: 12, value: 5, jx: 40, jy: 30 },
-      { pickup: 'ticket', value: 1, dy: -12 },
+      { pickup: 'coin', value: K.ticketCoins, dy: -12 },
     ], // an overworld lost-Pokemon event
     // World props (world.js). Oran replaces the old heal pickup at the same rates (both heal 30%).
     grass: [
@@ -101,8 +104,8 @@ G.Drops = (() => {
     ],
     bigchest: [
       { pickup: 'coin', n: 9, value: 4, jx: 22, jy: 14 },
-      { pickup: 'ticket', n: [1, 3], value: 1, jx: 16, jy: 10 },
-      { pickup: 'ticket10', p: 0.15, value: 1, dy: -10 },
+      { pickup: 'coin', n: [1, 3], value: K.ticketCoins, jx: 16, jy: 10 },
+      { pickup: 'coin', p: 0.15, value: K.ticket10Coins, dy: -10 },
       { pickup: 'item', p: 0.5, dx: 14, dy: -14, value: 'item' },
       { pickup: 'ground', dx: -14, dy: -14, value: 'ground' }, // a big chest always holds one ground item
       { pickup: 'xp', value: () => G.Game.levelXp() }, // enough to level up once
@@ -173,5 +176,8 @@ G.Drops = (() => {
     return out;
   }
 
-  return { K, TABLES, roll };
+  /** The coins a mission or achievement pays where it used to pay x1 and x10 tickets. */
+  const ticketCoins = (x1 = 0, x10 = 0) => x1 * K.ticketCoins + x10 * K.ticket10Coins;
+
+  return { K, TABLES, roll, ticketCoins };
 })();

@@ -1,0 +1,28 @@
+/* tools/library/hud-team-slot-draft.css: the composite run.hud.teamSlot (hud-team-slot-draft.js). Board only.
+   The stage, piece, text, held-item and cursor styles come from hud-area-draft.css and cursor-draft.css. */
+.lib-team-row > * {
+  position: absolute;
+}
+.lib-team-face {
+  position: absolute;
+}
+.lib-team-bar,
+.lib-team-fill {
+  position: absolute;
+}
+.lib-team-chip {
+  position: absolute;
+}
+.lib-team-text.is-fainted {
+  opacity: 0.5;
+}
+/* the swap shade: over the whole box, its right edge moving left as the cooldown runs out */
+.lib-team-cooldown {
+  position: absolute;
+  inset: 0;
+}
+.lib-team-cooldown > div {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+}

@@ -92,7 +92,7 @@ out.push(
     'Wild kill',
     'Ground item ' +
       pct(wildGroundBase) +
-      ' (plus the live Pinap bonus), then one shared roll for Oran Berry 0.2%, Sitrus Berry 0.1%, magnet 0.4%, bomb 0.1%, plus x2 ticket 1 in 400, plus XP'
+      ' (plus the live Pinap bonus), then one shared roll for Oran Berry 0.2%, Sitrus Berry 0.1%, magnet 0.4%, bomb 0.1%, plus XP'
   )
 );
 out.push(
@@ -121,8 +121,8 @@ out.push(
 );
 out.push(row('Golden enemy', pct(K.golden) + ' for 3 extra coins'));
 out.push(row('Meowth (thief)', '20 coins'));
-out.push(row('Gholdengo (thief)', '6 coins and an x10 ticket'));
-out.push(row('Lost-Pokemon event', '12 coins and a ticket'));
+out.push(row('Gholdengo (thief)', '6 coins and a jackpot coin worth 400'));
+out.push(row('Lost-Pokemon event', '12 coins and a coin worth 40'));
 out.push(row('Grass', 'One shared roll: Oran Berry 5%, 1 coin 6%'));
 out.push(
   row('Rock', 'One shared roll: small XP orb (1% of the next level) 40%, 2 coins 25%. Separately, Oran Berry 6%')
@@ -136,7 +136,7 @@ out.push(
 out.push(
   row(
     'Big chest',
-    '9 coins, 1 to 3 tickets, 15% x10 ticket, ' +
+    '9 coins, 1 to 3 coins worth 40, 15% a coin worth 400, ' +
       pct(bigItem) +
       ' chance of a Pokemon item, one ground item roll, one level of XP'
   )
@@ -202,7 +202,6 @@ out.push(
   )
 );
 out.push(row('Coin', 'PokeCoins, banked at the end of the run (Amulet Coin: +50%)'));
-out.push(row('Ticket / x10 ticket', 'Banked into Pokeball (x1) and Master Ball (x10) gacha tickets'));
 out.push(
   row(
     'Heal pickup (retired)',

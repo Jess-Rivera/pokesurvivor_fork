@@ -38,8 +38,8 @@
 G.PauseMenu = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
-  const { html, signal, preact, PALETTE, PixelShape, moveSlotRow, TooltipLayer, hideTooltip, fitToStage } = overlay.kit;
-  const { SlotButton, SLOT_BUTTON, REST_RIM } = overlay.kit; // the shared menu button (also the End Run screen's)
+  const { html, signal, preact, PALETTE, SlantedPanel, hideTooltip, fitToStage } = overlay.kit;
+  const { SlantedButton, SLANTED_BUTTON, REST_RIM } = overlay.kit; // the shared menu button (also the End Run screen's)
 
   // Step lengths in ms: dim and closed ball in, then ball opens with the panels sliding in. Open is about 0.23 s (Jess,
   // 2026-11-11, third feel test: halfway between the 0.31 s open and the close) and close about 0.16 s. Each matches a
@@ -47,11 +47,11 @@ G.PauseMenu = (() => {
   const OPEN_MS = [55, 175],
     CLOSE_MS = [38, 118],
     STEPS = OPEN_MS.length;
-  // The buttons are the kit's SlotButton: the run screen's move slot shape at 1.5x (315 x 66 px, Jess 2026-11-11),
+  // The buttons are the kit's SlantedButton: the run screen's move slot shape at 1.5x (315 x 66 px, Jess 2026-11-11),
   // white rim at rest, green on focus (REST_RIM, FOCUS_RIM).
-  const BUTTON_ART_WIDTH = SLOT_BUTTON.artWidth,
-    BUTTON_ART_ROWS = SLOT_BUTTON.artRows,
-    BUTTON_ART_PIXEL = SLOT_BUTTON.artPixel;
+  const BUTTON_ART_WIDTH = SLANTED_BUTTON.artWidth,
+    BUTTON_ART_ROWS = SLANTED_BUTTON.artRows,
+    BUTTON_ART_PIXEL = SLANTED_BUTTON.artPixel;
   const END_RIM = { light: '#ff8a90', base: '#e8202a', dark: '#7c1016' }; // the End answer's red
   const ANSWER_ART_WIDTH = 56; // End and No: 168 x 66 px each, side by side in Settings' row inside the ball
   const ANSWERS = [
@@ -157,19 +157,20 @@ G.PauseMenu = (() => {
   function PocketAsk() {
     const isAsking = pocketAsking.value;
     return html`<div class="pm-pocket-ask">
-      <div class="pm-pocket-header" style=${{ width: POCKET_HEADER_ART_WIDTH * BUTTON_ART_PIXEL + 'px' }}>
-        <${PixelShape}
-          artWidth=${POCKET_HEADER_ART_WIDTH}
-          artRows=${BUTTON_ART_ROWS}
-          artPixel=${BUTTON_ART_PIXEL}
-          paintRow=${(row) => moveSlotRow(row, POCKET_HEADER_ART_WIDTH, BUTTON_ART_ROWS, REST_RIM, PALETTE.body)}
-        />
+      <${SlantedPanel}
+        artWidth=${POCKET_HEADER_ART_WIDTH}
+        artRows=${BUTTON_ART_ROWS}
+        artPixel=${BUTTON_ART_PIXEL}
+        rim=${REST_RIM}
+        body=${PALETTE.body}
+        className="pm-pocket-header"
+      >
         <span class="hud-text">Destroy Items in Pocket?</span>
-      </div>
+      </${SlantedPanel}>
       <div class="pm-pocket-ask-row">
         ${POCKET_ANSWERS.map(
           (answer, index) =>
-            html`<${SlotButton}
+            html`<${SlantedButton}
               key=${answer.id}
               id=${'pocket-' + answer.id}
               label=${answer.label}
@@ -193,7 +194,7 @@ G.PauseMenu = (() => {
     return html`<div class="pm-buttons">
       ${buttonList().map(
         (button, index) =>
-          html`<${SlotButton}
+          html`<${SlantedButton}
             key=${button.id}
             id=${button.id}
             label=${button.label}
@@ -209,7 +210,7 @@ G.PauseMenu = (() => {
       <div class="pm-answers">
         ${ANSWERS.map(
           (answer, index) =>
-            html`<${SlotButton}
+            html`<${SlantedButton}
               key=${answer.id}
               id=${answer.id}
               label=${answer.label}
@@ -235,14 +236,16 @@ G.PauseMenu = (() => {
   const pokemon = G.PausePokemon && G.PausePokemon.ready ? G.PausePokemon : null;
   const inventory = G.PauseInventory && G.PauseInventory.ready ? G.PauseInventory : null;
   function Panels() {
-    return html`<div class="pm-panel pm-panel-info" data-panel="runInfo">
+    return html`<div class="pm-panel panel-flat pm-panel-info" data-panel="runInfo">
         ${runInfo ? html`<${runInfo.Panel} />` : null}
       </div>
-      <div class="pm-panel pm-panel-detail" data-panel="detail">
+      <div class="pm-panel panel-flat pm-panel-detail" data-panel="detail">
         ${pokemon ? html`<${pokemon.DetailPanel} />` : null}
       </div>
-      <div class="pm-panel pm-panel-team" data-panel="team">${pokemon ? html`<${pokemon.TeamPanel} />` : null}</div>
-      <div class="pm-panel pm-panel-inventory" data-panel="inventory">
+      <div class="pm-panel panel-flat pm-panel-team" data-panel="team">
+        ${pokemon ? html`<${pokemon.TeamPanel} />` : null}
+      </div>
+      <div class="pm-panel panel-flat pm-panel-inventory" data-panel="inventory">
         ${inventory && !reviewing.value ? html`<${inventory.InventoryPanel} />` : null}
       </div>`;
   }
@@ -252,7 +255,6 @@ G.PauseMenu = (() => {
       <div class="pm-stage">
         <div class="pm-centre"><${BallBack} /><${Buttons} /><${BallCaps} /></div>
         <${Panels} />
-        <${TooltipLayer} />
       </div>
       ${inventory ? html`<${inventory.CarryGhost} />` : null}`;
   }

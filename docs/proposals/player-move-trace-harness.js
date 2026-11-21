@@ -143,7 +143,7 @@ console.warn = (m, ...a) => (/^\[Gym\]/.test(m) ? undefined : warn0(m, ...a)); /
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 const OVERRIDE = { 'js/entities/player.js': 'PM_PLAYER', 'js/entities/player-sim-pass.js': 'PM_SIMPASS', 'js/entities/gym-leader.js': 'PM_LEADER', 'js/systems/move-sim.js': 'PM_SIM', 'js/systems/gym-arena.js': 'PM_ARENA', 'js/entities/enemy.js': 'PM_ENEMY' };
 try {
-  load('js/core/util.js');
+  load('js/ui/lib/tokens/tokens.js'); load('js/core/util.js');
 } catch (e) {
   /* it reads the DOM at the end; G.U is set before that */
 }

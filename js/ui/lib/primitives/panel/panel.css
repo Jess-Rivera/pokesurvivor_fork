@@ -1,0 +1,147 @@
+/* panel.css: the panels and the cards (G.Lib.Panel; #155 155c, 155c-2). Moved from css/pause-menu.css and
+   css/bw-catch.css (panel.pixel), css/bw-shop.css (panel.thin, card.vertical), the four window rules (panel.flat) and
+   css/hud-overlay.css (card.horizontal); the colours are tokens of the same value. Loaded before the screens'
+   stylesheets, so their rules still win at equal specificity. */
+
+/* ---------- panel.pixel (class pm-box): its SVG and its contents sit on the box ---------- */
+.pm-box > svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.pm-box > * {
+  position: absolute;
+}
+
+/* ---------- panel.thin: the menu windows' thin teal rim on the checker body ---------- */
+.panel-thin {
+  box-sizing: border-box;
+  border: 2px solid var(--color-hud-teal);
+  background: var(--color-hud-checker);
+}
+
+/* ---------- panel.clean (#128 S6): square corners, a 1 px edge as a real border, no cut and no bar ---------- */
+.panel-clean {
+  box-sizing: border-box;
+  border: 1px solid var(--color-grey-slate);
+  background: var(--color-grey-panel);
+}
+/* panel.shopCard: every Shop card, a grey.raised body and a teal.base edge */
+.panel-clean.panel-shop-card {
+  border-color: var(--color-teal-base);
+  background: var(--color-grey-raised);
+}
+
+/* ---------- card.vertical (class shop-card) ---------- */
+.shop-card {
+  position: relative;
+}
+.shop-card > * {
+  position: absolute;
+}
+.shop-card-icon canvas {
+  display: block;
+  image-rendering: pixelated;
+}
+.shop-card-divider {
+  height: 2px;
+  background: var(--color-hud-slate); /* short of the rim */
+}
+.shop-card .shop-card-name,
+.shop-card .shop-card-description {
+  white-space: normal; /* wraps inside the card (the kit's .hud-text keeps one line) */
+  line-height: 24px;
+}
+.shop-card-name {
+  color: var(--color-text-secondary);
+}
+/* dimmed (a ball not unlocked yet): the whole card; its button still takes the cursor */
+.shop-card.is-dimmed {
+  opacity: 0.45;
+}
+/* dimmed with its button lit (#137c, a locked ball you can afford): the rim and body mixed 45% over the window's body,
+   the contents at 0.45, the button at full */
+.shop-card.is-dimmed-but-button {
+  border-color: color-mix(in srgb, var(--color-hud-teal) 45%, var(--color-hud-body));
+  background: color-mix(in srgb, var(--color-hud-checker) 45%, var(--color-hud-body));
+}
+.shop-card.is-dimmed-but-button > :not(.shop-card-buy) {
+  opacity: 0.45;
+}
+/* card.vertical on panel.shopCard (#128 S6): the text clean in Michroma, sized by the screen; a 1 px divider; dimmed
+   with its button lit keeps the card's own body and edge (only the contents dim) */
+.shop-card-clean-text {
+  font-family: 'HudModule', sans-serif;
+  font-synthesis: none;
+  color: var(--color-grey-white);
+}
+.shop-card .shop-card-name.shop-card-clean-text {
+  color: var(--color-teal-base);
+}
+.panel-shop-card .shop-card-divider {
+  height: 1px;
+}
+.panel-clean.panel-shop-card.is-dimmed-but-button {
+  border-color: var(--color-teal-base);
+  background: var(--color-grey-raised);
+}
+
+/* ---------- panel.flat: the windows' flat body, 1 px frame and 2 px outline (155c-2) ---------- */
+.panel-flat {
+  background: var(--color-hud-body);
+  border: 1px solid var(--color-hud-frame);
+  box-shadow: 0 0 0 2px var(--color-hud-outline);
+}
+
+/* ---------- card.horizontal (class hud-run-item; 155c-2, moved from css/hud-overlay.css) ---------- */
+.hud-run-item > * {
+  position: absolute;
+}
+.hud-run-item > svg {
+  left: 0;
+  top: 0;
+}
+.hud-run-icon canvas {
+  display: block; /* at its own size: the box's icon size (32 px on the run screen) */
+  image-rendering: pixelated;
+}
+/* a slot not bought yet (the Main Menu Inventory, #149d): dimmed as the item grid's locked squares */
+.hud-run-item.is-dimmed {
+  opacity: 0.3;
+}
+/* the name inside the box's top band (#94): left aligned, squeezed sideways from its left edge when wider */
+.hud-run-name {
+  display: flex;
+  align-items: center;
+  overflow: visible;
+}
+.hud-run-name span {
+  display: inline-block;
+  transform-origin: 0 50%;
+}
+.hud-run-text {
+  line-height: 16px; /* two lines fit beside the patch under the name band */
+  display: flex;
+  align-items: center;
+  white-space: normal;
+  overflow: hidden;
+}
+.hud-run-text span {
+  /* at most two lines, cut with an ellipsis */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  padding: 2px; /* room for the text outline inside the clip */
+  line-clamp: 2;
+  overflow: hidden;
+}
+.hud-run-text.is-live {
+  color: var(--color-hud-expFill); /* a live tracker in the EXP blue, as the canvas column's cyan */
+}
+
+/* ---------- panel.slanted: the move slot's frame; the screen places and sizes it, its SVG fills it ---------- */
+.panel-slanted > svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}

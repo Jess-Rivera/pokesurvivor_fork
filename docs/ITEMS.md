@@ -13,18 +13,18 @@ Drop chances and sources are owned by js/data/drops.js (one table per source). R
 
 | Source | What it drops |
 | --- | --- |
-| Wild kill | Ground item 0.4% (plus the live Pinap bonus), then one shared roll for Oran Berry 0.2%, Sitrus Berry 0.1%, magnet 0.4%, bomb 0.1%, plus x2 ticket 1 in 400, plus XP |
+| Wild kill | Ground item 0.4% (plus the live Pinap bonus), then one shared roll for Oran Berry 0.2%, Sitrus Berry 0.1%, magnet 0.4%, bomb 0.1%, plus XP |
 | Elite | Guaranteed heal berry (Oran or Sitrus, 50/50), one guaranteed ground item roll, 50% chance of a Pokemon item, big XP burst |
 | Boss | 10 coins, one guaranteed item (5% it is a run item, else a Pokemon item), and the wild extras above |
 | Gym leader | 10 coins, one guaranteed item (10% it is a run item, else a Pokemon item). No XP, the badge pays a level |
 | Golden enemy | 35% for 3 extra coins |
 | Meowth (thief) | 20 coins |
-| Gholdengo (thief) | 6 coins and an x10 ticket |
-| Lost-Pokemon event | 12 coins and a ticket |
+| Gholdengo (thief) | 6 coins and a jackpot coin worth 400 |
+| Lost-Pokemon event | 12 coins and a coin worth 40 |
 | Grass | One shared roll: Oran Berry 5%, 1 coin 6% |
 | Rock | One shared roll: small XP orb (1% of the next level) 40%, 2 coins 25%. Separately, Oran Berry 6% |
 | Small chest | 4 to 7 coins, Oran Berry or magnet (50/50), Sitrus Berry, 20 XP, 8% chance of a Pokemon item |
-| Big chest | 9 coins, 1 to 3 tickets, 15% x10 ticket, 50% chance of a Pokemon item, one ground item roll, one level of XP |
+| Big chest | 9 coins, 1 to 3 coins worth 40, 15% a coin worth 400, 50% chance of a Pokemon item, one ground item roll, one level of XP |
 | XP orbs from rocks and chests | Also roll the wild extras above, like a kill |
 
 ## Ground items (44)
@@ -168,7 +168,6 @@ Only bosses and gym leaders drop them, and only ones the team does not already h
 | --- | --- |
 | XP orb / big XP orb | Experience; every kill drops one, an orb worth 5% of the next level or more draws as the big one |
 | Coin | PokeCoins, banked at the end of the run (Amulet Coin: +50%) |
-| Ticket / x10 ticket | Banked into Pokeball (x1) and Master Ball (x10) gacha tickets |
 | Heal pickup (retired) | Used to heal 30% of max HP; nothing drops it any more, Oran and Sitrus Berry ground items replaced it everywhere |
 | Magnet | Pulls every pickup on screen to the nearest player |
 | Bomb | Screen clear: every wild enemy in view falls; bosses, gym leaders and elites take a hit instead |

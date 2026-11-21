@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+  :root {
+    --bg-panel: #141210;
+    --border-unpinned: #4a3f35;
+    --border-pinned: #c89b3c;
+    --text-main: #d8d0c5;
+    --keyword-color: #6ab0f3;
+  }
+
+  body {
+    background-color: #0b0a09;
+    color: var(--text-main);
+    font-family: system-ui, sans-serif;
+    padding: 40px;
+  }
+
+  .term {
+    color: var(--keyword-color);
+    text-decoration: underline dotted;
+    cursor: help;
+  }
+
+  .poe-tooltip {
+    position: fixed;
+    width: 280px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-unpinned);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    pointer-events: auto;
+    transition: border-color 0.2s ease;
+  }
+
+  .poe-tooltip.pinned {
+    border-color: var(--border-pinned);
+  }
+
+  .tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #2c2520;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    color: #f0e6d2;
+    cursor: grab;
+    user-select: none;
+  }
+
+  .tooltip-header:active {
+    cursor: grabbing;
+  }
+
+  .pin-status {
+    font-size: 11px;
+    color: #888;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+
+  .pin-status:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .poe-tooltip.pinned .pin-status {
+    color: var(--border-pinned);
+  }
+
+  .pin-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: var(--border-pinned);
+    width: 0%;
+  }
+
+  .poe-tooltip.pinning .pin-progress {
+    width: 100%;
+    transition: width 1.2s linear;
+  }
+
+  .poe-tooltip.pinned .pin-progress {
+    width: 100%;
+    transition: none;
+  }
+</style>
+</head>
+<body>
+
+<p>
+  Hitting an enemy applies <span class="term" data-term="ignite">Ignite</span>, 
+  which deals <span class="term" data-term="fire_damage">Fire Damage</span> over time.
+</p>
+
+<script>
+  const GLOSSARY = {
+    ignite: {
+      title: "Ignite",
+      body: 'An <span class="term" data-term="ailment">Ailment</span> that deals <span class="term" data-term="fire_damage">Fire Damage</span> over 4 seconds based on the base hit.'
+    },
+    ailment: {
+      title: "Elemental Ailment",
+      body: "A status effect inflicted by elemental hits. Includes Ignite, Chill, Freeze, and Shock."
+    },
+    fire_damage: {
+      title: "Fire Damage",
+      body: "One of the three elemental damage types. Mitigated by Fire Resistance."
+    }
+  };
+
+  let activeTooltips = [];
+  let topZIndex = 1000;
+  let hoverTimeout = null;
+  let closeTimeout = null;
+  const PIN_DELAY_MS = 1200;
+
+  // 1. Hover & Dismissal Events
+  document.addEventListener("mouseover", (e) => {
+    const termEl = e.target.closest(".term");
+    if (termEl) {
+      clearTimeout(closeTimeout);
+      const termKey = termEl.dataset.term;
+      const parentTooltipEl = termEl.closest(".poe-tooltip");
+      const parentId = parentTooltipEl ? parentTooltipEl.dataset.id : null;
+      const depth = parentTooltipEl ? parseInt(parentTooltipEl.dataset.depth, 10) + 1 : 0;
+
+      // Prevent spawning duplicate of the exact same term from the same parent
+      const alreadyOpen = activeTooltips.some(
+        (t) => t.key === termKey && t.parentId === parentId
+      );
+      if (alreadyOpen) return;
+
+      clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(() => {
+        pruneUnpinnedFromDepth(depth);
+        spawnTooltip(termKey, termEl, depth, parentId);
+      }, 150);
+    }
+
+    if (e.target.closest(".poe-tooltip")) {
+      clearTimeout(closeTimeout);
+    }
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    if (e.target.closest(".term") || e.target.closest(".poe-tooltip")) {
+      clearTimeout(hoverTimeout);
+      clearTimeout(closeTimeout);
+      closeTimeout = setTimeout(() => {
+        pruneUnpinnedFromDepth(0);
+      }, 250);
+    }
+  });
+
+  // Clicking outside closes everything (including pinned tooltips)
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".poe-tooltip") && !e.target.closest(".term")) {
+      closeAllTooltips();
+    }
+  });
+
+  // 2. Tooltip Creation & Lifecycle
+  function spawnTooltip(key, triggerEl, depth, parentId) {
+    const data = GLOSSARY[key];
+    if (!data) return;
+
+    const id = crypto.randomUUID();
+    const el = document.createElement("div");
+    el.className = "poe-tooltip";
+    el.dataset.id = id;
+    el.dataset.depth = depth;
+    el.style.zIndex = ++topZIndex;
+
+    el.innerHTML = `
+      <div class="pin-progress"></div>
+      <div class="tooltip-header">
+        <span>${data.title}</span>
+        <span class="pin-status">[Pin]</span>
+      </div>
+      <div>${data.body}</div>
+    `;
+
+    document.body.appendChild(el);
+    positionTooltip(el, triggerEl);
+
+    const entry = {
+      id,
+      parentId,
+      key,
+      el,
+      depth,
+      pinned: false,
+      pinTimer: null
+    };
+
+    requestAnimationFrame(() => el.classList.add("pinning"));
+    entry.pinTimer = setTimeout(() => setPinState(entry, true), PIN_DELAY_MS);
+
+    // Pin button click: pins if unpinned, closes immediately if already pinned
+    const pinBtn = el.querySelector(".pin-status");
+    pinBtn.addEventListener("mousedown", (e) => e.stopPropagation()); // Prevent drag start
+    pinBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (entry.pinned) {
+        removeTooltip(entry.id);
+      } else {
+        setPinState(entry, true);
+      }
+    });
+
+    // Bring to front on click
+    el.addEventListener("mousedown", () => {
+      el.style.zIndex = ++topZIndex;
+    });
+
+    makeDraggable(el, el.querySelector(".tooltip-header"), entry);
+    activeTooltips.push(entry);
+  }
+
+  function setPinState(entry, isPinned) {
+    entry.pinned = isPinned;
+    clearTimeout(entry.pinTimer);
+    entry.el.classList.remove("pinning");
+
+    if (isPinned) {
+      entry.el.classList.add("pinned");
+      entry.el.querySelector(".pin-status").textContent = "[Close]";
+    } else {
+      entry.el.classList.remove("pinned");
+      entry.el.querySelector(".pin-status").textContent = "[Pin]";
+    }
+  }
+
+  function removeTooltip(id) {
+    const index = activeTooltips.findIndex((t) => t.id === id);
+    if (index === -1) return;
+
+    const [removed] = activeTooltips.splice(index, 1);
+    clearTimeout(removed.pinTimer);
+    removed.el.remove();
+
+    // Cascade close any unpinned children spawned from this tooltip
+    const unpinnedChildren = activeTooltips.filter(
+      (t) => t.parentId === id && !t.pinned
+    );
+    unpinnedChildren.forEach((child) => removeTooltip(child.id));
+  }
+
+  function pruneUnpinnedFromDepth(minDepth) {
+    for (let i = activeTooltips.length - 1; i >= 0; i--) {
+      const entry = activeTooltips[i];
+      if (!entry.pinned && entry.depth >= minDepth) {
+        removeTooltip(entry.id);
+      }
+    }
+  }
+
+  function closeAllTooltips() {
+    while (activeTooltips.length > 0) {
+      removeTooltip(activeTooltips[0].id);
+    }
+  }
+
+  // 3. Drag-and-Drop Logic
+  function makeDraggable(tooltipEl, handleEl, entry) {
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    handleEl.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      // Automatically pin a tooltip if the user drags it
+      if (!entry.pinned) {
+        setPinState(entry, true);
+      }
+      const rect = tooltipEl.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const padding = 8;
+      const maxX = window.innerWidth - tooltipEl.offsetWidth - padding;
+      const maxY = window.innerHeight - tooltipEl.offsetHeight - padding;
+
+      const nextLeft = Math.min(Math.max(padding, e.clientX - offsetX), maxX);
+      const nextTop = Math.min(Math.max(padding, e.clientY - offsetY), maxY);
+
+      tooltipEl.style.left = `${nextLeft}px`;
+      tooltipEl.style.top = `${nextTop}px`;
+    });
+
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+    });
+  }
+
+  function positionTooltip(tooltipEl, triggerEl) {
+    const triggerRect = triggerEl.getBoundingClientRect();
+    const tipRect = tooltipEl.getBoundingClientRect();
+    const padding = 8;
+
+    let left = triggerRect.left;
+    let top = triggerRect.bottom + padding;
+
+    if (left + tipRect.width > window.innerWidth - padding) {
+      left = window.innerWidth - tipRect.width - padding;
+    }
+
+    if (top + tipRect.height > window.innerHeight - padding) {
+      top = triggerRect.top - tipRect.height - padding;
+    }
+
+    tooltipEl.style.left = `${Math.max(padding, left)}px`;
+    tooltipEl.style.top = `${Math.max(padding, top)}px`;
+  }
+</script>
+</body>
+</html>

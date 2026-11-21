@@ -55,6 +55,8 @@ python tools/make_seo_pages.py # builds the Spanish + English SEO pages, en/inde
 
 Move Lab (dev tool, never shipped): open `tools/move-lab.html` (double-click or the local server). It loads the real move scripts, lists every routed move, loads a gym leader's lineup for any loop and level (each mon with its own moves and cards), and folds upgrade cards into each mon's moves, with base vs effective fields, the leader form and reach, and a paste-ready `moves` / `cards` block for js/data/gyms.js.
 
+UI Library (dev tool, never shipped, #147): open `tools/ui-library.html` (double-click). The design language on one page: live components from the HUD kit with placeholder content (move slots, team cards, life meter, chips, menu buttons, item squares, cursor, the main menu panel), then every font, working colour, type colour and UI piece, labelled with its job, using the game's own fonts, CSS and type colours; plus each screen's CSS variables (flagged when not in HUD-STYLE) and the UI-PALETTES reference sets. Roles are copied from docs/HUD-STYLE.md. The library pages are design language only; no test checks them (decision 2026-11-19-155-no-tests-for-the-library-board).
+
 Key facts about `tools/build.js`:
 - It reads the script list between `<!-- scripts:begin -->` and `<!-- scripts:end -->`
   in `dev.html`, concatenates those files, and runs them through terser (minify) and
@@ -92,7 +94,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 ## 5. Module map
 
 ### `js/core/` (engine services)
-- `util.js` creates `G`, shared helpers. `stats.js` (`G.Stats`) the shared combat-stat formulas (HP, attack factor, damage).
+- `util.js` creates `G` (so does `js/ui/lib/tokens/tokens.js`, which loads first: the UI library's design tokens, `G.Tokens`, #155; util.js reads the type colours from it), shared helpers. `stats.js` (`G.Stats`) the shared combat-stat formulas (HP, attack factor, damage).
 - `simbus.js` (`G.SimBus`) the sim-to-presentation event bus (docs/SIM-PRESENT-BOUNDARY.md). `debug.js` (`G.Debug`) dev tools behind `?dev` (plus `debug-run-screens.js`, `debug-leader.js`, `debug-leader-trace.js` and `debug-run-trace.js` (#124, the run pace trace: `G.Debug.runTrace()`), which add their commands onto `G.Debug`; F6, 2026-11-14), including `G.Debug.newcombat(set)` (move test scenes; the name outlived the removed flag).
 - `db.js` the save layer (localStorage, salted SHA-256 passwords; also the merge logic). A save's Pokemon copies (`save.box`) are read only through `js/systems/copies.js` (G.Copies), rolled from the generated `js/data/species-traits.js` (`tools/species_traits.js`). The game font is the face GameFont in `css/style.css`, a trimmed Silver (`tools/subset_silver.py`).
 - `audio.js` Web Audio synthesizer + sound effects (scores live in `js/data/music.js`).
@@ -114,6 +116,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 - `enemies.js` enemy roster and tiers. `starters.js` the 29 starters + personality test.
 - `leader-ai-settings.js` (`G.LeaderSettings`) the leader AI's baseline settings, tuning tables and per-gym `ai` resolution (LEADER-AI "Authoring a leader"); each name is also on `G.LeaderAI`. Loads after gyms.js.
 - `upgrades.js` permanent upgrades. `items.js` equippable run items. `ground-items.js` (`G.Grounds`) items used on touch. `drops.js` (`G.Drops`) every drop chance, one table per source; docs/ITEMS.md is generated from these by tools/items_report.js.
+- `ball-sprites.js` (`G.BALL_SPRITES`, generated) the Poke Ball animation strips. `balls.js` (`G.BALL_CATALOG`) every ball the Main Menu Shop shows, with its name and line; which balls a throw can use is `G.Catch`'s.
 - `achievements.js`, `missions.js` quests/achievements. `changelog.js` news (bilingual).
 - `types.js` the type chart. `music.js` the song scores. `lang-en.js` the i18n dictionary.
 - `funding.js` support/funding config.
@@ -145,7 +148,11 @@ in English. Do not add those new English strings to `lang-en.js`.
 - `move-info.js` (`G.MoveInfo`: a move's display name, type, icon badge and generated card text, read from `G.MoveDefs`; loads
   before icons.js), `icons.js` pixel-art icons drawn in code, `status-fx.js` (`G.StatusFx`: the on-sprite status and stat
   change animations, drawn by every Pokemon from `G.STATUS_ANIMS` in `js/data/status-anims.js`), then `ui.js`, `hud.js`, `sheet.js` (the team sheet), `gym-present.js`, `login.js`,
-  `menu.js`, `test.js` (personality test), and the per-screen UIs: `gacha-ui.js`,
+  `menu.js` (`G.MenuUI`: the Main Menu and region select; the only menu surface other modules call) and the menu
+  screens split from it in #154: `menu-dex-grid.js` (the filter bar and grid the Pokedex and Team screen share),
+  `menu-pokedex.js`, `menu-team.js` (team slots, detail, box tabs and list), `menu-team-copies.js` (nicknames,
+  selling one, bulk sell) and `menu-upgrades.js` (display only, #97 replaces it), `test.js` (personality test), and the per-screen UIs: `gacha-ui.js` (the Main Menu Shop, with its
+  Pokeballs tab in `shop-balls.js` and the pieces it shares with the Inventory in `menu-window-kit.js`),
   `run-ui.js`, `social-ui.js`, `ranking-ui.js`, `settings-ui.js`, `goals-ui.js`,
   `layout-ui.js`, `mod-ui.js`, `news-ui.js`, `slots.js` (gacha slot machine),
   `support-ui.js`.

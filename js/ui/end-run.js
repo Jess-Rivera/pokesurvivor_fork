@@ -3,7 +3,7 @@
  * (scr-over) while multiplayer is deferred.
  *
  * The run's world stays behind it, dimmed; the run HUD hides as it does for the pause menu. The title "EXPEDITION OVER"
- * (Michroma, red) over two buttons in the pause menu's button shape (the kit's SlotButton), side by side:
+ * (Michroma, red) over two buttons in the pause menu's button shape (the kit's SlantedButton), side by side:
  *   Run Review              the pause menu reopened read-only (#92); its Back comes back here
  *   Learn from the Loss     when the run has whole EVs to give: the EV screen
  *   Return Home             when it has none (a quit never has any, #103): back to the main menu
@@ -20,7 +20,7 @@
 G.EndRun = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
-  const { html, signal, preact, SlotButton, fitToStage, createButtonRow } = overlay.kit;
+  const { html, signal, preact, SlantedButton, fitToStage, createButtonRow } = overlay.kit;
 
   const BUTTON_ART_WIDTH = 140; // 420 x 66 px: "Learn from the Loss" fits at the buttons' 30 px text
 
@@ -44,7 +44,7 @@ G.EndRun = (() => {
         <div class="er-buttons">
           ${buttons.value.map(
             (button, index) =>
-              html`<${SlotButton}
+              html`<${SlantedButton}
                 key=${button.id}
                 id=${button.id}
                 label=${button.label}

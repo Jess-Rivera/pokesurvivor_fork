@@ -90,12 +90,25 @@
       }
     </script>
     <!-- seo:end -->
+    <!-- UI library primitives (#155): first, so the screens' rules still win at equal specificity -->
+    <link rel="stylesheet" href="js/ui/lib/primitives/pixels/pixels.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/button/button.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/panel/panel.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/square/square.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/bar/bar.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/modal/modal.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/portrait/portrait.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/cursor/cursor.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/well/well.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/toast/toast.css" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/bw-menu.css" />
     <link rel="stylesheet" href="css/bw-team.css" />
     <link rel="stylesheet" href="css/bw-inventory.css" />
     <link rel="stylesheet" href="css/bw-upgrades.css" />
     <link rel="stylesheet" href="css/bw-settings.css" />
+    <link rel="stylesheet" href="css/bw-catch.css" />
+    <link rel="stylesheet" href="css/bw-shop.css" />
     <link rel="stylesheet" href="css/hud-overlay.css" />
     <link rel="stylesheet" href="css/pause-menu.css" />
   </head>
@@ -201,7 +214,7 @@
           <button class="bw-row play sel" data-go="play">Jugar<small>Entra en la mazmorra</small></button>
           <button class="bw-row" data-go="team">Team<small id="menu-dex-count"></small></button>
           <button class="bw-row" data-go="inventory">Inventory<small>Team items for your run</small></button>
-          <button class="bw-row" data-go="gacha">Shop<small>Pokémon, team items and upgrades</small></button>
+          <button class="bw-row" data-go="gacha">Shop<small>Poke Balls, upgrades, team items and TMs</small></button>
           <button class="bw-row" data-go="goals">
             Misiones<small id="menu-goals-sub">Misiones, logros y perfil</small>
           </button>
@@ -217,8 +230,6 @@
     <div id="topbar" class="topbar hidden">
       <span id="guest-note" class="guest-note hidden">Guest mode: progress is not saved</span>
       <div class="pill"><span class="coin"></span><span id="coins">0</span></div>
-      <div class="pill" id="tickets-pill" title="Poke Balls"></div>
-      <div class="pill" id="master-pill" title="Master Balls"></div>
       <div class="pill" id="user-pill"></div>
       <button id="btn-news" class="btn small ghost news-btn" title="Novedades"></button>
       <button id="btn-support" class="btn small gold hidden" title="Apoyar el proyecto"></button>
@@ -590,18 +601,12 @@
       </div>
     </section>
 
-    <!-- ====== Inventory (pre-run team item loadout, opened from the main menu) ====== -->
+    <!-- ====== Inventory (Main Menu, #149d; js/ui/inventory-ui.js, css/bw-inventory.css): the pre-run team item loadout,
+         the Shop's window on the 1920 x 1080 stage over the Main Menu. Everything in it is drawn into #inv-window. ====== -->
     <section id="scr-inventory" class="scr dim hidden">
-      <div class="inv">
-        <div class="inv-head"><b>Inventory</b><span id="inv-count"></span></div>
-        <p class="inv-sub">Team items you equip here start every run. Gym leaders and bosses can drop new ones.</p>
-        <div class="inv-main">
-          <aside class="inv-slots" id="inv-slots"></aside>
-          <div class="inv-grid" id="inv-grid"></div>
-          <aside class="inv-detail" id="inv-detail"></aside>
-        </div>
-        <div class="inv-foot">
-          <button class="bw-btn" id="inv-back" data-back>Back<img src="assets/ui/team/back-x.png" alt="" /></button>
+      <div class="inv-host" translate="no">
+        <div class="pm-stage inv-stage">
+          <div id="inv-window" class="shop-window panel-flat"></div>
         </div>
       </div>
     </section>
@@ -672,65 +677,30 @@
       </div>
     </section>
 
-    <!-- ====== Gacha ====== -->
+    <!-- ====== Shop (Main Menu, #149; js/ui/gacha-ui.js, css/bw-shop.css): a window on the 1920 x 1080 stage over the
+         Main Menu. The icon rail and Exit are drawn into #shop-rail from the HUD kit; the panes sit in .shop-panes. ====== -->
     <section id="scr-gacha" class="scr dim hidden">
-      <div class="box wide">
-        <div class="row between">
-          <h2>Shop</h2>
-          <button class="btn small ghost" data-back>Volver</button>
-        </div>
-        <div class="gen-tabs" id="shop-tabs"></div>
+      <div class="shop-host" translate="no">
+        <div class="pm-stage shop-stage">
+          <div class="shop-window panel-clean">
+            <div class="shop-panes">
+              <!-- Pokeballs: the ball cards and the belts, drawn by js/ui/shop-balls.js (149e), which buys them too (#137) -->
+              <div id="shop-balls" class="shop-pane shop-pane-fixed hidden"></div>
 
-        <!-- Pokemon: the old Gacha, with the regions down the left side -->
-        <div id="shop-pokemon" class="shop-pane">
-          <div class="shop-split">
-            <div class="shop-regions" id="gacha-gens"></div>
-            <div class="split">
-              <div>
-                <div class="banner" id="banner">
-                  <h3 id="banner-title"></h3>
-                  <p id="banner-desc" style="margin: 4px 0 6px"></p>
-                  <p class="sub" id="gacha-owned" style="margin: 0"></p>
-                  <div class="feat" id="gacha-feat"></div>
-                </div>
-                <div class="row" style="margin-top: 14px">
-                  <button id="pull-1" class="btn grow" data-sfx="none">Tirar ×1 · <span id="cost-1"></span></button>
-                  <button id="pull-10" class="btn gold grow" data-sfx="none">
-                    Tirar ×10 · <span id="cost-10"></span>
-                  </button>
-                  <button id="pull-10b" class="btn gold grow" data-sfx="none">
-                    Tirar ×10 · <span id="cost-10b"></span>
-                  </button>
-                </div>
-                <p class="note tickets-line" id="gacha-tickets"></p>
-                <p class="note" id="gacha-pity"></p>
-              </div>
-              <div class="panel rates" id="gacha-rates"></div>
+              <!-- Character Upgrades: the Berry Pocket and Team Items Pocket cards, drawn by gacha-ui.js (149b) -->
+              <div id="shop-upgrades" class="shop-pane hidden"></div>
+
+              <!-- Team Items: cards for sale and the owned panel, drawn by gacha-ui.js (149c) -->
+              <div id="shop-items" class="shop-pane shop-pane-fixed hidden"></div>
+
+              <!-- TMs: the TM cards and the Pokemon panel, drawn by js/ui/shop-tms.js (149f) -->
+              <div id="shop-tms" class="shop-pane shop-pane-fixed hidden"></div>
             </div>
+            <div id="shop-rail" class="shop-rail"></div>
           </div>
         </div>
-
-        <!-- Team Items: buy an unlock for the Inventory -->
-        <div id="shop-items" class="shop-pane hidden">
-          <p class="sub" style="margin: 4px 0 8px">
-            Unlock a team item for good (equip it in Inventory). <span id="shop-items-count"></span>
-          </p>
-          <div class="shop-items-main">
-            <div class="grid inv-grid" id="shop-items-grid"></div>
-            <aside class="panel inv-detail" id="shop-items-detail"></aside>
-          </div>
-        </div>
-
-        <!-- Team Upgrades: team item slots -->
-        <div id="shop-upgrades" class="shop-pane hidden"></div>
       </div>
     </section>
-
-    <div id="pull-fx" class="hidden">
-      <canvas id="slot" width="176" height="170" title="Clic para acelerar"></canvas>
-      <div class="pull-results" id="pull-results"></div>
-      <button id="pull-close" class="btn gold hidden">Continuar</button>
-    </div>
 
     <!-- ====== Durante la run ====== -->
     <section id="scr-levelup" class="scr dim hidden">
@@ -786,17 +756,13 @@
       </div>
     </section>
 
-    <!-- In-game confirm dialog (G.UI.ask): replaces the browser confirm() for new screens. Not in the SCREENS list, so it sits on top of whatever is open. -->
+    <!-- #136: the catch screen (js/ui/catch-ui.js, G.CatchUI, draws inside it from the HUD kit; css/bw-catch.css) -->
+    <section id="scr-catch" class="scr dim hidden"></section>
+
+    <!-- In-game confirm dialog (G.UI.ask): the UI library's modal.dialog (#155 155c-4), drawn into the menu stage below.
+         Not in the SCREENS list, so it sits on top of whatever is open. -->
     <section id="scr-ask" class="scr dim hidden">
-      <div class="box center ask">
-        <h2 id="ask-title">Are you sure?</h2>
-        <p id="ask-msg" class="ask-msg"></p>
-        <p id="ask-note" class="sub ask-note"></p>
-        <div class="row" style="justify-content: center; margin-top: 12px">
-          <button id="ask-ok" class="btn gold" data-sfx="confirm">Confirm</button>
-          <button id="ask-no" class="btn">Cancel</button>
-        </div>
-      </div>
+      <div id="ask-stage" class="pm-stage"></div>
     </section>
 
     <section id="scr-pause" class="scr dim hidden">
@@ -855,6 +821,8 @@
 
     <!-- datos generados -->
     <!-- scripts:begin -->
+    <!-- design tokens (#155): first, since util.js reads the type colours from them -->
+    <script defer src="js/ui/lib/tokens/tokens.js"></script>
     <script defer src="js/core/util.js"></script>
     <!-- Third-party (js/vendor/, MIT): Preact 10.24.3 with hooks, htm 3.1.1, Signals core 1.8.0, Preact Signals 1.3.0 -->
     <script defer src="js/vendor/preact.min.js"></script>
@@ -862,6 +830,16 @@
     <script defer src="js/vendor/htm.min.js"></script>
     <script defer src="js/vendor/preact-signals-core.min.js"></script>
     <script defer src="js/vendor/preact-signals.min.js"></script>
+    <!-- UI library primitives (#155 155b): after Preact, before the HUD kit that passes them on -->
+    <script defer src="js/ui/lib/primitives/pixels/pixels.js"></script>
+    <script defer src="js/ui/lib/primitives/button/button.js"></script>
+    <script defer src="js/ui/lib/primitives/panel/panel.js"></script>
+    <script defer src="js/ui/lib/primitives/square/square.js"></script>
+    <script defer src="js/ui/lib/primitives/bar/bar.js"></script>
+    <script defer src="js/ui/lib/primitives/modal/modal.js"></script>
+    <script defer src="js/ui/lib/primitives/portrait/portrait.js"></script>
+    <script defer src="js/ui/lib/primitives/cursor/cursor.js"></script>
+    <script defer src="js/ui/lib/primitives/well/well.js"></script>
     <script defer src="js/core/stats.js"></script>
     <script defer src="js/core/simbus.js"></script>
     <script defer src="js/systems/log.js"></script>
@@ -893,6 +871,9 @@
     <script defer src="js/data/shop-contact.js"></script>
     <script defer src="js/data/upgrades.js"></script>
     <script defer src="js/data/evolvable.js"></script>
+    <script defer src="js/data/stage-one.js"></script>
+    <script defer src="js/data/ball-sprites.js"></script>
+    <script defer src="js/data/balls.js"></script>
     <script defer src="js/data/species-traits.js"></script>
     <script defer src="js/systems/copies.js"></script>
     <script defer src="js/data/items.js"></script>
@@ -913,6 +894,7 @@
     <script defer src="js/entities/projectile.js"></script>
     <script defer src="js/entities/enemy.js"></script>
     <script defer src="js/entities/elite.js"></script>
+    <script defer src="js/entities/uber-elite.js"></script>
     <script defer src="js/entities/boss-ai.js"></script>
     <script defer src="js/entities/pickup.js"></script>
     <script defer src="js/entities/player.js"></script>
@@ -923,12 +905,14 @@
     <script defer src="js/systems/combat.js"></script>
     <script defer src="js/systems/spawner.js"></script>
     <script defer src="js/systems/elites.js"></script>
+    <script defer src="js/systems/rescue.js"></script>
+    <script defer src="js/systems/catch.js"></script>
     <script defer src="js/systems/levelup.js"></script>
-    <script defer src="js/systems/gacha.js"></script>
     <script defer src="js/systems/interact.js"></script>
     <script defer src="js/systems/gym-arena.js"></script>
     <script defer src="js/systems/gym.js"></script>
     <script defer src="js/systems/shops.js"></script>
+    <script defer src="js/systems/tms.js"></script>
     <script defer src="js/systems/events.js"></script>
     <script defer src="js/systems/weather.js"></script>
     <script defer src="js/systems/pathing.js"></script>
@@ -991,11 +975,20 @@
     <script defer src="js/ui/gym-present.js"></script>
     <script defer src="js/ui/login.js"></script>
     <script defer src="js/ui/test.js"></script>
+    <script defer src="js/ui/menu-window-kit.js"></script>
     <script defer src="js/ui/menu.js"></script>
-    <script defer src="js/ui/slots.js"></script>
+    <script defer src="js/ui/menu-dex-grid.js"></script>
+    <script defer src="js/ui/menu-pokedex.js"></script>
+    <script defer src="js/ui/menu-team.js"></script>
+    <script defer src="js/ui/menu-team-copies.js"></script>
+    <script defer src="js/ui/menu-upgrades.js"></script>
+    <script defer src="js/ui/shop-balls.js"></script>
+    <script defer src="js/ui/shop-tms.js"></script>
     <script defer src="js/ui/gacha-ui.js"></script>
+    <script defer src="js/ui/inventory-ui.js"></script>
     <script defer src="js/ui/run-ui.js"></script>
     <script defer src="js/ui/shop-ui.js"></script>
+    <script defer src="js/ui/catch-ui.js"></script>
     <script defer src="js/ui/social-ui.js"></script>
     <script defer src="js/ui/ranking-ui.js"></script>
     <script defer src="js/ui/mod-ui.js"></script>

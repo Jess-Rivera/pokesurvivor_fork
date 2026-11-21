@@ -20,7 +20,7 @@ const seeded = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s 
 
 // ---- engine: real modules plus stubs ----
 global.G = {}; global.window = global;
-for (const f of ['js/core/util.js', 'js/core/stats.js', 'js/data/types.js', 'js/systems/stages.js', 'js/systems/status.js', 'js/core/simbus.js',
+for (const f of ['js/ui/lib/tokens/tokens.js', 'js/core/util.js', 'js/core/stats.js', 'js/data/types.js', 'js/systems/stages.js', 'js/systems/status.js', 'js/core/simbus.js',
   'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js',
   'js/data/move-resolver.js']) load(R + '/' + f);
 G.MoveDefs = Object.assign({}, G.MoveDefs);     // slice 4c-1: the live defs are deep-frozen (I2); synthetic moves go in a copy of the container, the real defs stay frozen

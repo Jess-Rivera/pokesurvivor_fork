@@ -1,0 +1,102 @@
+/* tools/library/shop-draft.css: the main.shop.* composites (shop-draft.js). Board only. Boxes are panel.clean
+   (.lib-clean, clean-draft.css); their contents sit above its body. */
+.lib-shop-stage {
+  position: relative;
+  box-sizing: content-box;
+}
+.lib-shop-window {
+  position: relative;
+}
+.lib-shop-window > *,
+.lib-shop-box > *,
+.lib-shop-card > *,
+.lib-shop-square > * {
+  z-index: 1;
+}
+.lib-shop-pane {
+  overflow: visible;
+}
+.lib-shop-tab {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* flush with the window's left edge, as today */
+}
+.lib-shop-tab img {
+  display: block;
+  image-rendering: pixelated;
+  transform-origin: left center;
+}
+.lib-shop-text {
+  position: absolute;
+  font-synthesis: none;
+  white-space: normal;
+}
+.lib-shop-divider {
+  position: absolute;
+}
+.lib-shop-square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lib-shop-square > * {
+  position: relative;
+}
+.lib-shop-item-icon {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  transform-origin: 0 0;
+}
+.lib-shop-picture > * {
+  position: absolute;
+}
+/* a ball: one frame of its strip (today's art), sized inline */
+.lib-shop-ball {
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+.lib-shop-glyph {
+  width: 64px;
+  height: 64px;
+}
+.lib-shop-scroll {
+  overflow: hidden;
+}
+.lib-shop-grid {
+  display: grid;
+}
+.lib-shop-card {
+  position: relative;
+}
+.lib-shop-card > * {
+  position: absolute;
+}
+/* button.glitch at a fixed box: the label centred in the body, today's 54 px tall */
+.lib-shop-button {
+  position: absolute;
+  padding: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+.lib-shop-card .lib-shop-button,
+.lib-shop-box .lib-shop-button {
+  position: absolute;
+}
+.lib-shop-button::after {
+  padding: 0 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lib-shop-toggle {
+  position: absolute;
+  gap: 14px;
+}
+.lib-shop-tip {
+  z-index: 10;
+}
+/* a Character Upgrades pocket: panel.pixel's svg first, its contents placed over it */
+.lib-shop-pocket > * {
+  position: absolute;
+}

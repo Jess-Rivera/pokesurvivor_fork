@@ -3,7 +3,7 @@
  * Without ?dev, every method is a no-op, so this is inert in the published
  * game unless a developer explicitly opts in.
  *
- *   G.Debug.maxAll()   unlock every Pokemon + shiny, max coins/tickets,
+ *   G.Debug.maxAll()   unlock every Pokemon + shiny, max coins,
  *                      and max every per-Pokemon upgrade. Writes to the
  *                      current save (local or guest).
  *   G.Debug.give(id)   give the active Pokemon a move
@@ -13,8 +13,12 @@
  *   G.Debug.loadout(id, id, ...) set the pre-run loadout directly (cleaned: unlocked only, one Stone, within your slots). No ids: logs it. Saved.
  *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
  *   G.Debug.silver(n)  set this run's Silver to n (no arg: logs it). In a run only, not saved (Silver is run-only). For the Move Shop.
+ *   G.Debug.rescue()   #135: start a rescue event now (the toast, the arrow, the UberElite). False when one is up or you are in a gym arena.
+ *   G.Debug.catch([dex])   #136: open the catch screen now for a won rescue of that species (default: a random rescue pick), as if
+ *                      its UberElite fell with half the clock left. False when another screen is open or the belt is empty.
+ *   G.Debug.catchMath([on])  #148: print a catch throw's math (every factor of the rate, the critical and shake chances, each
+ *                      roll) as a console table. No arg: the last throw. true: every throw as it lands, until false or a reload.
  *   G.Debug.xpBoost(on)  #125: turn the opening 3-minute XP boost on (true) or off (false, the default); no arg: logs it. Until reload, not saved.
- *   G.Debug.tickets(n, m) set your Pokeballs (x1 tickets) to n and, if given, your Master Balls (x10 tickets) to m (no arg: logs both). Saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.berryslots(n) set how many berry slots this save has (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.runitem(id[, force]) give a run-tier item through the real pickup path, chooser included (force=true equips on the team directly, ignoring slot limits; no id: logs every run-tier id; e.g. 'snowballbadge', 'redo', 'firestone', 'sharpscissors')
@@ -75,7 +79,6 @@ G.Debug = (() => {
 
     // Currency.
     save.coins = 9999999;
-    save.tickets = { t1: 9999, t10: 9999 };
 
     // Max every per-Pokemon upgrade, for every owned Pokemon.
     for (const p of G.DEX) {
@@ -88,7 +91,7 @@ G.Debug = (() => {
 
     G.DB.commit(true);
     if (G.UI && G.UI.toast) G.UI.toast('Debug: everything unlocked and maxed', 3000);
-    console.log('[Debug] maxed:', dexN, 'Pokemon owned + shiny, coins/tickets maxed, all upgrades maxed.');
+    console.log('[Debug] maxed:', dexN, 'Pokemon owned + shiny, coins maxed, all upgrades maxed.');
     return true;
   }
 
@@ -157,17 +160,9 @@ G.Debug = (() => {
       return false;
     }
     if (!id) {
-      const ids = G.Grounds.LIST.map((i) => i.id).concat(['pokeball', 'masterball']);
+      const ids = G.Grounds.LIST.map((i) => i.id);
       console.log('[Debug] ground ids: ' + ids.join(', '));
       return ids;
-    }
-    const BALL = { pokeball: 'ticket', masterball: 'ticket10' }; // gacha tickets: drawn as a Great Ball (x1) and a Master Ball (x10)
-    if (BALL[id]) {
-      const p = G.Game.player;
-      if (!p) return false;
-      G.Game.debugMaxed();
-      G.Pickups.drop(BALL[id], p.x + G.U.rand(-160, 160), p.y - Math.min(260, (p.magnet || 80) + 90), 1);
-      return true;
     }
     if (!G.Grounds.BY[id]) {
       console.warn('[Debug] unknown ground item ' + id);
@@ -269,6 +264,132 @@ G.Debug = (() => {
     return G.Silver.whole;
   }
 
+  /** #135: start a rescue event now, whatever the roll says. In a run only. */
+  function rescue() {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first.');
+      return false;
+    }
+    const started = G.Rescue.debugFire();
+    console.log('[Debug] rescue: ' + (started ? 'started' : 'not started (one is up, or you are in a gym arena)'));
+    return started;
+  }
+
+  // #148: the catch math printer. While on, G.Catch.throwBall is wrapped to print each throw; off puts the original back.
+  let unwrappedThrowBall = null;
+  const percent = (share) => (share * 100).toFixed(1) + '%';
+  const times = (factor) => 'x' + +factor.toFixed(3);
+
+  /** One throw's math as console table rows. */
+  function catchMathRows(roll) {
+    const math = roll.math,
+      mon = G.DEX_BY[math.dex] || { name: '?' };
+    const shakes = math.shakeRolls.map((value) => value.toFixed(3) + (value < math.shakeChance ? ' pass' : ' fail'));
+    const result = roll.critical
+      ? 'caught: critical catch'
+      : roll.caught
+        ? 'caught: all ' + roll.shakes + ' shakes passed'
+        : 'broke free after ' + roll.shakes + ' shake' + (roll.shakes === 1 ? '' : 's');
+    return [
+      { step: 'Pokemon', value: mon.name + ' #' + math.dex + ', ' + math.ballId + ' ball' },
+      { step: 'capture rate', value: math.captureRate },
+      { step: 'time term', value: times(math.timeTerm) + ' (' + percent(math.timeLeft) + ' of the clock left)' },
+      { step: 'ball', value: times(math.ball) },
+      { step: 'star', value: times(math.star) + ' (' + (mon.rarity || 1) + ' star)' },
+      {
+        step: 'badge cap penalty',
+        value:
+          times(math.badgePenalty) +
+          ' (World Level ' +
+          math.worldLevel +
+          ', ' +
+          math.badges +
+          ' badges, cap ' +
+          math.badgeCap +
+          ')',
+      },
+      { step: 'early World Level bonus', value: times(math.earlyBonus) },
+      { step: 'rate', value: math.rate.toFixed(2) + ' / ' + G.Catch.ODDS.rateCap },
+      {
+        step: 'critical',
+        value:
+          percent(math.criticalChance) +
+          ' (' +
+          math.ownedSpecies +
+          ' species owned), roll ' +
+          math.criticalRoll.toFixed(3),
+      },
+      { step: 'shake chance', value: percent(math.shakeChance) + ' each, rolls ' + (shakes.join(', ') || 'none') },
+      { step: 'throw chance', value: percent(math.throwChance) },
+      { step: 'result', value: result },
+    ];
+  }
+
+  /** #148: print the last catch throw's math, or (on true / false) print every throw as it lands. Until a reload. */
+  function catchMath(printEveryThrow) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (printEveryThrow === true && !unwrappedThrowBall) {
+      unwrappedThrowBall = G.Catch.throwBall;
+      G.Catch.throwBall = (...args) => {
+        const outcome = unwrappedThrowBall(...args);
+        if (outcome !== 'none' && G.Catch.lastThrow) console.table(catchMathRows(G.Catch.lastThrow));
+        return outcome;
+      };
+    } else if (printEveryThrow === false && unwrappedThrowBall) {
+      G.Catch.throwBall = unwrappedThrowBall;
+      unwrappedThrowBall = null;
+    }
+    if (printEveryThrow !== undefined) {
+      console.log('[Debug] catchMath: ' + (unwrappedThrowBall ? 'printing every throw' : 'off'));
+      return !!unwrappedThrowBall;
+    }
+    const roll = G.Catch.lastThrow;
+    if (!roll) {
+      console.log('[Debug] catchMath: no throw yet in this catch.');
+      return null;
+    }
+    console.table(catchMathRows(roll));
+    return roll.math;
+  }
+
+  /** #136: open the catch screen now, as if a rescue of dex was won with half its clock left. In a run only. */
+  function catchNow(dex) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first.');
+      return false;
+    }
+    const mon = dex ? G.DEX_BY[dex] : G.Rescue.pickSpecies(G.Enemies.region);
+    if (!mon) {
+      console.warn('[Debug] no such Pokemon: ' + dex);
+      return false;
+    }
+    const nature = G.Rescue.rollNature();
+    const natureName = G.SpeciesTraits.NATURES[nature - 1][0];
+    const opened = G.Game.openCatch({
+      outcome: 'won',
+      dex: mon.dex,
+      name: mon.name,
+      nature,
+      natureName: natureName.charAt(0).toUpperCase() + natureName.slice(1),
+      timeFraction: 0.5,
+    });
+    console.log(
+      '[Debug] catch: ' + (opened ? mon.name + ' opened' : 'not opened (another screen is open, or the belt is empty)')
+    );
+    return opened;
+  }
+
   /** #125: turn the opening 3-minute XP boost on (true) or off (false, the game's default); no argument logs it. ?dev only. Takes effect at once and
    *  stays for later runs until the page reloads (not saved). The run pace trace records the setting on each run's start row. */
   function xpBoost(enabled) {
@@ -280,28 +401,6 @@ G.Debug = (() => {
     const now = G.Spawner.xpBoostEnabled;
     console.log('[Debug] opening XP boost: ' + (now ? 'on' : 'off') + (enabled != null ? ' (until reload)' : ''));
     return now;
-  }
-
-  /** Set the gacha tickets: n Pokeballs (x1), and m Master Balls (x10) when given. No arg: logs both. ?dev only. Saved. */
-  function tickets(n, m) {
-    if (!on) {
-      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
-      return false;
-    }
-    const s = G.DB && G.DB.save;
-    if (!s) {
-      console.warn('[Debug] no save loaded.');
-      return false;
-    }
-    s.tickets = s.tickets || { t1: 0, t10: 0 };
-    const whole = (v) => Math.max(0, Math.floor(+v) || 0);
-    if (n != null || m != null) {
-      if (n != null) s.tickets.t1 = whole(n);
-      if (m != null) s.tickets.t10 = whole(m);
-      G.DB.commit();
-    }
-    console.log('[Debug] Pokeballs: ' + s.tickets.t1 + ' · Master Balls: ' + s.tickets.t10);
-    return { pokeballs: s.tickets.t1, masterBalls: s.tickets.t10 };
   }
 
   /** Unlock `n` run-item slots (1 to 4) on this save, or log the current count. ?dev only. Saved (save.runSlots, absent in old saves = 1). */
@@ -1287,7 +1386,7 @@ G.Debug = (() => {
     }
     const ok = G.Shops.debugPlace();
     console.log(
-      ok ? '[Debug] Move Trainer and TM Mart placed, follow the red arrows' : '[Debug] no free ground found, try again'
+      ok ? '[Debug] Move Trainer and TR Shop placed, follow the red arrows' : '[Debug] no free ground found, try again'
     );
     return ok;
   }
@@ -1334,7 +1433,9 @@ G.Debug = (() => {
     coins,
     silver,
     xpBoost,
-    tickets,
+    rescue,
+    catch: catchNow,
+    catchMath,
     unlockitem,
     loadout,
     ignite,

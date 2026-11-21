@@ -1,7 +1,7 @@
 /* ============ ui.js — common interface utilities ============
  * - Mostrar / ocultar pantallas.
  * - Animated PMD sprites inside DOM <canvas> (menu, collection,
- *   gacha...). They are registered here and the main loop animates them with tick().
+ *   shop...). They are registered here and the main loop animates them with tick().
  * - Interface sounds (by delegation: any button plays on its own).
  * - Sound panel, notices (toast), coins, type chips, stars.
  */
@@ -31,6 +31,7 @@ G.UI = (() => {
     'scr-mod',
     'scr-inventory',
     'scr-shop', // Move Shop step 4 (js/ui/shop-ui.js), so hideAll closes it too
+    'scr-catch', // #136 (js/ui/catch-ui.js), so hideAll closes it too
   ];
 
   function show(id, keepMenu = false) {
@@ -59,9 +60,6 @@ G.UI = (() => {
   function refreshCoins() {
     const s = G.DB.save;
     $('coins').textContent = s ? s.coins.toLocaleString('en-US') : '0'; // 12,000, like the Shop and the box tabs
-    const t = (s && s.tickets) || { t1: 0, t10: 0 };
-    $('tickets-pill').innerHTML = `${G.Icons.html('ball', 24)} ${t.t1}`;
-    $('master-pill').innerHTML = `${G.Icons.html('ball4', 24)} ${t.t10}`;
     // Sync dot: green = saved in the cloud, yellow = saving,
     // red = no connection (saved locally and uploaded on return).
     const st = G.DB.guest ? 'guest' : G.DB.syncState;
@@ -84,46 +82,106 @@ G.UI = (() => {
 
   let toastEl = null,
     toastT = 0;
-  /** tone: 'bad' = red toast (a benched Pokemon fainted, slice E2b). */
   /**
-   * In-game confirm dialog (the matching-UI replacement for the browser confirm()). Resolves true on Confirm / Enter, false on Cancel / Esc.
-   * @param o  { title, ok, cancel, note, noCancel }  (note = a small second line, e.g. what you will have left; noCancel = a notice with one button)
+   * In-game confirm dialog (the matching-UI replacement for the browser confirm()), drawn as the UI library's
+   * modal.dialog on the menu stage (#155 155c-4; clean, #128 catch.window). Resolves true on the confirm, false on the
+   * back-out or Esc.
+   * @param o  { title, ok, cancel, note, intent, noCancel }  (note = a small second line, e.g. what you will have left)
+   *   intent    'negative' (the default) guards a loss the player cannot earn back, so it opens on the back-out and a
+   *             stray Enter loses nothing; 'positive' (a gain or a spend) opens on the confirm. The confirm takes the
+   *             intent, the back-out is always neutral (decision 2026-11-20-155-dialog-answers-never-share-an-intent).
+   *   noCancel  a notice: one neutral button.
+   * Keys: Left and Right move the focus; Enter or Space presses it; Esc cancels at once. The focus shows only while the
+   * keyboard is in use (the kit's inputMode): with the mouse neither button shows it and only the one under the pointer
+   * swipes. A key after the mouse first shows the focus (Enter or Space only reveal it, an arrow reveals and moves it),
+   * from the last button the mouse touched (decision 2026-11-19-155-dialog-clean-cancel-state-and-input-modes).
    * It is NOT one of the SCREENS, so it opens on top of the current screen and leaves it as it was. A second call cancels the first.
    */
-  let askDone = null;
+  const ASK_PART_IDS = { title: 'ask-title', message: 'ask-msg', note: 'ask-note' }, // the smokes read these
+    ASK_STEPS = { ArrowLeft: -1, ArrowRight: 1 },
+    ASK_OPENS_ON_CONFIRM = { positive: true, negative: false };
+  let askDone = null,
+    askFit = null; // the stage's fit to the window (the HUD kit's fitToStage), made the first time an ask opens
   function ask(msg, o = {}) {
     return new Promise((resolve) => {
       if (askDone) askDone(false);
       const scr = $('scr-ask'),
-        ok = $('ask-ok'),
-        no = $('ask-no');
-      $('ask-title').textContent = o.title || 'Are you sure?';
-      $('ask-msg').textContent = msg;
-      $('ask-note').textContent = o.note || '';
-      ok.textContent = o.ok || 'Confirm';
-      no.textContent = o.cancel || 'Cancel';
-      no.style.display = o.noCancel ? 'none' : '';
+        stage = $('ask-stage'),
+        html = window.htm.bind(window.preact.h),
+        inputMode = G.HudKit.inputMode;
+      const notice = !!o.noCancel,
+        intent = notice ? 'neutral' : o.intent || 'negative';
+      const buttons = [{ key: 'ok', elementId: 'ask-ok', label: o.ok || 'Confirm', intent }];
+      if (!notice) buttons.push({ key: 'no', elementId: 'ask-no', label: o.cancel || 'Cancel', intent: 'neutral' });
+      let focus = notice || ASK_OPENS_ON_CONFIRM[intent] ? 0 : 1, // the button Enter presses
+        focusShown = inputMode.value === 'keys';
+      const clampFocus = (index) => Math.max(0, Math.min(buttons.length - 1, index));
+      function draw() {
+        window.preact.render(
+          html`<${G.Lib.Modal.ModalDialog}
+            title=${o.title || 'Are you sure?'}
+            message=${msg}
+            note=${o.note}
+            buttons=${buttons}
+            focus=${focusShown ? focus : -1}
+            byKeys=${focusShown}
+            onPress=${press}
+            onHover=${moveTo}
+            partIds=${ASK_PART_IDS}
+          />`,
+          stage
+        );
+      }
+      function moveTo(index) {
+        if (index === focus) return;
+        focus = index;
+        if (focusShown) G.Audio.sfx('hover');
+        draw();
+      }
+      function press(index) {
+        G.Audio.sfx(index === 0 ? 'confirm' : 'click');
+        done(index === 0);
+      }
+      // the mouse took over: the focus hides until a key shows it again
+      const stopWatchingMouse = window.preactSignals.effect(() => {
+        if (inputMode.value !== 'mouse' || !focusShown) return;
+        focusShown = false;
+        window.preactSignals.untracked(draw); // the redraw reads no signal this effect should follow
+      });
       const onKey = (e) => {
-        if (e.key !== 'Enter' && e.key !== 'Escape') return;
+        const step = ASK_STEPS[e.key],
+          pressKey = e.key === 'Enter' || e.key === ' ';
+        if (e.key === 'Escape') done(false);
+        else if (!focusShown && (step || pressKey)) {
+          // after the mouse the first key only shows the focus (an arrow moves it too), so no key presses unseen
+          focus = clampFocus(focus + (step || 0));
+          focusShown = true;
+          G.Audio.sfx('hover');
+          draw();
+        } else if (step) moveTo(clampFocus(focus + step));
+        else if (pressKey) press(focus);
+        else return;
         e.preventDefault();
-        e.stopPropagation(); // the game must not also read this Esc / Enter
-        done(e.key === 'Enter');
+        e.stopPropagation(); // the game must not also read this key
       };
       const done = (v) => {
         if (askDone !== done) return;
         askDone = null;
+        stopWatchingMouse();
         scr.classList.add('hidden');
         removeEventListener('keydown', onKey, true);
         resolve(v);
       };
       askDone = done;
-      ok.onclick = () => done(true);
-      no.onclick = () => done(false);
+      if (askFit) askFit();
+      else askFit = G.HudKit.fitToStage(stage);
+      draw();
       addEventListener('keydown', onKey, true);
       scr.classList.remove('hidden');
     });
   }
 
+  /** tone: 'bad' = red toast (a benched Pokemon fainted, slice E2b). */
   function toast(msg, ms = 2200, tone = '') {
     if (!toastEl) {
       toastEl = document.createElement('div');
@@ -231,6 +289,7 @@ G.UI = (() => {
       return ask(G.T('Se borrarán tu cuenta y toda tu partida, para siempre. ¿Seguro?'), {
         title: 'Delete account',
         ok: 'Delete',
+        intent: 'negative',
       }).then((y) => (y ? { pass: '' } : null));
     return new Promise((done) => {
       const el = document.createElement('section');

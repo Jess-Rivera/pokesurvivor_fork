@@ -31,7 +31,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   Icons: { html: () => '' }, Ranking: { periodIds: () => ({ d: 'd-2026-10-31', w: 'w-2026-44' }) },
   Social: { me: null, profileData: () => ({ name: 'Tester', best: {}, medals: [] }) }, DB: { save: null, online: false, commit() { } } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-try { load('js/core/util.js'); } catch (e) { }
+try { load('js/ui/lib/tokens/tokens.js'); load('js/core/util.js'); } catch (e) { }
 if (!G.U || !G.U.TYPE_NAME) { console.log('util did not load'); process.exit(1); }
 ['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/enemy-classes.js',
  'js/data/enemies.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js',
@@ -58,7 +58,7 @@ const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b))
 //    meta, the gacha's legendary rarity (D1), the old save field names in core/db.js, and lines about the pokedex leg exclusion;
 //    #53: the leader AI's misjudge setting is not the Judgment, so judg after 'mis' is allowed)
 { const SKIP = /^js\/(net\/|app\.min\.js$|data\/(lang-en|changelog|pokedex|sprites-meta)\.js$)/;
-  const LEG_OK_FILES = new Set(['js/systems/gacha.js', 'js/ui/gacha-ui.js', 'js/ui/slots.js', 'js/ui/icons.js']);
+  const LEG_OK_FILES = new Set(['js/systems/copies.js', 'js/ui/gacha-ui.js', 'js/ui/icons.js']);
   const SAVE_FIELDS = /\b(legends|arenas|riftWins|judged|judgeTime|judgeBosses)\b/;
   const BAN = [/(^|[^a-z])rift/i, /grieta/i, /(?<!mis)judg|arceus/i, /\.legend\b|\bleg_|LEGEND_T10|BOSS_T10/];
   const JUDG = BAN[2];
@@ -83,7 +83,7 @@ const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b))
   ok(!badA.length, 'removed achievements back: ' + badA.map(a => a.id));
   ok(!G.AchDefs.CATS.some(c => ['grietas', 'legendarios'].includes(c[0])), 'removed achievement categories back');
   ok(!M.some(m => m.id === 'wrift' || ['rift', 'judge', 'judgeEnd'].includes(m.ev)) && !G.MissionDefs.BY.wrift, 'removed mission back');
-  ok(A.length > 30 && G.MissionDefs.weekly.length === 4, 'the other lists are intact (' + A.length + ' achievements, ' + G.MissionDefs.weekly.length + ' weeklies)');
+  ok(A.length > 20 && G.MissionDefs.weekly.length === 4, 'the other lists are intact (' + A.length + ' achievements, ' + G.MissionDefs.weekly.length + ' weeklies)');
   console.log('3 lists: ' + A.length + ' achievements in ' + G.AchDefs.CATS.length + ' categories, ' + M.length + ' missions, none from the removed modes'); }
 
 // 4. an old save holding the removed ids and fields

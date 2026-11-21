@@ -65,81 +65,28 @@ G.U = {
     return m + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   },
 
-  /** "1,204" up to 9,999, then "41.2k" and "1.3M": one decimal, a trailing .0 dropped ("10k") (#91-3, 91d P4). */
-  compact(n) {
+  /**
+   * "1,204" below shortFrom (10,000 by default, the pause menu's stats: #91-3, 91d P4), then "41.2k" and "1.3M": one
+   * decimal, a trailing .0 dropped ("10k"). The Main Menu Shop's buttons shorten from 1,000
+   * (G.MenuWindowKit.SHORT_PRICE_FROM: "Buy 9k", "Buy 7.5k").
+   */
+  compact(n, shortFrom = 10000) {
     const value = Math.round(n || 0),
       size = Math.abs(value);
-    if (size < 10000) return value.toLocaleString('en-US');
+    if (size < shortFrom) return value.toLocaleString('en-US');
     const [unit, step] = size >= 999950 ? ['M', 1e6] : ['k', 1e3]; // 999,950 reads 1M, never 1000k
     return String(Math.round((value / step) * 10) / 10) + unit;
   },
 
   /**
-   * Pokemon type colours: the Bulbapedia Scarlet/Violet palette (docs/HUD-STYLE.md "Type colours"), checked against that
-   * table by tools/type_colors.js. TYPE_COLOR is the Base tone, for fills, projectiles and effects. TYPE_COLOR_LIGHT is
-   * for highlights and for type-coloured text drawn over the map (Base is too dark there for Ghost, Dark, Ground).
-   * TYPE_COLOR_DARK is for shades and outlines.
+   * Pokemon type colours, from the design tokens (js/ui/lib/tokens/tokens.js, color.type.<type>.<tone>; the Bulbapedia
+   * Scarlet/Violet palette, docs/HUD-STYLE.md "Type colours", checked by tools/type_colors.js). TYPE_COLOR is the Base
+   * tone, for fills, projectiles and effects. TYPE_COLOR_LIGHT is for highlights and for type-coloured text drawn over
+   * the map (Base is too dark there for Ghost, Dark, Ground). TYPE_COLOR_DARK is for shades and outlines.
    */
-  TYPE_COLOR: {
-    normal: '#9FA19F',
-    fire: '#E62829',
-    water: '#2980EF',
-    grass: '#3FA129',
-    electric: '#FAC000',
-    ice: '#3DCEF3',
-    fighting: '#FF8000',
-    poison: '#9141CB',
-    ground: '#915121',
-    flying: '#81B9EF',
-    psychic: '#EF4179',
-    bug: '#91A119',
-    rock: '#AFA981',
-    ghost: '#704170',
-    dragon: '#5060E1',
-    dark: '#624D4E',
-    steel: '#60A1B8',
-    fairy: '#EF70EF',
-  },
-  TYPE_COLOR_LIGHT: {
-    normal: '#C1C2C1',
-    fire: '#EF7374',
-    water: '#74ACF5',
-    grass: '#82C274',
-    electric: '#FCD659',
-    ice: '#81DFF7',
-    fighting: '#FFAC59',
-    poison: '#B884DD',
-    ground: '#B88E6F',
-    flying: '#ADD2F5',
-    psychic: '#F584A8',
-    bug: '#B8C26A',
-    rock: '#CBC7AD',
-    ghost: '#A284A2',
-    dragon: '#8D98EC',
-    dark: '#998B8C',
-    steel: '#98C2D1',
-    fairy: '#F5A2F5',
-  },
-  TYPE_COLOR_DARK: {
-    normal: '#676967',
-    fire: '#961A1B',
-    water: '#1B539B',
-    grass: '#29691B',
-    electric: '#A37D00',
-    ice: '#28869E',
-    fighting: '#A65300',
-    poison: '#5E2A84',
-    ground: '#5E3515',
-    flying: '#54789B',
-    psychic: '#9B2A4F',
-    bug: '#5E6910',
-    rock: '#726E54',
-    ghost: '#492A49',
-    dragon: '#343E92',
-    dark: '#403233',
-    steel: '#3E6978',
-    fairy: '#9B499B',
-  },
+  TYPE_COLOR: G.Tokens.typeTable('base'),
+  TYPE_COLOR_LIGHT: G.Tokens.typeTable('light'),
+  TYPE_COLOR_DARK: G.Tokens.typeTable('dark'),
 
   TYPE_NAME: {
     normal: 'Normal',

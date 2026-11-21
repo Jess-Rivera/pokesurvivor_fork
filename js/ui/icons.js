@@ -510,40 +510,6 @@ G.Icons = (() => {
         '............',
       ],
     },
-    ticket: {
-      pal: { y: '#ffd23f', d: '#c08a10', w: '#fff3b0', r: '#ff5f6d' },
-      rows: [
-        '............',
-        '............',
-        'kkkkkkkkkkkk',
-        'kwyyydyyyyyk',
-        'kyyyyyyrryyk',
-        '.kyyydyrryk.',
-        '.kyyyyyrryk.',
-        'kyyyydyyyyyk',
-        'kddddddddddk',
-        'kkkkkkkkkkkk',
-        '............',
-        '............',
-      ],
-    },
-    ticket10: {
-      pal: { p: '#c47bff', q: '#8a3fd0', w: '#f0d8ff', y: '#ffd23f' },
-      rows: [
-        '............',
-        '............',
-        'kkkkkkkkkkkk',
-        'kwpppqppyypk',
-        'kppppqpyyypk',
-        '.kpppqpyyyk.',
-        '.kpppqppyyk.',
-        'kppppqpppppk',
-        'kqqqqqqqqqqk',
-        'kkkkkkkkkkkk',
-        '............',
-        '............',
-      ],
-    },
     wsun: {
       pal: { y: '#ffd23f', o: '#ff9a3d' },
       rows: [
@@ -629,7 +595,7 @@ G.Icons = (() => {
         '............',
       ],
     },
-    // Balls of the gacha slot machine (one per rarity). Pixel art cut from assets/icons/pokeball/<rarity>.png:
+    // Balls for the star tiers (one per rarity). Pixel art cut from assets/icons/pokeball/<rarity>.png:
     // ball = Common, ball2 = Uncommon (Premier), ball3 = Rare, ballLux = Epic, ball4 = Legendary.
     ball2: {
       pal: { k: '#000000', a: '#ffffff', b: '#e0e0e0', c: '#ff0000' },
@@ -2127,13 +2093,7 @@ G.Icons = (() => {
     return cv;
   }
 
-  // The ticket pickups in the world are drawn as Pokesprite balls: 'ticket' (x1) is a Great Ball, 'ticket10' (x10) a Master Ball.
-  // The menus do not use these names: they draw 'ball' (Poke Ball) and 'ball4' (the purple Master Ball) from assets/icons/pokeball.
-  // To go back to the pixel-art tickets in the world, empty this table (their definitions are still in UI above).
-  const ALIAS = { ticket: 'ps:ball.great', ticket10: 'ps:ball.master' };
-
   function canvas(name) {
-    name = ALIAS[name] || name;
     let cv = cache.get(name);
     if (cv) return cv;
     if (name.startsWith('move:')) {
@@ -2303,7 +2263,6 @@ G.Icons = (() => {
    * 16 px icon painted at 24 would double some pixels and not others.
    */
   function snap(name, size) {
-    name = ALIAS[name] || name;
     if (name.startsWith('ps:')) return size; // Pokesprite cells scale freely (smoothed when drawn)
     const w = canvas(name).width;
     return w * Math.max(1, Math.round(size / w));
@@ -2311,7 +2270,6 @@ G.Icons = (() => {
 
   /** Pixelated <img> for the DOM. */
   function html(name, size = 20, cls = '') {
-    name = ALIAS[name] || name;
     if (name.startsWith('ps:')) {
       const pos = (G.PokeSprite && G.PokeSprite[name.slice(3)]) || [0, 0],
         k = size / PS_CELL;
@@ -2324,7 +2282,6 @@ G.Icons = (() => {
   }
 
   function draw(ctx, name, x, y, size) {
-    name = ALIAS[name] || name;
     const cv = canvas(name);
     const s2 = snap(name, size);
     x += (size - s2) / 2;
@@ -2391,7 +2348,7 @@ G.Icons = (() => {
    */
   const RARITY_BALL = { 1: 'ball', 2: 'ball2', 3: 'ball3', 4: 'ballLux', 5: 'ball4' };
   function rarity(n, size = 12) {
-    return `<span class="rarity-ball" title="${(G.Gacha && G.Gacha.RARITY_NAME[n]) || ''}">${html(RARITY_BALL[n] || 'ball', size)}</span>`;
+    return `<span class="rarity-ball" title="${(G.Copies && G.Copies.RARITY_NAME[n]) || ''}">${html(RARITY_BALL[n] || 'ball', size)}</span>`;
   }
 
   /**

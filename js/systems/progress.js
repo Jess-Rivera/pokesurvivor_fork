@@ -148,18 +148,13 @@ G.Progress = (() => {
   function grant(r) {
     const s = G.DB.save;
     if (!r) return;
-    s.tickets = s.tickets || { t1: 0, t10: 0 };
     if (r.coins) s.coins += r.coins;
-    if (r.t1) s.tickets.t1 += r.t1;
-    if (r.t10) s.tickets.t10 += r.t10;
     if (G.UI && G.UI.refreshCoins && !document.getElementById('topbar').classList.contains('hidden'))
       G.UI.refreshCoins();
   }
 
   function rewardText(r) {
     const p = [];
-    if (r.t10) p.push(G.Icons.html('ball4', 24) + ' ' + r.t10 + ' Master Ball' + (r.t10 > 1 ? 's' : ''));
-    if (r.t1) p.push(G.Icons.html('ball', 24) + ' ' + r.t1 + ' Pokeball' + (r.t1 > 1 ? 's' : ''));
     if (r.coins) p.push('<span class="coin"></span> ' + r.coins);
     return p.join(' &nbsp;');
   }

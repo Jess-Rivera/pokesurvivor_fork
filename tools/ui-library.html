@@ -1,0 +1,1132 @@
+<!doctype html>
+<!-- UI Library (dev tool, never ships; Jess 2026-11-15, #147). The design language on one page: every font, colour and UI piece,
+     each labelled with its job. It loads the game's own fonts, stylesheets and type colours (js/core/util.js), so those can't drift
+     from the game. The roles and labels are copied from docs/HUD-STYLE.md "Colour palette" and docs/UI-PALETTES.md. Open it by double-click (file://).
+     Tabs group the sections. The Run panels and Pause panels tabs mount the game's real panels over a fake run (the last
+     script below), so the page loads the game's own scripts; only the boot and the live run are left out. -->
+
+<!-- Add a "?seed=N" to the address to see one fake team again; the seed is shown above each screen. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI Library</title>
+<!-- Every path on this page is from the repo root, as in dev.html, so the HUD kit's own asset paths (assets/pokemon/,
+     assets/icons/types/) resolve. Section links use data-jump, since a #hash link would resolve against this base. -->
+<base href="../">
+<link rel="stylesheet" href="js/ui/lib/primitives/pixels/pixels.css">
+<link rel="stylesheet" href="js/ui/lib/primitives/button/button.css">
+<link rel="stylesheet" href="js/ui/lib/primitives/panel/panel.css">
+<link rel="stylesheet" href="js/ui/lib/primitives/square/square.css">
+<link rel="stylesheet" href="js/ui/lib/primitives/bar/bar.css">
+<link rel="stylesheet" href="js/ui/lib/primitives/modal/modal.css">
+<link rel="stylesheet" href="js/ui/lib/primitives/portrait/portrait.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/bw-menu.css">
+<link rel="stylesheet" href="css/hud-overlay.css">
+<link rel="stylesheet" href="css/pause-menu.css">
+<style>
+  /* The page's own chrome: neutral, so the game's colours read true. style.css sets body overflow hidden and no text
+     selection for the game; both are undone here. */
+  :root { --lib-bg: #15171c; --lib-panel: #1e2128; --lib-line: #2e323b; --lib-text: #e4e6eb; --lib-dim: #8b919c; --lib-accent: #6ea4ff; }
+  html, body { height: auto; }
+  body { overflow: auto; background: var(--lib-bg); color: var(--lib-text); font: 14px/1.45 system-ui, sans-serif;
+    -webkit-font-smoothing: auto; touch-action: auto; }
+  body, body * { -webkit-user-select: text; user-select: text; }
+  header { position: sticky; top: 0; z-index: 10; background: var(--lib-bg); border-bottom: 1px solid var(--lib-line);
+    padding: 10px 16px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; }
+  header nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  header nav button { background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--lib-dim);
+    font: 13px system-ui, sans-serif; padding: 4px 10px; cursor: pointer; }
+  header nav button:hover { color: var(--lib-text); }
+  header nav button[aria-selected="true"] { color: var(--lib-text); background: var(--lib-panel); border-color: var(--lib-line); }
+  section[hidden] { display: none; }
+
+  /* The game screen: a 1920x1080 box scaled to the page width. Its transform makes it the containing block for the
+     panels' position: fixed, so the real HUD and pause menu lay out inside it as if it were the window. */
+  .lib-screen-wrap { position: relative; width: 100%; max-width: 1400px; border: 1px solid var(--lib-line); border-radius: 6px;
+    overflow: hidden; background: #0b1a12; }
+  .lib-screen { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0;
+    background: radial-gradient(circle at 40% 55%, #3d6b45, #16301d 70%, #0b1a12); overflow: hidden; }
+  .lib-screen-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0 0 10px; }
+  .lib-screen-bar button { background: var(--lib-panel); color: var(--lib-text); border: 1px solid var(--lib-line);
+    border-radius: 4px; padding: 4px 10px; font: 13px system-ui, sans-serif; cursor: pointer; }
+  .lib-screen-bar button:hover { border-color: var(--lib-accent); }
+  .lib-team-list { font-size: 12px; color: var(--lib-dim); }
+  .lib-font-line { font-size: 11px; color: var(--lib-dim); font-family: ui-monospace, monospace; }
+  .lib-hover-font { font: 12px ui-monospace, monospace; color: var(--lib-accent); min-height: 1.45em; margin: 8px 0 0; }
+  table.lib-font-table { margin-top: 12px; }
+  table.lib-font-table td:first-child { width: 34%; }
+
+  /* Components: the kit's pieces are placed absolutely inside the HUD; here they sit in the flow. */
+  .lib-live .lib-stage { background: #0c0d10; }
+  .lib-live .lib-stage.lib-game-bg { background: #2a3a2a; }
+  .lib-live .hud-slot, .lib-live .hud-roster-row { position: relative !important; left: auto !important; bottom: auto !important; }
+  .lib-live .lib-piece { position: relative; font-family: 'HudText', monospace; color: #fff; }
+  .lib-live .pm-button { position: relative; }
+  .lib-menu-frame { position: relative; height: 560px; width: 100%; overflow: hidden; border-radius: 6px;
+    background: radial-gradient(circle at 30% 60%, #2f5a3a, #0b1a12); --u: 0.52px; --bw-panel: calc(535 * var(--u)); --bw-fade: calc(360 * var(--u)); }
+  main { max-width: 1400px; margin: 0 auto; padding: 8px 16px 64px; }
+  section { margin-top: 28px; }
+  h2 { font-size: 20px; margin: 0 0 4px; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--lib-dim); margin: 22px 0 4px; }
+  .lib-note { color: var(--lib-dim); font-size: 13px; margin: 2px 0 10px; max-width: 900px; }
+  .lib-tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #2b3242; color: var(--lib-dim);
+    vertical-align: middle; margin-left: 6px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+  .lib-tag.lib-proposed { background: #4a3a12; color: #ffd27a; }
+  .lib-tag.lib-offspec { background: #3a2230; color: #f0a0c0; }
+  .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .lib-card { background: var(--lib-panel); border: 1px solid var(--lib-line); border-radius: 6px; overflow: hidden; }
+  .lib-card .lib-chip-row { display: flex; height: 56px; }
+  .lib-card .lib-chip-row > div { flex: 1; display: flex; align-items: flex-end; padding: 4px 6px; font: 11px ui-monospace, monospace; }
+  .lib-card .lib-body { padding: 8px 10px; }
+  .lib-card .lib-role { font-weight: 600; }
+  .lib-card .lib-hex { font: 12px ui-monospace, monospace; color: var(--lib-dim); }
+  .lib-card .lib-use { font-size: 12px; color: var(--lib-dim); margin-top: 2px; }
+  table.lib-ramp { border-collapse: collapse; width: 100%; max-width: 900px; font-size: 13px; }
+  table.lib-ramp td, table.lib-ramp th { padding: 4px 6px; border-bottom: 1px solid var(--lib-line); text-align: left; }
+  table.lib-ramp th { color: var(--lib-dim); font-weight: 500; }
+  table.lib-ramp .lib-sw { width: 120px; font: 11px ui-monospace, monospace; }
+  .lib-stage { background: #0c0d10; border: 1px solid var(--lib-line); border-radius: 6px; padding: 16px; display: flex;
+    flex-wrap: wrap; gap: 18px; align-items: center; }
+  .lib-sample { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .lib-sample .lib-cap { font-size: 12px; color: var(--lib-dim); }
+  .lib-fontrow { background: var(--lib-panel); border: 1px solid var(--lib-line); border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }
+  .lib-fontrow .lib-meta { font-size: 12px; color: var(--lib-dim); margin-bottom: 8px; }
+  .lib-fontrow .lib-meta b { color: var(--lib-text); font-size: 14px; }
+  .lib-fontrow .lib-specimens { display: flex; flex-direction: column; gap: 8px; color: #fff; overflow-x: auto;
+    -webkit-font-smoothing: none; /* as the game draws text (style.css body) */ }
+  .lib-fontrow .lib-specimens span.lib-size { font: 11px ui-monospace, monospace; color: var(--lib-dim); display: inline-block; width: 48px; }
+  .lib-fontrow .lib-fail { color: #ff7a6b; }
+
+  /* Samples drawn from HUD-STYLE values (not live components). */
+  .s-chip { width: 70px; height: 24px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+    font: 20px/20px 'HudText', monospace; color: #fff;
+    text-shadow: 2px 0 0 #101010, -2px 0 0 #101010, 0 2px 0 #101010, 0 -2px 0 #101010, 2px 2px 0 #101010, -2px -2px 0 #101010, 2px -2px 0 #101010, -2px 2px 0 #101010; }
+  .s-chip.solid { background: linear-gradient(var(--fill) 0 66%, var(--shade) 66% 100%); }
+  .s-chip.hollow { background: #101010; box-shadow: inset 0 0 0 2px var(--rim); color: var(--rim); text-shadow: none; }
+  .s-bar { width: 240px; height: 12px; background: linear-gradient(#f3f3f3 0 66%, #adadad 66% 100%); outline: 2px solid #212121; position: relative; }
+  .s-bar.dark { background: linear-gradient(#7f7f7f 0 66%, #464646 66% 100%); }
+  .s-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--pct); background: linear-gradient(var(--fill) 0 66%, var(--shade) 66% 100%); }
+  .s-tooltip { background: #181818; border: 2px solid #f3b200; padding: 8px 12px; max-width: 320px;
+    font: 20px/22px var(--font); color: #fff; text-shadow: 1px 0 0 #101010, -1px 0 0 #101010, 0 1px 0 #101010, 0 -1px 0 #101010; }
+  .s-tooltip b { color: #ffd23f; font-weight: 400; display: block; }
+  .s-typeplate { display: inline-flex; align-items: center; height: 32px; padding: 0 18px 0 14px; color: #fff;
+    background: repeating-conic-gradient(#393939 0 25%, #292929 0 50%) 0 0 / 8px 8px;
+    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); box-shadow: inset 0 0 0 3px var(--rim);
+    font: 20px/20px 'HudText', monospace; outline: 2px solid #000000; }
+  .s-btn { min-width: 220px; padding: 8px 14px; background: #181818; border: 3px solid var(--rim); color: #fff;
+    font: 30px/30px 'HudText', monospace; text-align: center; }
+  .s-shake { animation: lib-flash 0.5s steps(1) infinite; }
+  @keyframes lib-flash { 50% { --fill: #ffffff; background: #ffffff; color: #101010; text-shadow: none; } }
+  .toast.lib-static { position: static; transform: none; animation: none; display: block; left: auto; bottom: auto; }
+  .s-ball { width: 120px; height: 120px; border-radius: 50%; position: relative; overflow: hidden; outline: 4px solid #747474;
+    box-shadow: 0 0 0 10px #575757; margin: 12px; }
+  .s-ball::before { content: ''; position: absolute; inset: 0 0 55% 0; background: #c8141c; border-bottom: 4px solid #ffffff; }
+  .s-ball::after { content: ''; position: absolute; inset: 55% 0 0 0; background: #313a46; border-top: 4px solid #ffffff; }
+  .s-ball i { position: absolute; inset: 42% 0 42% 0; background: #000000; z-index: 1; }
+  .lib-screenvars td.lib-where { color: var(--lib-dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>UI Library</h1>
+  <nav role="tablist">
+    <button data-tab="bits">Base UI bits</button><button data-tab="run">Run panels</button><button data-tab="pause">Pause panels</button>
+    <button data-tab="menu">Main menu panels</button><button data-tab="fonts">Fonts</button><button data-tab="colours">Colours</button>
+    <button data-tab="screens">Screen variables</button><button data-tab="reference">Reference palettes</button>
+  </nav>
+  <span class="lib-note" style="margin:0">Source of truth: docs/HUD-STYLE.md. Dev tool, never ships (#147).</span>
+</header>
+<main>
+
+<section id="components" data-tab="bits">
+  <h2>Components <span class="lib-tag">live, placeholder content</span></h2>
+  <p class="lib-note">The game's own pieces, mounted from the HUD kit (js/ui/hud-kit*.js) and styled by its real CSS, fed placeholder names and numbers. Where a piece is private to its panel, it is rebuilt here from the same kit parts and named as such.</p>
+  <div id="components-body" class="lib-live"></div>
+</section>
+
+<section id="run-panels" data-tab="run">
+  <h2>Run panels <span class="lib-tag">real panels, fake run</span></h2>
+  <p class="lib-note">The run HUD as the game draws it: every panel file (js/ui/hud-*-panel.js) mounted for real on a 1920 x 1080 screen, reading a fake run built through the game's own classes (G.Player, G.Team, G.RunStats, G.DpsHistory) instead of a live one. Nothing here is saved.</p>
+  <div class="lib-screen-bar"><button data-reroll>New random team</button><span class="lib-team-list" data-team-list></span></div>
+  <div class="lib-screen-wrap" data-screen-slot="run"></div>
+  <p class="lib-hover-font" data-hover-font>Hover any text on the screen to see its font.</p>
+  <h3>Fonts by panel <span class="lib-tag">read live from the panels</span></h3>
+  <table class="lib-ramp lib-font-table" data-font-table="run"></table>
+</section>
+
+<section id="pause-panels" data-tab="pause">
+  <h2>Pause panels <span class="lib-tag">real panels, fake run</span></h2>
+  <p class="lib-note">The pause menu (js/ui/pause-menu.js) opened for real over the same fake run: Run Info, the Pokemon detail and team panels, and the Run Inventory. Hover for the game's tooltips; click a team card to show that Pokemon.</p>
+  <div class="lib-screen-bar"><button data-reroll>New random team</button><span class="lib-team-list" data-team-list></span></div>
+  <div class="lib-screen-wrap" data-screen-slot="pause"></div>
+  <p class="lib-hover-font" data-hover-font>Hover any text on the screen to see its font.</p>
+  <h3>Fonts by panel <span class="lib-tag">read live from the panels</span></h3>
+  <table class="lib-ramp lib-font-table" data-font-table="pause"></table>
+</section>
+
+<section id="menu-panels" data-tab="menu">
+  <h2>Main menu panels</h2>
+  <div id="menu-body" class="lib-live"></div>
+</section>
+
+<section id="fonts" data-tab="fonts">
+  <h2>Fonts</h2>
+  <p class="lib-note">Each face is loaded from assets/fonts through the game's own stylesheets. Pixel faces only at whole multiples of their grid (HUD-STYLE "Crisp sizes only").</p>
+  <div id="font-list"></div>
+</section>
+
+<section id="colours" data-tab="colours">
+  <h2>Working colours</h2>
+  <p class="lib-note">HUD-STYLE "Working colours". A working palette, not a frozen one: every colour has a job. B/W colours come in pairs (a bright fill over a dark shade), shown as a split swatch.</p>
+  <div id="colour-groups"></div>
+</section>
+
+<section id="types" data-tab="colours">
+  <h2>Type palette <span class="lib-tag">canonical for all UI</span></h2>
+  <p class="lib-note">Bulbapedia Scarlet/Violet. Base for fills, Dark for shades and outlines, Light for highlights and for type-coloured text over the map. Read live from G.U.TYPE_COLOR, TYPE_COLOR_LIGHT and TYPE_COLOR_DARK (js/core/util.js).</p>
+  <table class="lib-ramp" id="type-table"></table>
+</section>
+
+<section id="pieces" data-tab="bits">
+  <h2>Styles</h2>
+  <p class="lib-note">Looks that are not kit components. The type chips, toasts and HUD text use the game's real CSS classes; the rest are drawn here from HUD-STYLE values (the live components are in Components above).</p>
+
+  <h3>Type chips <span class="lib-tag">real: .type, style.css</span></h3>
+  <p class="lib-note">The type's Base fill inside a 2 px Dark rim, white text with a hard #101010 shadow. Team screen, Pokedex, pause sheet (G.UI.typeChip).</p>
+  <div class="lib-stage" id="type-chips"></div>
+
+  <h3>How a type shows on a panel</h3>
+  <p class="lib-note">From the B2 battle rip: an angled rim in the type's colour around a #393939 / #292929 checker body, with a #000000 outline.</p>
+  <div class="lib-stage" id="type-plates"></div>
+
+  <h3>HUD text <span class="lib-tag">real: .hud-text, hud-overlay.css</span></h3>
+  <p class="lib-note">In game the face comes from the .hud-overlay layer; it is set on the samples here.</p>
+  <div class="lib-stage">
+    <div class="lib-sample"><span class="hud-text" style="font-family:'HudText',monospace">PIKACHU  Lv 12</span><span class="lib-cap">White text, eight hard #101010 shadows one font pixel out (20 px body)</span></div>
+    <div class="lib-sample"><span class="hud-text" style="font-family:'HudText',monospace;opacity:0.45">Region  Map  Kills</span><span class="lib-cap">Dim text: white at about 45%</span></div>
+  </div>
+
+  <h3>Life meters and bars</h3>
+  <p class="lib-note">B/W thresholds: green above 50%, yellow 50% to 20%, red below 20%. Fill over shade on the empty track.</p>
+  <div class="lib-stage" id="bars"></div>
+
+  <h3>Status chips (70 x 24)</h3>
+  <p class="lib-note">Majors are solid (fill over shade), on the left. Minors are hollow (a #101010 body in a rim of their own colour), in the character info panel only.</p>
+  <div class="lib-stage" id="status-chips"></div>
+
+  <h3>Effect chips</h3>
+  <p class="lib-note">Good band above, bad band next to the life meter. Stat chips are the stat's Base over Dark (UI-PALETTES "Pokemon Stats"); type guard chips are the type's SV Base over Dark.</p>
+  <div class="lib-stage" id="effect-chips"></div>
+
+  <h3>Shake Off prompt (flashing)</h3>
+  <div class="lib-stage"><div class="lib-sample"><span class="s-chip solid s-shake" style="--fill:#f3b200;--shade:#9a6110;width:200px;height:32px">SHAKE OFF!</span><span class="lib-cap">#f3b200 over #9a6110, flashing to #ffffff</span></div></div>
+
+  <h3>Tooltip</h3>
+  <div class="lib-stage"><div class="s-tooltip"><b>Oran Berry</b>Restores a little HP when the holder is low.</div>
+    <span class="lib-note" style="margin:0">GameFont 20 px, #181818 body, 2 px #f3b200 frame, name in #ffd23f. Always the topmost layer (TooltipLayer).</span></div>
+
+  <h3>Toasts <span class="lib-tag">real: .toast, style.css</span></h3>
+  <div class="lib-stage">
+    <div class="toast lib-static">Caught! Bulbasaur joins the team.</div>
+    <div class="toast bad lib-static">Not enough coins.</div>
+    <span class="lib-note" style="margin:0">Michroma 20 px on 30 px lines. Teal #29ceff rim for news, red #c8141c for bad news (tone 'bad').</span>
+  </div>
+
+  <h3>Pause menu</h3>
+  <div class="lib-stage">
+    <div class="lib-sample"><div class="s-ball"><i></i></div><span class="lib-cap">Ball caps #c8141c / #313a46, #ffffff edges, ring #575757 with #747474 outer edge</span></div>
+    <div class="lib-sample"><div class="s-btn" style="--rim:#ffffff">Resume</div><span class="lib-cap">Button at rest: #ffffff rim, #181818 flat body</span></div>
+    <div class="lib-sample"><div class="s-btn" style="--rim:#38d030">Team</div><span class="lib-cap">Focus or hover: #38d030 rim</span></div>
+    <div class="lib-sample"><div class="s-btn" style="--rim:#e8202a;background:#7c1016;box-shadow:0 0 0 3px #ff8a90">End</div><span class="lib-cap">End answer focused: #ff8a90 / #e8202a / #7c1016 rim, #7c1016 body</span></div>
+    <div class="lib-sample"><div class="s-btn" style="--rim:#ffffff;background:#848484">No</div><span class="lib-cap">No answer focused: #848484 body</span></div>
+  </div>
+
+  <h3>Wayfinding arrows</h3>
+  <p class="lib-note">Chevrons off the character toward an off-screen target: Base fill, Dark outline, Light shine, then a #101010 line outside. No halo.</p>
+  <div class="lib-stage" id="arrows"></div>
+</section>
+
+<section id="screens" data-tab="screens">
+  <h2>Screen variables</h2>
+  <p class="lib-note">The CSS variables each screen's stylesheet defines, read live from the game's CSS. Rows marked "not in HUD-STYLE" are colours a screen uses that the spec doesn't list yet.</p>
+  <table class="lib-ramp lib-screenvars" id="screen-vars"></table>
+</section>
+
+<section id="reference" data-tab="reference">
+  <h2>Reference palettes</h2>
+  <p class="lib-note">docs/UI-PALETTES.md: Bulbapedia's light, base and dark sets. Reference, not rules; a set is used only once HUD-STYLE adopts it.</p>
+  <div id="reference-sets"></div>
+</section>
+
+</main>
+
+<!-- The game's scripts, in dev.html's order, minus the boot (js/main.js), the run itself (js/game.js: a fake G.Game stands in,
+     below) and the deferred network stack (firebase-config, js/net/). The smoke checks this list against dev.html. -->
+<script>
+window.G = {};
+// The panels size themselves from the window (centre line, pause stage fit). On this page they live in a 1920 x 1080 box,
+// so they are told the window is that size; the page's own layout never reads these.
+Object.defineProperty(window, 'innerWidth', { configurable: true, get: () => 1920 });
+Object.defineProperty(window, 'innerHeight', { configurable: true, get: () => 1080 });
+</script>
+<script src="js/ui/lib/tokens/tokens.js"></script>
+<script src="js/core/util.js"></script>
+<script src="js/vendor/preact.min.js"></script>
+<script src="js/vendor/preact-hooks.min.js"></script>
+<script src="js/vendor/htm.min.js"></script>
+<script src="js/vendor/preact-signals-core.min.js"></script>
+<script src="js/vendor/preact-signals.min.js"></script>
+<script src="js/ui/lib/primitives/pixels/pixels.js"></script>
+<script src="js/ui/lib/primitives/button/button.js"></script>
+<script src="js/ui/lib/primitives/panel/panel.js"></script>
+<script src="js/ui/lib/primitives/square/square.js"></script>
+<script src="js/ui/lib/primitives/bar/bar.js"></script>
+<script src="js/ui/lib/primitives/modal/modal.js"></script>
+<script src="js/ui/lib/primitives/portrait/portrait.js"></script>
+<script src="js/core/stats.js"></script>
+<script src="js/core/simbus.js"></script>
+<script src="js/systems/log.js"></script>
+<script src="js/core/i18n.js"></script>
+<script src="js/data/lang-en.js"></script>
+<script src="js/core/settings.js"></script>
+<script src="js/data/music.js"></script>
+<script src="js/data/pokedex.js"></script>
+<script src="js/data/sprites-meta.js"></script>
+<script src="js/data/status-anims.js"></script>
+<script src="js/core/db.js"></script>
+<script src="js/core/audio.js"></script>
+<script src="js/core/input.js"></script>
+<script src="js/core/touch.js"></script>
+<script src="js/core/sprites.js"></script>
+<script src="js/core/camera.js"></script>
+<script src="js/data/learnsets.js"></script>
+<script src="js/data/moves.js"></script>
+<script src="js/data/types.js"></script>
+<script src="js/data/starters.js"></script>
+<script src="js/data/enemy-classes.js"></script>
+<script src="js/data/enemies.js"></script>
+<script src="js/data/gyms.js"></script>
+<script src="js/data/leader-ai-settings.js"></script>
+<script src="js/data/gym-contact.js"></script>
+<script src="js/data/shop-contact.js"></script>
+<script src="js/data/upgrades.js"></script>
+<script src="js/data/evolvable.js"></script>
+<script src="js/data/stage-one.js"></script>
+<script src="js/data/ball-sprites.js"></script>
+<script src="js/data/balls.js"></script>
+<script src="js/data/species-traits.js"></script>
+<script src="js/systems/copies.js"></script>
+<script src="js/data/items.js"></script>
+<script src="js/data/ground-items.js"></script>
+<script src="js/data/drops.js"></script>
+<script src="js/data/pickup-sprites.js"></script>
+<script src="js/data/pokesprite-index.js"></script>
+<script src="js/data/missions.js"></script>
+<script src="js/data/achievements.js"></script>
+<script src="js/data/funding.js"></script>
+<script src="js/data/changelog.js"></script>
+<script src="js/world/tiles.js"></script>
+<script src="js/world/world.js"></script>
+<script src="js/entities/vfx.js"></script>
+<script src="js/entities/fx.js"></script>
+<script src="js/entities/projectile.js"></script>
+<script src="js/entities/enemy.js"></script>
+<script src="js/entities/elite.js"></script>
+<script src="js/entities/uber-elite.js"></script>
+<script src="js/entities/boss-ai.js"></script>
+<script src="js/entities/pickup.js"></script>
+<script src="js/entities/player.js"></script>
+<script src="js/entities/player-sim-pass.js"></script>
+<script src="js/entities/gym-leader.js"></script>
+<script src="js/entities/leader-ai.js"></script>
+<script src="js/systems/combat.js"></script>
+<script src="js/systems/spawner.js"></script>
+<script src="js/systems/elites.js"></script>
+<script src="js/systems/rescue.js"></script>
+<script src="js/systems/catch.js"></script>
+<script src="js/systems/levelup.js"></script>
+<script src="js/systems/interact.js"></script>
+<script src="js/systems/gym-arena.js"></script>
+<script src="js/systems/gym.js"></script>
+<script src="js/systems/shops.js"></script>
+<script src="js/systems/tms.js"></script>
+<script src="js/systems/events.js"></script>
+<script src="js/systems/weather.js"></script>
+<script src="js/systems/pathing.js"></script>
+<script src="js/systems/progress.js"></script>
+<script src="js/systems/silver.js"></script>
+<script src="js/systems/hazards.js"></script>
+<script src="js/systems/status.js"></script>
+<script src="js/systems/stages.js"></script>
+<script src="js/systems/team.js"></script>
+<script src="js/systems/leader-memory.js"></script>
+<script src="js/systems/leader-info.js"></script>
+<script src="js/systems/leader-belief.js"></script>
+<script src="js/systems/leader-planner.js"></script>
+<script src="js/data/move-attributes.js"></script>
+<script src="js/data/moves-generated.js"></script>
+<script src="js/data/move-overrides.js"></script>
+<script src="js/data/move-handler.js"></script>
+<script src="js/data/move-resolver.js"></script>
+<script src="js/systems/team-cards.js"></script>
+<script src="js/systems/dps-history.js"></script>
+<script src="js/systems/run-stats.js"></script>
+<script src="js/systems/move-geom.js"></script>
+<script src="js/systems/move-sim.js"></script>
+<script src="js/systems/move-effects.js"></script>
+<script src="js/systems/move-route.js"></script>
+<script src="js/systems/move-render.js"></script>
+<script src="js/ui/move-info.js"></script>
+<script src="js/ui/icons.js"></script>
+<script src="js/ui/status-fx.js"></script>
+<script src="js/ui/ui.js"></script>
+<script src="js/ui/statchart.js"></script>
+<script src="js/ui/sheet.js"></script>
+<script src="js/ui/hud.js"></script>
+<script src="js/ui/hud-kit.js"></script>
+<script src="js/ui/hud-kit-items.js"></script>
+<script src="js/ui/hud-kit-hp-bars.js"></script>
+<script src="js/ui/hud-kit-chips.js"></script>
+<script src="js/ui/hud-overlay.js"></script>
+<script src="js/ui/hud-boss-panel.js"></script>
+<script src="js/ui/hud-player-panel.js"></script>
+<script src="js/ui/hud-roster-panel.js"></script>
+<script src="js/ui/hud-run-items-panel.js"></script>
+<script src="js/ui/hud-map-panel.js"></script>
+<script src="js/ui/hud-dps-panel.js"></script>
+<script src="js/ui/pause-inventory.js"></script>
+<script src="js/ui/pause-pokemon.js"></script>
+<script src="js/ui/pause-run-info.js"></script>
+<script src="js/ui/pause-menu.js"></script>
+<script src="js/ui/end-run.js"></script>
+<script src="js/ui/ev-screen.js"></script>
+<script src="js/ui/confetti.js"></script>
+<script src="js/ui/gym-present.js"></script>
+<script src="js/ui/login.js"></script>
+<script src="js/ui/test.js"></script>
+<script src="js/ui/menu-window-kit.js"></script>
+<script src="js/ui/menu.js"></script>
+<script src="js/ui/menu-dex-grid.js"></script>
+<script src="js/ui/menu-pokedex.js"></script>
+<script src="js/ui/menu-team.js"></script>
+<script src="js/ui/menu-team-copies.js"></script>
+<script src="js/ui/menu-upgrades.js"></script>
+<script src="js/ui/shop-balls.js"></script>
+<script src="js/ui/shop-tms.js"></script>
+<script src="js/ui/gacha-ui.js"></script>
+<script src="js/ui/inventory-ui.js"></script>
+<script src="js/ui/run-ui.js"></script>
+<script src="js/ui/shop-ui.js"></script>
+<script src="js/ui/catch-ui.js"></script>
+<script src="js/ui/social-ui.js"></script>
+<script src="js/ui/ranking-ui.js"></script>
+<script src="js/ui/mod-ui.js"></script>
+<script src="js/ui/goals-ui.js"></script>
+<script src="js/ui/settings-ui.js"></script>
+<script src="js/ui/layout-ui.js"></script>
+<script src="js/ui/support-ui.js"></script>
+<script src="js/ui/news-ui.js"></script>
+<script src="js/core/updater.js"></script>
+<script src="js/core/debug.js"></script>
+<script src="js/core/debug-run-screens.js"></script>
+<script src="js/core/debug-leader.js"></script>
+<script src="js/core/debug-leader-trace.js"></script>
+<script src="js/core/debug-run-trace.js"></script>
+<script>
+'use strict';
+// ---------- Data copied from docs/HUD-STYLE.md "Colour palette" (roles and jobs). Keep in step with the doc; the smoke checks it. ----------
+// A colour entry is [hex, role, where used] or, for a B/W pair, [[fill, shade], role, where used].
+const WORKING_GROUPS = [
+  { title: 'Panels and lines', note: 'B2 bar frame and the menus.', colours: [
+    ['#181818', 'Panel body', 'Every HUD panel, menu bars (--bw-charcoal), toasts, tooltips, pause buttons'],
+    ['#212121', 'Frame', 'Panel and bar frames (B2, not W2)'],
+    ['#303030', 'Checker', 'Body texture, checkered with the panel colour'],
+    ['#495151', 'Slate', 'Dividers, empty slots, chip rim fallback'],
+    ['#adadad', 'Light grey', 'B2 bar track shade'],
+    ['#c6c6c6', 'Light grey, lighter', 'Disabled text and icons'],
+    ['#f3f3f3', 'Off-white track', 'Empty bar track'],
+    ['#29ceff', 'Accent line', 'Menu lines (--bw-line), toast rim, focus edges'],
+    ['#8cfff7', 'Secondary text', 'Menu sub text (--bw-sub)'],
+    ['#fff000', 'Title', 'Menu titles (--bw-title)'],
+    ['#8f8500', 'Title shade', 'Under menu titles (--bw-title-shade)'],
+    ['#00213a', 'Ink shadow', 'Menu text shadow (--bw-ink-shadow)'],
+  ] },
+  { title: 'Text', colours: [
+    ['#ffffff', 'Text', 'All HUD text'],
+    ['#101010', 'Text outline', 'Hard outline on HUD text, type chip shadow, outer line on arrows and toasts'],
+  ] },
+  { title: 'How a type shows', note: 'B2 lower-screen battle rip.', colours: [
+    ['#393939', 'Checker light', 'Type plate body'],
+    ['#292929', 'Checker dark', 'Type plate body'],
+    ['#000000', 'Outline', 'Type plate outline; also the open ball inside and the pause screen dim (at 55%)'],
+  ] },
+  { title: 'Bars (fill over shade)', note: 'B2/W2 HP bar rip.', colours: [
+    [['#00fb49', '#008a28'], 'HP above 50%', 'Life meters'],
+    [['#f3b200', '#9a6110'], 'HP 50% to 20%', 'Life meters; also the Lv label and the Shake Off prompt'],
+    [['#fb3041', '#922030'], 'HP below 20%', 'Life meters; also the female sign'],
+    [['#f3f3f3', '#adadad'], 'Empty track', 'Bar background'],
+    [['#7f7f7f', '#464646'], 'Empty track (dark bar)', 'Bar background on dark bars'],
+    [['#00baf3', '#00799a'], 'EXP', 'The portrait ring; also the male sign'],
+  ] },
+  { title: 'Status chips, major (fill over shade)', colours: [
+    [['#848484', '#4a4a4a'], 'SLP', 'Sleep'],
+    [['#d631de', '#6b2942'], 'PSN', 'Poison'],
+    [['#d631de', '#391042'], 'Bad PSN', 'Bad poison'],
+    [['#e75a4a', '#b50000'], 'BRN', 'Burn'],
+    [['#218cf7', '#005a8c'], 'FRZ', 'Freeze'],
+    [['#efad00', '#ad6b00'], 'PAR', 'Paralysis'],
+  ] },
+  { title: 'Status chips, minor (hollow: rim and text)', note: 'Body #101010. Character info panel only.', colours: [
+    ['#d8b000', 'CNF', 'Confusion'],
+    ['#1f9fe7', 'DZE', 'Daze'],
+    ['#e73963', 'DRW', 'Drowsy'],
+    ['#adb5bd', 'TRP', 'Trapped'],
+  ] },
+  { title: 'Effect chip colours', note: 'Ramped like the B2 buttons: 100%, about 55%, 45% and 33% of the bright tone.', colours: [
+    ['#5fe08a', 'Regen', 'REG chip (Aqua Ring)'],
+    ['#ffb347', 'Lansat', 'LAN chip'],
+    ['#ffd23f', 'Pinap', 'PIN chip; also the tooltip name'],
+  ] },
+  { title: 'Tooltips', colours: [
+    ['#f3b200', 'Tooltip frame', '2 px frame on every pause menu tooltip'],
+    ['#ffd23f', 'Tooltip name', 'The item or move name'],
+  ] },
+  { title: 'Wayfinding arrows', note: 'From UI-PALETTES "Attacks".', colours: [
+    ['#375ab2', 'Gym gate: fill', 'Special Base'], ['#243b74', 'Gym gate: outline', 'Special Dark'], ['#7d94cd', 'Gym gate: shine', 'Special Light'],
+    ['#eb5628', 'Move Trainer, TM Mart: fill', 'Physical Base'], ['#99381a', 'Move Trainer, TM Mart: outline', 'Physical Dark'], ['#f29173', 'Move Trainer, TM Mart: shine', 'Physical Light'],
+    ['#3fae5a', 'Rescue: fill', 'Proposed (#135), by eye', 'proposed'], ['#22703a', 'Rescue: outline', 'Proposed (#135)', 'proposed'], ['#8fdda5', 'Rescue: shine', 'Proposed (#135)', 'proposed'],
+  ] },
+  { title: 'Pause menu', note: 'After the b2-lower rip, picked by eye.', colours: [
+    ['#c8141c', 'Ball top cap', 'Also the bad-news toast rim (--pm-red)'],
+    ['#313a46', 'Ball bottom cap', '--pm-slate'],
+    ['#747474', 'Circle ring, outer edge', ''],
+    ['#575757', 'Circle ring', ''],
+    ['#38d030', 'Button rim, focus or hover', 'Rest rim is #ffffff'],
+    ['#ff8a90', 'End answer rim, light', ''],
+    ['#e8202a', 'End answer rim, base', ''],
+    ['#7c1016', 'End answer rim, dark', 'Also its body when focused'],
+    ['#848484', 'No answer body, focused', ''],
+  ] },
+  { title: 'Catch screen', note: 'Approved 2026-11-16 (136b). Every colour is an existing one with a job here.', colours: [
+    ['#DBB26E', 'Belt rim, light', 'Bag: Poke Balls pocket; also the selected slot edge'],
+    ['#C88820', 'Belt rim, base', 'Bag: Poke Balls pocket'],
+    ['#825815', 'Belt rim, dark', 'Also the slot edge and the selected slot body'],
+    ['#C1C2C1', 'Pokemon owned rim, light', 'Normal type ramp; also the owned portrait edge'],
+    ['#9FA19F', 'Pokemon owned rim, base', 'Normal type ramp'],
+    ['#676967', 'Pokemon owned rim, dark', 'Normal type ramp'],
+    ['#e7e7e7', 'Flee ring, empty', 'Fills with the first type\'s Dark, one step per miss'],
+    ['#9be895', 'Throw rim, focused, light', 'The team menu button shape, the pause menu focus ramp'],
+    ['#38d030', 'Throw rim, focused, base', 'The pause menu button focus'],
+    ['#1d6c19', 'Throw rim, focused, dark', 'The pause menu focus ramp'],
+    ['#7c1016', 'Let It Go body, focused', 'With the End answer rim; text white at 45% until focused'],
+    ['#f3b200', 'Result line', 'The Lv yellow'],
+  ] },
+];
+
+// UI-PALETTES sets: [name, light, base, dark]. adopted names where HUD-STYLE uses the set.
+const REFERENCE_SETS = [
+  { title: 'Pokemon Stats', adopted: 'Adopted: stat raise and drop chips (Base over Dark)', rows: [
+    ['HP', '#9EE865', '#69DC12', '#448F0C'], ['Attack', '#F5DE69', '#EFCC18', '#9B8510'], ['Defense', '#F09A65', '#E86412', '#97410C'],
+    ['Special Attack', '#66D8F6', '#14C3F1', '#0D7F9D'], ['Special Defense', '#899EEA', '#4A6ADF', '#304591'], ['Speed', '#E46CCA', '#D51DAD', '#8B1370'],
+    ['Special (Gen I)', '#78BBF0', '#2F97E8', '#1F6297']] },
+  { title: 'Attacks', adopted: 'Adopted: Physical and Special for the wayfinding arrows. Text is #FFFFFF.', rows: [
+    ['Physical', '#F29173', '#EB5628', '#99381A'], ['Special', '#7D94CD', '#375AB2', '#243B74'], ['Status', '#AEAEAE', '#828282', '#555555']] },
+  { title: 'Regions', candidate: 'Candidate: the Map panel and region select', rows: [
+    ['Kanto', '#ACD36C', '#80BB1D', '#537A13'], ['Johto', '#DCD677', '#CAC02E', '#837D1E'], ['Hoenn', '#9CD7C8', '#67C1AB', '#437E6F'],
+    ['Sinnoh', '#B7A3C3', '#9072A3', '#5E4A6A'], ['Unova', '#9FCADF', '#6BAECE', '#467186'], ['Kalos', '#DD608C', '#CB0B4F', '#840733'],
+    ['Alola', '#E89483', '#DC5A40', '#8F3B2A'], ['Galar', '#C97DC0', '#AC379E', '#702467'], ['Isle of Armor', '#FDE060', '#FCD00B', '#A48707'],
+    ['Crown Tundra', '#66CA9C', '#15AE68', '#0D7143'], ['Hisui', '#7C93A9', '#36597B', '#233A50'], ['Paldea', '#E8CC59', '#DCB000', '#8F7200'],
+    ['Kitakami', '#59C3BB', '#00A398', '#006A62'], ['Blueberry', '#5987A7', '#004878', '#002E4E'], ['Lumiose', '#82C7E0', '#3FA9D0', '#296E87'],
+    ['Hyperspace', '#858585', '#444444', '#2C2C2C'], ['Orange', '#FFAC59', '#FF7F00', '#A65300'], ['Orre', '#ADA588', '#817548', '#544C2F'],
+    ['PokePark', '#A7DB8D', '#78C850', '#4E8234'], ['Sevii', '#8FDEB8', '#52CC91', '#35855E']] },
+  { title: 'Bag', candidate: 'Candidate: berry slots, run items, held items, the Inventory', rows: [
+    ['Apricorn', '#F5C169', '#F0A018', '#9C6810'], ['Battle items pocket', '#78A2EB', '#3070E0', '#1F4992'], ['Berries pocket', '#6EC188', '#20A048', '#15682F'],
+    ['Cologne', '#D2CCDC', '#BAB1C9', '#797383'], ['Ingredients pocket', '#CA8263', '#AD3F0F', '#70290A'], ['Items pocket', '#D89DB7', '#C86890', '#82445E'],
+    ['Key items pocket', '#B788E6', '#9048D8', '#5E2F8C'], ['Mail pocket', '#69B7CC', '#1890B0', '#105E72'], ['Medicine pocket', '#EBA27E', '#E07038', '#924924'],
+    ['Poke Balls pocket', '#DBB26E', '#C88820', '#825815'], ['TMs and HMs pocket', '#ACC66E', '#80A820', '#536D15'], ['Treasures pocket', '#F7DB8C', '#F2C74E', '#9D8133'],
+    ['Z-Crystals pocket', '#CEB38A', '#B48A4B', '#755A31']] },
+  { title: 'Time', candidate: 'Candidate: a time-of-day tint', rows: [
+    ['Morning', '#A2DFEB', '#70CEE0', '#498692'], ['Day', '#AAD6FC', '#7CC0FA', '#517DA3'], ['Evening', '#EFBFA4', '#E79D73', '#96664B'], ['Night', '#CFC2EF', '#B5A1E6', '#766996']] },
+  { title: 'Seasons', candidate: 'Candidate: a weather tint', rows: [
+    ['Spring', '#C7FA89', '#B0F858', '#7BAE3D'], ['Summer', '#A0DEFA', '#78D0F8', '#5492AE'], ['Autumn', '#FAB189', '#F89058', '#AE653D'], ['Winter', '#F4E3FA', '#F0D8F8', '#A897AE']] },
+  { title: 'Egg Groups', candidate: 'Nothing yet', rows: [
+    ['Monster', '#BBA38B', '#97724C', '#624A31'], ['Water 1', '#9FE1FB', '#6BD1F9', '#4688A2'], ['Water 2', '#8AB9F3', '#4B94ED', '#31609A'],
+    ['Water 3', '#6FA3CE', '#2271B4', '#164975'], ['Bug', '#C8D775', '#AAC22A', '#6F7E1B'], ['Flying', '#B7CBF6', '#90AFF1', '#5E7290'],
+    ['Field', '#EED29B', '#E5BA65', '#957942'], ['Fairy', '#FFC0D2', '#FF9EB9', '#A66778'], ['Grass', '#AEE294', '#82D25A', '#55893B'],
+    ['Human-Like', '#87D0CA', '#47B7AE', '#2E7771'], ['Mineral', '#BBB79C', '#979067', '#625E43'], ['Amorphous', '#C1AEDE', '#9F82CC', '#675585'],
+    ['Ditto', '#D0C8E4', '#B6AAD5', '#766F8A'], ['Dragon', '#9692D5', '#5E57BF', '#3D397C'], ['No Eggs Discovered', '#F5E059', '#EFCF00', '#9B8700']] },
+];
+
+// Fonts: [css family, file, job, sizes, sample text]
+const FONTS = [
+  ['HudText', 'Truth-And-Ideals-10px.ttf', 'HUD text face (the B/W DS font). Everything directly on or about a Pokemon: names, stats, HP, moves, EVs, its panels. Body 20, headers 30, emphasis 40 (lean on 20).', [20, 30, 40], 'PIKACHU Lv 12  HP 34/50  0123456789'],
+  ['HudDigits', 'BoldPixels.ttf', 'Display numbers (BoldPixels, 16 px grid, fixed-width digits): World Level, Lv NN. CC-BY-SA 4.0, credit needed.', [32, 48], 'Lv 42  W 7'],
+  ['HudModule', 'Michroma-Regular.ttf', 'The game talking (Michroma): module panels like DPS-Upgrades, titles like EXPEDITION OVER, toasts. Smooth, soft dark shadow, digits not fixed width.', [20, 30], 'EXPEDITION OVER  DPS 1,240'],
+  ['GameFont', 'Silver-game.ttf', 'The game UI font (var(--font)): tooltips at 20 px; the base face of older screens.', [20, 30], 'Restores a little HP when low.'],
+  ['PokeBW', 'pokemon-b-w.ttf', 'Main menu and B/W menu screens. Not in the HUD: only 81 characters (no plus, minus, accents, gender signs).', [16, 32], 'NEW RUN  POKEDEX  SETTINGS'],
+  ['Monogram', 'monogram-extended.ttf', 'Settings screen labels.', [16, 32], 'Music volume  Screen shake'],
+];
+
+// Screen variables: [selector to read from, variable, where used]. HUD-STYLE hexes are matched automatically.
+const SCREEN_VARS = [
+  ['Main and B/W menus (bw-menu.css :root)', ':root', ['--bw-charcoal', '--bw-line', '--bw-sub', '--bw-sub-sel', '--bw-title', '--bw-title-shade', '--bw-ink-shadow', '--bw-grid', '--bw-grid-line']],
+  ['Team screen fields (bw-team.css)', '#scr-roster .ros-center', ['--bw-field', '--bw-field-edge', '--bw-field-focus']],
+  ['Settings rows (bw-settings.css)', '#scr-settings', ['--st-edge', '--st-edge-hot', '--st-card', '--st-lab', '--st-val']],
+  ['Settings danger rows (bw-settings.css)', '.st-row.danger', ['--st-edge', '--st-edge-hot', '--st-lab', '--st-val']],
+  ['Pause menu (pause-menu.css)', '.pause-menu', ['--pm-red', '--pm-slate']],
+  ['Older blue screens (style.css :root)', ':root', ['--ink', '--muted', '--box1', '--box2', '--edge', '--edge-in', '--edge-out', '--gold', '--gold2', '--red', '--green', '--shadow', '--r1', '--r2', '--r3', '--r4', '--r5']],
+];
+
+// ---------- helpers ----------
+const $ = (id) => document.getElementById(id);
+const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+function inkFor(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return '#fff';
+  const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#101010' : '#ffffff';
+}
+const swatchCell = (hex, label) => `<div style="background:${hex};color:${inkFor(hex)}">${esc(label || hex)}</div>`;
+// Fonts as drawn: every bit of text inside an element, its computed face (the first family named) and size in CSS
+// pixels (the 1080p sizes, before the screen box is scaled). Faces not in FONTS are flagged "not a listed face".
+const LISTED_FACES = new Set(FONTS.map(([family]) => family));
+const faceOf = (element) => getComputedStyle(element).fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '');
+window.libFontsIn = (root) => {
+  const faces = new Map(); // face -> Set of sizes
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const element = node.parentElement;
+    if (!node.textContent.trim() || !element || element.closest('style, script')) continue;
+    const face = faceOf(element);
+    if (!faces.has(face)) faces.set(face, new Set());
+    faces.get(face).add(Math.round(parseFloat(getComputedStyle(element).fontSize)));
+  }
+  return [...faces].map(([face, sizes]) => ({ face, sizes: [...sizes].sort((a, b) => a - b), listed: LISTED_FACES.has(face) }));
+};
+// HUD-STYLE "Crisp sizes only": a pixel face is crisp only at whole multiples of its grid. Only the faces whose grid the
+// spec names are checked; HudModule is smooth, so the rule does not apply to it.
+const PIXEL_GRID = { HudText: 10, HudDigits: 16 };
+const offGrid = (face, size) => PIXEL_GRID[face] && size % PIXEL_GRID[face] !== 0;
+const fontFlags = ({ face, sizes, listed }) =>
+  (listed ? '' : '<span class="lib-tag lib-offspec">not a listed face</span>') +
+  (sizes.some((size) => offGrid(face, size))
+    ? `<span class="lib-tag lib-offspec">${sizes.filter((size) => offGrid(face, size)).join(', ')} px off its ${PIXEL_GRID[face]} px grid</span>` : '');
+const fontInline = (fonts) => fonts.map((font) => `${esc(font.face)} ${font.sizes.join('/')} px${fontFlags(font)}`).join(', ');
+window.libFontHtml = (fonts) => fonts.length
+  ? fonts.map((font) => `<b>${esc(font.face)}</b> ${font.sizes.join(' / ')} px${fontFlags(font)}`).join('<br>')
+  : '<span class="lib-note">no text</span>';
+// Caption each sample with the fonts its piece draws in (the caption itself is left out).
+window.libCaptionFonts = (container) => container.querySelectorAll('.lib-sample').forEach((sample) => {
+  sample.querySelectorAll('.lib-font-line').forEach((line) => line.remove());
+  const piece = sample.firstElementChild;
+  const fonts = piece && !piece.classList.contains('lib-cap') ? window.libFontsIn(piece) : [];
+  if (fonts.length) sample.insertAdjacentHTML('beforeend', `<span class="lib-font-line">Font: ${fontInline(fonts)}</span>`);
+});
+window.libFontInline = fontInline;
+const hudStyleHexes = new Set();
+WORKING_GROUPS.forEach((group) => group.colours.forEach(([hex]) => [].concat(hex).forEach((h) => hudStyleHexes.add(h.toLowerCase()))));
+
+// ---------- fonts ----------
+$('font-list').innerHTML = FONTS.map(([family, file, job, sizes, text]) => `
+  <div class="lib-fontrow" data-font="${family}">
+    <div class="lib-meta"><b>${family}</b> <span class="lib-font-status"></span><br>assets/fonts/${file}<br>${esc(job)}</div>
+    <div class="lib-specimens">${sizes.map((px) => `<div style="font-family:'${family}';font-size:${px}px;line-height:1.2;white-space:nowrap"><span class="lib-size">${px}px</span>${esc(text)}</div>`).join('')}</div>
+  </div>`).join('');
+// PokeBW and Monogram live in bw-settings.css too; declare them here so the page needs no settings screen.
+document.fonts.add(new FontFace('PokeBW', "url('assets/fonts/pokemon-b-w.ttf')"));
+document.fonts.add(new FontFace('Monogram', "url('assets/fonts/monogram-extended.ttf')", { weight: '551 900' }));
+window.libFontsReady = Promise.all(FONTS.map(([family, , , sizes]) =>
+  document.fonts.load(`${sizes[0]}px '${family}'`).then((faces) => {
+    const ok = faces.length > 0;
+    const status = document.querySelector(`[data-font="${family}"] .lib-font-status`);
+    status.textContent = ok ? '' : 'did not load';
+    status.className = 'lib-font-status' + (ok ? '' : ' lib-fail');
+    return [family, ok];
+  }, () => [family, false])));
+
+// ---------- working colours ----------
+$('colour-groups').innerHTML = WORKING_GROUPS.map((group) => `
+  <h3>${esc(group.title)}</h3>${group.note ? `<p class="lib-note">${esc(group.note)}</p>` : ''}
+  <div class="lib-grid">${group.colours.map(([hex, role, use, status]) => {
+    const pair = Array.isArray(hex);
+    const chips = pair ? swatchCell(hex[0], 'fill ' + hex[0]) + swatchCell(hex[1], 'shade ' + hex[1]) : swatchCell(hex);
+    return `<div class="lib-card"><div class="lib-chip-row">${chips}</div><div class="lib-body">
+      <div class="lib-role">${esc(role)}${status === 'proposed' ? '<span class="lib-tag lib-proposed">proposed</span>' : ''}</div>
+      <div class="lib-hex">${pair ? hex.join(' over ') : hex}</div>${use ? `<div class="lib-use">${esc(use)}</div>` : ''}</div></div>`;
+  }).join('')}</div>`).join('');
+
+// ---------- type palette and type chips ----------
+const TYPES = Object.keys(G.U.TYPE_COLOR);
+const typeLabel = (type) => type[0].toUpperCase() + type.slice(1);
+$('type-table').innerHTML = '<tr><th>Type</th><th>Light</th><th>Base</th><th>Dark</th></tr>' + TYPES.map((type) => {
+  const tones = [G.U.TYPE_COLOR_LIGHT[type], G.U.TYPE_COLOR[type], G.U.TYPE_COLOR_DARK[type]];
+  return `<tr><td>${typeLabel(type)}</td>${tones.map((hex) => `<td class="lib-sw" style="background:${hex};color:${inkFor(hex)}">${hex}</td>`).join('')}</tr>`;
+}).join('');
+// Same markup as G.UI.typeChip (js/ui/ui.js), English names since this page has no translation layer.
+$('type-chips').innerHTML = TYPES.map((type) =>
+  `<span class="type" style="background:${G.U.TYPE_COLOR[type]};--type-rim:${G.U.TYPE_COLOR_DARK[type]}">${typeLabel(type)}</span>`).join('');
+$('type-plates').innerHTML = ['fire', 'water', 'grass', 'ghost'].map((type) =>
+  `<span class="s-typeplate" style="--rim:${G.U.TYPE_COLOR[type]}">${typeLabel(type)}</span>`).join('');
+
+// ---------- bars ----------
+const BAR_SAMPLES = [
+  ['HP 80%: above 50%', '#00fb49', '#008a28', 80], ['HP 35%: 50% to 20%', '#f3b200', '#9a6110', 35],
+  ['HP 12%: below 20%', '#fb3041', '#922030', 12], ['EXP 60% (shown here as a bar; in game it is the portrait ring)', '#00baf3', '#00799a', 60],
+];
+$('bars').innerHTML = BAR_SAMPLES.map(([cap, fill, shade, pct]) =>
+  `<div class="lib-sample"><div class="s-bar"><i style="--fill:${fill};--shade:${shade};--pct:${pct}%"></i></div><span class="lib-cap">${cap}</span></div>`).join('') +
+  `<div class="lib-sample"><div class="s-bar dark"><i style="--fill:#00fb49;--shade:#008a28;--pct:50%"></i></div><span class="lib-cap">On the dark track (#7f7f7f over #464646)</span></div>`;
+
+// ---------- status and effect chips ----------
+const majors = WORKING_GROUPS.find((g) => g.title.startsWith('Status chips, major')).colours;
+const minors = WORKING_GROUPS.find((g) => g.title.startsWith('Status chips, minor')).colours;
+$('status-chips').innerHTML = majors.map(([[fill, shade], tag]) =>
+  `<div class="lib-sample"><span class="s-chip solid" style="--fill:${fill};--shade:${shade}">${tag === 'Bad PSN' ? 'PSN' : tag}</span><span class="lib-cap">${tag}</span></div>`).join('') +
+  minors.map(([rim, tag, use]) => `<div class="lib-sample"><span class="s-chip hollow" style="--rim:${rim}">${tag}</span><span class="lib-cap">${use}</span></div>`).join('');
+const stats = REFERENCE_SETS[0].rows;
+const STAT_CHIPS = [['ATK', 'Attack', 'raise'], ['DEF', 'Defense', 'raise'], ['SPA', 'Special Attack', 'drop'], ['SPD', 'Special Defense', 'drop'], ['SPE', 'Speed', 'drop (also Slow)']];
+$('effect-chips').innerHTML = STAT_CHIPS.map(([tag, name, note]) => {
+  const row = stats.find((r) => r[0] === name);
+  return `<div class="lib-sample"><span class="s-chip solid" style="--fill:${row[2]};--shade:${row[3]}">${tag}</span><span class="lib-cap">${name} ${note}</span></div>`;
+}).join('') + `<div class="lib-sample"><span class="s-chip solid" style="--fill:${G.U.TYPE_COLOR.fire};--shade:${G.U.TYPE_COLOR_DARK.fire}">OCC</span><span class="lib-cap">Type guard (Occa, Fire)</span></div>`;
+
+// ---------- arrows ----------
+const ARROWS = [['Gym gate', '#375ab2', '#243b74', '#7d94cd'], ['Move Trainer, TM Mart', '#eb5628', '#99381a', '#f29173'], ['Rescue (proposed)', '#3fae5a', '#22703a', '#8fdda5']];
+$('arrows').innerHTML = ARROWS.map(([cap, fill, dark, shine]) => `<div class="lib-sample">
+  <svg width="90" height="60" viewBox="0 0 90 60" style="shape-rendering:crispEdges">
+    <polyline points="20,8 50,30 20,52" fill="none" stroke="#101010" stroke-width="22" stroke-linecap="square" stroke-linejoin="miter"/>
+    <polyline points="20,8 50,30 20,52" fill="none" stroke="${dark}" stroke-width="16" stroke-linecap="square" stroke-linejoin="miter"/>
+    <polyline points="20,8 50,30 20,52" fill="none" stroke="${fill}" stroke-width="10" stroke-linecap="square" stroke-linejoin="miter"/>
+    <polyline points="20,8 50,30" fill="none" stroke="${shine}" stroke-width="3" stroke-linecap="square"/>
+  </svg><span class="lib-cap">${cap}</span></div>`).join('');
+
+// ---------- screen variables (read live from the game's CSS) ----------
+['css/bw-team.css', 'css/bw-settings.css'].forEach((href) => { const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; document.head.appendChild(link); });
+// ---------- tabs: one group of sections at a time. The tab is remembered for this browser tab only (sessionStorage), not in
+// the URL, since a #hash would resolve against <base href="../">. Other scripts listen for 'lib-tab' to set up their screen. ----------
+const TAB_KEY = 'uiLibrary.tab';
+window.libShowTab = (name) => {
+  const tabs = [...document.querySelectorAll('header nav [data-tab]')];
+  if (!tabs.some((tab) => tab.dataset.tab === name)) name = tabs[0].dataset.tab;
+  tabs.forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.tab === name)));
+  document.querySelectorAll('main > section').forEach((section) => (section.hidden = section.dataset.tab !== name));
+  try { sessionStorage.setItem(TAB_KEY, name); } catch (error) { /* private window: the tab is just not remembered */ }
+  window.dispatchEvent(new CustomEvent('lib-tab', { detail: name }));
+  return name;
+};
+document.querySelector('header nav').addEventListener('click', (event) => {
+  const tab = event.target.closest('[data-tab]');
+  if (tab) window.libShowTab(tab.dataset.tab);
+});
+function readVar(selector, name) {
+  if (selector === ':root') return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  // Build a hidden element chain matching a simple selector like '#scr-roster .ros-center' or '.st-row.danger'.
+  const top = document.createElement('div');
+  top.style.cssText = 'position:absolute;visibility:hidden;width:0;height:0;overflow:hidden';
+  let parent = top, leaf = top;
+  selector.split(/\s+/).forEach((part, index) => {
+    const el = index === 0 ? top : document.createElement('div');
+    const id = /#([\w-]+)/.exec(part);
+    if (id) el.id = id[1];
+    el.className = (part.match(/\.[\w-]+/g) || []).map((c) => c.slice(1)).join(' ');
+    if (index > 0) parent.appendChild(el);
+    parent = leaf = el;
+  });
+  document.body.appendChild(top);
+  const value = getComputedStyle(leaf).getPropertyValue(name).trim();
+  top.remove();
+  return value;
+}
+function renderScreenVars() {
+  $('screen-vars').innerHTML = '<tr><th>Screen</th><th>Variable</th><th>Value</th><th>In HUD-STYLE?</th></tr>' + SCREEN_VARS.flatMap(([where, selector, names]) =>
+    names.map((name) => {
+      const value = readVar(selector, name) || '(not found)';
+      const inSpec = hudStyleHexes.has(value.toLowerCase());
+      const cell = /^#|^rgb/.test(value) ? `<td class="lib-sw" style="background:${value};color:${value.startsWith('#') ? inkFor(value) : '#fff'}">${esc(value)}</td>` : `<td>${esc(value)}</td>`;
+      return `<tr><td class="lib-where">${esc(where)}</td><td><code>${name}</code></td>${cell}<td>${inSpec ? 'yes' : '<span class="lib-tag lib-offspec">not in HUD-STYLE</span>'}</td></tr>`;
+    })).join('');
+}
+// The screen stylesheets are added above, so read once everything has loaded.
+window.addEventListener('load', renderScreenVars);
+
+// ---------- reference palettes ----------
+$('reference-sets').innerHTML = REFERENCE_SETS.map((set) => `
+  <h3>${esc(set.title)} <span class="lib-tag">${esc(set.adopted || set.candidate)}</span></h3>
+  <table class="lib-ramp"><tr><th>Name</th><th>Light</th><th>Base</th><th>Dark</th></tr>${set.rows.map(([name, ...tones]) =>
+    `<tr><td>${esc(name)}</td>${tones.map((hex) => `<td class="lib-sw" style="background:${hex};color:${inkFor(hex)}">${hex}</td>`).join('')}</tr>`).join('')}</table>`).join('');
+</script>
+<script>
+'use strict';
+// ---------- Components: the HUD kit's pieces with placeholder content ----------
+(() => {
+  const body = document.getElementById('components-body');
+  if (!G.HudOverlay.ready) {
+    body.innerHTML = '<p class="lib-note lib-fail">Preact, htm or Signals did not load, so the kit pieces cannot mount.</p>';
+    return;
+  }
+  // G.HudOverlay (js/ui/hud-overlay.js) mounted its layer with the shared SVG patterns (slot grid, bar checker); no panel
+  // files are loaded, so it shows nothing else. Every piece reads the kit there, as the game's panels do.
+  const kit = G.HudOverlay.kit;
+  const { html, preact, signal, PALETTE, PixelShape, moveSlotRow, SLOT_GRID, SlantedButton, REST_RIM, Cursor, typeColours, hpBand } = kit;
+  const { ItemSquare, ItemGrid, RosterCard, rosterFill, createLifeBar, Chip, FAINTED_RIM } = kit;
+
+  // The move slot is private to js/ui/hud-player-panel.js (Slot); this rebuilds it from the same kit parts and numbers.
+  const SLOT = { artWidth: 105, artRows: 22, artPixel: 2, wellSize: 36, wellFirst: 47 },
+    BOND_RIM = { light: '#ffd3f1', base: '#ff8ad8', dark: '#8c4c77' },
+    EMPTY_RIM = { light: PALETTE.checker, base: PALETTE.frame, dark: PALETTE.frame };
+  const wellCentre = (index) => SLOT.wellFirst + ((SLOT.artWidth * SLOT.artPixel - 2 * SLOT.wellFirst) * index) / 3;
+  const glyph = (type) => 'assets/icons/types/' + type.charAt(0).toUpperCase() + type.slice(1) + '_icon.png';
+  function MoveSlot({ types, keyLabel, active, cooldown = 0 }) {
+    const rim = !types.length ? EMPTY_RIM : types.length > 1 ? BOND_RIM : typeColours(types[0]);
+    const bodyFill = rim === EMPTY_RIM ? PALETTE.body : SLOT_GRID;
+    return html`<div class=${'hud-slot' + (active ? ' is-active' : '')}
+      style=${{ width: SLOT.artWidth * SLOT.artPixel + 'px', height: SLOT.artRows * SLOT.artPixel + 'px' }}>
+      <${PixelShape} artWidth=${SLOT.artWidth} artRows=${SLOT.artRows} artPixel=${SLOT.artPixel}
+        paintRow=${(row) => moveSlotRow(row, SLOT.artWidth, SLOT.artRows, rim, bodyFill)} />
+      ${[0, 1, 2, 3].map((well) => html`<div class="hud-well" style=${{ left: wellCentre(well) - SLOT.wellSize / 2 + 'px' }}>
+        <div class="hud-well-disc" style=${types[well] ? { background: typeColours(types[well]).base } : null}>
+          ${types[well] ? html`<img src=${glyph(types[well])} alt="" />
+            <div class="hud-well-shade" style=${{ '--wipe': Math.round((1 - (well === 0 ? cooldown : 0)) * 360) + 'deg' }}></div>` : null}
+        </div></div>`)}
+      <span class="hud-text hud-slot-key">${keyLabel}</span>
+      ${active ? html`<${Cursor} />` : null}
+    </div>`;
+  }
+
+  const lifeBars = [0.8, 0.35, 0.12].map((fraction) => ({ fraction, bar: createLifeBar({ artPixel: 2, artWidth: signal(231), labelTop: -6 }) }));
+
+  const ROSTER_WIDTH = 139; // js/ui/hud-roster-panel.js ROW.artWidth
+  const TEAM = [
+    { dex: 1, type: 'grass', name: 'Lorem', hp: 0.9 },
+    { dex: 4, type: 'fire', name: 'Ipsum', hp: 0.4 },
+    { dex: 7, type: 'water', name: 'Dolor', hp: 0.12 },
+    { dex: 25, type: 'electric', name: 'Sit Amet', hp: 0, fainted: true },
+  ];
+
+  const MAJOR_CHIPS = [['SLP', '#848484', '#4a4a4a'], ['PSN', '#d631de', '#6b2942'], ['BRN', '#e75a4a', '#b50000'], ['FRZ', '#218cf7', '#005a8c'], ['PAR', '#efad00', '#ad6b00']];
+  const MINOR_CHIPS = [['CNF', '#d8b000'], ['DZE', '#1f9fe7'], ['DRW', '#e73963'], ['TRP', '#adb5bd']];
+  const STAT_CHIPS = [['ATK', '#EFCC18', '#9B8510'], ['DEF', '#E86412', '#97410C'], ['SPA', '#14C3F1', '#0D7F9D'], ['SPD', '#4A6ADF', '#304591'], ['SPE', '#D51DAD', '#8B1370']];
+  const chip = ([label, fill, shade], index, timer = null) => ({ key: label + index, label, fill, shade, text: null, timer });
+
+  const Piece = ({ caption, children, width }) => html`<div class="lib-sample">
+    <div class="lib-piece" style=${width ? { width: width + 'px' } : null}>${children}</div>
+    <span class="lib-cap">${caption}</span></div>`;
+  const Group = ({ title, built, note, bg, children }) => html`<h3>${title} <span class="lib-tag">${built}</span></h3>
+    ${note ? html`<p class="lib-note">${note}</p>` : null}
+    <div class=${'lib-stage' + (bg ? ' lib-game-bg' : '')}>${children}</div>`;
+
+  function Components() {
+    return html`
+      <${Group} title="Move slots" built="rebuilt from kit parts: hud-player-panel.js Slot"
+        note="The four move buttons in the character info panel. Rim: the move's type colour; pink when moves are bonded; dark when empty. Each well is one move (a bond holds up to 4). The yellow corners mark the active slot; the dark wipe is the cooldown.">
+        <${Piece} caption="One Fire move, on cooldown"><${MoveSlot} types=${['fire']} keyLabel="1" cooldown=${0.6} /><//>
+        <${Piece} caption="One Water move, active"><${MoveSlot} types=${['water']} keyLabel="2" active=${true} /><//>
+        <${Piece} caption="Bonded: three moves"><${MoveSlot} types=${['grass', 'electric', 'psychic']} keyLabel="3" /><//>
+        <${Piece} caption="Empty"><${MoveSlot} types=${[]} keyLabel="4" /><//>
+      <//>
+      <${Group} title="Team cards" built="real: kit RosterCard" bg=${true}
+        note="One card per team member in the roster (lower left) and the pause menu. Rim: the Pokemon's first type; HP fill green, yellow, red by the B/W thresholds; grey when fainted.">
+        ${TEAM.map((member) => html`<${Piece} caption=${member.fainted ? 'Fainted' : 'HP ' + Math.round(member.hp * 100) + '%'}>
+          <${RosterCard} artWidth=${ROSTER_WIDTH} rim=${member.fainted ? FAINTED_RIM : typeColours(member.type)}
+            fill=${rosterFill(member.hp, member.fainted, ROSTER_WIDTH)} band=${hpBand(member.hp)}
+            dex=${member.dex} shiny=${false} name=${member.name} fainted=${member.fainted} /><//>`)}
+      <//>
+      <${Group} title="Life meter" built="real: kit createLifeBar"
+        note="Your active Pokemon's HP in the character info panel, and the enemy Player entity's. Green above 50%, yellow to 20%, red below.">
+        ${lifeBars.map(({ fraction, bar }) => html`<${Piece} caption=${'HP ' + Math.round(fraction * 100) + '%'}><${bar.View} /><//>`)}
+      <//>
+      <${Group} title="Status and effect chips" built="real: kit Chip"
+        note="70 x 24. Majors solid, minors hollow (character info panel only), stat and effect chips in the good and bad bands. The white bar along the bottom is the time left.">
+        ${MAJOR_CHIPS.map((style, index) => html`<${Piece} caption=${style[0]}><${Chip} chip=${chip(style, index, index === 0 ? 0.6 : null)} /><//>`)}
+        ${MINOR_CHIPS.map(([label, colour], index) => html`<${Piece} caption=${label + ' (minor)'}><${Chip} chip=${{ key: label + index, label, fill: '#101010', shade: colour, text: colour, timer: null }} /><//>`)}
+        ${STAT_CHIPS.map((style, index) => html`<${Piece} caption=${style[0] + ' stage'}><${Chip} chip=${chip(style, index)} /><//>`)}
+      <//>
+      <${Group} title="Menu buttons" built="real: kit SlantedButton"
+        note="The pause menu, End Run and EV screen buttons: the move slot shape at 1.5x. White rim at rest, green on focus; End Run's answer is red.">
+        <${Piece} caption="At rest"><${SlantedButton} id="a" label="Resume" /><//>
+        <${Piece} caption="Focused"><${SlantedButton} id="b" label="Team" focused=${true} /><//>
+        <${Piece} caption="End, focused"><${SlantedButton} id="c" label="End" artWidth=${60} focused=${true}
+          focusRim=${{ light: '#ff8a90', base: '#e8202a', dark: '#7c1016' }} focusBody="#7c1016" /><//>
+        <${Piece} caption="No, focused"><${SlantedButton} id="d" label="No" artWidth=${60} focused=${true} focusRim=${REST_RIM} focusBody="#848484" /><//>
+      <//>
+      <${Group} title="Item squares" built="real: kit ItemSquare, ItemGrid"
+        note="Held item (yellow rim when holding, slate when empty), the berry bag and the pause menu's Run Inventory (a 2 x 2 grid).">
+        <${Piece} caption="Held item"><${ItemSquare} icon="coin" artSize=${20} /><//>
+        <${Piece} caption="Empty"><${ItemSquare} icon=${null} artSize=${20} /><//>
+        <${Piece} caption="Berry bag grid"><${ItemGrid} slots=${[{ key: 'a', icon: 'coin' }, { key: 'b', icon: 'star' }, { key: 'c', icon: null }, { key: 'd', icon: null }]} /><//>
+      <//>
+      <${Group} title="Selection cursor" built="real: kit Cursor" note="The B2 cursor: yellow corner brackets around whatever is selected.">
+        <${Piece} caption="Around a box"><div style=${{ position: 'relative', width: '160px', height: '60px', background: PALETTE.body }}><${Cursor} /></div><//>
+      <//>`;
+  }
+  preact.render(html`<${Components} />`, body);
+  lifeBars.forEach(({ fraction, bar }, index) => bar.update(Math.round(fraction * 100), 100, false, 'sample' + index));
+
+  // The main menu panel is plain markup in dev.html (#scr-menu), styled by css/bw-menu.css; copied here with placeholder text.
+  document.getElementById('menu-body').insertAdjacentHTML('beforeend', `<h3>Main menu <span class="lib-tag">real CSS: bw-menu.css; markup copied from dev.html #scr-menu</span></h3>
+    <p class="lib-note">The right-hand menu panel. The selected row is highlighted; Play is the tall first row. Shown at about half size.</p>
+    <div class="lib-menu-frame"><div class="bw-panel" style="animation:none">
+      <h1 class="bw-title">PokeSwarm</h1>
+      <div class="bw-list">
+        <button class="bw-row play sel">Play<small>Lorem ipsum dolor sit amet</small></button>
+        <button class="bw-row">Team<small>12 / 151</small></button>
+        <button class="bw-row">Inventory<small>Consectetur adipiscing</small></button>
+        <button class="bw-row">Shop<small>Sed do eiusmod tempor</small></button>
+        <button class="bw-row">Missions<small>Ut labore et dolore</small></button>
+        <button class="bw-row">Settings<small>Magna aliqua</small></button>
+      </div></div></div>`);
+})();
+</script>
+<script>
+'use strict';
+// ---------- A fake run for the real panels (Run panels and Pause panels tabs) ----------
+// The panels read G.Game, the save and the run systems exactly as in a run. G.Game is a stand-in object here (js/game.js is
+// not loaded), but everything it hands out is built with the game's own classes and calls: G.Player members with real
+// moves and held items, a G.Team, a G.DpsHistory and G.RunStats record filled through their own record calls, G.Gym
+// badges, G.Silver kills, G.Catch catches. Placeholder numbers, real code paths.
+(() => {
+  if (!G.HudOverlay.ready) return;
+
+  // The save is a sandbox: file:// pages share one localStorage with the game, so nothing on this page may write it.
+  const sandboxSave = {
+    runSlots: 4, berrySlots: 4, team: [], pbind: {}, pupg: {}, owned: {}, shiny: {}, itemsFound: {},
+    teamItems: {}, teamLoadout: [], box: [], belt: { size: 6, poke: 6 },
+  };
+  G.DB = Object.create(G.DB, { save: { value: sandboxSave }, commit: { value: () => {} } });
+  // The network stack is not loaded (deferred, CLAUDE.md "Local-first"); the HUD only asks whether co-op is on.
+  if (!G.Coop) G.Coop = { active: false, isHost: false };
+
+  const RUN_SECONDS = 452, // 7:32 into the run
+    TEAM_LEVEL = 24,
+    HP_SHARES = [1, 0.72, 0.46, 0.17, 0.88, 0], // by team slot; the last one has fainted
+    FAINTED_AT = 388;
+
+  // A small seeded random, so a team can be named and shown again (?seed=N in the page address).
+  function seededRandom(seed) {
+    let state = seed >>> 0;
+    return () => {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let mixed = Math.imul(state ^ (state >>> 15), 1 | state);
+      mixed = (mixed + Math.imul(mixed ^ (mixed >>> 7), 61 | mixed)) ^ mixed;
+      return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const seedFromAddress = Number(new URLSearchParams(location.search).get('seed'));
+  let seed = seedFromAddress > 0 ? seedFromAddress : 1 + Math.floor(Math.random() * 99999);
+
+  const SPECIES = G.DEX.filter((mon) => mon.dex <= 493 && mon.stats && G.startMoveOf(mon.dex));
+  const HELD_ITEMS = G.Items.LIST.filter((item) => item.tier === 'pokemon').map((item) => item.id);
+  const RUN_ITEMS = G.Items.LIST.filter((item) => item.tier === 'run').map((item) => item.id);
+  const BERRIES = G.Grounds.LIST.filter((ground) => ground.bag).map((ground) => ground.id);
+
+  let run = null; // { team, roster, names }
+
+  function buildRun() {
+    const random = seededRandom(seed);
+    const pick = (list) => list[Math.floor(random() * list.length)];
+    const shuffled = (list) => list.map((value) => [random(), value]).sort((a, b) => a[0] - b[0]).map(([, value]) => value);
+
+    G.Gym.reset();
+    G.Silver.reset();
+    G.Catch.startRun(sandboxSave);
+
+    const roster = shuffled(SPECIES).slice(0, 6).map((mon, slot) => {
+      const member = new G.Player(mon, {}, random() < 0.2, null);
+      member.teamSlot = slot;
+      member.addMove(G.startMoveOf(mon.dex));
+      const pool = G.Moves.poolFor(mon).filter((id) => !member.hasMove(id) && !G.MoveInfo.isBuff(id));
+      for (const id of shuffled(pool).slice(0, 3)) member.addMove(id);
+      member.setActive(0);
+      member.syncLevel(TEAM_LEVEL);
+      return member;
+    });
+    const team = G.Team.create(roster, (from, to) => to.syncLevel(from.level));
+    team.dpsHistory = G.DpsHistory.create();
+    team.runStats = G.RunStats.create();
+    const player = team.active;
+
+    // Held items on four of the six, two berries in the bag, one team item.
+    shuffled(roster).slice(0, 4).forEach((member) => member.equip(pick(HELD_ITEMS)));
+    shuffled(BERRIES).slice(0, 2).forEach((id) => player.berries.push(id));
+    const runItem = pick(RUN_ITEMS);
+    roster.forEach((member) => G.Items.BY[runItem].on(member));
+    player.runItems.push(runItem);
+
+    // The run so far: each member had a turn on the field, dealt damage, landed statuses, took and healed hits.
+    const stats = team.runStats,
+      history = team.dpsHistory;
+    for (let second = 0; second < RUN_SECONDS; second++) {
+      const onField = roster[Math.floor(second / 80) % roster.length];
+      const damage = Math.round(40 + random() * 160 + second / 3);
+      G.DpsHistory.record(history, onField, damage);
+      G.RunStats.dealt(stats, onField, damage, { typeMult: random() < 0.3 ? 2 : 1, dot: random() < 0.1, moveId: onField.moves[0] && onField.moves[0].id });
+      if (random() < 0.6) G.RunStats.kill(stats, onField, random() < 0.02);
+      if (random() < 0.05) G.RunStats.inflicted(stats, onField, pick(['burn', 'poison', 'paralysis', 'sleep', 'confusion']));
+      if (random() < 0.2) G.RunStats.taken(stats, onField, Math.round(random() * 30));
+      if (random() < 0.1) G.RunStats.healed(stats, onField, Math.round(random() * 20));
+      G.DpsHistory.advance(history, 1, onField);
+    }
+    for (let item = 0; item < 3; item++) G.RunStats.item(stats);
+    G.RunStats.shiny(stats);
+    const fainted = roster[5];
+    G.RunStats.faint(stats, fainted, FAINTED_AT);
+
+    roster.forEach((member, slot) => {
+      member.hp = Math.round(member.maxHp * HP_SHARES[slot]);
+      if (HP_SHARES[slot] === 0) member.dead = true;
+    });
+    player.kills = stats.members.reduce((sum, counts) => sum + (counts ? counts.kills : 0), 0);
+    player.coins = 145;
+    for (let kill = 0; kill < player.kills; kill++) G.Silver.kill();
+    G.Silver.spend(Math.min(G.Silver.whole, 30));
+    G.Gym.debugBadges([{ badge: 'Boulder Badge', at: 212 }]);
+    const caughtMon = pick(SPECIES);
+    G.Catch.held.push({ dex: caughtMon.dex, name: caughtMon.name, nature: 'adamant', natureName: 'Adamant' });
+
+    const evBank = [3.4, 0, 1.2, 0, 0.6, 5.8];
+    const regionBest = G.RunStats.regionEntry({ loop: 1, splits: [240], fightStartedAt: null, endTime: 610 });
+    G.Game = {
+      state: 'playing',
+      st: { time: RUN_SECONDS },
+      get player() { return team.active; },
+      get roster() { return roster; },
+      get everyone() { return [team.active]; },
+      get activeIndex() { return team.activeIdx; },
+      swapCooldown: 0,
+      swapMax: G.Team.SWAP_LOCK,
+      runStats: stats,
+      regionBest,
+      runIsClean: true,
+      shiniesCaught: 0,
+      evBank,
+      swap: () => false,
+      openCatch() {}, openShop() {}, flash() {}, togglePause() {},
+    };
+    run = { team, roster };
+    const label = roster.map((member) => {
+      const held = member.item && G.Items.BY[member.item];
+      return member.mon.name + (member.shiny ? ' (shiny)' : '') + (held ? ' @ ' + held.name : '');
+    }).join(', ');
+    const extras = 'Berries: ' + player.berries.map((id) => G.Grounds.BY[id].name).join(', ') + '. Team item: ' + G.Items.BY[runItem].name + '.';
+    document.querySelectorAll('[data-team-list]').forEach((el) => (el.textContent = 'Seed ' + seed + ': ' + label + '. ' + extras));
+  }
+
+  // ---------- the screen box that the HUD layer and the pause menu live in ----------
+  const screen = document.createElement('div');
+  screen.className = 'lib-screen';
+  screen.append(document.querySelector('.hud-overlay'), document.querySelector('.pause-menu'));
+  const fitScreen = () => {
+    const slot = screen.parentElement;
+    if (!slot || !slot.clientWidth) return;
+    const scale = slot.clientWidth / 1920;
+    screen.style.transform = 'scale(' + scale + ')';
+    slot.style.height = Math.round(1080 * scale) + 'px';
+  };
+  new ResizeObserver(fitScreen).observe(document.querySelector('main'));
+
+  let syncing = false;
+  function syncLoop() {
+    if (!syncing) return;
+    G.HudOverlay.sync(true);
+    requestAnimationFrame(syncLoop);
+  }
+  if (G.PauseMenu.ready) {
+    // Resume closes the menu and opens it again, so the panels stay on show; End Run and Settings do nothing here.
+    G.PauseMenu.wire({ resume: () => G.PauseMenu.close(() => setTimeout(G.PauseMenu.open, 400)), endRun() {}, settings() {} });
+  }
+
+  function showScreen(tab) {
+    const slot = document.querySelector(`[data-screen-slot="${tab}"]`);
+    syncing = false;
+    if (G.PauseMenu.ready) G.PauseMenu.hideNow();
+    if (!slot) return;
+    if (!run) buildRun();
+    slot.appendChild(screen);
+    fitScreen();
+    if (tab === 'run') {
+      syncing = true;
+      syncLoop();
+    } else if (G.PauseMenu.ready) {
+      G.HudOverlay.sync(true);
+      G.PauseMenu.open();
+    }
+  }
+  // ---------- fonts by panel: read from the mounted panels once they have drawn ----------
+  const PANEL_FONTS = {
+    run: [
+      ['Character info: name, HP, Lv, moves, timer, Silver (hud-player-panel.js)', '.hud-player'],
+      ['Team roster and berry bag (hud-roster-panel.js)', '.hud-roster'],
+      ['Team items (hud-run-items-panel.js)', '.hud-run-items'],
+      ['World Level, region (hud-map-panel.js)', '.hud-map'],
+      ['Kills line (hud-map-panel.js)', '.hud-kills'],
+      ['DPS-Upgrades (hud-dps-panel.js)', '.hud-dps'],
+      ['Enemy name bar (hud-boss-panel.js)', '.hud-boss'],
+    ],
+    pause: [
+      ['Run Info (pause-run-info.js)', '.pm-panel-info'],
+      ['Pokemon detail (pause-pokemon.js)', '.pm-panel-detail'],
+      ['Team cards (pause-pokemon.js)', '.pm-panel-team'],
+      ['Run Inventory (pause-inventory.js)', '.pm-panel-inventory'],
+      ['Ball buttons (pause-menu.js)', '.pm-centre'],
+      ['Tooltip (kit TooltipLayer)', '.hud-tip-layer'],
+    ],
+  };
+  function showPanelFonts(tab) {
+    const table = document.querySelector(`[data-font-table="${tab}"]`);
+    if (!table) return;
+    table.innerHTML = '<tr><th>Panel</th><th>Font and sizes</th></tr>' + PANEL_FONTS[tab].map(([name, selector]) => {
+      const panel = screen.querySelector(selector);
+      const cell = panel ? window.libFontHtml(window.libFontsIn(panel)) : '<span class="lib-note">not on screen in this run</span>';
+      return `<tr data-panel="${selector}"><td>${name}</td><td>${cell}</td></tr>`;
+    }).join('');
+  }
+  // After two frames the panels have read the run and drawn (the pause menu's panels mount as it opens).
+  const afterDraw = (then) => requestAnimationFrame(() => requestAnimationFrame(then));
+  let currentTab = null;
+  const refreshFonts = () => currentTab && afterDraw(() => showPanelFonts(currentTab));
+  // Hover: the text under the pointer, its face and size.
+  screen.addEventListener('mouseover', (event) => {
+    const readout = screen.closest('section').querySelector('[data-hover-font]');
+    const element = event.target;
+    const text = [...element.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent).join('').trim();
+    if (!text) return;
+    const size = Math.round(parseFloat(getComputedStyle(element).fontSize));
+    const face = faceOf(element);
+    readout.textContent = `"${text.slice(0, 40)}": ${face} ${size} px${offGrid(face, size) ? ' (off its ' + PIXEL_GRID[face] + ' px grid)' : ''}` +
+      ` (.${[...element.classList].join(' .') || element.tagName.toLowerCase()})`;
+  });
+  screen.addEventListener('click', refreshFonts); // a team card click changes the detail panel
+
+  window.addEventListener('lib-tab', (event) => {
+    currentTab = PANEL_FONTS[event.detail] ? event.detail : null;
+    showScreen(event.detail);
+    refreshFonts();
+  });
+  document.querySelectorAll('[data-reroll]').forEach((button) => button.addEventListener('click', () => {
+    seed = 1 + Math.floor(Math.random() * 99999);
+    run = null;
+    showScreen(button.closest('section').dataset.tab);
+    refreshFonts();
+  }));
+  window.libFakeRun = () => run; // the smoke reads the team it built
+})();
+
+// Open the remembered tab (or the first one) once every script above is ready.
+(() => {
+  // Font captions on the Base UI bits and Main menu pieces. A Styles stage with no captioned samples gets one line for the stage.
+  ['components-body', 'pieces', 'menu-body'].forEach((id) => window.libCaptionFonts(document.getElementById(id)));
+  document.querySelectorAll('#pieces .lib-stage, #menu-body .lib-menu-frame').forEach((stage) => {
+    if (stage.querySelector('.lib-sample')) return;
+    const fonts = window.libFontsIn(stage).filter((font) => font.face !== 'system-ui');
+    if (fonts.length) stage.insertAdjacentHTML('afterend', `<p class="lib-font-line">Font: ${window.libFontInline(fonts)}</p>`);
+  });
+  let saved = null;
+  try { saved = sessionStorage.getItem('uiLibrary.tab'); } catch (error) { /* private window */ }
+  window.libShowTab(saved);
+})();
+</script>
+</body>
+</html>

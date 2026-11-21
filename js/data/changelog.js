@@ -7,9 +7,149 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-21',
+    title: ['A new look for the Poke Balls shop and the catch screen', 'A new look for the Poke Balls shop and the catch screen'],
+    new: [
+      [
+        "The catch screen has a new look: a clean window, the Pokemon's types on its frame (both, for a two-type Pokemon), belts like the Shop's and new buttons. Under the cursor a slot or a face shows a yellow ring.",
+        "The catch screen has a new look: a clean window, the Pokemon's types on its frame (both, for a two-type Pokemon), belts like the Shop's and new buttons. Under the cursor a slot or a face shows a yellow ring.",
+      ],
+      [
+        'The Poke Balls tab of the Shop has a new look: cleaner cards, new buttons, and belts with round slots for your balls. Under the cursor a slot shows a yellow ring.',
+        'The Poke Balls tab of the Shop has a new look: cleaner cards, new buttons, and belts with round slots for your balls. Under the cursor a slot shows a yellow ring.',
+      ],
+    ],
+    chg: [
+      [
+        'A throw now tells you how it went in a message at the bottom of the screen.',
+        'A throw now tells you how it went in a message at the bottom of the screen.',
+      ],
+      [
+        'Questions that would lose you something now start on the safe answer (Keep trying, Cancel), so a stray Enter loses nothing. Questions about buying start on Buy.',
+        'Questions that would lose you something now start on the safe answer (Keep trying, Cancel), so a stray Enter loses nothing. Questions about buying start on Buy.',
+      ],
+      [
+        'Questions and messages have a new clean look. With the mouse, a question shows no selected button; your first key press shows it.',
+        'Questions and messages have a new clean look. With the mouse, a question shows no selected button; your first key press shows it.',
+      ],
+      [
+        'In a run, a Pokemon with two types shows both colours on the frame of its team row.',
+        'In a run, a Pokemon with two types shows both colours on the frame of its team row.',
+      ],
+      [
+        'Unlocking a ball and buying a belt no longer ask first: like buying balls, they happen as soon as you press.',
+        'Unlocking a ball and buying a belt no longer ask first: like buying balls, they happen as soon as you press.',
+      ],
+      [
+        "A ball you cannot unlock yet keeps a bright button on its card, which tells you why when you press it.",
+        "A ball you cannot unlock yet keeps a bright button on its card, which tells you why when you press it.",
+      ],
+      [
+        "The Shop window has a thin clean frame and a new Exit button.",
+        "The Shop window has a thin clean frame and a new Exit button.",
+      ],
+      [
+        'Poke Balls now sit in the middle of their slots and cards, in the Shop and on the catch screen.',
+        'Poke Balls now sit in the middle of their slots and cards, in the Shop and on the catch screen.',
+      ],
+      [
+        'A move that raises every stat by the same amount now says so once: Ancient Power reads "10% team all stats +1".',
+        'A move that raises every stat by the same amount now says so once: Ancient Power reads "10% team all stats +1".',
+      ],
+    ],
+    fix: [
+      [
+        "The yellow ring's flicker as the cursor moves now passes behind the Poke Ball in its slot and behind a Pokemon's face.",
+        "The yellow ring's flicker as the cursor moves now passes behind the Poke Ball in its slot and behind a Pokemon's face.",
+      ],
+      [
+        'The ball no longer blinks out for a moment when you throw it.',
+        'The ball no longer blinks out for a moment when you throw it.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-18',
+    title: ['Shorter Shop prices', 'Shorter Shop prices'],
+    chg: [
+      [
+        'Shop buttons write prices of 1,000 and up short: Buy 9k, Unlock 15k, Buy 7.5k. The question before you buy still shows the whole price.',
+        'Shop buttons write prices of 1,000 and up short: Buy 9k, Unlock 15k, Buy 7.5k. The question before you buy still shows the whole price.',
+      ],
+      [
+        'The belt button on the Poke Balls tab now reads Belt 2 10k.',
+        'The belt button on the Poke Balls tab now reads Belt 2 10k.',
+      ],
+      [
+        "The EV screen's panel now has the same dark outline as the other windows.",
+        "The EV screen's panel now has the same dark outline as the other windows.",
+      ],
+      [
+        "Confirm windows now use the game's pixel-art look. Arrow keys pick the button, Enter or Space presses it, Esc cancels.",
+        "Confirm windows now use the game's pixel-art look. Arrow keys pick the button, Enter or Space presses it, Esc cancels.",
+      ],
+    ],
+    fix: [
+      [
+        'Poke Balls tab: the right column of ball cards is no longer cut off by the scroll bar.',
+        'Poke Balls tab: the right column of ball cards is no longer cut off by the scroll bar.',
+      ],
+      [
+        'TMs tab: the right column of TM cards is no longer cut off by the scroll bar.',
+        'TMs tab: the right column of TM cards is no longer cut off by the scroll bar.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-17',
+    title: ['TMs for good', 'TMs for good'],
+    new: [
+      [
+        'Poke Balls in the Shop: buy Poke Balls for your belt (Shift buys 10), unlock Great and Ultra Balls, and buy a second and third belt for six more balls each. A new ball goes into the first empty slot, and you can move your balls between slots by click, drag or Enter and Space. Balls you do not throw stay on your belt for the next run; runs no longer refill it for free. You can also sell a ball you hold back for half its price.',
+        'Poke Balls in the Shop: buy Poke Balls for your belt (Shift buys 10), unlock Great and Ultra Balls, and buy a second and third belt for six more balls each. A new ball goes into the first empty slot, and you can move your balls between slots by click, drag or Enter and Space. Balls you do not throw stay on your belt for the next run; runs no longer refill it for free. You can also sell a ball you hold back for half its price.',
+      ],
+      [
+        'TMs in the Shop: buy a TM with PokeCoins to teach one of your Pokemon a move for good. In every run after that, the Move Trainer can offer that move to it.',
+        'TMs in the Shop: buy a TM with PokeCoins to teach one of your Pokemon a move for good. In every run after that, the Move Trainer can offer that move to it.',
+      ],
+    ],
+    chg: [
+      [
+        'The TM Mart you find during a run is now the TR Shop. A move bought there is a TR and lasts that run only.',
+        'The TM Mart you find during a run is now the TR Shop. A move bought there is a TR and lasts that run only.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-16',
+    title: ['A new catch screen', 'A new catch screen'],
+    chg: [
+      [
+        'The catch screen has a new look. It shows a range for your catch chance instead of an exact number, and a ring around the Pokemon fills with every miss until it runs off. Your belt holds 6 Poke Balls, and two more belts are coming later. You can also see every one of that species you already own, with its IVs and EVs on hover. Arrow keys move a cursor, Enter selects or throws, and keys 1 to 6 throw from that slot.',
+        'The catch screen has a new look. It shows a range for your catch chance instead of an exact number, and a ring around the Pokemon fills with every miss until it runs off. Your belt holds 6 Poke Balls, and two more belts are coming later. You can also see every one of that species you already own, with its IVs and EVs on hover. Arrow keys move a cursor, Enter selects or throws, and keys 1 to 6 throw from that slot.',
+      ],
+    ],
+    fix: [
+      [
+        'Double-clicking a Poke Ball on the catch screen now throws it.',
+        'Double-clicking a Poke Ball on the catch screen now throws it.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-15',
     title: ['Speed and dodges', 'Speed and dodges'],
+    new: [
+      [
+        'Catch Pokemon: beat the guard of a Pokemon that needs help, then walk up to it to open the catch screen. You start with 6 Poke Balls on your belt, refilled every run for now. Every throw uses a ball, and the more time you had left in the fight, the better your odds. Some natures run off after a single miss. Your catches join your Pokebox when the run ends, unless you end the run yourself.',
+        'Catch Pokemon: beat the guard of a Pokemon that needs help, then walk up to it to open the catch screen. You start with 6 Poke Balls on your belt, refilled every run for now. Every throw uses a ball, and the more time you had left in the fight, the better your odds. Some natures run off after a single miss. Your catches join your Pokebox when the run ends, unless you end the run yourself.',
+      ],
+    ],
     chg: [
+      [
+        'The Pokemon gacha and its Pokeball and Master Ball tickets are gone. Everything that paid tickets now pays PokeCoins instead, and the Shop keeps its Team Items and Team Upgrades tabs. New saves also start fresh with this update, and your old save stays in this browser as a backup.',
+        'The Pokemon gacha and its Pokeball and Master Ball tickets are gone. Everything that paid tickets now pays PokeCoins instead, and the Shop keeps its Team Items and Team Upgrades tabs. New saves also start fresh with this update, and your old save stays in this browser as a backup.',
+      ],
       [
         "Silver is simpler: every Pokemon you defeat pays 1 Silver, and a run starts with none. Move prices no longer climb with your level or the clock. Instead each Pokemon's next move costs more the more slots it has filled, so filling out the whole team comes first: at the Move Trainer 60, 120, then 240, and 300 to replace a move. TMs cost more: 150, 300, 400, then 450.",
         "Silver is simpler: every Pokemon you defeat pays 1 Silver, and a run starts with none. Move prices no longer climb with your level or the clock. Instead each Pokemon's next move costs more the more slots it has filled, so filling out the whole team comes first: at the Move Trainer 60, 120, then 240, and 300 to replace a move. TMs cost more: 150, 300, 400, then 450.",

@@ -254,7 +254,7 @@ ok(G.Team.SWAP_IFRAME === 0.5, 'the swap i-frames are 0.5 s (' + G.Team.SWAP_IFR
   ok(/runTeam = G\.Team\.create\(roster, carryRun\);\s*pl = runTeam\.active;/.test(body('function startRun(')), 'startRun builds the Team from the roster');
   ok(!/f\.(stgTeam|teamCards|runItems|dodges|berries) = /.test(body('function startRun(')), 'startRun no longer links the stores by hand');
   const carry = body('function carryRun(');
-  ok(['level', 'xp', 'xpNext', 'kills', 'bosses', 'coins', 't1', 't10'].every((k) => carry.includes('to.' + k + ' = from.' + k + ';')), 'carryRun copies the run progress');
+  ok(['level', 'xp', 'xpNext', 'kills', 'bosses', 'coins'].every((k) => carry.includes('to.' + k + ' = from.' + k + ';')), 'carryRun copies the run progress');
   ok(carry.length > 50 && !/bonds/.test(carry.replace(/\/\*[\s\S]*?\*\//g, '')), 'carryRun does not copy links');
   ok(/function takeField\(/.test(g) === false && !/\bswapLock\b|\bactiveIdx\b(?!\s*[:)])|SWAP_LOCK =|SWAP_IFRAME =/.test(g.replace(/runTeam\.activeIdx/g, '')), 'game.js keeps no team state of its own');
   ok(/runTeam\.canSwap\(i, state === 'playing'\)/.test(body('function swapTo(')), 'swapTo asks the Team');

@@ -1,33 +1,17 @@
 /* ============ hud-kit-items.js: the HUD kit's tooltip layer, scroll box and item pieces (G.HudKitItems) ============
- * Part of the HUD kit (js/ui/hud-kit.js has the overview); it reads only G.HudKit. Panels and screens take these
- * from G.HudOverlay.kit. Split out of js/ui/hud-overlay.js on 2026-11-14 (structural review F1); the code is
- * unchanged.
+ * Part of the HUD kit (js/ui/hud-kit.js has the overview); it reads G.HudKit and the UI library (the item squares and
+ * the run item box are its square.item, grid.item and card.horizontal, 155c-2: this file draws their icons and wires
+ * their tooltips). Panels and screens take these from G.HudOverlay.kit. Split out of js/ui/hud-overlay.js on
+ * 2026-11-14 (structural review F1).
  */
 G.HudKitItems = (() => {
-  const coreKit = G.HudKit;
-  if (!coreKit.ready) return { ready: false };
-  const { html, signal, hooks: preactHooks, PALETTE, BAR_CHECKER, PixelShape } = coreKit;
-
-  // ---------- the B2 bag button (b2-lower Y4 to AB5): a square with chamfered corners, a rim and the checker body ----------
-  function bagButtonRow(row, artSize, rimColour) {
-    const chamfer = row < 2 ? 2 - row : row > artSize - 3 ? row - (artSize - 3) : 0,
-      left = chamfer,
-      right = artSize - 1 - chamfer;
-    if (row === 0 || row === artSize - 1) return [[left, right - left + 1, PALETTE.outline]];
-    if (row === 1 || row === artSize - 2)
-      return [
-        [left, 1, PALETTE.outline],
-        [left + 1, right - left - 1, rimColour],
-        [right, 1, PALETTE.outline],
-      ];
-    return [
-      [left, 1, PALETTE.outline],
-      [left + 1, 1, rimColour],
-      [left + 2, right - left - 3, BAR_CHECKER],
-      [right - 1, 1, rimColour],
-      [right, 1, PALETTE.outline],
-    ];
-  }
+  const coreKit = G.HudKit,
+    square = G.Lib && G.Lib.Square, // the item squares are the UI library's square.item and grid.item (155c-2)
+    panel = G.Lib && G.Lib.Panel, // the run item box is its card.horizontal; the ball belt its panel.pixel
+    pixels = G.Lib && G.Lib.Pixels; // the ball belt's body is its Unified slot grid
+  if (!coreKit.ready || !square || !square.ready || !panel || !panel.ready || !pixels || !pixels.ready)
+    return { ready: false };
+  const { html, signal, hooks: preactHooks } = coreKit;
 
   /**
    * An item icon (Pokesprite cell or app icon, through G.Icons.draw) painted on a small canvas at 1x. It paints on a change,
@@ -52,103 +36,134 @@ G.HudKitItems = (() => {
   }
 
   /**
-   * The held item square: the bag button with the item's icon at 1x in its centre; the Lv yellow rim when it holds
-   * something, slate when empty (HUD-STYLE "Character info panel"). artSize is in 2 px art pixels.
+   * The held item square (the library's square.item): the item's icon at 1x in its centre; the Lv yellow rim when it
+   * holds something, slate when empty (HUD-STYLE "Character info panel"). artSize is in 2 px art pixels.
    */
   function ItemSquare({ icon, artSize }) {
-    const size = artSize * 2,
-      rim = icon ? PALETTE.lvFill : PALETTE.slate;
-    return html`<div class="hud-item-square" style=${{ width: size + 'px', height: size + 'px' }}>
-      <${PixelShape}
-        artWidth=${artSize}
-        artRows=${artSize}
-        artPixel=${2}
-        paintRow=${(row) => bagButtonRow(row, artSize, rim)}
-      />
-      ${icon ? html`<${IconCanvas} icon=${icon} size=${32} className="hud-item-icon" />` : null}
-    </div>`;
+    return html`<${square.ItemSquare}
+      artSize=${artSize}
+      filled=${!!icon}
+      picture=${icon ? html`<${IconCanvas} icon=${icon} size=${32} className="hud-item-icon" />` : null}
+    />`;
   }
 
   /**
-   * The tight 2x2 item grid (#90, HUD-STYLE "Berry bag"): item squares in two columns, half a square between them, filling
-   * row by row. Used by the run screen's berry bag and the pause menu's Run Inventory.
-   * slots: [{ key, icon, locked, tip: { name, desc }, className, attrs }]: icon null = empty; locked = dimmed (not bought);
-   * tip = the hover tooltip (none on the run screen), drawn in the screen's TooltipLayer; attrs = extra attributes for
-   * the slot's element (data-*, handlers). tipPlace: where the tooltip opens (showTooltip's place; above by default).
+   * The tight 2x2 item grid (#90, HUD-STYLE "Berry bag"; the library's grid.item): item squares in two columns, half a
+   * square between them, filling row by row. Used by the run screen's berry bag and the pause menu's Run Inventory.
+   * slots: [{ key, icon, locked, tip: { name, desc }, className, attrs, overlay }]: icon null = empty; locked = dimmed
+   * (not bought); tip = the hover tooltip (none on the run screen), drawn in the page's tooltip layer; attrs = extra
+   * attributes for the slot's element (data-*, handlers); overlay = drawn over the square (a selection cursor).
+   * tipPlace: where the tooltip opens (showTooltip's place; above by default). columns: squares per row (2 by default;
+   * the Main Menu Shop's owned items use 4, #149c).
    */
-  function ItemGrid({ slots, artSize = 20, className, tipPlace }) {
-    const size = artSize * 2,
-      gap = size / 2;
-    return html`<div
-      class=${'hud-item-grid' + (className ? ' ' + className : '')}
-      style=${{ gridTemplateColumns: `${size}px ${size}px`, gap: gap + 'px' }}
-    >
-      ${slots.map(
-        (slot) =>
-          html`<div
-            key=${slot.key}
-            class=${
-              'hud-grid-slot' +
-              (slot.icon ? ' is-filled' : '') +
-              (slot.locked ? ' is-locked' : '') +
-              (slot.className ? ' ' + slot.className : '')
-            }
-            ...${slot.tip && slot.icon ? itemTipHandlers(slot.tip, tipPlace) : {}}
-            ...${slot.attrs || {}}
-          >
-            <${ItemSquare} icon=${slot.icon || null} artSize=${artSize} />
-          </div>`
-      )}
-    </div>`;
+  function ItemGrid({ slots, artSize, columns, className, tipPlace }) {
+    const librarySlots = slots.map((slot) => ({
+      key: slot.key,
+      filled: !!slot.icon,
+      picture: slot.icon ? html`<${IconCanvas} icon=${slot.icon} size=${32} className="hud-item-icon" />` : null,
+      locked: slot.locked,
+      className: slot.className,
+      overlay: slot.overlay,
+      attrs: { ...(slot.tip && slot.icon ? itemTipHandlers(slot.tip, tipPlace) : {}), ...(slot.attrs || {}) },
+    }));
+    return html`<${square.ItemGrid}
+      slots=${librarySlots}
+      artSize=${artSize}
+      columns=${columns}
+      className=${className}
+    />`;
   }
   const itemTipHandlers = (tip, place) =>
     tooltipHandlers({ name: tip.name, lines: tip.desc ? [tip.desc] : [], variant: 'item' }, place);
 
-  // ---------- the shared tooltip layer (Jess, 2026-11-12: every hover tooltip is the topmost layer) ----------
+  // ---------- the tooltip layer: one for the whole page, always on top (Jess, 2026-11-16, decision 2026-11-16-one-universal-tooltip-layer) ----------
   /**
-   * One tooltip at a time, drawn by TooltipLayer, which a screen mounts as the LAST child of its stage (the pause
-   * menu's 1920 x 1080 stage), above everything else on it. No tooltip lives inside its panel any more: there it was
-   * trapped under later panels (the team cards over the move list's tooltip) and clipped by scroll boxes.
+   * One tooltip at a time, drawn in ONE layer the kit puts on the page itself: fixed over the whole window, the body's
+   * last child, z-index 1000 (nothing else on the page may reach it), never catching the pointer. Screens do not mount
+   * a layer of their own. Before 2026-11-16 each screen mounted one and the kit remembered only the last, so closing the
+   * catch screen left the pause menu's tooltips with nowhere to draw. Nested tooltips (Path of Exile style) are not built;
+   * when they are, tooltipState becomes a stack and nothing else here changes shape.
    * showTooltip(anchor, content, place): content { name, lines, variant } (variant 'item': name and a 300 px
    *   description; 'detail': the detail panel's 558 px box; 'plain': one line, no name); nothing to show hides it.
-   *   place { side: 'above' (default) | 'below' | 'leftOf', align: 'centre' (default) | 'start' | 'end', gap (px,
-   *   default 8), beside: for 'leftOf', the element or a selector (closest to the anchor) whose left edge it is off }.
+   *   place { side: 'above' (default) | 'below' | 'leftOf' | 'rightOf', align: 'centre' (default) | 'start' | 'end', gap
+   *   (px at the screen's own size, default 8), beside: for 'leftOf' / 'rightOf', the element or a selector (closest to
+   *   the anchor) whose left / right edge it is off; level with the anchor's top }.
+   * The tooltip is drawn at the hovered screen's scale (a menu stage fitted to the window draws its tooltips fitted too).
+   * While one shows, the layer re-places it every frame from its anchor (a sliding panel carries it along) and hides it
+   * when the anchor is removed or hidden, so a closing screen can never leave one behind.
    * hideTooltip(): gone (a scroll, a redraw, a pick-up, the menu closing).
    * tooltipHandlers(content, place): an anchor's hover handlers; content may be a function read on each show. A
    *   pointer move re-shows it after a redraw under a still pointer (an item put down, the next Pokemon by key).
    */
-  const tooltipState = signal(null); // { anchor, name, lines, variant, x, y, shift } in stage pixels
-  let tooltipLayer = null; // the mounted layer's element
+  const tooltipState = signal(null); // { anchor, name, lines, variant, place }
+  const tooltipPlace = signal(null); // { x, y, shift, scale } in window pixels, from the anchor this frame
   function hideTooltip() {
     if (tooltipState.value) tooltipState.value = null;
+    tooltipPlace.value = null;
   }
-  function showTooltip(anchor, content, place = {}) {
-    const layer = tooltipLayer;
-    const lines = (content && content.lines ? content.lines : []).filter(Boolean);
-    if (!layer || !anchor || !content || !(content.name || lines.length)) return hideTooltip();
-    const layerBox = layer.getBoundingClientRect(),
-      anchorBox = anchor.getBoundingClientRect(),
-      scale = layerBox.width / (layer.offsetWidth || layerBox.width || 1); // the stage is scaled to fit the window
-    const toStageX = (x) => (x - layerBox.left) / scale,
-      toStageY = (y) => (y - layerBox.top) / scale;
+  /** The scale the anchor's screen is drawn at: a menu stage is scaled to fit the window (--pm-scale); 1 elsewhere. */
+  function anchorScale(anchor) {
+    const stage = anchor.closest('.pm-stage');
+    if (!stage || !stage.offsetWidth) return 1;
+    return stage.getBoundingClientRect().width / stage.offsetWidth;
+  }
+  /** Where the tooltip goes for its anchor now, or null when the anchor is gone or hidden. */
+  function placeFor(anchor, place) {
+    if (!anchor.isConnected || !anchor.getClientRects().length || getComputedStyle(anchor).visibility === 'hidden')
+      return null;
+    const anchorBox = anchor.getBoundingClientRect(),
+      scale = anchorScale(anchor);
     const side = place.side || 'above',
       align = place.align || 'centre',
-      gap = place.gap != null ? place.gap : 8;
-    let x, y, shift;
-    if (side === 'leftOf') {
-      const beside = (typeof place.beside === 'string' ? anchor.closest(place.beside) : place.beside) || anchor;
-      x = toStageX(beside.getBoundingClientRect().left) - gap;
-      y = toStageY(anchorBox.top);
-      shift = 'translate(-100%, 0)';
-    } else {
-      const edge =
-        align === 'start' ? anchorBox.left : align === 'end' ? anchorBox.right : (anchorBox.left + anchorBox.right) / 2;
-      x = toStageX(edge);
-      y = side === 'below' ? toStageY(anchorBox.bottom) + gap : toStageY(anchorBox.top) - gap;
-      const shiftX = align === 'start' ? '0' : align === 'end' ? '-100%' : '-50%';
-      shift = 'translate(' + shiftX + ', ' + (side === 'below' ? '0' : '-100%') + ')';
+      gap = (place.gap != null ? place.gap : 8) * scale;
+    if (side === 'leftOf' || side === 'rightOf') {
+      const beside = (typeof place.beside === 'string' ? anchor.closest(place.beside) : place.beside) || anchor,
+        besideBox = beside.getBoundingClientRect();
+      return {
+        x: side === 'leftOf' ? besideBox.left - gap : besideBox.right + gap,
+        y: anchorBox.top,
+        shift: side === 'leftOf' ? 'translate(-100%, 0)' : 'none',
+        scale,
+      };
     }
-    tooltipState.value = { anchor, name: content.name || '', lines, variant: content.variant || 'item', x, y, shift };
+    const edge =
+      align === 'start' ? anchorBox.left : align === 'end' ? anchorBox.right : (anchorBox.left + anchorBox.right) / 2;
+    const shiftX = align === 'start' ? '0' : align === 'end' ? '-100%' : '-50%';
+    return {
+      x: edge,
+      y: side === 'below' ? anchorBox.bottom + gap : anchorBox.top - gap,
+      shift: 'translate(' + shiftX + ', ' + (side === 'below' ? '0' : '-100%') + ')',
+      scale,
+    };
+  }
+  const samePlace = (a, b) => a && b && a.x === b.x && a.y === b.y && a.shift === b.shift && a.scale === b.scale;
+  let following = false; // the per-frame follow runs only while a tooltip shows
+  function follow() {
+    const shown = tooltipState.value;
+    if (!shown) {
+      following = false;
+      return;
+    }
+    const next = placeFor(shown.anchor, shown.place);
+    if (!next) {
+      following = false;
+      return hideTooltip();
+    }
+    if (!samePlace(next, tooltipPlace.value)) tooltipPlace.value = next;
+    requestAnimationFrame(follow);
+  }
+  function showTooltip(anchor, content, place = {}) {
+    const lines = (content && content.lines ? content.lines : []).filter(Boolean);
+    if (!anchor || !content || !(content.name || lines.length)) return hideTooltip();
+    const at = placeFor(anchor, place);
+    if (!at) return hideTooltip();
+    if (layerElement !== document.body.lastElementChild) document.body.appendChild(layerElement); // stay the body's last child
+    tooltipState.value = { anchor, name: content.name || '', lines, variant: content.variant || 'item', place };
+    tooltipPlace.value = at;
+    if (!following) {
+      following = true;
+      requestAnimationFrame(follow);
+    }
   }
   function tooltipHandlers(content, place) {
     const contentNow = () => (typeof content === 'function' ? content() : content);
@@ -165,30 +180,24 @@ G.HudKitItems = (() => {
       },
     };
   }
-  /** The layer itself: mount it as the stage's last child. It never catches the pointer. */
+  /** The page's one layer: the tooltip at its anchor's place, drawn at its screen's scale from the anchor point. */
   function TooltipLayer() {
-    const ref = preactHooks.useRef(null);
-    preactHooks.useLayoutEffect(() => {
-      tooltipLayer = ref.current;
-      return () => {
-        if (tooltipLayer === ref.current) tooltipLayer = null;
-      };
-    }, []);
-    const shown = tooltipState.value;
-    return html`<div class="hud-tip-layer" ref=${ref}>
-      ${
-        shown
-          ? html`<div
-              class=${'hud-tip is-' + shown.variant}
-              style=${{ left: shown.x + 'px', top: shown.y + 'px', transform: shown.shift }}
-            >
-              ${shown.name ? html`<div class="hud-text hud-tip-name">${shown.name}</div>` : null}
-              ${shown.lines.map((line, index) => html`<div key=${index} class="hud-text hud-tip-line">${line}</div>`)}
-            </div>`
-          : null
-      }
+    const shown = tooltipState.value,
+      at = tooltipPlace.value;
+    if (!shown || !at) return null;
+    return html`<div
+      class=${'hud-tip is-' + shown.variant}
+      style=${{ left: at.x + 'px', top: at.y + 'px', transform: 'scale(' + at.scale + ') ' + at.shift }}
+    >
+      ${shown.name ? html`<div class="hud-text hud-tip-name">${shown.name}</div>` : null}
+      ${shown.lines.map((line, index) => html`<div key=${index} class="hud-text hud-tip-line">${line}</div>`)}
     </div>`;
   }
+  const layerElement = document.createElement('div');
+  layerElement.className = 'hud-tip-layer';
+  layerElement.setAttribute('translate', 'no'); // English-only text
+  document.body.appendChild(layerElement);
+  coreKit.preact.render(html`<${TooltipLayer} />`, layerElement);
 
   /**
    * A scrolling box with the pause menu's thin scroll bar (dex-buttons AF2-AF20). Made for the move list in #89,
@@ -275,13 +284,147 @@ G.HudKitItems = (() => {
       </div>`;
   }
 
+  /**
+   * A search box (#149c, the Main Menu Shop's mockups): one line of HUD text on the panel body with a thin white rim.
+   * value and onChange(text) keep it in the screen's own state; Enter or Esc while typing hands the keys back to the
+   * screen (the box lets go of the keyboard; that key press itself goes no further). Player-typed text, so never translated.
+   */
+  function SearchBar({ value, onChange, placeholder = 'Search', width, className }) {
+    return html`<input
+      type="text"
+      class=${'hud-search' + (className ? ' ' + className : '')}
+      translate="no"
+      spellcheck="false"
+      autocomplete="off"
+      placeholder=${placeholder}
+      value=${value}
+      style=${width ? { width: width + 'px' } : null}
+      onInput=${(event) => onChange(event.currentTarget.value)}
+      onKeyDown=${(event) => {
+        if (event.key !== 'Enter' && event.key !== 'Escape') return;
+        event.stopPropagation(); // this key belongs to the box: the screen must not also read it (Esc would close it)
+        event.currentTarget.blur();
+      }}
+    />`;
+  }
+
+  // ---------- the run item box: a team item slot (the library's card.horizontal, 155c-2) ----------
+  // The run screen draws it at 2 px per art pixel and 140 wide; the Main Menu Inventory sizes it up (#149d).
+  const RUN_BOX_ROWS = panel.HORIZONTAL_CARD.artRows;
+  /**
+   * One team item slot: the item's icon in its white patch, its name in the top band and its text (a live tracker or
+   * the short description) right of the patch. item: { name, icon, text, live } or null for an empty slot. artWidth and
+   * artPixel size it (the run screen: 140 and 2); dimmed draws a slot not bought yet; style places it; attrs adds
+   * attributes (data-*, handlers); overlay is drawn on top (a selection cursor).
+   */
+  function RunItemBox({ artWidth, artPixel, item, dimmed, className, style, attrs, overlay }) {
+    const picture = item
+      ? html`<${IconCanvas} icon=${item.icon} size=${panel.HORIZONTAL_CARD.iconArt * artPixel} />`
+      : null;
+    return html`<${panel.HorizontalCard}
+      artWidth=${artWidth}
+      artPixel=${artPixel}
+      item=${item}
+      picture=${picture}
+      dimmed=${dimmed}
+      className=${className}
+      style=${style}
+      attrs=${attrs}
+      overlay=${overlay}
+    />`;
+  }
+
+  /**
+   * One Poke Ball frame from its strip (G.BALL_SPRITES), drawn at scale (whole or half numbers keep the pixel art crisp).
+   * Moved here from js/ui/catch-ui.js for the Main Menu Shop's ball cards (149e). flipped mirrors it left to right (the
+   * Shop's cards, mockup Shop-Pokeballs.svg); style places it. Each frame is shifted by its centreShift (#128 S6,
+   * measured by tools/make_ball_sprites.py) so the ball's filled pixels, not its frame, sit in the middle of where it
+   * is placed; the shift mirrors with the ball.
+   */
+  function BallSprite({ ball, frame, scale, flipped, className, style }) {
+    const sprites = G.BALL_SPRITES,
+      size = sprites.size * scale,
+      [shiftX, shiftY] = sprites.centreShift[ball][frame], // the generated table holds every ball and frame
+      shift = 'translate(' + (flipped ? -shiftX : shiftX) * scale + 'px, ' + shiftY * scale + 'px)';
+    return html`<div
+      class=${'catch-ball' + (className ? ' ' + className : '')}
+      style=${{
+        ...style,
+        width: size + 'px',
+        height: size + 'px',
+        backgroundImage: 'url(' + sprites.path(ball) + ')',
+        backgroundSize: size * sprites.frames + 'px ' + size + 'px',
+        backgroundPosition: -frame * size + 'px 0',
+        backgroundRepeat: 'no-repeat',
+        imageRendering: 'pixelated',
+        transform: shift + (flipped ? ' scaleX(-1)' : ''),
+      }}
+    ></div>`;
+  }
+
+  // ---------- the ball belt (main.shop.pokeball's, decision 2026-11-20-155-main-shop-pokeball-look; the catch screen
+  // draws the same belt, decision 2026-11-20-155-catch-window-look; #128) ----------
+  // A panel.pixel sized to six wells over the slot grid in the Unified greys, rimmed in the Poke Balls pocket ramp
+  // (color.rim.belt, kept canon) when bought and the fainted ramp when not, its number on the top-left corner (Michroma
+  // 16, white with an ink stroke; hud-overlay.css). Each screen draws its own slots (their wells, balls, keys, cursor
+  // and input) in the places the belt gives.
+  const BALL_BELT = { slots: 6, well: 52, gap: 8, inset: 16, ballScale: 2 };
+  BALL_BELT.width = BALL_BELT.well + 2 * BALL_BELT.inset; // 84
+  BALL_BELT.height =
+    BALL_BELT.slots * BALL_BELT.well + (BALL_BELT.slots - 1) * BALL_BELT.gap + 2 * BALL_BELT.inset; // 384
+  // -6: the ball's frame centred on the well
+  BALL_BELT.ballAt = (BALL_BELT.well - G.BALL_SPRITES.size * BALL_BELT.ballScale) / 2;
+  /** Slot index's place in its belt, px: { left, top, width, height }, the well's own box. */
+  const beltSlotPlace = (index) => ({
+    left: BALL_BELT.inset + 'px',
+    top: BALL_BELT.inset + index * (BALL_BELT.well + BALL_BELT.gap) + 'px',
+    width: BALL_BELT.well + 'px',
+    height: BALL_BELT.well + 'px',
+  });
+  const BELT_RIM = G.Tokens.ramp('color.rim.belt');
+  /**
+   * One belt at left, top (px in its parent): number (1 to 3) on its corner; locked when not bought (the fainted ramp,
+   * class is-locked); className adds the screen's class. slot(index, place) draws each of the six slots, place being
+   * its box in the belt (beltSlotPlace), for the slot's own element's style.
+   */
+  function BallBelt({ left, top, number, locked, className, slot }) {
+    const { PixelPanel } = panel;
+    return html`<${PixelPanel}
+      left=${left}
+      top=${top}
+      width=${BALL_BELT.width}
+      height=${BALL_BELT.height}
+      rim=${locked ? coreKit.FAINTED_RIM : BELT_RIM}
+      body=${pixels.PATTERNS.slotGridUnified}
+      className=${'ball-belt' + (locked ? ' is-locked' : '') + (className ? ' ' + className : '')}
+    >
+      <div class="ball-belt-number">${number}</div>
+      ${Array.from({ length: BALL_BELT.slots }, (_, index) => slot(index, beltSlotPlace(index)))}
+    </${PixelPanel}>`;
+  }
+  /** A ball in a belt well: its front frame at the belt's scale, its frame centred on the well (the well clips it). */
+  const BeltBall = ({ ball }) =>
+    html`<${BallSprite}
+      ball=${ball}
+      frame=${G.BALL_SPRITES.animations.front[0]}
+      scale=${BALL_BELT.ballScale}
+      style=${{ left: BALL_BELT.ballAt + 'px', top: BALL_BELT.ballAt + 'px' }}
+    />`;
+
   return {
     ready: true,
+    RunItemBox,
+    RUN_BOX_ROWS,
+    BallSprite,
+    BALL_BELT,
+    BallBelt,
+    BeltBall,
     IconCanvas,
     ItemSquare,
     ItemGrid,
     ScrollBox,
-    TooltipLayer,
+    SearchBar,
+    showTooltip,
     hideTooltip,
     tooltipHandlers,
   };

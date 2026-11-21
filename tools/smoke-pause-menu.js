@@ -123,7 +123,7 @@ async function main() {
     );
   };
   // The shown tooltip, read from the menu's shared tooltip layer (Jess, 2026-11-12: every hover tooltip is the topmost
-  // layer): its name and lines, whether the layer is the stage's last child, and how many sample points across the
+  // layer): its name and lines, whether the layer is the page's one layer, and how many sample points across the
   // tooltip's box are covered by something else (0 = on top everywhere). Points off the window are not sampled.
   const tipNow = () =>
     page.evaluate(() => {
@@ -148,7 +148,9 @@ async function main() {
         lines: [...tip.querySelectorAll('.hud-tip-line')].map((line) => line.textContent.trim()),
         covered,
         sampled,
-        last: document.querySelector('.pm-stage').lastElementChild === tip.parentElement,
+        // the page's one tooltip layer (decision 2026-11-16-one-universal-tooltip-layer): the body's last child, z 1000
+        last:
+          document.body.lastElementChild === tip.parentElement && getComputedStyle(tip.parentElement).zIndex === '1000',
         left: box.left,
         right: box.right,
       };
@@ -525,6 +527,29 @@ async function main() {
   await page.mouse.move(5, 5);
   await sleep(60);
   ok((await tipNow()) === null, 'leaving a corner hides its tooltip');
+  // Another screen with tooltips opening and closing (the catch screen, #136) leaves the menu's tooltips working. Before
+  // the page had one tooltip layer, closing a catch left the pause menu with none (Jess, 2026-11-16). The catch ends by
+  // one miss: a Timid Pokemon allows one, so it runs off and the screen closes.
+  const caught = await page.evaluate(() => {
+    G.PauseMenu.hideNow();
+    const timid = G.SpeciesTraits.NATURES.findIndex((nature) => nature[0] === 'timid') + 1;
+    const session = G.Catch.begin({ outcome: 'won', dex: 16, name: 'Pidgey', nature: timid, natureName: 'Timid' });
+    if (!session) return false;
+    G.CatchUI.open(session, () => {});
+    const realRandom = Math.random;
+    Math.random = () => 0.9999;
+    G.CatchUI.throwNow();
+    Math.random = realRandom;
+    return true;
+  });
+  await page.waitForFunction(() => !G.UI.isOpen('scr-catch'), null, { timeout: 8000 }).catch(() => {});
+  await page.evaluate(() => G.PauseMenu.open());
+  await sleep(FULL_MS);
+  await page.hover('.pm-hex-label[data-stat="' + hex.texts[0].stat + '"]');
+  await sleep(60);
+  ok(caught && onTop(await tipNow()), 'after a catch screen opens and closes, a menu tooltip still shows on top');
+  await page.mouse.move(5, 5);
+  await sleep(60);
   // sized for the widest labels: a 4 digit stat and "+100%" on the side corners stay inside the hex box
   const savedForFit = await page.evaluate(() => {
     const member = G.Game.player,
@@ -1552,13 +1577,19 @@ async function main() {
     evState.state === 'ui' && learnTook >= 1900 && learnTook < 3500,
     'Learn: home after about 2 s (' + learnTook + ' ms, state ' + evState.state + ')'
   );
+  // the bad tone's edge is the Unified red (the toast primitive, #128 catch.window), read off the token, not copied
   const badToast = await page.evaluate(() => {
     G.UI.toast('Smoke check', 400, 'bad');
-    return getComputedStyle(document.querySelector('.toast')).borderTopColor;
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--color-red-base)';
+    document.body.appendChild(probe);
+    const red = getComputedStyle(probe).color;
+    probe.remove();
+    return { edge: getComputedStyle(document.querySelector('.toast')).borderTopColor, red };
   });
   ok(
-    badToast === 'rgb(200, 20, 28)',
-    "the shared toast's bad tone keeps the shape with the red rim (" + badToast + ')'
+    badToast.edge === badToast.red,
+    "the shared toast's bad tone keeps the shape with the red edge (" + JSON.stringify(badToast) + ')'
   );
   await sleep(450);
   const toastDrift = await page.evaluate(async () => {

@@ -1,0 +1,54 @@
+/* tools/library/modal-draft.css: the Modal, Unified tab (modal-draft.js). Board only. The frame is .lib-clean
+   (clean-draft.css), the buttons .lib-glitch-button (glitch-draft.css). */
+.lib-modal {
+  display: inline-block;
+}
+.lib-modal-inner {
+  position: relative; /* above panel.clean's body layer */
+  color: var(--modal-text);
+  text-align: center;
+  font-family: 'HudModule', sans-serif;
+}
+.lib-modal-title {
+  font-size: var(--modal-title);
+  line-height: 1.4;
+}
+.lib-modal-message {
+  margin: 20px 0 0;
+  font-size: var(--modal-message);
+  line-height: 1.6;
+  white-space: normal;
+}
+.lib-modal-note {
+  margin: 8px 0 0;
+  font-size: var(--modal-note);
+  line-height: 1.6;
+  color: var(--modal-note-colour);
+}
+.lib-modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--modal-gap);
+  margin-top: 28px;
+}
+/* keyboard mode: only the focused button shows its fill, so a pointer resting on the other never leaves two filled.
+   Mouse mode (.is-mouse, set when the mouse moves): nothing is focused and the hover swipe plays as on any
+   button.glitch */
+.lib-modal-stage:not(.is-mouse) .lib-glitch-button:hover:not(.focused)::after {
+  clip-path: inset(0 0 0 100%);
+}
+/* and its bar stays the rest bar (glitch-draft.css gives a hovered button the focus bar) */
+.lib-modal-stage:not(.is-mouse) .lib-glitch-button:hover:not(.focused) {
+  box-shadow: 6px 0 0 var(--glitch-bar);
+}
+.lib-modal-stage {
+  outline: none;
+}
+.lib-modal-stage:focus-visible {
+  box-shadow: 0 0 0 1px #3a3a46;
+}
+.lib-modal-readout {
+  min-height: 18px;
+  margin-top: 8px;
+  font-size: 12px;
+}

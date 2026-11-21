@@ -877,6 +877,37 @@ async function rosterPanel(browser) {
     'roster: rows are 278 x 64 at x 16 (' + (first && [first.left, first.width, first.height].join(', ')) + ')'
   );
   ok(last && last.top + last.height === 1080 - 42, 'roster: the lowest row sits 42 px above the bottom');
+  // #128 catch.window: a two-type member's row (Bulbasaur, Grass and Poison) takes its first type's ramp on the left rim
+  // and its second's on the right, dithered between (decision 2026-11-20-155-two-type-team-slot-rim-dithered-middle-band),
+  // never a gradient; a one-type row's rim is its own type's on both sides. Read off a straight rim row (art row 10)
+  const rims = await page.evaluate(() =>
+    [...document.querySelectorAll('.hud-roster-row:not(.pm-team-card)')].map((row) => {
+      const name = row.querySelector('.hud-roster-name').textContent.trim(),
+        member = G.Game.roster.find((each) => each.mon && each.mon.name === name),
+        svg = row.querySelector(':scope > svg'),
+        artWidth = +svg.getAttribute('viewBox').split(' ')[2],
+        rects = [...svg.querySelectorAll('rect')];
+      const fillAt = (x) => {
+        const rect = rects.find((each) => each.getAttribute('y') === '10' && +each.getAttribute('x') === x);
+        return rect ? rect.getAttribute('fill').toLowerCase() : null;
+      };
+      return {
+        name,
+        bases: member.mon.types.map((type) => G.U.TYPE_COLOR[type].toLowerCase()),
+        left: fillAt(1), // the rim's base column on the left ('oBoLLo')
+        right: fillAt(artWidth - 2), // and on the right
+        gradient: !!row.querySelector('linearGradient'),
+      };
+    })
+  );
+  const rimRight = (rim) =>
+    !rim.gradient && rim.left === rim.bases[0] && rim.right === rim.bases[rim.bases.length > 1 ? 1 : 0];
+  ok(
+    rims.some((rim) => rim.bases.length === 2) && rims.every(rimRight),
+    'roster: a two-type row rims first type left, second type right, a one-type row its own type, no gradient (' +
+      JSON.stringify(rims) +
+      ')'
+  );
   ok(
     state.rows.every((row, index) => index === 0 || row.top - state.rows[index - 1].top === 68),
     'roster: rows are 68 px apart'

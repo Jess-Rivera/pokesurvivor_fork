@@ -73,8 +73,12 @@ function checkGh(command, args) {
 }
 
 // Drop heredoc bodies and quoted text so words inside commit messages never trigger a rule.
+// Only up to each heredoc's end marker: whatever follows the <<MARKER on its opening line, and every command after the
+// end marker, is still checked (the old pattern cut everything from the first << to the end, so a git push after a
+// heredoc went unchecked). The end marker line may end in \r (CRLF). A heredoc with no end marker keeps its body: a
+// false block is safer than a missed command.
 function strip(command) {
-  return command.replace(/<<-?\s*['"]?\w+['"]?[\s\S]*$/, '');
+  return command.replace(/<<-?\s*(['"]?)(\w+)\1([^\n]*)\n[\s\S]*?\n[ \t]*\2[ \t]*\r?(?=\n|$)/g, '$3');
 }
 function stripQuotes(text) {
   return text.replace(/"[^"]*"|'[^']*'/g, '""');

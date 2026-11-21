@@ -5,11 +5,11 @@
  *   - Every 5 min (and on returning to the tab) version.json is checked (served
  *     by GitHub Pages: it costs nothing).
  *   - If NOT in a game: a "updating in 5 s…" notice and it reloads.
- *     If in the gacha, the upgrade shop, the settings or typing in
+ *     If in the Shop, the upgrade shop, the settings or typing in
  *     a field, it waits until done. In a co-op room, it reloads
  *     anyway (decision of 2026-10-12).
  *   - If IN A GAME: it is not touched. On finishing, the run is saved as
- *     always (records, coins, tickets, ranking) and, on returning to the menu, it
+ *     always (records, coins, ranking) and, on returning to the menu, it
  *     reloads.
  *   - Before reloading it waits for the saved game to upload to the cloud
  *     (a few seconds at most; otherwise it stays in this browser and uploads on
@@ -48,8 +48,6 @@ G.Updater = (() => {
     if (!G.Game || G.Game.state !== 'ui') return false; // in a game or on the summary
     if (['scr-gacha', 'scr-upgrades', 'scr-settings'].some((id) => document.getElementById(id) && G.UI.isOpen(id)))
       return false;
-    const fx = document.getElementById('pull-fx');
-    if (fx && !fx.classList.contains('hidden')) return false; // gacha pull in progress
     const a = document.activeElement;
     if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false; // typing (password, nickname...)
     return true;

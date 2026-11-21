@@ -1,0 +1,126 @@
+rounding (only used when multiplying two 4096-scaled numbers):
+	round4096(x) = floor( (x + 2048) / 4096 )
+
+Constants & Lookup Tables:
+	maxTimeSecs = 60
+	BADGE_CAP = [10, 18, 26, 34, 42, 50, 58, 66, 75, 83, 91, 99, 100] // indexed by badges_earned (0 to 12)
+	OVERCAP_PENALTY_4096 = [4096, 3482, 2959, 2515, 2138, 1817, 1545]    // 0.85^step * 4096 (step 0 to 6+)
+	RARITY_MOD_4096 = [4096, 3072, 2048, 1024] // 1-Star (1.0x), 2-Star (0.75x), 3-Star (0.5x), 4-Star (0.25x)
+
+Example: Catching a 1-Star Bulbasaur (catch rate 45) with 23s remaining before beating Brock at World Level 3, 0 badges earned, 3 unique species in Dex, regular Poké Ball (4096), global rescue time = 60s.
+
+Step 1: Calculate Time Modifier (4096-scaled)
+	a = (3 * maxTimeSecs - 2 * timeRemainingSecs) * 4096
+		example: a = (3 * 60 - 2 * 23) * 4096 = (180 - 46) * 4096 = 548864
+
+Step 2: Account for Weight
+	**Heavy Ball**
+	c = max(1, species_catch_rate + heavy_ball_mod) * a
+		Where:
+
+			| Weight      | Modifier |
+			|-------------|----------|
+			| 0-99.9      | -20      |
+			| 100.0-199.9 | 0        |
+			| 200.0-299.9 | 20       |
+			| 300.0+      | 30       |
+	**Any Other Ball**
+	c = species_catch_rate * a
+		example: c = 45 * 548864 = 24698880
+
+Step 3a: Ball Capture Ratio (ball_ratio_4096: Poké = 4096, Great = 6144, Ultra = 8192)
+	d = round4096(c * ball_ratio_4096)
+		example: d = floor((24698880 * 4096 + 2048) / 4096) = 24698880
+
+Step 3b: Apply Rarity Modifier (rarity_tier: 1 to 4 stars)
+	d_rare = max(1, round4096(d * RARITY_MOD_4096[rarity_tier - 1]))
+		Where RARITY_MOD_4096:
+
+			| Rarity Tier | Multiplier | 4096-Scale Value |
+			|-------------|------------|------------------|
+			| 1-Star      | 1.00x      | 4096             |
+			| 2-Star      | 0.75x      | 3072             |
+			| 3-Star      | 0.50x      | 2048             |
+			| 4-Star      | 0.25x      | 1024             |
+		example (1-Star): d_rare = max(1, floor((24698880 * 4096 + 2048) / 4096)) = 24698880
+		example (4-Star): d_rare = max(1, floor((24698880 * 1024 + 2048) / 4096)) = 6174720
+
+Step 4: Badge Cap Penalty & Time Normalization
+	overCap = max(0, worldLevel - BADGE_CAP[badges_earned])
+	penaltyStep = min(6, floor(overCap / 4))
+	penalty_4096 = OVERCAP_PENALTY_4096[penaltyStep]
+	e = floor( round4096(d_rare * penalty_4096) / (3 * maxTimeSecs) )
+		example: worldLevel (3) <= BADGE_CAP (10) -> overCap = 0 -> penalty_4096 = 4096
+		         e = floor( round4096(24698880 * 4096) / 180 ) = floor(24698880 / 180) = 137216
+
+Step 5: Apply Early World Level Bonus
+	wlMult = max(10, 36 - 2 * worldLevel)
+	f = floor( (wlMult * e) / 10 )
+		example: wlMult = max(10, 36 - 6) = 30
+		         f = floor( (30 * 137216) / 10 ) = 411648
+
+Step 6: Modified Catch Rate (4096-scaled, max 255 * 4096 = 1044480)
+	mcr = max(1, min(f, 1044480))
+		example: mcr = max(1, min(411648, 1044480)) = 411648
+
+Step 7: Determine Critical Catch
+	critical_catch_rate = floor( (mcr * critical_catch_modifier) / 24576 )
+		Where critical_catch_modifier:
+
+			| Species in Dex | Modifier |
+			|----------------|----------|
+			| 0-30           | 0        |
+			| 31-150         | 2048     |
+			| 151-300        | 4096     |
+			| 301-450        | 6144     |
+			| 451-600        | 8192     |
+			| 601+           | 10240    |
+		example: critical_catch_rate = floor( (411648 * 0) / 24576 ) = 0
+	is_critical_catch = IF(rand(256) < critical_catch_rate) catch on first shake, else Step 8.
+
+Step 8: Shake Chance (Deterministic Integer 16th-Root, 0 to 65536)
+	If mcr >= 1044480:
+		shake_chance = 65536
+	Else:
+		// Computes floor( 65536 * (mcr / 1044480)^(3/16) ) using 4 integer square roots (isqrt)
+		ratio_256bit = floor( (mcr^3 * 2^256) / 1044480^3 )
+		shake_chance = isqrt( isqrt( isqrt( isqrt(ratio_256bit) ) ) )
+		example (1-Star): shake_chance = 55037 (83.98% per shake -> 59.23% overall across 3 checks)
+		example (4-Star): shake_chance = 42428 (64.74% per shake -> 27.14% overall across 3 checks)
+
+	successful_shake:
+		let shake_checks = 3
+		while (shake_checks > 0)
+			IF (rand(65536) >= shake_chance) break (escaped!)
+			ELSE shake_checks--
+		IF (shake_checks == 0) caught!
+
+
+| Poké Ball    | Catch Rate Multiplier | Special Conditions / Notes                                             	|
+|-:------------|-:---------------------|-:--------------------------------------------------------------------------|
+| Poké Ball    | 1.0x                  | Standard baseline rate                                                 	|
+| Great Ball   | 1.5x                  | Standard tier upgrade                                                  	|
+| Ultra Ball   | 2.0x                  | Standard high-tier ball                                                	|
+| Master Ball  | 255.0x (Guaranteed)   | Bypasses catch calculation entirely                                    	|
+| Safari Ball  | 1.5x                  | Standard Safari Zone rate                                              	|
+| Fast Ball    | 4.0x (or 1.0x)        | 4.0x if target's base Speed is 100 or higher                           	|
+| Level Ball   | 1.0x to 8.0x          | Scales based on how much higher your level is than the target          	|
+| Lure Ball    | 4.0x (or 1.0x)        | 4.0x when fishing (3.0x in Gen 2)                                      	|
+| Heavy Ball   | +0 to +30 (Flat)      | Adds a flat modifier to catch rate based on target's weight            	|
+| Love Ball    | 8.0x (or 1.0x)        | 8.0x if target is the same species and opposite gender                 	|
+| Friend Ball  | 1.0x                  | Sets captured Pokémon's base friendship to 200 (150 in Gen 8+)         	|
+| Moon Ball    | 4.0x (or 1.0x)        | 4.0x if target evolves via Moon Stone                                  	|
+| Sport Ball   | 1.5x                  | Used in Bug-Catching Contests                                          	|
+| Net Ball     | 3.5x (or 1.0x)        | 3.5x on Bug- or Water-type Pokémon (3.0x prior to Gen 7)               	|
+| Dive Ball    | 3.5x (or 1.0x)        | 3.5x when surfing, fishing, or underwater                              	|
+| Nest Ball    | 1.0x to 4.0x          | Scales higher the lower the target's level is (below level 30)         	|
+| Repeat Ball  | 3.5x (or 1.0x)        | 3.5x if species is already registered in Pokédex (3.0x prior to Gen 7) 	|
+| Timer Ball   | 1.0x to 4.0x          | Increases by +0.3x: 4096 + floor(((60 - timeRemainingSecs) * 12288) / 50)	|
+| Luxury Ball  | 1.0x                  | Doubles friendship gains after capture                                 	|
+| Premier Ball | 1.0x                  | Cosmetic variant of the standard Poké Ball                             	|
+| Dusk Ball    | 3.0x (or 1.0x)        | 3.0x at night or in caves (3.5x prior to Gen 7)                        	|
+| Heal Ball    | 1.0x                  | Fully restores HP, PP, and status upon capture                         	|
+| Quick Ball   | 5.0x (or 1.0x)        | 5.0x if thrown on the very first turn (4.0x in Gen 4)                  	|
+| Cherish Ball | 1.0x                  | Event-exclusive ball; cannot be bought in-game                         	|
+| Dream Ball   | 4.0x (or 1.0x)        | 4.0x if target is asleep (guaranteed in Gen 5 Entree Forest)           	|
+| Beast Ball   | 5.0x (or 0.1x)        | 5.0x on Ultra Beasts; 0.1x on all other Pokémon                        	|

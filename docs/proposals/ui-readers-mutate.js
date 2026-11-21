@@ -19,6 +19,8 @@ const M = [
   ['the description drops its effects', 'info', [["return head + (fx.length ? ': ' + fx.join(', ') : '') + '.';", "return head + '.';"]]],
   ['effects skip emitted children', 'info', [['for (const k of kids(x)) walk(', 'for (const k of []) walk(']]],
   ['the chance is dropped', 'info', [["const pct = (c) => (c != null && c < 100 ? c + '% ' : '');", "const pct = (c) => '';"]]],
+  ['the stat fold is skipped', 'info', [['for (const fx of foldStats(x.payload || [])) {', 'for (const fx of x.payload || []) {']]],
+  ['the fold ignores the chance', 'info', [['fx.side === first.side && fx.scope === first.scope && fx.chance === first.chance &&', 'fx.side === first.side && fx.scope === first.scope &&']]],
   ['an unknown or retired move gets a made-up name', 'info', [['const name = (id) => {\n    const d = def(id);\n    return d ? d.name : id;\n  };', "const name = (id) => {\n    const d = def(id);\n    return d ? d.name : 'Move';\n  };"]]],
   // ---- sheet.js ----
   ['the sheet never takes the def rows', 'sheet', [['const routed = (m) => !!G.MoveDefs[m.id];', 'const routed = (m) => false;']]],

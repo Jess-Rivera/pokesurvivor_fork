@@ -1010,6 +1010,68 @@ G.Items = (() => {
     return out;
   }
 
+  // ---- #149d: the Main Menu Inventory's equip rules (plan: docs/ASCII Concept Maps/149 - Shop Rework Opening.md). Each
+  // works on a cleaned loadout, changes it in place and says what happened, so the screen can toast it. ----
+  /** The lowest empty bought slot (0-based) of a cleaned loadout, or -1 when every bought slot holds an item. */
+  function firstEmptySlot(save) {
+    const load = save.teamLoadout,
+      slotCount = runSlots(save);
+    for (let slot = 0; slot < slotCount; slot++) if (!load[slot]) return slot;
+    return -1;
+  }
+  /** The slot of another equipped item in id's group (one Stone at a time), or -1. */
+  function groupMateSlot(save, id) {
+    const group = BY[id] && BY[id].group;
+    if (!group) return -1;
+    return save.teamLoadout.findIndex((other) => other && other !== id && BY[other] && BY[other].group === group);
+  }
+  /** Puts id in the slot (filling any empty slots before it), returns the item it replaced there, or null. */
+  function placeInSlot(save, id, slot) {
+    const load = save.teamLoadout,
+      replaced = load[slot] || null;
+    while (load.length <= slot) load.push(null);
+    load[slot] = id;
+    cleanLoadout(save);
+    return replaced;
+  }
+  /**
+   * Equip an unlocked team item (Jess 2026-11-17): into the slot of an equipped item of its group (a second Stone takes
+   * the first's place), else the lowest empty bought slot.
+   * -> { ok:true, slot, replaced: the id it replaced or null } or { ok:false, error:'locked'|'equipped'|'full' }.
+   */
+  function equipTeamItem(save, id) {
+    cleanLoadout(save);
+    if (!isTeamItem(id) || !unlocked(save, id)) return { ok: false, error: 'locked' };
+    if (save.teamLoadout.includes(id)) return { ok: false, error: 'equipped' };
+    const mateSlot = groupMateSlot(save, id),
+      slot = mateSlot >= 0 ? mateSlot : firstEmptySlot(save);
+    if (slot < 0) return { ok: false, error: 'full' };
+    return { ok: true, slot, replaced: placeInSlot(save, id, slot) };
+  }
+  /** Unequip a team item; the other slots keep their places. -> { ok:true, slot } or { ok:false, error:'not equipped' }. */
+  function unequipTeamItem(save, id) {
+    cleanLoadout(save);
+    const slot = save.teamLoadout.indexOf(id);
+    if (slot < 0) return { ok: false, error: 'not equipped' };
+    save.teamLoadout[slot] = null;
+    cleanLoadout(save);
+    return { ok: true, slot };
+  }
+  /**
+   * Swap an unequipped team item into a chosen bought slot (the Inventory's Swap, when every slot is full); the item there
+   * leaves the loadout. An item of its group equipped elsewhere is the one it replaces instead, in that item's slot.
+   * -> { ok:true, slot, replaced } or { ok:false, error:'locked'|'equipped'|'slot' }.
+   */
+  function swapTeamItem(save, id, slot) {
+    cleanLoadout(save);
+    if (!isTeamItem(id) || !unlocked(save, id)) return { ok: false, error: 'locked' };
+    if (save.teamLoadout.includes(id)) return { ok: false, error: 'equipped' };
+    const mateSlot = groupMateSlot(save, id),
+      target = mateSlot >= 0 ? mateSlot : slot;
+    if (!(target >= 0 && target < runSlots(save))) return { ok: false, error: 'slot' };
+    return { ok: true, slot: target, replaced: placeInSlot(save, id, target) };
+  }
+
   // ---- F3d-3: Shop prices (PLACEHOLDERS, tune here). Team items are a flat price (a bad-luck valve against the rare drops); slots are bought in order. ----
   const TEAM_ITEM_PRICE = 100000;
   const SLOT_PRICES = { 2: 9000, 3: 23000, 4: 60000 }; // price of owning the Nth team item slot (slot 1 is free)
@@ -1138,6 +1200,10 @@ G.Items = (() => {
     unlock,
     grantStarters,
     cleanLoadout,
+    firstEmptySlot,
+    equipTeamItem,
+    unequipTeamItem,
+    swapTeamItem,
     TEAM_ITEM_PRICE,
     SLOT_PRICES,
     slotPrice,

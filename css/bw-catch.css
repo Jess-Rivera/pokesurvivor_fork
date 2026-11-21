@@ -1,0 +1,129 @@
+/* ============ bw-catch.css: the catch screen (#136, redesign 136b, catch.window #128; js/ui/catch-ui.js) ============
+ * Look: catch.window (decision 2026-11-20-155-catch-window-look; board tools/library/catch-draft.js). The pause menu's
+ * stage (pause-menu.css .pm-stage, scaled by --pm-scale) inside #scr-catch. The pieces are the UI library's and the HUD
+ * kit's: panel.clean, panel.pixel, portrait.round, the ball belt and its wells, button.glitch, cursor.ring. Places and
+ * sizes come from catch-ui.js (stage pixels); only the looks are here.
+ */
+.catch-host {
+  position: absolute;
+  inset: 0;
+  user-select: none;
+  --pm-scale: 1;
+}
+.catch-stage {
+  color: var(--color-grey-white);
+}
+/* every piece sits at the place catch-ui.js gives it (the Pokemon panel is panel.pixel, which leaves its own
+   positioning to the screen) */
+.catch-window,
+.catch-mon,
+.catch-owned,
+.catch-button,
+.catch-ball {
+  position: absolute;
+}
+
+/* ---------- Silver (font.silver, the Pokemon tier): crisp at 20, 30 and 40, a one font pixel ink outline ---------- */
+.catch-silver {
+  position: absolute;
+  font-family: 'Silver 10px', monospace;
+  font-synthesis: none;
+  font-size: var(--silver-size);
+  line-height: var(--silver-size);
+  white-space: nowrap;
+  color: var(--color-grey-white);
+  text-shadow:
+    var(--silver-pixel) 0 0 var(--color-grey-ink),
+    calc(-1 * var(--silver-pixel)) 0 0 var(--color-grey-ink),
+    0 var(--silver-pixel) 0 var(--color-grey-ink),
+    0 calc(-1 * var(--silver-pixel)) 0 var(--color-grey-ink),
+    var(--silver-pixel) var(--silver-pixel) 0 var(--color-grey-ink),
+    calc(-1 * var(--silver-pixel)) var(--silver-pixel) 0 var(--color-grey-ink),
+    var(--silver-pixel) calc(-1 * var(--silver-pixel)) 0 var(--color-grey-ink),
+    calc(-1 * var(--silver-pixel)) calc(-1 * var(--silver-pixel)) 0 var(--color-grey-ink);
+}
+.catch-silver-20 {
+  --silver-size: 20px;
+  --silver-pixel: 2px;
+}
+.catch-silver-30 {
+  --silver-size: 30px;
+  --silver-pixel: 3px;
+}
+.catch-silver-40 {
+  --silver-size: 40px;
+  --silver-pixel: 4px;
+}
+
+/* ---------- the Pokemon: the flee ring's face, the name, the band and the ball line, centred ---------- */
+.catch-mon .catch-name,
+.catch-mon .catch-band,
+.catch-mon .catch-ball-name {
+  left: 20px;
+  right: 20px;
+  white-space: normal;
+  text-align: center;
+}
+/* the face goes into the ball on a throw, comes back on a miss, and fades when it flees */
+.catch-face img {
+  transition: transform 0.2s ease-out;
+}
+.catch-face.is-absorbed img {
+  transform: scale(0);
+  transition: transform 0.2s ease-in;
+}
+.catch-face.is-fled img {
+  opacity: 0;
+  transition: opacity 0.6s linear;
+}
+
+/* ---------- the belts' slots (the kit's ball belt and its wells) ---------- */
+.catch-slot.is-full {
+  cursor: pointer;
+}
+.catch-slot .catch-slot-key {
+  right: 0;
+  bottom: -2px;
+}
+.catch-ball {
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* ---------- Pokemon owned: panel.clean on the cards' grey.raised body, 48 px faces that scroll ---------- */
+.catch-owned.panel-clean {
+  background: var(--color-grey-raised);
+}
+.catch-owned-grid {
+  position: relative;
+}
+.catch-owned-cell {
+  position: absolute;
+}
+.catch-owned-face {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1; /* over its cursor.ring, so the ring's CRT passes behind the face */
+}
+.catch-owned .catch-owned-none {
+  left: 0;
+  right: 0;
+  top: 112px;
+  text-align: center;
+  color: var(--color-grey-mid);
+}
+
+/* ---------- the ball in the air ---------- */
+.catch-flight {
+  z-index: 3;
+}
+.catch-flight.is-caught {
+  animation: catch-click 0.3s ease-out;
+}
+@keyframes catch-click {
+  50% {
+    filter: brightness(1.8);
+  }
+}

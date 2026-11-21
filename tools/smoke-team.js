@@ -135,7 +135,7 @@ async function run(browser) {
   // ---- B. manual swap: carry, i-frames, lock, dodges ----
   const b = await page.evaluate(() => {
     const pl = G.Game.player;
-    Object.assign(pl, { kills: 37, bosses: 2, coins: 123, t1: 4, t10: 1, xp: 5 });
+    Object.assign(pl, { kills: 37, bosses: 2, coins: 123, xp: 5 });
     pl.bonds = 2;
     pl.dodges.cd[0] = 3;
     pl.dodges.cd[1] = 2.5;
@@ -145,7 +145,7 @@ async function run(browser) {
     const n = G.Game.player;
     const out = {
       okSwap,
-      carry: [n.kills, n.bosses, n.coins, n.t1, n.t10, n.xp, n.level === pl.level].join(),
+      carry: [n.kills, n.bosses, n.coins, n.xp, n.level === pl.level].join(),
       bonds: n.bonds,
       pos: n.x === pl.x && n.y === pl.y && n.aim === aim,
       dodges: n.dodges === dodges && n.dodges.cd[0] === 3 && n.dodges.cd[1] === 2.5,
@@ -155,10 +155,7 @@ async function run(browser) {
     return out;
   });
   ok(b.okSwap && b.v.slot === 1 && b.v.same, 'manual swap: slot 2 takes the field, player is roster[activeIndex]');
-  ok(
-    b.carry === '37,2,123,4,1,5,true',
-    'manual swap: kills, bosses, coins, tickets, XP and level carry (' + b.carry + ')'
-  );
+  ok(b.carry === '37,2,123,5,true', 'manual swap: kills, bosses, coins, XP and level carry (' + b.carry + ')');
   ok(b.bonds === 2, 'manual swap: unspent links carry (' + b.bonds + ')');
   ok(b.pos, 'manual swap: position and aim carry');
   ok(b.v.inv >= 0.5, 'manual swap: 0.5 s i-frames on the incoming member (' + b.v.inv + ')');

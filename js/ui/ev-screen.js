@@ -23,7 +23,7 @@
 G.EvScreen = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
-  const { html, signal, preact, SlotButton, portraitSource, portraitFallback, fitToStage, createButtonRow } =
+  const { html, signal, preact, SlantedButton, portraitSource, portraitFallback, fitToStage, createButtonRow } =
     overlay.kit;
 
   const TEAM_SLOTS = 6;
@@ -179,14 +179,14 @@ G.EvScreen = (() => {
   function Screen() {
     return html`<div class="er-dim"></div>
       <div class="pm-stage er-stage">
-        <div class="ev-panel">
+        <div class="ev-panel panel-flat">
           <${Head} />
           ${ROWS.map((row) => html`<${Row} key=${row.stat} row=${row} />`)}
         </div>
         <div class="ev-buttons">
           ${BUTTONS.map(
             (button, index) =>
-              html`<${SlotButton}
+              html`<${SlantedButton}
                 key=${button.id}
                 id=${button.id}
                 label=${button.label}
@@ -279,6 +279,7 @@ G.EvScreen = (() => {
         title: 'Discard leftover EVs?',
         ok: 'Yes',
         cancel: 'Cancel',
+        intent: 'negative',
       });
       if (!yes) return;
     }
@@ -292,7 +293,12 @@ G.EvScreen = (() => {
   }
 
   async function goHome() {
-    const yes = await G.UI.ask('Discard all EVs and return?', { title: 'Go Home', ok: 'Yes', cancel: 'Cancel' });
+    const yes = await G.UI.ask('Discard all EVs and return?', {
+      title: 'Go Home',
+      ok: 'Yes',
+      cancel: 'Cancel',
+      intent: 'negative',
+    });
     if (yes) leave(); // saves nothing
   }
 

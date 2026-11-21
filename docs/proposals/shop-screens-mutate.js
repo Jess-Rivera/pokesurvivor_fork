@@ -22,7 +22,9 @@ const M = [
   ['a forgotten move is refunded', 'shops', [['if (!f.replaceMove(f.slots[slot][0].id, id)) return false;', 'if (!f.replaceMove(f.slots[slot][0].id, id)) return false;\n      G.Silver.set(G.Silver.amount + c.cost);']]],
   ['a refused or cancelled pick still charges', 'shops', [['const c = check(shop, f, id);\n    if (!c.ok) return false;', 'const c = check(shop, f, id);\n    if (c.ok) G.Silver.spend(c.cost);\n    if (!c.ok) return false;']]],
   // ---- stock ----
-  ['known moves are offered', 'shops', [['G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id))', 'G.Moves.poolFor(f.mon)'], ['return ids.filter((id) => !f.hasMove(id));', 'return ids;']]],
+  ['known moves are offered', 'shops', [['trainerPool(f).filter((id) => !f.hasMove(id)),\n          STOCK', 'trainerPool(f),\n          STOCK'], ['return ids.filter((id) => !f.hasMove(id));', 'return ids;']]],
+  ['learned TMs never join the Trainer pool (#149 149f)', 'shops', [['return learned.length ? [...new Set([...pool, ...learned])] : pool;', 'return pool;']]],
+  ['a reroll ignores learned TMs (#149 149f)', 'shops', [['pool = mart ? G.Moves.tmList() : trainerPool(f).filter', 'pool = mart ? G.Moves.tmList() : G.Moves.poolFor(f.mon).filter']]],
   ['the stock rerolls on reopen', 'shops', [['if (!ids)\n      shop.stock.set(\n        f,', 'shop.stock.set(\n        f,']]],
   // ---- the rules ----
   ['a purchase switches the active slot', 'shops', [['} else if (!f.addMove(id, true)) return false;', '} else if (!f.addMove(id)) return false;']]],
@@ -48,7 +50,7 @@ const M = [
   // ---- step 4c: Shop Rerolls ----
   ['a reroll is free forever', 'shops', [['    shop.rerolls--;\n', '']]],
   ['a reroll can show the same 4', 'shops', [['pool.filter((id) => !shown.includes(id)),', 'pool,']]],
-  ['a reroll offers known moves', 'shops', [['pool = mart ? G.Moves.tmList() : G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id)),', 'pool = mart ? G.Moves.tmList() : G.Moves.poolFor(f.mon),']]],
+  ['a reroll offers known moves', 'shops', [['pool = mart ? G.Moves.tmList() : trainerPool(f).filter((id) => !f.hasMove(id)),', 'pool = mart ? G.Moves.tmList() : trainerPool(f),']]],
   ['the count is per member', 'shops', [['    if (!(shop.rerolls > 0)) return false;\n', "    const rk = f ? 'rr' + f.dex : 'rerolls';\n    if (shop[rk] == null) shop[rk] = shop.rerolls;\n    if (!(shop[rk] > 0)) return false;\n"], ['    shop.rerolls--;\n', '    shop[rk]--;\n']]],
   ['a reroll costs Silver', 'shops', [['    shop.rerolls--;\n', '    shop.rerolls--;\n    G.Silver.spend(1);\n']]],
   ['rerolls work under the dialog', 'shopui', [['function rerollNow() {\n    if (busy() || cur.forget) return;', 'function rerollNow() {\n    if (cur.forget) return;']]],

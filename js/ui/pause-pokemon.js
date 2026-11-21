@@ -21,8 +21,8 @@
  * value is drawn between 10% and 100% of the radius. Each corner shows the final stat (HP as the game has it) with the
  * yellow "+X%"; hovering it shows the copy's make-up, "Base: N, IV: N, EV: N".
  *
- * Every hover tooltip here is drawn in the menu's shared tooltip layer (the kit's TooltipLayer, the stage's last
- * child), so nothing on the menu covers it (Jess, 2026-11-12).
+ * Every hover tooltip here is drawn in the page's one tooltip layer (the kit's, the body's last child at z-index 1000),
+ * so nothing on the menu covers it (Jess, 2026-11-12; one layer for the page, 2026-11-16).
  *
  * Team panel (548 x 160): the six team slots in 3 columns by 2 rows, in slot order, as the run screen's roster cards
  * narrowed to fit (no status chips). A missing member is an empty frame. Clicking a card shows it on the detail panel;
@@ -85,7 +85,7 @@ G.PausePokemon = (() => {
   if (!overlay || !overlay.ready) return { ready: false, runStatsNumbers, runStatsRows };
   const { html, signal, hooks, PALETTE, FAINTED_RIM, PixelShape, typeColours, hpBand } = overlay.kit;
   const { IconCanvas, Cursor, RosterCard, rosterBoxGrid, rosterColours, letterRows, rosterFill } = overlay.kit;
-  const { createLifeBar, portraitSource, portraitFallback, ItemGrid, ScrollBox } = overlay.kit;
+  const { createLifeBar, portraitSource, portraitFallback, ItemGrid, ScrollBox, Box, RoundPortrait } = overlay.kit;
   const { tooltipHandlers, hideTooltip } = overlay.kit; // every tooltip is drawn in the menu's shared layer
   const inventory = G.PauseInventory && G.PauseInventory.ready ? G.PauseInventory : null; // held item moves (#90)
 
@@ -98,7 +98,7 @@ G.PausePokemon = (() => {
     HP_TEXT = { left: 340, top: 72 },
     COLUMN_LEFT = { x: 16, width: 200 },
     COLUMN_RIGHT = { x: 230, width: 390 },
-    PORTRAIT = { top: 124, size: 116 },
+    PORTRAIT = { top: 124, size: 116, stroke: 4 },
     HELD = { top: 256, artSize: 24 },
     RUN_STATS = { top: 44, rowHeight: 26 }, // #91-3: the rows start under the box title
     RUN_STATS_BOX = { top: 320, height: 200 },
@@ -199,22 +199,6 @@ G.PausePokemon = (() => {
       style=${{ ...style, transformOrigin: origin }}
       >${text}</span
     >`;
-  }
-
-  /** A box: the roster card's box at any size with a flat body, rimmed in `rim`; its contents go inside. */
-  function Box({ left, top, width, height, rim, className, children }) {
-    return html`<div
-      class=${'pm-box' + (className ? ' ' + className : '')}
-      style=${{ left: left + 'px', top: top + 'px', width: width + 'px', height: height + 'px' }}
-    >
-      <${PixelShape}
-        artWidth=${width / 2}
-        artRows=${height / 2}
-        artPixel=${2}
-        paintRow=${letterRows(rosterBoxGrid(width / 2, height / 2, false), rosterColours(rim, PALETTE.body))}
-      />
-      ${children}
-    </div>`;
   }
 
   /** A pixel arrow (after b2-lower AC8 to AD8): a filled triangle with an outline, pointing left or right. */
@@ -571,24 +555,18 @@ G.PausePokemon = (() => {
         ${hp} / ${maxHp}
       </div>
       ${member.dead ? html`<div class="hud-text pm-detail-fainted">Fainted</div>` : null}
-      <div
-        class="hud-portrait pm-detail-portrait"
-        style=${{
-          left: COLUMN_LEFT.x + (COLUMN_LEFT.width - PORTRAIT.size) / 2 + 'px',
-          top: PORTRAIT.top + 'px',
-          '--exp': Math.round(expFraction * 360) + 'deg',
-        }}
-      >
-        <div class="hud-exp-ring"></div>
-        <div class="hud-portrait-face">
-          <img
-            src=${portraitSource(member.dex, member.shiny)}
-            data-dex=${member.dex}
-            alt=""
-            onError=${portraitFallback}
-          />
-        </div>
-      </div>
+      <${RoundPortrait}
+        className="hud-portrait pm-detail-portrait"
+        ringClass="hud-exp-ring"
+        faceClass="hud-portrait-face"
+        style=${{ left: COLUMN_LEFT.x + (COLUMN_LEFT.width - PORTRAIT.size) / 2 + 'px', top: PORTRAIT.top + 'px' }}
+        size=${PORTRAIT.size}
+        stroke=${PORTRAIT.stroke}
+        ring=${{ fraction: expFraction }}
+        src=${portraitSource(member.dex, member.shiny)}
+        dex=${member.dex}
+        onError=${portraitFallback}
+      />
       <div
         class="pm-detail-held"
         style=${{ left: COLUMN_LEFT.x + (COLUMN_LEFT.width - HELD.artSize * 2) / 2 + 'px', top: HELD.top + 'px' }}

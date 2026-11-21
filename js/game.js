@@ -3,8 +3,7 @@
  *   login ──> personality test ──> menu ──> run ──> summary ──> menu
  *                (first time only)        │
  *                                          ├─ Pokemon (collection)
- *                                          ├─ Upgrades
- *                                          └─ Gacha
+ *                                          └─ Upgrades
  *
  * Loop states: 'ui' (menus, with the world in the background), 'playing',
  * 'levelup', 'paused', 'over'.
@@ -181,6 +180,8 @@ G.Game = (() => {
     G.Gym.reset();
     G.Shops.reset(); // Move Shop step 3: the first pair is due at 2:00 again
     G.Events.reset();
+    G.Rescue.reset(); // #135: the rescue event's roll and any rescue up
+    G.Catch.startRun(G.DB.save); // #136: nothing held; the belt keeps its balls (bought in the Shop, #137)
     G.Weather.reset();
     G.Path.clear();
     G.Hazards.clear();
@@ -216,7 +217,6 @@ G.Game = (() => {
     runTeam.runStats = G.RunStats.create(); // #91: the run's other counters (kills, faints, statuses...), for the pause menu
     // F3d-2 pre-run loadout (Inventory screen): equip the team items you chose, in slot order, through the same path as a pickup.
     for (const id of G.Items.cleanLoadout(save)) if (id) equipRun(id);
-    banked = { t1: 0, t10: 0 };
     caught = [];
 
     if (coop) {
@@ -282,7 +282,7 @@ G.Game = (() => {
   }
 
   /**
-   * The run-shared progress the incoming member takes from the outgoing one (level/XP, kills, bosses, coins, tickets). The Team calls
+   * The run-shared progress the incoming member takes from the outgoing one (level/XP, kills, bosses, coins). The Team calls
    * it on every manual swap, faint swap and Re-Do. Unspent links are not copied: they are one Team store (slice 2, Jess 2026-11-06).
    */
   function carryRun(from, to) {
@@ -292,8 +292,6 @@ G.Game = (() => {
     to.kills = from.kills;
     to.bosses = from.bosses;
     to.coins = from.coins;
-    to.t1 = from.t1;
-    to.t10 = from.t10;
   }
 
   /**
@@ -369,34 +367,13 @@ G.Game = (() => {
       kills: pl.kills,
       bosses: pl.bosses,
       coins: pl.coins,
-      t1: pl.t1,
-      t10: pl.t10,
     };
   }
   function summary() {
-    return { t: time, ki: pl.kills, bo: pl.bosses, co: pl.coins, lv: pl.level, t1: pl.t1, t10: pl.t10 };
+    return { t: time, ki: pl.kills, bo: pl.bosses, co: pl.coins, lv: pl.level };
   }
 
   /** What co-op needs from the game. */
-  /**
-   * Collected tickets are saved as soon as you pick them up (like the shinies):
-   * before, only on finishing, and if the tab closed abruptly they were lost.
-   * `banked` = the ones from this game already in the saved game.
-   */
-  let banked = { t1: 0, t10: 0 };
-  function bankTickets(save_ = true) {
-    const sv = G.DB.save;
-    if (!sv || !pl) return;
-    sv.tickets = sv.tickets || { t1: 0, t10: 0 };
-    const d1 = Math.max(0, pl.t1 - banked.t1),
-      d10 = Math.max(0, pl.t10 - banked.t10);
-    if (!d1 && !d10) return;
-    sv.tickets.t1 += d1;
-    sv.tickets.t10 += d10;
-    banked = { t1: pl.t1, t10: pl.t10 };
-    if (save_) G.DB.commit('run');
-  }
-
   const coopApi = {
     team: teamState,
     summary,
@@ -410,10 +387,6 @@ G.Game = (() => {
       pl.kills = t.kills;
       pl.bosses = t.bosses;
       pl.coins = t.coins;
-      if (t.t1 > pl.t1 || t.t10 > pl.t10) G.Audio.sfx('shiny');
-      pl.t1 = t.t1 || 0;
-      pl.t10 = t.t10 || 0;
-      bankTickets();
     },
     levelStart(level) {
       // (If you had the item choice open, it returns on finishing: afterLevelUp.)
@@ -459,8 +432,6 @@ G.Game = (() => {
           bosses: d.bo,
           coins: d.co,
           level: Math.max(pl.level, d.lv || 1),
-          t1: d.t1 || pl.t1,
-          t10: d.t10 || pl.t10,
         });
       if (d && d.t) time = d.t;
       if (d && d.why === 'host') G.UI.toast('El anfitrión ha terminado la partida', 3200);
@@ -592,6 +563,8 @@ G.Game = (() => {
     state = 'over';
     if (G.Game.runRecorder) G.Game.runRecorder('end', time, dead); // #124: the run pace trace, dev only
     G.LeaderMemory.end(); // Leader AI slice 4: what the leaders remembered of you dies with the run, never saved
+    // #136: the run's catches become copies when the run keeps its EVs (a fall, a crash), all lost on a quit; saved by the commit below
+    const settled = G.Catch.settle(keepsEvs && !coop, G.DB.save);
     G.Audio.music(null);
     G.Audio.sfx(dead ? 'gameover' : 'back');
     const save = G.DB.save;
@@ -606,7 +579,6 @@ G.Game = (() => {
     const record = time > save.stats.bestTime;
 
     save.coins += coins;
-    bankTickets(false);
     save.stats.runs++;
     save.stats.totalKills += pl.kills;
     save.stats.bestTime = Math.max(save.stats.bestTime, Math.floor(time));
@@ -649,8 +621,6 @@ G.Game = (() => {
         bosses: pl.bosses,
         coins,
         record,
-        t1: pl.t1,
-        t10: pl.t10,
         moves: pl.moves,
         roster,
         coop, // #103: co-op keeps the old results card
@@ -665,8 +635,18 @@ G.Game = (() => {
       () => {
         pl = null;
         G.Flow.afterRun();
+        catchNotice(settled);
       }
     );
+  }
+
+  /** #136: back at the menu, which catches joined the Pokebox and which a full box sold. */
+  function catchNotice(settled) {
+    const lines = [];
+    if (settled.placed.length) lines.push(settled.placed.join(', ') + ' joined your Pokebox!');
+    for (const sold of settled.sold)
+      lines.push('Your Pokebox is full: ' + sold.name + ' was sold for ' + sold.coins + ' PokeCoins.');
+    if (lines.length) G.UI.toast(lines.join(' '), 5000);
   }
 
   /*
@@ -737,7 +717,7 @@ G.Game = (() => {
    */
   function offerBond(quiet = false) {
     if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.GymArena.inArena) return;
-    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop'].some(G.UI.isOpen)) return; // a shop holds it back until you leave
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop', 'scr-catch'].some(G.UI.isOpen)) return; // a shop or a catch holds it back until you leave
     // The link belongs to the team: any living member that can bond now may take it (picked on the screen).
     const choices = roster.filter((f) => !f.dead).map((f) => ({ f, opt: f.bondOptions() }));
     if (!choices.some((c) => c.opt)) {
@@ -770,10 +750,25 @@ G.Game = (() => {
    */
   function openShop(shop) {
     if (!pl || pl.dead || state !== 'playing' || G.Coop.active) return false;
-    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop'].some(G.UI.isOpen)) return false;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop', 'scr-catch'].some(G.UI.isOpen)) return false;
     state = 'choice';
     G.Audio.sfx('confirm');
     G.ShopUI.open(shop, () => {
+      if (state === 'choice') state = 'playing';
+    });
+    return true;
+  }
+
+  /** #136: touching a won rescue's Stage 1 opens the catch screen (js/ui/catch-ui.js) with the run paused, as a shop does.
+   *  False when it cannot now (another screen is open, co-op): G.Rescue tries again next frame. */
+  function openCatch(result) {
+    if (!pl || pl.dead || state !== 'playing' || G.Coop.active || !G.CatchUI.ready) return false;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop', 'scr-catch'].some(G.UI.isOpen)) return false;
+    const session = G.Catch.begin(result);
+    if (!session) return false;
+    state = 'choice';
+    G.Audio.sfx('confirm');
+    G.CatchUI.open(session, () => {
       if (state === 'choice') state = 'playing';
     });
     return true;
@@ -788,8 +783,6 @@ G.Game = (() => {
     heal: 'heal',
     bomb: 'break',
     magnet: 'confirm',
-    ticket: 'shiny',
-    ticket10: 'legend',
     item: 'legend',
     ground: 'heal',
   };
@@ -962,20 +955,6 @@ G.Game = (() => {
       if (mine) G.Grounds.apply(pl, p.value);
       return;
     }
-    if (p.kind === 'ticket' || p.kind === 'ticket10') {
-      if (p.kind === 'ticket') pl.t1++;
-      else pl.t10++;
-      bankTickets();
-      G.FX.dmgText(
-        who.x,
-        who.y - who.bodyH - 8,
-        p.kind === 'ticket' ? '+1 Pokeball' : 'Master Ball!',
-        p.kind === 'ticket' ? '#ffd23f' : '#d9a6ff',
-        true
-      );
-      G.FX.ring(who.x, who.y, 6, 50, p.kind === 'ticket' ? '#ffd23f' : '#c47bff', 0.4, 3);
-      return;
-    }
     if (p.kind === 'heal') {
       if (mine) pl.heal(pl.maxHp * 0.3);
       G.FX.ring(who.x, who.y, 6, 60, '#5fe08a', 0.4, 3);
@@ -1021,6 +1000,10 @@ G.Game = (() => {
       G.ShopUI.keys();
       return;
     }
+    if (G.UI.isOpen('scr-catch')) {
+      G.CatchUI.keys();
+      return;
+    }
     if (G.UI.isOpen('scr-bond')) {
       // Pokemon step: the team keys (1 to 6); move steps: the attack keys.
       const mon = G.RunUI.bondPickingMon();
@@ -1035,12 +1018,13 @@ G.Game = (() => {
       return;
     }
     if (state === 'ui') {
-      // Esc on a menu subscreen returns to the menu. (Upgrades handles its own Esc: it goes back to the Team screen.)
+      // Esc on a menu subscreen returns to the menu. (Upgrades handles its own Esc: it goes back to the Team screen. The
+      // Inventory handles its own too: Esc first cancels a swap in progress, #149d. So does the Shop: Esc first closes an
+      // open filter list, #149 149f.)
       if (
         G.Input.tap('escape') &&
         !G.UI.isOpen('scr-profile') &&
-        ['scr-dex', 'scr-inventory', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen) &&
-        document.getElementById('pull-fx').classList.contains('hidden')
+        ['scr-dex', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
       )
         G.MenuUI.open();
       return;
@@ -1236,6 +1220,7 @@ G.Game = (() => {
     if (G.Game.runRecorder) G.Game.runRecorder('tick', time); // #124: the run pace trace, dev only
     if (!coop || G.Coop.isHost) G.Gym.update(dt, pl, time);
     G.Events.update(dt, all, time);
+    G.Rescue.update(dt, pl, time); // #135: the per-minute rescue roll, and the rescue's clocks
     G.Weather.update(dt, time, pl);
     G.FX.update(dt);
 
@@ -1288,6 +1273,7 @@ G.Game = (() => {
     if (gate) items.push({ y: gate.y, ent: gate });
     for (const s of G.Shops.drawables()) items.push({ y: s.y, ent: s });
     if (pl && state !== 'ui') for (const d of G.Events.drawables()) items.push({ y: d.y, ent: d });
+    if (pl && state !== 'ui') for (const d of G.Rescue.drawables()) items.push({ y: d.y, ent: d });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) {
       if (it.prop) G.World.drawProp(ctx, it.prop, t);
@@ -1470,6 +1456,7 @@ G.Game = (() => {
     flash,
     offerBond,
     openShop,
+    openCatch,
     /** Pokebox step 5: a defeated enemy adds its EV yield to the run's banks (enemy.js, the dead-enemy loop). */
     evKill(e) {
       const add = G.Copies.killEvs(e);
@@ -1594,6 +1581,7 @@ G.Flow = {
     G.TestUI.init();
     G.MenuUI.init();
     G.GachaUI.init();
+    G.InventoryUI.init();
     G.SocialUI.init();
     G.RankingUI.init();
     G.ModUI.init();
@@ -1654,7 +1642,7 @@ G.Flow = {
   async afterLogin() {
     G.Audio.music('village');
     if (G.DB.takeResetNotice())
-      await G.UI.ask('This update changes how every Pokemon is stored, so your save starts fresh.', {
+      await G.UI.ask('This update changes how you get Pokemon, so your save starts fresh.', {
         title: 'New save needed',
         ok: 'OK',
         note: 'Your old save is kept in this browser as a backup.',

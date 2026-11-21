@@ -1,0 +1,173 @@
+
+<style>
+  body { background:#121218; color:#ececf1; font-family:'Segoe UI', system-ui, sans-serif; line-height:1.55; margin:0; padding:32px; }
+  main { max-width:960px; margin:0 auto; }
+  h1 { font-size:28px; margin:0 0 6px; }
+  h2 { font-size:20px; margin:36px 0 10px; padding-top:12px; border-top:1px solid #2c2c38; }
+  h3 { font-size:15px; margin:20px 0 6px; color:#c9c9d6; }
+  p, li { font-size:15px; }
+  .lede { color:#a6a6b8; margin:0 0 20px; }
+  .card { background:#1b1b23; border:1px solid #2c2c38; border-radius:10px; padding:16px 20px; margin:16px 0; }
+  .card.key { border-color:#4a6cff; }
+  .big { font-size:30px; font-weight:600; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:16px 0; }
+  .grid .card { margin:0; }
+  .label { color:#a6a6b8; font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:12px 0; background:#1b1b23; border-radius:8px; overflow:hidden; }
+  th { text-align:left; color:#a6a6b8; font-weight:600; padding:8px 10px; border-bottom:1px solid #34344a; background:#23232d; }
+  td { padding:8px 10px; border-bottom:1px solid #2a2a36; vertical-align:top; }
+  .chips { display:inline-flex; gap:3px; vertical-align:middle; margin-left:4px; }
+  .chip { display:inline-block; width:22px; height:22px; border-radius:4px; border:1px solid #3a3a48; }
+  code, .mono { font-family:Consolas, 'SF Mono', monospace; font-size:13px; color:#c8d3ff; }
+  a { color:#8fb0ff; }
+  .muted { color:#a6a6b8; }
+</style>
+<main>
+<h1>How many colours should a 2D game UI use?</h1>
+<p class="lede">Research for the PokeSurvivor fork's Colours 2.0 board (2026-11-18): palette size, grey scales, colour as meaning, pixel-art and DS limits, and a fit check of the board's 141 colours.</p>
+
+<div class="grid">
+  <div class="card"><div class="label">UI colours today</div><div class="big">59</div><div class="muted">18 of them greys</div></div>
+  <div class="card key"><div class="label">Research-backed UI target</div><div class="big">30-35</div><div class="muted">read by players as about 8 roles</div></div>
+  <div class="card"><div class="label">Greys</div><div class="big">7-8</div><div class="muted">the 8-grey draft is supported</div></div>
+  <div class="card"><div class="label">Type colours</div><div class="big">54</div><div class="muted">fixed, kept outside the count</div></div>
+</div>
+
+<h2>The short answer</h2>
+<p>Yes, the UI side of the palette has too many colours, but not because the game has too many meanings. The excess is near-duplicate greys and accent shades that repeat each other. Players read the whole board as roughly eight UI roles (panel greys, cursor, positive, negative, caution, EXP, bonus, inactive) plus two labelled reference keys: the Pokemon types and the status chips.</p>
+<p>The research points to three numbers. Keep the UI chrome to about 30-35 colours, which matches commercial pixel HUD kits that lock the whole UI to one 32-colour palette [<a href="https://kestrelwick.itch.io/pixel-hud-kit" target="_blank" rel="noopener noreferrer">1</a>]. Use 7-8 greys, one per job. And keep the colours a player must read at a glance to about six hues, because colour alone tops out near seven quickly-distinguished categories [<a href="https://arxiv.org/pdf/2103.06084.pdf" target="_blank" rel="noopener noreferrer">2</a>].</p>
+<p>One caveat runs through all of this. No source publishes a colour count for a survivor-like HUD or for the Black 2 / White 2 battle screen, so the 30-35 target is an inference from design systems, pixel UI kits and perception research, not a measured norm for this genre.</p>
+
+<h2>Count roles, not tokens</h2>
+<p>The most useful idea in the research is that a palette has two sizes. The token list is what the code maintains. The role count is what the player perceives. Material Design 3 builds this split into its model: a few key colours expand into tonal palettes, and tones are then assigned to roles that the UI actually uses [<a href="https://m3.material.io/styles/color/system/how-the-system-works" target="_blank" rel="noopener noreferrer">3</a>]. Radix does the same within a single hue: its 12 steps each have one job, so a user sees one hue doing several jobs rather than twelve colours [<a href="https://www.radix-ui.com/docs/colors/palette-composition/understanding-the-scale" target="_blank" rel="noopener noreferrer">4</a>].</p>
+<p>The big libraries look enormous because they are menus, not palettes. Tailwind ships 11 steps for every colour [<a href="https://tailwindcss.com/docs/colors" target="_blank" rel="noopener noreferrer">5</a>], and Radix has about 372 styles per mode across its scales [<a href="https://radix-colors.framer.website/" target="_blank" rel="noopener noreferrer">6</a>]. A real product picks one neutral, one to three accent hues, and about four semantic hues (success, warning, error, info) from them.</p>
+<table>
+  <thead><tr><th>Source</th><th>Hues</th><th>Steps per hue</th><th>What it implies for a HUD</th></tr></thead>
+  <tbody>
+    <tr><td>Material Design 3</td><td>5 key colours (primary, secondary, tertiary, neutral, error) [<a href="https://copyprogramming.com/howto/complete-list-of-material-color-theming-attributes" target="_blank" rel="noopener noreferrer">7</a>]</td><td>13</td><td>Few hues, many tones, assigned to roles</td></tr>
+    <tr><td>Radix Colors</td><td>1 accent + 1 grey per theme</td><td>12</td><td>Each step has one documented job</td></tr>
+    <tr><td>Tailwind</td><td>22 families, 5 of them greys</td><td>11</td><td>A menu; products use a small subset</td></tr>
+    <tr><td>UXPin audit</td><td>116 variables, 62 of them greys, cut to 8 primary colours</td><td>Generated</td><td>Bloat shows up as greys used once</td></tr>
+    <tr><td>Pixel HUD kits</td><td>Whole UI in one palette</td><td>3-5 per ramp</td><td>About 32 colours total</td></tr>
+  </tbody>
+</table>
+<p>The one published before-and-after audit is the closest match to this board. UXPin found 116 colour variables in its product UI [<a href="https://medium.com/@marcintreder/design-system-sprint-2-one-color-palette-to-rule-them-all-d0114ed1f659" target="_blank" rel="noopener noreferrer">8</a>], including 62 shades of grey [<a href="https://www.uxpin.com/create-design-system-guide/get-organizational-buy-in-for-design-system" target="_blank" rel="noopener noreferrer">9</a>]. Their warning sign was the same one the All Colours tab now shows: colours used only once that sit right next to an existing grey [<a href="https://medium.com/@marcintreder/design-system-sprint-2-one-color-palette-to-rule-them-all-d0114ed1f659" target="_blank" rel="noopener noreferrer">8</a>].</p>
+<p>The familiar 60-30-10 rule (60% dominant, 30% secondary, 10% accent) also appears in indie game advice [<a href="https://itch.io/blog/478705/a-short-recommendation-color-palettes-and-the-60-30-10-rule" target="_blank" rel="noopener noreferrer">10</a>], but it describes how much screen area each colour covers, not how many tokens to keep. For a dark HUD it reads naturally as: dark panels dominate, rims and text are secondary, and saturated colours are the small accent.</p>
+
+<h2>Pixel art and the DS look</h2>
+<p>The HUD copies Black 2 / White 2, so the DS hardware is the natural reference. The Pokemon Platinum decompilation documents the DS 2D engine as supporting 16 palettes of 16 colours each, with 256 colours on screen [<a href="https://pret.github.io/pokeplatinum/2d_rendering.html" target="_blank" rel="noopener noreferrer">11</a>]. With 16-colour tiles, each tile draws from one palette [<a href="https://www.patater.com/manual-git/sprites.html" target="_blank" rel="noopener noreferrer">12</a>]. So a single BW2 panel element was very likely built from 15 colours or fewer plus transparency. That is an inference from the hardware; no source counts the colours in the BW2 battle HUD itself.</p>
+<p>Pixel-art practice agrees on small ramps. A ramp is typically three to five hue-shifted shades from dark to light [<a href="https://www.wayline.io/learn/color-palettes/3" target="_blank" rel="noopener noreferrer">13</a>], and small canvases need fewer, with shared colours keeping the total down [<a href="https://www.adobe.com/uk/products/firefly/discover/pixel-art-colour-palette.html" target="_blank" rel="noopener noreferrer">14</a>]. One artist's guide puts it bluntly [<a href="https://github.com/with-pebbly/aseprite-ai-artist/blob/main/skills/palette/SKILL.md" target="_blank" rel="noopener noreferrer">15</a>]. The light / base / dark rims already follow this. Whole scenes usually sit at 8 to 32 colours [<a href="https://www.wayline.io/learn/pixel-art/2" target="_blank" rel="noopener noreferrer">16</a>], and well-known palettes come in sizes of 4, 16 and 32 [<a href="https://starpixel.wiki/" target="_blank" rel="noopener noreferrer">17</a>].</p>
+<p>Shipped games treat limits as a guide, not a cage. Shovel Knight kept to the NES's 54 colours and added four more for detail and darker skin tones [<a href="https://www.engadget.com/2014-06-27-why-shovel-knight-couldnt-run-on-a-real-nes.html" target="_blank" rel="noopener noreferrer">18</a>], aiming for a "rose-tinted" NES rather than an exact copy [<a href="https://www.yachtclubgames.com/blog/breaking-the-nes/" target="_blank" rel="noopener noreferrer">19</a>]. The lesson for this board is that a few deliberate extra colours are fine; many accidental ones are not.</p>
+<p>Celeste's artist describes "full consistency" as doing everything at one resolution [<a href="https://saint11.art/blog/consistency/" target="_blank" rel="noopener noreferrer">20</a>]. Applied to colour, that means the HUD's rims, panels and text should share ramps and darks, rather than each screen inventing a grey of its own.</p>
+
+<h2>How many greys a dark HUD needs</h2>
+<p>Design systems publish 11 or 12 grey steps because they cover every product and every hover and pressed state. Radix reserves three of its twelve steps just for interaction states [<a href="https://www.radix-ui.com/docs/colors/palette-composition/understanding-the-scale" target="_blank" rel="noopener noreferrer">4</a>], uses only two text greys [<a href="https://www.radix-ui.com/docs/colors/palette-composition/understanding-the-scale" target="_blank" rel="noopener noreferrer">4</a>], and gives three steps to borders [<a href="https://www.radix-ui.com/docs/colors/palette-composition/understanding-the-scale" target="_blank" rel="noopener noreferrer">4</a>]. Material 3's dark surfaces come down to five surface-container roles [<a href="https://m3.material.io/blog/tone-based-surface-color-m3" target="_blank" rel="noopener noreferrer">21</a>].</p>
+<p>Stripping out the hover steps, a dark UI needs about six grey roles: background, raised panel, divider, disabled, secondary text and primary text. That list is an inference from the Radix roles rather than a published rule.</p>
+<p>Two perceptual limits cap how many greys are worth having. A just-noticeable difference is roughly 2.3 in CIE76 [<a href="https://metricgate.com/docs/delta-e-cie76/" target="_blank" rel="noopener noreferrer">22</a>], so greys closer than that look identical in play. And anything that marks a meaningful edge or state should reach 3:1 contrast against its neighbours [<a href="https://accessibility.build/wcag/1-4-11" target="_blank" rel="noopener noreferrer">23</a>]. In the narrow dark range from #101010 to #303030 that ratio cannot be met, so greys there can only be decorative layering, not separate signals.</p>
+<h3>Mapping the 8-grey draft to roles</h3>
+<table>
+  <thead><tr><th>Draft grey</th><th>Hex</th><th>Research role</th></tr></thead>
+  <tbody>
+    <tr><td>ink, panel, frame <span class="chips"><span class="chip" style="background:#101010" title="#101010"></span><span class="chip" style="background:#181818" title="#181818"></span><span class="chip" style="background:#212121" title="#212121"></span></span></td><td class="mono">#101010 #181818 #212121</td><td>Background, as the three layers of the B2 panel art</td></tr>
+    <tr><td>raised <span class="chips"><span class="chip" style="background:#303030" title="#303030"></span></span></td><td class="mono">#303030</td><td>Raised panel, checker, dark shades</td></tr>
+    <tr><td>slate <span class="chips"><span class="chip" style="background:#495151" title="#495151"></span></span></td><td class="mono">#495151</td><td>Divider and border</td></tr>
+    <tr><td>mid <span class="chips"><span class="chip" style="background:#7f7f7f" title="#7f7f7f"></span></span></td><td class="mono">#7f7f7f</td><td>Disabled, tracks, light shades</td></tr>
+    <tr><td>paper <span class="chips"><span class="chip" style="background:#e7e7e7" title="#e7e7e7"></span></span></td><td class="mono">#e7e7e7</td><td>Secondary text, rim base</td></tr>
+    <tr><td>white <span class="chips"><span class="chip" style="background:#ffffff" title="#ffffff"></span></span></td><td class="mono">#ffffff</td><td>Primary text, rim highlight</td></tr>
+  </tbody>
+</table>
+<p>Read this way, the 8-grey draft is exactly the six-role minimum once the three panel layers count as one background, and it is supported. The 11-grey draft is closer to a general-purpose library scale and is too many for one HUD.</p>
+<p>It can go to 7. The text kit already has white at 45% for refused labels, which can also serve as secondary text, leaving paper only if a rim's light tone needs it. Going below 7 starts merging roles that do different jobs, such as divider and disabled. So your sense that 8 felt like a lot is fair, but the research floor is close: 7 is the leanest set that keeps every role.</p>
+
+<h2>How many colour meanings players can read</h2>
+<p>For colours that must be recognised at a glance, the guidance is consistently small. Visualisation guides recommend about six categorical colours, twelve at most [<a href="https://guides.lib.berkeley.edu/data-visualization/design" target="_blank" rel="noopener noreferrer">24</a>]. Hand-picked categorical palettes usually stay under ten [<a href="https://colorcet.holoviz.org/user_guide/Categorical.html" target="_blank" rel="noopener noreferrer">25</a>], and perception studies find a capacity limit near seven for colour alone [<a href="https://arxiv.org/pdf/2103.06084.pdf" target="_blank" rel="noopener noreferrer">2</a>].</p>
+<p>That splits the HUD into two tiers:</p>
+<ul>
+  <li><strong>The glance tier.</strong> Positive green, negative red, caution yellow, inactive grey, EXP blue and gold. HP bands reuse green, yellow and red, so this comes to about five or six hues, inside the limit.</li>
+  <li><strong>The reference keys.</strong> The 18 type colours and the 18 or so status, stat and effect chips. Eighteen is far past fast recognition, so these work only as lookup keys that always carry a label, the way Pokemon type badges already do.</li>
+</ul>
+<p>Pairing colour with a second cue measurably helps, most of all at five to eight categories [<a href="https://arxiv.org/html/2602.06792" target="_blank" rel="noopener noreferrer">26</a>]. Games also inherit conventions: loot rarity commonly runs white, green, blue, purple, orange [<a href="https://gaming.stackexchange.com/q/318584/28182" target="_blank" rel="noopener noreferrer">27</a>], so green already carries "uncommon" for many players. That only matters if the game adds rarity tiers.</p>
+
+<h2>Readability and colour-blind safety in a bullet heaven</h2>
+<p>In a horde game the HUD competes with hundreds of sprites. Bullet-hell design advice is that enemy bullets must always stand out through bright, high-contrast colour [<a href="https://github.com/HashakGik/BulletHell-RMMV/blob/master/tutorials/bullets.md" target="_blank" rel="noopener noreferrer">28</a>], and shape carries meaning too, since round bullets do not show which way they are moving [<a href="https://sparen.github.io/ph3tutorials/ddsga2.html" target="_blank" rel="noopener noreferrer">29</a>]. That argues for keeping saturated colour in the play field and the UI chrome muted, which the dark B2 panels already do.</p>
+<p>Vampire Survivors shows the cost of getting it wrong. Players report that late runs become unreadable [<a href="https://steamcommunity.com/app/1794680/discussions/0/4033600925287523894/" target="_blank" rel="noopener noreferrer">30</a>], and the game added an option to turn weapon effects off [<a href="https://steamcommunity.com/app/1794680/discussions/0/604160477090586209/" target="_blank" rel="noopener noreferrer">31</a>]. A similar setting is worth noting for later.</p>
+<p>Colour vision deficiency affects about one in twelve men [<a href="https://www.colourblindawareness.org/colour-blindness/" target="_blank" rel="noopener noreferrer">32</a>], mostly the red-green kind. The Game Accessibility Guidelines treat colour as a back-up channel [<a href="https://gameaccessibilityguidelines.com/ensure-no-essential-information-is-conveyed-by-a-fixed-colour-alone/" target="_blank" rel="noopener noreferrer">33</a>], and Xbox requires at least two channels for important information [<a href="https://docs.xbox.com/gaming/accessibility/xbox-accessibility-guidelines/103" target="_blank" rel="noopener noreferrer">34</a>].</p>
+<p>For this HUD that means green for positive and red for negative should never be the only difference. HP bars already have bar length as a second channel. The focus rims need something more, such as an icon, a check or cross, a rim shape, or a clear brightness gap. The common alternative is a blue and orange pairing with icons [<a href="https://www.webability.io/blog/colors-to-avoid-for-color-blindness" target="_blank" rel="noopener noreferrer">35</a>].</p>
+
+<h2>Fit check: PokeSurvivor's palette</h2>
+<p>The board holds 141 unique colours: 54 fixed type colours, 28 status-chip colours and 59 UI colours, 18 of them greys [colours2-palette-snapshot.md](qw-file://workspace/artifacts/colours2-palette-snapshot.md).</p>
+<table>
+  <thead><tr><th>Group</th><th>Today</th><th>Target</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr><td>Greys</td><td>18</td><td>7-8</td><td>Too many; several pairs sit at or below a just-noticeable difference</td></tr>
+    <tr><td>UI chrome in total</td><td>59</td><td>30-35</td><td>About 25 surplus, mostly duplicates</td></tr>
+    <tr><td>Glance-tier hues</td><td>About 6</td><td>Up to 6-7</td><td>Fine, but red and green need a second cue</td></tr>
+    <tr><td>Status, stat and effect chips</td><td>28</td><td>About 22-25</td><td>Fine as a labelled key; remove overlaps with UI colours</td></tr>
+    <tr><td>Type colours</td><td>54</td><td>54</td><td>Fixed canon; a labelled reference key</td></tr>
+  </tbody>
+</table>
+<h3>Three near-duplicate pairs to settle</h3>
+<ul>
+  <li><strong>Fire red vs negative red</strong> <span class="chips"><span class="chip" style="background:#e62829" title="#e62829"></span><span class="chip" style="background:#e8202a" title="#e8202a"></span></span> are 2.3 apart, so players will see one colour. A Fire chip beside a negative button reads as "bad". Fire is fixed, so move negative red (darker or more crimson), or merge them and always pair negative with an icon.</li>
+  <li><strong>Paralysis vs Lv yellow</strong> <span class="chips"><span class="chip" style="background:#efad00" title="#efad00"></span><span class="chip" style="background:#f3b200" title="#f3b200"></span></span> are also 2.3 apart, and the Lv yellow already doubles as HP middle. Treat it as one caution and gold colour on purpose; the chip labels keep the meanings apart.</li>
+  <li><strong>EXP shade vs SpA shade</strong> <span class="chips"><span class="chip" style="background:#00799a" title="#00799a"></span><span class="chip" style="background:#0d7f9d" title="#0d7f9d"></span></span> are 3.1 apart, both dark tones of a blue. Merge them into one shade.</li>
+</ul>
+<p>Two pink and green overlaps are worth a look as well. Bond pink and the Team Item pocket's pink, and berry green and positive green, either mean the same thing (merge them) or they don't (give them a shape or icon so they don't read alike).</p>
+
+<h2>Recommended target and next steps</h2>
+<table>
+  <thead><tr><th>Group</th><th>Roles</th><th>Target</th></tr></thead>
+  <tbody>
+    <tr><td>Neutrals</td><td>3 B2 panel layers, raised, divider (slate), mid (disabled and tracks), white; paper optional</td><td>7-8 colours</td></tr>
+    <tr><td>Accents</td><td>Cursor yellow, teal, EXP blue, gold Lv and bonus, pause red; 2-3 tones each with shared darks</td><td>4-5 hues, about 12-15 colours</td></tr>
+    <tr><td>Meaning</td><td>Positive green, negative red (clear of Fire), caution yellow (same as HP middle and Lv), inactive grey from the neutrals</td><td>3 hues, about 9 colours</td></tr>
+    <tr><td>Bond and team pink</td><td>One hue, if it is a real meaning</td><td>3 colours</td></tr>
+    <tr><td><strong>UI total</strong></td><td>About 8 roles a player can read</td><td><strong>About 30-35</strong></td></tr>
+    <tr><td>Chips</td><td>Labelled key, deduplicated against the UI colours</td><td>About 22-25</td></tr>
+    <tr><td>Types</td><td>Fixed</td><td>54</td></tr>
+  </tbody>
+</table>
+<p>A working rule for the board follows from all of this: add a colour only when it brings a new meaning, and merge any pair closer than about 3 in delta E. Shading inside a ramp can reuse the shared darks and lights rather than adding new ones, which is how pixel artists keep palettes small.</p>
+<p>Suggested order on the board: apply the 8-grey fold (or the 7-grey version), settle the three near-duplicate pairs, then decide the red and green second cue. The All Colours tab can then show whether the UI count has landed near 30-35.</p>
+<p class="muted">Gaps: no published colour counts were found for the HUDs of Vampire Survivors, Brotato, Halls of Torment, Celeste, Stardew Valley or Pokemon Black 2 / White 2, and IBM Carbon and GitHub Primer step counts were not checked. The 30-35 target is an inference from the sources above.</p>
+</main>
+
+
+<h2>References</h2>
+<ul>
+  <li>[1] <a href="https://kestrelwick.itch.io/pixel-hud-kit" target="_blank" rel="noopener noreferrer">https://kestrelwick.itch.io/pixel-hud-kit</a></li>
+  <li>[2] <a href="https://arxiv.org/pdf/2103.06084.pdf" target="_blank" rel="noopener noreferrer">https://arxiv.org/pdf/2103.06084.pdf</a></li>
+  <li>[3] <a href="https://m3.material.io/styles/color/system/how-the-system-works" target="_blank" rel="noopener noreferrer">https://m3.material.io/styles/color/system/how-the-system-works</a></li>
+  <li>[4] <a href="https://www.radix-ui.com/docs/colors/palette-composition/understanding-the-scale" target="_blank" rel="noopener noreferrer">https://www.radix-ui.com/docs/colors/palette-composition/understanding-the-scale</a></li>
+  <li>[5] <a href="https://tailwindcss.com/docs/colors" target="_blank" rel="noopener noreferrer">https://tailwindcss.com/docs/colors</a></li>
+  <li>[6] <a href="https://radix-colors.framer.website/" target="_blank" rel="noopener noreferrer">https://radix-colors.framer.website/</a></li>
+  <li>[7] <a href="https://copyprogramming.com/howto/complete-list-of-material-color-theming-attributes" target="_blank" rel="noopener noreferrer">https://copyprogramming.com/howto/complete-list-of-material-color-theming-attributes</a></li>
+  <li>[8] <a href="https://medium.com/@marcintreder/design-system-sprint-2-one-color-palette-to-rule-them-all-d0114ed1f659" target="_blank" rel="noopener noreferrer">https://medium.com/@marcintreder/design-system-sprint-2-one-color-palette-to-rule-them-all-d0114ed1f659</a></li>
+  <li>[9] <a href="https://www.uxpin.com/create-design-system-guide/get-organizational-buy-in-for-design-system" target="_blank" rel="noopener noreferrer">https://www.uxpin.com/create-design-system-guide/get-organizational-buy-in-for-design-system</a></li>
+  <li>[10] <a href="https://itch.io/blog/478705/a-short-recommendation-color-palettes-and-the-60-30-10-rule" target="_blank" rel="noopener noreferrer">https://itch.io/blog/478705/a-short-recommendation-color-palettes-and-the-60-30-10-rule</a></li>
+  <li>[11] <a href="https://pret.github.io/pokeplatinum/2d_rendering.html" target="_blank" rel="noopener noreferrer">https://pret.github.io/pokeplatinum/2d_rendering.html</a></li>
+  <li>[12] <a href="https://www.patater.com/manual-git/sprites.html" target="_blank" rel="noopener noreferrer">https://www.patater.com/manual-git/sprites.html</a></li>
+  <li>[13] <a href="https://www.wayline.io/learn/color-palettes/3" target="_blank" rel="noopener noreferrer">https://www.wayline.io/learn/color-palettes/3</a></li>
+  <li>[14] <a href="https://www.adobe.com/uk/products/firefly/discover/pixel-art-colour-palette.html" target="_blank" rel="noopener noreferrer">https://www.adobe.com/uk/products/firefly/discover/pixel-art-colour-palette.html</a></li>
+  <li>[15] <a href="https://github.com/with-pebbly/aseprite-ai-artist/blob/main/skills/palette/SKILL.md" target="_blank" rel="noopener noreferrer">https://github.com/with-pebbly/aseprite-ai-artist/blob/main/skills/palette/SKILL.md</a></li>
+  <li>[16] <a href="https://www.wayline.io/learn/pixel-art/2" target="_blank" rel="noopener noreferrer">https://www.wayline.io/learn/pixel-art/2</a></li>
+  <li>[17] <a href="https://starpixel.wiki/" target="_blank" rel="noopener noreferrer">https://starpixel.wiki/</a></li>
+  <li>[18] <a href="https://www.engadget.com/2014-06-27-why-shovel-knight-couldnt-run-on-a-real-nes.html" target="_blank" rel="noopener noreferrer">https://www.engadget.com/2014-06-27-why-shovel-knight-couldnt-run-on-a-real-nes.html</a></li>
+  <li>[19] <a href="https://www.yachtclubgames.com/blog/breaking-the-nes/" target="_blank" rel="noopener noreferrer">https://www.yachtclubgames.com/blog/breaking-the-nes/</a></li>
+  <li>[20] <a href="https://saint11.art/blog/consistency/" target="_blank" rel="noopener noreferrer">https://saint11.art/blog/consistency/</a></li>
+  <li>[21] <a href="https://m3.material.io/blog/tone-based-surface-color-m3" target="_blank" rel="noopener noreferrer">https://m3.material.io/blog/tone-based-surface-color-m3</a></li>
+  <li>[22] <a href="https://metricgate.com/docs/delta-e-cie76/" target="_blank" rel="noopener noreferrer">https://metricgate.com/docs/delta-e-cie76/</a></li>
+  <li>[23] <a href="https://accessibility.build/wcag/1-4-11" target="_blank" rel="noopener noreferrer">https://accessibility.build/wcag/1-4-11</a></li>
+  <li>[24] <a href="https://guides.lib.berkeley.edu/data-visualization/design" target="_blank" rel="noopener noreferrer">https://guides.lib.berkeley.edu/data-visualization/design</a></li>
+  <li>[25] <a href="https://colorcet.holoviz.org/user_guide/Categorical.html" target="_blank" rel="noopener noreferrer">https://colorcet.holoviz.org/user_guide/Categorical.html</a></li>
+  <li>[26] <a href="https://arxiv.org/html/2602.06792" target="_blank" rel="noopener noreferrer">https://arxiv.org/html/2602.06792</a></li>
+  <li>[27] <a href="https://gaming.stackexchange.com/q/318584/28182" target="_blank" rel="noopener noreferrer">https://gaming.stackexchange.com/q/318584/28182</a></li>
+  <li>[28] <a href="https://github.com/HashakGik/BulletHell-RMMV/blob/master/tutorials/bullets.md" target="_blank" rel="noopener noreferrer">https://github.com/HashakGik/BulletHell-RMMV/blob/master/tutorials/bullets.md</a></li>
+  <li>[29] <a href="https://sparen.github.io/ph3tutorials/ddsga2.html" target="_blank" rel="noopener noreferrer">https://sparen.github.io/ph3tutorials/ddsga2.html</a></li>
+  <li>[30] <a href="https://steamcommunity.com/app/1794680/discussions/0/4033600925287523894/" target="_blank" rel="noopener noreferrer">https://steamcommunity.com/app/1794680/discussions/0/4033600925287523894/</a></li>
+  <li>[31] <a href="https://steamcommunity.com/app/1794680/discussions/0/604160477090586209/" target="_blank" rel="noopener noreferrer">https://steamcommunity.com/app/1794680/discussions/0/604160477090586209/</a></li>
+  <li>[32] <a href="https://www.colourblindawareness.org/colour-blindness/" target="_blank" rel="noopener noreferrer">https://www.colourblindawareness.org/colour-blindness/</a></li>
+  <li>[33] <a href="https://gameaccessibilityguidelines.com/ensure-no-essential-information-is-conveyed-by-a-fixed-colour-alone/" target="_blank" rel="noopener noreferrer">https://gameaccessibilityguidelines.com/ensure-no-essential-information-is-conveyed-by-a-fixed-colour-alone/</a></li>
+  <li>[34] <a href="https://docs.xbox.com/gaming/accessibility/xbox-accessibility-guidelines/103" target="_blank" rel="noopener noreferrer">https://docs.xbox.com/gaming/accessibility/xbox-accessibility-guidelines/103</a></li>
+  <li>[35] <a href="https://www.webability.io/blog/colors-to-avoid-for-color-blindness" target="_blank" rel="noopener noreferrer">https://www.webability.io/blog/colors-to-avoid-for-color-blindness</a></li>
+</ul>

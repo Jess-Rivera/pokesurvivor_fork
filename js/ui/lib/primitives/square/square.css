@@ -1,0 +1,33 @@
+/* square.css: the item squares and their grid (G.Lib.Square; #155 155c-2). Moved from css/hud-overlay.css; no colours
+   here (the shapes paint theirs from tokens). Loaded before the screens' stylesheets. */
+
+/* ---------- square.item ---------- */
+.hud-item-square {
+  position: relative;
+}
+.hud-item-square svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+/* the picture: 32 px in the square's centre */
+.hud-item-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  image-rendering: pixelated;
+}
+
+/* ---------- grid.item: the tight 2x2 item grid (#90), the berry bag and the pause menu's Run Inventory ---------- */
+.hud-item-grid {
+  display: grid;
+}
+.hud-grid-slot {
+  position: relative;
+}
+.hud-grid-slot.is-locked {
+  opacity: 0.3;
+}

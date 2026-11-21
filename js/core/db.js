@@ -30,8 +30,11 @@ G.DB = (() => {
     K_SAVE = 'ps.save.';
   const K_CLOUD = 'ps.cloud.',
     K_MIGRATED = 'ps.migrated.',
-    K_PREBOX = 'ps.backup.prebox.'; // a save from before the Pokebox, kept when it is replaced by a clean one
-  const VERSION = 3;
+    // #132: a save from before the acquisition rework (below VERSION 4, pre-Pokebox saves included), kept whole when a
+    // clean one replaces it. Backups an earlier build wrote under ps.backup.prebox. stay where they are.
+    K_BACKUP_PRE_ACQUISITION = 'ps.backup.preacq.';
+  // 4: the acquisition rework's new save (#128, #132). Settings (ps.settings) are a separate key and are kept.
+  const VERSION = 4;
   const START_COINS = 500;
   const SDK = 'https://www.gstatic.com/firebasejs/13.0.0/';
   const NAME_DOMAIN = 'jugadores.pokesurvivor.net'; // only for the internal email
@@ -43,7 +46,7 @@ G.DB = (() => {
   let guest = false;
   let save = null;
   let storageOk = true;
-  let resetNotice = false; // this load replaced a pre-Pokebox save; the game says so once
+  let resetNotice = false; // this load replaced a save from before the acquisition rework; the game says so once
 
   // ---------------- safe local storage ----------------
 
@@ -95,7 +98,7 @@ G.DB = (() => {
       created: Date.now(),
       updated: Date.now(), // last change (for merging)
       coins: START_COINS,
-      owned: {}, // dex -> { at, from: 'starter'|'gacha'|'wild' }
+      owned: {}, // dex -> { at, from: 'starter'|'wild'|'rescue' }
       shiny: {}, // dex -> { at, from } — shiny variants obtained
       partner: null, // dex of the Pokemon you play with
       partnerShiny: false, // play with its shiny version (if you have it)
@@ -104,8 +107,6 @@ G.DB = (() => {
       personality: null, // { trait, scores }
       upgrades: {}, // (old) account upgrades; now they go per Pokemon
       pupg: {}, // dex -> { id -> level }: each Pokemon's upgrades
-      tickets: { t1: 0, t10: 0 }, // gacha tickets (x1 and x10)
-      pity: {}, // banner generation -> pulls without a 5-star
       legends: {}, // dex -> date (old saves only: no longer written since the gyms-only change, 2026-10-31)
       arenas: {}, // type -> date (old saves only: no longer written since the gyms-only change)
       itemsFound: {}, // id -> date: equippable items found
@@ -133,6 +134,7 @@ G.DB = (() => {
       teamLoadout: [], // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
       box: [], // every Pokemon owned, as compact copies (only G.Copies reads them)
       boxCount: 2, // boxes this player has
+      belt: { size: 6, slots: Array(6).fill('poke'), unlocked: [] }, // #136, #137b: the ball belt, slot by slot (G.Catch)
       trainerId: G.Copies ? G.Copies.uuid() : null, // this save's original trainer id, never changes
     };
     if (G.Items) G.Items.grantStarters(save); // Lucky Egg + Amulet Coin
@@ -144,8 +146,6 @@ G.DB = (() => {
     const base = newSave(name || s.name);
     for (const k in base) if (s[k] == null) s[k] = base[k];
     for (const k in base.stats) if (s.stats[k] == null) s.stats[k] = base.stats[k];
-    // v1 -> v2: there was a single banner (Kanto) with pity as a number.
-    if (typeof s.pity === 'number') s.pity = { 1: s.pity };
     // v2 -> v3: upgrades belonged to the account; they pass to the companion of that time.
     if (!s.pupgDone) {
       if (s.partner && Object.values(s.upgrades || {}).some((v) => v > 0)) {
@@ -153,7 +153,6 @@ G.DB = (() => {
       }
       s.pupgDone = true;
     }
-    s.tickets = Object.assign({ t1: 0, t10: 0 }, s.tickets);
     sanitize(s);
     s.v = VERSION;
     return s;
@@ -168,8 +167,6 @@ G.DB = (() => {
   function sanitize(s) {
     const n = (v) => (Number.isFinite(+v) && +v > 0 ? Math.floor(+v) : 0);
     s.coins = n(s.coins);
-    s.tickets.t1 = n(s.tickets.t1);
-    s.tickets.t10 = n(s.tickets.t10);
     // F3d-2 team items: keep only real team-tier ids, then a clean loadout (unlocked, no duplicates, one per group, within the unlocked slots).
     if (G.Items) {
       if (!s.teamItems || typeof s.teamItems !== 'object') s.teamItems = {};
@@ -383,9 +380,10 @@ G.DB = (() => {
   function loadLocal(k, name) {
     const s = read(K_SAVE + k);
     if (!s) return newSave(name);
-    if (Array.isArray(s.box)) return migrate(s, name);
-    // Clean save checkpoint (Jess, 2026-11-03): a save from before the Pokebox is not migrated. It is kept aside and the player starts over.
-    if (!read(K_PREBOX + k)) write(K_PREBOX + k, s);
+    if (Array.isArray(s.box) && s.v >= VERSION) return migrate(s, name);
+    // Clean save checkpoints: a save from before the Pokebox (Jess, 2026-11-03) or from before the acquisition rework
+    // (#132, decision 2026-11-15-132-new-save-live-settings-kept) is not migrated. It is kept aside once and the player starts over.
+    if (!read(K_BACKUP_PRE_ACQUISITION + k)) write(K_BACKUP_PRE_ACQUISITION + k, s);
     resetNotice = true;
     const fresh = newSave(name);
     write(K_SAVE + k, fresh);
@@ -1086,14 +1084,15 @@ G.DB = (() => {
   }
 
   /**
-   * A Pokemon the player just got (gacha, rescue, wild shiny, starter, debug): the Pokedex record, then one new copy, every time.
+   * A Pokemon the player just got (rescue, wild shiny, starter, debug): the Pokedex record, then one new copy, every time.
    * A repeat is a copy too. A shiny gives only the shiny copy; the record still marks the species owned (pokebox 3a-2, D4).
    * With every box full there is no copy: it is sold on arrival and the coins go to this save (pokebox 3a-4, D3 and D4).
-   * @param s  the save to write (default: the loaded one; the gacha passes its own)
+   * @param s  the save to write (default: the loaded one)
+   * @param nature  the copy's nature as a pokeapi id (1 to 25), kept from a rescue (#136); absent: rolled
    * @returns { isNew, uid, box, sold }  isNew: new to the Pokedex, or a first shiny. uid, box (from 0): the new copy, null if none.
    *   sold: the PokeCoins paid when it was sold on arrival (absent otherwise).
    */
-  function obtain(dex, shiny, from, s = save) {
+  function obtain(dex, shiny, from, s = save, nature = null) {
     if (!s) return { isNew: false, uid: null, box: null };
     s.owned = s.owned || {};
     s.shiny = s.shiny || {};
@@ -1103,7 +1102,7 @@ G.DB = (() => {
     if (shiny && !s.shiny[dex]) s.shiny[dex] = { at: now, from };
     if (!G.Copies || !G.SpeciesTraits || !G.SpeciesTraits.SPECIES[dex]) return { isNew, uid: null, box: null };
     if (!Array.isArray(s.box)) s.box = [];
-    const c = G.Copies.add(s, { dex, shiny: !!shiny, from, at: now });
+    const c = G.Copies.add(s, { dex, shiny: !!shiny, from, at: now, nature });
     if (!c) {
       const sold = G.Copies.priceFor(dex, !!shiny);
       s.coins = (Math.floor(+s.coins) || 0) + sold;
@@ -1132,7 +1131,7 @@ G.DB = (() => {
     setName,
     upgradesOf,
     normalizeTeam,
-    /** True once if this load replaced a pre-Pokebox save with a clean one. */
+    /** True once if this load replaced a save from before the acquisition rework with a clean one. */
     takeResetNotice() {
       const v = resetNotice;
       resetNotice = false;

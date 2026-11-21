@@ -14,7 +14,7 @@
 G.HudMapPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
-  const { html, signal, typeColours, PixelShape, PALETTE } = overlay.kit;
+  const { html, signal, typeColours, PixelShape, PALETTE, TimerBar } = overlay.kit;
 
   // ---------- timings (ms; the CSS keyframes in css/hud-overlay.css use the same lengths) ----------
   const CARD_ENTER_MS = 600, // slide in from off screen, overshoot, settle
@@ -66,7 +66,7 @@ G.HudMapPanel = (() => {
     ICON = { size: 54, left: 54, top: 9 }, // px: in the tab, its lower part tucked behind the stripe
     NAME_PLACE = { left: 42, top: 54 }, // px: 30 px text in the stripe
     EFFECT_PLACE = { left: 48, top: 99 }, // px: 20 px text in the body
-    TIMER = { artLeft: 16, artRow: 41 }, // two art rows just inside the lower rim: Light over Base
+    TIMER = { artLeft: 16, artRow: 41, artRows: 2 }, // two art rows just inside the lower rim: Light over Base
     RIGHT_PADDING = 6; // art pixels between the longest text and the screen edge
 
   const tabRightAt = (row) => (row === 0 ? TAB_RIGHT - 2 : TAB_RIGHT + 12 - LEFT_EDGE[row]);
@@ -192,17 +192,19 @@ G.HudMapPanel = (() => {
       </div>
       ${
         shown.kind !== 'clear'
-          ? html`<div
-              class="hud-weather-timer"
+          ? html`<${TimerBar}
+              fraction=${cardTimeLeft.value}
+              height=${TIMER.artRows * ART_PIXEL}
+              light=${colours.light}
+              base=${colours.base}
+              drainsRight
+              className="hud-weather-timer"
               style=${{
                 left: TIMER.artLeft * ART_PIXEL + 'px',
                 top: TIMER.artRow * ART_PIXEL + 'px',
                 width: (artWidth - TIMER.artLeft) * ART_PIXEL + 'px',
-                '--timer-light': colours.light,
-                '--timer-base': colours.base,
-                transform: 'scaleX(' + cardTimeLeft.value + ')',
               }}
-            ></div>`
+            />`
           : null
       }
     </div>`;

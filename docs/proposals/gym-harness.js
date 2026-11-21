@@ -19,7 +19,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   Game: { player: { x: 0, y: 0 }, st: { get time() { return clock; } }, everyone: () => [{ level: 5 }] },
   Hazards: { add: h => hz.push(h) }, FX: new Proxy({ slash: (...a) => slashes.push(a) }, { get: (t, k) => (k in t ? t[k] : noop) }), LIFT: 0, VFX: { forMove: m => ({ id: m.id }), forType: () => null }, Projectiles: { spawn: s => { shots.push(s); return s; } }, Coop: { isHost: false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-try { load('js/core/util.js'); } catch (e) { }
+try { load('js/ui/lib/tokens/tokens.js'); load('js/core/util.js'); } catch (e) { }
 ['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js',
  'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/gyms.js', 'js/systems/stages.js',
  'js/systems/team-cards.js', 'js/systems/move-geom.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/elites.js', 'js/systems/gym.js'].forEach(p => {

@@ -1,0 +1,372 @@
+/* ============ bw-shop.css: the Main Menu Shop (#149; js/ui/gacha-ui.js) ============
+ * Mockups: assets/excalidraw/Shop-*.svg; plan: docs/ASCII Concept Maps/149 - Shop Rework Opening.md. A window on the menu
+ * screens' 1920 x 1080 stage (pause-menu.css .pm-stage, scaled by --pm-scale) over the dimmed Main Menu. Exit is the HUD
+ * kit's team menu button with its cursor; places of the drawn pieces come from gacha-ui.js, the window's are here.
+ */
+.shop-host {
+  position: absolute;
+  inset: 0;
+  --pm-scale: 1;
+}
+/* the window: the Menu Popup Panel; its look is .panel-flat (panel.flat, js/ui/lib/primitives/panel/panel.css) */
+.shop-window {
+  position: absolute;
+  left: 115px;
+  top: 205px;
+  width: 1145px;
+  height: 670px;
+}
+/* the panes: right of the rail, above Exit; each scrolls on its own */
+.shop-panes {
+  position: absolute;
+  left: 110px;
+  top: 30px;
+  right: 30px;
+  bottom: 110px;
+}
+.shop-pane {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.shop-soon {
+  margin: 0;
+  padding: 24px 4px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- the rail and Exit (drawn by gacha-ui.js into #shop-rail) ---------- */
+.shop-rail {
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* only its tabs and Exit take the mouse; the panes underneath stay clickable */
+  font-family: 'GameFont', monospace;
+  font-synthesis: none;
+  color: #ffffff;
+  user-select: none;
+}
+.shop-tab,
+.shop-button {
+  position: absolute;
+  pointer-events: auto;
+}
+.shop-tab {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* flush with the window's left edge */
+  cursor: pointer;
+}
+.shop-tab img {
+  display: block;
+  image-rendering: pixelated;
+  transform: scale(3); /* 3 screen pixels per art pixel; a whole number keeps the icons crisp */
+  transform-origin: left center;
+}
+.shop-button .hud-team-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+/* the label: Silver on its pixel grid at 2 screen pixels per font pixel, as the catch screen's buttons (bw-catch.css),
+   centred on the 54 px tall Exit */
+.shop-button .hud-team-button-label {
+  position: absolute;
+  left: 21px;
+  top: 12px;
+  font-size: 27.1429px;
+  line-height: 30px;
+  white-space: nowrap;
+  text-shadow:
+    2px 0 0 #101010,
+    -2px 0 0 #101010,
+    0 2px 0 #101010,
+    0 -2px 0 #101010,
+    2px 2px 0 #101010,
+    -2px 2px 0 #101010,
+    2px -2px 0 #101010,
+    -2px -2px 0 #101010;
+}
+
+/* ---------- Character Upgrades (149b): the pocket cards, drawn by gacha-ui.js into #shop-upgrades ---------- */
+.shop-pocket {
+  position: absolute;
+  font-family: 'GameFont', monospace;
+  font-synthesis: none;
+  color: #ffffff;
+  user-select: none;
+}
+.shop-pocket-divider {
+  height: 2px;
+  background: #495151; /* Slate divider, short of the rim */
+}
+.shop-pocket-name {
+  color: #8cfff7; /* Secondary text */
+}
+.shop-pocket .shop-pocket-line {
+  white-space: normal; /* wraps inside the card (the kit's .hud-text keeps one line) */
+  line-height: 26px;
+}
+/* a button that cannot be pressed at all: dimmed (a Buy that refuses is button.rounded's refused, #151; its label rule
+   is in js/ui/lib/primitives/button/button.css) */
+.shop-button .hud-team-button[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ---------- Team Items (149c): cards for sale and the owned panel, drawn by gacha-ui.js into #shop-items. The cards,
+   search stops and buttons are js/ui/menu-window-kit.js pieces; the Inventory (149d, bw-inventory.css) uses them too ---------- */
+.shop-pane-fixed {
+  bottom: -86px; /* down to the bottom of Inventory and Exit (gacha-ui.js SALE.listHeight) */
+  overflow: clip; /* only its own scroll boxes scroll: clip, unlike hidden, cannot be scrolled by code either */
+  padding-right: 0;
+}
+.shop-items-pane,
+.shop-sale,
+.shop-owned,
+.shop-search-host {
+  position: absolute; /* a cursor stop: the cursor's corners sit on this box, the search bar fills it */
+}
+.shop-search-host .hud-search {
+  display: block;
+}
+.shop-search-host.is-cursor .hud-search {
+  border-color: #38d030; /* the keys' cursor is on it: its focus green, no corners (Jess 2026-11-17) */
+}
+.shop-items-pane {
+  inset: 0;
+  font-family: 'GameFont', monospace; /* the Shop's font, as the pockets and buttons */
+  font-synthesis: none;
+  color: #ffffff;
+}
+.shop-sale {
+  bottom: 0; /* left and top: gacha-ui.js (CURSOR_ROOM) */
+}
+.shop-sale-search-host {
+  left: 0;
+  top: 0;
+}
+.shop-sale-grid {
+  display: grid;
+}
+.shop-search-host .hud-search {
+  font-family: 'GameFont', monospace; /* the menu windows' font (the kit's search box uses the HUD font) */
+}
+/* the cards (.shop-card, card.vertical on panel.thin): js/ui/lib/primitives/panel/panel.css (#155 155c). The owned
+   panel keeps the same thin #29ceff rim on a #303030 body here until it moves onto panel.thin */
+.shop-owned {
+  box-sizing: border-box;
+  border: 2px solid #29ceff;
+  background: #303030;
+}
+.shop-empty {
+  white-space: normal; /* wraps (the kit's .hud-text keeps one line) */
+  line-height: 24px;
+  padding: 12px 4px;
+}
+.shop-owned {
+  top: 0;
+}
+.shop-owned-search-host {
+  left: 14px;
+  top: 14px;
+}
+
+/* ---------- Pokeballs (149e): the ball cards and the belts, drawn by js/ui/shop-balls.js into #shop-balls. The cards
+   and buttons are js/ui/menu-window-kit.js pieces; the belts are panel.pixel holding the library's wells, the cursor
+   on a well cursor.ring (#128 S6, decision 2026-11-20-155-main-shop-pokeball-look) ---------- */
+.shop-balls-pane {
+  position: absolute;
+  inset: 0;
+  font-family: 'GameFont', monospace;
+  font-synthesis: none;
+  color: #ffffff;
+}
+.shop-ball-list,
+.shop-belt {
+  position: absolute;
+}
+/* a dimmed card, and one dimmed with its Unlock lit (#137c): card.vertical, js/ui/lib/primitives/panel/panel.css */
+/* #137c: Sell lines up with Exit, whose right end is 2 px past this pane's (1003 px wide inside the window's rim), so
+   this pane shows what overflows it; its cards scroll in their own box */
+#shop-balls.shop-pane-fixed {
+  overflow: visible;
+}
+
+/* ---------- the kit's Dropdown (149f, js/ui/menu-window-kit.js): a box like the search bar, its grouped choices in a
+   list under it; a click outside the list closes it. The keys' cursor shows its corners; the mouse a green rim ---------- */
+.shop-dropdown .shop-dropdown-box {
+  line-height: 36px;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+.shop-dropdown:hover .shop-dropdown-box,
+.shop-dropdown.is-open .shop-dropdown-box {
+  border-color: #38d030; /* under the mouse, or its list is open: the focus green */
+}
+.shop-dropdown-catcher {
+  position: absolute;
+  left: -3000px;
+  top: -3000px;
+  width: 6000px;
+  height: 6000px;
+  z-index: 4;
+}
+.shop-dropdown-list {
+  position: absolute;
+  z-index: 5;
+  box-sizing: border-box;
+  background: #181818;
+  border: 2px solid #ffffff;
+}
+.shop-dropdown-group {
+  padding: 8px 10px 4px;
+  color: #8cfff7; /* Secondary text */
+}
+.shop-dropdown-choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  margin: 0 4px;
+  padding: 0 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.shop-dropdown-choice:hover {
+  border-color: #38d030;
+}
+/* inside a scroll box the cursor sits on the item's edge (the box clips anything outside it), as the catch screen's cells */
+.shop-dropdown-choice .hud-cursor-top-left,
+.shop-tms-face-cell .hud-cursor-top-left {
+  left: 0;
+  top: 0;
+}
+.shop-dropdown-choice .hud-cursor-top-right,
+.shop-tms-face-cell .hud-cursor-top-right {
+  right: 0;
+  top: 0;
+}
+.shop-dropdown-choice .hud-cursor-bottom-left,
+.shop-tms-face-cell .hud-cursor-bottom-left {
+  left: 0;
+  bottom: 0;
+}
+.shop-dropdown-choice .hud-cursor-bottom-right,
+.shop-tms-face-cell .hud-cursor-bottom-right {
+  right: 0;
+  bottom: 0;
+}
+/* a tick box: a choice in a Dropdown, and the TMs tab's Able to Learn toggle */
+.shop-check {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ffffff;
+}
+.shop-check.is-on,
+.shop-toggle.is-on .shop-check {
+  background: #38d030;
+}
+
+/* ---------- TMs (149f): the TM cards and the Pokemon panel, drawn by js/ui/shop-tms.js into #shop-tms ---------- */
+.shop-tms-pane {
+  position: absolute;
+  inset: 0;
+  font-family: 'GameFont', monospace;
+  font-synthesis: none;
+  color: #ffffff;
+}
+.shop-tms-bar,
+.shop-tms-list,
+.shop-tms-panel,
+.shop-tms-panel > *,
+.shop-tms-finder {
+  position: absolute;
+}
+.shop-tms-bar,
+.shop-tms-finder {
+  z-index: 3; /* an open filter list lies over the cards and the portraits */
+}
+.shop-toggle {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background: #181818;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+}
+.shop-toggle:hover {
+  border-color: #38d030;
+}
+.shop-toggle .shop-check {
+  border: none;
+}
+.shop-tms-bar .shop-toggle-label {
+  position: absolute;
+  white-space: normal;
+  font-size: 16px;
+  line-height: 16px;
+  color: rgba(255, 255, 255, 0.6); /* mockup: White at 60% */
+}
+/* the Pokemon panel: the move slot card's shape from the pause menu (mockup: #9FA19F rim, #303030 body) */
+.shop-tms-panel {
+  top: 0;
+  box-sizing: border-box;
+  border: 2px solid #9fa19f;
+  background: #303030;
+}
+/* every portrait: a round face 4 px inside its cell (the catch screen's .catch-owned-face), the cursor on the cell's edge */
+.shop-tms-face-cell {
+  position: relative;
+  cursor: pointer;
+}
+.shop-tms-panel > .shop-tms-face-cell {
+  position: absolute;
+}
+.shop-tms-face-cell.is-empty {
+  opacity: 0.45;
+  cursor: default;
+}
+/* a face (portrait.round, js/ui/lib/primitives/portrait/portrait.css): fills its cell less the cursor's room */
+.shop-tms-face {
+  position: absolute;
+  inset: 4px;
+}
+.shop-tms-face-cell.is-chosen .shop-tms-face,
+.shop-tms-chosen .shop-tms-face {
+  border-color: #29ceff; /* the chosen Pokemon */
+}
+.shop-tms-face-cell:not(.is-empty):hover .shop-tms-face {
+  border-color: #38d030; /* under the mouse */
+}
+.shop-tms-box-grid {
+  display: grid;
+}
+.shop-tms-divider {
+  height: 2px;
+  background: #495151;
+}
+
+/* ---------- arranging the balls (#137b, js/ui/shop-balls.js): click or drag, or Enter / Space by keys ---------- */
+.shop-belt-slot.is-full {
+  cursor: grab;
+}
+.shop-belt-slot.is-lifted .catch-ball {
+  opacity: 0.25;
+}
+.shop-carry-ghost {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 30;
+}
+.shop-carry-ghost .catch-ball {
+  position: relative;
+}
