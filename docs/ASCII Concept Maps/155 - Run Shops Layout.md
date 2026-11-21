@@ -105,8 +105,31 @@ of air inside the rim and the chips clear the bottom rim; face centred, name and
 coin was the whole 8-frame sheet squashed (the artifact); now the counter's coin, first frame, still, at 1x. The move's
 type glyph sits in the move slot's well (type base in a 2 px ink ring), on the cards and the forget popup's rows.
 
+## run.hud.trMart v2: the Move Trainer mirrored top to bottom (Jess 2026-11-21, APPROVED: decision 2026-11-21-155-run-hud-tr-mart-look)
+
+Every aspect of the approved moveMart, with the two halves swapped: the four TR cards on top, the team rows below.
+Replaces the 2026-11-20 left/right mirror above.
+
+```mermaid
+flowchart TB
+  subgraph Trainer[Move Trainer, approved]
+    direction TB
+    T1[Team rows: choose a Pokemon] --> C1[4 offer cards: the answer, picking one buys]
+  end
+  subgraph Mart[TR Mart]
+    direction TB
+    C2[4 TR cards: choose a TR, cursor.ring on the picked disc] --> T2[Team rows with a status each: the answer, picking one buys]
+  end
+```
+
+- Same window, rows, cards (Silver price line, no button), Reroll Positive and Leave Neutral.
+- The TR card's picture is the placeholder TM disc, not the type well; the picked TR's disc carries cursor.ring
+  (Jess 2026-11-21: cursor.bar at the card's full height looked wrong).
+- Status at the right end of each row in Silver 30; a dimmed status dims the row, not the symbol.
+- The TR price placement question is settled: the coin and number line on the card, as the Move Trainer.
+
 Open (Jess):
-1. Does stacked (choose on top, answer below) replace mirrored for the TR Mart too (4 TR cards on top, the team rows below with a status each)?
+1. ~~Stacked for the TR Mart too~~ Yes, mirrored top to bottom (above).
 2. ~~What a wide team row holds~~ Ruled above.
 3. ~~Where the price goes~~ Ruled above.
 
