@@ -2,7 +2,7 @@
 // places (js/ui/catch-ui.js, css/bw-catch.css) rebuilt from the board's approved pieces. The window and Pokemon owned
 // are clean (the code's interface, a list from your collection); the Pokemon being caught is panel.pixel in its
 // type colours with the two-type rim and a plain grey.raised body (Jess 2026-11-20); the belts are
-// main.shop.pokeball's, wider on both sides for the cursor; the buttons button.glitch; the Let It Go ask modal.dialog,
+// main.shop.pokeball's; the buttons button.glitch; the Let It Go ask modal.dialog,
 // opening on its cancel; the result a toast (Jess 2026-11-20). Text is Silver (the catch screen is the Pokemon
 // tier). A plain script sharing the board's globals; it loads after every draft it uses (shop, hud-team-slot, hud-area,
 // portraits, cursor, tooltip, modal). A board copy: nothing here reads the game.
@@ -11,29 +11,28 @@
 // result line, so the window is only as tall as a belt (424, today 500) ----------
 const CATCH = {
   stage: { pad: 20, tipRoom: 330, toastRoom: 96 }, // the board's margin; room for the owned tooltip and a toast
-  window: { width: 1020, height: 424 }, // 40 px wider than today's 980, for the wider belts
+  window: { width: 980, height: 424 }, // today's width again: the ring needs no room beside the belts
   mon: { left: 20, top: 20, width: 340, height: 384 }, // as tall as a belt (today 460)
   ring: { size: 160, top: 24, stroke: 4 }, // the flee ring, one step per miss (today 192)
   text: { nameTop: 204, bandTop: 254, ballTop: 308, size: 30, bandSize: 40, inset: 20 },
-  // a belt holds the well with the cursor's room (its 2 px gap and 6 px bar) on both sides, so it stays symmetrical and
-  // the bar clears the rim (Jess 2026-11-20): 100 px (today 84), 12 px apart
-  belt: { firstLeft: 372, step: 112, wells: 6, well: 52, wellGap: 8, keySize: 20 },
-  // the faces 20 px apart across, so the cursor bar (2 px off a face, 6 px wide) sits plainly beside its own face and
-  // 12 px clear of the next (Jess 2026-11-20); 12 px apart down
+  // a belt is main.shop.pokeball's: 84 px, the well in the panel's own padding, which holds the cursor ring (it reaches
+  // 5 px) without widening it (Jess 2026-11-20); 12 px apart
+  belt: { firstLeft: 372, step: 96, wells: 6, well: 52, wellGap: 8, keySize: 20 },
+  // the faces 20 px apart across and 16 down, so the cursor ring (it reaches 5 px) clears the next face's ring
   owned: {
-    left: 716,
+    left: 676,
     top: 20,
     width: 284,
     height: 244,
     inset: 16,
     columns: 4,
     face: 48,
-    stroke: 4,
+    stroke: 2,
     columnGap: 20,
-    rowGap: 12,
+    rowGap: 16,
   },
   // button.glitch at the menus' 54 px, Let It Go on the window's bottom padding, Throw 16 px above it
-  button: { left: 718, width: 280, height: 54, tops: [280, 350] },
+  button: { left: 678, width: 280, height: 54, tops: [280, 350] },
   tipGap: 12,
   // the result toast (today the result line in the Pokemon panel): G.UI.toast's look in the Unified pieces, bottom
   // centre; Michroma 20 on 30 px lines, wrapping at 720
@@ -84,7 +83,7 @@ const CATCH_STATES = [
   },
   {
     id: 'letGo',
-    title: 'Let It Go: the ask opens on Keep trying, both buttons red (Jess 2026-11-20)',
+    title: 'Let It Go: the ask opens on Keep trying; Let it go red, Keep trying neutral (Jess 2026-11-20)',
     cursor: { area: 'button', index: 1 },
     ask: true,
   },
@@ -98,10 +97,14 @@ const CATCH_ASK = {
   cancel: 'Keep trying',
 };
 
-/** A box of a size at a place holding inner, with the cursor bar beside it (the board's cursor.bar, blinking). */
+/** A box of a size at a place holding inner, with the cursor bar beside it (the board's cursor.bar). */
 const catchCursorAt = (left, top, size, inner) =>
   `<div style="${place(left, top)};width:${px(size)};height:${px(size)};${cursorStyle()}">
-    ${inner}${staticBar(false)}</div>`;
+    ${inner}${staticBar()}</div>`;
+/** The same with cursor.ring around it (round portraits; Jess 2026-11-20, catch window first). */
+const catchRingAt = (left, top, size, inner) =>
+  `<div style="${place(left, top)};width:${px(size)};height:${px(size)};${cursorStyle()}">
+    ${inner}${staticRing()}</div>`;
 
 // ---------- the Pokemon: panel.pixel in its types, the flee ring, its name, the catch band, the ball ----------
 function catchMonPanel(state) {
@@ -138,7 +141,7 @@ function catchBelt(belt, index, cursor) {
   const b = CATCH.belt,
     ramp = pocketRamp('color.pocketPokeBalls'),
     panel = teamPocketPanel(
-      b.well + 2 * (CURSOR.gap + CURSOR.width), // the cursor bar's room on both sides of the wells
+      b.well,
       b.wells * b.well + (b.wells - 1) * b.wellGap,
       belt.bought ? ramp : TEAM_SLOT_COLOURS.fainted
     ),
@@ -151,7 +154,7 @@ function catchBelt(belt, index, cursor) {
         cursorHere = cursor && cursor.area === 'slot' && cursor.belt === index && cursor.slot === slot,
         fill = selected ? ramp.dark : AREA_COLOURS.wellEmpty,
         ringColour = selected ? ramp.light : ball ? ramp.base : AREA_COLOURS.outline,
-        left = panel.offsetX + CURSOR.gap + CURSOR.width,
+        left = panel.offsetX,
         wellTop = panel.offsetY + slot * (b.well + b.wellGap),
         picture = ball
           ? ballSprite(ball, SHOP_BALL_STRIP.beltFrame, { style: `position:absolute;${place(ballAt, ballAt)}` })
@@ -161,7 +164,7 @@ function catchBelt(belt, index, cursor) {
             numbered ? areaText(String(slot + 1), b.keySize, AREA_FONTS.silver, 'right:0;bottom:-2px') : ''
           }`;
       return cursorHere
-        ? catchCursorAt(left, wellTop, b.well, well)
+        ? catchRingAt(left, wellTop, b.well, well)
         : `<div style="${place(left, wellTop)};width:${px(b.well)};height:${px(b.well)}">${well}</div>`;
     }).join(''),
     // the belt's number: Michroma 16 in white with a 1 px ink stroke (main.shop.pokeball's)
@@ -187,7 +190,7 @@ function catchOwned(cursor) {
         });
       // the cursor bar sits 2 px off the face itself, not off its cell (Jess 2026-11-20)
       return cursor && cursor.area === 'owned' && cursor.index === index
-        ? catchCursorAt(left, top, o.face, face)
+        ? catchRingAt(left, top, o.face, face)
         : `<div style="${place(left, top)}">${face}</div>`;
     }).join('');
   return cleanBox(o.left, o.top, o.width, o.height, cells, { body: SHOP_CARD_PANEL.body });
@@ -272,19 +275,19 @@ function catchSection() {
         number in Michroma 16; not bought: the fainted grey ramp); the selected ball\u2019s well the pocket\u2019s
         dark with
         its light ring. Pokemon owned ${nameButton('panel.clean')} with the cards\u2019 grey.raised body, 48 px
-        ${nameButton('portrait.round')} faces at rest. ${nameButton('cursor.bar')}, ${nameButton('tooltip')},
+        ${nameButton('portrait.round')} faces at rest. ${nameButton('cursor.ring')} (round wells and faces), ${nameButton('tooltip')},
         ${nameButton('button.glitch')} (Throw Positive, Let It Go Negative), ${nameButton('modal.dialog')}</dd>
       <dt>Fonts</dt><dd>${nameButton('font.silver')}<span>the name, the ball line and the slot keys at
         ${CATCH.text.size} and ${CATCH.belt.keySize}, the band at ${CATCH.text.bandSize}; today GameFont 27 and
         40</span>${nameButton('font.michroma')}<span>the toast at ${CATCH.toast.size} (the game talking)</span></dd>
       <dt>Places</dt><dd>Today\u2019s order (the Pokemon left, three belts, Pokemon owned and the buttons right), in a
-        ${CATCH.window.width} x ${CATCH.window.height} px window (today 980 x 500): the flee ring ${CATCH.ring.size} px
-        (today 192); the Pokemon panel and the belts the same height; the belts 100 px wide and
-        ${CATCH.belt.step - 100} px apart, the wells centred with the cursor bar\u2019s room on both sides; Pokemon
+        ${CATCH.window.width} x ${CATCH.window.height} px window (today 980 x 500, the same width): the flee ring ${CATCH.ring.size} px
+        (today 192); the Pokemon panel and the belts the same height; the belts 84 px wide
+        (main.shop.pokeball\u2019s, the ring sits in their padding) and ${CATCH.belt.step - 84} px apart; Pokemon
         owned ${CATCH.owned.height} px tall (today 280, it scrolls); the buttons ${CATCH.button.height} px tall (the
-        menus\u2019) at the bottom right. The owned faces are ${CATCH.owned.columnGap} px apart across, so the cursor
-        bar (2 px off a face) reads as that face\u2019s</dd>
-      <dt>Changes the game</dt><dd>Let It Go keeps its ask and opens on Keep trying, both buttons red (Jess 2026-11-20:
+        menus\u2019) at the bottom right. The owned faces are ${CATCH.owned.columnGap} px apart across and ${CATCH.owned.rowGap} down, so the cursor
+        ring clears the next face\u2019s</dd>
+      <dt>Changes the game</dt><dd>Let It Go keeps its ask and opens on Keep trying, Let it go red and Keep trying neutral (Jess 2026-11-20:
         letting a rescue go is a loss you cannot earn back); today it opens on its confirm. The result (caught, broke
         free, fled) is a toast, not a line in the Pokemon panel (Jess 2026-11-20); good news teal, bad news red</dd>
       <dt>Not shown</dt><dd>The throw (spin, arc, absorb, wobble, the click), the ring catching up after a miss, the

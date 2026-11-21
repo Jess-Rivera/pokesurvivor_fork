@@ -104,7 +104,7 @@ function portraitWithCursor() {
     face = (selected) => portraitFace({ size: roster.size, stroke: roster.stroke, sample: PORTRAIT_SAMPLES.pikachu, selected });
   const inner = `<div class="lib-portrait-row">
       <div class="lib-cursor-host">${face(true)}</div>
-      <div class="lib-cursor-host">${face(false)}${staticBar(false)}</div></div>`;
+      <div class="lib-cursor-host">${face(false)}${staticBar()}</div></div>`;
   return portraitTile(
     'selectedWithCursor',
     'The pause roster: the first face is selected (its detail shows), the cursor has moved to the second',

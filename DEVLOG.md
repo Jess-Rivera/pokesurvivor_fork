@@ -379,3 +379,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   Keep trying. Seven 2026-11-20-155 decision files.
 - Broke: the catch ask drew under the window's pieces; one-sided belts; the owned cursor read between faces (fixed).
 - Stopped at: main.shop.tms label, then approve it and run.hud.teamItems. Nothing in js/ or css/; check.js not run.
+
+## 2026-11-20 night (Claude Code, home), #155 cursor.ring, dialog rule, run shops
+- Board: cursor.ring (round pieces, no blink, CRT) on shop belts, TMs and the catch window (belts back to 84 px, window
+  980); modal and glitch pages lose the cancel state; new rough drafts run.hud.moveMart, trMart, forgetMove.
+- Decided: a dialog's answers never share an intent (back-out Neutral); replace-a-move is pick, popup, Replace or Go
+  Back ask; run shops mirrored, no Silver purchase ask. Three decision files, a layout map in docs/ASCII Concept Maps.
+- Broke: the ring did not blink (rule named only the bar; moot once blink was removed). check.js and format pass.
+- Stopped at: Jess's move-trainer and tr-mart mockups (assets/excalidraw) were found at wrap-up and differ from the
+  drafts; redraw to them next. The run-shop pages were never rendered by the assistant. Nothing in js/ or css/.

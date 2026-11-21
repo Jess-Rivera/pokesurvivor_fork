@@ -6,7 +6,8 @@
   button it opens on, and button.glitch.cancel, because a positive confirm will be needed later. Only how #126 applies
   them changes: today's asks all guard a loss, so each takes the negative intent and opens on the cancel; the
   one-button notice is neutral. The board's Modal page stays as it is.
-- button.glitch.cancel, a new state: at rest exactly button.glitch.rest; under the cursor the same swipe uncovers the
+- SUPERSEDED 2026-11-20 (2026-11-20-155-dialog-answers-never-share-an-intent: no cancel state, the back-out is
+  Neutral). button.glitch.cancel, a new state: at rest exactly button.glitch.rest; under the cursor the same swipe uncovers the
   inverse of the intent's focus look (grey.ink body, the intent's colour for bar and text). The confirm keeps the
   normal focus look (the intent's body, ink bar and text).
 - Input modes (the game's inputMode, js/ui/hud-kit.js): with the keyboard one button shows focus; with the mouse

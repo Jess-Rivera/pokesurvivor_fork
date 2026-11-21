@@ -68,7 +68,7 @@ const SHOP = {
     team: { left: 144, top: 44, size: 52, gap: 10, columns: 3 },
     dividerTop: 166,
     finder: { top: 180, searchWidth: 200, filterLeft: 226, filterWidth: 137 },
-    box: { top: 232, columns: 4, cell: 76, gap: 10, faceInset: 4 },
+    box: { top: 232, columns: 4, cell: 60, columnGap: 22, rowGap: 14 }, // the face is the cell: the cursor bar is exactly as tall as it, 22 px clear of the next face
   },
   fonts: { meta: "'HudModule'", pokemon: "'Silver 10px'" },
   text: { name: 14, line: 12, lineHeight: 16, pocketName: 16, beltNumber: 16, pokemonName: 20 },
@@ -173,9 +173,12 @@ const divider = (left, right, top, extra = '') =>
 const scrollArea = (left, top, width, height, inner, { fraction = 0.5, at = 0 } = {}) =>
   `<div class="lib-shop-scroll" style="${place(left, top)};width:${px(width)};height:${px(height)}">${inner}</div>
   ${scrollBar({ height, fraction, at, style: place(left + width + 4, top) })}`;
-/** The cursor bar beside a piece (menus blink), at a place. */
+/** The cursor bar beside a piece, at a place. */
+/** The cursor ring around a round piece of a size, at a place (the host is exactly the piece). */
+const withRing = (left, top, size, inner) =>
+  `<div class="lib-cursor-host" style="${place(left, top)};width:${px(size)};height:${px(size)};${cursorStyle()}">${inner}${staticRing()}</div>`;
 const withCursor = (left, top, inner) =>
-  `<div class="lib-cursor-host" style="${place(left, top)};${cursorStyle()}">${inner}${staticBar(false)}</div>`;
+  `<div class="lib-cursor-host" style="${place(left, top)};${cursorStyle()}">${inner}${staticBar()}</div>`;
 
 // ---------- card.vertical on panel.shopCard (clean-draft.js: panel.clean with a grey.raised body) ----------
 /** A card: the picture, a divider, the name, the description, its button. look: lit, dimmed, or dimmedButButton.
@@ -253,12 +256,17 @@ function shopBelt(belt, index) {
     left = SHOP.pane.width - size.rightPad - (size.count - index) * panel.width - (size.count - 1 - index) * size.gap,
     ballAt = (size.well - SHOP_BALL_STRIP.size * SHOP_BALL_STRIP.scale) / 2, // the frame centred; ballSprite centres the art
     wells = Array.from({ length: size.wells }, (_, slot) => {
-      const ball = belt.balls[slot];
-      return `<div class="lib-area-well" style="left:${px(panel.offsetX)};
-        top:${px(panel.offsetY + slot * (size.well + size.wellGap))};width:${px(size.well)};height:${px(size.well)};
+      const ball = belt.balls[slot],
+        wellTop = panel.offsetY + slot * (size.well + size.wellGap),
+        well = (left, top) => `<div class="lib-area-well" style="left:${px(left)};
+        top:${px(top)};width:${px(size.well)};height:${px(size.well)};
         --well-fill:${AREA_COLOURS.wellEmpty};--well-ring:${ball ? ramp.base : AREA_COLOURS.outline}">${
           ball ? ballSprite(ball, SHOP_BALL_STRIP.beltFrame, { style: `position:absolute;${place(ballAt, ballAt)}` }) : ''
         }</div>`;
+      // the cursor ring on belt 1's second ball (the ball a Sell Pokeball would sell)
+      return index === 0 && slot === 1
+        ? withRing(panel.offsetX, wellTop, size.well, well(0, 0))
+        : well(panel.offsetX, wellTop);
     }).join(''),
     // the number: Michroma 16 in white with a 1 px ink stroke, eight hard shadows as the HUD's text (Jess 2026-11-20)
     stroke = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]
@@ -449,11 +457,10 @@ function tmsPanel() {
     ).join(''),
     boxRows = 3,
     cells = SHOP_BOX_DEX.map((dex, index) => {
-      const left = p.inset + (index % t.box.columns) * (t.box.cell + t.box.gap),
-        top = t.box.top + Math.floor(index / t.box.columns) * (t.box.cell + t.box.gap),
-        cell = `<div style="width:${px(t.box.cell)};height:${px(t.box.cell)};position:relative">
-          <div style="${place(t.box.faceInset, t.box.faceInset)}">${face(dex, t.box.cell - 2 * t.box.faceInset)}</div></div>`;
-      return index === 5 ? withCursor(left, top, cell) : `<div style="${place(left, top)}">${cell}</div>`;
+      const left = p.inset + (index % t.box.columns) * (t.box.cell + t.box.columnGap),
+        top = t.box.top + Math.floor(index / t.box.columns) * (t.box.cell + t.box.rowGap),
+        cell = face(dex, t.box.cell);
+      return index === 5 ? withRing(left, top, t.box.cell, cell) : `<div style="${place(left, top)}">${cell}</div>`;
     }).join(''),
     boxHeight = p.height - t.box.top - p.inset,
     chosenLeft = p.inset + (t.team.left - p.inset - t.chosen.size) / 2;
@@ -465,7 +472,7 @@ function tmsPanel() {
     ${dropdownBox({ width: t.finder.filterWidth, label: 'Filter', style: place(t.finder.filterLeft, t.finder.top) })}
     <div class="lib-shop-scroll" style="${place(0, t.box.top)};width:${px(p.width)};height:${px(boxHeight)}">
       <div style="position:relative;top:${px(-t.box.top)}">${cells}</div></div>
-    ${scrollBar({ height: boxHeight, fraction: boxHeight / (boxRows * (t.box.cell + t.box.gap) + 200), style: place(p.width - p.inset + 2, t.box.top) })}`;
+    ${scrollBar({ height: boxHeight, fraction: boxHeight / (boxRows * (t.box.cell + t.box.rowGap) + 200), style: place(p.width - p.inset + 2, t.box.top) })}`;
   // its body the cards' grey.raised (panel.shopCard; Jess 2026-11-20), as the Team Items owned panel
   return cleanBox(p.left, 0, p.width, p.height, inner, { body: SHOP_CARD_PANEL.body });
 }
@@ -539,7 +546,8 @@ const SHOP_PAGES = {
         in ${nameButton('color.pocketPokeBalls')} (a belt not bought: the fainted grey ramp, as today), sized to six
         ${SHOP.belt.well} px wells ${SHOP.belt.wellGap} px apart, the berry pocket’s wells (grey.panel inside; an
         ink ring when empty, the pocket’s base when it holds a ball); the ball at 2x fills most of the well. The
-        belt number in Michroma ${SHOP.text.beltNumber}, white with a 1 px ink stroke. Cards: lit (Poke, under the
+        belt number in Michroma ${SHOP.text.beltNumber}, white with a 1 px ink stroke. ${nameButton('cursor.ring')} on
+        a ball in belt 1; the panel\u2019s own padding holds it. Cards: lit (Poke, under the
         cursor), dimmed with its Unlock lit (Great), dimmed with its refused Unlock at full strength (the rest; Jess
         2026-11-20: a dimmed card never dims its button)</dd>
       <dt>For the build (#126)</dt><dd>Layout is the build\u2019s: the cards scroll in today\u2019s scroll box once all 17
@@ -587,7 +595,7 @@ const SHOP_PAGES = {
         the cards\u2019 grey.raised body (Jess 2026-11-20): the chosen
         Pokemon (${nameButton('portrait.round.selected')} at ${SHOP.tms.chosen.size} px, its name in Silver), the team of
         six at ${SHOP.tms.team.size} px (the chosen one selected), a divider, the search and Filter, the Pokebox grid at
-        rest with the cursor bar on one face</dd>`
+        rest with the cursor ring on one face</dd>`
     ),
 };
 // main.shop.pokeball and main.shop.character are approved (decisions 2026-11-20-155-main-shop-pokeball-look and

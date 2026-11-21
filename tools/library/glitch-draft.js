@@ -58,21 +58,6 @@ const GLITCH_REFUSED = { bar: greyTone('mid'), text: greyTone('mid'), focusBody:
 // rest look with grey.slate text, so it reads fainter than a refused button (Jess 2026-11-20: ink text vanished once the
 // rest body went transparent over grey.panel).
 const GLITCH_DISABLED = { bar: greyTone('mid'), text: greyTone('slate') };
-// Cancel (Jess 2026-11-19): the answer that backs out of an ask. At rest it is exactly button.glitch.rest. Under the
-// cursor the same swipe uncovers the inverse of the intent's focus look: a grey.ink body with the intent's colour for
-// the bar and the text (a neutral cancel is teal on ink, a positive one green, a negative one red), where the confirm
-// uncovers the intent's colour with ink bar and text. So the two only differ once the cursor is on one. The dialog
-// (modal-draft.js) uses it.
-const GLITCH_CANCEL = { focusBody: greyTone('ink'), labels: ['Cancel', 'Keep', 'Back'] };
-const glitchCancelColours = (kind) =>
-  glitchColours(kind, false, false) +
-  [
-    ['--glitch-focus-body', GLITCH_CANCEL.focusBody],
-    ['--glitch-focus-bar', kind.focusBody],
-    ['--glitch-focus-text', kind.focusBody],
-  ]
-    .map(([name, value]) => `;${name}:${value}`)
-    .join('');
 // Glitch, the secret state (Jess 2026-11-18): for the meta-narrative later, not used by any screen yet. The source's
 // glitch layer: slices of the focused button jump about in hard steps, its label split into two offset colour copies
 // (yellow.base up-left and a second Unified base down-right, which also draws the stripe at the cut corner).
@@ -99,21 +84,17 @@ const glitchColours = (kind, refused, disabled) =>
   ]
     .map(([name, value]) => `${name}:${value}`)
     .join(';');
-const glitchButtons = (kind, look) => {
-  const cancel = / cancel/.test(' ' + look);
-  return (cancel ? GLITCH_CANCEL.labels : kind.labels)
+const glitchButtons = (kind, look) =>
+  kind.labels
     .map(
       (label) => `<button type="button" class="lib-glitch-button${look ? ' ' + look : ''}"
-    tabindex="-1" data-label="${esc(label)}" style="${
-      cancel ? glitchCancelColours(kind) : glitchColours(kind, / refused/.test(' ' + look), / disabled/.test(' ' + look))
-    }">${esc(label)}${
+    tabindex="-1" data-label="${esc(label)}" style="${glitchColours(kind, / refused/.test(' ' + look), / disabled/.test(' ' + look))}">${esc(label)}${
       / secret/.test(' ' + look)
         ? `<span class="lib-glitch-slices" aria-hidden="true" data-burst="${look.match(/secret-(\w+)/)[1]}">${esc(label)}</span>`
         : ''
     }</button>`
     )
     .join('');
-};
 const glitchTile = (kind, state, title, look) => `<figure class="lib-state">
   <div class="lib-stage" data-state="button.glitch:${state}"
     style="display:flex;gap:24px;background:${GLITCH_STAGE}">
@@ -176,14 +157,11 @@ const glitchIntentStates = (kind) => `<h4 class="lib-dim">${esc(kind.intent)}: $
     <div class="lib-states">
       ${glitchTile(kind, 'focus' + kind.intent, 'Under the cursor, after the swipe', 'focused')}
       ${glitchTile(kind, 'press' + kind.intent, 'Held down, after the switch-off', 'focused pressed')}
-      ${glitchTile(kind, 'cancel' + kind.intent, 'Cancel, at rest: the same as rest (hover one to swipe)', 'cancel')}
-      ${glitchTile(kind, 'cancelFocus' + kind.intent, 'Cancel, under the cursor: ink body, the intent\u2019s bar and text', 'cancel focused')}
       ${glitchTile(kind, 'refusedFocus' + kind.intent, 'Refused, under the cursor', 'refused focused')}
       ${glitchTile(kind, 'glitch' + kind.intent, 'Secret, the first time: one 400 ms burst (click it to replay)', 'secret secret-first')}
       ${glitchTile(kind, 'glitch' + kind.intent, 'Secret, repeating: 1 s bursts with 1 s gaps, forever', 'secret secret-loop')}
     </div>
     <dl class="lib-facts">${glitchColour('Focus body', kind.token, kind.focusBody)}
-      ${glitchColour('Cancel focus bar and text', kind.token, kind.focusBody)}
       ${glitchColour('Refused focus bar', kind.token, kind.focusBody)}
       ${glitchColour('Glitch split, up-left', 'color.yellow.base', kind.glitchSplit[0])}
       ${glitchColour('Glitch split, down-right', kind.splitToken, kind.glitchSplit[1])}</dl>`;
@@ -205,10 +183,6 @@ function glitchDraftPage() {
       ${glitchColour('Refused focus body', 'color.grey.mid', GLITCH_REFUSED.focusBody)}
       ${glitchColour('Disabled bar', 'color.grey.mid', GLITCH_DISABLED.bar)}
       ${glitchColour('Disabled text', 'color.grey.slate', GLITCH_DISABLED.text)}
-      ${glitchColour('Cancel focus body', 'color.grey.ink', GLITCH_CANCEL.focusBody)}
-      <dt>Cancel</dt><dd>The answer that backs out of an ask (a dialog's Cancel, Keep, Keep editing). At rest exactly
-        button.glitch.rest; under the cursor the same swipe uncovers the inverse of the intent's focus look (ink body,
-        the intent's bar and text), so a focused cancel never reads like a focused confirm. Press and release as any.</dd>
       <dt>Refused press</dt><dd>A sideways shake, 4 px each way and settling, ${GLITCH_SHAKE_MS} ms; no colour change and no
         switch-off, so it never looks like a press that worked.</dd>
       <dt>Swipe</dt><dd>One hard edge from the right edge (the bar's) to the left, ${GLITCH_SWIPE_MS} ms, linear; the
@@ -234,7 +208,7 @@ const BUTTON_TABS = [
     title: 'Glitch Draft',
     note:
       'A possible new button design, button.glitch: its states for every intent, then the ones that change with the ' +
-      'intent (neutral, negative, positive), the cancel included.',
+      'intent (neutral, negative, positive).',
     draw: glitchDraftPage,
   },
 ];

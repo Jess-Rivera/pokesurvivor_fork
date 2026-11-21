@@ -52,6 +52,10 @@ const NAV = [
           { id: 'run.hud.gymLeader', title: 'run.hud.gymLeader' },
           { id: 'run.hud.worldInfo', title: 'run.hud.worldInfo' },
           { id: 'run.hud.runInfo', title: 'run.hud.runInfo' },
+          // the run's two walk-in shops and the popup a full roster opens (Jess 2026-11-20)
+          { id: 'run.hud.moveMart', title: 'run.hud.moveMart' },
+          { id: 'run.hud.trMart', title: 'run.hud.trMart' },
+          { id: 'run.hud.forgetMove', title: 'run.hud.forgetMove' },
         ],
       },
       {

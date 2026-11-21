@@ -6,11 +6,11 @@
 // A dialog is the game talking, the code's interface, so it is clean (decision
 // 2026-11-18-155-pixel-panels-for-one-pokemon-clean-for-the-rest): panel.clean, Michroma for every line (the meta tier,
 // decision 2026-11-18-155-font-scheme-three-tiers) and button.glitch (decision
-// 2026-11-18-155-button-glitch-replaces-slanted-and-rounded). Each ask has an intent (neutral, positive, negative) and
-// both its buttons take it. The confirm is button.glitch as it is. The cancel is a new state, button.glitch.cancel
-// (Jess 2026-11-19): at rest both are button.glitch.rest; under the cursor the confirm uncovers the intent's colour
-// (ink bar and text) and the cancel its inverse (ink body, the intent's bar and text), so the focused one always says
-// which answer Enter gives. A board copy: nothing here reads the game's modal.
+// 2026-11-18-155-button-glitch-replaces-slanted-and-rounded). A question has two answers and they never share an
+// intent (Jess 2026-11-20, decision 2026-11-20-155-dialog-answers-never-share-an-intent): the confirm takes the intent
+// of what it does (positive spends or gains, negative loses), the back-out answer is always Neutral, and each button
+// uses its own normal focus look. An ask whose confirm would be Neutral is not asked. A notice has one Neutral button.
+// A board copy: nothing here reads the game's modal.
 const MODAL = {
   width: 720, // px, today's on the 1920 x 1080 menu stage
   padding: '32px 40px 36px',
@@ -22,9 +22,10 @@ const MODAL = {
   note_colour: unifiedTone(UNIFIED_TEAL, 'base'), // Unified teal: secondary text
 };
 const intentOf = (name) => GLITCH_INTENTS.find((kind) => kind.intent === name);
-/** button.glitch's colours for a dialog button: the confirm as it is, the cancel's focus inverted (glitch-draft.js). */
-const modalButtonStyle = (kind, cancel) => (cancel ? glitchCancelColours(kind) : glitchColours(kind, false, false));
-// the asks the board shows: one per intent, plus a notice (one button). opensOn: the button the cursor starts on
+/** button.glitch's colours for a dialog button: the confirm takes the ask's intent, the back-out is always Neutral. */
+const modalButtonStyle = (kind, cancel) => glitchColours(cancel ? intentOf('Neutral') : kind, false, false);
+// the asks the board shows: a positive one, a negative one and a notice (one button). intent is the confirm's; the
+// back-out is Neutral. opensOn: the button the cursor starts on
 const MODAL_ASKS = [
   {
     id: 'positive',
@@ -45,19 +46,8 @@ const MODAL_ASKS = [
     note: null,
     confirm: 'Let It Go',
     cancel: 'Keep',
-    opensOn: 1, // a destructive ask opens on the cancel, so a stray Enter loses nothing (pending, Jess)
-    places: ['catch.letGoAsk', 'main.team.sellAsk'],
-  },
-  {
-    id: 'neutral',
-    intent: 'Neutral',
-    title: 'Unsaved changes',
-    message: 'Leave the Team screen without saving?',
-    note: 'Your changes will be lost.',
-    confirm: 'Leave',
-    cancel: 'Keep editing',
-    opensOn: 0,
-    places: ['main.team.unsavedAsk', 'ev.goHomeAsk'],
+    opensOn: 1, // a negative ask opens on the back-out, so a stray Enter loses nothing
+    places: ['catch.letGoAsk', 'main.team.sellAsk', 'ev.goHomeAsk', 'run.hud.replaceMoveAsk'],
   },
   {
     id: 'notice',
@@ -179,19 +169,8 @@ const modalTile = (ask) => `<figure class="lib-state">
   <div class="lib-stage lib-modal-stage" tabindex="0" data-modal-demo="${ask.id}" data-state="modal.dialog:${ask.id}"
     style="background:${CLEAN_STAGE}">${modalHtml(ask)}
     <div class="lib-dim lib-mono lib-modal-readout" data-modal-readout></div></div>
-  <figcaption>${nameButton('modal.dialog.' + ask.id)}<br>${esc(ask.intent)}${ask.cancel ? '' : ', a notice (one button)'}:
+  <figcaption>${nameButton('modal.dialog.' + ask.id)}<br>${ask.cancel ? 'Confirm ' + esc(ask.intent) + ', back-out Neutral' : 'A notice (one Neutral button)'}:
     opens on ${esc(ask.opensOn ? ask.cancel : ask.confirm)}. ${ask.places.map(nameButton).join('')}</figcaption></figure>`;
-
-// ---------- button.glitch.cancel on its own: rest and under the cursor, per intent ----------
-const cancelTile = (kind, focused) => `<figure class="lib-state">
-  <div class="lib-stage" data-state="button.glitch:cancel${focused ? 'Focus' : ''}${kind.intent}"
-    style="display:flex;gap:24px;background:${CLEAN_PANEL.body}">
-    <button type="button" class="lib-glitch-button" tabindex="-1" data-label="Confirm"
-      style="${modalButtonStyle(kind, false)}">Confirm</button>
-    <button type="button" class="lib-glitch-button${focused ? ' focused' : ''}" tabindex="-1" data-label="Cancel"
-      style="${modalButtonStyle(kind, true)}">Cancel</button></div>
-  <figcaption>${nameButton('button.glitch.cancel' + (focused ? 'Focus' : '') + kind.intent)}<br>${esc(kind.intent)}:
-    ${focused ? 'the cancel under the cursor: its inverse focus' : 'both at rest, alike (hover one to swipe)'}</figcaption></figure>`;
 
 function modalSection() {
   return `<section class="lib-story" data-draft="modal.dialog">
@@ -210,55 +189,36 @@ function modalSection() {
       <dt>Text</dt><dd>${nameButton('font.michroma')}<span>title ${MODAL.title} px, message ${MODAL.message} px, note
         ${MODAL.note} px, from the Fonts candidates; today the title is Michroma 30 px and the rest GameFont 27 and 20
         px. Settled at the Fonts feel test.</span></dd>
-      <dt>Buttons</dt><dd>button.glitch, confirm then cancel, ${MODAL.gap} px apart; both take the ask's intent.
-        Both rest alike; under the cursor the confirm fills with the intent's colour and the cancel shows its inverse
-        (ink body, the intent's bar and text).</dd>
-      <dt>Keys</dt><dd>Left and Right move the focus, Enter or Space press it, Esc answers the cancel (today's keys).
+      <dt>Buttons</dt><dd>button.glitch, confirm then back-out, ${MODAL.gap} px apart. The two answers never share an
+        intent (Jess 2026-11-20): the confirm takes the intent of what it does (Buy positive, Let It Go negative), the
+        back-out is always Neutral (teal). Each uses its own normal focus look, so the focused one says which answer
+        Enter gives by its colour.</dd>
+      <dt>No neutral ask</dt><dd>An ask whose confirm would be neutral gains and loses nothing, so it is not asked. A
+        notice is one Neutral button.</dd>
+      <dt>Keys</dt><dd>Left and Right move the focus, Enter or Space press it, Esc answers the back-out (today's keys).
         A focused button shows only with the keyboard.</dd>
       <dt>Mouse</dt><dd>Both buttons rest grey; the one under the pointer plays the hover swipe, a click presses it.
         Moving the mouse switches to mouse mode, a key switches back and the focus returns where it was (the game's
         inputMode, #149a). From mouse mode the first Enter or Space only shows the focus, the next presses it; arrows
         show and move it; Esc cancels at once. The keys start from the last button the mouse touched. Today the mouse
         moves the green focus and Enter presses it at once.</dd>
-      <dt>Opens on</dt><dd>The confirm, except a negative ask, which opens on the cancel so a stray Enter loses nothing
-        (a proposal, pending Jess)</dd>
+      <dt>Opens on</dt><dd>The confirm, except a negative ask, which opens on the back-out so a stray Enter loses
+        nothing</dd>
       <dt>Cursor</dt><dd>No cursor.bar: on a button.glitch the bar hides and the button shows its focus</dd>
       <dt>Behaviour at #126</dt><dd>G.UI.ask gains an intent for each ask (and which button it opens on); the intent
         is a prop, the dialog never reads game state</dd>
     </dl></section>`;
 }
-function cancelSection() {
-  const rows = GLITCH_INTENTS.map(
-    (kind) => `<h4 class="lib-dim">${esc(kind.intent)}</h4><div class="lib-states">${cancelTile(kind, false)}${cancelTile(
-      kind,
-      true
-    )}</div>`
-  ).join('');
-  return `<section class="lib-story" data-draft="button.glitch.cancel">
-    <h3>${nameButton('button.glitch.cancel')} ${draftTag('a new button.glitch state (Jess 2026-11-19)')}</h3>
-    ${rows}
-    <dl class="lib-facts">
-      <dt>At rest</dt><dd>Exactly button.glitch.rest: grey.raised body, grey.white bar and text, like the confirm</dd>
-      ${cleanColour('Focus body', 'color.grey.ink', GLITCH_CANCEL.focusBody)}
-      <dt>Focus bar and text</dt><dd>The intent's colour: teal.base, green.base or red.base, the inverse of the
-        confirm's focus look (the intent's body with ink bar and text)</dd>
-      <dt>Swipe</dt><dd>The same right-to-left swipe as every button.glitch, uncovering the inverse look</dd>
-      <dt>Press</dt><dd>The same CRT switch-off and switch-on as every button.glitch</dd>
-      <dt>Open</dt><dd>A focused cancel's ink body on the grey.panel dialog is nearly the same dark (#101010 on
-        #181818), so it reads as a coloured bar and word more than as a box; the confirm beside it goes back to rest</dd>
-    </dl></section>`;
-}
-
 const MODAL_TABS = [
   {
     id: 'unified',
     title: 'Unified',
     note:
-      'The dialog going forward: panel.clean, Michroma, button.glitch. Each ask has an intent; its cancel is the new ' +
-      'button.glitch.cancel state.',
+      'The dialog going forward: panel.clean, Michroma, button.glitch. The confirm takes the intent of what it does; the ' +
+      'back-out is always Neutral.',
     draw: () => {
       queueMicrotask(startModalDemos);
-      return modalSection() + cancelSection();
+      return modalSection();
     },
   },
   {

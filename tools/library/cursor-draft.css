@@ -15,10 +15,7 @@
 .lib-cursor-bar.is-off {
   visibility: hidden;
 }
-/* at rest: a terminal cursor's blink, hard on and off (the blink class is never on during a CRT animation) */
-.lib-cursor-bar.is-blinking {
-  animation: lib-cursor-blink var(--cursor-blink) steps(1, end) infinite;
-}
+/* the cursors no longer blink (Jess 2026-11-20); this blink is the typing caret's (inputs-draft.css) */
 @keyframes lib-cursor-blink {
   0% {
     opacity: 1;
@@ -74,6 +71,56 @@
   }
 }
 
+/* cursor.ring's CRT: the bar's off and on, drawn on a circle. Off: the ring flattens to a wider line, then a dot. On:
+   the dot opens to the line, then past full size, flickers once, settles. */
+.lib-cursor-ring.crt-off {
+  animation: lib-cursor-ring-off var(--cursor-off) forwards;
+}
+@keyframes lib-cursor-ring-off {
+  0% {
+    transform: scale(1, 1);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: scale(1.15, 0.12);
+    animation-timing-function: ease-in;
+  }
+  100% {
+    transform: scale(0.1, 0.03);
+  }
+}
+.lib-cursor-ring.crt-on {
+  animation: lib-cursor-ring-on var(--cursor-on) forwards;
+}
+@keyframes lib-cursor-ring-on {
+  0% {
+    transform: scale(0.1, 0.03);
+    animation-timing-function: ease-out;
+  }
+  35% {
+    transform: scale(1.15, 0.12);
+    animation-timing-function: ease-out;
+  }
+  65% {
+    transform: scale(1.06, 1.06);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1, 1);
+    opacity: 0.3;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1, 1);
+    opacity: 1;
+  }
+}
+.lib-cursor-ring.is-off {
+  visibility: hidden;
+}
+
 /* the demo: items laid out as a screen would, the cursor moves between them with the arrow keys */
 .lib-stage.lib-cursor-demo {
   position: relative;
@@ -93,4 +140,14 @@
 }
 .lib-cursor-item {
   position: relative;
+}
+
+/* cursor.ring: a ring around a round face, outside its rim; width, gap and colour are set inline (the draft) */
+.lib-cursor-ring {
+  position: absolute;
+  box-sizing: border-box;
+  border-style: solid;
+  border-radius: 50%;
+  border-color: var(--cursor-colour);
+  pointer-events: none;
 }
