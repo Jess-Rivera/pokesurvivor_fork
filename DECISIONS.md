@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-21, #155 run.hud.moveMart: stacked (team rows on top, offers below), teamSlot rows with type chips, no Buy button, price on the card; approved (Jess)](docs/decisions/2026-11-21-155-run-hud-move-mart-look.md)
 - [2026-11-20, #155 Move Shop replace-a-move buy: pick, a popup to choose the move, then a Replace or Go Back ask (Jess)](docs/decisions/2026-11-20-155-move-shop-replace-a-move-asks-replace-or-go-back.md)
 - [2026-11-20, #155 a dialog's two answers never share an intent: the confirm takes the action's intent, the back-out is always Neutral; button.glitch.cancel retired (Jess)](docs/decisions/2026-11-20-155-dialog-answers-never-share-an-intent.md)
 - [2026-11-20, #155 cursor.ring for round pieces; neither cursor blinks; the ring plays the CRT; catch belts back to 84 px (Jess)](docs/decisions/2026-11-20-155-cursor-ring-for-round-pieces-and-no-blink.md)

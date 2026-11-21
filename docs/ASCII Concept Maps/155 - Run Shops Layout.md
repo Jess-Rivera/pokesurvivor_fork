@@ -61,6 +61,55 @@ flowchart LR
   E -- Go Back --> D
 ```
 
+## run.hud.moveMart v2: stacked (Jess 2026-11-21, APPROVED: decision 2026-11-21-155-run-hud-move-mart-look)
+
+Replaces the mirrored left/right layout for the Move Trainer. The mockup gives the relative layout only (Jess
+2026-11-21: sizes are not a request); piece sizes stay with the approved pieces and the window grows to fit.
+
+```mermaid
+flowchart TB
+  subgraph W[Window panel.clean]
+    direction TB
+    H[Header: title top left, Silver counter top right, teal line under the title]
+    D[Divider across the window]
+    T[Team: 3 x 2 grid of wide rows spanning the window, type rim on each]
+    C[Offers: the chosen Pokemon's 4 cards in one row under the team]
+    B[Bottom right: Reroll then Leave]
+    H --> D --> T --> C --> B
+  end
+```
+
+Read from the colours: team rims are the Pokemon's own type (red is a Fire sample); card rims teal; the green button
+Positive (Reroll), the teal one Neutral (Leave). No Buy button on the cards (as the older move-trainer.excalidraw):
+picking the card is the buy.
+
+### The team row (Jess 2026-11-21)
+
+run.hud.teamSlot's panel.pixel box (278 x 64, rimmed in the first type, two-type seam), portrait and name, with the
+HP bar replaced by the Pokemon's chip.type chips. Fit check, in the bar's place (66 px from the left, 38 px down,
+about 198 px wide before the right rim):
+
+| Chip scale | One chip | Two chips (gap 6) | Fits |
+|---|---|---|---|
+| chip.type:one (Silver 10) | 60 x 17 | 126 x 17 | yes, clears the bottom rim |
+| chip.type:two (Silver 20) | 116 x 32 | 238 x 32 | no: too wide, and runs past the box's bottom |
+
+So chip.type:one. Dropped from teamSlot (run-only): the key, held item square, status chip, swap shade, HP bar.
+
+Price (Jess 2026-11-21): a Silver coin and the number on its own line at the bottom of the card, in the button's place.
+Drafted 2026-11-21 (Quick) in tools/library/run-shops-draft.js. Reroll turned Positive in the shared buttons, so the
+TR Mart page shows it green too. The window is as wide as the team grid (906 px), not the Main Menu Shop's 1145.
+
+Feel pass 1 (Jess 2026-11-21): the row box is 6 art rows taller than teamSlot (38 rows, 76 px) so cursor.ring has 2 px
+of air inside the rim and the chips clear the bottom rim; face centred, name and chips centred as a pair. The price
+coin was the whole 8-frame sheet squashed (the artifact); now the counter's coin, first frame, still, at 1x. The move's
+type glyph sits in the move slot's well (type base in a 2 px ink ring), on the cards and the forget popup's rows.
+
+Open (Jess):
+1. Does stacked (choose on top, answer below) replace mirrored for the TR Mart too (4 TR cards on top, the team rows below with a status each)?
+2. ~~What a wide team row holds~~ Ruled above.
+3. ~~Where the price goes~~ Ruled above.
+
 ## Open before the build
 
 1. The forget panel's name on the board (suggested: `run.hud.forgetMove`).
