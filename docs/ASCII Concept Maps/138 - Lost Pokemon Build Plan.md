@@ -128,3 +128,5 @@ lines), BALANCE.md (recruit odds), spec section 5 marked built, #138 comment, ca
 - Checks run in Quick's sandbox (Node is not reachable from Quick on the work machine): lost-pokemon-harness all
   passed; rescue-harness all passed; all 10 mutants caught; every touched file parses. Not run: tools/check.js,
   npm run format, the headless smokes (Jess runs them).
+- Jess 2026-11-21: check.js clean after the gyms-only guard fix and the doc-colours regen, feel tested, committed
+  ce57625 on feature/138-146-lost-and-full-box (not pushed yet).

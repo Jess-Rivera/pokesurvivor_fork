@@ -5,9 +5,8 @@ Last updated: 2026-11-21 late afternoon, Quick (work machine). Branch: feature/1
 main after feature/128-acquisition merged, e5c94df). No branch rules file.
 
 ## START HERE (next session, either tool)
-1. #138 S7 Lost Pokemon: BUILT, not committed. Jess runs node tools/check.js, npm run format and
-   node docs/proposals/lost-pokemon-mutate.js, then feel tests (G.Debug.lost(92) Gastly on a water map,
-   G.Debug.lost(133) Eevee), then commits. Plan: docs/ASCII Concept Maps/138 - Lost Pokemon Build Plan.md.
+1. #138 S7 Lost Pokemon: built, feel tested, committed ce57625 (not pushed). Left: the #138 comment and close,
+   the deferred co-op issue. Plan: docs/ASCII Concept Maps/138 - Lost Pokemon Build Plan.md.
 2. Next on this branch: #146 keep-or-sell list. Then #139 S8 (open: candy CD1 to CD4, friendship minutes).
 3. #145 small and ready. Feel test the Ancient Power line.
 
