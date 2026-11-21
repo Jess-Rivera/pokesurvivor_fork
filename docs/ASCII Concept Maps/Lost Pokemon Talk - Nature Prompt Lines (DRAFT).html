@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lost Pokemon Talk - Nature Prompt Lines (DRAFT)</title>
+<style>
+:root{color-scheme:dark;--bg:#121218;--card:#1b1b23;--surface:#23232d;--line:#30303c;--text:#ececf1;--muted:#a3a3b2;
+--atk:#ff7d7d;--def:#f5b942;--spa:#b98cff;--spd:#4fd8c8;--spe:#5cc8ff;--neu:#b4b4c4;--like:#6ee7a0;--neut:#ffd166;--dis:#ff6b6b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14.5px/1.5 "Segoe UI",system-ui,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:28px 24px 70px}
+h1{font-size:24px;margin:0 0 4px}
+h2{font-size:17px;margin:30px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+.sub{color:var(--muted);margin:0 0 18px}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600;background:var(--surface);border:1px solid var(--line)}
+.grid{display:grid;gap:14px}
+.g3{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--surface)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px}
+.arrow{color:var(--muted)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 16px}
+.chip{cursor:pointer;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit;font-size:13px}
+.chip.on{outline:2px solid var(--text)}
+input[type=search]{background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 10px;font:inherit}
+.group h3{margin:22px 0 8px;font-size:16px}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--neu);border-radius:10px;padding:12px 14px 14px;margin-bottom:12px}
+.head{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+.head b{font-size:16px}
+.read{color:var(--muted);font-style:italic}
+.wants{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px;font-size:12.5px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:820px){.cols{grid-template-columns:1fr}}
+.col{background:var(--surface);border-radius:8px;padding:8px 10px}
+.col h4{margin:0 0 6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.lab{font-size:12px;font-weight:700;margin-top:6px}
+.lab.o{color:var(--muted)}.lab.l{color:var(--like)}.lab.n{color:var(--neut)}.lab.d{color:var(--dis)}
+ul{margin:2px 0 4px 18px;padding:0}
+li{margin:1px 0}
+.long{color:var(--dis);font-size:11px;font-weight:700;margin-left:6px}
+button.roll{margin-top:10px;cursor:pointer;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:5px 12px;font:inherit;font-size:13px}
+button.roll:hover{border-color:var(--text)}
+.sample{display:none;margin-top:10px;background:#15151c;border:1px dashed var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.sample.show{display:block}
+.opt{display:grid;grid-template-columns:200px 22px 1fr;gap:6px;margin:2px 0}
+.emo{font-weight:700;text-align:center}
+.note{color:var(--muted);font-size:13px}
+.tag{font-size:11px;padding:0 6px;border-radius:5px;border:1px solid var(--line);margin-left:4px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<h1>Lost Pokemon Talk: Nature Prompt Lines</h1>
+<p class="sub">DRAFT, 2026-11-21. All lines are <span class="pill">[Proposed]</span> English text for the T1 prompt bank (js/data/lost-talk.js, later). Companion to "Lost Pokemon Talk - Research and Build Path.html". No code is approved here; this is copy for review.</p>
+
+<h2>How a talk is assembled</h2>
+<div class="box">
+<div class="flow">
+<span class="step">Toast names the nature</span><span class="arrow">→</span>
+<span class="step">P1 opener (nature pool)</span><span class="arrow">→</span>
+<span class="step">3 approaches: the liked one + 2 others</span><span class="arrow">→</span>
+<span class="step">P1 reaction (nature × like / neutral / dislike)</span><span class="arrow">→</span>
+<span class="step">P2 opener (nature pool)</span><span class="arrow">→</span>
+<span class="step">3 berries: the liked one + 2 others</span><span class="arrow">→</span>
+<span class="step">P2 reaction</span><span class="arrow">→</span>
+<span class="step">Roll at final favor</span>
+</div>
+<p class="note" style="margin:10px 0 0">Variety rules [Proposed]: each slot draws from its pool with a per-run shuffle bag, so no line repeats until its pool runs dry. Like and dislike lines are written to the one approach or berry that triggers them, so they can name it. Neutral lines must fit any of the 3 other options, so they stay generic. Every line is game narration about wordless behavior: no quoted speech and nothing about code (docs/META-NARRATIVE.md).</p>
+</div>
+
+<div class="grid g3" style="margin-top:14px">
+<div class="box">
+<b>Prompt 1: approach buttons</b>
+<p class="note" style="margin:4px 0 8px">One of 3 phrasings, drawn per talk. Each button always carries its fixed stat tag, so players learn the rule even when the wording changes.</p>
+<table id="apTable"><tr><th>Stat</th><th>Phrasings</th></tr></table>
+</div>
+<div class="box">
+<b>Prompt 2: berry buttons</b>
+<p class="note" style="margin:4px 0 8px">Fixed names plus a flavor tag (mainline berries, flavor only, no inventory).</p>
+<table id="beTable"><tr><th>Stat</th><th>Berry</th><th>Flavor</th></tr></table>
+</div>
+<div class="box">
+<b>Coverage</b>
+<table id="cov"></table>
+<p class="note" style="margin:8px 0 0">Feedback per reaction: <span style="color:var(--like)">♪ like</span>, <span style="color:var(--neut)">💧 neutral</span>, <span style="color:var(--dis)">💢 dislike</span>, plus the cry at a matching pitch and a rim tint.</p>
+</div>
+</div>
+
+<h2>Natures</h2>
+<div class="bar" id="bar"><input type="search" id="q" placeholder="Find a nature"></div>
+<div id="out"></div>
+
+<h2>Open points for review</h2>
+<div class="box">
+<ul>
+<li><b>Body plans.</b> The pool includes floaters (Zubat, Gastly). Lines avoid paws, tails and feet, but "sits", "lies down" and "rolls over" still read a little oddly on a floater. Option for later: add a floater variant for those few lines.</li>
+<li><b>Neutral natures</b> (Hardy, Docile, Serious, Bashful, Quirky) like whatever matches the species' highest non-HP base stat (build path D2 b), so their like lines are generic and they have no dislike lines. The sample roll below picks a random stat to stand in for that.</li>
+<li><b>Neutral is the most common outcome</b>, since 2 of the 3 options on each prompt are usually neutral, so every nature has 2 neutral lines per prompt. If playtests show repeats there first, that pool is the one to grow.</li>
+<li><b>Length.</b> Lines are flagged red if they pass 72 characters with a 10-letter name in place of {name}. That limit is a guess for the talk window width.</li>
+<li><b>Two nature models.</b> The catch screen's flee buckets (catch.js) don't follow raised stats, so a Timid Pokemon is hard to catch but loves Play chase here. That needs one decision at the #148 tuning pass.</li>
+</ul>
+</div>
+</main>
+
+<script>
+const STAT = {
+  Atk:{label:"Fierce",color:"var(--atk)",ap:["Spar with it","Offer a play-fight","Square up, grinning"],berry:"Cheri",flavor:"Spicy"},
+  Def:{label:"Steady",color:"var(--def)",ap:["Sit and wait","Stay still nearby","Wait it out quietly"],berry:"Aspear",flavor:"Sour"},
+  SpA:{label:"Curious",color:"var(--spa)",ap:["Show it something shiny","Show it a trick","Show it a smooth stone"],berry:"Chesto",flavor:"Dry"},
+  SpD:{label:"Gentle",color:"var(--spd)",ap:["Kneel and speak softly","Hum a quiet tune","Offer an open hand"],berry:"Rawst",flavor:"Bitter"},
+  Spe:{label:"Restless",color:"var(--spe)",ap:["Play chase","Race it to the next tree","Dash off and look back"],berry:"Pecha",flavor:"Sweet"}
+};
+const STATS = Object.keys(STAT);
+// [name, raised, lowered, read, p1 openers, p1 like, p1 neutral, p1 dislike, p2 openers, p2 like, p2 neutral, p2 dislike]
+const N = [
+["Lonely","Atk","Def","Acts tough, clings to you, bruises easily.",
+ ["{name} paces near the mark, glancing back to check on you.","{name} puffs up at nothing, then edges closer to you."],
+ ["{name} pounces, wrestles your sleeve, then leans against you.","{name} play-tackles you, then refuses to leave your side."],
+ ["{name} watches you closely and stays near.","{name} sniffs the air between you, unsure."],
+ ["Left waiting, {name} whines and turns away.","You keep still. {name} curls up with its back to you."],
+ ["{name} bumps your hand, then eyes your bag.","{name} hangs at your elbow, eyeing your pockets."],
+ ["{name} wolfs the Cheri down, eyes watering, and wants more.","{name} snatches the Cheri, chews hard, and bumps into you."],
+ ["{name} eats it slowly, never taking its eyes off you.","{name} eats it pressed against your side."],
+ ["{name} puckers at the sour Aspear and drops it in the dirt.","{name} spits out the Aspear and presses close to you, sulking."]],
+["Brave","Atk","Spe","Stands its ground, never runs, slow to move.",
+ ["{name} holds the mark like it owns it.","{name} stares down the nearest bush, daring it to move."],
+ ["{name} meets you head on, then stands taller for it.","{name} takes the hit, shakes it off, and charges again."],
+ ["{name} holds its ground and waits to see what you do.","{name} gives a short huff and stands firm."],
+ ["You take off running. {name} doesn't budge an inch.","{name} snorts as you run, too proud to chase."],
+ ["{name} sits square in front of you, waiting to be fed.","{name} squares up to your bag like it's a rival."],
+ ["{name} crunches the Cheri whole and doesn't flinch at the heat.","{name} bites down hard on the Cheri, eyes streaming, chest out."],
+ ["{name} eats it in two bites, unimpressed.","{name} swallows it and goes back on guard."],
+ ["{name} sniffs the sweet Pecha and nudges it away.","{name} turns its nose up at the Pecha as if insulted."]],
+["Adamant","Atk","SpA","Stubborn, single-minded, no patience for tricks.",
+ ["{name} stakes out the mark and won't give an inch.","{name} keeps glaring at one spot, refusing to look away."],
+ ["{name} shoves back hard and won't stop until you yield.","{name} grapples, wins, and stands over you, satisfied."],
+ ["{name} stares at you, unmoved, still deciding.","{name} doesn't move, but doesn't leave."],
+ ["{name} looks straight past what you're showing it.","{name} huffs at your little trick and turns aside."],
+ ["{name} stands rigid, but its stomach growls.","{name} fixes its eyes on your bag and won't blink."],
+ ["{name} grinds the Cheri down without blinking at the heat.","{name} chomps the Cheri in one go and gives a short, hard nod."],
+ ["{name} eats it because it's there.","{name} chews once, twice, and stares at you."],
+ ["{name} chews the dry Chesto once and lets it fall.","{name} drops the Chesto and glares at it."]],
+["Naughty","Atk","SpD","Mischievous, prickly, hates being fussed over.",
+ ["{name} tugs your bag strap, then darts back, mischief in its eyes.","{name} knocks a pebble off the mark and looks pleased with itself."],
+ ["{name} tackles you, tumbles away, and comes back for more.","{name} nips you cheekily and bounces on the spot."],
+ ["{name} eyes you sideways, plotting something.","{name} pretends to ignore you, badly."],
+ ["{name} squirms away from the fuss, scowling.","The soft approach makes {name} bristle and snap at the air."],
+ ["{name} is already halfway into your bag.","{name} pretends not to look at the berries. It is looking."],
+ ["{name} steals the Cheri before you finish offering it.","{name} gobbles the Cheri and tries to swipe a second."],
+ ["{name} nibbles it, then tosses the stem at you.","{name} eats it and eyes the rest of your bag."],
+ ["{name} bites the bitter Rawst and flings it back at you.","{name} gags at the Rawst and stomps off a few steps."]],
+["Bold","Def","Atk","Stands firm, calm under pressure, hates roughhousing.",
+ ["{name} sits squarely on the mark and does not move.","{name} watches you from the mark, perfectly still."],
+ ["You wait. After a moment, {name} settles beside you, solid as stone.","{name} seems to respect your patience and shuffles closer."],
+ ["{name} weighs you up without budging.","{name} gives you a long, level look."],
+ ["{name} braces and lets your play-fight bounce off, unamused.","{name} plants itself and refuses to roughhouse."],
+ ["{name} waits for you to make the first move.","{name} stays put, but its eyes follow your hand."],
+ ["{name} crunches the sour Aspear and gives a satisfied huff.","{name} savors the Aspear slowly and stays right where it is."],
+ ["{name} accepts it and eats without fuss.","{name} chews it calmly, still watching you."],
+ ["{name} coughs at the spicy Cheri and sets its jaw.","{name} sniffs the Cheri and nudges it back toward you."]],
+["Relaxed","Def","Spe","Unhurried, sleepy, hates being rushed.",
+ ["{name} lies down on the mark as if it's had a long day.","{name} yawns at you, then rolls onto its side."],
+ ["You settle in too. {name} sighs and rests its head against you.","{name} dozes off beside you, perfectly content."],
+ ["{name} opens one eye at you and closes it again.","{name} rolls over, considering it."],
+ ["You take off running. {name} watches you go and doesn't bother.","{name} groans at the idea of running and flops over."],
+ ["{name} stretches, then looks hopefully at your bag.","{name} doesn't get up, but it does lift its head."],
+ ["{name} munches the Aspear lazily and smacks its lips.","{name} eats the Aspear without getting up, humming contentedly."],
+ ["{name} eats it eventually, without sitting up.","{name} chews very, very slowly."],
+ ["{name} licks the sweet Pecha once and loses interest.","{name} rolls away from the sticky Pecha."]],
+["Impish","Def","SpA","Cheeky, physical, scoffs at clever tricks.",
+ ["{name} sits on the mark and grins like it's guarding treasure.","{name} blocks your path, then flops down, smug."],
+ ["You wait it out. {name} cracks first and scoots up beside you.","{name} leans into you like a boulder and won't move off."],
+ ["{name} sticks its tongue out and waits.","{name} smirks and stays put."],
+ ["{name} snorts at your trick and sits on it.","{name} acts like your trick is the dullest thing it has ever seen."],
+ ["{name} hops in front of you, impatient.","{name} pokes your bag, then acts innocent."],
+ ["{name} chomps the Aspear, scrunches its face, and grins.","{name} loves the sour bite and wiggles with glee."],
+ ["{name} eats it, then pretends it didn't.","{name} eats it with exaggerated slowness."],
+ ["{name} spits the dry Chesto at a nearby rock.","{name} buries the Chesto and sits on the spot."]],
+["Lax","Def","SpD","Easygoing, careless, sulks when fussed over.",
+ ["{name} is sprawled across the mark, unbothered by the horde.","{name} doesn't even look up as you arrive."],
+ ["You settle in. {name} slumps against you, perfectly happy.","{name} rolls over and drifts off beside you."],
+ ["{name} shrugs you off and keeps lounging.","{name} scoots an inch closer, then stops."],
+ ["{name} squirms at all the fussing and turns its back.","The fussing makes {name} grumble and drag itself away."],
+ ["{name} opens its mouth and waits to be fed.","{name} flops against you. Food, apparently."],
+ ["{name} gulps the Aspear and dozes off mid-chew.","{name} slurps the Aspear down, rind and all."],
+ ["{name} eats half of it and forgets the rest.","{name} eats it and promptly yawns."],
+ ["{name} tastes the bitter Rawst and lets it roll away.","{name} pulls a face at the Rawst and naps in protest."]],
+["Modest","SpA","Atk","Thoughtful, polite, shy of rough play.",
+ ["{name} studies the mark from a careful distance.","{name} peers at your hands, curious but reserved."],
+ ["{name} leans in to study what you show it, eyes bright.","{name} follows every detail, fascinated."],
+ ["{name} watches politely, giving nothing away.","{name} tilts its head, thinking it over."],
+ ["{name} shrinks from the play-fight and looks away.","{name} steps back, clearly not one for roughhousing."],
+ ["{name} looks at your bag, then at you, then back.","{name} waits quietly, too polite to beg."],
+ ["{name} nibbles the dry Chesto thoughtfully and sighs.","{name} turns the Chesto over twice, then eats it with care."],
+ ["{name} accepts it with a small bow of the head.","{name} eats it neatly and waits."],
+ ["{name} tastes the spicy Cheri and gasps for air.","{name} sets the Cheri aside, as gently as it can."]],
+["Mild","SpA","Def","Dreamy, soft, startles easily.",
+ ["{name} gazes at the sky, half lost in a daydream.","{name} jumps at a falling leaf, then sheepishly relaxes."],
+ ["{name} gasps at what you show it and edges closer.","{name} watches, swaying happily."],
+ ["{name} blinks slowly, drifting between you and the sky.","{name} looks at you, then at a cloud."],
+ ["The stillness makes {name} fidget and look for the exit.","{name} startles at your silence and backs away."],
+ ["{name} drifts toward your bag, then forgets why.","{name} sways softly, waiting."],
+ ["{name} nibbles the Chesto, eyes going dreamy.","{name} savors the dry Chesto and leans into you."],
+ ["{name} eats it slowly, lost in thought.","{name} holds it a while before eating."],
+ ["{name} startles at the sour Aspear and drops it.","{name} shivers at the sour taste and steps away."]],
+["Quiet","SpA","Spe","Watchful, still, slow to move.",
+ ["{name} sits on the mark, perfectly still, watching everything.","{name} hasn't blinked since you arrived."],
+ ["{name} studies what you show it for a long moment, then nods.","{name} mimics what you showed it, slowly and exactly."],
+ ["{name} keeps watching, unreadable.","{name} shifts its gaze to you, then away."],
+ ["You take off running. {name} watches you go, unimpressed.","{name} stays put while you run, faintly disappointed."],
+ ["{name} looks at your bag and waits, unblinking.","{name} tilts its head a fraction toward the berries."],
+ ["{name} eats the Chesto in tiny, careful bites.","{name} closes its eyes as it chews the Chesto."],
+ ["{name} takes it without a sound.","{name} eats it, then goes back to watching."],
+ ["{name} sniffs the sweet Pecha and looks at you flatly.","{name} leaves the Pecha exactly where you put it."]],
+["Rash","SpA","SpD","Impulsive, nosy, bristles at fuss.",
+ ["{name} is poking at everything near the mark.","{name} bolts toward a noise, then bolts back."],
+ ["{name} snatches what you show it to inspect it up close.","{name} turns it over and over with obvious delight."],
+ ["{name} loses interest halfway and sniffs your shoe.","{name} sniffs at you, then at something else."],
+ ["{name} huffs at the fussing and swats your hand away.","{name} wriggles free of the fuss, irritated."],
+ ["{name} is already rooting through your bag.","{name} grabs at the berries before you can choose."],
+ ["{name} crunches the Chesto and immediately wants another.","{name} tears into the Chesto, crumbs everywhere."],
+ ["{name} bites it, shrugs, and keeps chewing.","{name} eats it in two quick bites."],
+ ["{name} spits out the bitter Rawst with a loud huff.","{name} flings the Rawst over its shoulder."]],
+["Calm","SpD","Atk","Serene, patient, dislikes aggression.",
+ ["{name} rests on the mark, untroubled by the noise around it.","{name} watches you approach without a flicker of worry."],
+ ["{name} closes its eyes and leans toward you.","{name} lets the moment settle and moves in close."],
+ ["{name} regards you calmly, in no hurry.","{name} blinks slowly, taking it in."],
+ ["{name} steps aside from the play-fight, quietly disappointed.","{name} tenses at the rough play and draws back."],
+ ["{name} waits patiently, eyes soft.","{name} settles, as if it has all the time in the world."],
+ ["{name} chews the bitter Rawst slowly, at peace.","{name} finishes the Rawst and sighs deeply."],
+ ["{name} eats it serenely, giving nothing away.","{name} eats it and settles again."],
+ ["{name} winces at the spicy Cheri and sets it down.","{name} declines the Cheri with a slow shake of its head."]],
+["Gentle","SpD","Def","Kind, warm, delicate.",
+ ["{name} tends a bent flower by the mark.","{name} watches you with wide, kind eyes."],
+ ["{name} nuzzles you and makes a soft, happy sound.","{name} curls up near you, relaxed at last."],
+ ["{name} smiles faintly and waits.","{name} tilts its head kindly."],
+ ["Your stillness seems to hurt {name}, and it looks away.","{name} waits for you to come closer. You don't. It droops."],
+ ["{name} sits beside you and waits its turn.","{name} sniffs the air near your bag, hopeful."],
+ ["{name} eats the Rawst delicately and nuzzles you after.","{name} savors the bitter Rawst and beams."],
+ ["{name} takes it gratefully and eats in small bites.","{name} eats it carefully, leaving no mess."],
+ ["{name} shudders at the sour Aspear but tries to be polite.","{name} sets the Aspear down with an apologetic look."]],
+["Sassy","SpD","Spe","Proud, unhurried, expects respect.",
+ ["{name} sits on the mark with its nose in the air.","{name} looks you up and down, judging."],
+ ["{name} accepts your courtesy as its due and allows you closer.","{name} lifts its chin, pleased by the respect."],
+ ["{name} glances at you, then looks away, bored.","{name} allows it, barely."],
+ ["You take off running. {name} refuses to be seen chasing.","{name} watches you run around and sniffs, disdainful."],
+ ["{name} waits to be served.","{name} pointedly ignores your bag, waiting for you to notice."],
+ ["{name} eats the bitter Rawst with great dignity.","{name} finishes the Rawst and allows you a short nod."],
+ ["{name} takes it as if doing you a favor.","{name} eats it, then checks that you noticed."],
+ ["{name} sniffs the sweet Pecha and turns away, offended.","{name} nudges the Pecha back to you with obvious contempt."]],
+["Careful","SpD","SpA","Cautious, suspicious of anything new.",
+ ["{name} circles the mark twice before settling on it.","{name} keeps one eye on you and one on the horde."],
+ ["{name} hesitates, then lets you near, slowly.","{name} sniffs at you for a long moment, then relaxes."],
+ ["{name} keeps its distance, still checking you over.","{name} edges a little closer, then stops."],
+ ["{name} backs away from the strange new thing.","{name} eyes your trick with deep suspicion and retreats."],
+ ["{name} watches your bag like it might bite.","{name} waits for you to set the berry down first."],
+ ["{name} tests the Rawst with a lick, then eats it, satisfied.","{name} relaxes at the familiar bitter taste."],
+ ["{name} inspects it from every side before eating.","{name} sniffs it a long while, then eats."],
+ ["{name} won't touch the unfamiliar Chesto.","{name} sniffs the dry Chesto and pushes it far away."]],
+["Timid","Spe","Atk","Skittish, quick to bolt, scared of rough play.",
+ ["{name} hides behind the mark, peeking out at you.","{name} flinches at every sound, ready to bolt."],
+ ["{name} darts after you, then zips ahead, delighted.","{name} races you in circles and forgets to be scared."],
+ ["{name} peeks out, still unsure of you.","{name} creeps out an inch, then freezes."],
+ ["{name} squeaks at the play-fight and bolts behind a rock.","{name} trembles and backs away from the rough play."],
+ ["{name} creeps toward your bag, one nervous step at a time.","{name} stays hidden, but peeks out toward the berries."],
+ ["{name} snatches the Pecha and nibbles it in a happy blur.","{name} munches the sweet Pecha and finally stops shaking."],
+ ["{name} grabs it and eats it in hiding.","{name} nibbles it, ready to run."],
+ ["{name} yelps at the spicy Cheri and scrambles away.","{name} drops the Cheri and hides its face."]],
+["Hasty","Spe","Def","Impatient, can't sit still.",
+ ["{name} zips back and forth across the mark, impatient.","{name} can't keep still, darting this way and that."],
+ ["{name} rockets after you, overtakes, and circles back.","{name} races ahead and waits, bouncing, for you to catch up."],
+ ["{name} fidgets, half paying attention.","{name} shifts restlessly, waiting for more."],
+ ["You wait. {name} groans and paces around you.","{name} can't bear the waiting and darts off a few steps."],
+ ["{name} tugs at your bag, too impatient to wait.","{name} bounces in place, eyes on the berries."],
+ ["{name} gulps the Pecha in one bite and spins around.","{name} wolfs the Pecha and zooms a lap around you."],
+ ["{name} eats it in a hurry and looks for more.","{name} bolts it down without tasting."],
+ ["{name} spits out the sour Aspear mid-dash.","{name} scowls at the Aspear and zips away."]],
+["Jolly","Spe","SpA","Cheerful, playful, bored by clever tricks.",
+ ["{name} bounces on the mark, delighted to see you.","{name} wiggles happily and spins in a circle."],
+ ["{name} chases you, tumbles, and pops up grinning.","{name} bounds after you, overjoyed, and leaps at you."],
+ ["{name} cocks its head, still cheerful.","{name} bounces once and waits for the fun part."],
+ ["{name} yawns at your trick and wanders off to play.","{name} gets bored of your trick and knocks it over."],
+ ["{name} dances in front of your bag.","{name} rolls over, begging cheerfully."],
+ ["{name} devours the Pecha and does a little jig.","{name} munches the sweet Pecha and bounces happily."],
+ ["{name} eats it cheerfully, then goes back to playing.","{name} eats it and hums a happy note."],
+ ["{name} munches the dry Chesto, then makes a face.","{name} chews the Chesto, frowns, and runs off a little."]],
+["Naive","Spe","SpD","Carefree, trusting, flighty when fussed.",
+ ["{name} trots up to you, completely unafraid.","{name} chases a bug around the mark, ignoring the horde."],
+ ["{name} romps after you and tumbles into your arms.","{name} chases you gleefully, wherever you go."],
+ ["{name} gets distracted by a bug halfway through.","{name} watches, wide-eyed and trusting."],
+ ["{name} squirms out of the fuss and zips away.","All the fussing makes {name} restless, and it wriggles off."],
+ ["{name} sticks its whole head in your bag.","{name} trusts you completely and opens its mouth wide."],
+ ["{name} gobbles the Pecha and licks your fingers.","{name} munches the Pecha happily, juice everywhere."],
+ ["{name} eats it, then tries to eat the bag too.","{name} eats it and grins at you."],
+ ["{name} bites the bitter Rawst and pulls a horrified face.","{name} drops the Rawst and stares at you, betrayed."]],
+["Hardy",null,null,"Sturdy and even-tempered.",
+ ["{name} stands on the mark, sturdy and patient.","{name} looks you over with an even, steady gaze."],
+ ["{name} lights up and steps in close.","{name} answers you with a firm, happy nudge."],
+ ["{name} takes it in stride.","{name} seems unbothered either way."],[],
+ ["{name} waits for you to open your bag.","{name} settles, ready for whatever comes."],
+ ["{name} eats it heartily and stays by you.","{name} finishes it and gives a short, approving shake."],
+ ["{name} eats it without complaint.","{name} chews it steadily, unfazed."],[]],
+["Docile",null,null,"Agreeable, follows your lead.",
+ ["{name} waits at the mark, watching to see what you'll do.","{name} mirrors your steps as you come closer."],
+ ["{name} brightens and follows your lead eagerly.","{name} copies you exactly, clearly pleased."],
+ ["{name} goes along with it quietly.","{name} does as you do, without much spark."],[],
+ ["{name} settles when you settle.","{name} looks at your bag, then to you for permission."],
+ ["{name} eats it gratefully and moves closer.","{name} finishes it and waits for your next move."],
+ ["{name} eats it obediently.","{name} accepts it without fuss."],[]],
+["Serious",null,null,"Focused, solemn, hard to read.",
+ ["{name} stands at the mark, eyes fixed on the horizon.","{name} watches the horde, not you."],
+ ["{name} turns its full attention to you, approving.","{name} gives a single, solemn nod."],
+ ["{name} considers it, expression unchanged.","{name} keeps its focus elsewhere."],[],
+ ["{name} looks at the berries as if weighing a decision.","{name} waits, utterly composed."],
+ ["{name} eats it with grave focus, then steps nearer.","{name} finishes and holds your gaze a moment longer."],
+ ["{name} eats it without a flicker.","{name} chews, considering."],[]],
+["Bashful",null,null,"Shy, hides, warms up slowly.",
+ ["{name} ducks out of sight as you arrive, then peeks back.","{name} looks away the moment you look at it."],
+ ["{name} blushes, then shuffles a little closer.","{name} peeks out and holds your gaze for a moment."],
+ ["{name} stays half hidden, unsure.","{name} fidgets, too shy to decide."],[],
+ ["{name} watches your bag from behind cover.","{name} pretends not to want a berry."],
+ ["{name} takes it shyly, then glances back, pleased.","{name} nibbles it and inches closer when you're not looking."],
+ ["{name} takes it and retreats to eat in private.","{name} accepts it without meeting your eyes."],[]],
+["Quirky",null,null,"Unpredictable, odd habits.",
+ ["{name} is balanced oddly on the mark, for some reason.","{name} is staring intently at its own reflection in a puddle."],
+ ["{name} does a strange little spin, which seems to mean yes.","{name} flops over sideways, delighted in its own way."],
+ ["{name} reacts to something entirely different.","{name} sneezes and seems to forget you were there."],[],
+ ["{name} tries to eat a pebble while you open your bag.","{name} sniffs your elbow instead of your bag."],
+ ["{name} eats it upside down and looks thrilled.","{name} tosses it up, catches it, eats it, and hops in a circle."],
+ ["{name} eats half and buries the other half.","{name} licks it, then stares at you."],[]]
+];
+const SAMPLE_NAMES = ["Eevee","Zubat","Growlithe","Gastly","Mareep","Psyduck","Pidgey","Abra"];
+const LIMIT = 72, TEST_NAME = "Charmander";
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const tooLong = s => s.replace("{name}",TEST_NAME).length > LIMIT;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(p=>p[1]);
+
+// static tables
+document.getElementById("apTable").insertAdjacentHTML("beforeend",STATS.map(s=>`<tr><td style="color:${STAT[s].color};font-weight:700">${s}</td><td>${STAT[s].ap.join("<br>")}</td></tr>`).join(""));
+document.getElementById("beTable").insertAdjacentHTML("beforeend",STATS.map(s=>`<tr><td style="color:${STAT[s].color};font-weight:700">${s}</td><td>${STAT[s].berry} Berry</td><td>${STAT[s].flavor}</td></tr>`).join(""));
+let total=0,long=0;
+N.forEach(r=>[4,5,6,7,8,9,10,11].forEach(i=>r[i].forEach(l=>{total++; if(tooLong(l)) long++;})));
+document.getElementById("cov").innerHTML=`<tr><td>Natures</td><td>${N.length}</td></tr><tr><td>Nature lines</td><td>${total}</td></tr><tr><td>Per non-neutral nature</td><td>16 (2 openers, 2 like, 2 neutral, 2 dislike, per prompt)</td></tr><tr><td>Per neutral nature</td><td>12 (no dislike)</td></tr><tr><td>Approach phrasings</td><td>15</td></tr><tr><td>Over ${LIMIT} chars</td><td style="color:${long?"var(--dis)":"var(--like)"}">${long}</td></tr>`;
+
+function list(lines){ return "<ul>"+lines.map(l=>`<li>${esc(l)}${tooLong(l)?'<span class="long">long</span>':''}</li>`).join("")+"</ul>"; }
+function block(title,o,l,n,d){
+  return `<div class="col"><h4>${title}</h4><div class="lab o">Openers</div>${list(o)}<div class="lab l">♪ Like</div>${list(l)}<div class="lab n">💧 Neutral</div>${list(n)}${d.length?`<div class="lab d">💢 Dislike</div>${list(d)}`:""}</div>`;
+}
+function card(r,idx){
+  const [name,up,dn,read]=r;
+  const color = up?STAT[up].color:"var(--neu)";
+  const wants = up
+    ? `<span class="pill" style="color:var(--like)">Likes: ${STAT[up].ap[0]} · ${STAT[up].berry} (${STAT[up].flavor})</span><span class="pill" style="color:var(--dis)">Dislikes: ${STAT[dn].ap[0]} · ${STAT[dn].berry} (${STAT[dn].flavor})</span>`
+    : `<span class="pill" style="color:var(--like)">Likes: the species' highest non-HP base stat</span><span class="pill">No dislike</span>`;
+  return `<div class="card" style="border-left-color:${color}" data-name="${name.toLowerCase()}">
+  <div class="head"><b>${name}</b><span class="pill" style="color:${color}">${up?`+${up} −${dn}`:"neutral"}</span><span class="read">${read}</span></div>
+  <div class="wants">${wants}</div>
+  <div class="cols">${block("Prompt 1: approach",r[4],r[5],r[6],r[7])}${block("Prompt 2: berry",r[8],r[9],r[10],r[11])}</div>
+  <button class="roll" data-i="${idx}">Roll a sample talk</button><div class="sample" id="s${idx}"></div></div>`;
+}
+const GROUPS=[["Atk","Fierce (+Atk)"],["Def","Steady (+Def)"],["SpA","Curious (+SpA)"],["SpD","Gentle (+SpD)"],["Spe","Restless (+Spe)"],[null,"Neutral natures"]];
+let filter="all";
+function render(){
+  const q=document.getElementById("q").value.trim().toLowerCase();
+  document.getElementById("out").innerHTML=GROUPS.filter(g=>filter==="all"||String(g[0])===filter).map(([s,label])=>{
+    const rows=N.map((r,i)=>[r,i]).filter(([r])=>r[1]===s&&(!q||r[0].toLowerCase().includes(q)));
+    if(!rows.length) return "";
+    return `<div class="group"><h3 style="color:${s?STAT[s].color:"var(--neu)"}">${label}</h3>${rows.map(([r,i])=>card(r,i)).join("")}</div>`;
+  }).join("");
+}
+const bar=document.getElementById("bar");
+[["all","All"],...GROUPS.map(g=>[String(g[0]),g[1].split(" (")[0]])].forEach(([k,l],i)=>{
+  const b=document.createElement("button"); b.className="chip"+(i===0?" on":""); b.textContent=l;
+  if(k!=="all"&&k!=="null") b.style.color=STAT[k].color;
+  b.onclick=()=>{filter=k; bar.querySelectorAll(".chip").forEach(c=>c.classList.remove("on")); b.classList.add("on"); render();};
+  bar.insertBefore(b,document.getElementById("q"));
+});
+document.getElementById("q").oninput=render;
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button.roll"); if(!b) return;
+  const i=+b.dataset.i, r=N[i], who=pick(SAMPLE_NAMES), sub=s=>esc(s.replace("{name}",who));
+  const likeStat=r[1]||pick(STATS), dis=r[2];
+  const offered=shuffle([likeStat,...shuffle(STATS.filter(s=>s!==likeStat)).slice(0,2)]);
+  const react=(s,l,n,d)=>s===likeStat?["♪","var(--like)",pick(l)]:s===dis?["💢","var(--dis)",pick(d)]:["💧","var(--neut)",pick(n)];
+  const row=(label,s,re)=>`<div class="opt"><span>${esc(label)}<span class="tag">${s}</span></span><span class="emo" style="color:${re[1]}">${re[0]}</span><span>${sub(re[2])}</span></div>`;
+  let h=`<div class="note">${who}, ${r[0]}${r[1]?"":` (best stat rolled as ${likeStat})`}. Every option's reaction is shown; in game you pick one.</div>`;
+  h+=`<p style="margin:6px 0 4px"><b>P1.</b> ${sub(pick(r[4]))}</p>`+offered.map(s=>row(pick(STAT[s].ap),s,react(s,r[5],r[6],r[7]))).join("");
+  const offered2=shuffle([likeStat,...shuffle(STATS.filter(s=>s!==likeStat)).slice(0,2)]);
+  h+=`<p style="margin:10px 0 4px"><b>P2.</b> ${sub(pick(r[8]))}</p>`+offered2.map(s=>row(`${STAT[s].berry} Berry (${STAT[s].flavor})`,s,react(s,r[9],r[10],r[11]))).join("");
+  const el=document.getElementById("s"+i); el.innerHTML=h; el.classList.add("show"); b.textContent="Roll again";
+});
+render();
+</script>
+</body>
+</html>

@@ -13,6 +13,23 @@ _Avoid_: game, partida
 
 Rule: BOSS-REWORK.md section 4
 
+**OOR level (out-of-run level)**:
+A copy's permanent level, 1 to 100, raised only by Exp Candy. It sets the copy's evolution stage and which starting moves it may pick; every run still starts at level 1.
+
+_Avoid_: candy level, meta level
+
+Rule: decision 2026-11-21-139-oor-level-candy-sources-friendship-model; Acquisition v2 spec section 6
+
+**Egg move unlock**:
+A copy may start a run with one of its species' egg moves once you have ever owned a member of a line that shares its egg group and learns that move by level-up (the mainline breeding father).
+
+Rule: decision 2026-11-21-139-oor-level-candy-sources-friendship-model
+
+**Fatigue**:
+A copy's tiredness, 0 to 100%, built up by runs and recovered only in runs it sits out. It scales friendship changes. Stubbed, numbers open.
+
+Rule: decision 2026-11-21-139-oor-level-candy-sources-friendship-model
+
 **Gym**:
 A fight at a gate on the map: a type-matched arena against a leader's signature Pokemon with hand-authored moves, at the run-time level + 4. Replaced the rifts.
 

@@ -404,3 +404,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   main.team first pass and the Pause placeholders were removed. Team menu mockup and rulings kept for #126.
 - Broke: nothing known. Nothing in js/ or css/; check.js and format not run, board pages not rendered from Quick.
 - Stopped at: closing #155 (drafts in docs/ASCII Concept Maps/155 - Close-out Drafts.md).
+
+## 2026-11-21 evening (Quick, work), #138 Lost Pokemon built; #139 grilled
+- Changed: #138 built (pool of evolvable Stage 1s from any region with floaters, nature toast, hover escort, safe
+  liquid spots, recruit 20 / 12 / 6% held like a catch, English lines, G.Debug.lost; new lost-pokemon harness and
+  10 mutants; gyms-only harness reads pool()). Committed ce57625 and 4cf32cb, pushed.
+- Decided: #138 H1, H2, D1 to D9; #139 opening, then a grilling that replaced CD1, CD3, F0 and F1 (out-of-run level,
+  candy sources, starting and egg moves, friendship model, fatigue). Agent corrected for deciding too much alone.
+- Broke: the gyms-only guard ("not legendary" comment, old pool regex), fixed. check.js clean on Jess's machine.
+- Stopped at: the 8a build plan. Research noted as a forming idea, no scope yet.

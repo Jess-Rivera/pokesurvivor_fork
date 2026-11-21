@@ -153,17 +153,28 @@ Data facts are from pokedex.js, enemy-classes.js, sprites-meta.js and the pokeap
 6. EVOLUTION (the only way past Stage 1)
 ----------------------------------------
   CANDY
-    Exp Candy is an EVOLUTION METER ONLY: no stats, every run still starts at level 1. Permanent
-    power comes from the evolved form's base stats.
+    Exp Candy raises a copy's OUT-OF-RUN (OOR) LEVEL, 1 to 100, along its species' growth curve. The OOR
+    level sets only its evolution stage and which starting moves it may pick; every run still starts at
+    level 1 (decision 2026-11-21-139-oor-level-candy-sources-friendship-model). Permanent power comes
+    from the evolved form's base stats.
     sizes   XS 100 | S 800 | M 3,000 | L 10,000 | XL 30,000 XP
     cost    the mainline XP curve: the species' growth rate, to its evolution level.
             Abra > Kadabra 2,535 | Bulbasaur > Venusaur 27,021 | Charmander > Charizard 40,007 |
             median line 33,084 | Dratini > Dragonite 207,968 | Deino > Hydreigon 327,680
-    source  gym leaders drop it.
-    [Parked] drop table, loop scaling, other sources, overflow past the last evolution (CD1 to CD4)
+    source  a rarity drop: gym leaders 100%, UberElites 50%, elites 15% (TUNE); gym size by gym order,
+            UberElite one size under the last gym beaten, elite XS; x loop number. Candy goes into a bag
+            and is given to a chosen copy in the Team menu; refused at OOR level 100.
+    pace    a median line evolves fully in 2 to 3 six-loop clears; level 100 is a long tail.
+            [Proposed] the size table (8a build plan).
+    level   evolutions with no level (131) take no candy: their normal requirement only (D8).
+  STARTING MOVES (after #97; takes #150 in)
+    level-up moves at or under the OOR level (newest game), the earlier forms' moves, and egg moves.
+    An egg move unlocks at any level once a parent line was ever owned (shares an egg group, learns it
+    by level-up, forms included).
 
   WHERE AND HOW
-    Evolving happens in the TEAM MENU, when the copy's candy level is reached and every requirement is met.
+    Evolving is a CHOICE in the TEAM MENU (permanent, optional), once the OOR level is reached and every
+    requirement is met.
     In-run requirements are TRUE / FALSE FLAGS saved on the copy, set during a run. Back at the main menu
     a popup says the mon is ready ("Runerigus is ready to evolve!").
     Evolutions added in a later gen are always allowed, in any region (Golbat > Crobat in Kanto).
@@ -176,8 +187,10 @@ Data facts are from pokedex.js, enemy-classes.js, sprites-meta.js and the pokeap
     trade                 26     a LINK CABLE (one-time use, Shop) or a real trade once multiplayer
                                  exists (deferred)
       trade + held item   17     Link Cable AND the held item (Shop), e.g. Onix > Steelix = Cable + Metal Coat
-    friendship            18     N minutes on the TEAM in one run (being on the team is enough);
-                                 [Open] N per species (pokeapi base_happiness is one possible dial)
+    friendship            18     the copy's friendship (0 to 255) reaches the mainline threshold (160;
+                                 220 Pichu, Chingling, Swadloon); no candy (D8). Run time alive raises it,
+                                 time fainted and faints lower it, fatigue scales it. [Open] the
+                                 calculation. Decision 2026-11-21-139-oor-level-candy-sources-friendship-model
     time of day           18     flag: it was the ACTIVE Pokemon while it was day (or night); needs the
                                  day / night cycle (#101, parked, run time, random start point)
     knows a move          14     flag: the move was in that copy's RUN MOVESET
