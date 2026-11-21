@@ -7,6 +7,16 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-21',
+    title: ['Shorter move descriptions', 'Shorter move descriptions'],
+    chg: [
+      [
+        'A move that raises every stat by the same amount now says so once: Ancient Power reads "10% team all stats +1".',
+        'A move that raises every stat by the same amount now says so once: Ancient Power reads "10% team all stats +1".',
+      ],
+    ],
+  },
+  {
     d: '2026-11-18',
     title: ['Shorter Shop prices', 'Shorter Shop prices'],
     chg: [
