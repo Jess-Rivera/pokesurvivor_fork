@@ -1,0 +1,15 @@
+/* well.css: the round slot (G.Lib.Well; #128 S6). Ported from the board (tools/library/hud-area-draft.css,
+   lib-area-well); the colours are the Unified tokens, the holder's ring colour comes inline (--well-ring). */
+.well {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--color-grey-panel);
+  box-shadow: inset 0 0 0 2px var(--well-ring, var(--color-grey-ink));
+}
+.well > * {
+  position: absolute;
+}

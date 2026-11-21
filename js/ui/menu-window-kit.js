@@ -4,15 +4,17 @@
  * (149c) unchanged, so a later screen (#126) can take them too. Styles: css/bw-shop.css (the shop- class names stay).
  *   createMenuCursor  one screen's selection cursor: keys, mouse, arrows to the nearest item, areas, search stops,
  *                     scrolling into view, the delayed cursor tooltip
- *   CursorButton      the rounded button (button.rounded) at 3 px per art pixel inside a box the cursor can sit on
+ *   CursorButton      a button inside a box the cursor can sit on: button.rounded at 3 px per art pixel, or
+ *                     button.glitch at any size (#128 S6), which shows the cursor by its own focus swipe
  *   ItemCard          a team item card (the library's card.vertical): icon, name, description, one button
  *   SearchStop        a search bar as a cursor stop at the top of its area
  *   Dropdown          a multi-select filter box whose grouped choices open in a list under it (#149 149f, the TMs tab)
  */
 G.MenuWindowKit = (() => {
   const kitOverlay = G.HudOverlay,
-    panel = G.Lib && G.Lib.Panel; // the card is the UI library's card.vertical (#155 155c)
-  if (!kitOverlay || !kitOverlay.ready || !panel || !panel.ready) return { ready: false };
+    panel = G.Lib && G.Lib.Panel, // the card is the UI library's card.vertical (#155 155c)
+    buttons = G.Lib && G.Lib.Button; // button.glitch (#128 S6)
+  if (!kitOverlay || !kitOverlay.ready || !panel || !panel.ready || !buttons || !buttons.ready) return { ready: false };
   const {
     html,
     signal,
@@ -27,6 +29,7 @@ G.MenuWindowKit = (() => {
     hideTooltip,
     ScrollBox,
   } = kitOverlay.kit;
+  const { GlitchButton } = buttons;
 
   const px = (value) => value + 'px';
   // the windows' buttons write a price from 1,000 up short (G.U.compact): "Buy 9k", "Belt 2 10k", "Buy 7.5k"; the ask
@@ -81,7 +84,8 @@ G.MenuWindowKit = (() => {
    */
   function createMenuCursor({ host, isOpen, eligibleItems, home, press, escape, keys = {}, tipFor, tipPlace }) {
     const focus = signal(home),
-      hovered = signal(null);
+      hovered = signal(null),
+      keyPress = signal({ id: null, count: 0 }); // the last item Enter or Space pressed, so its button plays the press
 
     /** Where the cursor is: by keys, the last item it was on (home if it can no longer take it); by mouse, the item under the pointer. */
     function cursorOn() {
@@ -91,6 +95,16 @@ G.MenuWindowKit = (() => {
     }
     /** The cursor's corners, only while the keys are in use. */
     const cornersIf = (shown) => (shown && inputMode.value === 'keys' ? html`<${Cursor} />` : null);
+    /** Whether the keys' cursor shows on this item now (a piece that draws its own cursor marks itself with it). */
+    const isShownOn = (id) => inputMode.value === 'keys' && cursorOn() === id;
+    /** For a cursor.ring (G.Lib.Cursor.useRingTravel): the round item the keys' cursor is on, or null. isRound(id) says
+     *  which items are round. */
+    function ringOn(isRound) {
+      const at = inputMode.value === 'keys' ? cursorOn() : null;
+      return at && isRound(at) ? at : null;
+    }
+    /** How many times the keys have pressed this item since the last press elsewhere (0 if that press was not it). */
+    const keyPressCountOf = (id) => (keyPress.value.id === id ? keyPress.value.count : 0);
     /** The mouse entered (an id) or left (null) an eligible item; entering also makes it the keys' starting point. */
     function hover(id) {
       hovered.value = id;
@@ -190,6 +204,7 @@ G.MenuWindowKit = (() => {
         const at = cursorOn(),
           atElement = at && elementOf(at),
           refusal = atElement && atElement.dataset.refusal;
+        if (at) keyPress.value = { id: at, count: keyPress.value.count + 1 };
         if (refusal) refuse(refusal);
         else if (at) press(at);
       } else if (extraKey) extraKey();
@@ -226,7 +241,18 @@ G.MenuWindowKit = (() => {
       return null;
     }
 
-    return { cursorOn, cornersIf, hover, moveTo, elementOf, onKey, CursorTip };
+    return {
+      cursorOn,
+      cornersIf,
+      isShownOn,
+      ringOn,
+      keyPressCountOf,
+      hover,
+      moveTo,
+      elementOf,
+      onKey,
+      CursorTip,
+    };
   }
 
   /** A press the button turns down (#151): the error sound and the refusal's toast; nothing else happens. */
@@ -236,12 +262,16 @@ G.MenuWindowKit = (() => {
   }
 
   /**
-   * The team menu button at 3 px per art pixel in a box the cursor can sit on (its corners sit on this box). A disabled
-   * button never takes the cursor. refusal (#151, decision 2026-11-17-unaffordable-buttons-take-the-cursor): the toast a
-   * press shows instead of acting ("Unable to Afford", or a Full pocket's line); the button still takes the cursor, keeps
-   * its rim and greys its label (button.rounded's refused, 155b; this box keeps its refused class, which the smokes
-   * read). style places the box; area puts it in a cursor area; action is the button's
-   * data-action (the cursor id by default). focusRim: the rim's colours under the cursor (the kit's green by default).
+   * A button in a box the cursor can sit on. A disabled button never takes the cursor. refusal (#151, decision
+   * 2026-11-17-unaffordable-buttons-take-the-cursor): the toast a press shows instead of acting ("Unable to Afford", or
+   * a Full pocket's line); the button still takes the cursor and shows its refused look (this box keeps its refused
+   * class, which the smokes read). style places the box; area puts it in a cursor area; action is the button's
+   * data-action (the cursor id by default). look:
+   *   rounded  the team menu button at 3 px per art pixel, artWidth art pixels wide; the cursor's corners sit on the
+   *            box; focusRim: the rim's colours under the cursor (the kit's green by default)
+   *   glitch   button.glitch, width x height px (its bar included), label fontSize px, in its intent (#128 S6). It
+   *            shows the cursor by its own focus swipe, so no corners; the box carries data-cursor-shown while the
+   *            keys' cursor is on it, and a key press plays the button's press
    */
   function CursorButton({
     cursor,
@@ -256,30 +286,58 @@ G.MenuWindowKit = (() => {
     style,
     area,
     focusRim = FOCUS_RIM,
+    look = 'rounded',
+    intent,
+    width,
+    height = BUTTON.height,
+    fontSize,
   }) {
-    const focused = cursor.cursorOn() === id;
+    const focused = cursor.cursorOn() === id,
+      pressNow = () => (refusal ? refuse(refusal) : !disabled && onPress()),
+      glitch = look === 'glitch';
     return html`<div
       class=${'shop-button' + (refusal ? ' refused' : '') + (className ? ' ' + className : '')}
       data-cursor-id=${id}
       data-cursor-area=${area}
       data-refusal=${refusal || undefined}
-      style=${{ ...style, width: px(artWidth * BUTTON.artPixel), height: px(BUTTON.height) }}
+      data-cursor-shown=${glitch && cursor.isShownOn(id) ? '' : undefined}
+      style=${{
+        ...style,
+        width: px(glitch ? width : artWidth * BUTTON.artPixel),
+        height: px(glitch ? height : BUTTON.height),
+      }}
       onMouseEnter=${() => cursor.hover(disabled ? null : id)}
       onMouseLeave=${() => cursor.hover(null)}
     >
-      <${RoundedButton}
-        id=${action}
-        label=${label}
-        artWidth=${artWidth}
-        artPixel=${BUTTON.artPixel}
-        rim=${REST_RIM}
-        focusRim=${focusRim}
-        focused=${focused}
-        disabled=${disabled}
-        refused=${!!refusal}
-        onPress=${() => (refusal ? refuse(refusal) : !disabled && onPress())}
-      />
-      ${cursor.cornersIf(focused)}
+      ${
+        glitch
+          ? html`<${GlitchButton}
+              id=${action}
+              label=${label}
+              intent=${intent}
+              width=${width}
+              height=${height}
+              fontSize=${fontSize}
+              focused=${focused}
+              refused=${!!refusal}
+              disabled=${disabled}
+              pressCount=${cursor.keyPressCountOf(id)}
+              onPress=${pressNow}
+            />`
+          : html`<${RoundedButton}
+                id=${action}
+                label=${label}
+                artWidth=${artWidth}
+                artPixel=${BUTTON.artPixel}
+                rim=${REST_RIM}
+                focusRim=${focusRim}
+                focused=${focused}
+                disabled=${disabled}
+                refused=${!!refusal}
+                onPress=${pressNow}
+              />
+              ${cursor.cornersIf(focused)}`
+      }
     </div>`;
   }
 
@@ -288,7 +346,9 @@ G.MenuWindowKit = (() => {
    * id is the cursor's, in the given area). width: the Shop's 186 by default; the Inventory's are wider. refusal: as
    * CursorButton's. picture: drawn in the icon box in place of the item's icon (the Shop's ball cards, 149e); dimmed:
    * the whole card at the locked look (a ball not unlocked yet); buttonLit (#137c): with dimmed, everything but the
-   * button dims, so a locked ball you can afford shows an Unlock you can press.
+   * button dims, so a locked ball you can afford shows an Unlock you can press. sizes and frame: the card's (the
+   * library's CARD and panel.thin by default; card.vertical); look and intent: its button's (CursorButton's), a glitch
+   * button sized by sizes.buttonWidth, buttonHeight and buttonFontSize.
    */
   function ItemCard({
     cursor,
@@ -300,13 +360,19 @@ G.MenuWindowKit = (() => {
     onPress,
     area,
     width = CARD.width,
+    sizes = CARD,
+    frame = 'thin',
+    look = 'rounded',
+    intent,
     picture,
     dimmed,
     buttonLit,
   }) {
     return html`<${VerticalCard}
       width=${width}
-      picture=${picture || html`<${IconCanvas} icon=${item.icon || item.id} size=${CARD.iconSize} />`}
+      sizes=${sizes}
+      frame=${frame}
+      picture=${picture || html`<${IconCanvas} icon=${item.icon || item.id} size=${sizes.iconSize} />`}
       name=${item.name}
       description=${item.desc}
       dimmed=${dimmed}
@@ -317,12 +383,17 @@ G.MenuWindowKit = (() => {
         id=${buttonId}
         label=${buttonLabel}
         artWidth=${CARD.buttonArtWidth}
+        look=${look}
+        intent=${intent}
+        width=${sizes.buttonWidth}
+        height=${sizes.buttonHeight}
+        fontSize=${sizes.buttonFontSize}
         disabled=${disabled}
         refusal=${refusal}
         onPress=${onPress}
         className="shop-card-buy"
         area=${area}
-        style=${cardButtonPlace(width)}
+        style=${cardButtonPlace(width, sizes, frame)}
       />`}
     />`;
   }

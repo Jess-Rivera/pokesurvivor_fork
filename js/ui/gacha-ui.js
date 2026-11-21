@@ -5,8 +5,10 @@
  *   rail     four icon tabs down the window's left edge (assets/ui/shop_icons/), top to bottom: Pokeballs (149e, its
  *            own file js/ui/shop-balls.js; #137 wires its buys), Character Upgrades (team item slots, berry slots), Team
  *            Items (100k unlocks), TMs (149f, its own file js/ui/shop-tms.js: moves a Pokemon learns for good).
- *            Flush with the window's left edge; the chosen tab uses its -selected art. A click or Q / E switches them.
- *   Exit     the team menu's button at 3 px per art pixel, bottom right; back to the Main Menu.
+ *            Each icon touches the window's 1 px edge instead of covering it (Jess 2026-11-20); the chosen tab uses its
+ *            -selected art. A click or Q / E switches them.
+ *   window   panel.clean (dev.html, #128 S6, decision 2026-11-21-unify-work-builds-final-building-blocks)
+ *   Exit     button.glitch (neutral), bottom right; back to the Main Menu (#128 S6).
  *   pockets  the Character Upgrades pane (149b, mockup Shop-Character-Upgrades.svg): the Berry Pocket and the Team Items
  *            Pocket, each a box in the pause menu's detail-panel shape with its 2x2 slot grid (unbought slots dimmed), a
  *            divider, its name and line, and one Buy button for the next slot (Full once every slot is bought).
@@ -69,9 +71,9 @@ G.GachaUI = (() => {
   const ICON_PATH = 'assets/ui/shop_icons/';
   // ---------- sizes and places (stage pixels, inside the window; css/bw-shop.css places the window) ----------
   const WINDOW = { width: 1145, height: 670 },
-    RAIL = { firstTop: 70, step: 130, cell: 96 }, // flush with the window's left edge; icons up to 32 px, drawn 3x (CSS)
-    EXIT = { right: 30, bottom: 24, artWidth: 52 }; // the team menu's button at 3 px per art pixel
-  EXIT.width = EXIT.artWidth * BUTTON.artPixel; // 156
+    // left: 1 px in, the clean window's edge width (G.Lib.Panel.CLEAN_PANEL.edge); icons up to 32 px, drawn 3x (CSS)
+    RAIL = { left: G.Lib.Panel.CLEAN_PANEL.edge, firstTop: 70, step: 130, cell: 96 },
+    EXIT = { right: 30, bottom: 24, width: 156 }; // button.glitch, as wide as the team menu button it replaced
   // the pocket cards (149b), in pane pixels: side by side from the pane's top left; inside each, the grid, the divider
   // (short of the rim), the name and line, then Buy at the bottom (the team menu button at 3 px per art pixel)
   const POCKET = {
@@ -253,7 +255,12 @@ G.GachaUI = (() => {
     return html`<div
       class=${'shop-tab' + (selected ? ' is-selected' : '')}
       data-tab=${entry.key}
-      style=${{ left: 0, top: px(RAIL.firstTop + index * RAIL.step), width: px(RAIL.cell), height: px(RAIL.cell) }}
+      style=${{
+        left: px(RAIL.left),
+        top: px(RAIL.firstTop + index * RAIL.step),
+        width: px(RAIL.cell),
+        height: px(RAIL.cell),
+      }}
       onClick=${() => pickTab(entry.key)}
     >
       <img src=${ICON_PATH + entry.icon + (selected ? '-selected' : '') + '.png'} alt=${entry.name} />
@@ -285,7 +292,9 @@ G.GachaUI = (() => {
         id="exit"
         action="shop-exit"
         label="Exit"
-        artWidth=${EXIT.artWidth}
+        look="glitch"
+        intent="neutral"
+        width=${EXIT.width}
         onPress=${close}
         className="shop-exit"
         style=${{ left: px(exitLeft), top: px(buttonTop) }}

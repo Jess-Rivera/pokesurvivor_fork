@@ -6,36 +6,86 @@
  * Loaded first (before js/core/util.js, which reads the type colours from here). Plain data and lookups, no game state,
  * so the harnesses load it in Node too; it writes the CSS variables only when there is a page.
  * A colour value may be another colour token's name (an alias): the token then always shows that token's colour.
+ * The Unified palette (decision 2026-11-18-155-unified-palette) comes first: 7 greys and 7 three-tone ramps, the
+ * colours every unified piece is built from. Its names are placeholders until Jess names them. An older token with
+ * exactly a Unified value is an alias of it (decision 2026-11-21-unify-work-builds-final-building-blocks); an older
+ * token with a different value keeps it until #126 folds it.
  */
 window.G = window.G || {};
 
 G.Tokens = (() => {
+  // ---------- the Unified palette: 7 greys, then the 7 UI colours as light / base / dark ramps ----------
+  // Values: tools/library.html, Tokens, Colours, Unified (colours-greys-unified.js); light and dark come from the
+  // accent ramp rule (35% to white, 55% of the base) except where the decision names them.
+  const unifiedRamp = (id, job, light, base, dark) => ({
+    id,
+    title: 'Unified ' + id + ' (name later)',
+    job,
+    source: 'decision 2026-11-18-155-unified-palette; tools/library.html, Tokens, Colours, Unified',
+    colours: [
+      ['light', light, job + ', highlight'],
+      ['base', base, job],
+      ['dark', dark, job + ', shade'],
+    ],
+  });
+  const UNIFIED_PALETTES = [
+    {
+      id: 'grey',
+      title: 'Unified greys (names later)',
+      job: 'The 7 neutrals, dark to light',
+      source: 'decision 2026-11-18-155-unified-palette; tools/library.html, Tokens, Colours, Unified (GREY_DRAFT)',
+      colours: [
+        ['ink', '#101010', 'Outlines and text strokes; button.glitch focus bar and text'],
+        ['panel', '#181818', 'Panel bodies (panel.clean), a well inside'],
+        ['raised', '#303030', 'Raised bodies (panel.shopCard), checkers, dark shades'],
+        ['slate', '#495151', "Dividers, empty slots, panel.clean's edge"],
+        ['mid', '#828282', 'Tracks, light shades, a refused button.glitch (the canon Status attack base)'],
+        ['paper', '#e7e7e7', 'The run item icon patch'],
+        ['white', '#ffffff', "Labels; button.glitch's rest bar and text"],
+      ],
+    },
+    unifiedRamp('red', 'Danger: the negative intent, low HP', '#ff8a90', '#fb3041', '#922030'),
+    unifiedRamp('green', 'Positive: the positive intent, the focus rim', '#7ee078', '#38d030', '#1f721a'),
+    unifiedRamp('blue', 'EXP', '#66d8f6', '#00baf3', '#0d7f9d'),
+    unifiedRamp('yellow', 'The selection cursor (cursor.ring), bonus values', '#fff559', '#fff000', '#8c8400'),
+    unifiedRamp('purple', 'The Epic rarity tier', '#d9a9ff', '#c47bff', '#6c448c'),
+    unifiedRamp('pink', 'Bond and team', '#ffb3e6', '#ff8ad8', '#8c4c77'),
+    unifiedRamp(
+      'teal',
+      "Secondary text (a card's name); the neutral intent, panel.shopCard's edge",
+      '#b4fffa',
+      '#8cfff7',
+      '#4d8c88'
+    ),
+  ];
+
   // ---------- colour palettes: [key, value or alias, job] ----------
   const COLOUR_PALETTES = [
+    ...UNIFIED_PALETTES,
     {
       id: 'hud',
       title: 'HUD kit',
       job: 'The base colours every HUD and menu piece is drawn with',
       source: 'HUD-STYLE "Panels and lines", "Text", "Bars"; js/ui/hud-kit.js PALETTE',
       colours: [
-        ['outline', '#101010', 'Text outline, shape outlines'],
-        ['body', '#181818', 'Panel body'],
+        ['outline', 'color.grey.ink', 'Text outline, shape outlines'],
+        ['body', 'color.grey.panel', 'Panel body'],
         ['frame', '#212121', 'Panel frame'],
-        ['checker', '#303030', 'The checker of the HP bar body'],
-        ['slate', '#495151', 'Dividers, empty slots'],
+        ['checker', 'color.grey.raised', 'The checker of the HP bar body'],
+        ['slate', 'color.grey.slate', 'Dividers, empty slots'],
         ['trackShade', '#464646', 'Empty track (dark bar)'],
         ['trackLight', '#7f7f7f', 'Empty track (light bar)'],
         ['typeBodyDark', '#292929', 'The move slot grid, dark squares (from the B2 type checker)'],
         ['typeBodyLight', '#393939', 'The move slot grid, light lines (from the B2 type checker)'],
-        ['expFill', '#00baf3', 'EXP bar fill'],
+        ['expFill', 'color.blue.base', 'EXP bar fill'],
         ['expShade', '#00799a', 'EXP bar shade'],
         ['lvFill', '#f3b200', 'Lv and gold fill'],
         ['lvShade', '#9a6110', 'Lv and gold shade'],
         ['lvDark', '#6d5000', 'The Lv yellow at 45%: the run item box corner shade'],
-        ['cursor', '#fff000', 'Title yellow: the selection cursor'],
+        ['cursor', 'color.yellow.base', 'Title yellow: the selection cursor'],
         ['trackEdge', '#313131', 'The roster HP track frame'],
         ['paperEdge', '#848484', 'The run item icon patch edge'],
-        ['paper', '#e7e7e7', 'The run item icon patch'],
+        ['paper', 'color.grey.paper', 'The run item icon patch'],
         ['teal', '#29ceff', "The menu windows' teal: card rims (panel.thin), the scroll thumb"],
       ],
     },
@@ -49,8 +99,8 @@ G.Tokens = (() => {
         ['high.shade', '#008a28', 'HP over half, shade'],
         ['middle.fill', '#f3b200', 'HP from a fifth to half, fill'],
         ['middle.shade', '#9a6110', 'HP from a fifth to half, shade'],
-        ['low.fill', '#fb3041', 'HP under a fifth, fill'],
-        ['low.shade', '#922030', 'HP under a fifth, shade'],
+        ['low.fill', 'color.red.base', 'HP under a fifth, fill'],
+        ['low.shade', 'color.red.dark', 'HP under a fifth, shade'],
       ],
     },
     {
@@ -59,16 +109,16 @@ G.Tokens = (() => {
       job: 'Rim ramps (light, base, dark) for buttons, cards and belts',
       source: 'HUD-STYLE "Pause menu", "Roster rows", "Catch screen"; hud-kit.js, shop-balls.js',
       colours: [
-        ['rest.light', '#ffffff', 'A menu button at rest, highlight'],
+        ['rest.light', 'color.grey.white', 'A menu button at rest, highlight'],
         ['rest.base', 'color.hud.paper', 'A menu button at rest'],
         ['rest.dark', 'color.hud.paperEdge', 'A menu button at rest, shade'],
         ['focus.light', '#9be895', 'The button under the cursor, highlight'],
-        ['focus.base', '#38d030', 'The button under the cursor'],
+        ['focus.base', 'color.green.base', 'The button under the cursor'],
         ['focus.dark', '#1d6c19', 'The button under the cursor, shade'],
         ['fainted.light', 'color.hud.trackLight', 'A fainted roster row, a locked belt, highlight'],
         ['fainted.base', 'color.hud.slate', 'A fainted roster row, a locked belt'],
         ['fainted.dark', 'color.hud.checker', 'A fainted roster row, a locked belt, shade'],
-        ['sell.light', '#ff8a90', 'Sell under the cursor (Shop, Pokeballs tab), highlight'],
+        ['sell.light', 'color.red.light', 'Sell under the cursor (Shop, Pokeballs tab), highlight'],
         ['sell.base', '#e8202a', 'Sell under the cursor (Shop, Pokeballs tab)'],
         ['sell.dark', '#7c1016', 'Sell under the cursor (Shop, Pokeballs tab), shade'],
         ['belt.light', '#DBB26E', 'A bought ball belt (the Poke Balls pocket colours), highlight'],
@@ -93,9 +143,9 @@ G.Tokens = (() => {
       job: "Text colours of the library's pieces",
       source: "js/ui/lib/primitives/button/button.css and panel/panel.css (from the screens' stylesheets, 155b, 155c)",
       colours: [
-        ['label', '#ffffff', 'A button label'],
+        ['label', 'color.grey.white', 'A button label'],
         ['labelRefused', 'rgba(255, 255, 255, 0.45)', 'The label of a button that refuses (#151): white at 45%'],
-        ['secondary', '#8cfff7', "Secondary text: a card's name"],
+        ['secondary', 'color.teal.base', "Secondary text: a card's name"],
       ],
     },
   ];

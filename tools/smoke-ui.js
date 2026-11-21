@@ -859,7 +859,8 @@ async function catchFlow(browser, query, tag) {
 // #149e, #137: the Pokeballs tab: one card per catalog ball (an unlocked tier lit "Buy <price>", a locked Great or Ultra
 // dimmed "Unlock <price>", the rest dimmed "Unlock"), three belts showing the save's belt, the next belt's priced Buy;
 // the arrows reach them all. A ball buy takes its price, adds one ball and asks nothing; Shift+Enter buys up to 10 across
-// two belts; refusals say why and change nothing; an unlock and a belt ask, then pay their price and change the tab.
+// two belts; refusals say why and change nothing; an unlock and a belt ask nothing, pay their price and change the tab.
+// #128 S6: the tab's pieces (panel.shopCard, button.glitch, the wells, cursor.ring) and the balls centred by their pixels.
 // #149c: the Team Items pane: sale cards plus owned items cover every team item, the owned grid is 4 across with dimmed
 // empties; a card Buy moves its item to the owned grid for its label's price; each search bar narrows its grid; owned
 // squares show their tooltip at once by mouse and after the Tooltip Delay by keys; unaffordable Buys take the cursor and
@@ -885,18 +886,21 @@ async function shopFlow(browser, query, tag) {
         .filter((p) => !p.classList.contains('hidden'))
         .map((p) => p.id),
       selected: [...document.querySelectorAll('.shop-tab.is-selected')].map((t) => t.dataset.tab),
-      // where the keys' cursor shows: the item its corners sit on (the button's action, or the item's cursor id), or a
-      // search bar showing it by its green rim ('' when it shows nowhere, always so with the mouse)
+      // where the keys' cursor shows: the item its corners sit on, or an item that draws its own cursor and marks itself
+      // data-cursor-shown (a button.glitch, a well with cursor.ring; #128 S6), as the button's action or the item's cursor
+      // id; or a search bar showing it by its green rim ('' when it shows nowhere, always so with the mouse)
       cursorOn: (() => {
         const corner = document.querySelector('#scr-gacha .hud-cursor');
         const host = corner
           ? corner.closest('[data-cursor-id]')
-          : document.querySelector('.shop-search-host.is-cursor');
+          : document.querySelector('#scr-gacha [data-cursor-shown]') || document.querySelector('.shop-search-host.is-cursor');
         const button = host && host.querySelector('button');
         return (button && button.dataset.action) || (host && host.dataset.cursorId) || '';
       })(),
-      // the button with the green (focused) rim, whether by keys or under the mouse
-      greenOn: (document.querySelector('#scr-gacha .hud-team-button.focused') || { dataset: {} }).dataset.action || '',
+      // the button showing its focus (a rounded button's green rim, a glitch button's swipe), by keys or under the mouse
+      greenOn:
+        (document.querySelector('#scr-gacha .hud-team-button.focused, #scr-gacha .glitch-button.focused') || { dataset: {} })
+          .dataset.action || '',
     }));
   const arrowKey = async (key) => {
     await page.keyboard.press(key);
@@ -940,7 +944,7 @@ async function shopFlow(browser, query, tag) {
     return shown();
   };
   const mouseTo = async (selector) => (await mouseOver(selector)).cursorOn;
-  const overExit = await mouseOver('.shop-exit .hud-team-button');
+  const overExit = await mouseOver('.shop-exit button');
   const onExitByMouse = overExit.cursorOn === '' && overExit.greenOn === 'shop-exit';
   const overCard = await mouseOver('#shop-items .shop-card-icon');
   const offOnCard = overCard.cursorOn === '' && overCard.greenOn === '';
@@ -1486,7 +1490,10 @@ async function shopFlow(browser, query, tag) {
   // and that price; every other ball is dimmed and reads Unlock. Three belts of six slots: bought ones = the save's
   // belts, the balls drawn = the save's balls; one Buy, at that belt's price. #137c: the belts sit against the pane's
   // right edge, each numbered; the one "Belt <n>" button is on Exit's row, left of it; Sell sits right above Exit, its
-  // width. The arrows reach every card button, that Buy, Sell and Exit
+  // width. The arrows reach every card button, that Buy, Sell and Exit. #128 S6 (decision
+  // 2026-11-20-155-main-shop-pokeball-look): the cards are panel.shopCard with button.glitch, a dimmed card never dims
+  // its button (one that cannot buy shows the refused look), the belts hold the library's wells, the cursor on a well is
+  // cursor.ring, and no buy asks
   const BALL_BELT = { size: 6, poke: 4, great: 0, ultra: 0, unlocked: [] };
   await setSave({ coins: 0, belt: { ...BALL_BELT } });
   await page.click('.shop-tab[data-tab="balls"]');
@@ -1513,9 +1520,11 @@ async function shopFlow(browser, query, tag) {
           label: card.querySelector('button').textContent.trim(),
           dimmed: card.classList.contains('is-dimmed') || card.classList.contains('is-dimmed-but-button'),
           buttonLit: card.classList.contains('is-dimmed-but-button'),
+          refused: card.querySelector('.shop-button').classList.contains('refused'),
           pictured: !!card.querySelector('.shop-card-icon .catch-ball'),
         })),
-        beltSlots: belts.map((belt) => belt.querySelectorAll('.catch-slot').length),
+        beltSlots: belts.map((belt) => belt.querySelectorAll('.shop-belt-slot').length),
+        beltWells: belts.map((belt) => belt.querySelectorAll('.shop-belt-slot > .well').length),
         lockedBelts: belts.filter((belt) => belt.classList.contains('is-locked')).length,
         boughtBelts: G.Catch.beltsBought(),
         nextBeltPrice: G.Catch.nextBeltPrice(),
@@ -1536,7 +1545,8 @@ async function shopFlow(browser, query, tag) {
     card.name === ball.name &&
     card.pictured &&
     card.dimmed === !ball.unlocked &&
-    !card.buttonLit && // no coins: no Unlock is lit
+    card.buttonLit === card.dimmed && // a dimmed card never dims its button
+    card.refused && // no coins: every button refuses
     (ball.unlocked
       ? card.label.startsWith('Buy') && showsPrice(card.label, ballShorts, ball.price)
       : ball.unlockPrice
@@ -1547,17 +1557,18 @@ async function shopFlow(browser, query, tag) {
       balls.cards.every((card, index) => cardReadsRight(card, balls.catalog[index])),
     tag +
       ': one card per catalog ball in order; an unlocked tier lit with its Buy price, a locked Great or Ultra dimmed ' +
-      'with its unlock price, the rest dimmed Unlock'
+      'with its unlock price, the rest dimmed Unlock; a dimmed card keeps its button, with no coins each one refuses'
   );
   ok(
     balls.beltSlots.length === 3 &&
       balls.beltSlots.every((count) => count === 6) &&
+      balls.beltWells.every((count) => count === 6) &&
       balls.lockedBelts === 3 - balls.boughtBelts &&
       balls.ballsDrawn === Math.min(balls.ballsOwned, balls.boughtBelts * 6) &&
       balls.beltBuys.length === 1 &&
       showsPrice(balls.beltBuys[0], ballShorts, balls.nextBeltPrice),
     tag +
-      ": three belts of six; the bought ones hold the save's balls; one Buy, at the next belt's price (" +
+      ": three belts of six wells; the bought ones hold the save's balls; one Buy, at the next belt's price (" +
       balls.ballsDrawn +
       ' balls, ' +
       balls.lockedBelts +
@@ -1586,8 +1597,9 @@ async function shopFlow(browser, query, tag) {
       rightPad: pane.offsetWidth - (lastBelt.offsetLeft + lastBelt.offsetWidth),
       inOrder: belts.every((belt, index) => !index || belt.offsetLeft > belts[index - 1].offsetLeft),
       labelsFit: [...pane.querySelectorAll('.shop-sell, .shop-belt-buy')].every((host) => {
-        const label = host.querySelector('button span');
-        return label.getBoundingClientRect().width <= host.getBoundingClientRect().width - 12;
+        const button = host.querySelector('button'),
+          label = button.querySelector('span');
+        return label.getBoundingClientRect().width <= button.getBoundingClientRect().width;
       }),
       numbers: belts.map((belt) => (belt.querySelector('.shop-belt-number') || { textContent: '' }).textContent.trim()),
       buyOnExitRow: !!buy && Math.abs(buy.top - exit.top) < 1 && buy.right < exit.left,
@@ -1624,6 +1636,88 @@ async function shopFlow(browser, query, tag) {
       ballLayout.buyClearsBar +
       ')'
   );
+  // #128 S6, the pieces: each card's button.glitch is narrower than its card, centred on it, inside it, its label inside
+  // the button; every ball (on a card and in a well) has its filled pixels centred on its picture box or well, measured
+  // from the strip's own pixels here, not from the game's shift table (within half an art pixel, the rounding)
+  const pieceLook = await page.evaluate(async () => {
+    const pane = document.querySelector('.shop-balls-pane'),
+      rect = (element) => element.getBoundingClientRect(),
+      screenScale = rect(pane).width / pane.offsetWidth;
+    const buttonsFit = [...pane.querySelectorAll('.shop-card')].every((card) => {
+      const cardBox = rect(card),
+        host = rect(card.querySelector('.shop-button')),
+        button = rect(card.querySelector('.shop-button button')),
+        label = rect(card.querySelector('.shop-button button span'));
+      const centreGap = Math.abs(host.left + host.width / 2 - (cardBox.left + cardBox.width / 2));
+      return host.width < cardBox.width && centreGap <= 1 && host.bottom <= cardBox.bottom && label.width <= button.width;
+    });
+    // a strip's frame: the box of its filled pixels, in art pixels [left, top, right, bottom) (the canvas reads it, the
+    // page is served over http)
+    const strips = {};
+    async function filledBox(url, frame, frameSize) {
+      if (!strips[url]) {
+        const image = new Image();
+        image.src = url;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0);
+        strips[url] = context;
+      }
+      const data = strips[url].getImageData(frame * frameSize, 0, frameSize, frameSize).data;
+      let left = frameSize,
+        top = frameSize,
+        right = 0,
+        bottom = 0;
+      for (let y = 0; y < frameSize; y++)
+        for (let x = 0; x < frameSize; x++)
+          if (data[(y * frameSize + x) * 4 + 3]) {
+            left = Math.min(left, x);
+            top = Math.min(top, y);
+            right = Math.max(right, x + 1);
+            bottom = Math.max(bottom, y + 1);
+          }
+      return { left, top, right, bottom };
+    }
+    const frameSize = G.BALL_SPRITES.size,
+      misses = [];
+    for (const sprite of pane.querySelectorAll('.shop-card-icon .catch-ball, .shop-belt-slot .catch-ball')) {
+      const style = getComputedStyle(sprite),
+        url = style.backgroundImage.slice(5, -2),
+        drawn = sprite.offsetWidth,
+        frame = Math.round(-parseFloat(style.backgroundPositionX) / drawn),
+        flipped = style.transform !== 'none' && new DOMMatrix(style.transform).a < 0,
+        box = await filledBox(url, frame, frameSize),
+        at = rect(sprite),
+        artPixel = at.width / frameSize;
+      const middleX = (box.left + box.right) / 2,
+        seenX = flipped ? at.right - middleX * artPixel : at.left + middleX * artPixel,
+        seenY = at.top + ((box.top + box.bottom) / 2) * artPixel;
+      const well = sprite.closest('.shop-belt-slot'),
+        target = well
+          ? { x: rect(well).left + rect(well).width / 2, y: rect(well).top + rect(well).height / 2 }
+          : (() => {
+              const picture = rect(sprite.closest('.shop-card-icon')),
+                half = (drawn / 2) * screenScale; // the picture box is the ball's own drawn size
+              return { x: picture.left + half, y: picture.top + half };
+            })();
+      if (Math.max(Math.abs(seenX - target.x), Math.abs(seenY - target.y)) > artPixel / 2 + 0.5)
+        misses.push(url.split('/').pop() + ' frame ' + frame + ' off by ' + [seenX - target.x, seenY - target.y]);
+    }
+    return { buttonsFit, misses, measured: pane.querySelectorAll('.shop-card-icon .catch-ball, .shop-belt-slot .catch-ball').length };
+  });
+  ok(
+    pieceLook.buttonsFit && pieceLook.measured > 0 && !pieceLook.misses.length,
+    tag +
+      ': each card button sits centred inside its card with its label inside it; every ball is centred on its picture ' +
+      'or well by its filled pixels (' +
+      pieceLook.measured +
+      ' measured' +
+      (pieceLook.misses.length ? '; ' + pieceLook.misses.join(', ') : '') +
+      ')'
+  );
   // the arrows: into the top-left card, then a snake down the 3-column grid, then on to the belt Buy, Sell and Exit
   // (Up never leaves an area, so the walk goes left into the cards before it goes up)
   const ballVisits = new Set();
@@ -1641,8 +1735,10 @@ async function shopFlow(browser, query, tag) {
           return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
         };
         const goal = document.querySelector('#scr-gacha [data-cursor-id="' + target + '"]'),
-          corner = document.querySelector('#scr-gacha .hud-cursor'),
-          host = corner && corner.closest('[data-cursor-id]');
+          corner = document.querySelector('#scr-gacha .hud-cursor'), // the B2 corners, or a piece that marks itself
+          host = corner
+            ? corner.closest('[data-cursor-id]')
+            : document.querySelector('#scr-gacha [data-cursor-shown]');
         if (!goal) return null;
         if (!host) return { hidden: true }; // the mouse was last: no cursor shows until a key
         const from = centre(host),
@@ -1685,6 +1781,57 @@ async function shopFlow(browser, query, tag) {
     tag +
       ': the arrows reach every ball card, the belt Buy, Sell and Exit' +
       (missedVisits.length ? ' (missed ' + missedVisits.join(', ') + ')' : '')
+  );
+  // #128 S6, the cursor: by keys, on a well it is cursor.ring and no corners; on a button the button shows its focus
+  // and no corners, its rest bar in the focus bar's colour (no 1 px sliver, Jess 2026-11-20); with the mouse over a well
+  // no ring shows at all
+  await ballCursorTo('slot-0');
+  await sleep(300); // past the ring's CRT
+  const cursorOnWell = await page.evaluate(() => {
+    const host = document.querySelector('#shop-balls [data-cursor-id="slot-0"]');
+    return {
+      ring: !!host.querySelector('.cursor-ring'),
+      rings: document.querySelectorAll('#shop-balls .cursor-ring').length,
+      corners: !!document.querySelector('#scr-gacha .hud-cursor'),
+    };
+  });
+  await ballCursorTo('ball-poke');
+  await sleep(300); // past the swipe
+  const cursorOnButton = await page.evaluate(() => {
+    const button = document.querySelector('#shop-balls [data-cursor-id="ball-poke"] button'),
+      probe = document.createElement('span');
+    probe.style.color = 'var(--glitch-focus-bar)';
+    button.appendChild(probe);
+    const focusBar = getComputedStyle(probe).color;
+    probe.remove();
+    return {
+      focused: button.classList.contains('focused'),
+      corners: !!document.querySelector('#scr-gacha .hud-cursor'),
+      rings: document.querySelectorAll('#shop-balls .cursor-ring').length,
+      restBarIsFocusBar: getComputedStyle(button).boxShadow.startsWith(focusBar),
+    };
+  });
+  const wellBox = await (await page.$('#shop-balls [data-cursor-id="slot-1"]')).boundingBox();
+  await page.mouse.move(wellBox.x + wellBox.width / 2 + 20, wellBox.y + wellBox.height / 2 + 20, { steps: 3 });
+  await page.mouse.move(wellBox.x + wellBox.width / 2, wellBox.y + wellBox.height / 2, { steps: 5 });
+  await sleep(200);
+  const ringsByMouse = await page.evaluate(() => document.querySelectorAll('#shop-balls .cursor-ring').length);
+  await page.keyboard.press('Shift');
+  await sleep(100);
+  ok(
+    cursorOnWell.ring &&
+      cursorOnWell.rings === 1 &&
+      !cursorOnWell.corners &&
+      cursorOnButton.focused &&
+      !cursorOnButton.corners &&
+      !cursorOnButton.rings &&
+      cursorOnButton.restBarIsFocusBar &&
+      ringsByMouse === 0,
+    tag +
+      ': by keys a well shows cursor.ring and a button its own focus, neither with corners, the focused bar one colour;' +
+      ' with the mouse no ring (' +
+      JSON.stringify({ cursorOnWell, cursorOnButton, ringsByMouse }) +
+      ')'
   );
   // refusals (#151): Enter with no coins on a ball and on the belt Buy says "Unable to Afford"; a ball with no use yet
   // says "Coming soon."; a full belt says "Your belts are full."; none asks and none changes the save
@@ -1759,8 +1906,8 @@ async function shopFlow(browser, query, tag) {
       beltTwoBalls +
       ' on belt 2)'
   );
-  // #137c: a locked Great you can afford: its card still looks dimmed but its Unlock button is not; Master (no use yet)
-  // stays wholly dimmed
+  // #137c, #128 S6: a locked ball's card looks dimmed but its button never is: an affordable Great Unlock is lit and
+  // presses, Master (no use yet) keeps its button at full strength in the refused look
   await setSave({ coins: 100000, belt: { ...BALL_BELT } });
   await sleep(100);
   const unlockLook = await page.evaluate(() => {
@@ -1775,24 +1922,30 @@ async function shopFlow(browser, query, tag) {
       greatButton: seen(card('great').querySelector('button')),
       greatPicture: seen(card('great').querySelector('.shop-card-icon')),
       greatName: seen(card('great').querySelector('.shop-card-name')),
+      greatRefused: card('great').querySelector('.shop-button').classList.contains('refused'),
       masterButton: seen(card('master').querySelector('button')),
+      masterRefused: card('master').querySelector('.shop-button').classList.contains('refused'),
     };
   });
   ok(
     unlockLook.greatButton === 1 &&
       unlockLook.greatPicture < 1 &&
       unlockLook.greatName < 1 &&
-      unlockLook.masterButton < 1,
+      !unlockLook.greatRefused &&
+      unlockLook.masterButton === 1 &&
+      unlockLook.masterRefused,
     tag +
-      ': an affordable Unlock stays lit on its dimmed card; a ball with no use stays wholly dimmed (' +
+      ': on a dimmed card the button stays at full strength: an affordable Unlock lit, a ball with no use refused (' +
       JSON.stringify(unlockLook) +
       ')'
   );
-  // an unlock asks, then pays its price once; the card turns lit with its Buy price
+  // an unlock asks nothing (decision 2026-11-19-155-dialog-clean-cancel-state-and-input-modes) and pays its price once;
+  // the card turns lit with its Buy price
   await ballCursorTo('ball-great');
   before = await ballsNow();
   await page.keyboard.press('Enter');
-  await clickConfirm();
+  await sleep(200);
+  const unlockAsked = await page.evaluate(() => G.UI.isOpen('scr-ask'));
   after = await ballsNow();
   const greatCard = (state) => state.cards.find((card) => card.id === 'great');
   const greatBall = after.catalog.find((ball) => ball.id === 'great');
@@ -1800,24 +1953,27 @@ async function shopFlow(browser, query, tag) {
   spentShort = await shortPrices([spent]);
   ok(
     after.belt.unlocked.includes('great') &&
+      !unlockAsked &&
       showsPrice(greatCard(before).label, spentShort, spent) &&
       !greatCard(after).dimmed &&
       showsPrice(greatCard(after).label, ballShorts, greatBall.price),
     tag +
-      ': Unlock asks, pays the price it showed, and the card turns to Buy at the ball price (' +
+      ': Unlock asks nothing, pays the price it showed, and the card turns to Buy at the ball price (' +
       greatCard(after).label +
       ')'
   );
-  // a belt buy asks, then adds six slots at its price; the next belt's Buy takes its place
+  // a belt buy asks nothing and adds six slots at its price; the next belt's Buy takes its place
   await ballCursorTo('belt-2');
   before = await ballsNow();
   await page.keyboard.press('Enter');
-  await clickConfirm();
+  await sleep(200);
+  const beltAsked = await page.evaluate(() => G.UI.isOpen('scr-ask'));
   after = await ballsNow();
   spent = before.coins - after.coins;
   spentShort = await shortPrices([spent]);
   ok(
     after.belt.size === before.belt.size + 6 &&
+      !beltAsked &&
       showsPrice(before.beltBuys[0], spentShort, spent) &&
       after.lockedBelts === before.lockedBelts - 1 &&
       after.beltBuys.length === 1 &&
@@ -1825,7 +1981,7 @@ async function shopFlow(browser, query, tag) {
       before.beltBuys[0].startsWith('Belt ' + (before.boughtBelts + 1) + ' ') &&
       after.beltBuys[0].startsWith('Belt ' + (after.boughtBelts + 1) + ' '),
     tag +
-      ': a belt Buy asks, adds six slots for its price, and the next belt is for sale (' +
+      ': a belt Buy asks nothing, adds six slots for its price, and the next belt is for sale (' +
       after.beltBuys.join() +
       ')'
   );
@@ -1848,7 +2004,7 @@ async function shopFlow(browser, query, tag) {
   await ballCursorTo('slot-1');
   await page.keyboard.press('Enter');
   await sleep(80);
-  const liftedShown = await page.evaluate(() => !!document.querySelector('#shop-balls .catch-slot.is-lifted'));
+  const liftedShown = await page.evaluate(() => !!document.querySelector('#shop-balls .shop-belt-slot.is-lifted'));
   await ballCursorTo('slot-4');
   await page.keyboard.press('Escape');
   await sleep(150);
@@ -1903,7 +2059,7 @@ async function shopFlow(browser, query, tag) {
   await page.mouse.click(outside.x, outside.y);
   await sleep(150);
   const afterOutside = await layoutNow(),
-    stillLifted = await page.evaluate(() => !!document.querySelector('#shop-balls .catch-slot.is-lifted'));
+    stillLifted = await page.evaluate(() => !!document.querySelector('#shop-balls .shop-belt-slot.is-lifted'));
   ok(
     movedByClick === ',,,great,,,poke,,,,,' &&
       swappedByDrag === ',,,poke,,,great,,,,,' &&

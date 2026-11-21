@@ -24,6 +24,18 @@
   background: var(--color-hud-checker);
 }
 
+/* ---------- panel.clean (#128 S6): square corners, a 1 px edge as a real border, no cut and no bar ---------- */
+.panel-clean {
+  box-sizing: border-box;
+  border: 1px solid var(--color-grey-slate);
+  background: var(--color-grey-panel);
+}
+/* panel.shopCard: every Shop card, a grey.raised body and a teal.base edge */
+.panel-clean.panel-shop-card {
+  border-color: var(--color-teal-base);
+  background: var(--color-grey-raised);
+}
+
 /* ---------- card.vertical (class shop-card) ---------- */
 .shop-card {
   position: relative;
@@ -59,6 +71,23 @@
 }
 .shop-card.is-dimmed-but-button > :not(.shop-card-buy) {
   opacity: 0.45;
+}
+/* card.vertical on panel.shopCard (#128 S6): the text clean in Michroma, sized by the screen; a 1 px divider; dimmed
+   with its button lit keeps the card's own body and edge (only the contents dim) */
+.shop-card-clean-text {
+  font-family: 'HudModule', sans-serif;
+  font-synthesis: none;
+  color: var(--color-grey-white);
+}
+.shop-card .shop-card-name.shop-card-clean-text {
+  color: var(--color-teal-base);
+}
+.panel-shop-card .shop-card-divider {
+  height: 1px;
+}
+.panel-clean.panel-shop-card.is-dimmed-but-button {
+  border-color: var(--color-teal-base);
+  background: var(--color-grey-raised);
 }
 
 /* ---------- panel.flat: the windows' flat body, 1 px frame and 2 px outline (155c-2) ---------- */

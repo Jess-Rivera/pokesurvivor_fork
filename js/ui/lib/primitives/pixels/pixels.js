@@ -49,6 +49,9 @@ G.Lib.Pixels = (() => {
     barChecker: 'url(#hud-bar-checker)', // the B2 HP bar body: 1-pixel checker of the panel body and checker
     typeChecker: 'url(#hud-type-checker)', // the B2 type checker body
     slotGrid: 'url(#hud-slot-grid)', // the HUD move slots: the same grid with 3x3 dark squares (Jess, 2026-11-10)
+    // the slot grid in the Unified greys (grey.panel squares, grey.raised lines; board SLANTED_GRID): the bodies of the
+    // unified pixel panels, starting with the Shop's ball belts (#128 S6); the move slots move onto it at #126
+    slotGridUnified: 'url(#hud-slot-grid-unified)',
   };
   /** The pattern definitions, drawn once per page; their ids are what PATTERNS points at. */
   function PixelPatterns() {
@@ -67,6 +70,10 @@ G.Lib.Pixels = (() => {
         <pattern id="hud-slot-grid" width="4" height="4" patternUnits="userSpaceOnUse">
           <rect x="0" y="0" width="4" height="4" fill=${colour('typeBodyLight')} />
           <rect x="0" y="0" width="3" height="3" fill=${colour('typeBodyDark')} />
+        </pattern>
+        <pattern id="hud-slot-grid-unified" width="4" height="4" patternUnits="userSpaceOnUse">
+          <rect x="0" y="0" width="4" height="4" fill=${G.Tokens.color('color.grey.raised')} />
+          <rect x="0" y="0" width="3" height="3" fill=${G.Tokens.color('color.grey.panel')} />
         </pattern>
       </defs>
     </svg>`;

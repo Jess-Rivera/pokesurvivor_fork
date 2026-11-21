@@ -8,8 +8,30 @@
 G.CHANGELOG = [
   {
     d: '2026-11-21',
-    title: ['Shorter move descriptions', 'Shorter move descriptions'],
+    title: ['A new look for the Poke Balls shop', 'A new look for the Poke Balls shop'],
+    new: [
+      [
+        'The Poke Balls tab of the Shop has a new look: cleaner cards, new buttons, and belts with round slots for your balls. Under the cursor a slot shows a yellow ring.',
+        'The Poke Balls tab of the Shop has a new look: cleaner cards, new buttons, and belts with round slots for your balls. Under the cursor a slot shows a yellow ring.',
+      ],
+    ],
     chg: [
+      [
+        'Unlocking a ball and buying a belt no longer ask first: like buying balls, they happen as soon as you press.',
+        'Unlocking a ball and buying a belt no longer ask first: like buying balls, they happen as soon as you press.',
+      ],
+      [
+        "A ball you cannot unlock yet keeps a bright button on its card, which tells you why when you press it.",
+        "A ball you cannot unlock yet keeps a bright button on its card, which tells you why when you press it.",
+      ],
+      [
+        "The Shop window has a thin clean frame and a new Exit button.",
+        "The Shop window has a thin clean frame and a new Exit button.",
+      ],
+      [
+        'Poke Balls now sit in the middle of their slots and cards, in the Shop and on the catch screen.',
+        'Poke Balls now sit in the middle of their slots and cards, in the Shop and on the catch screen.',
+      ],
       [
         'A move that raises every stat by the same amount now says so once: Ancient Power reads "10% team all stats +1".',
         'A move that raises every stat by the same amount now says so once: Ancient Power reads "10% team all stats +1".',

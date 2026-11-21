@@ -1,14 +1,20 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-21 midday, Quick (work machine). Branch: feature/128-acquisition. No branch rules file.
+Last updated: 2026-11-21 afternoon, Quick (work machine). Branch: feature/128-acquisition. No branch rules file.
 
 ## START HERE (next session, either tool)
-0. `git status`, then `node tools/check.js` and `npm run format` (neither ran from Quick today), commit, and
-   `git push origin feature/128-acquisition`.
-1. Close #155 and file the two new issues from docs/ASCII Concept Maps/155 - Close-out Drafts.md.
-2. Feel test the Ancient Power line ("10% team all stats +1") on its card and in the pause sheet.
-3. Then #128 (#138, then #146), or #126 (applies the board). #145 small and ready.
+0. `git status`, `node tools/check.js`, `npm run format`, `node tools/smoke-ui.js` (none ran from Quick today).
+   Fix what fails, commit, `git push origin feature/128-acquisition`.
+1. #128 S6 look is BUILT, untested (plan: docs/ASCII Concept Maps/128 - Shop Pokeballs Look Plan.md, its Status
+   table lists where the build differs). Feel test it (plan, "Feel test"); that also clears #137's playtest.
+   Open: cursor.ring 3 px (decision) or 2 px (board); keep or exempt the wobble frames from ball centring.
+2. Then #138, then #146. Feel test the Ancient Power line. #145 small and ready.
+
+## Landed 2026-11-21 afternoon (Quick)
+- Library pieces: Unified tokens (old matching tokens now aliases), button.glitch, panel.clean, panel.shopCard,
+  cursor.ring and well (new folders), slotGridUnified. Ball centreShift generated. Shop window, rail, Exit converted.
+- Ruled: decision 2026-11-21-unify-work-builds-final-building-blocks. #155 closed; its drafts not filed (Jess).
 
 ## Landed 2026-11-21 (Quick)
 - Board approved: run.hud.moveMart, .trMart, .forgetMove, .bondSelection (team rows, the four slots in one row,

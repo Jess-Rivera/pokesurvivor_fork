@@ -3,8 +3,14 @@
  *   panel.pixel    PixelPanel: the B2 roster box (corner bumps, a light / base / dark rim) at 2 px per art pixel with a
  *                  flat body, any size; a second rim ramp blends left to right (a dual-type Pokemon)
  *   panel.thin     ThinPanel: a 2 px flat rim on a flat body (the menu windows' cards)
+ *   panel.clean    CleanPanel and the panel-clean class: square corners, a 1 px grey.slate edge on a grey.panel body,
+ *                  no cut and no bar (decision 2026-11-18-155-pixel-panels-for-one-pokemon-clean-for-the-rest; the
+ *                  board's Panels, Clean Draft). The Main Menu Shop's window first (#128 S6); every window at #126
+ *   panel.shopCard ShopCardPanel: panel.clean with a grey.raised body and a teal.base edge, every Shop card (decision
+ *                  2026-11-20-155-panel-shopcard-raised-body-teal-edge)
  *   card.vertical  VerticalCard: a thin panel with a picture on top, a divider, a name, a description and a button
- *                  at the bottom; lit, dimmed, or dimmed with its button still lit
+ *                  at the bottom; lit, dimmed, or dimmed with its button still lit; framed by panel.thin or
+ *                  panel.shopCard
  *   panel.flat     FlatPanel and the panel-flat class: the windows' flat body, 1 px frame and 2 px outline (the pause
  *                  menu's Run Info and detail panels, the Shop and Inventory, the catch and EV screens; 155c-2)
  *   card.horizontal  HorizontalCard: the B2 run item box (a picture in a white patch, a name band, text beside it), any
@@ -125,8 +131,28 @@ G.Lib.Panel = (() => {
     </div>`;
   }
 
+  // ---------- panel.clean and panel.shopCard: square corners and a 1 px edge drawn as a real CSS border (panel.css;
+  // the board's trick, an inset body over the edge colour, lost the edge under display scaling, 2026-11-20) ----------
+  const CLEAN_PANEL = { edge: 1 };
+  /** A clean panel: the screen gives its size and place in style; screens with their own markup add panel-clean. */
+  function CleanPanel({ className, style, attrs, children }) {
+    return html`<div class=${'panel-clean' + (className ? ' ' + className : '')} style=${style} ...${attrs || {}}>
+      ${children}
+    </div>`;
+  }
+  /** panel.shopCard: a clean panel in the Shop card's colours. */
+  const ShopCardPanel = ({ className, ...props }) =>
+    html`<${CleanPanel} className=${'panel-shop-card' + (className ? ' ' + className : '')} ...${props} />`;
+
   // ---------- card.vertical: the menu windows' card (149c), 186 x 350 by default ----------
-  // room for a six-line description above the button; the button is the rounded one at 3 px per art pixel
+  // room for a six-line description above the button; the button is the rounded one at 3 px per art pixel. A screen
+  // may hand its own sizes (the same keys; the Shop's ball card, #128 S6) and its frame:
+  //   thin      panel.thin, the text in the HUD's outlined font at 24 px lines (today's cards)
+  //   shopCard  panel.shopCard, the text clean in Michroma at the sizes' nameSize, descriptionSize and lineHeight
+  const CARD_FRAMES = {
+    thin: { Panel: ThinPanel, edge: THIN_PANEL.rim, textClass: 'hud-text', textSized: false },
+    shopCard: { Panel: ShopCardPanel, edge: CLEAN_PANEL.edge, textClass: 'shop-card-clean-text', textSized: true },
+  };
   const CARD = {
     width: 186,
     height: 350,
@@ -144,44 +170,69 @@ G.Lib.Panel = (() => {
   CARD.buttonWidth = CARD.buttonArtWidth * CARD.buttonArtPixel; // 174
   CARD.buttonHeight = buttons.ROUNDED_BUTTON.artRows * CARD.buttonArtPixel; // 54
   const px = (value) => value + 'px';
-  /** Where a card width wide places its button: centred, buttonBottom above the bottom rim. */
-  const cardButtonPlace = (width = CARD.width) => ({
-    left: px((width - 2 * THIN_PANEL.rim - CARD.buttonWidth) / 2),
-    top: px(CARD.height - 2 * THIN_PANEL.rim - CARD.buttonBottom - CARD.buttonHeight),
+  /** Where a card width wide places its button: centred, buttonBottom above the bottom edge; sizes and frame are the
+   *  card's. */
+  const cardButtonPlace = (width = CARD.width, sizes = CARD, frame = 'thin') => ({
+    left: px((width - 2 * CARD_FRAMES[frame].edge - sizes.buttonWidth) / 2),
+    top: px(sizes.height - 2 * CARD_FRAMES[frame].edge - sizes.buttonBottom - sizes.buttonHeight),
   });
   /**
    * A vertical card: picture (drawn in the picture box), name, description, and button (placed by the screen with
    * cardButtonPlace, class shop-card-buy). dimmed: the whole card at the locked look; buttonLit (#137c): with dimmed,
    * everything but the button dims. attrs adds data attributes (the screen's item id, the cursor's whole-card mark).
+   * sizes: CARD by default; frame: a key of CARD_FRAMES.
    */
-  function VerticalCard({ width = CARD.width, picture, name, description, button, dimmed, buttonLit, attrs }) {
-    const inner = width - 2 * THIN_PANEL.rim;
-    return html`<${ThinPanel}
+  function VerticalCard({
+    width = CARD.width,
+    sizes = CARD,
+    frame = 'thin',
+    picture,
+    name,
+    description,
+    button,
+    dimmed,
+    buttonLit,
+    attrs,
+  }) {
+    const { Panel, edge, textClass, textSized } = CARD_FRAMES[frame],
+      inner = width - 2 * edge,
+      textSize = (size) => (textSized ? { fontSize: px(size), lineHeight: px(sizes.lineHeight) } : null);
+    return html`<${Panel}
       className=${'shop-card' + (dimmed ? (buttonLit ? ' is-dimmed-but-button' : ' is-dimmed') : '')}
-      style=${{ width: px(width), height: px(CARD.height) }}
+      style=${{ width: px(width), height: px(sizes.height) }}
       attrs=${attrs}
     >
-      <div class="shop-card-icon" style=${{ left: px((inner - CARD.iconSize) / 2), top: px(CARD.iconTop) }}>
+      <div class="shop-card-icon" style=${{ left: px((inner - sizes.iconSize) / 2), top: px(sizes.iconTop) }}>
         ${picture}
       </div>
       <div
         class="shop-card-divider"
-        style=${{ left: px(CARD.textInset), right: px(CARD.textInset), top: px(CARD.dividerTop) }}
+        style=${{ left: px(sizes.textInset), right: px(sizes.textInset), top: px(sizes.dividerTop) }}
       ></div>
       <div
-        class="hud-text shop-card-name"
-        style=${{ left: px(CARD.textInset), right: px(CARD.textInset), top: px(CARD.nameTop) }}
+        class=${textClass + ' shop-card-name'}
+        style=${{
+          left: px(sizes.textInset),
+          right: px(sizes.textInset),
+          top: px(sizes.nameTop),
+          ...textSize(sizes.nameSize),
+        }}
       >
         ${name}
       </div>
       <div
-        class="hud-text shop-card-description"
-        style=${{ left: px(CARD.textInset), right: px(CARD.textInset), top: px(CARD.descriptionTop) }}
+        class=${textClass + ' shop-card-description'}
+        style=${{
+          left: px(sizes.textInset),
+          right: px(sizes.textInset),
+          top: px(sizes.descriptionTop),
+          ...textSize(sizes.descriptionSize),
+        }}
       >
         ${description}
       </div>
       ${button}
-    </${ThinPanel}>`;
+    </${Panel}>`;
   }
 
   // ---------- panel.flat: the windows' flat frame (colours: panel.css, from tokens) ----------
@@ -374,6 +425,9 @@ G.Lib.Panel = (() => {
     pixelPanelColours,
     PixelPanel,
     ThinPanel,
+    CLEAN_PANEL,
+    CleanPanel,
+    ShopCardPanel,
     CARD,
     cardButtonPlace,
     VerticalCard,

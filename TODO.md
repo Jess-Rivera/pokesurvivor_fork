@@ -12,9 +12,9 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 3. Before leaving a machine: commit and push.
 
 ## Next (queue set by Jess 2026-11-15, updated 2026-11-21; gym leader AI parked)
-0. #155 is done (decision 2026-11-21-155-board-ends-at-primitives). Jess closes it and files the two new issues from
-   docs/ASCII Concept Maps/155 - Close-out Drafts.md (Team menu rebuild; box buying as a character upgrade).
-   Carried to #126:
+0. #128 S6 finish (now): the Pokeballs tab in the approved look, built from shared primitives #126 reuses; unlock and
+   belt buys stop asking. Plan: docs/ASCII Concept Maps/128 - Shop Pokeballs Look Plan.md. Clears #137's playtest.
+   #155 is closed (Jess 2026-11-21); the two close-out drafts are not filed (Jess). Carried to #126:
    - Feel test: the Ancient Power description ("10% team all stats +1") on a card and in the pause sheet.
    - Primitives, Inputs (field.text, field.dropdown, scroll.bar): drafted 2026-11-20, not reviewed yet.
    - Tooltip pin and close icons (Jess is drawing them); pinnable tooltips are #158.

@@ -335,11 +335,15 @@ G.HudKitItems = (() => {
   /**
    * One Poke Ball frame from its strip (G.BALL_SPRITES), drawn at scale (whole or half numbers keep the pixel art crisp).
    * Moved here from js/ui/catch-ui.js for the Main Menu Shop's ball cards (149e). flipped mirrors it left to right (the
-   * Shop's cards, mockup Shop-Pokeballs.svg); style places it.
+   * Shop's cards, mockup Shop-Pokeballs.svg); style places it. Each frame is shifted by its centreShift (#128 S6,
+   * measured by tools/make_ball_sprites.py) so the ball's filled pixels, not its frame, sit in the middle of where it
+   * is placed; the shift mirrors with the ball.
    */
   function BallSprite({ ball, frame, scale, flipped, className, style }) {
     const sprites = G.BALL_SPRITES,
-      size = sprites.size * scale;
+      size = sprites.size * scale,
+      [shiftX, shiftY] = sprites.centreShift[ball][frame], // the generated table holds every ball and frame
+      shift = 'translate(' + (flipped ? -shiftX : shiftX) * scale + 'px, ' + shiftY * scale + 'px)';
     return html`<div
       class=${'catch-ball' + (className ? ' ' + className : '')}
       style=${{
@@ -351,7 +355,7 @@ G.HudKitItems = (() => {
         backgroundPosition: -frame * size + 'px 0',
         backgroundRepeat: 'no-repeat',
         imageRendering: 'pixelated',
-        ...(flipped ? { transform: 'scaleX(-1)' } : {}),
+        transform: shift + (flipped ? ' scaleX(-1)' : ''),
       }}
     ></div>`;
   }
