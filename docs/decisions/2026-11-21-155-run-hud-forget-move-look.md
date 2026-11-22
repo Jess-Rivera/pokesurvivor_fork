@@ -1,3 +1,10 @@
+---
+title: "#155 run.hud.forgetMove: the four move slots and a wide card; approved (Jess)"
+date: 2026-11-21
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md \"Move Shop\"."
+---
 # 2026-11-21: #155 run.hud.forgetMove: the four move slots and a wide card; approved (Jess)
 
 - A popup (panel.clean) over either shop, the screen under it dimmed (ink at 60%). Title "Replace which move?" in

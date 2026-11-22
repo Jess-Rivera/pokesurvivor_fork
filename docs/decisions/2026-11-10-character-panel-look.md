@@ -1,3 +1,10 @@
+---
+title: "Character info panel look (#62), and #61 as a soft dependency (Jess)"
+date: 2026-11-10
+issues: [61, 62]
+area: ui
+canonical: "docs/HUD-STYLE.md \"Character info panel (#62)\" under Shapes, Motion and Panel sizes at 1080p."
+---
 ## 2026-11-10, Character info panel look (#62), and #61 as a soft dependency (Jess)
 #61 (HUD-STYLE) is a soft dependency for #62 to #67: each panel build locks its own shapes, motion and sizes as it goes.
 Character panel: B2 shapes redrawn at 2 px per art pixel. Move slots are the B2 fight-menu button (the rip's profile row for row, 44 px), the B2 grid with 3x3 dark squares, type rims, bond pink for bonds, the disabled button when empty, B2 corner-bracket cursor on the active slot. A move's well is its SV type colour with the white `<Type>_icon.png` glyph and its family badge; the cooldown is a clock wipe.

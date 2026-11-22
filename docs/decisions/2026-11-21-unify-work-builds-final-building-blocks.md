@@ -1,3 +1,10 @@
+---
+title: "during the UI unify, what a slice touches is built or renamed into its final library piece (Jess)"
+date: 2026-11-21
+issues: []
+area: ui
+canonical: "this file (a scope rule for the unify work; ends when #126 closes)."
+---
 # 2026-11-21: during the UI unify, what a slice touches is built or renamed into its final library piece (Jess)
 
 - While the UI is being unified (#126 and any slice pulled forward from it, starting with #128's Pokeballs tab), a

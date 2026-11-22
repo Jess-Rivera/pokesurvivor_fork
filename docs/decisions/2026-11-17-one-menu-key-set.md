@@ -1,3 +1,10 @@
+---
+title: "one select and move key set across the Main Menu and its windows (Jess)"
+date: 2026-11-17
+issues: []
+area: ui
+canonical: "js/ui/menu-window-kit.js createMenuCursor for the windows; js/ui/menu.js for the Main Menu rows (until #126 / #127 moves the Main Menu onto the shared cursor)."
+---
 # 2026-11-17: one select and move key set across the Main Menu and its windows (Jess)
 
 - Select: Enter and Space, everywhere (Main Menu rows, Shop, Inventory).

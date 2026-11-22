@@ -1,3 +1,10 @@
+---
+title: "#49: misjudgment, and leader sharpness grows with the loop (Jess)"
+date: 2026-11-09
+issues: [49]
+area: gyms
+canonical: "docs/LEADER-AI.md \"The Decider (#49)\" (MISJUDGMENT, SHARPNESS AND STYLE) and \"Authoring a leader\""
+---
 ## 2026-11-09, #49: misjudgment, and leader sharpness grows with the loop (Jess)
 New setting `misjudge`: seeded noise on each candidate plan's cost, drawn once per plan per think tick. The leader thinks a bad plan is good, unlike `randomness`, which picks a worse goal on purpose.
 Sharpness settings take a per-leader base plus a per-loop growth (12 leaders, 6 loops: 24 values per setting), so loop 6 Brock can out-think loop 1 Lance. `misjudge` is approved; the same shape for `memoryUse`, `reflex` and `dodgeRead` is proposed (Jess: "likely"). Style settings (goal weights, cost multipliers, `range`, `swapWill`, `risk`) stay flat per leader. Run memory (learning you during a run) is separate and stays.

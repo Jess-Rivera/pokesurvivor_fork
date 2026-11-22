@@ -1,3 +1,10 @@
+---
+title: "#155 run.hud.teamItems: both bags stacked on the lower right as pixel pockets; item details live in the pause screen (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md \"Roster, berry bag and run items\"."
+---
 # 2026-11-20: #155 run.hud.teamItems: both bags stacked on the lower right as pixel pockets; item details live in the pause screen (Jess)
 
 - A bag is a bag: the team items pocket takes the berry pocket's set up (2026-11-19 berry pocket): panel.pixel in

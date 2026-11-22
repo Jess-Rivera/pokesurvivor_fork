@@ -1,3 +1,10 @@
+---
+title: "#125: your level against the world level follows your skill, with diminishing returns ahead (Jess)"
+date: 2026-11-15
+issues: [125]
+area: engine
+canonical: "#125 until the XP pass lands, then BALANCE.md XP lines and BOSS-REWORK.md level curve."
+---
 # 2026-11-15, #125: your level against the world level follows your skill, with diminishing returns ahead (Jess)
 
 Today you outlevel the world by about Lv 4. Ruling, three bands of play:

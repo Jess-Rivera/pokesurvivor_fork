@@ -1,3 +1,10 @@
+---
+title: "#109 target feel: Brock a ranged wall, Misty a fast aggressor (Jess)"
+date: 2026-11-14
+issues: [109]
+area: gyms
+canonical: "docs/LEADER-AI.md \"Authoring a leader\"; #109."
+---
 # 2026-11-14, #109 target feel: Brock a ranged wall, Misty a fast aggressor (Jess)
 
 Agreed from the stated-vs-canon map (docs/AI Outputs/Issue-109/109 - Brock and Misty Target Feel.md). T1: Misty is a fast

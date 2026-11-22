@@ -1,3 +1,10 @@
+---
+title: "#136: the catch opens on contact; held catch, belt and screen rulings (Jess)"
+date: 2026-11-15
+issues: [136]
+area: engine
+canonical: "docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt sections 3 and 4, and js/systems/catch.js (K)."
+---
 # 2026-11-15, #136: the catch opens on contact; held catch, belt and screen rulings (Jess)
 
 - Contact, not an automatic pause (replaces spec section 3's "the game pauses" on the win): a won rescue's Stage 1 waits 30 s

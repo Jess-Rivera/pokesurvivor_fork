@@ -1,3 +1,10 @@
+---
+title: "structural review of feature/gym-leader-ai: new files count against the 1000-line rule (Jess)"
+date: 2026-11-14
+issues: []
+area: docs
+canonical: ".claude/skills/structural-review/SKILL.md, \"The 1000-line rule (adapted)\"."
+---
 # 2026-11-14, structural review of feature/gym-leader-ai: new files count against the 1000-line rule (Jess)
 
 D1: a file that does not exist on main counts as crossing 1000 lines when the branch brings it in over 1000, whatever

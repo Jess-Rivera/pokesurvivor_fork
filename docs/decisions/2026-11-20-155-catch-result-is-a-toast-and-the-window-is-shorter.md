@@ -1,3 +1,10 @@
+---
+title: "#155 catch screen: the result is a toast, and the window is shorter (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md \"Catch screen\"."
+---
 # 2026-11-20: #155 catch screen: the result is a toast, and the window is shorter (Jess)
 
 - The throw's result leaves the Pokemon panel and becomes a G.UI.toast: "Gotcha! ... was caught!" as good news (teal

@@ -1,3 +1,10 @@
+---
+title: "#155 button.glitch: the rest body is transparent, so the swipe draws the button (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md (buttons)."
+---
 # 2026-11-20: #155 button.glitch: the rest body is transparent, so the swipe draws the button (Jess)
 
 - At rest a button.glitch is its white bar and label only. The body takes the colour of whatever it sits on (the

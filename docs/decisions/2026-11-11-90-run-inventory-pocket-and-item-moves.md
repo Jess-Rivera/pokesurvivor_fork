@@ -1,3 +1,10 @@
+---
+title: "#90 and #96: the Run Inventory, the Temporary Pocket, held item moves and berry slots (Jess)"
+date: 2026-11-11
+issues: [90, 96]
+area: ui
+canonical: "docs/PAUSE-MENU.md sections 3 and 4; docs/HUD-STYLE.md \"Fonts\" and \"Berry bag\"."
+---
 ## 2026-11-11, #90 and #96: the Run Inventory, the Temporary Pocket, held item moves and berry slots (Jess)
 Run Inventory: no frame; three tight 2x2 grids in a row (berries, run items, Temporary Pocket), unbought slots dimmed, no labels, every item's name and effect in its hover tooltip. The run screen berry bag uses the same tight grid (half a square between squares), no names, bought slots only.
 Held items: the detail panel's held slot is the square only. Click then click, or drag and drop, moves a held item between the held slot, the pocket and the team cards; onto a holder they swap; anywhere else, or Esc, returns it; no highlight shows where it can go.

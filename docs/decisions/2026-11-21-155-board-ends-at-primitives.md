@@ -1,3 +1,10 @@
+---
+title: "#155 the board ends at the primitives and the approved composites; the rest is built in the game (Jess)"
+date: 2026-11-21
+issues: [155]
+area: ui
+canonical: "this file."
+---
 # 2026-11-21: #155 the board ends at the primitives and the approved composites; the rest is built in the game (Jess)
 
 - Drafting main.team showed the primitives are enough. A whole-screen board copy of a screen the game rebuilds anyway

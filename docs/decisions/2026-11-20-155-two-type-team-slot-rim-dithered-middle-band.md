@@ -1,3 +1,10 @@
+---
+title: "#155 run.hud.teamSlot: a two-type Pokemon's rim is first type left, second type right, the middle 25% dithered (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md \"Roster, berry bag and run items\"."
+---
 # 2026-11-20: #155 run.hud.teamSlot: a two-type Pokemon's rim is first type left, second type right, the middle 25% dithered (Jess)
 
 - The portrait stroke of the Pokemon out now stays its first type's base only (a split, a gradient and stepped bands were

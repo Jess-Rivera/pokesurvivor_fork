@@ -1,3 +1,10 @@
+---
+title: "#155 run.hud.moveMart: the Move Trainer, stacked; approved (Jess)"
+date: 2026-11-21
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md \"Move Shop\"."
+---
 # 2026-11-21: #155 run.hud.moveMart: the Move Trainer, stacked; approved (Jess)
 
 - Stacked, not mirrored: the team on top, the chosen Pokemon's four offers below, Reroll and Leave bottom right. Replaces

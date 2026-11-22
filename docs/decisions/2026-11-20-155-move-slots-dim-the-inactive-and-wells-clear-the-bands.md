@@ -1,3 +1,10 @@
+---
+title: "#155 run.hud.playerActive.area: the inactive move slots are dimmed; the wells clear the slot's bands (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md \"Character info panel\"."
+---
 # 2026-11-20: #155 run.hud.playerActive.area: the inactive move slots are dimmed; the wells clear the slot's bands (Jess)
 
 - Active slot: the slot the keys use now draws as it is; the other three are dimmed to 50% brightness (darkened, not

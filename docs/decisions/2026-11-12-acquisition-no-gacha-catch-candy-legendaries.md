@@ -1,3 +1,10 @@
+---
+title: "Acquisition: no gacha; catch Stage 1s in runs, evolve by candy, legendaries by loop clear (Jess)"
+date: 2026-11-12
+issues: []
+area: items
+canonical: "docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt (history: Acquisition v1 - Catch, Candy, Legendaries.txt)"
+---
 # 2026-11-12, Acquisition: no gacha; catch Stage 1s in runs, evolve by candy, legendaries by loop clear (Jess)
 
 Direction: the gacha goes. Luck should not hand out an end-game mon and make starters useless; the game is moving toward a horde ARPG with Pokemon investment and meta progression.

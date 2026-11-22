@@ -1,3 +1,10 @@
+---
+title: "#155 the UI uses 28 non-canon colours: 7 greys and 7 three-tone ramps (Jess)"
+date: 2026-11-18
+issues: [155]
+area: ui
+canonical: "this file (no other spec named)"
+---
 # 2026-11-18: #155 the UI uses 28 non-canon colours: 7 greys and 7 three-tone ramps (Jess)
 
 - Every colour the UI shows that is not canon Pokemon is one of 28: 7 neutrals and the 7 UI colours (red, green, blue,

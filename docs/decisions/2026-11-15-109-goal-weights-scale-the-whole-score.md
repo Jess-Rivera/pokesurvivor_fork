@@ -1,3 +1,10 @@
+---
+title: "#109: goal weights scale the whole score, not just the value (Jess)"
+date: 2026-11-15
+issues: [109]
+area: gyms
+canonical: "docs/LEADER-AI.md \"GOAL VALUE AND SCORE\" and \"CHOICE\"; #109."
+---
 # 2026-11-15, #109: goal weights scale the whole score, not just the value (Jess)
 
 Finish won on cost once hits were sized right, so a goal weight (on the value only, about 0.1 to 0.7) could not move it

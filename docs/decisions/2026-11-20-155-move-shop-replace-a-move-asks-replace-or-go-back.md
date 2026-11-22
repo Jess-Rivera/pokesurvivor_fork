@@ -1,3 +1,10 @@
+---
+title: "#155 the Move Shop's replace-a-move buy: pick, a popup to choose the move, then a Replace or Go Back ask (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it."
+---
 # 2026-11-20: #155 the Move Shop's replace-a-move buy: pick, a popup to choose the move, then a Replace or Go Back ask (Jess)
 
 - A Move Trainer or TR Mart buy into full slots goes: pick the move or TR, a popup panel to choose which loose move to

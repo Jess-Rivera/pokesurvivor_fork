@@ -1,3 +1,10 @@
+---
+title: "#123: move speed 0.95x to 1.05x for everyone; Speed sets dodge recharge (Jess)"
+date: 2026-11-15
+issues: [123]
+area: engine
+canonical: "docs/COMBAT-RULES.md \"SPEED\"; BALANCE.md movement and dodge lines; #123."
+---
 # 2026-11-15, #123: move speed 0.95x to 1.05x for everyone; Speed sets dodge recharge (Jess)
 
 The 0.7x to 1.3x movement bounds (2026-11-01) left slow starters (Turtwig 76, Bulbasaur 82 px/s) unable to kite early

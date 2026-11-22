@@ -1,3 +1,10 @@
+---
+title: "#137b each ball keeps its own slot; the player arranges them in the Shop (Jess)"
+date: 2026-11-17
+issues: [137]
+area: items
+canonical: "js/systems/catch.js header (belt) and js/ui/shop-balls.js header (arrange). Plan: docs/AI Outputs/Issue-137/137b - Belt Slots and Rearranging Plan.md."
+---
 # 2026-11-17: #137b each ball keeps its own slot; the player arranges them in the Shop (Jess)
 
 - The save keeps the belt slot by slot (save.belt.slots), not counts per tier. Old saves convert on load, best tier

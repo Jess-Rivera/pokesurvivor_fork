@@ -1,3 +1,10 @@
+---
+title: "#149 is the Main Menu Shop, four tabs; a TR bought there is learned for good and sold by the Move Trainer (Jess)"
+date: 2026-11-16
+issues: [149]
+area: ui
+canonical: "that plan until 149f lands; then js/systems/shops.js header (Trainer pool) and the TR module's header."
+---
 # 2026-11-16: #149 is the Main Menu Shop, four tabs; a TR bought there is learned for good and sold by the Move Trainer (Jess)
 
 - #149 reworks the Main Menu Shop (scr-gacha, between runs, PokeCoins) and the Inventory screen, from Jess's mockups

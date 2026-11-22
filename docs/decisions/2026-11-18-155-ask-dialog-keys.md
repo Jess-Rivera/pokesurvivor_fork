@@ -1,3 +1,10 @@
+---
+title: "#155 the ask dialog's keys follow the menu windows (Jess)"
+date: 2026-11-18
+issues: [155]
+area: ui
+canonical: "js/ui/ui.js ask() header. Plan: docs/AI Outputs/Issue-155/155c-4 - Modal Plan.md."
+---
 # 2026-11-18: #155 the ask dialog's keys follow the menu windows (Jess)
 
 - Every confirm (G.UI.ask) has one green button, Confirm when it opens. Left and Right move it; the mouse over a button

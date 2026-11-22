@@ -1,3 +1,10 @@
+---
+title: "#155 panel.shopCard: panel.clean with a grey.raised body and a teal.base edge, for every Shop card (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md (panels)."
+---
 # 2026-11-20: #155 panel.shopCard: panel.clean with a grey.raised body and a teal.base edge, for every Shop card (Jess)
 
 - New primitive panel.shopCard: panel.clean's shape (1 px edge, square corners, no cut, no bar) with a grey.raised body

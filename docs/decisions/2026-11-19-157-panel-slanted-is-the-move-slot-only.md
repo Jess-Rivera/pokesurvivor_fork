@@ -1,3 +1,10 @@
+---
+title: "#157 panel.slanted stays as it is, and its only place is the move slot (Jess)"
+date: 2026-11-19
+issues: [157]
+area: ui
+canonical: "js/ui/lib/primitives/panel/panel.js header, once #126 applies it; until then this file."
+---
 # 2026-11-19: #157 panel.slanted stays as it is, and its only place is the move slot (Jess)
 
 - panel.slanted.rest is kept unchanged: today's shape, rim and art pixel. Its one place is run.hud.moveSlot.

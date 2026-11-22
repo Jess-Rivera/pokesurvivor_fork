@@ -1,3 +1,10 @@
+---
+title: "#125: the opening XP boost is off by default, debug only (Jess)"
+date: 2026-11-15
+issues: [125]
+area: engine
+canonical: "BALANCE.md (the 2026-11-15 XP boost line) and js/systems/spawner.js."
+---
 # 2026-11-15, #125: the opening XP boost is off by default, debug only (Jess)
 
 The opening XP boost (x2 wild-kill XP for the first 3:00, with its "3 Min XP boost!" banner) no longer runs in the game.

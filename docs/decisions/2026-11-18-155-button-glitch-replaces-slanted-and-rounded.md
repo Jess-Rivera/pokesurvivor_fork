@@ -1,3 +1,10 @@
+---
+title: "#155 button.glitch replaces button.slanted and button.rounded on every screen, the catch screen included (Jess)"
+date: 2026-11-18
+issues: [155]
+area: ui
+canonical: "tools/library/glitch-draft.js header (the board) until #126 moves button.glitch into js/ui/lib/primitives/button/."
+---
 # 2026-11-18: #155 button.glitch replaces button.slanted and button.rounded on every screen, the catch screen included (Jess)
 
 - Every button press is the game talking (the code's voice, docs/META-NARRATIVE.md), so every screen's buttons become

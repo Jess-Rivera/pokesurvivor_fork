@@ -1,3 +1,10 @@
+---
+title: "#155 main.shop.tms: the TMs tab as drawn; approved (Jess)"
+date: 2026-11-21
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it."
+---
 # 2026-11-21: #155 main.shop.tms: the TMs tab as drawn; approved (Jess)
 
 - The bar: field.text (Search TMs), the Type field.dropdown and toggle.power "Able to Learn", shown off. The toggle's

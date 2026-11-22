@@ -1,3 +1,10 @@
+---
+title: "#155 a primitive's states are what it shows on its own; everything a screen sets is a prop (Jess)"
+date: 2026-11-18
+issues: [155]
+area: ui
+canonical: "the story files' headers (tools/library/stories/\\*.story.js, moved from js/ui/lib/primitives/ 2026-11-19). Plan and as-built: docs/ASCII Concept"
+---
 # 2026-11-18: #155 a primitive's states are what it shows on its own; everything a screen sets is a prop (Jess)
 
 - A state is a condition the piece itself shows: at rest, focused, refused, disabled, dimmed, fainted, filled, empty,

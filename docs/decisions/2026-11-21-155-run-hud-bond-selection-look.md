@@ -1,3 +1,10 @@
+---
+title: "#155 run.hud.bondSelection: team rows, then the four move slots in one row, then a Bond ask; approved (Jess)"
+date: 2026-11-21
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md."
+---
 # 2026-11-21: #155 run.hud.bondSelection: team rows, then the four move slots in one row, then a Bond ask; approved (Jess)
 
 - The popup after a gym leader is beaten, when the team holds a bond: panel.clean as wide as the run shops, the screen

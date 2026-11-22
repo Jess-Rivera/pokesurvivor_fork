@@ -1,3 +1,10 @@
+---
+title: "#155 the UI's design tokens live in one JS data file, type colours included (Jess)"
+date: 2026-11-17
+issues: [155]
+area: ui
+canonical: "js/ui/lib/tokens/tokens.js header; docs/HUD-STYLE.md \"Type colours\". Plan: docs/AI Outputs/Issue-155/155 - UI Library v2 Build Plan.md."
+---
 # 2026-11-17: #155 the UI's design tokens live in one JS data file, type colours included (Jess)
 
 - The UI library defines the look and the game follows it (#155). Its tokens (colour palettes, fonts, the page's z-index

@@ -1,3 +1,10 @@
+---
+title: "#39 opening: split into 39a and 39b, judged by a seeded duel profile (Jess)"
+date: 2026-11-14
+issues: [39]
+area: gyms
+canonical: "docs/LEADER-AI.md \"Authoring a leader\" and Build order 5b; #39."
+---
 # 2026-11-14, #39 opening: split into 39a and 39b, judged by a seeded duel profile (Jess)
 
 Jess approved the #39 opening as recommended (docs/AI Outputs/Issue-39/39 - Slice Opening.html). D1: buffBias, exploit, aimError and memoryUse

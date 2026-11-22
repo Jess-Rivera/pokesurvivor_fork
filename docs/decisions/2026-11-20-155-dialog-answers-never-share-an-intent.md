@@ -1,3 +1,10 @@
+---
+title: "#155 a dialog's two answers never share an intent; the back-out is Neutral (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then the dialog rule's home in docs/HUD-STYLE.md or the modal spec."
+---
 # 2026-11-20: #155 a dialog's two answers never share an intent; the back-out is Neutral (Jess)
 
 - A binary question has two different answers, so they cannot share an intent. The confirm takes the intent of what

@@ -1,3 +1,10 @@
+---
+title: "39a: planner input and output checks replace the duel profile; three 16e duels retired (Jess)"
+date: 2026-11-14
+issues: [39]
+area: gyms
+canonical: "docs/LEADER-AI.md TESTS; #39."
+---
 # 2026-11-14, 39a: planner input and output checks replace the duel profile; three 16e duels retired (Jess)
 
 The duels' scripted you stands still and never dodges, so their numbers said nothing about how a player fights (Jess: a test

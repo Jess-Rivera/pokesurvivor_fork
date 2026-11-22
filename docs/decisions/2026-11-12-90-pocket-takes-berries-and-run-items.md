@@ -1,3 +1,10 @@
+---
+title: "#90, #94, #98: the pocket takes berries and run items; hex +X% placement; run item name in its card (Jess)"
+date: 2026-11-12
+issues: [90, 94, 98]
+area: ui
+canonical: "docs/PAUSE-MENU.md sections 3 and 4; docs/HUD-STYLE.md \"Run items\"."
+---
 ## 2026-11-12, #90, #94, #98: the pocket takes berries and run items; hex +X% placement; run item name in its card (Jess)
 Temporary Pocket: berries and run items can be set aside in it too, to destroy them through the resume prompt. They move by click or drag between their own bought slots and the pocket only, never onto a Pokemon or the other grid; a same-kind filled slot swaps. A run item in the pocket stops working for the whole team until it goes back; one Stone at a time still holds.
 Stat hex: on the four side corners the yellow "+X%" sits on its own line under the stat number; HP and Spe keep it beside the name.

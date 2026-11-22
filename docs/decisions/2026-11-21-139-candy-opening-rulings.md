@@ -1,3 +1,10 @@
+---
+title: "#139 opening: S8 split in three, candy drop rules, candy by hand (Jess)"
+date: 2026-11-21
+issues: [139]
+area: engine
+canonical: "docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built."
+---
 # 2026-11-21: #139 opening: S8 split in three, candy drop rules, candy by hand (Jess)
 
 - S8 splits into 8a candy (drops, the meter), 8b evolve (table, Team menu Evolve, ready popup, branch pick, copy-data

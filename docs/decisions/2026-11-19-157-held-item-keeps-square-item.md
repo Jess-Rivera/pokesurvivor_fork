@@ -1,3 +1,10 @@
+---
+title: "#157 the held item keeps square.item, folded to the Unified colours (Jess)"
+date: 2026-11-19
+issues: [157]
+area: ui
+canonical: "js/ui/lib/primitives/square/square.js header, once #126 applies it; until then this file."
+---
 # 2026-11-19: #157 the held item keeps square.item, folded to the Unified colours (Jess)
 
 - The held item is one Pokemon's, so it is pixel. It keeps square.item (the B2 bag button: chamfered corners and a 1 art

@@ -1,3 +1,10 @@
+---
+title: "#138 floater escort and the slice opening rulings (Jess)"
+date: 2026-11-21
+issues: [138]
+area: engine
+canonical: "docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt section 5 (its [Open] build detail is"
+---
 # 2026-11-21: #138 floater escort and the slice opening rulings (Jess)
 
 - H1: a floating Lost Pokemon (sprites-meta hv, G.Sprites.hovers) escorts with hover movement, like hover enemies.

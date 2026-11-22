@@ -1,3 +1,10 @@
+---
+title: "#53: a trigger's set may not name intelligence, and a set reflex keeps the 0.1 s floor (Jess)"
+date: 2026-11-13
+issues: [53]
+area: gyms
+canonical: "docs/LEADER-AI.md TRIGGERS."
+---
 ## 2026-11-13, #53: a trigger's set may not name intelligence, and a set reflex keeps the 0.1 s floor (Jess)
 From the #53 plan check (T1, T2). T1: `intelligence` resolves once, at fight start, into the five settings it drives, so
 a trigger that sets it would do nothing; the gyms.js validator refuses it (chosen over re-resolving the five when the

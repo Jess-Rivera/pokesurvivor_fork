@@ -1,3 +1,10 @@
+---
+title: "end of run: the End Run screen, Run Review, the EV screen redesign, and no EVs on quit (Jess)"
+date: 2026-11-12
+issues: []
+area: ui
+canonical: "docs/PAUSE-MENU.md section 7."
+---
 ## 2026-11-12, end of run: the End Run screen, Run Review, the EV screen redesign, and no EVs on quit (Jess)
 End Run (#103): the old results card is replaced by "EXPEDITION OVER" and two buttons, "Run Review" and "Learn from the Loss" (whole EVs to give) or "Return Home" (none). Nothing is lost: Run Info already shows coins, Silver, shinies seen and caught and the rest (Jess). The Ko-fi ask is dropped. Poke Balls and Master Balls earned show nowhere: not on End Run, Run Review, the EV screen or any in-run screen (they still go to the save).
 Rule change: a run ended by quitting gives no EVs (until now a quit gave them), so a quit always shows "Return Home".

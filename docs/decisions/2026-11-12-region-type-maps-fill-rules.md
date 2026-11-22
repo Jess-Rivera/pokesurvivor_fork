@@ -1,3 +1,10 @@
+---
+title: "Region type maps: 9 maps per region, cast fill rules (Jess)"
+date: 2026-11-12
+issues: []
+area: engine
+canonical: "docs/AI Outputs/Old txt files/Region Type Maps/Region Type Maps - Biomes v2 (8 type maps + Stage 3 map).txt (history: Biomes v1.txt, Region Type Maps Feasibility.txt)"
+---
 # 2026-11-12, Region type maps: 9 maps per region, cast fill rules (Jess)
 
 Each region gets 9 maps, each focused on 2 or 3 types (a mix of both), themed as a biome ("Meandering Meadows", "Dark Volcano"). Feeds a later Pokemon acquisition mechanic.

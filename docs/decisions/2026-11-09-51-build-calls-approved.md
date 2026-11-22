@@ -1,3 +1,10 @@
+---
+title: "#51 build calls (a) to (d) approved; the two planner gaps filed (Jess)"
+date: 2026-11-09
+issues: [51]
+area: gyms
+canonical: "docs/LEADER-AI.md \"The Decider (#49)\", GOAL VALUE AND SCORE and CHOICE"
+---
 ## 2026-11-09, #51 build calls (a) to (d) approved; the two planner gaps filed (Jess)
 After the #51 feel test (good), Jess approved all four calls made while building the planner:
 1. (a) Finish's partial credit is the KO bonus x the share of your HP dealt, with damage dealt left out of that plan's cost; a Finish plan that reaches the KO keeps the full rule.

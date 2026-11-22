@@ -1,3 +1,10 @@
+---
+title: "#133: tickets are retired; every ticket payout becomes coins at 40 per x1 and 400 per x10 (Jess)"
+date: 2026-11-15
+issues: [133]
+area: engine
+canonical: "js/data/drops.js (K) and docs/AI Outputs/Issue-133-134/133-134 - Gacha Removal and Starter Pick Opening.md."
+---
 # 2026-11-15, #133: tickets are retired; every ticket payout becomes coins at 40 per x1 and 400 per x10 (Jess)
 
 - The gacha, its slot machine and the Pokeball and Master Ball tickets are removed. The Shop keeps Team Items and Team Upgrades

@@ -1,3 +1,10 @@
+---
+title: "#155 the menu buttons use Michroma (HudModule), the game's own UI face (Jess)"
+date: 2026-11-18
+issues: [155]
+area: ui
+canonical: "docs/HUD-STYLE.md \"Fonts\", \"Which face for what\"."
+---
 # 2026-11-18: #155 the menu buttons use Michroma (HudModule), the game's own UI face (Jess)
 
 - The menu buttons (pause menu, End Run, EV screen) are the game talking, not text about a Pokemon, so they take

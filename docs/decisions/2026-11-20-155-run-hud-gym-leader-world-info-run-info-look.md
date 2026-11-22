@@ -1,3 +1,10 @@
+---
+title: "#155 the run screen's top: run.hud.gymLeader, run.hud.worldInfo and run.hud.runInfo looks (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md's sections for each panel."
+---
 # 2026-11-20: #155 the run screen's top: run.hud.gymLeader, run.hud.worldInfo and run.hud.runInfo looks (Jess)
 
 - Names: run.hud.worldInfo is the map panel (World Level, Region, Map, the weather card) and the kills line;

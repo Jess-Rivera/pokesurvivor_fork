@@ -1,3 +1,10 @@
+---
+title: "#155 pixel panels frame one Pokemon and what it owns; everything shared, and the code's own interface, is clean (Jess)"
+date: 2026-11-18
+issues: [155]
+area: ui
+canonical: "js/ui/lib/primitives/panel/panel.js header, once #126 applies it; until then this file."
+---
 # 2026-11-18: #155 pixel panels frame one Pokemon and what it owns; everything shared, and the code's own interface, is clean (Jess)
 
 - Pixel (panel.pixel, panel.slanted, the B2 art): one Pokemon. pause.pokemonDetail's stats and moves boxes, its held item

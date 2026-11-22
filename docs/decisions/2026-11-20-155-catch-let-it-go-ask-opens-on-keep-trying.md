@@ -1,3 +1,10 @@
+---
+title: "#155 the catch screen's Let It Go keeps its ask and opens on Keep trying (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then the dialog rule's home in docs/HUD-STYLE.md or the modal spec."
+---
 # 2026-11-20: #155 the catch screen's Let It Go keeps its ask and opens on Keep trying (Jess)
 
 - Letting a rescue go is a loss the player cannot earn back, so under the dialog rule (only such losses get a

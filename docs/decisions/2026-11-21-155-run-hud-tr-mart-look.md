@@ -1,3 +1,10 @@
+---
+title: "#155 run.hud.trMart: the Move Trainer mirrored top to bottom; approved (Jess)"
+date: 2026-11-21
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md \"Move Shop\"."
+---
 # 2026-11-21: #155 run.hud.trMart: the Move Trainer mirrored top to bottom; approved (Jess)
 
 - Every aspect of run.hud.moveMart (2026-11-21-155-run-hud-move-mart-look), the halves swapped: the four TR cards on

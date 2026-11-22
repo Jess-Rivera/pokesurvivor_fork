@@ -1,3 +1,10 @@
+---
+title: "#155 the dialog is panel.clean, Michroma and button.glitch; a cancel state; focus shows only with the keyboard, and from the mouse the first key only reveals it, in menus and dialogs (Jess)"
+date: 2026-11-19
+issues: [155]
+area: ui
+canonical: "js/ui/lib/primitives/modal/modal.js and js/ui/ui.js G.UI.ask headers, once #126 applies it; until then this file."
+---
 # 2026-11-19: #155 the dialog is panel.clean, Michroma and button.glitch; a cancel state; focus shows only with the keyboard, and from the mouse the first key only reveals it, in menus and dialogs (Jess)
 
 - modal.dialog goes clean: panel.clean frame (720 px), every line in Michroma (sizes settled at the Fonts feel test),

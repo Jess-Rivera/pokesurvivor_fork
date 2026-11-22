@@ -1,3 +1,10 @@
+---
+title: "#155 main.shop.pokeball: the Pokeballs tab's look on the board (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then the shop's spec section."
+---
 # 2026-11-20: #155 main.shop.pokeball: the Pokeballs tab's look on the board (Jess)
 
 - The rail's icons sit 1 px in, touching the window's 1 px edge instead of covering it (every shop tab).

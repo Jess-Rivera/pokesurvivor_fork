@@ -1,3 +1,10 @@
+---
+title: "one universal tooltip layer, the topmost thing on the page (Jess)"
+date: 2026-11-16
+issues: []
+area: ui
+canonical: "docs/HUD-STYLE.md \"Fonts\" (the tooltip rules) and js/ui/hud-kit-items.js."
+---
 # 2026-11-16: one universal tooltip layer, the topmost thing on the page (Jess)
 
 - Every hover tooltip on every screen is drawn in ONE layer the HUD kit puts on the page itself: fixed over the whole

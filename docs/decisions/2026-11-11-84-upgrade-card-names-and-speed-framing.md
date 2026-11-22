@@ -1,3 +1,10 @@
+---
+title: "#84: upgrade card renames, speed framing for the dividing cards, All Damage Up (Jess)"
+date: 2026-11-11
+issues: [84]
+area: moves
+canonical: "docs/UPGRADE-CARDS.md (names, hints and per-pick tables); steps in js/systems/team-cards.js."
+---
 ## 2026-11-11, #84: upgrade card renames, speed framing for the dividing cards, All Damage Up (Jess)
 Gate Reduction, Cooldown Down and Delay Down keep their dividing maths and are named as speeds, so "+X%" is exactly true:
 Stat Climb Speed Up (+10%), Attack Speed Up (+15%), Impact Speed Up (+15%). Recoil Down becomes Recoil Reduction, its description shows the real share of base recoil now and after the pick.

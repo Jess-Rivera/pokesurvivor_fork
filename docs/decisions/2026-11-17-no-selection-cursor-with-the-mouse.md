@@ -1,3 +1,10 @@
+---
+title: "no selection cursor with the mouse; none on search bars (Jess)"
+date: 2026-11-17
+issues: []
+area: ui
+canonical: "js/ui/gacha-ui.js header and cornersIf; js/ui/hud-kit.js \"the input mode\" comment."
+---
 # 2026-11-17: no selection cursor with the mouse; none on search bars (Jess)
 
 - Using the mouse, the selection cursor's corners show nowhere. The button under the mouse shows its own green (focus) rim.

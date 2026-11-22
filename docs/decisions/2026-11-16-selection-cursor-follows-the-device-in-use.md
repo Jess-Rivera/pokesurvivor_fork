@@ -1,3 +1,10 @@
+---
+title: "the selection cursor follows the device in use (Jess)"
+date: 2026-11-16
+issues: []
+area: ui
+canonical: "js/ui/hud-kit.js \"the input mode\" comment; js/ui/gacha-ui.js header for the Shop."
+---
 # 2026-11-16: the selection cursor follows the device in use (Jess)
 
 - Using the mouse (a real move, not a jitter of a few pixels, or a click): the selection cursor shows only on the eligible

@@ -1,3 +1,10 @@
+---
+title: "#155 run.hud.teamSlot: bar.life's format without the background, 2 px cursor gap, the berry pocket in circles (Jess)"
+date: 2026-11-19
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md \"Roster, berry bag and run items\"."
+---
 # 2026-11-19: #155 run.hud.teamSlot: bar.life's format without the background, 2 px cursor gap, the berry pocket in circles (Jess)
 
 - The roster row's HP bar is bar.life's format with no background shape: the HP tab plate and the 5-row track only. The

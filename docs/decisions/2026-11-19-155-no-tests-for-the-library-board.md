@@ -1,3 +1,10 @@
+---
+title: "#155 the library board has no tests; tools/smoke-ui-library.js is removed (Jess)"
+date: 2026-11-19
+issues: [155]
+area: ui
+canonical: "CLAUDE.md is unchanged; this file."
+---
 # 2026-11-19: #155 the library board has no tests; tools/smoke-ui-library.js is removed (Jess)
 
 - The board (tools/library/, tools/ui-library.html) is a design-language page Jess looks at, not shipped code, so no

@@ -1,3 +1,10 @@
+---
+title: "tests check relations, not values (Jess)"
+date: 2026-11-14
+issues: []
+area: engine
+canonical: "docs/TEST-FIRST.md, The cycle, step 3."
+---
 # 2026-11-14, tests check relations, not values (Jess)
 
 A check compares outputs the code produces with each other: parity with your path, a setting doing what its name says on

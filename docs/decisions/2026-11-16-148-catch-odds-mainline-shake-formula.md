@@ -1,3 +1,10 @@
+---
+title: "#148 catch odds use Jess's mainline-style shake formula; capture_rate returns (Jess)"
+date: 2026-11-16
+issues: [148]
+area: engine
+canonical: "js/systems/catch.js header and its ODDS table."
+---
 # 2026-11-16: #148 catch odds use Jess's mainline-style shake formula; capture_rate returns (Jess)
 
 - The catch chance follows Jess's formula (docs/AI Outputs/Old txt files/pokeball-math-human-made.txt): time stands in for HP,

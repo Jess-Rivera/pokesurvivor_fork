@@ -1,3 +1,10 @@
+---
+title: "#155 main.shop.tms: a TM's Learned and Known buttons are disabled, not refused (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then the shop's spec section."
+---
 # 2026-11-20: #155 main.shop.tms: a TM's Learned and Known buttons are disabled, not refused (Jess)
 
 - On a TM card, Learned (the chosen Pokemon bought it) and Known (its level-up or egg pool has it) show button.glitch

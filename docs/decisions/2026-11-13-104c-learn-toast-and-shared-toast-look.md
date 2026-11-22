@@ -1,3 +1,10 @@
+---
+title: "#104c: Learn says \"Lessons Learned, Returning Home\" for 2 s; every toast takes the main menu bars' look (Jess)"
+date: 2026-11-13
+issues: [104]
+area: ui
+canonical: "docs/PAUSE-MENU.md section 7 (Learn), docs/HUD-STYLE.md \"Toasts\" (the look)."
+---
 ## 2026-11-13, #104c: Learn says "Lessons Learned, Returning Home" for 2 s; every toast takes the main menu bars' look (Jess)
 After Learn saves the EVs, the shared toast says "Lessons Learned, Returning Home" for 2 s (feel tests: 1 s too fast, 3 s too long); the EV screen stays up and takes no input, then the main menu. Go Home has no toast.
 Rule change for every screen: the one shared toast (G.UI.toast, about 50 messages) is restyled in place, a dark panel with the teal rim of the main menu's top and bottom bars, in Michroma, bottom centre as before; bad news keeps the shape with the pause menu red rim.

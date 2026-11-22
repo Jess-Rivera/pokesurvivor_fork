@@ -1,3 +1,10 @@
+---
+title: "#155 library pieces are named by their look, never by a screen or a job (Jess)"
+date: 2026-11-18
+issues: [155]
+area: ui
+canonical: "js/ui/lib/primitives/button/button.js header. Plan: docs/AI Outputs/Issue-155/155b-2 - Button Shape Names Plan.md."
+---
 # 2026-11-18: #155 library pieces are named by their look, never by a screen or a job (Jess)
 
 - A primitive's name says what it looks like: `button.slanted` (the move slot shape, angled ends) and `button.rounded`

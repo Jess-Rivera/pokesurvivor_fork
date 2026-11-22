@@ -1,3 +1,10 @@
+---
+title: "Leader AI slice 4 shipped (Jess)"
+date: 2026-11-08
+issues: []
+area: gyms
+canonical: "docs/LEADER-AI.md"
+---
 ## 2026-11-08, Leader AI slice 4 shipped (Jess)
 Jess feel-tested slice 4 (#33: the run memory, stale reveals, swap tags and the usual-lead read) and approved it ("it feels awesome"). Approved with it, the three calls made during the build (decision 2026-11-08-leader-ai-slice-4-opened-the-usual-lead-is-the-first-exploit): a stale move is seen missing once that mon has cast 4 other moves in the fight; the swap tag lines (low under 30% HP, a leader mon sent in within 2 s); and the read line goes ahead of the line queue, so on a read fight the start line is dropped. The drafted exploit lines for Misty and Brock stay for now. Next: slice 5 (#34).
 Canonical: docs/LEADER-AI.md

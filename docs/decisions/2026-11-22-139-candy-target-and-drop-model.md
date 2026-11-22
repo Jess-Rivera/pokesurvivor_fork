@@ -1,3 +1,10 @@
+---
+title: "#139 8a: the candy target, canon sizes, the base drops and the extra pool (Jess)"
+date: 2026-11-22
+issues: [139]
+area: engine
+canonical: "docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built."
+---
 # 2026-11-22: #139 8a: the candy target, canon sizes, the base drops and the extra pool (Jess)
 
 - [Approved] Target: the deterministic base drops of one full run (loop 6 done: 8 gyms and 4 Elite Four per loop)

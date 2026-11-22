@@ -1,3 +1,10 @@
+---
+title: "#52 build: a swap's matchup over the long window, the duels' shape, planner cost (Jess)"
+date: 2026-11-09
+issues: [52]
+area: gyms
+canonical: "docs/LEADER-AI.md \"The Decider (#49)\", ACTIONS and TESTS"
+---
 ## 2026-11-09, #52 build: a swap's matchup over the long window, the duels' shape, planner cost (Jess)
 Three calls made during the #52 build, on gaps found in it:
 1. A swap is also worth its matchup over the 10 s long window, as Buff is valued: the swap step takes (your shots' damage per second on the incoming mon minus on the outgoing one) x 10 s and deals (the incoming mon's best hit per second on you minus the outgoing one's) x 10 s, signed. Why: a plan of 4 actions at range sees no trade, so the matchup swap never won (vs Bulbasaur's Vine Whip, Staryu takes 0.048 a second, Seel 0.037: 0.10 over 10 s against the 0.03 swap cost).

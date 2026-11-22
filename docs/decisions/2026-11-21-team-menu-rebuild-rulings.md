@@ -1,3 +1,10 @@
+---
+title: "the Team menu rebuild: Jess's mockup and five rulings, for #126 (Jess)"
+date: 2026-11-21
+issues: [126]
+area: ui
+canonical: "this file until #126 builds the screen."
+---
 # 2026-11-21: the Team menu rebuild: Jess's mockup and five rulings, for #126 (Jess)
 
 - Layout: assets/excalidraw/team-menu.excalidraw. Counters top right, one filter row (Box N, Search, Filter, Sort),

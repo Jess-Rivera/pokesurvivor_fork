@@ -1,3 +1,10 @@
+---
+title: "#155 status chips take canon type ramps or the unified colours (Jess)"
+date: 2026-11-18
+issues: [155]
+area: ui
+canonical: "tools/library.html, Colours 2.0 Unified, Status group (STATUS_TYPE_SWATCHES)."
+---
 # 2026-11-18: #155 status chips take canon type ramps or the unified colours (Jess)
 
 - From Generation VIII the paralysis, frozen, burned and poisoned icons match the Electric, Ice, Fire and Poison type

@@ -1,3 +1,10 @@
+---
+title: "a button you cannot afford still takes the selection cursor, and says why (Jess)"
+date: 2026-11-17
+issues: []
+area: ui
+canonical: "js/ui/menu-window-kit.js CursorButton (its refusal option)."
+---
 # 2026-11-17: a button you cannot afford still takes the selection cursor, and says why (Jess)
 
 - In every menu, the keyboard selection cursor moves onto a buy button you cannot afford and highlights it as normal.

@@ -1,3 +1,10 @@
+---
+title: "the split debug files stay out of NEED (Jess)"
+date: 2026-11-14
+issues: []
+area: engine
+canonical: "ONBOARDING.md, the NEED rule and its exception."
+---
 # 2026-11-14, the split debug files stay out of NEED (Jess)
 
 Structural review F6 moves the dev commands feature/gym-leader-ai added to debug.js into js/core/debug-run-screens.js

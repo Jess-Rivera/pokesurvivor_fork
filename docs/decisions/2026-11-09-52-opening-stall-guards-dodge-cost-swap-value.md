@@ -1,3 +1,10 @@
+---
+title: "#52 opening: stall guards stay gates, the planned dodge's cost, what a swap is worth (Jess)"
+date: 2026-11-09
+issues: [52]
+area: gyms
+canonical: "docs/LEADER-AI.md \"The Decider (#49)\", ACTIONS; \"Fairness\", STALL GUARDS"
+---
 ## 2026-11-09, #52 opening: stall guards stay gates, the planned dodge's cost, what a swap is worth (Jess)
 Jess approved the #52 opening (goal, done-condition, test on the issue) and four calls:
 1. `minField` and `swapLimit` stay hard gates on a voluntary swap (FAIRNESS STALL GUARDS wins over the ACTIONS line that called `minField` a cost term). A fairness limit, raised as a question per PRINCIPLE. `swapWill` is the swap's cost term.

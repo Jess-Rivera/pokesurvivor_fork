@@ -1,3 +1,10 @@
+---
+title: "QA-11: A self-buff's maxStacks is min(floor(duration / cooldown), 6)"
+date: 2026-10-28
+issues: []
+area: moves
+canonical: "docs/COMBAT-RULES.md, \"Stat stages and maxStacks\""
+---
 ## 2026-10-28, QA-11: A self-buff's maxStacks is min(floor(duration / cooldown), 6)
 A self-buff's maxStacks is min(floor(duration / cooldown), 6). (owner answer QA-11)
 Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"

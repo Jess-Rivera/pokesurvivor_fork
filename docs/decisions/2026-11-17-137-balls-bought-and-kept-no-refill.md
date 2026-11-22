@@ -1,3 +1,10 @@
+---
+title: "#137 balls and belts are bought in the Shop and kept between runs; no free refill (Jess)"
+date: 2026-11-17
+issues: [137]
+area: items
+canonical: "js/systems/catch.js header (belt, shop) and js/data/balls.js (prices). Plan: docs/AI Outputs/Issue-137/137 - Shop Balls Plan.md."
+---
 # 2026-11-17: #137 balls and belts are bought in the Shop and kept between runs; no free refill (Jess)
 
 - Prices (TUNE with #131): balls Poke 50, Great 150, Ultra 300; unlocks Great 5,000, Ultra 15,000; Belt 2 10,000,

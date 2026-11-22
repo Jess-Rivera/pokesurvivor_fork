@@ -1,3 +1,10 @@
+---
+title: "#135: the rescue event's first-build rulings (Jess)"
+date: 2026-11-15
+issues: [135]
+area: engine
+canonical: "docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt section 2 and js/systems/rescue.js (K)."
+---
 # 2026-11-15, #135: the rescue event's first-build rulings (Jess)
 
 - The slice stops at a recorded result (G.Rescue.lastResult); a win pays the UberElite's drops and a toast until the catch phase (#136).

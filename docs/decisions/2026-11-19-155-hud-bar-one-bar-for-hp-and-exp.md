@@ -1,3 +1,10 @@
+---
+title: "#155 run.hud.playerActive.bar is one B2 bar for HP and EXP; EXP leaves the portrait ring; HP numbers outside, centred, current HP held still (Jess)"
+date: 2026-11-19
+issues: [155]
+area: ui
+canonical: "js/ui/hud-player-panel.js header and docs/HUD-STYLE.md, once #126 applies it; until then this file."
+---
 # 2026-11-19: #155 run.hud.playerActive.bar is one B2 bar for HP and EXP; EXP leaves the portrait ring; HP numbers outside, centred, current HP held still (Jess)
 
 - One bar: the healthBar and expBar sets fold into run.hud.playerActive.bar, built from B2's EXP version of the dark HP

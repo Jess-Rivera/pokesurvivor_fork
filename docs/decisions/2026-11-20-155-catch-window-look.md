@@ -1,3 +1,10 @@
+---
+title: "#155 catch.window: the catch screen's look on the board (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then docs/HUD-STYLE.md \"Catch screen\"."
+---
 # 2026-11-20: #155 catch.window: the catch screen's look on the board (Jess)
 
 - The window panel.clean, 1020 x 424 px (2026-11-20-155-catch-result-is-a-toast-and-the-window-is-shorter).

@@ -1,3 +1,10 @@
+---
+title: "#155 main.shop.items: the Team Items tab's look on the board (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then the shop's spec section."
+---
 # 2026-11-20: #155 main.shop.items: the Team Items tab's look on the board (Jess)
 
 - Sale cards carry the Pokeballs card over (2026-11-20-155-main-shop-pokeball-look): card.vertical on panel.shopCard,

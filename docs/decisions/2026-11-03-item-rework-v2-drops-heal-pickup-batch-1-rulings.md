@@ -1,3 +1,10 @@
+---
+title: "Item rework v2: drops, heal pickup, batch 1 rulings (Jess)"
+date: 2026-11-03
+issues: []
+area: items
+canonical: "docs/ITEMS.md (generated) and js/data/drops.js for drops; docs/proposals/item-rework-v2-handoff.md for batch 1 until it is built"
+---
 ## 2026-11-03, Item rework v2: drops, heal pickup, batch 1 rulings (Jess)
 Drops: every chance lives in G.Drops. The heal pickup is retired everywhere; Oran takes its place at the same rates (grass, rocks, small chests), and wild kills drop Oran 0.55% or Sitrus 0.40%. A gym leader drops one item, not two, plus its 10 coins.
 Batch 1 is 12 ground and 19 Pokemon items. No species-locked items: Thick Club, Light Ball, Lucky Punch, Leek and the two Powders are generic. Eviolite stays, working while the holder can still evolve. Choice Band physical only, Choice Specs special only, both keep the lock; Muscle Band and Wise Glasses become physical and special only. Gems and run items come later.

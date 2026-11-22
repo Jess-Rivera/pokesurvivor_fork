@@ -1,3 +1,10 @@
+---
+title: "#124: Silver is 1 per kill from 0; move prices fall by slots filled, Trainer below the TM Mart (Jess)"
+date: 2026-11-15
+issues: [124]
+area: items
+canonical: "BALANCE.md \"Move price\" and \"Silver income\"; docs/proposals/move-shop-plan.md \"Silver\"."
+---
 # 2026-11-15, #124: Silver is 1 per kill from 0; move prices fall by slots filled, Trainer below the TM Mart (Jess)
 
 Replaces the 5 x world level x character level price, the world level / 10 kill pay and the starting 100.

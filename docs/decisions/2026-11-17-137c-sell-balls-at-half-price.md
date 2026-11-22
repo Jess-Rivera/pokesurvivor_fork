@@ -1,3 +1,10 @@
+---
+title: "#137c balls sell back at half price; one belt Buy beside Exit (Jess)"
+date: 2026-11-17
+issues: [137]
+area: items
+canonical: "js/ui/shop-balls.js header; sell share G.BALL_SELL_SHARE in js/data/balls.js. Plan: docs/AI Outputs/Issue-137/137c - Belts, Sell and Unlock Plan.md."
+---
 # 2026-11-17: #137c balls sell back at half price; one belt Buy beside Exit (Jess)
 
 - "Sell Pokeball", above Exit on the Shop's Pokeballs tab, sells the ball you are holding (picked up by click or keys,

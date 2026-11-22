@@ -1,3 +1,10 @@
+---
+title: "#59: a reflex dodge weighs the plan it would break; duels count shots avoided; Bait parked (Jess)"
+date: 2026-11-09
+issues: [59]
+area: gyms
+canonical: "docs/LEADER-AI.md \"The Decider (#49)\", REFLEX and TESTS"
+---
 ## 2026-11-09, #59: a reflex dodge weighs the plan it would break; duels count shots avoided; Bait parked (Jess)
 1. Weigh, not hold: while the running plan still has a Dodge your shot step ahead, a reflex dodge that would spend the charge that step needs goes only when your hit (x the goal's damage-taken weight x `risk`) beats the plan's worth (its value minus its cost). Why: spending the charge breaks the whole plan, not just one dodge; a hard hold would be a scripted rule (PRINCIPLE).
 2. Counter-play and learning count the share of your Fire Blasts Brock avoids (a shot that never touches his body that frame), summed over 5 seeds, not his hits. Why: his casts fire whenever ready in your reach, so his hits cannot see his choices; one duel holds only about a dozen Fire Blasts.

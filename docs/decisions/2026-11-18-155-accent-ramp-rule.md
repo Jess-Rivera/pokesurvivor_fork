@@ -1,3 +1,10 @@
+---
+title: "#155 every accent colour is a 3-tone ramp worked out from its base (Jess)"
+date: 2026-11-18
+issues: [155]
+area: ui
+canonical: "tools/library.html, Colours 2.0 Unified (accentRamp, RAMP_LIGHT, RAMP_DARK). Research:"
+---
 # 2026-11-18: #155 every accent colour is a 3-tone ramp worked out from its base (Jess)
 
 - Every accent on Colours 2.0 Unified has three tones: light, base, dark. The base is the colour the game uses today;

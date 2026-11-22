@@ -1,3 +1,10 @@
+---
+title: "#155 run.hud.playerActive.area lines up on the move slots: one stack gap upward, the item's gap sideways (Jess)"
+date: 2026-11-19
+issues: [155]
+area: ui
+canonical: "js/ui/hud-player-panel.js header and docs/HUD-STYLE.md, once #126 applies it; until then this file."
+---
 # 2026-11-19: #155 run.hud.playerActive.area lines up on the move slots: one stack gap upward, the item's gap sideways (Jess)
 
 - The bar's left and right pixels line up with the move slots' outer edges; the chip bands start at the slots' left

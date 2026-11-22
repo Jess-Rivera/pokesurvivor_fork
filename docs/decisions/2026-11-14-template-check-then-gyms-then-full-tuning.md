@@ -1,3 +1,10 @@
+---
+title: "Brock and Misty get a template check, then gyms 3 to 8, then one tuning pass across all eight (Jess)"
+date: 2026-11-14
+issues: []
+area: gyms
+canonical: "docs/proposals/host-model-plan.md, slice 12."
+---
 # 2026-11-14, Brock and Misty get a template check, then gyms 3 to 8, then one tuning pass across all eight (Jess)
 
 Supersedes the ordering in 2026-11-14-gyms-3-to-8-migrate-after-merge; the rest of that ruling stands (own branch off

@@ -1,3 +1,10 @@
+---
+title: "#155 every tooltip is Michroma, the game talking, whatever it is about (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "docs/HUD-STYLE.md \"Fonts\"."
+---
 # 2026-11-20: #155 every tooltip is Michroma, the game talking, whatever it is about (Jess)
 
 - Every hover tooltip (items, moves, stats, Run Stats, Cards Taken) is in Michroma (`HudModule`): the name at 20 px, the

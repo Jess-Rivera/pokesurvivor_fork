@@ -1,3 +1,10 @@
+---
+title: "#155 chips are one B2 capsule; chip.status is Silver 10 at 1 px, chip.type is Silver 10 at 1 px or Silver 20 at 2 px, in capitals (Jess)"
+date: 2026-11-19
+issues: [155]
+area: ui
+canonical: "docs/HUD-STYLE.md \"Status chips\" and \"Type chips\", once #126 applies it; until then this file."
+---
 # 2026-11-19: #155 chips are one B2 capsule; chip.status is Silver 10 at 1 px, chip.type is Silver 10 at 1 px or Silver 20 at 2 px, in capitals (Jess)
 
 - One shape, the B2 capsule (corners stepped 2, 2, 1, 1, a 2 art pixel shade rim), for the status, effect and type

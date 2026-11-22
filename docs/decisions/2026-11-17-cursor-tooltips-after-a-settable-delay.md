@@ -1,3 +1,10 @@
+---
+title: "the selection cursor shows tooltips after a settable delay (Jess)"
+date: 2026-11-17
+issues: []
+area: ui
+canonical: "js/core/settings.js header; js/ui/gacha-ui.js header (CursorTip) for the Shop."
+---
 # 2026-11-17: the selection cursor shows tooltips after a settable delay (Jess)
 
 - When the selection cursor (keys now, a controller later) rests on an item that has a hover tooltip, the tooltip shows

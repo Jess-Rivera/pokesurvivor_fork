@@ -1,3 +1,10 @@
+---
+title: "#148 catch tuning after the feel test: Steep star curve, early bonus x2 fading to x1, badge penalty unchanged (Jess)"
+date: 2026-11-16
+issues: [148]
+area: engine
+canonical: "js/systems/catch.js header and its ODDS table."
+---
 # 2026-11-16: #148 catch tuning after the feel test: Steep star curve, early bonus x2 fading to x1, badge penalty unchanged (Jess)
 
 - Star curve is Steep: 1 / 0.5 / 0.25 / 0.1 / 0.05 for 1 to 5 star (was 1 / 0.75 / 0.5 / 0.25, 5 star used the 4 star value).

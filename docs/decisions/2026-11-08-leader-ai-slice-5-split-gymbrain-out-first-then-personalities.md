@@ -1,3 +1,10 @@
+---
+title: "Leader AI slice 5 split: GymBrain out first, then personalities (Jess)"
+date: 2026-11-08
+issues: []
+area: gyms
+canonical: "docs/LEADER-AI.md"
+---
 ## 2026-11-08, Leader AI slice 5 split: GymBrain out first, then personalities (Jess)
 Opening #34. Slice 5 becomes two slices, structure first. 5a (#34): the AI player takes over from GymBrain on Player-entity leaders with no change in behavior. Movement (the stance alternation and range bands) and the slot choice move into the AI player; a leader casts through your own cast path, with the tell (wind-up, aim lock, recovery) kept as its one authored difference under the existing `tells` restriction. Gyms 3 to 8 keep GymBrain. Done when no Player-entity leader builds or reads GymBrain and the feel test finds no difference; the test is a fixed-seed parity run (same headings, slot presses, tell timings and casts as before) plus every existing harness keeping its numbers.
 5b (its own issue): personalities. All the remaining style and memory settings go in: `range`, `buffBias`, `swapWill`, `aimError`, `randomness`, `risk`, `memoryUse`, `exploit`. Targets: Brock a wall (patient, mid range, buffs early, rarely swaps, a little slow to react); Misty tempo (kites with Water Pulse, pushes when ahead, swaps for matchups, reads you fast). Done when the two read as distinct in a feel test; the test is the validator accepting every setting and rejecting unknown ones, and each setting's effect showing in a fixed-seed decision log.

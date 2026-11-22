@@ -1,3 +1,10 @@
+---
+title: "#53: one intelligence score per leader drives its sharpness, with overrides; misjudge on by default (Jess)"
+date: 2026-11-13
+issues: [53]
+area: gyms
+canonical: "docs/LEADER-AI.md \"The Decider (#49)\" (MISJUDGMENT, INTELLIGENCE AND STYLE, TESTS) and \"Authoring a leader\"."
+---
 ## 2026-11-13, #53: one intelligence score per leader drives its sharpness, with overrides; misjudge on by default (Jess)
 Replaces the per-setting shape of decision 2026-11-09-49-leader-sharpness-base-plus-loop-growth (that file stays as history).
 - Score: each leader has one `intelligence`, 0 to 1 (default 0.5) = a base plus a fixed per-loop growth, held inside 0 to 1. Growth is

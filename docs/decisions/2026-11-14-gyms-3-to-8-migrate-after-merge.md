@@ -1,3 +1,10 @@
+---
+title: "gyms 3 to 8 migrate after feature/gym-leader-ai merges (Jess)"
+date: 2026-11-14
+issues: []
+area: gyms
+canonical: "docs/proposals/host-model-plan.md, slice 12."
+---
 # 2026-11-14, gyms 3 to 8 migrate after feature/gym-leader-ai merges (Jess)
 
 feature/gym-leader-ai merges to main with only Brock and Misty on the AI player; gyms 3 to 8 stay on GymBrain until

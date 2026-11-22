@@ -1,3 +1,10 @@
+---
+title: "#39 closes on the feel test; 39b is not filed; tuning moves to its own issue (Jess)"
+date: 2026-11-14
+issues: [39]
+area: gyms
+canonical: "docs/LEADER-AI.md Build order 5b; #39."
+---
 # 2026-11-14, #39 closes on the feel test; 39b is not filed; tuning moves to its own issue (Jess)
 
 Jess's 39a feel test: Brock and Misty read as distinct leaders, only overtuned (Brock closes the distance too much for a

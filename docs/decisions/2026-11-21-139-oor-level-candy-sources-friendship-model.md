@@ -1,3 +1,10 @@
+---
+title: "#139 grilling: the out-of-run level, candy sources, starting moves, the friendship model (Jess)"
+date: 2026-11-21
+issues: [139]
+area: engine
+canonical: "docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built."
+---
 # 2026-11-21: #139 grilling: the out-of-run level, candy sources, starting moves, the friendship model (Jess)
 
 - [Approved] Runs start at level 1. A copy's out-of-run (OOR) level sets only its evolution stage and which moves it

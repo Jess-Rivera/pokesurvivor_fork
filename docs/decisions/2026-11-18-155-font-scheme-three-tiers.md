@@ -1,3 +1,10 @@
+---
+title: "#155 the game's text uses four faces in three tiers: meta, Pokemon, world (Jess)"
+date: 2026-11-18
+issues: [155]
+area: ui
+canonical: "docs/HUD-STYLE.md \"Fonts\"."
+---
 # 2026-11-18: #155 the game's text uses four faces in three tiers: meta, Pokemon, world (Jess)
 
 - Meta, "the game talking": Michroma (`HudModule`). Menus, menu buttons, toasts, titles, module panels, the Main Menu,

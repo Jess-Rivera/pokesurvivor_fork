@@ -1,3 +1,10 @@
+---
+title: "Bait parked in code: the goal choice skips it until #60 rules (Jess)"
+date: 2026-11-14
+issues: [60]
+area: gyms
+canonical: "docs/LEADER-AI.md \"The Decider (#49)\" GOALS; #60."
+---
 # 2026-11-14, Bait parked in code: the goal choice skips it until #60 rules (Jess)
 
 The 2026-11-09 parking (decision 2026-11-09-59-reflex-weighs-the-plan-bait-parked) blocked the 16e Bait check but left Bait

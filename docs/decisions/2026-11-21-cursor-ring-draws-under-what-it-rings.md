@@ -1,3 +1,10 @@
+---
+title: "cursor.ring draws under the piece it rings, so its CRT passes behind it (Jess)"
+date: 2026-11-21
+issues: []
+area: ui
+canonical: "js/ui/lib/primitives/well/well.js and cursor/cursor.css headers."
+---
 # 2026-11-21: cursor.ring draws under the piece it rings, so its CRT passes behind it (Jess)
 
 - cursor.ring sits under what it rings. On a well it goes between the well's inside and what the well holds: its CRT

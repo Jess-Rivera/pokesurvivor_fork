@@ -1,3 +1,10 @@
+---
+title: "a TM is kept for good, a TR lasts one run (Jess)"
+date: 2026-11-17
+issues: []
+area: items
+canonical: "js/systems/tms.js (G.TMs) for the rules; js/systems/shops.js KINDS for the in-run name."
+---
 # 2026-11-17: a TM is kept for good, a TR lasts one run (Jess)
 
 - In the main games a TM is kept and a TR is used up. The names follow that here.

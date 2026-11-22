@@ -1,3 +1,10 @@
+---
+title: "#155 main.shop.character: the Character Upgrades tab's look on the board (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it; then the shop's spec section."
+---
 # 2026-11-20: #155 main.shop.character: the Character Upgrades tab's look on the board (Jess)
 
 - Each pocket (Berry Pocket, Team Items Pocket) is panel.pixel in its own Bag pocket ramp (color.pocketBerries,

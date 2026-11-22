@@ -1,3 +1,10 @@
+---
+title: "#89: the pause menu's detail and team panels, and the stat hex (Jess)"
+date: 2026-11-11
+issues: [89]
+area: ui
+canonical: "docs/PAUSE-MENU.md sections 4 and 5."
+---
 ## 2026-11-11, #89: the pause menu's detail and team panels, and the stat hex (Jess)
 The detail panel keeps the mockup's two-tier bars (level box below the name band, a raised arrow tab on the bottom bar). Team cards are the run screen's roster cards narrowed to fit, typed borders kept; the shown one's portrait gets a green stroke and a looping shimmer, top left to bottom right.
 Stat hex, settled over several rounds the same day: drawn in real stats from the game's formula (nature included), HP at mainline size (before HP_SCALAR), as three bands growing out from each other: first type's colour at 60% (level 1), white (growth to the level now), yellow (cards and run effects). Edge 300, 600 or 1000; values drawn between 10% and 100% of the radius; the edge number sits in a break of the HP to Atk line. Corners show the final stat (HP the game's number) with the yellow +X%; hover shows "Base: N, IV: N, EV: N"; a hovered corner's tooltip is always on top. The hex is sized for a 4 digit stat.

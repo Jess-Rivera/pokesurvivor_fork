@@ -1,3 +1,10 @@
+---
+title: "#155 cursor.ring for round pieces; neither cursor blinks; the ring plays the CRT (Jess)"
+date: 2026-11-20
+issues: [155]
+area: ui
+canonical: "this file until #126 applies it."
+---
 # 2026-11-20: #155 cursor.ring for round pieces; neither cursor blinks; the ring plays the CRT (Jess)
 
 - The bar beside a round portrait read as the next face's, so a new piece, cursor.ring, goes around round pieces: 3 px

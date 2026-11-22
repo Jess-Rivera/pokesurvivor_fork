@@ -1,3 +1,10 @@
+---
+title: "#68 and #81: type-coloured text on the map uses Light; type chips in the reference-sheet style (Jess)"
+date: 2026-11-11
+issues: [68, 81]
+area: ui
+canonical: "docs/HUD-STYLE.md \"Type colours\" and \"Type chips\"."
+---
 ## 2026-11-11, #68 and #81: type-coloured text on the map uses Light; type chips in the reference-sheet style (Jess)
 Type-coloured text drawn over the map (the horde countdown, the dev console log) uses the SV Light tone, since Base is too dark there for Ghost, Dark and Ground. Fills, projectiles and effects stay Base.
 Type chips follow the Spriters Resource Pokedex type sheet: SV Base fill, a 2 px rim in the type's SV Dark tone, white text with a hard pixel shadow one pixel right, down and diagonal.

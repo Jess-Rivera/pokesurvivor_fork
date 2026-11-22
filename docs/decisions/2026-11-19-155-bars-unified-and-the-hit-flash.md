@@ -1,3 +1,10 @@
+---
+title: "#155 the bars fold to the Unified colours; a hit's cut piece flashes white, goes grey and falls (Jess)"
+date: 2026-11-19
+issues: [155]
+area: ui
+canonical: "js/ui/lib/primitives/bar/bar.js header and docs/HUD-STYLE.md \"Motion\", once #126 applies it; until then this file."
+---
 # 2026-11-19: #155 the bars fold to the Unified colours; a hit's cut piece flashes white, goes grey and falls (Jess)
 
 - bar.life keeps its B2 shape. Colours fold by the Fold Map: tab, body and outline greys keep their hex; the track

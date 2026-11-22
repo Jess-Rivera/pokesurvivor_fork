@@ -1,3 +1,10 @@
+---
+title: "Four roles: Decider, Controller, Body, SimPass (Jess)"
+date: 2026-11-09
+issues: []
+area: gyms
+canonical: "docs/LEADER-AI.md (FRAME); GLOSSARY.md Decider, Controller, Body, SimPass"
+---
 ## 2026-11-09, Four roles: Decider, Controller, Body, SimPass (Jess)
 Tightens the flow of 2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim after terms drifted (decider, mind, hands, brain, AI, AI player). Every Player entity runs four roles, each blind to the others' jobs:
 - Decider: you or the AI. Takes in the screen only (your eyes; the AI's eyes are G.LeaderInfo, plus its own HUD as you see yours) and answers commands to the Controller. Decides; enforces no rule.

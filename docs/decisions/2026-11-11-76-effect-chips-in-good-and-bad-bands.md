@@ -1,3 +1,10 @@
+---
+title: "#76: timed effects join the status chips in a good band and a bad band (Jess)"
+date: 2026-11-11
+issues: [76]
+area: ui
+canonical: "docs/HUD-STYLE.md \"Effect chips: good and bad bands (#76)\"."
+---
 ## 2026-11-11, #76: timed effects join the status chips in a good band and a bad band (Jess)
 The character info panel's chip area grows to four lines: a bad band (2 lines next to the life meter: major, minors, stat drops) and a good band above it (2 lines: stat raises, regen, berries, altar power). The bands sit at fixed heights, and each fills its lower line first. Shake Off moves above the stack.
 Stat changes now get chips as well as their on-sprite effect (reverses that part of #78). A stat's chip is its net stage, in the band its sign puts it in.
