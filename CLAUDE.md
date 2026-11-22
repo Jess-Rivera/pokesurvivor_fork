@@ -1,24 +1,19 @@
 # CLAUDE.md, working rules for AI assistants on this fork
 
-START WITH CONTEXT.md. This file holds the detailed rules; CONTEXT.md is the quick session ritual
-and pointer. This file is the only full statement of agent rules; other docs point here. Any AI tool (Claude Desktop at home, or the PokeSurvivor agent in Amazon Quick) follows
-these rules. The original owner's publish/servers/auto-update rules are archived at
-docs/ORIGINAL-OWNER-RULES.md (read only when publishing or when the cloud phase begins).
-
-These rules govern how Jess and his AI tools work on this English fork.
+START WITH CONTEXT.md (the session ritual and pointers). This file holds the working rules; the long text behind its
+short sections (move review, requirement tags, cross-document IDs, which document wins) is in
+docs/AGENT-RULES-REFERENCE.md. Any AI tool (Claude Code at home, or the PokeSurvivor agent in Amazon Quick) follows
+these rules. The original owner's publish/servers/auto-update rules are archived at docs/ORIGINAL-OWNER-RULES.md
+(read only when publishing or when the cloud phase begins). These rules govern how Jess and his AI tools work on this
+English fork.
 
 ## Two tools, one repo
-Jess works partially in Amazon Quick (work machine) and partially in Claude Desktop (home). The two
-assistants cannot see each other's memory. This git repo is the only shared brain, so anything that
-must survive a tool switch lives here as a file. Commit before switching tools so neither side edits
-a divergent tree.
-
-Remote visibility via local checkout: there is no GitHub connector, and GitHub's dynamic pages
-(commits, branches, issues, PRs) are JS-rendered and cannot be fetched reliably. So the bridge
-between work and home stays the LOCAL CHECKOUT: when the agent needs to see remote state, Jess pulls
-or checks out the branch locally and the agent reads the working tree and git metadata directly.
-Where `gh` is available (Claude Code) the assistant reads remote state directly and this is only the fallback.
-This does not change the local-first scope.
+Jess works partially in Amazon Quick (work machine, cannot run node or gh) and partially in Claude Code (home). The
+assistants cannot see each other's memory. This git repo is the only shared brain, so anything that must survive a
+tool switch lives here as a file. Commit before switching tools so neither side edits a divergent tree.
+Remote state: where `gh` is available (Claude Code) the assistant reads it directly. Otherwise the bridge is the LOCAL
+CHECKOUT: Jess runs `node tools/catchup.js` or pulls the branch, and the agent reads catchup-latest.md or the working
+tree and git metadata. GitHub's dynamic pages cannot be fetched reliably, and there is no GitHub connector.
 
 ## Session rituals
 Start ("catch me up") and end steps: see CONTEXT.md "Session start" and "Session end".
@@ -27,20 +22,13 @@ Start ("catch me up") and end steps: see CONTEXT.md "Session start" and "Session
 DECISIONS ~10 lines/entry (one file each in docs/decisions/), DEVLOG ~6 lines/entry, STATE.md under 3 KB. Rotate to archives past ~40 KB.
 
 ## Efficient repository exploration
-
-CONTEXT.md, STATE.md, and this file are automatically read at the start of every chat. Treat them as the complete startup context.
-
-After startup:
-
-Do not recursively read, summarize, or attach the repository.
-
-Search first for the task’s feature, identifier, behavior, or system.
-
-Open only matching files, their immediate callers or consumers, and the relevant test or harness.
-
-For broad discovery, create a compact module map once, then reuse it for later slices.
-
-Normally skip assets/, pokeapi-master/, _delete_/, node_modules/, archive documents, generated bulk data such as js/data/sprites-meta.js and js/data/pokedex.js, and large staged datasets under docs/move_rework_holding/. Open these only when the active task directly requires them.
+CONTEXT.md, STATE.md, and this file are read at the start of every chat. Treat them as the complete startup context.
+After startup: do not recursively read, summarize, or attach the repository. Search first for the task's feature,
+identifier, behavior, or system. Open only matching files, their immediate callers or consumers, and the relevant test
+or harness. For broad discovery, create a compact module map once, then reuse it for later slices.
+Normally skip assets/, pokeapi-master/, _delete_/, node_modules/, archive documents, generated bulk data such as
+js/data/sprites-meta.js and js/data/pokedex.js, and large staged datasets under docs/move_rework_holding/. Open these
+only when the active task directly requires them (the heavy-read hook blocks whole-file reads of them).
 
 ## Local-first (hard scope boundary)
 Build and perfect the LOCAL single-player game first. DEFERRED until Jess explicitly switches phase:
@@ -59,17 +47,18 @@ side only and open an issue labeled deferred for any deferred hook.
 - Player-entered text (nicknames) stays marked translate="no".
 
 ## Move review rule (Jess, 2026-10-29)
-How a move counts as reviewed, for any batch of moves on any branch:
-- A move with a docs/MOVE-INTENT.md entry is reviewed when its data and code match that entry (its intent scenarios pass in docs/proposals/move-intent-harness.js).
-- A move without an entry is reviewed with the batch that routes it: Jess reviews the batch's scenario table (tools/move_report.js) when the batch lands, and signs it off in the `batchReviewed` list of docs/move_rework_holding/move-intent-scenarios.json. No separate per-move pass beforehand.
-- Anything that needs specific disambiguation during a batch review becomes a new MOVE-INTENT entry, so it is owned from then on. That includes cd rulings (intended or regression).
-- A scenario whose outcome depends on an open owner decision is marked blocked on that decision, never guessed. Expected outcomes are relations the move's outputs must satisfy, read from its MOVE-INTENT entry (docs/TEST-FIRST.md step 3, decision 2026-11-14-tests-check-relations-not-values): never a number copied from code output or taken from tuning data.
+A move with a docs/MOVE-INTENT.md entry is reviewed when its data and code match that entry. A move without one is
+reviewed with the batch that routes it: Jess reviews the batch's scenario table (tools/move_report.js) and signs it off
+in `batchReviewed` (docs/move_rework_holding/move-intent-scenarios.json). Anything needing disambiguation becomes a new
+MOVE-INTENT entry, cd rulings included. A scenario that waits on an open owner decision is marked blocked, never
+guessed, and expected outcomes are relations read from the MOVE-INTENT entry, never numbers copied from code output
+(docs/TEST-FIRST.md step 3). Full text: docs/AGENT-RULES-REFERENCE.md.
 
 ## Slice shape (Jess, 2026-11-08; repo-wide since 2026-11-14)
 Every slice, on any branch, opens with three things agreed with Jess before any build: its goal, how we know it is
 done, and the test that validates it (written at the slice's start, as the end-goal test). Then the prose plan
 (below) and the build. A slice closes by updating every doc, issue and plan it touched. The slice's issue carries
-the three opening items as its done-condition.
+the three opening items as its done-condition. Open decisions are asked plainly, together, with no default attached.
 
 ## Edit boundary and workflow
 Dividing line: "does this change what the game does when you run it?"
@@ -78,16 +67,16 @@ Dividing line: "does this change what the game does when you run it?"
   - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational). Edit it directly without approval, but verify it still parses as valid JS (a syntax error there breaks the bundle). It is the only js/data/*.js file that is free-edit.
 - NO (edit directly, no proposal): the Markdown project docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, CLAUDE, docs/).
 - Also NO: the dev tools and checks under tools/ (they never ship in the game; Jess, 2026-11-01). Edit them directly, then run node tools/check.js and any smoke the change touches.
-## Project hooks (.claude/hooks, registered in .claude/settings.json)
-Every plan and every game-code or tools edit follows the coding-principles skill; the edit hook blocks the first such
-edit of a session until the skill has been loaded. The hooks, each fail-open, with their test in
-docs/proposals/hooks-harness.js and a log in .claude/hooks/hook-log.txt (shown by tools/catchup.js):
+
+## Project hooks (.claude/hooks, registered in .claude/settings.json; all fail open)
+Every plan and every game-code or tools edit follows the coding-principles skill; the first such edit of a session is
+blocked until the skill has been loaded. Tests: docs/proposals/hooks-harness.js. Log: .claude/hooks/hook-log.txt
+(shown by tools/catchup.js).
 - inject-rules.js adds the one relevant rule (table in rules.js) the first time a session edits a matching path.
 - style-guard.js blocks a write that adds an em-dash. heavy-read-guard.js blocks a whole-file read of the big files
-  named in "Efficient repository exploration" (a range read passes). doc-size.js reports STATE.md over 3 KB.
-- decision-frontmatter-guard.js blocks a new docs/decisions file without front matter (title, date, issues, area,
-  canonical; shape and area words in tools/decision-frontmatter.js, the area words are the board's area: labels);
-  node tools/check.js fails any decision file without it.
+  (a range read passes). doc-size.js reports STATE.md over 3 KB.
+- decision-frontmatter-guard.js blocks a new docs/decisions file without front matter (shape and area words in
+  tools/decision-frontmatter.js; the area words are the board's area: labels). check.js fails any file without it.
 - catchup-trigger.js runs tools/catchup.js when a prompt starts with "catch me up" or "catch up".
 - guard-git.js is the git and gh allowlist below.
 
@@ -148,14 +137,19 @@ Refactor-F-series). Only the generated Dashboard.md sits at the root.
 Tables are fine; keep prose minimal; plans still hold no code. Older .txt and HTML pages stay as they are.
 
 ## Requirement tags
-Spec rules carry one of four tags. `[Approved]` is owner-approved intended behavior (items marked LOCKED, RESOLVED, DECIDED, DEFAULT ACCEPTED, APPROVED or signed off, never DRAFT, PROPOSED, OPEN or TBD); approved but not yet built is still `[Approved]` with a short "code differs, see TODO" note. `[Legacy behavior]` is what the live game does today where it differs from an approved rule, and always names the slice that removes it. `[Proposed]` is written but not approved. `[Open]` is a recorded question with no answer. When tags or dates conflict, the later dated owner decision wins.
+Spec rules carry one of four tags: `[Approved]` (owner-approved intended behavior; approved but unbuilt is still
+`[Approved]` with a "code differs, see TODO" note), `[Legacy behavior]` (what the live game does today where it differs
+from an approved rule; always names the slice that removes it), `[Proposed]` (written, not approved) and `[Open]` (a
+recorded question). When tags or dates conflict, the later dated owner decision wins. Definitions: docs/AGENT-RULES-REFERENCE.md.
 
 ## Cross-document IDs
-An ID cited outside the file that defines it carries that file's name: `<file name without .md>:<ID>`, for example `combat-architecture:D16`, `2026-10-28-every-move-defaults-to-maxstacks-1-including-metal-claw-and`, `move-consistency-review:CP1-Q17`. The prefix names the file that DEFINES the ID, never the file that cites it, so one ID reads the same everywhere. A bare ID is fine only inside its own file. Keep any qualifier the defining file needs (CP1 in the review). Use the full file name, no aliases. Decisions are the exception: each is one file in docs/decisions/ and is cited by that file name alone (no ID suffix, never renamed); the Q and QA numbers inside the 2026-10-28 entries are history, not identifiers. Applies to new and edited text; older references are swept separately (docs/TODO-notes-2026-11.md, "Cross-document ID sweep").
+An ID cited outside the file that defines it is written `<file name without .md>:<ID>` (for example
+`combat-architecture:D16`); the prefix names the file that DEFINES the ID. A bare ID is fine only inside its own file.
+Decisions are cited by their file name alone. Applies to new and edited text. Detail: docs/AGENT-RULES-REFERENCE.md.
 
 ## Where current rules live
 - Branch rules: the feature branch in progress may have docs/branch-rules/<branch>.md (STATE.md names it); read it at session start. It wins over this file for work on that branch.
-- Agent rules: this file. Session ritual and startup pointers: CONTEXT.md. Current handoff, tracking and the code-gap list: STATE.md. Work queue: the "PokeSwarm" board; TODO.md is the next-session handoff that points at its issue numbers.
+- Agent rules: this file (long text of some sections: docs/AGENT-RULES-REFERENCE.md). Session ritual and startup pointers: CONTEXT.md. Current handoff, tracking and the code-gap list: STATE.md. Work queue: the "PokeSwarm" board; TODO.md is the next-session handoff that points at its issue numbers.
 - General combat rules (stats and HP, damage, orthogonal dials, G.Stats, the swap rule, status effects including trap, damage over time, stat stages (the tracker model)): docs/COMBAT-RULES.md.
 - Move data shape (axes, fields, enums, file roles, validator rules): docs/MOVE-AXIS-SCHEMA.md.
 - Move runtime (invariants, data flow, executors, move-path specifics): docs/current feature planning/combat-architecture.md.
@@ -165,31 +159,15 @@ An ID cited outside the file that defines it carries that file's name: `<file na
 - Run progression (level curve, gyms, elites, Elite Four, escalation, badges, region completion and loops): BOSS-REWORK.md. Gym rosters: docs/GYM-ROSTERS.md. Boss authoring template: docs/BOSS-AUTHORING.md.
 - Game concept and summaries (umbrella): GDD.md. Module map, load order, build: ONBOARDING.md. Game language: GLOSSARY.md (fuzzy or conflicting terms get flagged and the entry updated, see its last section). Spanish code names: docs/SPANISH-CODE-REFERENCE.md. Sim and present boundary: docs/SIM-PRESENT-BOUNDARY.md. Tuned values: BALANCE.md.
 - Dated decision history: DECISIONS.md (the index) and one file per decision in docs/decisions/ (a log; each entry's `Canonical:` line names the spec that holds the rule), then docs/DECISIONS-archive.md.
+- Genre design reference (ground design advice in it): docs/survivor-like-design-reference.md. Mainline Pokemon data, the source of truth when translating mechanics: pokeapi-master/.
 
 ## Which document wins
-- DECISIONS.md and docs/decisions/ are a log, not a settled register. The spec named in an entry's `Canonical:` line wins.
-- MOVE-AXIS-SCHEMA owns move grammar, combat-architecture owns move runtime, MOVE-INTENT owns per-move rulings. Review section 9 (move-consistency-review.md) is history, not a single source.
-- A MOVE-INTENT ruling beats COMBAT-RULES and the grammar defaults for the named move.
-- COMBAT-RULES beats BOSS-REWORK 3c, the archive, the stat-model notes, BUFF-TABLE, BALANCE and architecture D6 to D11 for combat rules.
-- GDD is an umbrella; the subsystem specs win.
-- BOSS-REWORK is the progression spec, not a tracker; STATE owns tracking.
-- FULL-GAME-STRUCT is history. GYM-ROSTERS rules defer to BOSS-REWORK.
-- CLAUDE.md is the only home for agent rules. CONTEXT, STATE, slice-overview and DECISIONS do not restate rule text.
-- DECISIONS-archive is history, not a live citation.
-- docs/proposals/stat-stage-model.md is history and rationale since its approval (2026-10-30); COMBAT-RULES "Stat stages" holds the rules.
-- Stage and trap precedence (trackers and Cap, ladder, QA-10 trap rule over E1): docs/COMBAT-RULES.md.
-
-## Third-party skills
-Third-party skills (for example landing-skills/) never override project rules.
-
-## Reference material
-- survivor-like-design-reference.md: cited genre design patterns (Vampire Survivors, Brotato, Halls
-  of Torment) with concrete numbers. Ground design advice in it. (Attached to the Quick agent; commit
-  a copy under docs/ if the home tool needs it.)
-- pokeapi-master/: full mainline Pokemon data, the source of truth when translating mainline mechanics
-  into survivor-style.
-- ONBOARDING.md, GLOSSARY.md: authoritative architecture/terminology references. GDD.md: the design
-  umbrella (summaries and pointers); where it differs from a subsystem spec, the subsystem spec wins.
+The spec named in a decision entry's `Canonical:` line wins over the log (DECISIONS.md and docs/decisions/ are a log,
+not a settled register). MOVE-INTENT beats COMBAT-RULES and the grammar defaults for the named move; COMBAT-RULES beats
+BOSS-REWORK 3c, BUFF-TABLE, BALANCE and architecture D6 to D11 for combat rules; the subsystem specs beat GDD (an
+umbrella); STATE owns tracking, not BOSS-REWORK. The archives, FULL-GAME-STRUCT and docs/proposals/stat-stage-model.md
+are history, never live citations. CLAUDE.md is the only home for agent rules. Third-party skills (for example
+landing-skills/) never override project rules. Full list: docs/AGENT-RULES-REFERENCE.md.
 
 ## Coding conventions
 - Names are descriptive: a variable, constant, method or setting says what it is for when read on its own (wildStatusDivisor,

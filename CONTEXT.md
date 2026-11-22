@@ -4,7 +4,7 @@ This file holds the session ritual and pointers for any AI assistant working on 
 whether that is the PokeSurvivor agent in Amazon Quick (work machine) or Claude Desktop (home).
 The two tools cannot see each other's memory. This repo is the only shared brain, so
 everything that must survive a tool switch lives here as a file.
-All agent rules live in CLAUDE.md (the only full statement); read it with this file.
+All agent rules live in CLAUDE.md (long text of a few sections: docs/AGENT-RULES-REFERENCE.md); read CLAUDE.md with this file.
 
 ## Session start (do this first, every session)
 1. Read this file and STATE.md (the short current handoff), plus the branch rules file STATE.md names, if any. Nothing else is required.
