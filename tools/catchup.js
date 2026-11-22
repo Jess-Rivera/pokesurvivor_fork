@@ -11,6 +11,7 @@ const root = path.resolve(__dirname, '..');
 const OUTPUT_FILE = 'catchup-latest.md';
 const PROJECT_NUMBER = '2';
 const PROJECT_OWNER = 'Jess-Rivera';
+const HOOK_LOG_LINES_SHOWN = 10;
 
 // ---- pure helpers (checked by docs/proposals/catchup-harness.js) ----
 
@@ -314,8 +315,15 @@ function buildReport({ run = defaultRunner, readFile = defaultReadFile, now = ne
     'git log --oneline ' + branchName + '..origin/main',
     'node tools/check.js    # must end with "check: all passed"',
     '```',
-    'Before leaving a machine: commit and push.'
+    'Before leaving a machine: commit and push.',
+    ''
   );
+
+  // 7. Project hook log (written by .claude/hooks; lets Jess see what fired or blocked without asking)
+  out.push('## 7. Project hook log (last ' + HOOK_LOG_LINES_SHOWN + ' entries)', '');
+  const hookLog = attempt(() => readFile('.claude/hooks/hook-log.txt'));
+  const hookLogLines = hookLog.ok ? hookLog.value.split('\n').filter(Boolean).slice(-HOOK_LOG_LINES_SHOWN) : [];
+  out.push(...(hookLogLines.length ? hookLogLines.map((line) => '- ' + line) : ['- no hook events logged yet']));
   return out.join('\n') + '\n';
 }
 

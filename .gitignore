@@ -81,3 +81,6 @@ assets/raw/confuse-birds.png
 
 # Catch-up briefing written by `node tools/catchup.js` (overwritten each run)
 /catchup-latest.md
+
+# Project hook log (written by .claude/hooks, shown by tools/catchup.js)
+/.claude/hooks/hook-log.txt

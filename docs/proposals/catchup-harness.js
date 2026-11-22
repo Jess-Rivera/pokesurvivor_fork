@@ -27,7 +27,7 @@ const when = new Date(2026, 10, 22, 9, 5);
   const report = catchup.buildReport({ run: fakeRun, readFile, now: when });
   if (!report.startsWith('Catch-up run: 2026-11-22 09:05')) bad('first line carries the run date and time');
   for (const n of decisionNumbers) if (!report.includes('#' + n + ' [Title of ' + n + ']')) bad('decision issue #' + n + ' missing or without its title');
-  for (const s of ['## 1.', '## 2.', '## 3.', '## 4.', '## 5.', '## 6.']) if (!report.includes(s)) bad('section ' + s + ' missing');
+  for (const s of ['## 1.', '## 2.', '## 3.', '## 4.', '## 5.', '## 6.', '## 7.']) if (!report.includes(s)) bad('section ' + s + ' missing');
 }
 // gh missing: local sections stay, GitHub sections say unavailable, nothing throws.
 {

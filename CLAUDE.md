@@ -78,6 +78,16 @@ Dividing line: "does this change what the game does when you run it?"
   - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational). Edit it directly without approval, but verify it still parses as valid JS (a syntax error there breaks the bundle). It is the only js/data/*.js file that is free-edit.
 - NO (edit directly, no proposal): the Markdown project docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, CLAUDE, docs/).
 - Also NO: the dev tools and checks under tools/ (they never ship in the game; Jess, 2026-11-01). Edit them directly, then run node tools/check.js and any smoke the change touches.
+## Project hooks (.claude/hooks, registered in .claude/settings.json)
+Every plan and every game-code or tools edit follows the coding-principles skill; the edit hook blocks the first such
+edit of a session until the skill has been loaded. The hooks, each fail-open, with their test in
+docs/proposals/hooks-harness.js and a log in .claude/hooks/hook-log.txt (shown by tools/catchup.js):
+- inject-rules.js adds the one relevant rule (table in rules.js) the first time a session edits a matching path.
+- style-guard.js blocks a write that adds an em-dash. heavy-read-guard.js blocks a whole-file read of the big files
+  named in "Efficient repository exploration" (a range read passes). doc-size.js reports STATE.md over 3 KB.
+- catchup-trigger.js runs tools/catchup.js when a prompt starts with "catch me up" or "catch up".
+- guard-git.js is the git and gh allowlist below.
+
 ## Git and GitHub (what the assistant may do)
 Enforced in Claude Code by the PreToolUse hook .claude/hooks/guard-git.js (registered in .claude/settings.json).
 It is an allowlist: a git or gh command not named here is blocked until Jess decides about it. Other tools
