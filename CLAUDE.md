@@ -85,39 +85,25 @@ Enforced in Claude Code by the PreToolUse hook .claude/hooks/guard-git.js (regis
 It is an allowlist: a git or gh command not named here is blocked until Jess decides about it. Other tools
 without hooks (Amazon Quick) follow the same list on trust.
 
-The assistant MAY:
-- Read-only git: status, diff, log, show, blame, branch (list only), ls-files, ls-tree, rev-parse, config --get,
-  remote -v, `git fetch`.
-- Stage and commit on the branch Jess has checked out (add, commit). Commit at slice boundaries once
-  `node tools/check.js` and `npm run format` are clean, and at session end, so a tool switch never starts from a
-  dirty tree. Never --amend, never --no-verify.
-- GitHub through `gh`: create, edit, comment on, label, close and reopen issues; create labels; add and edit board
-  items on the PokeSwarm project (the token needs the `project` scope, Jess runs `gh auth refresh -s project`);
-  open a PR from a branch Jess has already pushed; read anything.
+The assistant MAY: read git state (status, diff, log, show, fetch and the other read-only commands); stage and commit on
+the branch Jess has checked out, at slice boundaries once `node tools/check.js` and `npm run format` are clean and at
+session end (never --amend, never --no-verify); and use `gh` to read anything and to create, edit, comment on, label,
+close and reopen issues, create labels, edit board items and open a PR from a branch Jess already pushed.
 
-The assistant MUST NOT (Jess runs these; the assistant gives the exact commands, explains them, and advises
-strategy on branching, staging and messages):
-- Anything that moves or publishes history or changes branches: push, pull, merge, rebase, reset, checkout,
-  switch, branch create/delete/rename, stash, cherry-pick, revert, tag, clean, restore, rm, mv, apply, am,
-  config (set), remote (add/remove), submodule, worktree, amend, force of any kind.
-- On GitHub: merge or close a PR, delete anything (issue, label, repo, release), `gh api` writes, settings,
-  auth, workflow runs, releases.
-When in doubt whether a command writes something not listed above, do not run it and ask Jess.
+The assistant MUST NOT run anything that moves or publishes history or changes branches (push, pull, merge, rebase,
+reset, checkout, switch, stash, branch create or delete, tag, clean, restore, rm, mv, amend, force of any kind), and on
+GitHub must not merge or close a PR or delete anything. Jess runs those; the assistant gives the exact commands, explains
+them, and advises on strategy. When in doubt whether a command writes something, do not run it and ask Jess.
 Commit messages carry no "Co-Authored-By" line and no AI signature of any kind.
+The complete allowlist and blocklist: docs/AGENT-RULES-REFERENCE.md "Git and GitHub allowlist".
 
 ## Project management and issue tracking (the assistant is Jess's PM)
 The assistant acts as Jess's expert PM, not just a coder. The tracker is GitHub Issues + the "PokeSwarm" Project
-board, and the board wins for "what's next". The assistant creates and maintains issues and board cards itself (see
-"Git and GitHub"). TODO.md is only the next-session handoff: a short list of what is next, each line pointing at
-issue numbers. It never duplicates an issue's content.
-- When work is agreed, it becomes an issue (clear title, type + area + status labels, a concrete done-condition),
-  not a TODO line. Draft a batch of more than about five new issues for Jess to approve first.
-- When a slice lands, comment on its issue with what shipped, and move the card to Needs Playtest when it needs Jess's
-  feel test. When Jess confirms a ticket is done and settled, the assistant closes it and the card goes to Shipped
-  (closing moves it there by project automation). A ruling goes in a new docs/decisions/ file plus an index line in DECISIONS.md, the task it implies goes in an issue, with a link.
-- At session end, rewrite the TODO.md handoff from what actually happened, and STATE.md as before.
-Full detail, label taxonomy, board columns, PM behaviors and the playtester/template rules:
-**docs/PM-WORKFLOW.md**. Playtester guide: CONTRIBUTING.md.
+board, and the board wins for "what's next". The assistant creates and maintains issues and board cards itself. Agreed
+work becomes an issue, not a TODO line; a ruling becomes a docs/decisions/ file; TODO.md is only the short next-session
+handoff pointing at issue numbers. At session end, rewrite TODO.md and STATE.md from what actually happened.
+Everything else (issue and label shape, when to comment, close and move cards, the batch-of-five rule, board columns,
+PM behaviors, playtester rules): **docs/PM-WORKFLOW.md**. Playtester guide: CONTRIBUTING.md.
 
 ## Performance stance
 Vision first, trim fat later. Ignore small per-frame millisecond differences now. BUT treat a visible

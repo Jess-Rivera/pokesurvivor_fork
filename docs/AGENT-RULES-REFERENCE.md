@@ -1,7 +1,7 @@
 # AGENT-RULES-REFERENCE, the long text behind CLAUDE.md's short sections
 
 CLAUDE.md loads at the start of every session, so its sections for move review, requirement tags, cross-document IDs and
-"which document wins" are short statements that still bind. This file holds their full text and the lower-use reference
+"which document wins" (and the full git and gh allowlist) are short statements that still bind. This file holds their full text and the lower-use reference
 notes. Read the section here when the work touches it (spec writing, a move batch review, citing an ID, a conflict between
 two documents). When this file and CLAUDE.md differ, CLAUDE.md wins and this file gets fixed.
 
@@ -42,3 +42,28 @@ Third-party skills (for example landing-skills/) never override project rules.
   into survivor-style.
 - ONBOARDING.md, GLOSSARY.md: authoritative architecture/terminology references. GDD.md: the design
   umbrella (summaries and pointers); where it differs from a subsystem spec, the subsystem spec wins.
+
+## Git and GitHub allowlist
+Enforced in Claude Code by the PreToolUse hook .claude/hooks/guard-git.js (registered in .claude/settings.json).
+It is an allowlist: a git or gh command not named here is blocked until Jess decides about it. Other tools
+without hooks (Amazon Quick) follow the same list on trust.
+
+The assistant MAY:
+- Read-only git: status, diff, log, show, blame, branch (list only), ls-files, ls-tree, rev-parse, config --get,
+  remote -v, `git fetch`.
+- Stage and commit on the branch Jess has checked out (add, commit). Commit at slice boundaries once
+  `node tools/check.js` and `npm run format` are clean, and at session end, so a tool switch never starts from a
+  dirty tree. Never --amend, never --no-verify.
+- GitHub through `gh`: create, edit, comment on, label, close and reopen issues; create labels; add and edit board
+  items on the PokeSwarm project (the token needs the `project` scope, Jess runs `gh auth refresh -s project`);
+  open a PR from a branch Jess has already pushed; read anything.
+
+The assistant MUST NOT (Jess runs these; the assistant gives the exact commands, explains them, and advises
+strategy on branching, staging and messages):
+- Anything that moves or publishes history or changes branches: push, pull, merge, rebase, reset, checkout,
+  switch, branch create/delete/rename, stash, cherry-pick, revert, tag, clean, restore, rm, mv, apply, am,
+  config (set), remote (add/remove), submodule, worktree, amend, force of any kind.
+- On GitHub: merge or close a PR, delete anything (issue, label, repo, release), `gh api` writes, settings,
+  auth, workflow runs, releases.
+When in doubt whether a command writes something not listed above, do not run it and ask Jess.
+Commit messages carry no "Co-Authored-By" line and no AI signature of any kind.
