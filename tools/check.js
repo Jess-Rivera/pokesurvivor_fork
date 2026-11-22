@@ -227,6 +227,14 @@ try {
       );
     }
   }
+  // The page itself must assemble (library, data and page files all present, data embeds as valid JSON).
+  const page = dash.toHtml(data);
+  const dataStart = page.indexOf('window.__DASH__=') + 'window.__DASH__='.length;
+  const embedded = page.slice(dataStart, page.indexOf(';</' + 'script>', dataStart));
+  if (dataStart < 20 || !JSON.parse(embedded).files.length) {
+    dbad++;
+    console.log('dashboard: the HTML page does not embed its data');
+  }
   info('dashboard: ' + mapped.length + ' code files, ' + mappedTagCount + ' tags, ' + data.gaps.length + ' gap items');
 } catch (e) {
   dbad++;

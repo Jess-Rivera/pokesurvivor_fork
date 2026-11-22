@@ -6,7 +6,6 @@
 const fs = require('fs'),
   path = require('path');
 const root = path.resolve(__dirname, '..');
-const rel = (p) => path.relative(root, p).replace(/\\/g, '/');
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 
 const SKIP_DIRS = new Set([
@@ -149,7 +148,15 @@ function buildCodeMap() {
   const scripts = readLoadedScripts();
   const modules = scripts
     .filter((p) => !isVendor(p))
-    .map((p, order) => ({ path: p, area: areaOf(p), order, defines: [], uses: new Set() }));
+    .map((p, order) => ({
+      path: p,
+      area: areaOf(p),
+      order,
+      defines: [],
+      uses: new Set(),
+      dependsOn: new Set(),
+      usedBy: new Set(),
+    }));
   const definer = new Map(); // G.<name> -> module path that assigns it first
   for (const mod of modules) {
     const source = fs.existsSync(path.join(root, mod.path)) ? read(mod.path) : '';
@@ -160,12 +167,15 @@ function buildCodeMap() {
     }
     for (const m of source.matchAll(/\bG\.([A-Za-z_]\w*)/g)) mod.uses.add(m[1]);
   }
+  const moduleByPath = new Map(modules.map((m) => [m.path, m]));
   const areaEdges = new Map(); // "from>to" -> count of distinct G names crossing
   for (const mod of modules) {
     const seen = new Set();
     for (const name of mod.uses) {
       const owner = definer.get(name);
       if (!owner || owner === mod.path) continue;
+      mod.dependsOn.add(owner);
+      moduleByPath.get(owner).usedBy.add(mod.path);
       const ownerArea = areaOf(owner);
       if (ownerArea === mod.area) continue;
       const key = mod.area + '>' + ownerArea + '>' + name;
@@ -235,8 +245,18 @@ function buildDesignMap() {
     );
     const total = TAGS.reduce((s, t) => s + counts[t], 0);
     const issueRefs = issueNumbers(lines.join('\n'));
-    if (total || cited.length) specs.push({ file, counts, total, items, cited, citedOnlyAsRemoved, issueRefs });
+    if (total || cited.length)
+      specs.push({ file, counts, total, items, cited, citedOnlyAsRemoved, issueRefs, text: lines.join('\n') });
   }
+  // Which other specs does each spec name? (the doc-to-doc web: who points at whom)
+  const escapeForRegex = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, (ch) => '\\' + ch);
+  for (const spec of specs) {
+    spec.mentions = specs
+      .filter((other) => other !== spec)
+      .filter((other) => new RegExp('(^|[^A-Za-z0-9_-])' + escapeForRegex(path.basename(other.file))).test(spec.text))
+      .map((other) => other.file);
+  }
+  for (const spec of specs) delete spec.text;
   // decisions: one file each, with a Canonical: line naming the spec that holds the rule
   const decisions = listFiles('docs/decisions', (p) => p.endsWith('.md')).map((file) => {
     const text = read(file);
@@ -390,153 +410,79 @@ function toMarkdown(data) {
   return out.join('\n');
 }
 
-// ---- HTML output (self contained, opens from disk) ----
-function boardToHtml(board) {
-  if (!board.available)
-    return '<h2>Board</h2><p style="color:var(--mut)">No issue snapshot yet. Run <code>node tools/dashboard.js --refresh</code> (needs <code>gh</code> signed in).</p>';
-  const issueLine = (r) =>
-    '<tr><td class="num"><a href="' +
-    esc(r.url) +
-    '">#' +
-    r.number +
-    '</a></td><td>' +
-    esc(r.title) +
-    '</td><td>' +
-    esc(r.labels.join(', ')) +
-    '</td><td class="num">' +
-    (r.citedIn.length || '') +
-    '</td></tr>';
-  const openColumns = board.columns
-    .filter((c) => c.open)
-    .map((c) => {
-      const rows = board.rows.filter((r) => r.state === 'OPEN' && (r.column || 'Not on the board') === c.name);
-      return (
-        '<details' +
-        (/playtest|triage/i.test(c.name) ? ' open' : '') +
-        '><summary><b>' +
-        esc(c.name) +
-        '</b> (' +
-        c.open +
-        ' open, ' +
-        c.closed +
-        ' closed)</summary><table><tr><th>#</th><th>Title</th><th>Labels</th><th class="num">Docs citing it</th></tr>' +
-        rows.map(issueLine).join('') +
-        '</table></details>'
-      );
-    });
-  return (
-    '<h2>Board</h2><p style="color:var(--mut)">Issues as of ' +
-    esc(board.fetchedAt.slice(0, 16).replace('T', ' ')) +
-    ' UTC (<code>--refresh</code> to update). Specs and decisions cite ' +
-    board.cited.open +
-    ' open and ' +
-    board.cited.closed +
-    ' closed issues.</p>' +
-    openColumns.join('')
-  );
-}
-const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-function toHtml(data) {
-  const { code, design, gaps, tagTotals } = data;
-  const areaNames = code.areas.map((a) => a.name);
-  const cell = (from, to) => {
-    const e = code.areaEdges.find((x) => x.from === from && x.to === to);
-    return e
-      ? '<td class="n" style="--v:' +
-          Math.min(1, e.names / 40) +
-          '" title="' +
-          esc(from + ' uses ' + e.names + ' names from ' + to) +
-          '">' +
-          e.names +
-          '</td>'
-      : '<td></td>';
+// ---- HTML output: one self-contained page (library, data, styles and script inlined), opens from disk ----
+function buildGraphData(data) {
+  const { code, design, board, gaps } = data;
+  const moduleByPath = new Map(code.modules.map((m) => [m.path, m]));
+  const gapsByNode = new Map(); // a file path (spec or code) -> gaps that name it
+  for (const g of gaps) {
+    const id = g.where.startsWith('#') ? null : g.where.replace(/:\d+$/, '');
+    if (id) gapsByNode.set(id, [...(gapsByNode.get(id) || []), g]);
+  }
+  const decisionsBySpec = new Map();
+  for (const d of design.decisions)
+    for (const t of d.targets)
+      if (t.resolved) decisionsBySpec.set(t.resolved, (decisionsBySpec.get(t.resolved) || 0) + 1);
+  const issueByNumber = board.available ? new Map(board.rows.map((r) => [r.number, r])) : new Map();
+  const citedBy = new Map();
+  for (const spec of design.specs) for (const p of spec.cited) citedBy.set(p, [...(citedBy.get(p) || []), spec.file]);
+  return {
+    root: root.replace(/\\/g, '/'),
+    builtOn: data.builtOn,
+    tags: data.tagTotals,
+    areas: code.areas,
+    areaEdges: code.areaEdges,
+    files: code.modules.map((m) => ({
+      id: m.path,
+      area: m.area,
+      defines: m.defines,
+      dependsOn: [...m.dependsOn],
+      usedBy: [...m.usedBy],
+      citedBy: citedBy.get(m.path) || [],
+      gaps: gapsByNode.get(m.path) || [],
+    })),
+    specs: design.specs.map((s) => ({
+      id: s.file,
+      counts: s.counts,
+      total: s.total,
+      cited: s.cited.filter((p) => moduleByPath.has(p)),
+      citedOther: s.cited.filter((p) => !moduleByPath.has(p)),
+      mentions: s.mentions,
+      decisions: decisionsBySpec.get(s.file) || 0,
+      issues: s.issueRefs.map((n) => issueByNumber.get(n) || { number: n }),
+      gaps: gapsByNode.get(s.file) || [],
+    })),
+    board: board.available
+      ? {
+          fetchedAt: board.fetchedAt,
+          totals: board.totals,
+          columns: board.columns,
+          cited: board.cited,
+          rows: board.rows,
+        }
+      : null,
+    gaps,
   };
-  const matrix =
-    '<table class="matrix"><tr><th>uses &rarr;</th>' +
-    areaNames.map((a) => '<th class="rot">' + esc(a) + '</th>').join('') +
-    '</tr>' +
-    areaNames
-      .map(
-        (from) =>
-          '<tr><th>' +
-          esc(from) +
-          '</th>' +
-          areaNames.map((to) => (from === to ? '<td class="self"></td>' : cell(from, to))).join('') +
-          '</tr>'
-      )
-      .join('') +
-    '</table>';
-  const specRows = [...design.specs]
-    .sort((a, b) => b.total - a.total)
-    .map(
-      (s) =>
-        '<tr><td>' +
-        esc(s.file) +
-        '</td>' +
-        TAGS.map((t) => '<td class="num">' + (s.counts[t] || '') + '</td>').join('') +
-        '<td class="num">' +
-        s.cited.length +
-        '</td></tr>'
-    )
-    .join('');
-  const boardHtml = boardToHtml(data.board);
-  const types = [...new Set(gaps.map((g) => g.type))].sort();
-  const gapRows = gaps
-    .map(
-      (g) =>
-        '<tr data-type="' +
-        esc(g.type) +
-        '"><td>' +
-        esc(g.type) +
-        '</td><td>' +
-        esc(g.where) +
-        '</td><td>' +
-        esc(g.detail) +
-        '</td></tr>'
-    )
-    .join('');
-  const tiles =
-    TAGS.map((t) => '<div class="tile"><b>' + tagTotals[t] + '</b><span>' + t + '</span></div>').join('') +
-    (data.board.available
-      ? '<div class="tile"><b>' +
-        data.board.totals.open +
-        '</b><span>open issues</span></div><div class="tile"><b>' +
-        data.board.rows.filter((r) => r.state === 'OPEN' && r.labels.includes('needs-playtest')).length +
-        '</b><span>need your playtest</span></div>'
-      : '') +
-    '<div class="tile"><b>' +
-    code.modules.length +
-    '</b><span>code files loaded</span></div><div class="tile"><b>' +
-    gaps.length +
-    '</b><span>gap items</span></div>';
+}
+
+function toHtml(data) {
+  const pageDir = path.join(__dirname, 'dashboard-page');
+  const inScript = (text) => text.replace(/<\/(script)/gi, '<\\/$1');
+  const embedded = inScript(JSON.stringify(buildGraphData(data)));
+  const library = inScript(fs.readFileSync(path.join(__dirname, 'vendor/cytoscape.min.js'), 'utf8'));
+  const pageScript = inScript(fs.readFileSync(path.join(pageDir, 'page.js'), 'utf8'));
+  const pageStyle = fs.readFileSync(path.join(pageDir, 'page.css'), 'utf8');
   return (
-    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Project dashboard</title><style>' +
-    ':root{--bg:#fff;--fg:#1d2330;--mut:#667;--line:#d8dce6;--acc:#2f6fed}@media(prefers-color-scheme:dark){:root{--bg:#14171f;--fg:#e6e9f2;--mut:#9aa3b8;--line:#2c3242;--acc:#6b9bff}}' +
-    'body{margin:0;padding:16px;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif;max-width:1100px;margin-inline:auto}h1{font-size:20px}h2{font-size:16px;margin-top:28px}' +
-    '.tiles{display:flex;flex-wrap:wrap;gap:8px}.tile{border:1px solid var(--line);border-radius:8px;padding:8px 14px;min-width:90px}.tile b{display:block;font-size:22px}.tile span{color:var(--mut);font-size:12px}' +
-    'table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}.num{text-align:right;font-variant-numeric:tabular-nums}' +
-    '.matrix{width:auto}.matrix td{text-align:center;min-width:34px}.matrix .n{background:color-mix(in srgb,var(--acc) calc(var(--v)*80% + 12%),transparent)}.matrix .self{background:var(--line)}.rot{writing-mode:vertical-rl;transform:rotate(180deg)}' +
-    '.scroll{overflow-x:auto}select{font:inherit;padding:2px 6px}</style></head><body><h1>Project dashboard</h1><p style="color:var(--mut)">Generated ' +
-    data.builtOn +
-    ' by tools/dashboard.js from the docs, decisions, dev.html and js files.</p>' +
-    '<div class="tiles">' +
-    tiles +
-    '</div>' +
-    '<h2>Code map: area uses names defined in another area</h2><p style="color:var(--mut)">Row uses the column. Darker means more shared names. Read it as "who depends on whom".</p><div class="scroll">' +
-    matrix +
-    '</div>' +
-    '<h2>Design map: specs by requirement tag, and how many code files each names</h2><div class="scroll"><table><tr><th>Spec</th>' +
-    TAGS.map((t) => '<th class="num">' + t + '</th>').join('') +
-    '<th class="num">Code files named</th></tr>' +
-    specRows +
-    '</table></div>' +
-    boardHtml +
-    '<h2>Gaps</h2><p><label>Show <select id="f"><option value="">all kinds</option>' +
-    types.map((t) => '<option>' + esc(t) + '</option>').join('') +
-    '</select></label></p><div class="scroll"><table id="g"><tr><th>Kind</th><th>Where</th><th>Detail</th></tr>' +
-    gapRows +
-    '</table></div>' +
-    '<script>document.getElementById("f").onchange=function(e){var v=e.target.value;document.querySelectorAll("#g tr[data-type]").forEach(function(r){r.style.display=!v||r.dataset.type===v?"":"none"})}</script></body></html>'
+    '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1"><title>Project dashboard</title><style>' +
+    pageStyle +
+    '</style></head><body><div id="app"></div><script>window.__DASH__=' +
+    embedded +
+    ';</script><script>' +
+    library +
+    '</script><script>' +
+    pageScript +
+    '</script></body></html>'
   );
 }
 
