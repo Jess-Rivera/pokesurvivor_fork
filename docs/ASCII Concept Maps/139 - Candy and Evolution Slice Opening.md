@@ -17,6 +17,36 @@ with #150, 8b, the friendship grilling, 8c.
 - C1 to C6 below still hold, with "candy XP" read as the OOR level's XP; C2 gains: gym > UberElite > elite in
   expected candy XP per run. The size table is proposed in the 8a build plan.
 
+## Revised again (Jess 2026-11-22): drop model
+Ruling: decision 2026-11-22-139-candy-target-and-drop-model. It supersedes the size table (D1, CD1), the gym-order
+sizing, the 100/50/15 chances and the pace line above.
+
+```mermaid
+flowchart TD
+  T["Target: one full run lets the median 3-stage, fully level-based line finish<br/>40,007 XP (Charizard line, level 36)"] --> B
+  B["Base: gyms and Elite Four, 100%, count = loop number<br/>gym 8 S every loop, last E4 beaten S on loop 6, rest XS<br/>= 44,100 XP a full run"] --> X
+  X["Extra pool: every source rolls, loop N means N rolls<br/>a roll can be nothing; XS to L, XL very rare<br/>[Open] the tables"]
+  B --> G["Bag: stacks per size, banked when earned, kept on a loss"]
+  X --> G
+  G --> V["Giving: one per press, hold repeats, Give until a level<br/>refused only at OOR level 100"]
+```
+
+| Fact | Value |
+|---|---|
+| Canon sizes | XS 100, S 800, M 3,000, L 10,000, XL 30,000 |
+| Sources per loop | 12 (8 gyms, 4 Elite Four) |
+| Drops a full run | 252 (12 x 21 loop-shares) |
+| Median, 3-stage fully level-based | 40,007 XP (p25 33,084, p75 74,088, 76 paths) |
+| Dragonite (207,968) | about 4.7 full runs on the base alone |
+
+- C1 stays the harness spot check (Abra 2,535, Venusaur line 27,021) and gains: the base total of a full run is at
+  least the median 3-stage fully level-based XP, read from pokeapi in the harness on its own.
+- C2 (a later gym never drops less than an earlier one) is dropped; gym 8 and the last Elite Four are the only S.
+  C2 now reads: a later loop never drops fewer base candies than an earlier one.
+- C5 reads: a copy refuses candy only at OOR level 100; a no-level evolution does not stop it (the OOR level also
+  sets the starting moves).
+- [Open] the extra drop tables, and how many UberElites and elites a run holds.
+
 Everything below this line is the first draft, kept as history.
 
 ## What exists today

@@ -4,25 +4,24 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Getting up to date (either machine), from the 2026-11-21 evening session (Quick, work)
-1. On this machine: `git status`, commit the session's docs (STATE has the commands), then
-   `git push origin feature/138-146-lost-and-full-box`.
+## Getting up to date (either machine), from the 2026-11-22 session (home)
+1. On this machine: `git status`, then `git push origin feature/138-146-lost-and-full-box`. The old
+   feature/128-acquisition branch is merged and can be deleted (its dashboard commits are on this branch).
 2. On the other machine: `git fetch origin`, `git checkout feature/138-146-lost-and-full-box` (use
    `git checkout -b feature/138-146-lost-and-full-box origin/feature/138-146-lost-and-full-box` the first time),
    `git pull --ff-only`, then `node tools/check.js` (must end "check: all passed"). Say "catch me up".
 3. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. #139 S8 8a: write the build plan (candy drops from gyms, UberElites, elites; the bag; giving candy; the OOR
-   level and its meter; G.Debug.candy). The size table is a decision item, not settled. Rulings: decision
-   2026-11-21-139-oor-level-candy-sources-friendship-model; opening: docs/ASCII Concept Maps/139 - Candy and
-   Evolution Slice Opening.md.
+0. #139 S8 8a: Jess OKs docs/ASCII Concept Maps/139a - Candy Build Plan.md (the fixed tier-to-size rule, whether the
+   elite berry and ground item stay beside the ladder, UberElite and elite counts), then build Parts A to G, tests
+   first. Rulings: decision 2026-11-22-139-candy-target-and-drop-model.
 1. Grill #97 (upgrade rework). The starting-move picker (#150 folded in) waits on it, then needs a learnset rebake
    with levels and the egg-move unlock data.
 2. #139 8b evolve, then grill friendship (docs/ASCII Concept Maps/139 - Friendship Minutes Deep Dive.md, [Open]),
    then 8c. #161 fatigue (stub) rides with it.
 3. #146 keep-or-sell list; #145 small and ready (may ride this branch). Then #140 to #143 and #162.
-4. Owed by Jess: confirm docs/proposals/lost-pokemon-mutate.js ran with all 10 caught after the format pass.
+4. #163 evolution materials shop tab (new, with #162): needs the type-to-material map and the shop price.
 5. #126 UI unify (#61 first), then #127 Main Menu v3.0. #129 architecture review. #130 regions and map selection.
    Parked: #111, then #122.
 6. Board fixes (Jess, on GitHub): #160 duplicates #159 (close one); #151 #152 #153 and older closed issues still

@@ -413,3 +413,15 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   candy sources, starting and egg moves, friendship model, fatigue). Agent corrected for deciding too much alone.
 - Broke: the gyms-only guard ("not legendary" comment, old pool regex), fixed. check.js clean on Jess's machine.
 - Stopped at: the 8a build plan. Research noted as a forming idea, no scope yet.
+
+## 2026-11-22 (home), branch recovery; #139 8a candy designed
+- Changed: moved from the stale feature/128-acquisition to feature/138-146-lost-and-full-box (dashboard commits
+  cherry-picked, format pass and doc-colours regenerated, check.js passes). Lost-pokemon mutate: 10/10 caught.
+  Wrote the candy decision file, the opening-doc revision and docs/ASCII Concept Maps/139a - Candy Build Plan.md.
+  Filed #163 (materials shop tab).
+- Decided: target 40,007 XP (3-stage fully level-based median; Quick's 33,084 was the 25th percentile); canon candy
+  sizes; base 44,100 XP a full run; a drop ladder (Common to Jackpot) in G.Drops; elite floor weights; materials
+  separate ladders, derived from the leader's type, one roll per source per loop, shop stock of one per beating.
+- Broke: nothing. No game code touched.
+- Stopped at: the 8a build plan awaiting Jess's OK on the fixed tier-to-size rule and two open items (elite berry
+  and ground item beside the ladder; UberElite and elite counts). Part A is next.
