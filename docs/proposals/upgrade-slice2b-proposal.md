@@ -1,5 +1,7 @@
 # Upgrade rework, slice 2b proposal: mechanic cards go live
 
+HISTORY (2026-11-21): slice 7b-2a deleted js/data/kinds.js and js/data/mechanics.js. This proposal is the record of the design they came from.
+
 Status: PROPOSAL, built and tested in a work copy, NOT applied. 2026-10-18.
 Diff: `upgrade-slice2b.diff` (13 files, dry-run clean against the committed 2a state).
 Tests: `upgrade-slice2b-harness.js` (offline logic) plus a headless Chromium run of the real screens (results below).

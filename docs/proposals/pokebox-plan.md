@@ -7,7 +7,7 @@ IVs, natures, gender and EVs belong to one copy of a Pokemon, not to a species, 
 
 ## Rulings (Jess, 2026-11-03)
 - [Approved] The player can own many copies of a species, shinies included, and can field the same species more than once on a team. Fielding is built; more than one copy needs G.Debug.addCopy until step 3.
-- [Approved] A gacha pull always gives a copy. Selling happens from the box, or from the gacha results screen. Code differs: repeats pay coins and a repeat shiny re-rolls (js/systems/gacha.js).
+- [Approved] A gacha pull always gives a copy. Selling happens from the box, or from the gacha results screen. Code differs: repeats pay coins and a repeat shiny re-rolls (js/systems/gacha.js (removed in #133)).
 - [Approved] Natures affect stats (mainline +10% and -10%). Code differs: not in G.Stats.
 - [Approved] Gender is mainly for fun, with no combat effect.
 - [Approved] The box lives on the Team screen, in place of a single unified scroll, with one tab row: Pokedex, Box 1, Box 2 and so on. A player starts with 2 boxes and can buy up to 3 more.
@@ -145,7 +145,7 @@ No key names is smallest, but the position of every value becomes permanent, whi
 Give Jess a no-code plan first and wait for his OK (CLAUDE.md "Edit boundary"). Then build, test, and hand over for a feel-test.
 
 Scope:
-- Copies at the source: js/systems/gacha.js pull() (a pull always makes a copy; drop the repeat refund and the repeat-shiny re-roll), js/game.js G.onRescue and G.onShinyCaught, js/ui/test.js starter, js/core/debug.js. Use G.Copies.add. Keep writing `owned` and `shiny`, since they are the Pokedex record.
+- Copies at the source: js/systems/gacha.js (removed in #133) pull() (a pull always makes a copy; drop the repeat refund and the repeat-shiny re-roll), js/game.js G.onRescue and G.onShinyCaught, js/ui/test.js starter, js/core/debug.js. Use G.Copies.add. Keep writing `owned` and `shiny`, since they are the Pokedex record.
 - Remove G.Copies.fill and its call in normalizeTeam, or a sold copy comes back. Every source must create its copy first. The harness sections on fill move to the new path.
 - Selling: from the box, and from the gacha results screen, at the sell price below. A sold copy leaves save.box. Add a G.Copies sell function, and test it against team slots.
 - Full boxes: the warning and auto-sell below. G.Copies.add currently overflows into the last box; a pull must sell the overflow instead.

@@ -26,7 +26,7 @@ Workflow: CLAUDE.md "Edit boundary" (prose plan in chat, no code, Jess OKs, then
 - Pass 2 (after the harness is green): remove `maxStacks` and stat `duration` from docs/move_rework_holding/move-conversions-described.json, move-attributes.js, move-resolver.js, the 4 buff cds in move-overrides.js; validator rejection in tools/validate_moves.js; readers in tools/move_parity.js and tools/move_report.js; Jess re-runs tools/export_moves.js (regenerates moves-generated.js).
 
 ## 5b: code facts found 2026-10-30
-- Today's cards: js/data/mechanics.js (catalogue, modes add / inc / rate, SCOPED type and kind cards, STATS), js/data/kinds.js (per-kind keys and nouns), js/systems/levelup.js (family draw, FAMILY_W, 2-buff limit on `kind === 'buff'`), js/ui/run-ui.js (choose sheet steps, about lines 79 to 142), js/ui/sheet.js (preview through G.Moves.derive, about line 132), js/data/moves.js addStack / derive.
+- Today's cards (both files since removed in slice 7b-2a): js/data/mechanics.js (catalogue, modes add / inc / rate, SCOPED type and kind cards, STATS), js/data/kinds.js (per-kind keys and nouns), js/systems/levelup.js (family draw, FAMILY_W, 2-buff limit on `kind === 'buff'`), js/ui/run-ui.js (choose sheet steps, about lines 79 to 142), js/ui/sheet.js (preview through G.Moves.derive, about line 132), js/data/moves.js addStack / derive.
 - New path reads `G.MoveDefs[id]` in move-sim.js (4 places) and move-render.js (2): these read the folded team def.
 - Stat cards today: player.js `inc` (per Pokemon) and `addStat`; `badge` is already a run-long bonus for every member, bench included: Vitamins can use that path.
 - Bench loop: game.js about line 838 (`benchUpdate`): HP Regen goes there (bench only).

@@ -1,5 +1,7 @@
 # Upgrade rework, slice 2a proposal: the data layer (no player-visible change)
 
+HISTORY (2026-11-21): slice 7b-2a deleted js/data/kinds.js and js/data/mechanics.js. This proposal is the record of the design they came from.
+
 Status: PROPOSAL, not applied. 2026-10-18. Spec for the whole slice 2 is `upgrade-slice2-proposal.md` (sections 2.x); this is its first piece.
 Diff: `upgrade-slice2a.diff` (dry-run applied to a copy of the current files, results byte-identical to the tested files).
 Harness: `upgrade-slice2a-harness.js` (offline, Node only).

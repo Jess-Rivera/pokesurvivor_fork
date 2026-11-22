@@ -1,5 +1,7 @@
 # FEATURES_GRAB: Controller support + Manual aim (from upstream pokesurvivor-main)
 
+NOT BUILT (as of 2026-11-21): this is a porting plan. js/core/gamepad.js and the controller and manual aim features do not exist in the fork yet.
+
 Source: the updated upstream copy at `Downloads\pokesurvivor-main` (paths below are relative to it unless
 marked "fork"). Target: this fork. Both features are small and cleanly separated in upstream, so they
 port well. Nothing here has been applied to the game code yet. Per CLAUDE.md, every game-code step below is

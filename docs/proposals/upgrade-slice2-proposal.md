@@ -1,5 +1,7 @@
 # Upgrade rework, slice 2 proposal: data-driven mechanic cards
 
+HISTORY (2026-11-21): slice 7b-2a deleted js/data/kinds.js and js/data/mechanics.js. This proposal is the record of the design they came from.
+
 Status: PROPOSAL, nothing applied. Written 2026-10-18. Follows slice 1 (deletion, applied, uncommitted).
 Companion: the Move Catalogue Explorer artifact and `docs/move-catalogue-preview.json` (the numbers below come from that export).
 Rulings this builds on are in DECISIONS.md, entries "2026-10-18, Upgrade rework (in-run)" and later.
