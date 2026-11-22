@@ -134,7 +134,6 @@ G.Lib.Pixels = (() => {
     </svg>`;
   }
 
-
   // ---------- the shared fills (moved from js/ui/hud-overlay.js, 155c-2): SVG patterns a shape paints with ----------
   const PATTERNS = {
     barChecker: 'url(#hud-bar-checker)', // the B2 HP bar body: 1-pixel checker of the panel body and checker

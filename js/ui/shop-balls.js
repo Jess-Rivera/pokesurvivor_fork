@@ -446,8 +446,7 @@ G.ShopBallsPane = (() => {
       </div>
       ${Array.from(
         { length: BELT.count },
-        (_, index) =>
-          html`<${Belt} key=${index} cursor=${cursor} number=${index + 1} balls=${balls} ring=${ring} />`
+        (_, index) => html`<${Belt} key=${index} cursor=${cursor} number=${index + 1} balls=${balls} ring=${ring} />`
       )}
       ${
         belt

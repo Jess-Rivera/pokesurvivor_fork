@@ -772,135 +772,21 @@ window.LIBRARY_DOC_COLOURS = [
  },
  {
   "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
+  "section": "Toasts (G.UI.toast, every screen; the UI library's toast, js/ui/lib/primitives/toast/toast.css, #128)",
   "hex": "#181818",
-  "line": "Window background | #181818, frame #212121 | the Run Info panel"
+  "line": "#128: a #181818 body with a 2 px #29ceff rim (#104c), bad news #c8141c."
  },
  {
   "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#212121",
-  "line": "Window background | #181818, frame #212121 | the Run Info panel"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#dbb26e",
-  "line": "Belt rim (light, base, dark) | #DBB26E #C88820 #825815 | UI-PALETTES Bag, Poke Balls pocket"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#c88820",
-  "line": "Belt rim (light, base, dark) | #DBB26E #C88820 #825815 | UI-PALETTES Bag, Poke Balls pocket"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#825815",
-  "line": "Belt rim (light, base, dark) | #DBB26E #C88820 #825815 | UI-PALETTES Bag, Poke Balls pocket"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#c1c2c1",
-  "line": "Pokemon owned rim (light, base, dark) | #C1C2C1 #9FA19F #676967 | Normal type ramp"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#9fa19f",
-  "line": "Pokemon owned rim (light, base, dark) | #C1C2C1 #9FA19F #676967 | Normal type ramp"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#676967",
-  "line": "Pokemon owned rim (light, base, dark) | #C1C2C1 #9FA19F #676967 | Normal type ramp"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#e7e7e7",
-  "line": "Flee ring filled / empty | first type's Dark / #e7e7e7 | Type colours / run item paper"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#ffffff",
-  "line": "Button rim at rest / body | #ffffff #e7e7e7 #848484 / #181818 | the pause menu's rest ramp, panel body"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#848484",
-  "line": "Button rim at rest / body | #ffffff #e7e7e7 #848484 / #181818 | the pause menu's rest ramp, panel body"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#9be895",
-  "line": "Throw rim focused | #9be895 #38d030 #1d6c19 | Pause menu button focus ramp"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#38d030",
-  "line": "Throw rim focused | #9be895 #38d030 #1d6c19 | Pause menu button focus ramp"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#1d6c19",
-  "line": "Throw rim focused | #9be895 #38d030 #1d6c19 | Pause menu button focus ramp"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#ff8a90",
-  "line": "Let It Go rim and body focused | #ff8a90 #e8202a #7c1016, body #7c1016 | Pause menu End answer"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#e8202a",
-  "line": "Let It Go rim and body focused | #ff8a90 #e8202a #7c1016, body #7c1016 | Pause menu End answer"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#7c1016",
-  "line": "Let It Go rim and body focused | #ff8a90 #e8202a #7c1016, body #7c1016 | Pause menu End answer"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Catch screen (#136, redesign 136b; Jess's mockup 2026-11-16, feel-tested 2026-11-16)",
-  "hex": "#f3b200",
-  "line": "Result line | #f3b200 | the Lv yellow"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Toasts (G.UI.toast, every screen; Jess, 2026-11-13, #104c)",
-  "hex": "#181818",
-  "line": "Body #181818 and a 2 px rim #29ceff: the main menu top and bottom bars' charcoal and teal line (bw-menu.css"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Toasts (G.UI.toast, every screen; Jess, 2026-11-13, #104c)",
+  "section": "Toasts (G.UI.toast, every screen; the UI library's toast, js/ui/lib/primitives/toast/toast.css, #128)",
   "hex": "#29ceff",
-  "line": "Body #181818 and a 2 px rim #29ceff: the main menu top and bottom bars' charcoal and teal line (bw-menu.css"
+  "line": "#128: a #181818 body with a 2 px #29ceff rim (#104c), bad news #c8141c."
  },
  {
   "doc": "HUD-STYLE.md",
-  "section": "Toasts (G.UI.toast, every screen; Jess, 2026-11-13, #104c)",
-  "hex": "#101010",
-  "line": "-bw-charcoal, --bw-line), with a 2 px #101010 outline. Bad news (tone 'bad'): the same with the pause menu"
- },
- {
-  "doc": "HUD-STYLE.md",
-  "section": "Toasts (G.UI.toast, every screen; Jess, 2026-11-13, #104c)",
+  "section": "Toasts (G.UI.toast, every screen; the UI library's toast, js/ui/lib/primitives/toast/toast.css, #128)",
   "hex": "#c8141c",
-  "line": "red #c8141c rim."
+  "line": "#128: a #181818 body with a 2 px #29ceff rim (#104c), bad news #c8141c."
  },
  {
   "doc": "UI-PALETTES.md",

@@ -720,7 +720,9 @@ async function catchFlow(browser, query, tag) {
       belts = [...root.querySelectorAll('.catch-belt.ball-belt')],
       mon = root.querySelector('.catch-mon'),
       types = G.DEX_BY[G.Catch.session.dex].types,
-      fills = new Set([...mon.querySelectorAll(':scope > svg rect')].map((rect) => rect.getAttribute('fill').toLowerCase()));
+      fills = new Set(
+        [...mon.querySelectorAll(':scope > svg rect')].map((rect) => rect.getAttribute('fill').toLowerCase())
+      );
     return {
       clean: frame.classList.contains('panel-clean'),
       heightFitsBelt: Math.abs(frame.clientHeight - (2 * belts[0].offsetTop + belts[0].offsetHeight)) < 1,
@@ -741,7 +743,7 @@ async function catchFlow(browser, query, tag) {
       look.selectedWell,
     tag +
       ': the window is panel.clean and a belt tall; the two-type rim holds both types (dithered, no gradient); three ' +
-      'belts of six wells; the selected ball\'s well is selected (' +
+      "belts of six wells; the selected ball's well is selected (" +
       JSON.stringify(look) +
       ')'
   );
@@ -776,7 +778,8 @@ async function catchFlow(browser, query, tag) {
   }));
   ok(
     letGoAsk.open && letGoAsk.onKeepTrying && letGoAsk.keepTryingNeutral && letGoAsk.letGoNegative,
-    tag + ': Esc asks before letting it go, and the ask opens on Keep trying (neutral), Let it go red (' +
+    tag +
+      ': Esc asks before letting it go, and the ask opens on Keep trying (neutral), Let it go red (' +
       JSON.stringify(letGoAsk) +
       ')'
   );
@@ -827,12 +830,20 @@ async function catchFlow(browser, query, tag) {
       probe.remove();
       if (!toast || toast.style.display === 'none') return null;
       const edge = getComputedStyle(toast).borderTopColor;
-      return { text: toast.textContent.trim(), bad: toast.classList.contains('bad'), red: edge === colours.red, teal: edge === colours.teal };
+      return {
+        text: toast.textContent.trim(),
+        bad: toast.classList.contains('bad'),
+        red: edge === colours.red,
+        teal: edge === colours.teal,
+      };
     });
   const missToast = await toastNow();
   ok(
     !!missToast && missToast.text === 'Oh no! It broke free.' && missToast.bad && missToast.red && !shown.noteLine,
-    tag + ': a miss shows the bad-news toast with the red edge; the panel has no result line (' + JSON.stringify(missToast) + ')'
+    tag +
+      ': a miss shows the bad-news toast with the red edge; the panel has no result line (' +
+      JSON.stringify(missToast) +
+      ')'
   );
   const printed = await page.evaluate(() => {
     const tables = [],
@@ -1010,14 +1021,18 @@ async function shopFlow(browser, query, tag) {
         const corner = document.querySelector('#scr-gacha .hud-cursor');
         const host = corner
           ? corner.closest('[data-cursor-id]')
-          : document.querySelector('#scr-gacha [data-cursor-shown]') || document.querySelector('.shop-search-host.is-cursor');
+          : document.querySelector('#scr-gacha [data-cursor-shown]') ||
+            document.querySelector('.shop-search-host.is-cursor');
         const button = host && host.querySelector('button');
         return (button && button.dataset.action) || (host && host.dataset.cursorId) || '';
       })(),
       // the button showing its focus (a rounded button's green rim, a glitch button's swipe), by keys or under the mouse
       greenOn:
-        (document.querySelector('#scr-gacha .hud-team-button.focused, #scr-gacha .glitch-button.focused') || { dataset: {} })
-          .dataset.action || '',
+        (
+          document.querySelector('#scr-gacha .hud-team-button.focused, #scr-gacha .glitch-button.focused') || {
+            dataset: {},
+          }
+        ).dataset.action || '',
     }));
   const arrowKey = async (key) => {
     await page.keyboard.press(key);
@@ -1766,7 +1781,9 @@ async function shopFlow(browser, query, tag) {
         button = rect(card.querySelector('.shop-button button')),
         label = rect(card.querySelector('.shop-button button span'));
       const centreGap = Math.abs(host.left + host.width / 2 - (cardBox.left + cardBox.width / 2));
-      return host.width < cardBox.width && centreGap <= 1 && host.bottom <= cardBox.bottom && label.width <= button.width;
+      return (
+        host.width < cardBox.width && centreGap <= 1 && host.bottom <= cardBox.bottom && label.width <= button.width
+      );
     });
     // a strip's frame: the box of its filled pixels, in art pixels [left, top, right, bottom) (the canvas reads it, the
     // page is served over http)
@@ -1823,7 +1840,11 @@ async function shopFlow(browser, query, tag) {
       if (Math.max(Math.abs(seenX - target.x), Math.abs(seenY - target.y)) > artPixel / 2 + 0.5)
         misses.push(url.split('/').pop() + ' frame ' + frame + ' off by ' + [seenX - target.x, seenY - target.y]);
     }
-    return { buttonsFit, misses, measured: pane.querySelectorAll('.shop-card-icon .catch-ball, .shop-belt-slot .catch-ball').length };
+    return {
+      buttonsFit,
+      misses,
+      measured: pane.querySelectorAll('.shop-card-icon .catch-ball, .shop-belt-slot .catch-ball').length,
+    };
   });
   ok(
     pieceLook.buttonsFit && pieceLook.measured > 0 && !pieceLook.misses.length,
@@ -1853,9 +1874,7 @@ async function shopFlow(browser, query, tag) {
         };
         const goal = document.querySelector('#scr-gacha [data-cursor-id="' + target + '"]'),
           corner = document.querySelector('#scr-gacha .hud-cursor'), // the B2 corners, or a piece that marks itself
-          host = corner
-            ? corner.closest('[data-cursor-id]')
-            : document.querySelector('#scr-gacha [data-cursor-shown]');
+          host = corner ? corner.closest('[data-cursor-id]') : document.querySelector('#scr-gacha [data-cursor-shown]');
         if (!goal) return null;
         if (!host) return { hidden: true }; // the mouse was last: no cursor shows until a key
         const from = centre(host),

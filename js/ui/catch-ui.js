@@ -33,7 +33,8 @@ G.CatchUI = (() => {
   const piecesReady = pieces.every((piece) => piece && piece.ready);
   if (!overlay || !overlay.ready || !screen || !piecesReady) return { ready: false };
   const { html, signal, hooks, preact, typeColours, Box, ScrollBox, inputMode } = overlay.kit;
-  const { fitToStage, showTooltip, hideTooltip, portraitSource, portraitFallback, BallSprite, RoundPortrait } = overlay.kit;
+  const { fitToStage, showTooltip, hideTooltip, portraitSource, portraitFallback, BallSprite, RoundPortrait } =
+    overlay.kit;
   const { BALL_BELT, BallBelt, BeltBall } = overlay.kit;
   const { GlitchButton } = library.Button,
     { CURSOR_RING, CursorRing, useRingTravel } = library.Cursor,
@@ -278,7 +279,8 @@ G.CatchUI = (() => {
     shownMisses.value = view.session.misses;
     if (outcome === 'fled') {
       face.value = 'fled';
-      const fledLine = G.Catch.total() > 0 ? name + ' broke free and ran off!' : 'Out of Poke Balls! ' + name + ' ran off.';
+      const fledLine =
+        G.Catch.total() > 0 ? name + ' broke free and ran off!' : 'Out of Poke Balls! ' + name + ' ran off.';
       G.UI.toast(fledLine, RESULT_TOAST_MS, BAD_NEWS);
       G.Audio.sfx('back');
       await wait(RESULT_MS);
@@ -526,7 +528,7 @@ G.CatchUI = (() => {
         />
       </div>`;
     return html`${button(0, 'throw', 'Throw', 'positive', () => throwNow())}
-      ${button(1, 'let-go', 'Let It Go', 'negative', letGo)}`;
+    ${button(1, 'let-go', 'Let It Go', 'negative', letGo)}`;
   }
 
   /** The owned tooltip: name, gender and box, then IV + EV per stat. */

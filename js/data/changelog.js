@@ -8,7 +8,10 @@
 G.CHANGELOG = [
   {
     d: '2026-11-21',
-    title: ['A new look for the Poke Balls shop and the catch screen', 'A new look for the Poke Balls shop and the catch screen'],
+    title: [
+      'A new look for the Poke Balls shop and the catch screen',
+      'A new look for the Poke Balls shop and the catch screen',
+    ],
     new: [
       [
         'Any Stage 1 Pokemon that can still evolve, from any region, can now be the Lost Pokemon, floating Pokemon included (like Gastly or Zubat). Floating ones follow you over rocks and walls, and on maps with water, swamp or ice they can wait for you or have their marker out on it.',
@@ -25,8 +28,8 @@ G.CHANGELOG = [
     ],
     chg: [
       [
-        "A Lost Pokemon's message now names its nature (\"A Timid Eevee is lost!\"), and all its messages are in English.",
-        "A Lost Pokemon's message now names its nature (\"A Timid Eevee is lost!\"), and all its messages are in English.",
+        'A Lost Pokemon\'s message now names its nature ("A Timid Eevee is lost!"), and all its messages are in English.',
+        'A Lost Pokemon\'s message now names its nature ("A Timid Eevee is lost!"), and all its messages are in English.',
       ],
       [
         'Taking a Lost Pokemon home can now recruit it: 20% for a 1 star Pokemon, 12% for 2 star, 6% for 3 star. A recruit is held like a catch and joins your box when the run ends (kept when you fall, lost if you quit), with the nature its message named. It counts in Caught this run.',
@@ -53,12 +56,12 @@ G.CHANGELOG = [
         'Unlocking a ball and buying a belt no longer ask first: like buying balls, they happen as soon as you press.',
       ],
       [
-        "A ball you cannot unlock yet keeps a bright button on its card, which tells you why when you press it.",
-        "A ball you cannot unlock yet keeps a bright button on its card, which tells you why when you press it.",
+        'A ball you cannot unlock yet keeps a bright button on its card, which tells you why when you press it.',
+        'A ball you cannot unlock yet keeps a bright button on its card, which tells you why when you press it.',
       ],
       [
-        "The Shop window has a thin clean frame and a new Exit button.",
-        "The Shop window has a thin clean frame and a new Exit button.",
+        'The Shop window has a thin clean frame and a new Exit button.',
+        'The Shop window has a thin clean frame and a new Exit button.',
       ],
       [
         'Poke Balls now sit in the middle of their slots and cards, in the Shop and on the catch screen.',

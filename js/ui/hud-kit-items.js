@@ -370,8 +370,7 @@ G.HudKitItems = (() => {
   // and input) in the places the belt gives.
   const BALL_BELT = { slots: 6, well: 52, gap: 8, inset: 16, ballScale: 2 };
   BALL_BELT.width = BALL_BELT.well + 2 * BALL_BELT.inset; // 84
-  BALL_BELT.height =
-    BALL_BELT.slots * BALL_BELT.well + (BALL_BELT.slots - 1) * BALL_BELT.gap + 2 * BALL_BELT.inset; // 384
+  BALL_BELT.height = BALL_BELT.slots * BALL_BELT.well + (BALL_BELT.slots - 1) * BALL_BELT.gap + 2 * BALL_BELT.inset; // 384
   // -6: the ball's frame centred on the well
   BALL_BELT.ballAt = (BALL_BELT.well - G.BALL_SPRITES.size * BALL_BELT.ballScale) / 2;
   /** Slot index's place in its belt, px: { left, top, width, height }, the well's own box. */

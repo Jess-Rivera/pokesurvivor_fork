@@ -287,9 +287,7 @@ G.Lib.Button = (() => {
     const fitted = width == null,
       size = fitted ? {} : { width: px(width - GLITCH.barWidth), height: px(height) };
     const states = [fitted && 'glitch-fit', focused && 'focused', refused && 'refused', disabled && 'disabled', phase];
-    const classes = ['glitch-button', 'glitch-' + intent, ...states]
-      .filter(Boolean)
-      .join(' ');
+    const classes = ['glitch-button', 'glitch-' + intent, ...states].filter(Boolean).join(' ');
     return html`<button
       type="button"
       class=${classes}
