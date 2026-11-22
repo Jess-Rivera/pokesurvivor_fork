@@ -108,7 +108,7 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
   rework is a separate issue.
 - [Approved] Per Pokemon Run Stats panel holds the per-Pokemon numbers (kills, time on field, damage dealt, best hit,
   times fainted). It grows down into the Cards Taken area (they split that column vertically) or scrolls.
-- [Approved] Run Stats box (Jess, 2026-11-12, map docs/ASCII Concept Maps/91d - Run Stats Box (detail panel).txt):
+- [Approved] Run Stats box (Jess, 2026-11-12, map docs/AI Outputs/Issue-91/91d - Run Stats Box (detail panel).txt):
   keeps its 200 px and scrolls its rows (26 px each) in the shared scroll box; Cards Taken keeps its 400 px (Jess,
   2026-11-12, replacing "grows to 360 px, Cards Taken shrinks to 240"). Super eff. is a share of its HIT damage, burn
   and poison ticks left out (RS1); every row shows at zero ("0", "0:00", "--"), so the box never changes (RS3). Rows: Kills, Field, Damage, Share, Best hit, Super
@@ -140,7 +140,7 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 - [Approved] Scope (Jess, 2026-11-12): everything about the run, or team wide / run wide. Anything about one Pokemon
   goes to the detail panel; a per-Pokemon stat shows here only as its team total.
 - [Approved] Layout (Jess, 2026-11-12): sections Progress, Combat, Faints, Statuses Inflicted, Loot, EVs Earned,
-  Region Best, as in docs/ASCII Concept Maps/91c - Run Info Panel (left).txt. 24 px text, 36 px rows; the panel
+  Region Best, as in docs/AI Outputs/Issue-91/91c - Run Info Panel (left).txt. 24 px text, 36 px rows; the panel
   scrolls. Faints shows the team total, Most Faints and time fainted, tracked per Pokemon for the Run Stats box.
   Statuses Inflicted aggregates the per-Pokemon counts per kind, plus damage over time.
 - [Approved] Counting rules (Jess, 2026-11-12):

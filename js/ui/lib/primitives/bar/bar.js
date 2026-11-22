@@ -6,7 +6,7 @@
  *   bar.timer  TimerBar: a thin strip that drains as time runs out (the chips, the Shake Off prompt, the weather card)
  * Props only, never game state. The HUD kit's createLifeBar (js/ui/hud-kit-hp-bars.js) keeps the per-frame reading and
  * the falling pieces' list, and draws these pieces. Style: bar.css. Board: tools/library.html, Primitives, Bars
- * (bar.story.js). Plan: docs/ASCII Concept Maps/155c-3 - Bars Plan.md. Look and motion: docs/HUD-STYLE.md "Motion".
+ * (bar.story.js). Plan: docs/AI Outputs/Issue-155/155c-3 - Bars Plan.md. Look and motion: docs/HUD-STYLE.md "Motion".
  */
 G.Lib = G.Lib || {};
 G.Lib.Bar = (() => {

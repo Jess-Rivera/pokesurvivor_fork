@@ -7,6 +7,6 @@
 - Text only: code ids (`mart`), the building art (its sign says MART) and the tab icon (`tm-purchase`) stay.
 - Rewords the 2026-11-16 decision (2026-11-16-149-main-menu-shop-four-tabs-trs-learned-for-good): its "TR learned for good" is
   now a TM. #150 (start a run with a learned move) follows the new name.
-- Built in #149 149f (rework/shop), plan: docs/ASCII Concept Maps/149 - Shop Rework Opening.md (F9).
+- Built in #149 149f (rework/shop), plan: docs/AI Outputs/Issue-149/149 - Shop Rework Opening.md (F9).
 
 Canonical: js/systems/tms.js (G.TMs) for the rules; js/systems/shops.js KINDS for the in-run name.

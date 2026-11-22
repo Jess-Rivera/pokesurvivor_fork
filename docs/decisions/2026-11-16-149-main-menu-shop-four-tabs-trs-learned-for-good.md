@@ -10,5 +10,5 @@
 - Picking a learned TR as the starting move is a later Team, Upgrade purchase (own issue, deferred).
 - Build order: 149a shell, b Character Upgrades, c Team Items, d Inventory, e Pokeballs layout, f TRs.
 
-Plan: docs/ASCII Concept Maps/149 - Shop Rework Opening.md.
+Plan: docs/AI Outputs/Issue-149/149 - Shop Rework Opening.md.
 Canonical: that plan until 149f lands; then js/systems/shops.js header (Trainer pool) and the TR module's header.

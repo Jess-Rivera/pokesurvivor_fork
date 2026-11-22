@@ -2,7 +2,7 @@
 // Pins every number a hit produces TODAY, through entry points that survive slice 4a: G.MoveEffects.applyHit (your moves on a wild
 // or an Elite, a leader's move on you), G.Combat.resolve (wild contact and shots on you), G.Hazards.update (hazards on you),
 // G.Status.tick (burn and poison on you) and WildEntity.update (burn and poison on a wild). Written BEFORE slice 4a moves anything:
-// it must pass on today's code and, unchanged, after 4a. Plan: docs/ASCII Concept Maps/Entity Model Slice 4 - Hit Contract and Hard
+// it must pass on today's code and, unchanged, after 4a. Plan: docs/AI Outputs/Entity Model Slice 4 - Hit Contract and Hard
 // Typing.txt. Expected numbers are worked by hand from docs/COMBAT-RULES.md "Damage": D = (A / max(1, Dstat) + 2) x STAB x scale,
 // then type, items, crit, chain falloff, floor of 1. The attacker half A is an input here (slice 4 does not touch it); Dstat comes
 // from the G.Stats stat primitives. Every rule constant sits in K, the STAB flags and the type values in RAW / TYPE: slice 4b edits

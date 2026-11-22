@@ -1,5 +1,5 @@
 // tools/replay-leader-trace.js: rescore a saved leader trace under other goal weights (#109, dev only).
-// Plan: docs/ASCII Concept Maps/109 - Weights Scale The Whole Score Plan.md, step 4.
+// Plan: docs/AI Outputs/Issue-109/109 - Weights Scale The Whole Score Plan.md, step 4.
 //
 //   node tools/replay-leader-trace.js <trace.json> [more traces] [--weights finish=0.35,maintain=1.2]
 //

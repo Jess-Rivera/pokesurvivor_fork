@@ -10,4 +10,4 @@
 - The board is tools/library.html (Jess's mockup assets/excalidraw/pokeswarm-library-html.excalidraw): it loads only the
   library's files and draws pieces with placeholder data. It replaces tools/ui-library.html once it covers it.
 
-Canonical: js/ui/lib/tokens/tokens.js header; docs/HUD-STYLE.md "Type colours". Plan: docs/ASCII Concept Maps/155 - UI Library v2 Build Plan.md.
+Canonical: js/ui/lib/tokens/tokens.js header; docs/HUD-STYLE.md "Type colours". Plan: docs/AI Outputs/Issue-155/155 - UI Library v2 Build Plan.md.

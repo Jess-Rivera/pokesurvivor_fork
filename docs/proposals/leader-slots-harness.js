@@ -1,5 +1,5 @@
 // Entity model slice 8: leader AI, slot choice (Node only). Usage from the repo root:  node docs/proposals/leader-slots-harness.js
-// Map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt (Q1 to Q10, Jess 2026-11-07). Loads the same real modules
+// Map: docs/AI Outputs/Gym Leader AI/Entity Model Slice 8 - Leader Slot Choice.txt (Q1 to Q10, Jess 2026-11-07). Loads the same real modules
 // and stubs as gym-leader-harness.js. Expected values are hand-derived from the map and the move data (cooldowns, reaches, TELL), never
 // read from the brain's own output. leader-slots-mutate.js points LS_<FILE> at altered copies.
 const fs = require('fs'),

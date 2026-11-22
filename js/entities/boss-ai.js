@@ -18,7 +18,7 @@
  * closer while its longest ready ranged move falls short of that (it walks in to use it, Jess 2026-11-01);
  * below 30% HP it favors far. Touching the body hurts with the melee move's numbers (the contact move), recomputed every step so the
  * enrage and stages count. There is no fury: the enrage is the 120 s clock (systems/gym.js).
- * Entity model slice 8 (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt): on a G.GymLeader
+ * Entity model slice 8 (Jess 2026-11-07, map: docs/AI Outputs/Gym Leader AI/Entity Model Slice 8 - Leader Slot Choice.txt): on a G.GymLeader
  * each authored move line is its own slot (bonded lines share one) and only the active slot casts, as yours. pickSlot chooses the slot
  * under your 0.4 s slot hold: a self heal first, then stay unless another slot scores SWITCH_MARGIN times more, then a buff visit
  * when nothing in reach is ready. Movement still reads every open slot. The wild body keeps one group and is unchanged.

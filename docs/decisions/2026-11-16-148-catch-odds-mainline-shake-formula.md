@@ -1,6 +1,6 @@
 # 2026-11-16: #148 catch odds use Jess's mainline-style shake formula; capture_rate returns (Jess)
 
-- The catch chance follows Jess's formula (docs/ASCII Concept Maps/pokeball-math-human-made.txt): time stands in for HP,
+- The catch chance follows Jess's formula (docs/AI Outputs/Old txt files/pokeball-math-human-made.txt): time stands in for HP,
   then the species' capture_rate, ball, star rarity (1 / 0.75 / 0.5 / 0.25), the badge cap penalty, the early World Level
   bonus, a critical catch and three shake checks. Replaces the star band x ball x (1 + time left) formula and its 90% ceiling.
 - A faster win is an easier catch: the time term counts time used, not time left (the txt file's step 1 is flipped).
@@ -14,5 +14,5 @@
 - #137 ships Poke, Great and Ultra (Heavy and Timer if wanted); balls that need missing systems (fishing, night, gender,
   sleep, level gaps) get their own issue.
 
-Plan: docs/ASCII Concept Maps/148 - Catch Odds Slice Opening.md.
+Plan: docs/AI Outputs/Issue-148/148 - Catch Odds Slice Opening.md.
 Canonical: js/systems/catch.js header and its ODDS table.

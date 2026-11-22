@@ -8,9 +8,9 @@
  * it), your stat profile, cards (team cards included) and items. Its own: HP x hpMult, the authored restrictions (status cut, hard CC
  * gap, auto shake, hit i-frames; none authored means your rules), no touch damage (combat.js), the enrage trigger, drops and faint
  * effects, and the boss look. COMBAT-RULES "Host model".
- * Slice 7 (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Slice 7 - Leader Team and Faint Swaps.txt): a switched gym
+ * Slice 7 (Jess 2026-11-07, map: docs/AI Outputs/Gym Leader AI/Entity Model Slice 7 - Leader Team and Faint Swaps.txt): a switched gym
  * fields its loop lineup as one G.Team (G.GymLeader.team, below; the arena sends them out). Only the last to fall is the boss kill.
- * Slice 8 (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt): one slot per authored move
+ * Slice 8 (Jess 2026-11-07, map: docs/AI Outputs/Gym Leader AI/Entity Model Slice 8 - Leader Slot Choice.txt): one slot per authored move
  * line and one active slot under your slot hold (the AI player picks it), your melee cushion and your flinch rule.
  * Leader AI slice 1 (#22, docs/LEADER-AI.md): the AI player (G.LeaderAI, js/entities/leader-ai.js) drives it through your controller;
  * its heading and slot choice reach the body only as its answers.

@@ -1,6 +1,6 @@
 /* ============ ev-screen.js: the EV screen at the end of a solo run (#104) ============
  * Spec: docs/PAUSE-MENU.md section 7 "EV screen" and "EV buttons" (mock assets/excalidraw/End Run EV.png). Plan:
- * docs/ASCII Concept Maps/104 - EV Screen Build Plan.txt. It replaces the old allocation screen (scr-evs in run-ui.js).
+ * docs/AI Outputs/Issue-104/104 - EV Screen Build Plan.txt. It replaces the old allocation screen (scr-evs in run-ui.js).
  *
  * Opened by End Run's "Learn from the Loss". Six portrait circles in team slot order (an empty circle for a slot with
  * no copy), "x / 510" under each, counting this screen's additions. Rows HP, Attack, Defense, Speed, Special Defense,

@@ -3,5 +3,5 @@ New rule: on the EV screen a click on + or - moves 1 EV, Shift-click moves 10 (c
 The old allocation screen (scr-evs, run-ui.js showEvs) is retired, not kept for co-op: co-op runs carry no EVs (deferred).
 Learn's and Go Home's asks use the shared G.UI.ask dialog. Restyling that dialog to the pause menu's look is a later problem (an issue to file).
 Defaults taken with the plan: "x / 510" counts this screen's additions live; - only takes back this screen's additions; Learn has the focus first; Esc does nothing.
-Plan: docs/ASCII Concept Maps/104 - EV Screen Build Plan.txt.
+Plan: docs/AI Outputs/Issue-104/104 - EV Screen Build Plan.txt.
 Canonical: docs/PAUSE-MENU.md section 7.

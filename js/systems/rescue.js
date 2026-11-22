@@ -1,6 +1,6 @@
 /* ============ rescue.js: the rescue event (G.Rescue) ============
- * Acquisition rework, slice S4 (#135). Spec: docs/ASCII Concept Maps/Old txt files/Acquisition v2 - Spec.txt section 2; plan:
- * docs/ASCII Concept Maps/135 - Rescue Event Slice Opening.md.
+ * Acquisition rework, slice S4 (#135). Spec: docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt section 2; plan:
+ * docs/AI Outputs/Issue-135/135 - Rescue Event Slice Opening.md.
  *
  * Every run minute the game rolls: 4% the first time, +4% after each miss, back to 4% after a rescue fires (so it is certain by
  * roll 25). The roll counts run time (the dt it is given), so a pause, the pause menu and later the catch phase stop it; it keeps

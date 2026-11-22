@@ -77,7 +77,7 @@ Default allow. Authored `restrictions` at three levels: gym, slot, loop (the sam
 5. Status flip and Elite to weak host (gaps 7, 8, 9 and the Elite table), with COMBAT-RULES updates.
 6. Restriction block replaces the heal cap and the whitelist; remove `formOf` as a gate (gap 4, 15).
 7. Dodge, terrain, skills, tell switch (gaps 10, 12).
-8. Re-author gyms 2 to 8 on the new model (the cards sheet: docs/ASCII Concept Maps/Kanto Gyms 2-8 - Mons and Moves.txt), then the Elite Four.
+8. Re-author gyms 2 to 8 on the new model (the cards sheet: docs/AI Outputs/Gym Leader AI/Kanto Gyms 2-8 - Mons and Moves.txt), then the Elite Four.
 
 ## Open decisions for Jess
 

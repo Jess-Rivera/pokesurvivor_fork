@@ -1,6 +1,6 @@
 // tools/dashboard.js: builds the project dashboard (design map, code map, gap list) from the repo's own files.
 // Usage: node tools/dashboard.js [--refresh]   (--refresh reads issues and board columns through gh first)
-//        writes out/dashboard.html and docs/ASCII Concept Maps/Dashboard.md
+//        writes out/dashboard.html and docs/AI Outputs/Dashboard.md
 // tools/check.js calls build() and verifies it against dev.html and the raw tag counts.
 // Nothing here is hand drawn: every node and edge is read from a doc, a decision file, dev.html or a js file.
 const fs = require('fs'),
@@ -20,7 +20,7 @@ const SKIP_DIRS = new Set([
 ]);
 // History and logs are not specs: their tags and paths describe the past, so they stay out of the design map.
 const HISTORY_DOC =
-  /(^|\/)(DEVLOG|DECISIONS-archive|DEVLOG-archive|FULL-GAME-STRUCT)[^/]*\.md$|^docs\/decisions\/|^docs\/ASCII Concept Maps\//;
+  /(^|\/)(DEVLOG|DECISIONS-archive|DEVLOG-archive|FULL-GAME-STRUCT)[^/]*\.md$|^docs\/decisions\/|^docs\/AI Outputs\//;
 const TAGS = ['Approved', 'Legacy behavior', 'Proposed', 'Open'];
 const TAG_PATTERN = /\[(Approved|Legacy behavior|Proposed|Open)\]/g;
 const CODE_PATH_PATTERN = /\b(?:js|tools)\/[A-Za-z0-9_\-./]*[A-Za-z0-9_-]\.(?:js|html)\b/g;
@@ -202,7 +202,7 @@ function resolveCanonicalTargets(canonicalText) {
     markdownByName = new Map();
     for (const p of listFiles('', (f) => f.endsWith('.md'))) markdownByName.set(p.split('/').pop(), p);
   }
-  const folders = ['', 'docs/', 'docs/current feature planning/', 'docs/ASCII Concept Maps/', 'docs/proposals/'];
+  const folders = ['', 'docs/', 'docs/current feature planning/', 'docs/AI Outputs/', 'docs/proposals/'];
   const found = [];
   for (const m of canonicalText.matchAll(/([^;()]*?\.md)/g)) {
     const words = m[1].trim().split(/\s+/);
@@ -493,7 +493,7 @@ if (require.main === module) {
   const data = build();
   fs.mkdirSync(path.join(root, 'out'), { recursive: true });
   fs.writeFileSync(path.join(root, 'out/dashboard.html'), toHtml(data));
-  fs.writeFileSync(path.join(root, 'docs/ASCII Concept Maps/Dashboard.md'), toMarkdown(data));
+  fs.writeFileSync(path.join(root, 'docs/AI Outputs/Dashboard.md'), toMarkdown(data));
   console.log(
     'dashboard: ' +
       data.code.modules.length +
@@ -503,5 +503,5 @@ if (require.main === module) {
       data.gaps.length +
       ' gap items'
   );
-  console.log('wrote out/dashboard.html and docs/ASCII Concept Maps/Dashboard.md');
+  console.log('wrote out/dashboard.html and docs/AI Outputs/Dashboard.md');
 }

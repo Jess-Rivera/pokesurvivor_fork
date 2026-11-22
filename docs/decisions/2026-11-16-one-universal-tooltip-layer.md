@@ -10,5 +10,5 @@
   yet; when they are, the tooltip state becomes a stack.
 - #102 (tooltips outside the pause menu) now has the layer to move onto; it stays open for the old team sheet's tooltips.
 
-Plan: docs/ASCII Concept Maps/136b - Catch Screen Redesign Plan.md, "Bug 1".
+Plan: docs/AI Outputs/Issue-136/136b - Catch Screen Redesign Plan.md, "Bug 1".
 Canonical: docs/HUD-STYLE.md "Fonts" (the tooltip rules) and js/ui/hud-kit-items.js.

@@ -412,7 +412,7 @@ to E14 and F15 to J18; values picked by eye, not sampled.
 #### `[Approved]` Catch screen (catch.window, #128; decisions 2026-11-20-155-catch-window-look and -catch-result-is-a-toast-and-the-window-is-shorter)
 
 Built from the UI library's pieces (js/ui/catch-ui.js, css/bw-catch.css; board tools/library/catch-draft.js). The
-#136b colour table is history (docs/ASCII Concept Maps/136b - Catch Screen Redesign Plan.md).
+#136b colour table is history (docs/AI Outputs/Issue-136/136b - Catch Screen Redesign Plan.md).
 
 | Role | Piece and colour |
 | --- | --- |

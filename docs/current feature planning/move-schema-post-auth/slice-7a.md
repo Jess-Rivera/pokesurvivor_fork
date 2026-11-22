@@ -25,7 +25,7 @@ enemy.js boss casts (kind, cd, cat, radius, arc), gyms.js (BOSS_FORMS, Moves.BY_
 ## Scope
 UI readers (icons, menu, levelup) read resolved fields or a display name, never `kind`. Gym and boss code per D-ENEMY. Brock's fight works end to end on the new definitions (QA-13). Gym Harden moves onto the stat stage tracker model (COMBAT-RULES:SS13; Jess, 2026-10-30).
 - Brock scope (Jess, 2026-10-31): only roster slot 1 (Geodude line: Tackle, Rock Throw, Harden) must work end to end, since loop 1 fields slot 1 only. Slots 2 to 6 keep their PROVISIONAL move sets (picked to fit the old boss forms) and only have to pass the new gym data check; their real move sets come with the gym-roster branch. Order: the boss and gym plan first, the UI readers second.
-- 7a-0 first (Jess, 2026-10-31): gyms only. Commit A removes rifts, legendary fights and the Judgment (gym arena moves to js/systems/gym-arena.js); commit B splits the gym AI into js/entities/boss-ai.js (GymBrain), no behavior change. Plan: docs/ASCII Concept Maps/Slice 7a-0 - Gyms Only Plan.txt. The 7a enemy-owner casts then land in GymBrain.
+- 7a-0 first (Jess, 2026-10-31): gyms only. Commit A removes rifts, legendary fights and the Judgment (gym arena moves to js/systems/gym-arena.js); commit B splits the gym AI into js/entities/boss-ai.js (GymBrain), no behavior change. Plan: docs/AI Outputs/Old txt files/Slice 5-7a/Slice 7a-0 - Gyms Only Plan.txt. The 7a enemy-owner casts then land in GymBrain.
 
 ## Tests
 A search guard: no `kind` read outside files 7b deletes. Existing boss and gym harnesses green. Brock fight smoke test; Brock's Harden reaches +6 after about 30 s of steady casting (SS13). Menus and level-up screens show every move correctly.

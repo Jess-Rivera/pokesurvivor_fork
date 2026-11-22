@@ -8,4 +8,4 @@
   unlock or a belt asks first; a shift-click skips the question. No order between the Great and Ultra unlocks.
 - The other 14 balls stay "Coming soon.". It all lives on the Shop's Pokeballs tab.
 
-Canonical: js/systems/catch.js header (belt, shop) and js/data/balls.js (prices). Plan: docs/ASCII Concept Maps/137 - Shop Balls Plan.md.
+Canonical: js/systems/catch.js header (belt, shop) and js/data/balls.js (prices). Plan: docs/AI Outputs/Issue-137/137 - Shop Balls Plan.md.

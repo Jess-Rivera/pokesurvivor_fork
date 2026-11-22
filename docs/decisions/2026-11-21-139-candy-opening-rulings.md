@@ -19,6 +19,6 @@
 - F0 and F1 (superseded: friendship is the 0 to 255 field, see 2026-11-21-139-oor-level-candy-sources-friendship-model): friendship minutes are CUMULATIVE: saved on the copy, added across runs, never reset. Supersedes T5's "in one
   run" (decision 2026-11-12). Totals are scaled to about one full clear: 45 min at base_happiness 70, inverse to
   the base, capped at 90 (Cleffa and Chansey 22.5, Snom 63, Buneary 90). Being on the team still counts (T5c).
-  The rest (F2 to F8): docs/ASCII Concept Maps/139 - Friendship Minutes Deep Dive.md.
+  The rest (F2 to F8): docs/AI Outputs/Issue-139/139 - Friendship Minutes Deep Dive.md.
 
-Canonical: docs/ASCII Concept Maps/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built.
+Canonical: docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built.

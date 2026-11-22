@@ -1,5 +1,5 @@
 // tools/planner-step-parity.js: the leader planner before and after a behavior-neutral refactor, checked for parity
-// (F3, docs/ASCII Concept Maps/F3 - Planner Verb Table Plan.md). A dev tool, never shipped; check.js syntax-checks it.
+// (F3, docs/AI Outputs/Refactor-F-series/F3 - Planner Verb Table Plan.md). A dev tool, never shipped; check.js syntax-checks it.
 // Usage from the repo root:
 //   node tools/planner-step-parity.js [before.js]
 // before.js defaults to tools/cache/leader-planner-before.js (git-ignored): copy js/systems/leader-planner.js there

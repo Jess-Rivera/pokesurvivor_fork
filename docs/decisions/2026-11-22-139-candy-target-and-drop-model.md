@@ -38,4 +38,4 @@
   The tier chances stay tunable (G.Debug.candy and the harness); no per-source multiplier is built.
 - [Open] "The last Elite Four beaten": the four gates open at once and the order is free (BOSS-REWORK section 4).
 
-Canonical: docs/ASCII Concept Maps/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built.
+Canonical: docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built.

@@ -16,6 +16,6 @@
   be undone. Cancel returns to the slots. Back (Neutral, Leave size, bottom right) returns to the team and is hidden
   when that step was skipped. No way to leave without bonding, as today.
 - Board: tools/library/bond-draft.js (run-shops-draft.js's team row takes a brightness; forgetCard takes a move, line
-  and width). Plan: docs/ASCII Concept Maps/155 - Bond Selection Layout.md. Applied at #126 (js/ui/run-ui.js showBond).
+  and width). Plan: docs/AI Outputs/Issue-155/155 - Bond Selection Layout.md. Applied at #126 (js/ui/run-ui.js showBond).
 
 Canonical: this file until #126 applies it; then docs/HUD-STYLE.md.

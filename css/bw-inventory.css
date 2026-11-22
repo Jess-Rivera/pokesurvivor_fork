@@ -1,5 +1,5 @@
 /* ============ bw-inventory.css: the Main Menu Inventory (#149d; js/ui/inventory-ui.js) ============
- * Mockup: assets/excalidraw/Main-Menu-Inventory.svg; plan: docs/ASCII Concept Maps/149 - Shop Rework Opening.md. The
+ * Mockup: assets/excalidraw/Main-Menu-Inventory.svg; plan: docs/AI Outputs/Issue-149/149 - Shop Rework Opening.md. The
  * Shop's window (bw-shop.css .shop-window) in the same place on the menu screens' 1920 x 1080 stage, over the dimmed Main
  * Menu. The cards, search bar and buttons are the Shop's (js/ui/menu-window-kit.js, bw-shop.css); the slot panels are
  * the run screen's team item boxes (the HUD kit's RunItemBox). Places of the drawn pieces come from inventory-ui.js.

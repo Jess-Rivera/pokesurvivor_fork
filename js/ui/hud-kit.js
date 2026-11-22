@@ -4,7 +4,7 @@
  * #155 155b), then hud-kit-items.js,
  * hud-kit-hp-bars.js and hud-kit-chips.js, which read only from this one. js/ui/hud-overlay.js joins them into
  * G.HudOverlay.kit; panels and screens read the kit there, never from these files. Split out of hud-overlay.js on
- * 2026-11-14 (structural review F1, docs/ASCII Concept Maps/F1 - HUD Kit Split Plan.md); the code is unchanged.
+ * 2026-11-14 (structural review F1, docs/AI Outputs/Refactor-F-series/F1 - HUD Kit Split Plan.md); the code is unchanged.
  * Style: docs/HUD-STYLE.md. If a library failed to load, ready is false here and in every kit file.
  */
 G.HudKit = (() => {

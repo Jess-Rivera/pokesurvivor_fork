@@ -84,7 +84,7 @@ ok(I.effects(D.discharge).join() === 'damage,30% paralysis', 'effects walk an em
   ok(statPhrases(made(FIVE.slice(0, 4).concat(raise('spd', 20)))) === 5, 'a raise at another chance keeps all five apart');
   ok(statPhrases(made(FIVE.slice(0, 4).concat(raise('atk')))) === 4, 'five raises that miss a stat do not fold (a repeat is dropped as before)');
   ok(I.effects(made(FIVE))[1].startsWith(I.effects(made([FIVE[0]]))[1].split(' Attack')[0]), 'the folded phrase keeps the chance and side of the raises it folds');
-  // shape: every real description fits the run shops' card text (about 100 characters, docs/ASCII Concept Maps/155 - Move Description Length.md)
+  // shape: every real description fits the run shops' card text (about 100 characters, docs/AI Outputs/Issue-155/155 - Move Description Length.md)
   const CARD_DESC_ROOM = 100, long = IDS.filter(id => I.desc(id).length > CARD_DESC_ROOM);
   ok(long.length === 0, 'every description fits the shop card: ' + long.map(id => id + ' ' + I.desc(id).length).join(', ')); }
 console.log('3 descriptions');

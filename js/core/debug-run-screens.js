@@ -1,6 +1,6 @@
 /* ============ debug-run-screens.js: the run screens' dev tools (dev only, with ?dev) ============
  * The HUD overlay, the quiet pause, the pause menu's Run Info panel, Region Best and the end-of-run EVs.
- * Split out of js/core/debug.js on 2026-11-14 (structural review F6, docs/ASCII Concept Maps/F6 - Debug Split
+ * Split out of js/core/debug.js on 2026-11-14 (structural review F6, docs/AI Outputs/F6 - Debug Split
  * Plan.md); the code is unchanged. It adds its commands onto G.Debug, so every caller uses them as before, and
  * reads only G.Debug.on, the ?dev flag. Loads right after debug.js. Not in the NEED array: like debug.js it is
  * dev-only and inert without ?dev (decision 2026-11-14-debug-split-files-stay-out-of-need).

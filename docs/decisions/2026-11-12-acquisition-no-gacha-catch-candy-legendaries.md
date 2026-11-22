@@ -96,4 +96,4 @@ Direction: the gacha goes. Luck should not hand out an end-game mon and make sta
 - Held catches (2026-11-13, replaces the full-box-only temp slot): every catch and recruit of a run is held until the run ends. A fall or a crash keeps them; a quit (End Run, sign out) loses them all. At the main menu they join the Pokebox; if there is not room, one list asks keep or sell, and the rest are sold. Open: other run endings (FB4), End Run counting as a quit (FB5), showing held catches mid-run (FB6).
 Design is complete. Still open are numbers only: flee values, the odds ceiling, the UberElite time limit, Alcremie's time (playtest); ball, belt, unlock, Link Cable and item prices, starting coins (economy pass); plus build-plan details (Shop tab, Metal Coat and Razor Claw sources, floater escort, pause side effects, settings reset). Not built. Parked: shinies, Exp Candy drops, region type maps, day/night (#101).
 
-Canonical: docs/ASCII Concept Maps/Acquisition v2 - Spec.txt (history: Acquisition v1 - Catch, Candy, Legendaries.txt)
+Canonical: docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt (history: Acquisition v1 - Catch, Candy, Legendaries.txt)

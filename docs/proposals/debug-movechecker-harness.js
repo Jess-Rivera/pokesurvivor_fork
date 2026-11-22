@@ -1,4 +1,4 @@
-// G.Debug.movechecker offline checks (slice 6 tool; plan: docs/ASCII Concept Maps/Debug - movechecker Plan.txt). Node only.
+// G.Debug.movechecker offline checks (slice 6 tool; plan: docs/AI Outputs/Old txt files/Debug - movechecker Plan.txt). Node only.
 // Usage from the repo root:  node docs/proposals/debug-movechecker-harness.js
 // Loads the REAL js/core/debug.js and js/systems/move-render.js against small stubs (game, player, spawner, enemy manager, enemy class,
 // team cards) and a recording canvas, then checks: (a) spawning stops and the live enemies are cleared, exactly one dummy added;

@@ -6,4 +6,4 @@
 - The dialog is the UI library's modal.dialog (panel.flat, button.rounded) on the 1920 x 1080 menu stage; the page
   behind keeps its dim. A red Confirm for destructive asks is not built (the colour pass).
 
-Canonical: js/ui/ui.js ask() header. Plan: docs/ASCII Concept Maps/155c-4 - Modal Plan.md.
+Canonical: js/ui/ui.js ask() header. Plan: docs/AI Outputs/Issue-155/155c-4 - Modal Plan.md.

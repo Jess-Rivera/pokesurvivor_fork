@@ -1010,7 +1010,7 @@ G.Items = (() => {
     return out;
   }
 
-  // ---- #149d: the Main Menu Inventory's equip rules (plan: docs/ASCII Concept Maps/149 - Shop Rework Opening.md). Each
+  // ---- #149d: the Main Menu Inventory's equip rules (plan: docs/AI Outputs/Issue-149/149 - Shop Rework Opening.md). Each
   // works on a cleaned loadout, changes it in place and says what happened, so the screen can toast it. ----
   /** The lowest empty bought slot (0-based) of a cleaned loadout, or -1 when every bought slot holds an item. */
   function firstEmptySlot(save) {

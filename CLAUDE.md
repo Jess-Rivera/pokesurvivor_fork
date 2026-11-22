@@ -126,8 +126,12 @@ not a deferred micro-optimization.
 No em-dashes, anywhere. Use commas, parentheses, "since"/"because" instead.
 
 ## Output format (Jess, 2026-11-14)
-Every output for Jess that is not code (plans, concept maps, reviews, reports) is a Markdown file built on Mermaid
-diagrams (fenced mermaid blocks; Jess previews them in VS Code with Ctrl+Shift+V), saved in docs/ASCII Concept Maps/.
+Answer quick questions in chat, reply first. A real plan, concept map, review or report is a Markdown file built on
+Mermaid diagrams (fenced mermaid blocks; Jess previews them in VS Code with Ctrl+Shift+V). Interactive HTML is for
+pages a script generates (the dashboard, tools/catchup.js output), not for hand-written outputs.
+Save it in docs/AI Outputs/Issue-N/ (N is the issue number; a letter suffix such as 139a stays in the parent's folder;
+a two-issue file goes in Issue-133-134 style). Work with no issue goes in a topic folder (Gym Leader AI, Shape Maps,
+Refactor-F-series). Only the generated Dashboard.md sits at the root.
 Tables are fine; keep prose minimal; plans still hold no code. Older .txt and HTML pages stay as they are.
 
 ## Requirement tags

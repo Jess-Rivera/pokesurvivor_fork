@@ -3,7 +3,7 @@
  * inside it. A card is only offered if at least one team move can take it. Move Shop step 5 (Jess 2026-11-05): the New Move card is
  * gone; moves come from the Move Trainer and TM Mart (js/systems/shops.js), where the 2-buff limit now lives.
  * Slice 7b-2a (Jess 2026-11-01): the legacy per-move mechanic cards and the per-Pokemon stat cards are gone; these are the only
- * cards. Plan: docs/ASCII Concept Maps/Slice 5b - Parts C to G Plan.txt.
+ * cards. Plan: docs/AI Outputs/Old txt files/Slice 5-7a/Slice 5b - Parts C to G Plan.txt.
  */
 G.LevelUp = (() => {
   // ---- slice 5b: team-wide cards on the new move path (build plan section 3; Parts C to G plan section 2E) ----

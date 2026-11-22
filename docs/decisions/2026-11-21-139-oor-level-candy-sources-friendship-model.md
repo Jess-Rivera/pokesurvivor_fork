@@ -20,4 +20,4 @@
 - [Approved] Fatigue 0 to 100%: builds on runs, recovers only in runs sat out, Shop items cut it with diminishing
   returns, never to 0. Stubbed; [Open] numbers.
 
-Canonical: docs/ASCII Concept Maps/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built.
+Canonical: docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built.

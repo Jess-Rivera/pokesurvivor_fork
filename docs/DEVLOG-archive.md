@@ -1626,7 +1626,7 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - Not verified here (no node). Stopped at: Jess's checks and feel-test of 3b-3. Step 3 done after that; next is step 4 (IVs and natures apply).
 
 ## 2026-11-04, Session close: Pokebox step 3 done (Quick, work, feature/pokeboxes)
-- Built: all of Pokebox step 3 in nine microsteps (3a-1 to 3a-4, 3a-2b, 3b-1 to 3b-3), each with an ASCII map in docs/ASCII Concept Maps/. Ride-along fixes: top bar coins, box price tabs and Shop buttons redraw on every save; G.Debug.tickets and fillBoxes.
+- Built: all of Pokebox step 3 in nine microsteps (3a-1 to 3a-4, 3a-2b, 3b-1 to 3b-3), each with an ASCII map in docs/AI Outputs/. Ride-along fixes: top bar coins, box price tabs and Shop buttons redraw on every save; G.Debug.tickets and fillBoxes.
 - Decided (Jess): every D and E ruling in the 3a and 3b maps, plus Select repeats counting normal and shiny copies apart. Rescue event left as is.
 - Verified (Jess, his machine): check.js all harnesses passed, mutation runner 56/56, smoke-ui, format. This machine cannot run node; whole-feature feel-test still to do.
 - Broke and fixed: a TODO.md edit put two backlog lines at the top and dropped the "# TODO / ISSUES" heading; restored at wrap-up. Board mirror re-synced (13 open, 8 closed).
@@ -1712,7 +1712,7 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 
 ## 2026-11-05, gym cards become the leader's pool (Claude Desktop)
 - Changed: gym `cards` moved from the roster slot to the gym, keyed by loop, holding the cards GAINED that loop; the pool for loop N is the running sum (G.Gyms.cardsFor) and every mon the gym fields holds it (gyms.js, gym.js makeDef). Brock's loop 1 pool is the old Geodude cards, so loop 1 is unchanged; loop 2 on he gains nothing yet (TUNE). Validator: loop key 1 to 6, whole stacks, running total within the cap, each card fits a move fielded the loop it is gained. BOSS-AUTHORING Cards section and move-lab text updated.
-- Decided (Jess): authored schedule, not mirroring the player; the number per loop is a TUNE value (a player holds about 60 upgrades by Brock loop 2). Also made docs/ASCII Concept Maps/Kanto Gyms 2-8 - Mons and Moves.txt (generated sheet of every gym 2 to 8 mon and move).
+- Decided (Jess): authored schedule, not mirroring the player; the number per loop is a TUNE value (a player holds about 60 upgrades by Brock loop 2). Also made docs/AI Outputs/Gym Leader AI/Kanto Gyms 2-8 - Mons and Moves.txt (generated sheet of every gym 2 to 8 mon and move).
 - Tests: gym-harness (new 8b pool checks, 4 new negative cases), boss-owner-harness 247 (pool and cap-across-loops checks), check.js green; boss-owner-mutate 55/60 caught, 0 missed, 5 STALE patterns that were already stale at HEAD (melee tell, chain form, nova order, strike spot x2).
 - Stopped at: card numbers per gym not authored yet; Misty loop 1 is first.
 
@@ -1731,7 +1731,7 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - Stopped at: slice 1 committed; slice 2 plan awaits Jess's OK, no slice 2 code written. Slice 1 feel test not confirmed.
 
 ## 2026-11-06, slice 2 review and smoke test (Quick)
-- Reviewed slice 2 as an ASCII map (docs/ASCII Concept Maps/Entity Model Slice 2 - Team Module.txt). Slice 2 approved.
+- Reviewed slice 2 as an ASCII map (docs/AI Outputs/Gym Leader AI/Entity Model Slice 2 - Team Module.txt). Slice 2 approved.
 - Decided (Jess): D1, the unspent-link count `pl.bonds` becomes a shared Team store (bond groups stay per-mon slot data); D2, Team takes only the 5 s team swap lock, `pl.swapT` is the "slot hold".
 - Changed: new tools/smoke-team.js (step 1: swap, lock, faint order, links, bench poison, Re-Do, wipe over file://). No game code.
 - Not verified: Quick cannot run node here and the work machine has no Playwright, so the smoke has never run. GitHub API empty again; board mirror still 2026-11-04.
@@ -1825,7 +1825,7 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - Stopped at: 7b checks owed; next is planning slice 8 in a new chat.
 
 ## 2026-11-07, late (Quick, work)
-- Slice 8 planned (map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt), Q1 to Q10 as recommended, BUILT: one slot per move line, one active slot under your 0.4 s hold, stay unless 1.5x, heal then buff visits, bonds, your melee cushion and flinch rule on leaders.
+- Slice 8 planned (map: docs/AI Outputs/Gym Leader AI/Entity Model Slice 8 - Leader Slot Choice.txt), Q1 to Q10 as recommended, BUILT: one slot per move line, one active slot under your 0.4 s hold, stay unless 1.5x, heal then buff visits, bonds, your melee cushion and flinch rule on leaders.
 - Files: boss-ai.js, gym-leader.js, player.js (onSwitchFeel hook), gyms.js (bond key + validator), changelog.js; docs COMBAT-RULES, BOSS-AUTHORING.
 - Tests: NEW leader-slots-harness.js, leader-slots-mutate.js (22), leader-dps-report.js; changed gym-leader harness/mutate, leader-stats and player-entity harnesses, smoke-gym. STALE scan clean. Not run (no node here).
 - Stopped at: Jess runs the checks, the DPS report (Q10) and the Misty feel test.

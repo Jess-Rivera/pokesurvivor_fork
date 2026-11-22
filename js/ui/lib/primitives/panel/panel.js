@@ -20,7 +20,7 @@
  * Props only, never game state: the screen passes the picture and the button as content. Moved from
  * js/ui/hud-kit-hp-bars.js (Box, the roster box shape) and js/ui/menu-window-kit.js (ItemCard's layout, CARD), which
  * pass them on to the screens. Style: panel.css. Board: tools/library.html, Primitives, Panels (panel.story.js).
- * Plan: docs/ASCII Concept Maps/155c - Panels Plan.md. Look: docs/HUD-STYLE.md "Roster rows".
+ * Plan: docs/AI Outputs/Issue-155/155c - Panels Plan.md. Look: docs/HUD-STYLE.md "Roster rows".
  */
 G.Lib = G.Lib || {};
 G.Lib.Panel = (() => {

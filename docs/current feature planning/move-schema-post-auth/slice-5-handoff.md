@@ -5,8 +5,8 @@ Workflow: CLAUDE.md "Edit boundary" (prose plan in chat, no code, Jess OKs, then
 
 ## Read first (and only these)
 - Rules: docs/COMBAT-RULES.md "Stat stages" SS1 to SS13 (SS8 now includes the active-group and swap-in rules), combat-architecture:H26.
-- 5a map: docs/ASCII Concept Maps/Slice 5a - Stat Stage Trackers.txt (sections 2 to 8 are the build).
-- 5b map: docs/ASCII Concept Maps/Slice 5b - Cards From Fields.txt (section 3 is the card list).
+- 5a map: docs/AI Outputs/Old txt files/Slice 5-7a/Slice 5a - Stat Stage Trackers.txt (sections 2 to 8 are the build).
+- 5b map: docs/AI Outputs/Old txt files/Slice 5-7a/Slice 5b - Cards From Fields.txt (section 3 is the card list).
 - Rulings: slice-5.md "Plan rulings".
 
 ## 5a: code facts found 2026-10-30
@@ -52,7 +52,7 @@ Workflow: CLAUDE.md "Edit boundary" (prose plan in chat, no code, Jess OKs, then
 - Next: part C (Gate Reduction and Duration Increase in stages.js / move-effects.js), then D, E, F, G per the build plan section 7.
 
 ## 5b parts C to G status (Quick, 2026-10-31)
-- Plan: docs/ASCII Concept Maps/Slice 5b - Parts C to G Plan.txt (approved; Jess: F1 sheet move numbers stay legacy, Vitamins uses the Protein / Calcium rule, no bench regen text).
+- Plan: docs/AI Outputs/Old txt files/Slice 5-7a/Slice 5b - Parts C to G Plan.txt (approved; Jess: F1 sheet move numbers stay legacy, Vitamins uses the Protein / Calcium rule, no bench regen text).
 - Written: C stages.js gateOf(selfDrop, mul) and a Duration argument on success / trackOwn / trackTeam (tracker field dl for the HUD); move-effects.js stat() passes the caster team's gateMul and durOf on all three branches; move-sim.js fizzle wait reads the team Gate. D player.js incOf adds the team Vitamins, benchUpdate HP Regen (capped, never a fainted member), new refreshMaxHp. E levelup.js teamFamilies (flag on and not co-op): field cards with a taker and under their cap, one Type card, Gate / Duration with a stat move, HP Regen with 2+ members, Vitamins (3 rows, Protein / Calcium rule), New Move with the no-damage buff test; run-ui.js team cards finish at once, Vitamins picks on the card screen (1-3, Backspace). F team-cards.js summary(), sheet.js Run Cards tab. G debug set newcombat('cards'), G.Debug.cards(id, n). Changelog entry.
 - Tests: team-cards-harness.js sections 5 to 9 (147 checks); team-cards-mutate.js 61 mutations (31 new). Retargeted patterns that followed the edited text: stat-stage-mutate (3), move-sim-mutate (1), move-persist-mutate (1); move-selfcast-mutate (2, stale since the A/B restart fix).
 - Verified in Quick's sandbox (node stand-in): every harness green except items-f3d2 and move-geom, which the stand-in cannot run (db.js patched before load, vm.runInNewContext) and which touch no changed file; all 9 mutation runners green. Jess to confirm on node.

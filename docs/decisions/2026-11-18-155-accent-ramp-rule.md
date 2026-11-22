@@ -26,4 +26,4 @@ EXP also keeps its ring's empty grey (grey.mid #7f7f7f) outside the ramp. No new
 board colour (nearest: EXP light 3.7 from the Ice base). Names come later. The game is unchanged until #126.
 
 Canonical: tools/library.html, Colours 2.0 Unified (accentRamp, RAMP_LIGHT, RAMP_DARK). Research:
-docs/ASCII Concept Maps/155 - Game UI Colour Count Research.html (2026-11-18).
+docs/AI Outputs/Issue-155/155 - Game UI Colour Count Research.html (2026-11-18).

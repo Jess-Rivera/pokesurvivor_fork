@@ -244,7 +244,7 @@ have identical HP at the same level (consistency goal met).
   so HP falls out of the formula. (DECISIONS.md.)
 
 ## IVs and natures (feature/pokeboxes, pokebox step 4, built 2026-11-04; TUNE by feel)
-- Mainline: stat = floor((2B + IV) x L / 100) + 5, then x1.1 raised / x0.9 lowered, rounded down (HP: IV only, never a nature). Enemies 0 IV, neutral (D2), so an average copy is a small net player buff. Plan and tables: docs/ASCII Concept Maps/Pokebox 4 - IVs and Natures Apply.txt.
+- Mainline: stat = floor((2B + IV) x L / 100) + 5, then x1.1 raised / x0.9 lowered, rounded down (HP: IV only, never a nature). Enemies 0 IV, neutral (D2), so an average copy is a small net player buff. Plan and tables: docs/AI Outputs/Old txt files/Pokebox/Pokebox 4 - IVs and Natures Apply.txt.
 - Size vs today (base 80): IV 15 +0% / +7% / +8% at L5 / L25 / L50; IV 31 +8% / +16% / +18%; IV 31 raised +15% / +27% / +29%; IV 0 lowered -15% / -11% / -11%. HP base 80: IV 31 +4% / +9% / +11%.
 - Movement (D3, through the 0.7x to 1.3x curve, history): base Spe 65 went 96.6 px/s (IV 0, lowered) to 131.8 (IV 31, raised) around a plain 107.0. Since #123 (0.95x to 1.05x): 101.8 to 112.3; base 30 and base 100 sit on the band's ends (101.7, 112.3) whatever the IV. Speed investment now shows mostly in dodge recharge: base 65 IV 31 raised 5.9 s, IV 0 lowered 7.7 s.
 
@@ -252,7 +252,7 @@ have identical HP at the same level (consistency goal met).
 - Earning (map F1, Jess 2026-11-04): a defeated enemy adds its species' typed mainline yield x a class rate to six run banks, in thousandths. Rates: wild 1/1000, elite 1/500, gym 1x (full yield), shiny x2 of its class (EV_RATE and SHINY_EV in js/systems/copies.js). Golden and thief units count as wild. Fractions and ungiven EVs are lost at run end.
 - Size (estimates: Kanto mean yields, 1.7 kills/s): wild-only 10 min run 0 whole EVs, 30 min ~3, 60 min ~9; each gym mon beaten adds 1 to 3 at 1x, so gym wins carry the progression.
 - Effect: 252 EVs in one stat, base 80, 0 IV: +29% / +33% / +36% at L10 / L25 / L50 (HP +17% / +20% / +22%). Movement with 252 Speed EVs: base 30 76.0 -> 100.9 px/s, base 65 107.0 -> 135.0, base 100 136.0 -> 138.6.
-- Plan and tables: docs/ASCII Concept Maps/Pokebox 5 - EVs.txt. Design: docs/proposals/ev-progression.md.
+- Plan and tables: docs/AI Outputs/Old txt files/Pokebox/Pokebox 5 - EVs.txt. Design: docs/proposals/ev-progression.md.
 
 ## Movement / Speed stat (base-stats feature, slice 1) — LOCKED 2026-10-17
 Tunables for the Speed -> movement identity model (see docs/stat-model-design-notes.md). Chosen by
@@ -306,7 +306,7 @@ feel with the interactive tuner over the real 966-species roster:
 - Rate (0 to 255) = capture rate x time term ((3 - 2 x share of the fight clock used) / 3) x ball x star (1, 0.75, 0.5, 0.25) x
   badge cap penalty (0.85 per 4 World Levels over the cap, up to 6 steps) x early World Level bonus (max(1, (36 - 2 x WL) / 10)).
 - One throw: a critical catch first (sure; rate x 0.5 to 2.5 / 6 out of 256, from 31 species owned), else 3 shakes at (rate / 255) ^ 3/16.
-- Levers: the star multipliers, the badge caps, the time term's 2, the early bonus. Worked odds: docs/ASCII Concept Maps/148 - Catch Odds Slice Opening.md.
+- Levers: the star multipliers, the badge caps, the time term's 2, the early bonus. Worked odds: docs/AI Outputs/Issue-148/148 - Catch Odds Slice Opening.md.
 
 ## Lost Pokemon recruit (#138, built 2026-11-21; TUNE by feel)
 - Chance a delivered Lost Pokemon joins you, by star (pokedex rarity): 1 star 20% | 2 star 12% | 3 star 6% (js/systems/events.js RECRUIT_ODDS; spec section 5). Rolled once at delivery; a recruit is held like a catch.

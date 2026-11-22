@@ -2,7 +2,7 @@
  * An elite (js/entities/elite.js) with a bigger HP budget, built and placed by G.Rescue (js/systems/rescue.js), not by G.Elites: it
  * does not take the single "alive elite" slot, the elite cadence or the wild-cap dip. Its power is the elite's, fixed (no enrage).
  * Its fight clock starts on the player's first hit and G.Rescue reads it; it only tells G.Rescue when it is hit and when it falls.
- * Acquisition spec section 2 (docs/ASCII Concept Maps/Old txt files/Acquisition v2 - Spec.txt), #135.
+ * Acquisition spec section 2 (docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt), #135.
  */
 G.UberElite = class UberElite extends G.Elite {
   constructor(def, x, y, sc) {

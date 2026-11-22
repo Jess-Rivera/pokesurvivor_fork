@@ -7,6 +7,6 @@ net alone, so a liked goal is never pushed down when its best plan is bad. A goa
 "worth nothing", which could still win when every other goal netted below 0). Confidence stays inside utility, so it now
 scales cost too. The #59 reflex reads a plan's worth by the same rule. Brock's Finish weight is set after a replay of
 fresh natural-gate traces (tools/replay-leader-trace.js), not in this ruling.
-Plan: docs/ASCII Concept Maps/109 - Weights Scale The Whole Score Plan.md.
+Plan: docs/AI Outputs/Issue-109/109 - Weights Scale The Whole Score Plan.md.
 
 Canonical: docs/LEADER-AI.md "GOAL VALUE AND SCORE" and "CHOICE"; #109.

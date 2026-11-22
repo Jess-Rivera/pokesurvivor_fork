@@ -1,6 +1,6 @@
 // Entity model slice 5: G.GymLeader, a gym leader as a Player entity (Node only). Usage from the repo root:  node docs/proposals/gym-leader-harness.js
 // Loads the REAL util, stats, pokedex, types, enemies, status, stages, enemy, player, gym-leader, boss-ai, combat, gyms, team cards and the move
-// sim and effects, with stubs for the world, camera, FX and the gym clock. Plan: docs/ASCII Concept Maps/Entity Model Slice 5 - GymLeader, Misty First.txt.
+// sim and effects, with stubs for the world, camera, FX and the gym clock. Plan: docs/AI Outputs/Gym Leader AI/Entity Model Slice 5 - GymLeader, Misty First.txt.
 // Parity: one hit, the old wild body against the leader, same species, level and max HP, and both against the number worked by hand from
 // COMBAT-RULES "Damage": D = (A / Dstat + 2) x STAB x scale, then type, items, crit, floor of 1. A is an input. Everything else is hand-derived from
 // the approved plan ("Leader status rules", decisions 2 to 10), never read from the code. gym-leader-mutate.js points GL_<FILE> at altered copies.
@@ -562,7 +562,7 @@ function cycleSlots(e) {
   ok(!bad({ restrictions: { tells: false, healLimit: 2 } }).length, 'good restrictions pass');
 }
 
-// 11. edge unstick (Jess 2026-11-07, docs/ASCII Concept Maps/Gym Leader - Edge Unstick.txt). Hand-derived from the map:
+// 11. edge unstick (Jess 2026-11-07, docs/AI Outputs/Gym Leader AI/Gym Leader - Edge Unstick.txt). Hand-derived from the map:
 // #41: the Decider's (G.LeaderAI), its state per mon in legsOf. stuck = moved under 35% of the heading's step for over 0.35 s; side-step 0.7 s at 1.25 rad; smart side by look-ahead.
 {
   reset();

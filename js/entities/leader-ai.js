@@ -161,7 +161,7 @@ G.LeaderAI = class LeaderAI {
     L.lastHeading = e.heading; // the next think reads how far the body's step moved her along it (e.lastStep)
   }
 
-  // ---------------- edge unstick (Jess 2026-11-07, map: docs/ASCII Concept Maps/Gym Leader - Edge Unstick.txt) ----------------
+  // ---------------- edge unstick (Jess 2026-11-07, map: docs/AI Outputs/Gym Leader AI/Gym Leader - Edge Unstick.txt) ----------------
   // The wild body's side-step (enemy.js), plus a smart side. Walls already slide her (G.World.collide); this frees her on corners.
   // #41: the Decider's, so it comes out as heading; the state is per mon in legsOf (stuckT, sideStepT, sideStepWay).
 

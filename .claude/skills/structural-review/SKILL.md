@@ -86,7 +86,7 @@ Written in prose with NO CODE (no snippet, no diff, not a single line):
   string matches in docs/proposals/*-mutate.js, so name the ones that would need repointing.
 
 ## Report
-- Save it as "docs/ASCII Concept Maps/<branch> - Structural Review.md" (Mermaid, CLAUDE.md "Output format"): the
+- Save it as "docs/AI Outputs/<branch> - Structural Review.md" (Mermaid, CLAUDE.md "Output format"): the
   findings (number, where, problem in a few words, size, behavior), then the decisions, then the verdict. In chat,
   give the verdict and the top three findings only.
 - Verdict, one of: Ready to merge (no blocker), Fix first (names the blockers), Discuss (a blocker whose remedy

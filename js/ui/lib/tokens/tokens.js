@@ -2,7 +2,7 @@
  * One home for the named values the UI is built from: colour palettes, fonts and the page's z-index layers. Each token
  * has a name (color.rim.focus.base, font.hudText, layer.tooltip), a value and a job. The game's code reads its values
  * from here (G.Tokens.color, ramp, typeTable); the library board (tools/library.html) shows every token by name.
- * Plan: docs/ASCII Concept Maps/155 - UI Library v2 Build Plan.md. Look and rules: docs/HUD-STYLE.md.
+ * Plan: docs/AI Outputs/Issue-155/155 - UI Library v2 Build Plan.md. Look and rules: docs/HUD-STYLE.md.
  * Loaded first (before js/core/util.js, which reads the type colours from here). Plain data and lookups, no game state,
  * so the harnesses load it in Node too; it writes the CSS variables only when there is a page.
  * A colour value may be another colour token's name (an alias): the token then always shows that token's colour.

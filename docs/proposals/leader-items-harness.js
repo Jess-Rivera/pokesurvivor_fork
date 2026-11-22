@@ -1,6 +1,6 @@
 // Entity model slice 7b: team-reading run items and HP Regen on a leader (Node only). Usage from the repo root:
 //   node docs/proposals/leader-items-harness.js
-// Plan: docs/ASCII Concept Maps/Entity Model Slice 7b - Leader Team Items and Regen.txt (approved 2026-11-07, Q1 to Q6).
+// Plan: docs/AI Outputs/Gym Leader AI/Entity Model Slice 7b - Leader Team Items and Regen.txt (approved 2026-11-07, Q1 to Q6).
 // Loads the REAL items, team, team cards, gyms, gym, gym-arena, gym-leader and the rest of the leader stack, with stubs for the world,
 // camera, FX, sound and the game. Fixture gyms are clones of Misty pushed onto the Kanto list. Every expected number is worked by
 // hand from the map: team HP bonus 1 + (1 - frac) / 0.9 at 3+ members, Pikachu's Tear 1.1 ^ fainted, Regen 0.5% max HP/s per stack,

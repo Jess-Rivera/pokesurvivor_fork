@@ -7,4 +7,4 @@
   after Belt 3. The belts sit against the pane's right edge, 20 px apart, each numbered on its top-left corner.
 - A locked Great or Ultra you can afford keeps its dimmed card but its Unlock button is lit.
 
-Canonical: js/ui/shop-balls.js header; sell share G.BALL_SELL_SHARE in js/data/balls.js. Plan: docs/ASCII Concept Maps/137c - Belts, Sell and Unlock Plan.md.
+Canonical: js/ui/shop-balls.js header; sell share G.BALL_SELL_SHARE in js/data/balls.js. Plan: docs/AI Outputs/Issue-137/137c - Belts, Sell and Unlock Plan.md.

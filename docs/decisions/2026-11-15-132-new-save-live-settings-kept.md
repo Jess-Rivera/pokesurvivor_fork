@@ -6,4 +6,4 @@
 - Settings (ps.settings: volume, language, layout) are a separate key and are kept. Accounts and the session are untouched.
 - No new test file: pokebox-copies-harness.js section 7 already covers the reset and now seeds a v3 save with a Pokebox.
 
-Canonical: docs/ASCII Concept Maps/Old txt files/Acquisition v2 - Spec.txt section 9.
+Canonical: docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt section 9.

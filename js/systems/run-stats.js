@@ -1,5 +1,5 @@
 /* ============ run-stats.js: the run's counters for the pause menu (G.RunStats, #91) ============
- * Spec: docs/PAUSE-MENU.md sections 4 (Run Stats box) and 6 (Run Info). Maps: docs/ASCII Concept Maps/91c, 91d, 91-1.
+ * Spec: docs/PAUSE-MENU.md sections 4 (Run Stats box) and 6 (Run Info). Maps: docs/AI Outputs/91c, 91d, 91-1.
  * What the DPS record (G.DpsHistory) already holds is never counted here: each member's damage and time on the field are
  * read from it. This file keeps the rest, per team member (keyed by teamSlot, as the DPS record is) and for the whole run.
  * Run state only, never saved. Leader teams get no record, so every hook is a no-op for them.
@@ -23,7 +23,7 @@
  *   mostFaints(record)            { slot, faints }: the most faints, the lower slot on a tie; null with no faint
  *   totals(record, now)           the team's sums of every per-member counter
  *
- * Region Best (#91-2 part C, map docs/ASCII Concept Maps/91-2C; rules DR1, DR3, DR4, RC1). Pure: everything comes in as
+ * Region Best (#91-2 part C, map docs/AI Outputs/91-2C; rules DR1, DR3, DR4, RC1). Pure: everything comes in as
  * arguments, nothing is read from the game or the save, so the end of a run and G.Debug.recordcheck share them.
  *   regionEntry({ loop, splits, fightStartedAt, endTime })   this run's place: gyms cleared, and whether it ended
  *                                 inside the next gym's fight (reachedAt = when that fight began)

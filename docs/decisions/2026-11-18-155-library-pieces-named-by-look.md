@@ -9,4 +9,4 @@
 - One name everywhere: the code says SlantedButton and RoundedButton (G.Lib.Button, the HUD kit, every screen), in
   place of SlotButton and TeamButton. CSS class names (pm-button, hud-team-button) stay until a later #126 slice.
 
-Canonical: js/ui/lib/primitives/button/button.js header. Plan: docs/ASCII Concept Maps/155b-2 - Button Shape Names Plan.md.
+Canonical: js/ui/lib/primitives/button/button.js header. Plan: docs/AI Outputs/Issue-155/155b-2 - Button Shape Names Plan.md.

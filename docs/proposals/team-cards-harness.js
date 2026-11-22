@@ -1,7 +1,7 @@
 // Move schema slice 5b (team-wide cards from fields), offline checks (Node only). Usage from the repo root:
 //   node docs/proposals/team-cards-harness.js .
 // Under test: js/systems/team-cards.js (the team store, the card field map, the lazy from-scratch fold) and the readers that must use the
-// folded def (js/systems/move-sim.js, js/systems/move-render.js). Plan: docs/ASCII Concept Maps/Slice 5b - Build Plan.txt sections 3 and 6;
+// folded def (js/systems/move-sim.js, js/systems/move-render.js). Plan: docs/AI Outputs/Old txt files/Slice 5-7a/Slice 5b - Build Plan.txt sections 3 and 6;
 // rules combat-architecture D4, I2, section C step 3 (Jess 2026-10-31: lazy, one copy per move id). Expected numbers are hand-derived
 // from the plan's step table and the move data, never read from the code under test. Parts A and B: sections 1 to 4 (store, fold,
 // readers). Parts C to G (Slice 5b - Parts C to G Plan.txt section 3): sections 5 to 9 (Gate and Duration cards, HP Regen and Vitamins,

@@ -14,7 +14,7 @@
  * blocks a field everywhere in the move, inline emitted children included; children are folded with their parent (they are the
  * team's move) and named children fold by their own id (move-sim childOf). Team cards (Gate, Duration, HP Regen, Vitamins) change no
  * move field; their readers are stages.js, move-effects.js and player.js.
- * Steps, caps and weights are PLACEHOLDERS for slice 6. Plan: docs/ASCII Concept Maps/Slice 5b - Build Plan.txt, section 3.
+ * Steps, caps and weights are PLACEHOLDERS for slice 6. Plan: docs/AI Outputs/Old txt files/Slice 5-7a/Slice 5b - Build Plan.txt, section 3.
  *
  *   store()                  a fresh team store { n, stacks, cache }
  *   add(store, id, k = 1)    k more stacks of card `id` (n goes up by k); returns the card's new stack count

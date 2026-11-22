@@ -5,5 +5,5 @@ trigger fires: more code, nothing asks for it). T2: a trigger's `set` skipped th
 get under REFLEX_FLOOR_SECONDS (0.1 s); the validator now holds it to the floor, as it does an authored reflex. Neither
 touches existing data (the only trigger set in gyms.js sets aggression). The other limits on a set, and a set dodgeRead or
 predictCap doing nothing (their bags are built once), are #107.
-Plan: docs/ASCII Concept Maps/53 - Plan Check.txt.
+Plan: docs/AI Outputs/Issue-53/53 - Plan Check.txt.
 Canonical: docs/LEADER-AI.md TRIGGERS.

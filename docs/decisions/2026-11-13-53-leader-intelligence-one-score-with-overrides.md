@@ -19,7 +19,7 @@ Replaces the per-setting shape of decision 2026-11-09-49-leader-sharpness-base-p
   (approved same day, so the top's 4 px is sharper than the default and still not perfect).
 - Sharpness duel (D3): the harness gives Brock a test growth on his loop 1 team, so it measures intelligence alone.
 Chosen over intelligence with no overrides (cannot say "Misty reads you fast but plans no better", which #39 asks for) and over the
-per-setting shape (too many numbers to tune by feel, no single difficulty number). Maps: docs/ASCII Concept Maps/53 - Intelligence vs
+per-setting shape (too many numbers to tune by feel, no single difficulty number). Maps: docs/AI Outputs/53 - Intelligence vs
 Per-Setting Sharpness.txt (the comparison), 53 - How Intelligence Drives the Four Settings.txt (the curves; it covers all five),
 53 - Intelligence and Misjudge Build Plan.txt (the plan).
 Canonical: docs/LEADER-AI.md "The Decider (#49)" (MISJUDGMENT, INTELLIGENCE AND STYLE, TESTS) and "Authoring a leader".

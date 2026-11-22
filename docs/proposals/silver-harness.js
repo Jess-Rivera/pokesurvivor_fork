@@ -2,7 +2,7 @@
 //   node docs/proposals/silver-harness.js .
 // Under test: js/systems/silver.js (G.Silver) over the real js/core/stats.js, and the lines that wire it in: the run start
 // (js/game.js startRun), the kill loop (js/entities/enemy.js), the end of a run (js/game.js endRun), the HUD (js/ui/hud.js), the
-// load order (dev.html, js/main.js NEED) and the coin sheet (assets/items/pickups/silver16.png). Plan: docs/ASCII Concept Maps/
+// load order (dev.html, js/main.js NEED) and the coin sheet (assets/items/pickups/silver16.png). Plan: docs/AI Outputs/
 // Move Shop step 2 - Silver.txt sections 2 and 5; spec docs/proposals/move-shop-plan.md "Silver", changed by #124 (start 0, a
 // kill pays 1). Expected numbers are hand-derived from the spec, never read from the code under test.
 // The mutation runner (silver-mutate.js) points the SV_* variables (SRC below) at altered copies; every mutation must make this fail.

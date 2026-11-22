@@ -1,7 +1,7 @@
 // Rescue event (#135, S4) and catch phase (#136, S5) offline checks (Node only). Usage from the repo root:  node docs/proposals/rescue-harness.js .
 // Real js/systems/rescue.js, js/systems/catch.js, js/systems/copies.js, js/core/db.js (a guest save, never stored),
 // js/data/stage-one.js, js/data/pokedex.js, js/data/sprites-meta.js and js/data/species-traits.js, with stubbed engine globals.
-// The expected values come from the acquisition spec sections 2 to 4 (docs/ASCII Concept Maps/Old txt files/Acquisition v2 -
+// The expected values come from the acquisition spec sections 2 to 4 (docs/AI Outputs/Old txt files/Acquisition v2 -
 // Spec.txt: the cadence figures, the pool table, the 8:4:2:1 weights, the nature buckets, a 6-ball start) and from pokeapi's
 // pokemon_species.csv read here on its own, never from what the modules print. Part 6 checks relations (docs/TEST-FIRST.md).
 const fs = require('fs'), vm = require('vm');

@@ -8,7 +8,7 @@
  * Props only, never game state: the screen passes the label, size, rims, body and state, and owns onEnter and onPress.
  * Moved from js/ui/hud-kit.js (155b; it passes them on to the screens), plus button.rounded's refused.
  * Colours: js/ui/lib/tokens/tokens.js. Style: button.css. Board: tools/library.html, Primitives, Buttons (stories in
- * button.story.js). Plan: docs/ASCII Concept Maps/155b - Buttons Plan.md. Look: docs/HUD-STYLE.md.
+ * button.story.js). Plan: docs/AI Outputs/Issue-155/155b - Buttons Plan.md. Look: docs/HUD-STYLE.md.
  */
 G.Lib = G.Lib || {};
 G.Lib.Button = (() => {

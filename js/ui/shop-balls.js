@@ -1,7 +1,7 @@
 /* ============ shop-balls.js: the Main Menu Shop's Pokeballs tab (G.ShopBallsPane; #149 149e) ============
  * Look: decision 2026-11-20-155-main-shop-pokeball-look (the board's main.shop.pokeball, tools/library/shop-draft.js),
- * applied with #128 S6 (plan: docs/ASCII Concept Maps/128 - Shop Pokeballs Look Plan.md) from the UI library's pieces.
- * Earlier rulings (E1 to E5): docs/ASCII Concept Maps/149 - Shop Rework Opening.md. Drawn into #shop-balls by
+ * applied with #128 S6 (plan: docs/AI Outputs/Issue-128/128 - Shop Pokeballs Look Plan.md) from the UI library's pieces.
+ * Earlier rulings (E1 to E5): docs/AI Outputs/Issue-149/149 - Shop Rework Opening.md. Drawn into #shop-balls by
  * js/ui/gacha-ui.js, which owns the window, the rail, Exit and the cursor.
  *   cards   a scrolling 3-column grid of item cards (card.vertical on panel.shopCard, BALL_CARD's sizes), one per ball
  *           in G.BALL_CATALOG: the ball (frame 9 of its strip, flipped, 2x), divider, name, line, one button.glitch

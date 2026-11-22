@@ -2,7 +2,7 @@
 // Usage from the repo root:  node docs/proposals/leader-stats-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs leader-stats-harness.js against it
 // (LS_<FILE>). The harness must fail every time; a miss is a gap, a stale pattern is reported as STALE.
-// Plan: docs/ASCII Concept Maps/Entity Model Slice 6 - Leader Stats and Cards.txt.
+// Plan: docs/AI Outputs/Gym Leader AI/Entity Model Slice 6 - Leader Stats and Cards.txt.
 const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const LD = 'js/entities/gym-leader.js',

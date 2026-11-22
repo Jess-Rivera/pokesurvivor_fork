@@ -1,5 +1,5 @@
 /* ============ debug-leader-trace.js: the leader AI's decision trace (dev only, with ?dev) ============
- * #109 (docs/ASCII Concept Maps/109 - Leader Decision Trace Plan.md, Jess 2026-11-14): under ?dev every switched
+ * #109 (docs/AI Outputs/Issue-109/109 - Leader Decision Trace Plan.md, Jess 2026-11-14): under ?dev every switched
  * gym fight's choices are kept, each with the inputs Belief handed the planner and the planner's whole ranking, so a
  * moment can be read back after the fight. The last TRACE.fightsKept fights are kept. The AI calls
  * G.LeaderAI.recorder at each choice (js/entities/leader-ai.js, replan); without ?dev nothing attaches it and nothing

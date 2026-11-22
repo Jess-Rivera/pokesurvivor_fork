@@ -6,7 +6,7 @@
  * have no face of their own), its fallback, the size and the colours. Each screen keeps its own states on top (the
  * boss circles' active rim and flicker, the pause menu's shimmer, the TMs tab's chosen and hover rims).
  * Style: portrait.css. Board: tools/library.html, Primitives, Portraits (portrait.story.js).
- * Plan: docs/ASCII Concept Maps/155c-5 - Slanted Panel and Round Portrait Plan.md. Look: docs/HUD-STYLE.md "Assets".
+ * Plan: docs/AI Outputs/Issue-155/155c-5 - Slanted Panel and Round Portrait Plan.md. Look: docs/HUD-STYLE.md "Assets".
  */
 G.Lib = G.Lib || {};
 G.Lib.Portrait = (() => {

@@ -9,4 +9,4 @@
 - The Pokebox sources test covered only gacha rules and went with the gacha; the drops test now checks the relations above.
 - The rarity names and colours moved from G.Gacha to G.Copies.
 
-Canonical: js/data/drops.js (K) and docs/ASCII Concept Maps/133-134 - Gacha Removal and Starter Pick Opening.md.
+Canonical: js/data/drops.js (K) and docs/AI Outputs/Issue-133-134/133-134 - Gacha Removal and Starter Pick Opening.md.

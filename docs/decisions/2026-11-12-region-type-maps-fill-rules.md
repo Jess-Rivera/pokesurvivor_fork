@@ -8,4 +8,4 @@ Each region gets 9 maps, each focused on 2 or 3 types (a mix of both), themed as
 Still open: D4 to D16 (v1: slot match, tier vs off-type order, weights, biome set, hordes, Kanto T6; v2: Stage 3 shared or exclusive, map 9 ramp, XP, pseudo-legends, baby stages, Kanto map 9, unlock).
 Not built. Changes G.Enemies.candidates / poolFor / castFor when it is.
 
-Canonical: docs/ASCII Concept Maps/Region Type Maps - Biomes v2 (8 type maps + Stage 3 map).txt (history: Biomes v1.txt, Region Type Maps Feasibility.txt)
+Canonical: docs/AI Outputs/Old txt files/Region Type Maps/Region Type Maps - Biomes v2 (8 type maps + Stage 3 map).txt (history: Biomes v1.txt, Region Type Maps Feasibility.txt)

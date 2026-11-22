@@ -5,7 +5,7 @@
 // with stubs for the game, audio and effects; plus the lines that wire the screen in (dev.html, js/main.js NEED, js/ui/ui.js SCREENS,
 // js/game.js openShop / offerBond / keys; js/ui/shop-ui.js only as text for the step 4b confirm rule). The screen itself is DOM, checked by
 // tools/smoke-ui.js and feel-tested.
-// Plan: docs/ASCII Concept Maps/Move Shop step 4 - Shop screens.txt sections 1 to 3 and 6 (v3: bonds are FIXED, Jess 2026-11-05),
+// Plan: docs/AI Outputs/Old txt files/Move Shop/Move Shop step 4 - Shop screens.txt sections 1 to 3 and 6 (v3: bonds are FIXED, Jess 2026-11-05),
 // step 4b - Purchase confirm and Ban.txt (the confirm) and step 4c - Shop Reroll.txt (rerolls, old bans no longer read);
 // spec docs/proposals/move-shop-plan.md. Expected values are hand-derived from the plan and the spec (#124 price: the shop's base,
 // Trainer 300 / Mart 450, less a discount set by the member's slots filled, Trainer 80 / 60 / 20 percent, Mart two thirds / one third /

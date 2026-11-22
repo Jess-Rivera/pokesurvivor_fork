@@ -2,7 +2,7 @@
 //   node docs/proposals/shops-harness.js .
 // Under test: js/systems/shops.js (G.Shops) over the real js/data/shop-contact.js, with stubs for the camera, the ground, the
 // arena, co-op and the notice line; and the lines that wire it in (dev.html order, js/main.js NEED, js/game.js startRun /
-// update / scene, js/systems/gym.js onReturn, js/ui/hud.js arrows). Plan: docs/ASCII Concept Maps/Move Shop step 3 - Buildings
+// update / scene, js/systems/gym.js onReturn, js/ui/hud.js arrows). Plan: docs/AI Outputs/Move Shop step 3 - Buildings
 // and arrows.txt sections 1 to 4 and 7; spec docs/proposals/move-shop-plan.md "Shops on the map". Expected values are
 // hand-derived from the plan and spec (2:00, gym return + 90 s, 60 s each, view radius + 140 to + 320, more than 90 degrees
 // apart, retry in 2 s, step off to enter again) and from the mask PNGs read by hand, never read from the code under test.

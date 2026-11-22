@@ -1,6 +1,6 @@
 # EV Progression, game-specific implementation (Jess's draft, 2026-11-04)
 
-Source design for pokebox step 5. Plan map: docs/ASCII Concept Maps/Pokebox 5 - EVs.txt (open questions there as F1 to F10).
+Source design for pokebox step 5. Plan map: docs/AI Outputs/Old txt files/Pokebox/Pokebox 5 - EVs.txt (open questions there as F1 to F10).
 
 EVs are permanent across runs and are earned through defeating enemies during gameplay.
 

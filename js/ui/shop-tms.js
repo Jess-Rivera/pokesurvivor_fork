@@ -1,6 +1,6 @@
 /* ============ shop-tms.js: the Main Menu Shop's TMs tab (G.ShopTmsPane; #149 149f) ============
  * Mockup: assets/excalidraw/Shop-TR-Menu.svg (drawn as "TRs"; renamed TMs by decision 2026-11-17-tm-for-good-tr-for-one-run);
- * plan and rulings (R2, R6 to R8, F1 to F9): docs/ASCII Concept Maps/149 - Shop Rework Opening.md. Drawn into #shop-tms by
+ * plan and rulings (R2, R6 to R8, F1 to F9): docs/AI Outputs/Issue-149/149 - Shop Rework Opening.md. Drawn into #shop-tms by
  * js/ui/gacha-ui.js, which owns the window, the rail, Exit and the cursor (create() takes them). The rules are G.TMs'.
  *   bar      a search bar (move names), the Type filter (a kit Dropdown) and the Able to Learn toggle (on at each
  *            opening: only the TMs the chosen Pokemon can use)

@@ -9,4 +9,4 @@
 - The arrow is the shop and gym arrow format in green (HUD-STYLE "Wayfinding arrows", Rescue row, a first pick by eye, [Proposed]).
 - All regions runs pool every gen's Stage 1s (the spec names only the single-region rule). Accelgor is not Stage 1.
 
-Canonical: docs/ASCII Concept Maps/Old txt files/Acquisition v2 - Spec.txt section 2 and js/systems/rescue.js (K).
+Canonical: docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt section 2 and js/systems/rescue.js (K).

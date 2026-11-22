@@ -2,7 +2,7 @@
  * Bought with PokeCoins in the Main Menu Shop's TMs tab (js/ui/shop-tms.js). A TM teaches one copy (by its UUID), never
  * the species, and it stays learned; in every later run the move joins that copy's Move Trainer pool (js/systems/shops.js),
  * one more move it may be offered, not a guaranteed one. Rulings: decision 2026-11-17-tm-for-good-tr-for-one-run (names)
- * and docs/ASCII Concept Maps/149 - Shop Rework Opening.md (R2, R6 to R8, F1 to F9). The copy's saved list is G.Copies'.
+ * and docs/AI Outputs/Issue-149/149 - Shop Rework Opening.md (R2, R6 to R8, F1 to F9). The copy's saved list is G.Copies'.
  *   list()                    every TM: each move on some species' TM list (G.Moves.tmList), sorted by name
  *   price(moveId)             PokeCoins, by the move's power (F1 bands, temporary)
  *   learned(save, uid)        the move ids copy uid has learned ([] for none or no such copy)

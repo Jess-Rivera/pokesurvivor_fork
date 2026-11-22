@@ -12,5 +12,5 @@
 - A full box at the run end sells the overflow with a notice; the keep-or-sell list is its own issue (#146).
 - Odds as a whole percent; 90% ceiling and flee 5 / 3 / 1 stay playtest values.
 
-Plan: docs/ASCII Concept Maps/136 - Catch Phase Slice Opening.md.
-Canonical: docs/ASCII Concept Maps/Old txt files/Acquisition v2 - Spec.txt sections 3 and 4, and js/systems/catch.js (K).
+Plan: docs/AI Outputs/Issue-136/136 - Catch Phase Slice Opening.md.
+Canonical: docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt sections 3 and 4, and js/systems/catch.js (K).

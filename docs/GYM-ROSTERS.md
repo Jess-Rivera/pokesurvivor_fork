@@ -105,8 +105,8 @@ starting point only; real bands get set and recorded in BALANCE.md at build time
 Source: Pokemon Crystal rematch party (Graveler, Rhyhorn, Omastar, Kabutops, Onix)
 + Aerodactyl (Brock's Let's Go rematch and B2W2 PWT teams; corrected 2026-10-31, the old
 "Red/Blue Anniversary" source was a fan run, not canon). Six Rock-type lines.
-Lore movesets per loop: docs/ASCII Concept Maps/Brock Movesets by Loop.txt.
-Gyms 2-8 and the Elite Four: docs/ASCII Concept Maps/Kanto Boss Movesets by Loop.txt.
+Lore movesets per loop: docs/AI Outputs/Gym Leader AI/Brock Movesets by Loop.txt.
+Gyms 2-8 and the Elite Four: docs/AI Outputs/Gym Leader AI/Kanto Boss Movesets by Loop.txt.
 
 Slot | Line (base -> mid -> final)        | Types (final)  | BST (final) | Role
 -----|------------------------------------|----------------|-------------|---------------------------

@@ -1,5 +1,5 @@
 // tools/run-pace-summary.js: average saved run pace traces (#124, dev only).
-// Plan: docs/ASCII Concept Maps/124 - Run Pace Trace Plan.md.
+// Plan: docs/AI Outputs/Issue-124/124 - Run Pace Trace Plan.md.
 //
 //   node tools/run-pace-summary.js [trace.json ...]
 //

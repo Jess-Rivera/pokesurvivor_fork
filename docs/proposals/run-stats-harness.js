@@ -392,7 +392,7 @@ const rng = () => 0;
   ok(/'DpsHistory',\s*'RunStats',/.test(text('js/main.js')), 'the NEED array lists RunStats');
 }
 
-// 9. Region Best (#91-2 part C, map docs/ASCII Concept Maps/91-2C; DR1, DR3, DR4, RC1, Jess 2026-11-12). Expected values are
+// 9. Region Best (#91-2 part C, map docs/AI Outputs/91-2C; DR1, DR3, DR4, RC1, Jess 2026-11-12). Expected values are
 // hand-derived from the approved rules and the map's timeline (best: gym 1 at 4:52, gym 2 at 9:10, gym 3 at 14:20).
 {
   const entry = (o) => RS.regionEntry(Object.assign({ loop: 1, splits: [], fightStartedAt: null, endTime: 0 }, o));

@@ -1,10 +1,10 @@
 /* ============ catch.js: the catch phase, the belt and the held catches (G.Catch) ============
- * Acquisition rework, slice S5 (#136). Spec: docs/ASCII Concept Maps/Old txt files/Acquisition v2 - Spec.txt sections 3 and 4;
- * plan and rulings: docs/ASCII Concept Maps/136 - Catch Phase Slice Opening.md.
+ * Acquisition rework, slice S5 (#136). Spec: docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt sections 3 and 4;
+ * plan and rulings: docs/AI Outputs/Issue-136/136 - Catch Phase Slice Opening.md.
  *
  * A won rescue (js/systems/rescue.js) leaves its Stage 1 waiting; touching it opens the catch screen (js/ui/catch-ui.js) with the
  * run paused. This file holds every rule; the screen only draws and routes input.
- *   odds     #148, Jess's mainline-style shake formula (docs/ASCII Concept Maps/pokeball-math-human-made.txt, decision
+ *   odds     #148, Jess's mainline-style shake formula (docs/AI Outputs/Old txt files/pokeball-math-human-made.txt, decision
  *            2026-11-16-148-catch-odds-mainline-shake-formula). A rate from 0 to 255: the species' capture rate (pokedex
  *            cr) x the time term (a faster win is bigger) x ball x star x the badge cap penalty x the early World Level
  *            bonus. A throw first rolls a critical catch (a sure catch, from 31 species in the Pokedex), then three shakes
@@ -12,7 +12,7 @@
  *   band     the screen never shows the exact chance: a range 2 x bandAccuracy points wide (K.bandAccuracy, 15 to start, a
  *            #97 meta upgrade later) that always holds it. Where the true chance sits inside is rolled once per catch
  *            (session.bandShift) and shared by every ball, so a better ball always reads better (Jess, 2026-11-16, plan
- *            docs/ASCII Concept Maps/136b - Catch Screen Redesign Plan.md). The range slides to stay inside 0 to 100.
+ *            docs/AI Outputs/Issue-136/136b - Catch Screen Redesign Plan.md). The range slides to stay inside 0 to 100.
  *   flee     misses allowed by the rescued Pokemon's nature (FLEE). The last allowed miss, or a miss that empties the belt,
  *            and it runs off.
  *   belt     save.belt: { size, slots, unlocked }. size is the slots bought, six per belt, three belts at most; slots

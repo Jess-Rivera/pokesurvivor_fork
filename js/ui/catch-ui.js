@@ -3,7 +3,7 @@
  * in G.Catch (js/systems/catch.js); this file only draws and routes input. Look: catch.window (decisions
  * 2026-11-20-155-catch-window-look, -catch-result-is-a-toast-and-the-window-is-shorter,
  * -catch-let-it-go-ask-opens-on-keep-trying; board tools/library/catch-draft.js), from the UI library's pieces.
- * Plan: docs/ASCII Concept Maps/catch.window Plan.md. On the pause menu's 1920 x 1080 stage, scaled to fit, inside
+ * Plan: docs/AI Outputs/Issue-136/catch.window Plan.md. On the pause menu's 1920 x 1080 stage, scaled to fit, inside
  * #scr-catch.
  *   window   panel.clean, 980 x 424, centred.
  *   left     the Pokemon: panel.pixel in its types (a two-type rim dithered across the middle) on a plain grey.raised

@@ -7,7 +7,7 @@
  * Props only, never game state: the screen passes the picture (the kit draws the item's icon) and each slot's
  * attributes (the kit adds the tooltip's hover handlers). Moved from js/ui/hud-kit-items.js, which passes them on under
  * the same names. Style: square.css. Board: tools/library.html, Primitives, Squares (square.story.js).
- * Plan: docs/ASCII Concept Maps/155c-2 - Flat Panel, Item Squares and Slot Box Plan.md. Look: HUD-STYLE "Berry bag".
+ * Plan: docs/AI Outputs/Issue-155/155c-2 - Flat Panel, Item Squares and Slot Box Plan.md. Look: HUD-STYLE "Berry bag".
  */
 G.Lib = G.Lib || {};
 G.Lib.Square = (() => {

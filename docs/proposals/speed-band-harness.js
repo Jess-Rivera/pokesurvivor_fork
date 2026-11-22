@@ -1,6 +1,6 @@
 // #123 speed band and dodge recharge, offline checks (Node only). Usage from the repo root:
 //   node docs/proposals/speed-band-harness.js .
-// Plan: docs/ASCII Concept Maps/123 - Speed Band And Dodge Recharge Plan.md. Ruling: decision
+// Plan: docs/AI Outputs/Issue-123/123 - Speed Band And Dodge Recharge Plan.md. Ruling: decision
 // 2026-11-15-123-speed-band-and-dodge-recharge. Rules: docs/COMBAT-RULES.md "SPEED".
 // Relations only (decision 2026-11-14-tests-check-relations-not-values): every bound is read from G.Stats, no px/s or
 // second count is written here. Loads the REAL js/data/pokedex.js, js/core/stats.js and js/entities/player.js with stubs

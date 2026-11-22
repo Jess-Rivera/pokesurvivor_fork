@@ -1,5 +1,5 @@
 // Entity model slice 6: leader stats and cards (Node only). Usage from the repo root:  node docs/proposals/leader-stats-harness.js
-// Plan: docs/ASCII Concept Maps/Entity Model Slice 6 - Leader Stats and Cards.txt (approved 2026-11-07).
+// Plan: docs/AI Outputs/Gym Leader AI/Entity Model Slice 6 - Leader Stats and Cards.txt (approved 2026-11-07).
 // Section a (step 0) is the neutral parity case; it passed on the code BEFORE slice 6 moved anything. A plain G.PlayerEntity and a G.GymLeader built from the same inputs (Staryu, level 20, neutral IVs, EVs and nature, no
 // cards, no items) must give the same HP before hpMult, the same attack factor before power and enrage, and take the same damage by
 // Def and by Sp. Def. Sections b to h (step A): profile, cards, items, restrictions, enrage, validator, card budget.

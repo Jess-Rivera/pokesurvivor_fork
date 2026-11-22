@@ -1,6 +1,6 @@
 # Move Shop (plan, 2026-11-04)
 
-Source: Jess's design, 2026-11-04, which replaces docs/ASCII Concept Maps/Move Shop.txt where they differ. Branch: feature/move-shop. Tags are defined in CLAUDE.md. The gacha overhaul is a separate branch and is not part of this plan.
+Source: Jess's design, 2026-11-04, which replaces docs/AI Outputs/Old txt files/Move Shop/Move Shop.txt where they differ. Branch: feature/move-shop. Tags are defined in CLAUDE.md. The gacha overhaul is a separate branch and is not part of this plan.
 
 ## Why
 Playtesters asked for it, Jeremy's notes say there are not enough new move upgrades, and it opens the imported moves to players: only 62 of the 178 moves can reach a player today (115 are in G.Moves.HELD, Hail is retired).
@@ -13,7 +13,7 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 - [Approved] Two shops, one of each, spawn again 90 s after coming back from a gym. (Jess 2026-11-04)
 - [Approved] The two are always more than 90 degrees apart as seen from the player, both off screen.
 - [Approved] A shop stays for 1 minute, then it is gone. (Jess 2026-11-04)
-- [Approved] Step 3 rulings (Jess 2026-11-05, docs/ASCII Concept Maps/Move Shop step 3 - Buildings and arrows.txt F1 to F5): the gym's off-screen arrow also floats off the character (changes the old screen-edge arrow). Until step 4, walking in shows a one-line "opens soon" notice. The label shows seconds left and blinks for the last 10 s; the building fades out over the last 1 s. In a gym arena the shops are hidden and their minute stops. No shops in co-op until co-op shops exist. Doors spawn at the view radius + 140 to + 320 world px; if either finds no free ground, both retry 2 s later.
+- [Approved] Step 3 rulings (Jess 2026-11-05, docs/AI Outputs/Old txt files/Move Shop/Move Shop step 3 - Buildings and arrows.txt F1 to F5): the gym's off-screen arrow also floats off the character (changes the old screen-edge arrow). Until step 4, walking in shows a one-line "opens soon" notice. The label shows seconds left and blinks for the last 10 s; the building fades out over the last 1 s. In a gym arena the shops are hidden and their minute stops. No shops in co-op until co-op shops exist. Doors spawn at the view radius + 140 to + 320 world px; if either finds no free ground, both retry 2 s later.
 - [Approved] Entering pauses the run. Never over another menu. (Jess 2026-11-05, step 4 G3/G4)
 
 ## Move Trainer
@@ -47,7 +47,7 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 - [Approved] Each kill pays 1 Silver, whatever the enemy or the run time. A run starts with 0. Elites, bosses and special encounters pay a fixed bonus on top, sizes TBD (decision 2026-11-15-124-move-price-by-slots-filled, which replaces world level / 10 and the starting 100).
 - [Approved] Price per move: the shop's base (Move Trainer 300, TM Mart 450) less a discount by the member's slots filled (Trainer 80 / 60 / 20 percent, Mart 66 / 33 / 11), full base for a replacement (decision 2026-11-15-124-move-price-by-slots-filled, which replaces 5 x world level x character level).
 - [Approved] Silver is run-only, so it needs no save field. It never adds to PokeCoins, and unspent Silver is lost at the end of the run. World level is the enemy level for the run time (G.Stats.levelForTime). (Jess 2026-11-05, step 2 plan)
-- [Approved] Step 2 rulings (Jess 2026-11-05, docs/ASCII Concept Maps/Move Shop step 2 - Silver.txt D1 to D4): the bump is a pop of about 1.3x for 0.18 s on the number only (the coin keeps spinning, no coin bounce; Jess 2026-11-05 after the feel test), restarted on every gain and never queued, the coin's and the digits' bottoms on one ground line, sized up 50% after the feel test (coin 36 px, number 30; Jess 2026-11-05), plus a number that rolls up like a slot reel and lands within 0.25 s of the last gain. Silver is hidden in co-op until co-op shops exist. Every kill pays the same formula, elites, bosses and gym mons included. No sound per coin.
+- [Approved] Step 2 rulings (Jess 2026-11-05, docs/AI Outputs/Old txt files/Move Shop/Move Shop step 2 - Silver.txt D1 to D4): the bump is a pop of about 1.3x for 0.18 s on the number only (the coin keeps spinning, no coin bounce; Jess 2026-11-05 after the feel test), restarted on every gain and never queued, the coin's and the digits' bottoms on one ground line, sized up 50% after the feel test (coin 36 px, number 30; Jess 2026-11-05), plus a number that rolls up like a slot reel and lands within 0.25 s of the last gain. Silver is hidden in co-op until co-op shops exist. Every kill pays the same formula, elites, bosses and gym mons included. No sound per coin.
 - Estimate, not measured: about 1 to 2 moves per shop if kills keep up with spawns. No income bot (Jess 2026-11-05): judged by feel in playtests, and the price or income are tuned from there.
 
 ## Level-ups

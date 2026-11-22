@@ -166,7 +166,7 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
   Mutation (one hex changed) fails it. Game CSS class names collided (.card, .grid), so page classes are lib- prefixed.
 - Then a Components section (Jess: placeholder content is fine): the HUD kit mounted with lorem names and numbers; move
   slots rebuilt from kit parts, main menu markup copied. Smoke checks each piece draws and its images load.
-- Stopped at: Jess looks it over; plan in docs/ASCII Concept Maps/UI Library - Slice Plan.md.
+- Stopped at: Jess looks it over; plan in docs/AI Outputs/Issue-155/UI Library - Slice Plan.md.
 
 ## 2026-11-16 (Claude Code, home), #136 catch screen redesign (136b) and one tooltip layer
 - Built Jess's catch mockup on the HUD kit: type-rimmed panel, catch band (30 wide, one shift per catch), flee ring, three
@@ -260,7 +260,7 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 
 ## 2026-11-17 (Claude Code, home), #155 UI Library v2, step 155a
 - #137 feel test passed, closed. New dev-process slice #155 (child of #126): a library board as the shared UI language.
-  Opening, mockup and plan: docs/ASCII Concept Maps/UI Library v2 - Slice Opening.md and 155 - UI Library v2 Build Plan.md.
+  Opening, mockup and plan: docs/AI Outputs/Issue-155/UI Library v2 - Slice Opening.md and 155 - UI Library v2 Build Plan.md.
 - 155a: js/ui/lib/tokens/tokens.js holds every colour palette, font and page layer by name; the type colours moved there
   (decision 2026-11-17-155-design-tokens-in-tokens-js). tools/library.html is the board (Tokens pages built).
 - No visible change. check.js, smoke-ui, smoke-ui-library all passed. The old page's script list was stale; resynced.
@@ -384,7 +384,7 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Board: cursor.ring (round pieces, no blink, CRT) on shop belts, TMs and the catch window (belts back to 84 px, window
   980); modal and glitch pages lose the cancel state; new rough drafts run.hud.moveMart, trMart, forgetMove.
 - Decided: a dialog's answers never share an intent (back-out Neutral); replace-a-move is pick, popup, Replace or Go
-  Back ask; run shops mirrored, no Silver purchase ask. Three decision files, a layout map in docs/ASCII Concept Maps.
+  Back ask; run shops mirrored, no Silver purchase ask. Three decision files, a layout map in docs/AI Outputs.
 - Broke: the ring did not blink (rule named only the bar; moot once blink was removed). check.js and format pass.
 - Stopped at: Jess's move-trainer and tr-mart mockups (assets/excalidraw) were found at wrap-up and differ from the
   drafts; redraw to them next. The run-shop pages were never rendered by the assistant. Nothing in js/ or css/.
@@ -403,7 +403,7 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Decided: the board stops at the primitives and the approved composites; the rest is built in the game at #126. The
   main.team first pass and the Pause placeholders were removed. Team menu mockup and rulings kept for #126.
 - Broke: nothing known. Nothing in js/ or css/; check.js and format not run, board pages not rendered from Quick.
-- Stopped at: closing #155 (drafts in docs/ASCII Concept Maps/155 - Close-out Drafts.md).
+- Stopped at: closing #155 (drafts in docs/AI Outputs/Issue-155/155 - Close-out Drafts.md).
 
 ## 2026-11-21 evening (Quick, work), #138 Lost Pokemon built; #139 grilled
 - Changed: #138 built (pool of evolvable Stage 1s from any region with floaters, nature toast, hover escort, safe
@@ -417,7 +417,7 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 ## 2026-11-22 (home), branch recovery; #139 8a candy designed
 - Changed: moved from the stale feature/128-acquisition to feature/138-146-lost-and-full-box (dashboard commits
   cherry-picked, format pass and doc-colours regenerated, check.js passes). Lost-pokemon mutate: 10/10 caught.
-  Wrote the candy decision file, the opening-doc revision and docs/ASCII Concept Maps/139a - Candy Build Plan.md.
+  Wrote the candy decision file, the opening-doc revision and docs/AI Outputs/Issue-139/139a - Candy Build Plan.md.
   Filed #163 (materials shop tab).
 - Decided: target 40,007 XP (3-stage fully level-based median; Quick's 33,084 was the 25th percentile); canon candy
   sizes; base 44,100 XP a full run; a drop ladder (Common to Jackpot) in G.Drops; elite floor weights; materials

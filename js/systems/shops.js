@@ -1,5 +1,5 @@
 /* ============ shops.js: the Move Shop buildings on the map (G.Shops) ============
- * Move Shop step 3 (docs/proposals/move-shop-plan.md "Shops on the map"; plan: docs/ASCII Concept Maps/Move Shop step 3 -
+ * Move Shop step 3 (docs/proposals/move-shop-plan.md "Shops on the map"; plan: docs/AI Outputs/Move Shop step 3 -
  * Buildings and arrows.txt). A Move Trainer and a TM Mart appear together at 2:00, and again AFTER_GYM s after each return
  * from a gym (G.Gym.onReturn calls afterGym). Both doors spawn beyond the view radius + NEAR, more than 90 degrees apart as
  * seen from the player (the second bearing is the first + 100 to 260 degrees), on free ground. If either finds no spot, both
@@ -7,7 +7,7 @@
  * out over the last FADE s. Walking onto a building's contact area enters it once; you step off before you can enter again.
  * Entering opens the shop screen (G.Game.openShop, js/ui/shop-ui.js, Move Shop step 4) and pauses the run. It never opens over
  * another screen: the game refuses, and the visit is not used up (it tries again next frame while you stand on it).
- * Step 4, stock and buying (plan: docs/ASCII Concept Maps/Move Shop step 4 - Shop screens.txt): the Trainer offers each member 4
+ * Step 4, stock and buying (plan: docs/AI Outputs/Old txt files/Move Shop/Move Shop step 4 - Shop screens.txt): the Trainer offers each member 4
  * random moves from its level-up and egg pool (plus the TMs its copy learned for good, G.TMs, #149 149f) it does not know, rolled the first time you look at that member and kept for this
  * building; the Mart offers 4 random TMs, once per building, never sold out. Price (#124): the shop's base less a discount set by
  * the member's slots filled (PRICES below), paid on confirm. Full slots (or a third buff) go through a forget step: only LOOSE moves can be forgotten, since bonds are fixed (Jess

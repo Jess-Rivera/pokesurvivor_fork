@@ -51,7 +51,7 @@ Ask Jess these first (audit "Open decisions"): architecture; HP model (player fo
 
 ## Repo state at handoff
 
-Branch `feature/gym-upgrade-authoring`, uncommitted (Jess commits). Changes this session: gym cards per leader per loop (js/data/gyms.js, js/systems/gym.js, BOSS-AUTHORING), self-heal cap (js/entities/boss-ai.js), Misty loop 1 data, harness updates (gym-harness 8b, boss-owner-harness, boss-owner-mutate), tools/move-lab.html, the gyms 2 to 8 sheet (docs/ASCII Concept Maps/Kanto Gyms 2-8 - Mons and Moves.txt), and the docs above. check.js was green (42 of 42 harnesses). boss-owner-mutate reports 5 stale patterns that were already stale at HEAD (melee tell, chain form, nova order, strike spot twice); a cleanup item, not part of this work.
+Branch `feature/gym-upgrade-authoring`, uncommitted (Jess commits). Changes this session: gym cards per leader per loop (js/data/gyms.js, js/systems/gym.js, BOSS-AUTHORING), self-heal cap (js/entities/boss-ai.js), Misty loop 1 data, harness updates (gym-harness 8b, boss-owner-harness, boss-owner-mutate), tools/move-lab.html, the gyms 2 to 8 sheet (docs/AI Outputs/Gym Leader AI/Kanto Gyms 2-8 - Mons and Moves.txt), and the docs above. check.js was green (42 of 42 harnesses). boss-owner-mutate reports 5 stale patterns that were already stale at HEAD (melee tell, chain form, nova order, strike spot twice); a cleanup item, not part of this work.
 
 ## Useful pointers
 
@@ -59,4 +59,4 @@ Branch `feature/gym-upgrade-authoring`, uncommitted (Jess commits). Changes this
 - Move runtime and the owner interface: docs/current feature planning/combat-architecture.md (D-ENEMY section), js/systems/move-sim.js header.
 - Status and stages: docs/COMBAT-RULES.md (Status effects, SS6 to SS13), js/systems/status.js, js/systems/stages.js.
 - Player kit: js/entities/player.js (constructor, hurt, update, tryDodge, setActive, fuse).
-- Per-gym move numbers and card pools as built: docs/ASCII Concept Maps/Kanto Gyms 2-8 - Mons and Moves.txt (regenerate with a node script if gyms.js changes; the generator is not committed, it only reads G.Gyms and G.MoveDefs).
+- Per-gym move numbers and card pools as built: docs/AI Outputs/Gym Leader AI/Kanto Gyms 2-8 - Mons and Moves.txt (regenerate with a node script if gyms.js changes; the generator is not committed, it only reads G.Gyms and G.MoveDefs).

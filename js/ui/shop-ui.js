@@ -1,7 +1,7 @@
 /* ============ shop-ui.js: the Move Trainer and TR Shop screens (G.ShopUI, Move Shop step 4) ============
  * The TR Shop was the TM Mart until #149 149f (decision 2026-11-17-tm-for-good-tr-for-one-run): a move bought in a run is a
  * TR, kept for that run; a TM (Main Menu Shop) is learned for good. Code ids keep 'mart'.
- * Opened by G.Game.openShop when you walk into a shop (js/systems/shops.js), with the run paused. Plan: docs/ASCII Concept Maps/
+ * Opened by G.Game.openShop when you walk into a shop (js/systems/shops.js), with the run paused. Plan: docs/AI Outputs/
  * Move Shop step 4 - Shop screens.txt. All buying rules live in G.Shops (offers, check, buy); this file only draws and routes input.
  *   Move Trainer  team keys pick WHO you shop for (it never swaps your active Pokemon), attack keys buy one of its 4 offers.
  *   TR Shop       attack keys pick a TR, team keys (or a click on a Pokemon) buy it for that Pokemon.

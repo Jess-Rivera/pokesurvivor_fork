@@ -5,4 +5,4 @@
 - The #97 upgrade redesign and the acquisition rework's new save (2026-11-12-acquisition-no-gacha-catch-candy-legendaries,
   "New save") ship together, so the redesigned upgrade levels need no save migration.
 
-Canonical: docs/ASCII Concept Maps/128 - Acquisition Slices Draft.md (until the slices land), then the acquisition spec.
+Canonical: docs/AI Outputs/Issue-128/128 - Acquisition Slices Draft.md (until the slices land), then the acquisition spec.

@@ -1,5 +1,5 @@
 // Pokebox step 5 (EVs), offline checks (Node only). Usage from the repo root:  node docs/proposals/pokebox-evs-harness.js .
-// Design: docs/proposals/ev-progression.md (Jess, 2026-11-04). Plan: docs/ASCII Concept Maps/Pokebox 5 - EVs.txt (F1 to F10).
+// Design: docs/proposals/ev-progression.md (Jess, 2026-11-04). Plan: docs/AI Outputs/Old txt files/Pokebox/Pokebox 5 - EVs.txt (F1 to F10).
 // Loads the REAL js/core/stats.js, types.js, status.js, stages.js, js/entities/player.js, js/data/species-traits.js and
 // js/systems/copies.js with stubs (pattern: pokebox-stats-harness.js), and reads js/game.js, js/entities/enemy.js, js/ui/run-ui.js,
 // js/ui/ev-screen.js (#104), js/ui/ui.js, js/main.js and dev.html as text for the wiring. Expected numbers are hand-derived, never read from the code under test:

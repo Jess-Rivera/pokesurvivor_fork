@@ -8,4 +8,4 @@
 - A throw empties its own slot in the save until a buy fills it. The catch screen shows the saved layout and starts on
   the best ball's first slot.
 
-Canonical: js/systems/catch.js header (belt) and js/ui/shop-balls.js header (arrange). Plan: docs/ASCII Concept Maps/137b - Belt Slots and Rearranging Plan.md.
+Canonical: js/systems/catch.js header (belt) and js/ui/shop-balls.js header (arrange). Plan: docs/AI Outputs/Issue-137/137b - Belt Slots and Rearranging Plan.md.

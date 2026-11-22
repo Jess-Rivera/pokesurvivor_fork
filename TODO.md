@@ -13,12 +13,12 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 3. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. #139 S8 8a: Jess OKs docs/ASCII Concept Maps/139a - Candy Build Plan.md (the fixed tier-to-size rule, whether the
+0. #139 S8 8a: Jess OKs docs/AI Outputs/Issue-139/139a - Candy Build Plan.md (the fixed tier-to-size rule, whether the
    elite berry and ground item stay beside the ladder, UberElite and elite counts), then build Parts A to G, tests
    first. Rulings: decision 2026-11-22-139-candy-target-and-drop-model.
 1. Grill #97 (upgrade rework). The starting-move picker (#150 folded in) waits on it, then needs a learnset rebake
    with levels and the egg-move unlock data.
-2. #139 8b evolve, then grill friendship (docs/ASCII Concept Maps/139 - Friendship Minutes Deep Dive.md, [Open]),
+2. #139 8b evolve, then grill friendship (docs/AI Outputs/Issue-139/139 - Friendship Minutes Deep Dive.md, [Open]),
    then 8c. #161 fatigue (stub) rides with it.
 3. #146 keep-or-sell list; #145 small and ready (may ride this branch). Then #140 to #143 and #162.
 4. #163 evolution materials shop tab (new, with #162): needs the type-to-material map and the shop price.

@@ -1,5 +1,5 @@
 // docs/proposals/debug-registry-harness.js: G.Debug is whole after debug.js is split into several files (F6,
-// docs/ASCII Concept Maps/F6 - Debug Split Plan.md). Node only; tools/check.js runs it.
+// docs/AI Outputs/Refactor-F-series/F6 - Debug Split Plan.md). Node only; tools/check.js runs it.
 // Usage from the repo root:  node docs/proposals/debug-registry-harness.js
 // Loads the real js/core/debug.js and every js/core/debug-*.js file in dev.html order, without ?dev, against a bare G.
 // Checks, all relations read from the files themselves (no list of command names is written here):

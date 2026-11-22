@@ -1,5 +1,5 @@
 /* ============ pause-run-info.js: the pause menu's Run Info panel, left of the ball (#91-2 part D) ============
- * Spec: docs/PAUSE-MENU.md section 6. Maps: docs/ASCII Concept Maps/91c (the mock) and 91-2D (the build).
+ * Spec: docs/PAUSE-MENU.md section 6. Maps: docs/AI Outputs/91c (the mock) and 91-2D (the build).
  * Everything about the run, or team wide / run wide; anything about one Pokemon is the detail panel's (Run Stats box).
  *
  * The game is held still while the menu is open, so read() takes ONE snapshot of the run when the menu opens (called by

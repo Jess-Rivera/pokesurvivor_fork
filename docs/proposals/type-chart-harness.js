@@ -4,7 +4,7 @@
 // [x0.25, x4] unless immune; an immune hit does 0 (it beats the floor of 1), has no side effects and no hurt feedback, shows a grey
 // Immune note at most once per 0.5 s per target, and applies on every target class; Power Stone pierces immunity for its type;
 // fixed-damage moves check immunity only; STAB 1.5 from every attacker after the +2; the stand-in wild Power is 27; flat damage
-// has no STAB; test dummies are typeless. Map: docs/ASCII Concept Maps/Entity Model Slice 4 - Hit Contract and Hard Typing.txt.
+// has no STAB; test dummies are typeless. Map: docs/AI Outputs/Gym Leader AI/Entity Model Slice 4 - Hit Contract and Hard Typing.txt.
 // Same engine setup as hit-parity-harness.js (which pins the numbers on every hit path); this file pins the 4b rules. Expected
 // values are worked by hand from the rules above, never copied from output. type-chart-mutate.js points the TY_* variables at
 // altered copies; every mutation must make this fail.

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>#39 Issue drafts</title>
+</head>
+<body>
+<main>
+<h1>#39 Issue drafts <span class="pill info">For you to apply</span> <span class="tag">feature/gym-leader-ai</span></h1>
+<p class="lede">Each Copy button gives one complete <code>gh</code> command for Git Bash. Paste it, press Enter. A, B, C and F any time; D and E after you push.</p>
+<style>
+  /* Standalone page (opened from file://): theme tokens are set here because the app does not inject them. */
+  :root {
+    color-scheme: dark;
+    --color-bg: #121218; --color-bg-secondary: #1b1b23; --color-surface: #23232d; --color-surface-hover: #2b2b37;
+    --color-border: rgba(255,255,255,0.13); --color-border-light: rgba(255,255,255,0.07);
+    --color-text: #ececf1; --color-text-secondary: #b0b0bc; --color-text-muted: #7a7a86;
+    --color-primary: #c084fc; --color-primary-bg: rgba(168,85,247,0.16); --color-primary-border: rgba(192,132,252,0.45);
+    --color-success-bg: rgba(34,197,94,0.14); --color-success-border: rgba(74,222,128,0.4); --color-success-dark: #4ade80;
+    --color-warning-bg: rgba(245,158,11,0.14); --color-warning-border: rgba(251,191,36,0.45); --color-warning-text: #fbbf24;
+    --color-info-bg: rgba(59,130,246,0.16); --color-info-border: rgba(96,165,250,0.45); --color-info-text: #93c5fd;
+    --color-error-bg: rgba(239,68,68,0.14); --color-error-border: rgba(248,113,113,0.45); --color-error-dark: #f87171;
+    --font-sans: 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    --radius-sm: 6px; --radius-md: 10px; --radius-pill: 17px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.45);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 28px 40px; background: var(--color-bg); color: var(--color-text);
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.55; }
+  main { max-width: 1040px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; font-weight: 650; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  h2 { font-size: 17px; margin: 0 0 10px; font-weight: 650; }
+  h3 { font-size: 14px; margin: 14px 0 6px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .lede { color: var(--color-text-secondary); margin: 0 0 18px; }
+  .pill { font-size: 12px; font-weight: 600; border-radius: var(--radius-pill); padding: 2px 10px; border: 1px solid; }
+  .ok { background: var(--color-success-bg); border-color: var(--color-success-border); color: var(--color-success-dark); }
+  .wait { background: var(--color-warning-bg); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .info { background: var(--color-info-bg); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .no { background: var(--color-error-bg); border-color: var(--color-error-border); color: var(--color-error-dark); }
+  .tag { font-family: var(--font-mono); font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-pill); padding: 1px 8px; color: var(--color-text-secondary); }
+  code { font-family: var(--font-mono); font-size: 13px; background: var(--color-surface); padding: 1px 5px; border-radius: 4px; }
+  .card { background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .leader { border-top: 4px solid var(--color-border); }
+  .leader.brock { border-top-color: #f59e0b; } .leader.misty { border-top-color: #38bdf8; }
+  .leader .who { font-size: 20px; font-weight: 700; } .leader .style { color: var(--color-text-secondary); margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--color-text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+  td.n { font-family: var(--font-mono); white-space: nowrap; }
+  tr:hover td { background: var(--color-surface-hover); }
+  .up { color: var(--color-success-dark); font-weight: 600; } .down { color: var(--color-error-dark); font-weight: 600; }
+  .same { color: var(--color-text-muted); }
+  ol, ul { margin: 6px 0 0; padding-left: 22px; } li { margin: 4px 0; }
+  .flow { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .node { flex: 1 1 140px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-size: 13px; }
+  .node b { display: block; font-size: 14px; } .node.new { background: var(--color-primary-bg); border-color: var(--color-primary-border); }
+  .node.same { opacity: 0.75; }
+  .arrow { align-self: center; color: var(--color-text-muted); font-size: 20px; }
+  .dec { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: start; padding: 10px 0;
+    border-bottom: 1px solid var(--color-border-light); }
+  .dec:last-child { border-bottom: none; } .dec .id { font-family: var(--font-mono); font-weight: 700; color: var(--color-primary); }
+  .dec .why { color: var(--color-text-secondary); font-size: 13px; margin-top: 2px; }
+  .callout { border-left: 4px solid var(--color-warning-border); background: var(--color-warning-bg); padding: 10px 14px;
+    border-radius: var(--radius-sm); margin: 8px 0; color: var(--color-warning-text); }
+  .muted { color: var(--color-text-muted); font-size: 13px; }
+  .copybox { position: relative; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: 12px 14px; white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; }
+  .copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 12px; cursor: pointer; border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary); border-radius: var(--radius-pill); padding: 2px 10px; transition: all 0.15s ease; }
+  .copy:hover { background: var(--color-surface-hover); }
+  .field { display: grid; grid-template-columns: 110px 1fr; gap: 8px; margin: 4px 0; }
+  .field .k { color: var(--color-text-muted); font-size: 13px; }
+  footer { color: var(--color-text-muted); font-size: 12px; margin-top: 24px; }
+</style>
+
+<style>
+  .copybox pre { margin: 0; padding-right: 64px; white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; }
+  .step { color: var(--color-text-secondary); margin: 0 0 10px; }
+</style>
+<div class="callout">Run from Git Bash, any folder (each command names the repo). D and E only after you push the commit that holds 39a.</div>
+<div class="card"><h2>A. Replace the title and body of #39</h2><p class="step">Done-condition 4 now reads "the two read as distinct"; the attack-time half moves to B.</p><div class="copybox"><button class="copy" data-target="cmdA">Copy</button><pre id="cmdA">gh issue edit 39 --repo Jess-Rivera/pokesurvivor_fork --title &quot;Leader AI slice 5b (39a): Brock and Misty personalities on the Decider&quot; --body-file - &lt;&lt;&#x27;EOF&#x27;
+Spec: docs/LEADER-AI.md (&quot;Authoring a leader&quot;, Build order 5b). Opening: docs/AI Outputs/Issue-39/39 - Slice Opening.html, decision 2026-11-14-39-opening-split-and-profile-test.
+
+**Goal:** Brock and Misty each get an authored personality on the Decider. Brock is a wall (patient, mid range, buffs early, rarely swaps, a little slow to react). Misty is tempo (kites at Water Pulse range, pushes when ahead, swaps for matchups, reads you fast). Built from goal weights, tag multipliers, `range`, `swapWill`, `risk`, `stubbornness` and an intelligence base plus growth. Signature actions and per-action overrides are not built (decision 2026-11-14-39-closes-on-feel-test-no-39b).
+
+**Done when:**
+1. The validator accepts the new keys within their limits and refuses unknown goals, unknown tags and out-of-range values.
+2. leader-ai-harness 16f passes: the personality settings checked as relations on made-up worlds (a goal weight raises only its goal, tag multipliers scale exactly their steps, range sets the band, intelligence growth never dulls a leader), plus the wiring.
+3. The rest of leader-ai-harness still passes (the 16e counter-play, learning and sharpness duels are retired: decision 2026-11-14-39-planner-checks-replace-duels).
+4. Jess&#x27;s feel test: the two read as distinct. (How much each fights versus moves is tuning, tracked in its own balance issue.)
+
+**Test:** leader-ai-harness 16f (planner inputs and outputs), 17f (the validator) and section 9 (the #59 reflex rule); leader-ai-mutate gains a mutant for each new wire, plus one for parking Bait.
+EOF</pre></div></div>
+<div class="card"><h2>B. Create the balance issue</h2><p class="step">Labels balance, area:gyms, ready. Its body names #39, so GitHub links the two.</p><div class="copybox"><button class="copy" data-target="cmdB">Copy</button><pre id="cmdB">gh issue create --repo Jess-Rivera/pokesurvivor_fork --title &quot;Tune Brock and Misty personalities (after the 39a feel test)&quot; --label balance --label area:gyms --label ready --body-file - &lt;&lt;&#x27;EOF&#x27;
+Picks up from #39 (decision 2026-11-14-39-closes-on-feel-test-no-39b). Jess&#x27;s 39a feel test: Brock and Misty read as distinct, but both are overtuned.
+
+- Brock closes the distance too much for a wall.
+- Misty spends too long moving and not enough fighting (the half of #39&#x27;s done-condition 4 that is not met yet).
+
+Starting notes, not approved: docs/AI Outputs/Issue-39/39a - Feel Test Retune Plan.html (Brock: range 250, approach x1.5, dash x2; Misty: Kite weight 1.2, retreat x1, risk 1.0). Read the overlay&#x27;s goal and step in play before changing a number.
+
+**Done when:** Jess&#x27;s feel test says Brock holds his spot and throws from range, and Misty stands and trades more than she runs. BALANCE.md &quot;Leader AI&quot; holds the final numbers, and leader-ai-harness 16f-a, 16f-b and 16f-c have their expected values re-worked by hand for them.
+EOF</pre></div></div>
+<div class="card"><h2>C. Comment on #60 (Bait)</h2><p class="step">Records today's numbers for the Bait ruling.</p><div class="copybox"><button class="copy" data-target="cmdC">Copy</button><pre id="cmdC">gh issue comment 60 --repo Jess-Rivera/pokesurvivor_fork --body-file - &lt;&lt;&#x27;EOF&#x27;
+Found in 39a (#39) on 2026-11-14 (leader-ai-harness 16f, Brock and Misty at loop 1): Bait was the running goal 97 to 98% of the time for Brock, Misty and both default-personality test leaders.
+
+Why: as written, any hit that lands while your best revealed move cools reaches Bait, so it needs no draw or dodge, and its base value (0.14) tops every other goal (Pressure 0.12; Endurance, Maintain, Kite 0.10). It played as a higher-valued Endurance, which is why it never planned a dodge.
+
+Parked in code now (decision 2026-11-14-bait-parked-in-code): the goal choice skips Bait. The search still plans it, so 16d keeps testing its plan shape, and the 16e Bait duel stays blocked here.
+
+For the ruling: if Bait comes back, its target likely needs a real setup step (a draw or a wait for your move) before the hit, not just a hit during your cooldown.
+EOF</pre></div></div>
+<div class="card"><h2>D. Comment on #39 (after the push)</h2><p class="step">What shipped, and the feel test result.</p><div class="copybox"><button class="copy" data-target="cmdD">Copy</button><pre id="cmdD">gh issue comment 39 --repo Jess-Rivera/pokesurvivor_fork --body-file - &lt;&lt;&#x27;EOF&#x27;
+39a landed on feature/gym-leader-ai (2026-11-14).
+
+Shipped:
+- Goal weights and tag multipliers are authorable in a gym&#x27;s `ai` (validated against the planner&#x27;s 9 goals and 11 tags, limits 0 to 3 and 0.25 to 4) and reach the planner through the settings and Belief.
+- Brock (wall) and Misty (tempo) authored, with intelligence growth 0.08 per loop. Numbers: BALANCE.md &quot;Leader AI&quot;.
+- Bait parked in code until #60 (it won 97 to 98% of think ticks for every leader).
+- Tests: leader-ai-harness 16f checks the personality settings as relations (no hard numbers), 17f the validator, section 9 the #59 reflex rule; the mechanics harnesses fight test leaders (tools/test-leaders.js). The 16e counter-play, learning and sharpness duels are retired (their scripted player stood still).
+
+check.js clean except gym-harness and leader-stats-harness (#30). All mutants caught.
+
+Feel test (Jess): the two read as distinct, only overtuned. Tuning continues in its own balance issue. 39b is not filed (decision 2026-11-14-39-closes-on-feel-test-no-39b).
+EOF</pre></div></div>
+<div class="card"><h2>E. Close #39 (after D)</h2><p class="step">Closing moves its card to Shipped by the board's automation, so no board command is needed.</p><div class="copybox"><button class="copy" data-target="cmdE">Copy</button><pre id="cmdE">gh issue close 39 --repo Jess-Rivera/pokesurvivor_fork --reason completed</pre></div></div>
+
+<div class="card"><h2>F. Create the test sweep issue</h2><p class="step">Labels area:docs, ready. Any time.</p><div class="copybox"><button class="copy" data-target="cmdF">Copy</button><pre id="cmdF">gh issue create --repo Jess-Rivera/pokesurvivor_fork --title &quot;Convert harness checks from hard-coded values to relations&quot; --label area:docs --label ready --body-file - &lt;&lt;&#x27;EOF&#x27;
+Decision 2026-11-14-tests-check-relations-not-values (docs/TEST-FIRST.md, The cycle, step 3): a check compares outputs the code produces (parity with your path, a setting doing what its name says on made-up inputs, wiring, the validator&#x27;s shape). No expected number is written into a test, and no check takes tuning data as its expectation.
+
+Already converted (2026-11-14): leader-ai-harness 16f, and leader-stats-harness&#x27;s Misty step B check.
+
+Still pinning numbers (known so far; search each harness for more):
+- leader-ai-harness: sections 15, 16a to 16d and 17 (hand-worked planner scores and costs, the intelligence curve values)
+- leader-stats-harness: sections a to h (hand-worked HP, factors and damage taken)
+- gym-harness: Brock&#x27;s and Misty&#x27;s real values (Geodude HP 1029, Tackle Power 52, Water Pulse 96 and the rest)
+- the move intent scenarios (docs/proposals/move-intent-harness.js, docs/move_rework_holding/move-intent-scenarios.json): CLAUDE.md&#x27;s Move review rule now asks for relations read from MOVE-INTENT
+- the other harnesses under docs/proposals, not yet surveyed
+
+**Done when:** no harness asserts a number from tuning data or a hand-worked value; each converted harness passes, and its *-mutate.js still catches every mutant (a mutant only a pinned number caught gets a relation check). One harness per pass.
+EOF</pre></div><p class="muted">No type label fits (bug, feature, balance, design); add one on github.com if you want it.</p></div>
+<footer>docs/LEADER-AI.md wins wherever this page differs. Written by the PokeSurvivor agent in Quick.</footer>
+</main>
+<script>
+document.querySelectorAll('.copy').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var t = document.getElementById(b.dataset.target).textContent;
+    var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1200); };
+    var fallback = function () { var a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select();
+      document.execCommand('copy'); a.remove(); done(); };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, fallback); else fallback();
+  });
+});
+</script>
+</body>
+</html>

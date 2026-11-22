@@ -1,5 +1,5 @@
 /* ============ debug-run-trace.js: the run pace trace (dev only, with ?dev) ============
- * #124 (docs/ASCII Concept Maps/124 - Run Pace Trace Plan.md, Jess 2026-11-15): under ?dev every run keeps a pace row
+ * #124 (docs/AI Outputs/Issue-124/124 - Run Pace Trace Plan.md, Jess 2026-11-15): under ?dev every run keeps a pace row
  * each full minute of run clock, a shop row when a shop pair appears, a visit row when you enter a shop (with what you
  * bought there) and an end row, so the economy pass can set prices from real runs. The last TRACE.runsKept runs are
  * kept. G.Game.runRecorder (run start, every map frame, run end) and G.Shops.recorder (pair placed, shop entered, move

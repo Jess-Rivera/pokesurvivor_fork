@@ -1,5 +1,5 @@
 // Entity model slice 7a: a leader's team and faint swaps (Node only). Usage from the repo root:  node docs/proposals/leader-team-harness.js
-// Plan: docs/ASCII Concept Maps/Entity Model Slice 7 - Leader Team and Faint Swaps.txt (approved 2026-11-07, Q1 to Q5).
+// Plan: docs/AI Outputs/Gym Leader AI/Entity Model Slice 7 - Leader Team and Faint Swaps.txt (approved 2026-11-07, Q1 to Q5).
 // Loads the REAL util, stats, pokedex, types, enemies, status, stages, enemy, player, gym-leader, team, team cards, the move sim and
 // effects, gyms, boss-ai, combat, gym and gym-arena, with stubs for the world, tiles, camera, FX, sound and the game. Drives the real
 // arena: open the gate, enter, faint the mon on the field, watch the send-out and the win. Expected values come from the map (beat

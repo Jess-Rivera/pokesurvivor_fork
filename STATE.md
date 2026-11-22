@@ -5,7 +5,7 @@ Last updated: 2026-11-22, home (Claude Code). Branch: feature/138-146-lost-and-f
 No branch rules file.
 
 ## START HERE (next session, either tool)
-1. #139 8a: read docs/ASCII Concept Maps/139a - Candy Build Plan.md (Proposed). Jess confirms the fixed
+1. #139 8a: read docs/AI Outputs/Issue-139/139a - Candy Build Plan.md (Proposed). Jess confirms the fixed
    tier-to-size rule (Uncommon S, Rare M, Epic L, Jackpot XL) and two opens: does the elite berry and ground item
    stay beside the ladder, and how many UberElites and elites a run holds. Then build Part A (the ladder in
    js/data/drops.js), tests first.

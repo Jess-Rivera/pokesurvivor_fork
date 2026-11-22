@@ -2,7 +2,7 @@
 // Usage from the repo root:  node docs/proposals/lost-pokemon-harness.js .
 // Real js/systems/events.js, catch.js, rescue.js, copies.js, js/core/db.js (a guest save, never stored) and the data
 // files, with stubbed engine globals (world, sprites, enemies). The expected outcomes are
-// relations from the slice opening (docs/ASCII Concept Maps/138 - Lost Pokemon Slice Opening.md, T1 to T6) and decision
+// relations from the slice opening (docs/AI Outputs/Issue-138/138 - Lost Pokemon Slice Opening.md, T1 to T6) and decision
 // 2026-11-21-138-floater-escort-hover-and-water-spots; the pool is rebuilt here from pokeapi's pokemon_species.csv and
 // the sprite hover flags, never from what events.js returns (docs/TEST-FIRST.md).
 // Not covered here: which liquids are safe. The world is stubbed, so the safe-liquid answer is the stub's; the rule

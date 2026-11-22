@@ -7,7 +7,7 @@
 // A plain script sharing the board's globals; it loads after run-shops-draft.js.
 'use strict';
 // ---------- looks: brightness ----------
-// B1 to B7 (Jess 2026-11-21, docs/ASCII Concept Maps/155 - Bond Selection Layout.md). A row or slot you can still
+// B1 to B7 (Jess 2026-11-21, docs/AI Outputs/Issue-155/155 - Bond Selection Layout.md). A row or slot you can still
 // pick dims to the HUD's inactive brightness; one that cannot bond is darker, as run.hud.forgetMove's disabled bond.
 const BOND_LOOK = {
   lit: 1,

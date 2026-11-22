@@ -1,6 +1,6 @@
 /* ============ gacha-ui.js: the Main Menu Shop (G.GachaUI; #149 rework) ============
  * The gacha is gone (#133, acquisition rework); the file keeps its old name. Mockups: assets/excalidraw/Shop-*.svg;
- * plan: docs/ASCII Concept Maps/149 - Shop Rework Opening.md. A window on the menu screens' 1920 x 1080 stage over the
+ * plan: docs/AI Outputs/Issue-149/149 - Shop Rework Opening.md. A window on the menu screens' 1920 x 1080 stage over the
  * dimmed Main Menu (css/bw-shop.css). Every buying rule lives in G.Items and G.Grounds; this file draws and routes input.
  *   rail     four icon tabs down the window's left edge (assets/ui/shop_icons/), top to bottom: Pokeballs (149e, its
  *            own file js/ui/shop-balls.js; #137 wires its buys), Character Upgrades (team item slots, berry slots), Team

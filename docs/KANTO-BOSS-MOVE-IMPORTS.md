@@ -1,6 +1,6 @@
 # Kanto boss move imports
 
-Every move the Kanto lore movesets call for that the move catalog does not have yet. Compiled 2026-11-01 from `docs/ASCII Concept Maps/Kanto Boss Movesets by Loop.txt` (gyms 2 to 8 and the Elite Four) against the 63 moves in `js/data/moves-generated.js`. Names, types, categories, power and generation come from pokeapi-master.
+Every move the Kanto lore movesets call for that the move catalog does not have yet. Compiled 2026-11-01 from `docs/AI Outputs/Gym Leader AI/Kanto Boss Movesets by Loop.txt` (gyms 2 to 8 and the Elite Four) against the 63 moves in `js/data/moves-generated.js`. Names, types, categories, power and generation come from pokeapi-master.
 
 ## Scope
 

@@ -6,6 +6,6 @@
   that 2026-11-19-155-dialog-clean-cancel-state-and-input-modes left pending.
 - A buy into a free slot does not ask (Silver, like coins, is earned again). Go Back returns to the popup panel.
 - Board: run.hud.moveMart, run.hud.trMart and the popup (run.hud.forgetMove, name to confirm); the ask is on the Modal
-  page's Negative sample. Applied at #126. Plan: docs/ASCII Concept Maps/155 - Run Shops Layout.md.
+  page's Negative sample. Applied at #126. Plan: docs/AI Outputs/Issue-155/155 - Run Shops Layout.md.
 
 Canonical: this file until #126 applies it.

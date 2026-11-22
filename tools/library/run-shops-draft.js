@@ -360,7 +360,7 @@ const RUN_SHOP_COMMON = `
     Leave (Neutral), at the bottom right. A Silver buy asks nothing (Jess 2026-11-20); a full roster opens
     ${nameButton('run.hud.forgetMove')}`)}
   ${runShopFact('Layout', `What you choose from comes first, the answer after it, one over the other: the two shops
-    mirror each other top to bottom (Jess 2026-11-21). Plan: docs/ASCII Concept Maps/155 - Run Shops Layout.md`)}`;
+    mirror each other top to bottom (Jess 2026-11-21). Plan: docs/AI Outputs/Issue-155/155 - Run Shops Layout.md`)}`;
 function moveMartSection() {
   return `<section class="lib-story" data-draft="run.hud.moveMart">
     <h3>${nameButton('run.hud.moveMart')} ${draftTag('composite: the Move Trainer (a board copy)')}</h3>

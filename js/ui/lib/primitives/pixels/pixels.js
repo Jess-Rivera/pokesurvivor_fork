@@ -4,7 +4,7 @@
  * game state. PixelPatterns (155c-2) defines the fills the shapes paint with by url(#id), once per page (the HUD's
  * root, the board). Moved unchanged from js/ui/hud-kit.js, which passes it on under the same names. Style: pixels.css.
  * The two-type rim (#128 catch.window) and letterRows are pure, so they are there even without Preact.
- * Plan: docs/ASCII Concept Maps/155b - Buttons Plan.md.
+ * Plan: docs/AI Outputs/Issue-155/155b - Buttons Plan.md.
  */
 G.Lib = G.Lib || {};
 G.Lib.Pixels = (() => {

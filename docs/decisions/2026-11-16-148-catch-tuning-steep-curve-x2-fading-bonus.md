@@ -9,6 +9,6 @@
 - Expected (from the formula, Poke Ball, half the clock left, per encounter of 3 throws): 4 star 32% at World Level 1, 23%
   from World Level 13; 3 star 56% then 41%; 1 star still sure at World Level 1.
 
-Plan: docs/ASCII Concept Maps/148 - Catch Odds Build Plan.md section 7. Supersedes the star values in
+Plan: docs/AI Outputs/Issue-148/148 - Catch Odds Build Plan.md section 7. Supersedes the star values in
 2026-11-16-148-catch-odds-mainline-shake-formula.
 Canonical: js/systems/catch.js header and its ODDS table.

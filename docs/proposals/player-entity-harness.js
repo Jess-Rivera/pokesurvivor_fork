@@ -2,7 +2,7 @@
 //   node docs/proposals/player-entity-harness.js
 // Under test: js/entities/player.js (the base class, the human subclass, the IDLE and KEYBOARD controllers) and, as text, the
 // controller reads in js/game.js, the NEED entry in js/main.js and the 14 isPlayer sites (js/systems/status.js, move-effects.js; the 14th is slice 4a's target routing).
-// Plan: docs/proposals/host-model-plan.md slice 3; map: docs/ASCII Concept Maps/Entity Model Slice 3 - PlayerEntity and HumanPlayer.txt.
+// Plan: docs/proposals/host-model-plan.md slice 3; map: docs/AI Outputs/Gym Leader AI/Entity Model Slice 3 - PlayerEntity and HumanPlayer.txt.
 // Real util.js and stats.js; the engine around the entity is stubbed, and the input, camera and sound stubs record every call.
 // Expected values are worked out by hand (DODGE 150 px in 0.5 s, Medium Fast XP 3L^2 + 3L + 1, the pre-slice field values),
 // never copied from output. The mutation runner (player-entity-mutate.js) points the PE3_* variables at altered copies.

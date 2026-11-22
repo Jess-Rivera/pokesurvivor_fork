@@ -15,5 +15,5 @@
 - D8: the pool is 324 species on 2026-11-21 (43 floaters), not 309; the test checks the rule, not the count.
 - D9: the recruit roll happens at delivery, not at spawn.
 
-Canonical: docs/ASCII Concept Maps/Old txt files/Acquisition v2 - Spec.txt section 5 (its [Open] build detail is
-answered here) and docs/ASCII Concept Maps/138 - Lost Pokemon Slice Opening.md.
+Canonical: docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt section 5 (its [Open] build detail is
+answered here) and docs/AI Outputs/Issue-138/138 - Lost Pokemon Slice Opening.md.

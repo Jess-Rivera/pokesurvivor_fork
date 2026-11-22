@@ -1,7 +1,7 @@
 // G.Team offline checks (Node only), entity model slice 2. Usage from the repo root:  node docs/proposals/team-harness.js
 // Under test: js/systems/team.js (members, active member, swap lock, swap and faint rules, shared stores, unspent links, bench
 // ticking), the Player.bonds accessor in js/entities/player.js, and as text the wiring in js/game.js, dev.html and js/main.js.
-// Plan: docs/proposals/host-model-plan.md slice 2; map: docs/ASCII Concept Maps/Entity Model Slice 2 - Team Module.txt.
+// Plan: docs/proposals/host-model-plan.md slice 2; map: docs/AI Outputs/Gym Leader AI/Entity Model Slice 2 - Team Module.txt.
 // Fighters are plain fakes with only the fields the Team touches. Expected values are worked out by hand from the plan and the
 // pre-slice game.js (5 s lock, 0.5 s i-frames, lowest living slot on a faint), never copied from output.
 // The real game is covered by tools/smoke-team.js (browser, file://). The mutation runner (team-mutate.js) points the TM_*

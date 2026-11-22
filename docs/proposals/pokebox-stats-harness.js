@@ -1,6 +1,6 @@
 // Pokebox step 4 (IVs and natures apply to stats), offline checks (Node only). Usage from the repo root:
 //   node docs/proposals/pokebox-stats-harness.js .
-// Plan: docs/ASCII Concept Maps/Pokebox 4 - IVs and Natures Apply.txt (D1 to D7). Rules: docs/COMBAT-RULES.md "Stats and HP".
+// Plan: docs/AI Outputs/Old txt files/Pokebox/Pokebox 4 - IVs and Natures Apply.txt (D1 to D7). Rules: docs/COMBAT-RULES.md "Stats and HP".
 // Loads the REAL js/core/stats.js, types.js, status.js, stages.js, js/entities/player.js, js/data/species-traits.js and
 // js/systems/copies.js with stubs (pattern: stat-stage-harness.js), and reads js/game.js as text for the buildFighter wiring.
 // Expected numbers are hand-derived from the mainline formula, never read from the code under test:
