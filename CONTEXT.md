@@ -9,7 +9,7 @@ All agent rules live in CLAUDE.md (the only full statement); read it with this f
 ## Session start (do this first, every session)
 1. Read this file and STATE.md (the short current handoff), plus the branch rules file STATE.md names, if any. Nothing else is required.
 2. Say where we left off and the top open items. ("Catch me up" means exactly this.)
-3. Read TODO.md (the short next-session handoff), then give the **catch-up briefing**, read-only (change nothing on GitHub; fixing things is /triage):
+3. Run `node tools/catchup.js` (it prints the whole briefing below and writes it to the gitignored catchup-latest.md; where a tool cannot run node or gh, Jess runs it and points the tool at that file). Relay it, adding a line or two of judgment (which items first, which drift matters). Only if the script is unavailable, build the briefing by hand: read TODO.md (the short next-session handoff), then give the **catch-up briefing**, read-only (change nothing on GitHub; fixing things is /triage):
    - Pull live state: `gh issue list --state open --json number,title,labels,updatedAt` and the PokeSwarm board (`gh project item-list 2 --owner Jess-Rivera --format json --limit 200`). The board wins over any file. If gh is unavailable (Quick), say so and fall back to the TODO.md list.
    - Report in about 15 lines, in this order:
      1. **Suggested for today:** the top 2 or 3 from TODO.md, plus any `priority:high` or `ready` issue not already on that list, each with its issue number and a one-line reason.
