@@ -59,8 +59,9 @@ const RULES = [
     id: 'decisions',
     matches: (rel) => /^docs\/decisions\/[^/]+\.md$/.test(rel),
     text:
-      '[rule:decisions] One file per decision, about 10 lines, cited by file name alone and never renamed. It carries a ' +
-      '`Canonical:` line naming the spec that holds the rule, and DECISIONS.md gets an index line. The task it implies goes in an issue.',
+      '[rule:decisions] One file per decision, about 10 lines, cited by file name alone and never renamed. It opens with ' +
+      'front matter (title, date, issues, area, canonical; see tools/decision-frontmatter.js, areas are the board labels) and ' +
+      'keeps a `Canonical:` line naming the spec that holds the rule. DECISIONS.md gets an index line. The task it implies goes in an issue.',
   },
 ];
 

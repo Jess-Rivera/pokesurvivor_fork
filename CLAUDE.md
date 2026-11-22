@@ -85,6 +85,9 @@ docs/proposals/hooks-harness.js and a log in .claude/hooks/hook-log.txt (shown b
 - inject-rules.js adds the one relevant rule (table in rules.js) the first time a session edits a matching path.
 - style-guard.js blocks a write that adds an em-dash. heavy-read-guard.js blocks a whole-file read of the big files
   named in "Efficient repository exploration" (a range read passes). doc-size.js reports STATE.md over 3 KB.
+- decision-frontmatter-guard.js blocks a new docs/decisions file without front matter (title, date, issues, area,
+  canonical; shape and area words in tools/decision-frontmatter.js, the area words are the board's area: labels);
+  node tools/check.js fails any decision file without it.
 - catchup-trigger.js runs tools/catchup.js when a prompt starts with "catch me up" or "catch up".
 - guard-git.js is the git and gh allowlist below.
 

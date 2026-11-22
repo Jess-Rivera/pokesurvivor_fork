@@ -134,6 +134,25 @@ const newSession = () => 'session-' + ++sessionCounter;
   if (parsed && parsed.hookSpecificOutput.hookEventName !== 'UserPromptSubmit') bad('the catch-up context names its event');
 }
 
+// decision-frontmatter-guard: a new decision file needs the five-field front matter, valid.
+{
+  const decisionPath = path.join(root, 'docs', 'decisions', '2026-11-22-harness-sample.md');
+  const block = (overrides = {}) => {
+    const fields = { title: '"A sample"', date: '2026-11-22', issues: '[139]', area: 'engine', canonical: '"docs/COMBAT-RULES.md"', ...overrides };
+    return '---\n' + Object.entries(fields).map(([key, value]) => key + ': ' + value).join('\n') + '\n---\n# body\n';
+  };
+  const write = (content, filePath = decisionPath) => run('decision-frontmatter-guard.js', { tool_name: 'Write', tool_input: { file_path: filePath, content } });
+  if (write(block()).code !== 0) bad('a decision file with valid front matter is allowed');
+  if (write('# 2026-11-22: no front matter\n').code !== 2) bad('a decision file with no front matter is blocked');
+  if (write(block({ area: 'banana' })).code !== 2) bad('an area outside the board vocabulary is blocked');
+  if (write(block({ date: '2026-10-01' })).code !== 2) bad('a date that does not match the file name is blocked');
+  if (write(block({ issues: '139' })).code !== 2) bad('issues that are not a list are blocked');
+  if (write(block({ canonical: '""' })).code !== 2) bad('an empty canonical is blocked');
+  if (write('# not a decision\n', path.join(root, 'docs', 'zz-harness-sample.md')).code !== 0) bad('files outside docs/decisions are not judged');
+  const missing = run('decision-frontmatter-guard.js', { tool_name: 'Write', tool_input: { file_path: decisionPath, content: '---\ntitle: "x"\n---\n' } });
+  if (missing.code !== 2 || !/missing field/.test(missing.err)) bad('a block names the missing fields');
+}
+
 // doc-size: STATE.md over 3 KB reports, under 3 KB stays silent.
 {
   const projectDir = path.join(scratch, 'project');

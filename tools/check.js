@@ -111,6 +111,18 @@ info(
         ')')
 );
 kbad += KG.bad.length;
+// 2d. Decision front matter guard: every docs/decisions/*.md carries the five front matter fields (tools/decision-frontmatter.js).
+const decisionFrontMatter = require('./decision-frontmatter.js');
+const decisionsDir = path.join(root, 'docs', 'decisions');
+const decisionFiles = fs.readdirSync(decisionsDir).filter((name) => name.endsWith('.md'));
+for (const name of decisionFiles) {
+  const problemList = decisionFrontMatter.problems(fs.readFileSync(path.join(decisionsDir, name), 'utf8'), name);
+  if (problemList.length) {
+    kbad++;
+    console.log('DECISION FRONT MATTER FAIL docs/decisions/' + name + '  ' + problemList.join('; '));
+  }
+}
+info('decision front matter: ' + decisionFiles.length + ' file(s) checked');
 // 3. Generated data: the move file must match its source JSON (no hand edits), every move must pass the grammar, and the resolver self-test and parity run must not crash;
 // the gym contact mask must match its PNG, and docs/ITEMS.md must match the item and drop data.
 let mbad = 0;
