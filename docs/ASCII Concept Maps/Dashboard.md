@@ -225,12 +225,26 @@ flowchart LR
 
 (Top 14 specs by tag count, up to 6 code files each. The HTML dashboard has the full list.)
 
+## Board (issues as of 2026-11-22)
+
+66 open, 96 closed. Specs and decisions cite 62 open and 77 closed issues.
+
+| Column | Open | Closed |
+|---|---|---|
+| Triage | 23 | 0 |
+| Shipped | 0 | 96 |
+| Blocked | 10 | 0 |
+| Accepted | 33 | 0 |
+
 ## Gap summary
 
 | Kind | Count |
 |---|---|
 | code no doc names | 63 |
 | open question | 46 |
-| approved, not built | 23 |
 | legacy behavior | 18 |
+| approved, not built, no issue | 18 |
+| open issue, no doc names it | 4 |
+| approved, not built | 3 |
+| approved, not built, issue closed | 2 |
 | decision without spec | 1 |

@@ -1,5 +1,6 @@
 // tools/dashboard.js: builds the project dashboard (design map, code map, gap list) from the repo's own files.
-// Usage: node tools/dashboard.js        writes out/dashboard.html and docs/ASCII Concept Maps/Dashboard.md
+// Usage: node tools/dashboard.js [--refresh]   (--refresh reads issues and board columns through gh first)
+//        writes out/dashboard.html and docs/ASCII Concept Maps/Dashboard.md
 // tools/check.js calls build() and verifies it against dev.html and the raw tag counts.
 // Nothing here is hand drawn: every node and edge is read from a doc, a decision file, dev.html or a js file.
 const fs = require('fs'),
@@ -48,6 +49,91 @@ function isLiveSpec(file) {
     .some((line) => NOT_LIVE_MARKER.test(line));
 }
 const listSpecFiles = () => listFiles('', (p) => p.endsWith('.md')).filter(isLiveSpec);
+
+// ---- issues and the board (read-only, from a local snapshot of `gh issue list`) ----
+const ISSUES_CACHE = 'out/issues.json';
+// "#155" in prose. Not "&#123;", not a URL fragment, and only 1 to 4 digits so colours like #ffd23f never match.
+const ISSUE_PATTERN = /(?:^|[^&\w/])#(\d{1,4})\b/g;
+const issueNumbers = (text) =>
+  [...new Set([...text.matchAll(ISSUE_PATTERN)].map((m) => Number(m[1])))].filter((n) => n > 0);
+// Decision files carry their issue number right after the date: 2026-11-15-124-economy-... or ...-137c-sell-...
+const decisionFileIssue = (file) => {
+  const m = path.basename(file).match(/^\d{4}-\d{2}-\d{2}-(\d{1,3})[a-z]?-/);
+  return m ? [Number(m[1])] : [];
+};
+
+function refreshIssues() {
+  const cp = require('child_process');
+  const json = cp.execFileSync(
+    'gh',
+    [
+      'issue',
+      'list',
+      '--state',
+      'all',
+      '--limit',
+      '1000',
+      '--json',
+      'number,title,state,labels,projectItems,url,closedAt,updatedAt',
+    ],
+    { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
+  );
+  fs.mkdirSync(path.join(root, 'out'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, ISSUES_CACHE),
+    JSON.stringify({ fetchedAt: new Date().toISOString(), issues: JSON.parse(json) })
+  );
+}
+
+function loadIssueSnapshot() {
+  try {
+    return JSON.parse(read(ISSUES_CACHE));
+  } catch (e) {
+    return null;
+  }
+}
+
+function buildBoard(design) {
+  const snapshot = loadIssueSnapshot();
+  if (!snapshot) return { available: false };
+  const citedBy = new Map(); // issue number -> files that cite it
+  const noteCitation = (n, file) => citedBy.set(n, [...new Set([...(citedBy.get(n) || []), file])]);
+  for (const spec of design.specs) for (const n of spec.issueRefs) noteCitation(n, spec.file);
+  for (const d of design.decisions) for (const n of d.issues) noteCitation(n, d.file);
+  const rows = snapshot.issues.map((i) => ({
+    number: i.number,
+    title: i.title,
+    state: i.state,
+    url: i.url,
+    labels: i.labels.map((l) => l.name),
+    column: (i.projectItems[0] && i.projectItems[0].status && i.projectItems[0].status.name) || null,
+    onBoard: i.projectItems.length > 0,
+    citedIn: citedBy.get(i.number) || [],
+  }));
+  const byNumber = new Map(rows.map((r) => [r.number, r]));
+  const columnNames = [...new Set(rows.map((r) => r.column || 'Not on the board'))];
+  const columns = columnNames.map((name) => ({
+    name,
+    open: rows.filter((r) => r.state === 'OPEN' && (r.column || 'Not on the board') === name).length,
+    closed: rows.filter((r) => r.state !== 'OPEN' && (r.column || 'Not on the board') === name).length,
+  }));
+  const cited = { open: 0, closed: 0, notAnIssue: 0 }; // notAnIssue: a PR number, or a number that is not an issue
+  for (const n of citedBy.keys()) {
+    const r = byNumber.get(n);
+    if (!r) cited.notAnIssue++;
+    else if (r.state === 'OPEN') cited.open++;
+    else cited.closed++;
+  }
+  const open = rows.filter((r) => r.state === 'OPEN').length;
+  return {
+    available: true,
+    fetchedAt: snapshot.fetchedAt,
+    rows,
+    columns,
+    cited,
+    totals: { all: rows.length, open, closed: rows.length - open },
+  };
+}
 
 // ---- code side ----
 function readLoadedScripts() {
@@ -138,6 +224,7 @@ function buildDesignMap() {
         items.push({
           file,
           line: i + 1,
+          issues: issueNumbers(line),
           kind: codeDiffers ? 'code differs' : found.includes('Legacy behavior') ? 'legacy' : 'open',
           text: line.replace(TAG_PATTERN, '').replace(/\s+/g, ' ').trim().slice(0, 220),
         });
@@ -147,23 +234,33 @@ function buildDesignMap() {
       cited.filter((p) => lines.filter((line) => line.includes(p)).every((line) => REMOVAL_WORDS.test(line)))
     );
     const total = TAGS.reduce((s, t) => s + counts[t], 0);
-    if (total || cited.length) specs.push({ file, counts, total, items, cited, citedOnlyAsRemoved });
+    const issueRefs = issueNumbers(lines.join('\n'));
+    if (total || cited.length) specs.push({ file, counts, total, items, cited, citedOnlyAsRemoved, issueRefs });
   }
   // decisions: one file each, with a Canonical: line naming the spec that holds the rule
   const decisions = listFiles('docs/decisions', (p) => p.endsWith('.md')).map((file) => {
     const text = read(file);
     const canonical = (text.match(/^Canonical:\s*(.+)$/m) || [])[1] || null;
     const targets = canonical ? resolveCanonicalTargets(canonical) : [];
-    return { file, canonical, targets };
+    return { file, canonical, targets, issues: [...new Set([...decisionFileIssue(file), ...issueNumbers(text)])] };
   });
   return { specs, decisions };
 }
 
 // ---- the gap list: where design and code disagree or one side is silent ----
-function buildGaps(code, design) {
+function buildGaps(code, design, board) {
   const gaps = [];
   const exists = (p) => fs.existsSync(path.join(root, p));
   const citedAnywhere = new Set(design.specs.flatMap((s) => s.cited));
+  const issueByNumber = board.available ? new Map(board.rows.map((r) => [r.number, r])) : new Map();
+  // Without a board snapshot every unbuilt item is just "approved, not built". With one, it is tracked, untracked,
+  // or contradicted by a closed issue.
+  const unbuiltKind = (item) => {
+    if (!board.available) return 'approved, not built';
+    const known = item.issues.map((n) => issueByNumber.get(n)).filter(Boolean);
+    if (!known.length) return 'approved, not built, no issue';
+    return known.every((r) => r.state !== 'OPEN') ? 'approved, not built, issue closed' : 'approved, not built';
+  };
   for (const spec of design.specs) {
     for (const p of spec.cited)
       if (!exists(p) && !spec.citedOnlyAsRemoved.has(p))
@@ -172,7 +269,7 @@ function buildGaps(code, design) {
       gaps.push({
         type:
           item.kind === 'code differs'
-            ? 'approved, not built'
+            ? unbuiltKind(item)
             : item.kind === 'legacy'
               ? 'legacy behavior'
               : 'open question',
@@ -195,6 +292,12 @@ function buildGaps(code, design) {
           ', which does not exist',
       });
   }
+  if (board.available) {
+    for (const r of board.rows.filter((row) => row.state === 'OPEN')) {
+      if (!r.onBoard) gaps.push({ type: 'issue not on the board', where: '#' + r.number, detail: r.title });
+      if (!r.citedIn.length) gaps.push({ type: 'open issue, no doc names it', where: '#' + r.number, detail: r.title });
+    }
+  }
   for (const mod of code.modules) {
     if (mod.missing)
       gaps.push({ type: 'broken reference', where: 'dev.html', detail: mod.path + ' is loaded but missing on disk' });
@@ -207,9 +310,10 @@ function buildGaps(code, design) {
 function build() {
   const code = buildCodeMap();
   const design = buildDesignMap();
-  const gaps = buildGaps(code, design);
+  const board = buildBoard(design);
+  const gaps = buildGaps(code, design, board);
   const tagTotals = Object.fromEntries(TAGS.map((t) => [t, design.specs.reduce((s, sp) => s + sp.counts[t], 0)]));
-  return { code, design, gaps, tagTotals, builtOn: new Date().toISOString().slice(0, 10) };
+  return { code, design, board, gaps, tagTotals, builtOn: new Date().toISOString().slice(0, 10) };
 }
 
 // ---- Mermaid output (the repo's standard format for maps) ----
@@ -257,6 +361,26 @@ function toMarkdown(data) {
     '(Top 14 specs by tag count, up to 6 code files each. The HTML dashboard has the full list.)',
     ''
   );
+  if (data.board.available) {
+    const b = data.board;
+    out.push(
+      '## Board (issues as of ' + b.fetchedAt.slice(0, 10) + ')',
+      '',
+      b.totals.open +
+        ' open, ' +
+        b.totals.closed +
+        ' closed. Specs and decisions cite ' +
+        b.cited.open +
+        ' open and ' +
+        b.cited.closed +
+        ' closed issues.',
+      '',
+      '| Column | Open | Closed |',
+      '|---|---|---|'
+    );
+    for (const c of b.columns) out.push('| ' + c.name + ' | ' + c.open + ' | ' + c.closed + ' |');
+    out.push('');
+  } else out.push('## Board', '', 'No issue snapshot. Run `node tools/dashboard.js --refresh`.', '');
   const byType = {};
   for (const g of data.gaps) (byType[g.type] = byType[g.type] || []).push(g);
   out.push('## Gap summary', '', '| Kind | Count |', '|---|---|');
@@ -267,6 +391,50 @@ function toMarkdown(data) {
 }
 
 // ---- HTML output (self contained, opens from disk) ----
+function boardToHtml(board) {
+  if (!board.available)
+    return '<h2>Board</h2><p style="color:var(--mut)">No issue snapshot yet. Run <code>node tools/dashboard.js --refresh</code> (needs <code>gh</code> signed in).</p>';
+  const issueLine = (r) =>
+    '<tr><td class="num"><a href="' +
+    esc(r.url) +
+    '">#' +
+    r.number +
+    '</a></td><td>' +
+    esc(r.title) +
+    '</td><td>' +
+    esc(r.labels.join(', ')) +
+    '</td><td class="num">' +
+    (r.citedIn.length || '') +
+    '</td></tr>';
+  const openColumns = board.columns
+    .filter((c) => c.open)
+    .map((c) => {
+      const rows = board.rows.filter((r) => r.state === 'OPEN' && (r.column || 'Not on the board') === c.name);
+      return (
+        '<details' +
+        (/playtest|triage/i.test(c.name) ? ' open' : '') +
+        '><summary><b>' +
+        esc(c.name) +
+        '</b> (' +
+        c.open +
+        ' open, ' +
+        c.closed +
+        ' closed)</summary><table><tr><th>#</th><th>Title</th><th>Labels</th><th class="num">Docs citing it</th></tr>' +
+        rows.map(issueLine).join('') +
+        '</table></details>'
+      );
+    });
+  return (
+    '<h2>Board</h2><p style="color:var(--mut)">Issues as of ' +
+    esc(board.fetchedAt.slice(0, 16).replace('T', ' ')) +
+    ' UTC (<code>--refresh</code> to update). Specs and decisions cite ' +
+    board.cited.open +
+    ' open and ' +
+    board.cited.closed +
+    ' closed issues.</p>' +
+    openColumns.join('')
+  );
+}
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function toHtml(data) {
   const { code, design, gaps, tagTotals } = data;
@@ -311,6 +479,7 @@ function toHtml(data) {
         '</td></tr>'
     )
     .join('');
+  const boardHtml = boardToHtml(data.board);
   const types = [...new Set(gaps.map((g) => g.type))].sort();
   const gapRows = gaps
     .map(
@@ -328,6 +497,13 @@ function toHtml(data) {
     .join('');
   const tiles =
     TAGS.map((t) => '<div class="tile"><b>' + tagTotals[t] + '</b><span>' + t + '</span></div>').join('') +
+    (data.board.available
+      ? '<div class="tile"><b>' +
+        data.board.totals.open +
+        '</b><span>open issues</span></div><div class="tile"><b>' +
+        data.board.rows.filter((r) => r.state === 'OPEN' && r.labels.includes('needs-playtest')).length +
+        '</b><span>need your playtest</span></div>'
+      : '') +
     '<div class="tile"><b>' +
     code.modules.length +
     '</b><span>code files loaded</span></div><div class="tile"><b>' +
@@ -354,6 +530,7 @@ function toHtml(data) {
     '<th class="num">Code files named</th></tr>' +
     specRows +
     '</table></div>' +
+    boardHtml +
     '<h2>Gaps</h2><p><label>Show <select id="f"><option value="">all kinds</option>' +
     types.map((t) => '<option>' + esc(t) + '</option>').join('') +
     '</select></label></p><div class="scroll"><table id="g"><tr><th>Kind</th><th>Where</th><th>Detail</th></tr>' +
@@ -366,6 +543,7 @@ function toHtml(data) {
 module.exports = { build, toMarkdown, toHtml, TAGS, TAG_PATTERN, readLoadedScripts, listSpecFiles };
 
 if (require.main === module) {
+  if (process.argv.includes('--refresh')) refreshIssues();
   const data = build();
   fs.mkdirSync(path.join(root, 'out'), { recursive: true });
   fs.writeFileSync(path.join(root, 'out/dashboard.html'), toHtml(data));
