@@ -188,11 +188,44 @@ try {
 } catch (e) {
   console.log('format: skipped (npm install to enable)');
 }
-const failed = bad || hbad || mbad || kbad;
+// 6. Dashboard (tools/dashboard.js): its code map must list exactly the non-vendor scripts dev.html loads, and its
+// design map must count exactly the requirement tags found by a raw scan of the same spec files.
+let dbad = 0;
+try {
+  const dash = require('./dashboard.js');
+  const data = dash.build();
+  const loaded = dash.readLoadedScripts().filter((p) => !p.startsWith('js/vendor/'));
+  const mapped = data.code.modules.map((m) => m.path);
+  if (loaded.join('|') !== mapped.join('|')) {
+    dbad++;
+    console.log('dashboard: code map differs from the scripts dev.html loads');
+  }
+  const specFiles = dash.listSpecFiles();
+  const rawTagCount = specFiles.reduce(
+    (sum, f) => sum + (fs.readFileSync(path.join(root, f), 'utf8').match(dash.TAG_PATTERN) || []).length,
+    0
+  );
+  const mappedTagCount = Object.values(data.tagTotals).reduce((a, b) => a + b, 0);
+  if (rawTagCount !== mappedTagCount) {
+    dbad++;
+    console.log('dashboard: design map counts ' + mappedTagCount + ' tags, raw scan finds ' + rawTagCount);
+  }
+  info('dashboard: ' + mapped.length + ' code files, ' + mappedTagCount + ' tags, ' + data.gaps.length + ' gap items');
+} catch (e) {
+  dbad++;
+  console.log('dashboard: crashed: ' + e.message);
+}
+const failed = bad || hbad || mbad || kbad || dbad;
 console.log(
   failed
     ? 'check: FAILED (' +
-        [bad && bad + ' syntax', hbad && hbad + ' harness', mbad && mbad + ' data', kbad && kbad + ' guard']
+        [
+          bad && bad + ' syntax',
+          hbad && hbad + ' harness',
+          mbad && mbad + ' data',
+          kbad && kbad + ' guard',
+          dbad && dbad + ' dashboard',
+        ]
           .filter(Boolean)
           .join(', ') +
         ')'
