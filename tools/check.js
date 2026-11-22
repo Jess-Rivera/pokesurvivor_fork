@@ -210,6 +210,23 @@ try {
     dbad++;
     console.log('dashboard: design map counts ' + mappedTagCount + ' tags, raw scan finds ' + rawTagCount);
   }
+  // Board: when an issue snapshot exists (node tools/dashboard.js --refresh), its totals must match the snapshot file.
+  if (data.board.available) {
+    const snapshot = JSON.parse(fs.readFileSync(path.join(root, 'out/issues.json'), 'utf8')).issues;
+    const columnTotal = data.board.columns.reduce((sum, col) => sum + col.open + col.closed, 0);
+    if (data.board.totals.all !== snapshot.length || columnTotal !== snapshot.length) {
+      dbad++;
+      console.log(
+        'dashboard: board counts ' +
+          data.board.totals.all +
+          '/' +
+          columnTotal +
+          ' differ from the ' +
+          snapshot.length +
+          ' issues in the snapshot'
+      );
+    }
+  }
   info('dashboard: ' + mapped.length + ' code files, ' + mappedTagCount + ' tags, ' + data.gaps.length + ' gap items');
 } catch (e) {
   dbad++;
