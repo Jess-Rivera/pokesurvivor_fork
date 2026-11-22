@@ -1,0 +1,255 @@
+/* Styles for the dashboard page (inlined by tools/dashboard.js). Colours are tokens so light and dark both work. */
+:root {
+  --bg: #ffffff;
+  --panel: #f5f7fb;
+  --fg: #1d2330;
+  --mut: #5d667a;
+  --line: #d3d8e4;
+  --acc: #2f6fed;
+  --bad: #d64545;
+  --warn: #d98e04;
+  --good: #2e9e5b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151c;
+    --panel: #1a1f2a;
+    --fg: #e6e9f2;
+    --mut: #9aa3b8;
+    --line: #2d3446;
+    --acc: #6b9bff;
+    --bad: #ff7b7b;
+    --warn: #f2b84b;
+    --good: #5cd18b;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.45 system-ui, sans-serif;
+}
+a {
+  color: var(--acc);
+}
+code {
+  background: var(--panel);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+header h1 {
+  font-size: 16px;
+  margin: 0;
+}
+header .stamp {
+  color: var(--mut);
+  font-size: 12px;
+}
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+nav button,
+.toolbar button {
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+nav button[aria-current='true'] {
+  background: var(--acc);
+  border-color: var(--acc);
+  color: #fff;
+}
+header input[type='search'] {
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-width: 200px;
+  margin-left: auto;
+}
+main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.graph {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  position: relative;
+}
+#cy {
+  flex: 1;
+  min-width: 0;
+}
+aside {
+  width: 340px;
+  max-width: 45%;
+  overflow: auto;
+  border-left: 1px solid var(--line);
+  background: var(--panel);
+  padding: 12px 14px;
+  font-size: 13px;
+}
+aside h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  word-break: break-all;
+}
+aside h4 {
+  margin: 12px 0 4px;
+  font-size: 12px;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+aside ul {
+  margin: 0;
+  padding-left: 18px;
+}
+aside li {
+  margin: 1px 0;
+  word-break: break-all;
+}
+aside .hint {
+  color: var(--mut);
+}
+.toolbar {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+.legend {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--mut);
+  max-width: 60%;
+}
+.scrollpage {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.tile {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 14px;
+  min-width: 100px;
+  background: var(--panel);
+}
+.tile b {
+  display: block;
+  font-size: 22px;
+}
+.tile span {
+  color: var(--mut);
+  font-size: 12px;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th,
+td {
+  border-bottom: 1px solid var(--line);
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+td.num,
+th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pill {
+  display: inline-block;
+  border-radius: 10px;
+  padding: 0 8px;
+  font-size: 12px;
+  border: 1px solid var(--line);
+}
+.pill.open {
+  color: var(--good);
+}
+.pill.closed {
+  color: var(--mut);
+}
+details {
+  margin: 6px 0;
+}
+summary {
+  cursor: pointer;
+}
+h2 {
+  font-size: 15px;
+  margin: 20px 0 6px;
+}
+select {
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+@media (max-width: 800px) {
+  .graph {
+    flex-direction: column;
+  }
+  aside {
+    width: 100%;
+    max-width: none;
+    height: 40%;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  header input[type='search'] {
+    margin-left: 0;
+    width: 100%;
+  }
+}
