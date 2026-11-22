@@ -425,3 +425,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-15
 - Broke: nothing. No game code touched.
 - Stopped at: the 8a build plan awaiting Jess's OK on the fixed tier-to-size rule and two open items (elite berry
   and ground item beside the ladder; UberElite and elite counts). Part A is next.
+
+## 2026-11-22 (home, Claude Code, evening): working-process cleanup
+- Built tools/catchup.js (one command prints the whole catch-up briefing with issue titles, writes gitignored
+  catchup-latest.md) and its harness. CONTEXT.md session start runs it; Quick reads the file Jess generates.
+- Renamed docs/ASCII Concept Maps to docs/AI Outputs, sorted 132 files into Issue-N and topic folders, rewrote every
+  path reference (153 files), updated the CLAUDE.md output-format rule (chat first, Mermaid file only for real plans).
+- Merged the STATE and TODO overlap, dropped the stale issues-by-area list, refreshed the memory files.
+- Broke: nothing. check.js passes. Stopped at: #139 8a awaiting the three candy plan answers.
