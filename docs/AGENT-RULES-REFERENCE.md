@@ -52,7 +52,7 @@ The assistant MAY:
 - Read-only git: status, diff, log, show, blame, branch (list only), ls-files, ls-tree, rev-parse, config --get,
   remote -v, `git fetch`.
 - Stage and commit on the branch Jess has checked out (add, commit). Commit at slice boundaries once
-  `node tools/check.js` and `npm run format` are clean, and at session end, so a tool switch never starts from a
+  `node tools/check.js` and `npm run format` are clean (a commit with no code skips both), and at session end, so a tool switch never starts from a
   dirty tree. Never --amend, never --no-verify.
 - GitHub through `gh`: create, edit, comment on, label, close and reopen issues; create labels; add and edit board
   items on the PokeSwarm project (the token needs the `project` scope, Jess runs `gh auth refresh -s project`);

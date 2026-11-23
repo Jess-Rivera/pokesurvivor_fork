@@ -86,7 +86,7 @@ It is an allowlist: a git or gh command not named here is blocked until Jess dec
 without hooks (Amazon Quick) follow the same list on trust.
 
 The assistant MAY: read git state (status, diff, log, show, fetch and the other read-only commands); stage and commit on
-the branch Jess has checked out, at slice boundaries once `node tools/check.js` and `npm run format` are clean and at
+the branch Jess has checked out, at slice boundaries once `node tools/check.js` and `npm run format` are clean (a commit with no code skips both) and at
 session end (never --amend, never --no-verify); and use `gh` to read anything and to create, edit, comment on, label,
 close and reopen issues, create labels, edit board items and open a PR from a branch Jess already pushed.
 
