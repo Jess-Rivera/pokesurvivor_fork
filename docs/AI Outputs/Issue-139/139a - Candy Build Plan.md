@@ -1,4 +1,4 @@
-# 139a - Candy Build Plan (S8 8a of #128, 2026-11-22, PROPOSED, awaiting Jess's OK to build)
+# 139a - Candy Build Plan (S8 8a of #128, 2026-11-22, APPROVED by Jess, building)
 
 Opening, rulings and numbers: docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md and decision
 2026-11-22-139-candy-target-and-drop-model. No code in this plan. Principles applied: .claude/skills/coding-principles.
@@ -6,9 +6,10 @@ Opening, rulings and numbers: docs/AI Outputs/Issue-139/139 - Candy and Evolutio
 # Summary of 8a: the system and the decisions
 
 ## In one paragraph
-Exp Candy is the way a copy grows between runs. Gym leaders, elites and UberElites drop candy through a drop ladder:
-a table of rarity tiers rolled rarest first, stopping at the first hit, with a guaranteed bottom tier. Every kill of a
-gym leader gives at least its base candy, and a rare roll upgrades it. Candy goes straight into a bag on the save.
+8a builds the ONE drop function every loot drop in the game will use: a table's rarity tiers are rolled rarest
+first, the roll stops at the first hit (Common when nothing rarer hits), and that tier's weighted list picks the
+result. Exp Candy is the first user: gym leaders, elites and UberElites roll candy tables through it, and a lucky hit
+above Common simply gives that tier's bigger candy. Candy goes straight into a bag on the save.
 In the Team menu you give candy to a copy (one at a time, or "Give until [level]"). The copy's out-of-run (OOR) level
 and an XP meter rise along its species' mainline growth curve, up to level 100. The OOR level sets only its evolution
 stage and the moves it may start a run with. It changes no stat in a run, and every run still starts at level 1.
@@ -18,10 +19,10 @@ stage and the moves it may start a run with. It changes no stat in a run, and ev
 ```mermaid
 flowchart LR
   subgraph src["Sources"]
-    G["Gym leader<br/>floor: base candy"]
-    E["Elite and UberElite<br/>floor: weighted coins, item, candy"]
+    G["Gym leader<br/>candy table, Common: base candy<br/>(own item table, as today in 8a)"]
+    E["Elite and UberElite<br/>one mixed table, Common:<br/>weighted coins, item, candy"]
   end
-  src --> L["Drop ladder (G.Drops)<br/>N rolls on loop N<br/>Jackpot, Epic, Rare, Uncommon, Common"]
+  src --> L["The drop function (G.Drops)<br/>roll count set per source (loop N here)<br/>Jackpot, Epic, Rare, Uncommon, Common"]
   L --> B["Candy bag on the save<br/>counted stacks per size"]
   B --> Give["Team menu: Give, or Give until [level]"]
   Give --> X["Copy's candy XP<br/>(new save key, 0 by default)"]
@@ -35,19 +36,25 @@ flowchart LR
 |---|---|---|
 | Target | One full run (loop 6 done, 8 gyms and 4 Elite Four per loop) lets the median 3-stage, fully level-based line reach its last evolution: 40,007 XP (the Charizard line, level 36). Computed from pokeapi per evolution path (76 paths, p25 33,084, p75 74,088). | [Approved] |
 | Candy sizes | Canon, never scaled: XS 100, S 800, M 3,000, L 10,000, XL 30,000 XP. | [Approved] |
-| Base (the floor) | Gym leaders and Elite Four, 100%, count = loop number (21 loop-shares, 252 drops a run). Gym 8 drops S every loop, the last Elite Four beaten drops S on loop 6 only, every other source XS: 44,100 XP, 10% over target. It is a hard floor: upgrades only add. | [Approved] |
-| Drop ladder | A drop table is N rarity tiers rolled rarest first, each with its own chance, stop at the first hit, bottom tier guaranteed. Loop N means N ladder rolls. One new entry type in G.Drops. | [Approved] |
+| Base (the floor) | Gym leaders and Elite Four, 100%, count = loop number (21 loop-shares, 252 drops a run). Gym 8 drops S every loop, the last Elite Four beaten drops S on loop 6 only, every other source XS: 44,100 XP, 10% over target. This is every roll landing on Common; a luckier hit gives a bigger candy instead. | [Approved] |
+| The drop function | The ONE flow for every loot drop in the game. Tiers rolled rarest first, stop at the first hit, then the tier's weighted list picks the result. 8a moves the candy sources only; the rest move in a later slice. | [Approved] |
+| Common | Every table has one. It has no chance: the roll lands on it when nothing rarer hits. | [Approved] |
+| Skipped tiers | A table may name only some tiers. A tier it does not name is never rolled, and its chance falls through to Common. | [Approved] |
+| Tier lists | Every tier holds a weighted list; a candy tier is a list of one. "Nothing" is a valid result. | [Approved] |
+| Roll count | Set per source. Gyms, Elite Four, elites and UberElites roll the loop number. | [Approved] |
 | Tier names | Common, Uncommon, Rare, Epic, Jackpot (rolled in that reverse order). Never candy sizes; every table uses them. | [Approved] |
-| Tier to candy | Fixed for every source: Uncommon S, Rare M, Epic L, Jackpot XL. A source supplies only its floor. A tier at or below the floor is no upgrade. | [Approved] |
-| Tier chances | Per roll: Uncommon 1%, Rare 0.4%, Epic 0.1%, Jackpot 0.02%. Tunable, accepted for now. | [Approved] for now |
-| Elite and UberElite floor | A weighted pick of what the kill gives (table below). Upgrade tiers replace the floor with candy. | [Approved] |
+| Tier contents | Each table names its own. (The earlier "fixed tier to size for every source" rule is rejected: it read "upgrade" literally.) | [Approved] |
+| Tier chances | One global set per roll: Uncommon 1%, Rare 0.4%, Epic 0.1%, Jackpot 0.02%. Tunable, accepted for now. | [Approved] for now |
+| Tables per source | Exp Candy is its own table. Gym leaders also roll an item table (items, coins, unique drops), which stays as today's 10 coins and guaranteed item in 8a. Elites and UberElites roll one mixed table. | [Approved] |
+| Elite and UberElite drop | One mixed table; its Common is the weighted pick below. It replaces the old berry, ground item and 50% item chance. | [Approved] |
+| Candy tables | The tables in "Candy tables" below (Jess, 2026-11-22). | [Approved] |
 | The bag | Counted stacks per size. A drop is banked the moment it is earned and kept even if the run is lost. | [Approved] |
 | Giving | One candy per press, hold repeats. Refused only at OOR level 100. A copy whose next evolution has no level still levels, since the OOR level also sets its starting moves. | [Approved] |
 | Give until | The largest candy that fits without overshooting, repeated, then the smallest that covers the remainder. May overshoot the target level, stops at 100, reports the level reached if the bag runs out. Its input control is decided at Part F. | [Approved] |
 | Meter | The copy's card shows the OOR level, an XP bar to the next level and a tick at the next level-based evolution (none when there is none). | [Approved] |
 | Scope | Candy only. The gym's 10 coins and guaranteed item stay as they are. | [Approved] |
 
-Elite and UberElite floor (weights, as a proposal turned ruling): the chances are the weight over the total of 120.
+Elite and UberElite Common tier (weights): the chances are the weight over the total of 120.
 
 | Floor result | Weight | Share |
 |---|---|---|
@@ -68,28 +75,39 @@ Elite and UberElite floor (weights, as a proposal turned ruling): the chances ar
 | Target | 40,007 XP (median, 3-stage, fully level-based) |
 | Average a drop would need | 40,007 / 252 = about 159 XP, which is why canon sizes force a mostly-XS floor |
 | Dragonite (207,968) | about 4.7 full runs on the base alone |
-| Upgrade value | about 35 XP a gym roll with the first-pass chances (tunable) |
+| Smallest floor that clears it | Gym 8 dropping XS too gives 39,900, 107 XP short, so gym 8's S Common is the smallest canon floor |
 
-## Why the tier-to-size rule is fixed
+## Candy tables [Approved]
 
-```mermaid
-flowchart TD
-  A["Option rejected: tiers step up from the floor<br/>Uncommon +1, Rare +2, Epic +3, Jackpot +4, capped at XL"] --> B["Gym 8, floor S: Epic and Jackpot both reach XL<br/>XL = 0.1% + 0.02% = 0.12%<br/>six times the XL chance of gyms with an XS floor"]
-  C["Chosen: tiers map to fixed sizes<br/>Uncommon S, Rare M, Epic L, Jackpot XL"] --> D["Every source has the same XL, L and M chances<br/>Gym 8 differs only by its floor<br/>An Uncommon hit at floor S is no upgrade"]
-```
+| Table | Common | Uncommon | Rare | Epic | Jackpot | Rolls |
+|---|---|---|---|---|---|---|
+| Gyms 1 to 7, Elite Four | XS | S | M | L | XL | loop number |
+| Gym 8, the last Elite Four on loop 6 | S | (not named) | M | L | XL | loop number |
+| Elite and UberElite (mixed) | the weighted pick above | S | M | L | XL | loop number |
+
+Gym 8 does not name Uncommon, since an Uncommon S would equal its Common; that 1% falls through to Common.
+
+| Case (gyms and Elite Four only) | Full run XP | Against 40,007 |
+|---|---|---|
+| Every roll lands on Common | 44,100 | +10% |
+| Expected with the global chances | about 52,500 | +31% |
+
+Expected per roll: about 134 XP on an XS table (100 on Common alone), about 825 on gym 8's table (800 alone).
+Elite candy is a bonus outside the target, since the elite count per run is not fixed. If +31% is too generous,
+the global chances are the dial; the tables stay.
 
 ## What 8a does not do
 Evolve and the ready popup (8b), friendship and fatigue (8c, #161), the starting-move picker (after #97), evolution
-materials and their shop tab (#163, #162), coins and items as ladders, the Elite Four source (the Elite Four is not
+materials and their shop tab (#163, #162), moving the other drop tables to the function, the Elite Four source (the Elite Four is not
 built), a chance multiplier per source, a candy sprite on the map, and anything about the loop counter itself.
 
 # Opening items
 
 | Item | Text |
 |---|---|
-| Goal | Gym leaders, elites and UberElites drop Exp Candy through a drop ladder into a bag; the player gives it to a copy in the Team menu; the copy's OOR level and XP meter rise along its mainline curve up to 100. |
+| Goal | The one drop function exists, and gym leaders, elites and UberElites drop Exp Candy through it into a bag; the player gives it to a copy in the Team menu; the copy's OOR level and XP meter rise along its mainline curve up to 100. |
 | Done when | 1. The candy harness passes inside `node tools/check.js` and its mutants are all caught. 2. Jess feel tests: beat a gym, see the drop toast, give candy, watch the meter move, reload (it survives), load an old save (every copy at 0, bag empty). 3. #139 comment, card to Needs Playtest, spec section 6, BALANCE.md, GLOSSARY and changelog updated. |
-| End-goal test | Relations, not values (docs/TEST-FIRST.md). The first one written is the floor: with every upgrade roll forced to miss, a full run's base candy still reaches the median 3-stage fully level-based line's XP, read from pokeapi by the harness on its own. |
+| End-goal test | Relations, not values (docs/TEST-FIRST.md). The first one written is the floor: with every roll forced to land on Common, a full run's candy still reaches the median 3-stage fully level-based line's XP, read from pokeapi by the harness on its own. |
 
 # Build plan
 
@@ -97,8 +115,8 @@ built), a chance multiplier per source, a candy sprite on the map, and anything 
 
 ```mermaid
 flowchart TD
-  K["a source is beaten<br/>gym leader, elite or UberElite"] --> N["rolls = the loop number N<br/>(gym.js loop, dev-set until the loop counter exists)"]
-  N --> L["one ladder roll, repeated N times"]
+  K["a source is beaten<br/>gym leader, elite or UberElite"] --> N["rolls = the source's roll count<br/>(here the loop number N: gym.js loop,<br/>dev-set until the loop counter exists)"]
+  N --> L["one roll per table, repeated per the roll count<br/>a tier the table does not name is skipped"]
   L --> J{"Jackpot hit?"}
   J -- yes --> Pick
   J -- no --> E{"Epic hit?"}
@@ -107,8 +125,8 @@ flowchart TD
   R -- yes --> Pick
   R -- no --> U{"Uncommon hit?"}
   U -- yes --> Pick
-  U -- no --> C["Common: the guaranteed floor<br/>gym: the base candy<br/>elite: the weighted floor table"]
-  C --> Pick["the tier's result is picked, the roll stops<br/>(a tier at or below the floor gives the floor)"]
+  U -- no --> C["Common: every table has one<br/>gym candy: the base candy<br/>elite: the weighted coins, item, candy pick"]
+  C --> Pick["the roll stops on that tier<br/>its weighted list picks the result<br/>(nothing is a valid result)"]
   Pick --> Bank["candy goes straight into the bag<br/>coins and items are placed as today"]
   Bank --> T["one toast per kill summing the candy"]
 ```
@@ -118,7 +136,7 @@ flowchart TD
 ```mermaid
 flowchart LR
   subgraph data["js/data"]
-    D1["drops.js<br/>ladder entry type, tier names,<br/>tier to size table, per-source ladders"]
+    D1["drops.js<br/>the drop function (tiered entry type),<br/>tier names, global chances, candy tables"]
     D2["growth-curves.js (NEW, generated)<br/>XP curves, rate per species,<br/>level of next level-up evolution"]
     D3["gyms.js<br/>candyBase per gym, validated"]
   end
@@ -142,18 +160,19 @@ flowchart LR
   S1 --> C2
 ```
 
-## Part A: the drop ladder (js/data/drops.js)
-- What changes: one new entry type, the ladder: tiers rolled rarest first, each with its own chance, stop at the
-  first hit, the bottom tier guaranteed. An entry also carries how many times it rolls (the loop number).
-  One constant lists the tier names in order, so every table spells them the same way. A tier's result can be a
-  bundle (the elite floor's "coins and an item" and "coins, an item and candy" are single weighted results that
-  give several things).
-- Reuses: the existing TABLES, source names, `make`/`place` path and the rule that an entry with no chance is
-  guaranteed. The `oneOf` shared-roll logic stays for the tables that use it.
-- New: the ladder branch in `roll`, the tier-name list, the tier-to-size table, the per-roll count read from the ctx
-  the caller passes, the bundle result.
-- Not built: the chance multiplier, coins and the gym's guaranteed item as ladders (own later slice), a ladder for
-  materials (#163, #162), per-source tier overrides nothing reads yet.
+## Part A: the drop function (js/data/drops.js)
+- What changes: one new entry type, the tiered table, built to be the flow every loot drop will use: tiers rolled
+  rarest first with the one global chance set, stop at the first hit, land on Common when nothing rarer hits, then
+  the tier's weighted list picks the result. A table names only the tiers it uses; an unnamed tier is skipped and its
+  chance falls through to Common. A table without Common fails `validate()`. "Nothing" is a valid list entry. A
+  result can be a bundle (the elite's "coins and an item" and "coins, an item and candy" give several things). The
+  roll count comes from the source.
+- Reuses: the existing TABLES, source names, `make`/`place` path. The old entry types and `oneOf` stay for the
+  tables not moved yet.
+- New: the tiered branch in `roll`, the tier-name list and global chance set (one constant each), the roll count read
+  from the ctx the caller passes, the bundle result, the Common check in `validate()`.
+- Not built: the chance multiplier, moving the other tables (wild drops, berries, ground items, the gym's 10 coins and
+  guaranteed item) to the function (own later slice), materials tables (#163, #162).
 - Where it lives: drops.js already says it is "the ONE place that decides what enemies and events drop".
 - Size: drops.js 183 lines grows to about 260.
 
@@ -185,15 +204,17 @@ flowchart LR
 - Not built: evolution data beyond that one level (8b brings the rest).
 
 ## Part E: wiring the sources (gym-leader.js, elite.js, uber-elite.js, gyms.js)
-- What changes: the gym leader's drop roll and the elite's and UberElite's roll pass the loop number. gyms.js
-  entries get one new field naming the floor size (default XS, gym 8 is S), checked by its `validate()`.
+- What changes: the gym leader rolls its candy table beside its current drops, and the elite's and UberElite's
+  mixed table replaces their current drops; each passes its roll count (the loop number). gyms.js entries get one
+  new field naming which candy table the gym rolls (default the XS table, gym 8 its S table), checked by its
+  `validate()`.
 - Reuses: G.Drops.roll and the loop value gym.js already holds.
 - Not built: the Elite Four source and the "last Elite Four beaten drops S on loop 6" line. The Elite Four is not
   built in code, so that row waits in the spec as [Approved] with a "code differs, see TODO" note. The loop counter
   is dev-set today, so a real run is loop 1 until the loop slice; the harness and G.Debug.candy drive loops 1 to 6.
 - Elites still run the temporary cadence (first 2:00, then every 6:00). Not changed here.
-- Behavior change [Approved]: elites and UberElites now always drop something (the floor table), and on loop N they
-  roll N times. The floor table replaces the old berry, ground item and 50% item chance (Jess, 2026-11-22).
+- Behavior change [Approved]: elites and UberElites now always drop something (their mixed table), and on loop N
+  they roll N times. It replaces the old berry, ground item and 50% item chance (Jess, 2026-11-22).
 
 ## Part F: the Team menu (js/ui/menu-team-copies.js)
 - What changes: a copy's card shows its OOR level, an XP bar to the next level and a tick at the next level-based
@@ -207,7 +228,7 @@ flowchart LR
 - Size: 275 lines grows to about 450.
 
 ## Part G: dev and docs
-- G.Debug.candy adds candy to the bag and prints a simulated full run's base and sampled upgrades, so tuning does
+- G.Debug.candy adds candy to the bag and prints a simulated full run's all-Common total and a sampled lucky run, so tuning does
   not need a real run. Dev only.
 - Docs: spec section 6, BALANCE.md (the tier chances and the elite floor weights), GLOSSARY (drop tier, tier names,
   candy size, bag), the `js/data/changelog.js` entry (free edit, parse-checked), the #139 comment, the board card.
@@ -216,11 +237,12 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-  F["Floor<br/>all upgrades forced to miss, a full run's base >= median XP"] --- M["Ladder shape<br/>chance falls from Common to Jackpot,<br/>candy never below its floor, each size's chance the same at every source"]
-  M --- S["Stop at first hit<br/>one result per roll"]
+  F["Floor<br/>every roll forced to Common, a full run's candy >= median XP"] --- M["Table shape<br/>every table has Common, chance falls from Common to Jackpot,<br/>a gym's candy grows from Common to its rarest named tier"]
+  M --- Sk["Skipped tier<br/>never returned, its chance lands on Common"]
+  Sk --- S["Stop at first hit<br/>one tier per roll, then one pick from its list"]
   S --- Lp["Loops<br/>N rolls on loop N"]
   Lp --- Ef["Effective chance<br/>seeded sample matches p x (1 - rarer)"]
-  Ef --- Fl["Elite floor<br/>shares match the weights, bundles give all their parts"]
+  Ef --- Fl["Elite Common<br/>shares match the weights, bundles give all their parts"]
   Fl --- G["Giving<br/>bag down by one, XP up by that size, never below 0"]
   G --- R["Refusal at level 100, give until ends at or past the target, bag empty reports the level"]
   R --- O["Old saves, hand-edited saves, save round trip"]
@@ -228,22 +250,26 @@ flowchart TD
 ```
 
 - Every expected outcome is a relation read from the decision file, never a value copied from the code.
-- This is a genuinely new system, so it gets a new harness. If a drops harness already covers G.Drops, the ladder
+- This is a genuinely new system, so it gets a new harness. If a drops harness already covers G.Drops, the drop function
   cases go there instead (checked at build).
-- The mutants (docs/proposals/candy-mutate.js): tiers rolled commonest first, the stop is missing, the floor is
-  missing, the tier sizes stepped from the floor (the rejected rule), loops ignored, giving does not reduce the bag,
-  refusal at 100 removed, the bag defaults removed.
+- The mutants (docs/proposals/candy-mutate.js): tiers rolled commonest first, the stop is missing, Common is
+  missing, a table without Common accepted, a skipped tier's chance moved to the next named tier instead of Common,
+  the roll count ignored, giving does not reduce the bag, refusal at 100 removed, the bag defaults removed.
 
 ## Risks
 - The loop counter does not exist, so "N rolls on loop N" is proven by the harness and G.Debug.candy, not by a real
   run beyond loop 1.
-- Elite and UberElite floors raise how much drops per kill on later loops (N guaranteed drops on loop N); the
+- Elite and UberElite tables raise how much drops per kill on later loops (N guaranteed drops on loop N); the
   weights above decide how loud that is.
-- The upgrade rate (about 35 XP a gym roll) is a first pass and tunable; expect a tuning pass after the first runs.
+- The luck above Common (about 34 XP a roll on an XS table, +31% over target expected) is a first pass and tunable;
+  expect a tuning pass after the first runs.
+- The function is built for every drop but only candy uses it in 8a, so its fit for wild drops is unproven until the
+  migration slice.
 
 ## Touched-code cleanups (listed so the approval covers them)
 None planned. If the build finds a misleading name in a line it already edits, it lists it before changing it.
 
 ## Not built (deferred)
-Evolve and the ready popup (8b), friendship and fatigue (8c, #161), the materials ladder and shop tab (#163, #162),
-coins and items as ladders, the chance multiplier, the Elite Four source, the starting-move picker (after #97).
+Evolve and the ready popup (8b), friendship and fatigue (8c, #161), the materials tables and shop tab (#163, #162),
+moving the other drop tables to the function, the chance multiplier, the Elite Four source, the starting-move picker
+(after #97).
