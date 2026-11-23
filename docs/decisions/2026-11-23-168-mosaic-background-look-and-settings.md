@@ -15,8 +15,7 @@ canonical: "this file and the values in tools/library/background-draft.js until 
   cuts the teal light and leaves waves in it, like an object moving through water. About 37 s to full rest is kept.
 - [Approved] Two settings: level-up starburst off, and static background instead of animated (performance).
 - [Approved] It waits and mounts with the new Team menu (#167); today's Team screen does not get it.
-- Rings a second showed no difference from 0 to 8 (Jess), so the build leaves it out.
-- [Open] Whether the look still holds after a reload (the paste came from a copy without the rings and level fix), and
-  whether the build spreads the star-shape cost (four overlapping bursts cost about 21 ms a frame).
+- [Approved] The look holds after the level fix, with rings a second at 2. The build works out each burst's star shape
+  once, to cut the cost of overlapping bursts (four cost about 21 ms a frame on the tuning page).
 
 Canonical: this file and the values in tools/library/background-draft.js until #168 builds the library piece.

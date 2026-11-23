@@ -24,7 +24,6 @@ TODO.md "Next" has the order. Run `node tools/catchup.js`.
 - Board fixes are in TODO.md item 6. Canvas HUD holdouts in js/ui/hud.js stay (Jess).
 
 ## Open owner decisions
-- #168: look after a reload, and the cost of overlapping bursts (decision file).
 - #166 slice opening (goal, done, test). #164 sidegrades (own grilling); #165 open items. Type-to-material map and
   shop price (#163), friendship calculation, fatigue numbers, "last Elite Four beaten" wording.
 - #131 (Silver bonuses, shops 2 to 4 check), #49, #107, #86, #99, #93, #60. Tooltip pin and close icons; #156 close or keep.

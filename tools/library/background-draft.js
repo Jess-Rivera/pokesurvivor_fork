@@ -34,7 +34,7 @@ const MOSAIC_DEFAULTS = Object.freeze({
   burstBrightness: 1,
   burstCut: 0.85,
   wavePush: 2,
-  waveRings: 0,
+  waveRings: 2,
   waveSpeed: 0.45,
   waveSettle: 0.2,
   waveLight: 2,
