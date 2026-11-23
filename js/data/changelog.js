@@ -7,6 +7,22 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-22',
+    title: ['Exp Candy drops', 'Exp Candy drops'],
+    new: [
+      [
+        'Gym leaders, elites and UberElites now drop Exp Candy (XS, S, M, L and XL). It goes straight into your candy bag and stays there even if the run is lost. A message says what you got. Giving candy to a Pokemon comes in a later update.',
+        'Gym leaders, elites and UberElites now drop Exp Candy (XS, S, M, L and XL). It goes straight into your candy bag and stays there even if the run is lost. A message says what you got. Giving candy to a Pokemon comes in a later update.',
+      ],
+    ],
+    chg: [
+      [
+        'Elites and UberElites drop something different: coins, a Pokemon item, an Exp Candy, or a mix of them, with a small chance of a bigger candy. They no longer drop a guaranteed berry and ground item.',
+        'Elites and UberElites drop something different: coins, a Pokemon item, an Exp Candy, or a mix of them, with a small chance of a bigger candy. They no longer drop a guaranteed berry and ground item.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-21',
     title: [
       'A new look for the Poke Balls shop and the catch screen',

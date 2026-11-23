@@ -37,7 +37,19 @@ const poke = G.Items.LIST.filter((i) => i.tier === 'pokemon'),
   ground = G.Grounds.LIST;
 const nP = poke.length,
   nR = run.length;
-const eliteItem = T.elite.find((e) => e.pickup === 'item').p;
+// The elite table is tiered (#139 8a): one roll lands on Common unless a rarer tier hits; Common is a weighted pick.
+const eliteTiers = T.elite.find((e) => e.tiers).tiers;
+const eliteCommonShare = ['uncommon', 'rare', 'epic', 'jackpot']
+  .filter((name) => eliteTiers[name])
+  .reduce((share, name) => share * (1 - K.tierChance[name]), 1);
+/** The share of one elite roll that gives a pickup of this kind (on loop 1). */
+const eliteShareOf = (pickup) => {
+  const list = eliteTiers.common,
+    total = list.reduce((sum, item) => sum + (item.w == null ? 1 : item.w), 0);
+  const holding = list.filter((item) => item.give.some((g) => g.pickup === pickup));
+  return (eliteCommonShare * holding.reduce((sum, item) => sum + (item.w == null ? 1 : item.w), 0)) / total;
+};
+const eliteItem = eliteShareOf('item');
 const bossRun = T.boss.find((e) => e.pickup === 'item').run,
   gymRun = T.gym.find((e) => e.pickup === 'item').run;
 const wildGroundBase = K.groundBase;
@@ -98,9 +110,13 @@ out.push(
 out.push(
   row(
     'Elite',
-    'Guaranteed heal berry (Oran or Sitrus, 50/50), one guaranteed ground item roll, ' +
+    'One roll per loop: coins (4 to 7 worth 3) ' +
+      pct(eliteShareOf('coin')) +
+      ', a Pokemon item ' +
       pct(eliteItem) +
-      ' chance of a Pokemon item, big XP burst'
+      ', Exp Candy ' +
+      pct(eliteShareOf('candy')) +
+      ' (some rolls give two or all three), else a rarer Exp Candy. Big XP burst'
   )
 );
 out.push(
@@ -116,7 +132,7 @@ out.push(
     'Gym leader',
     '10 coins, one guaranteed item (' +
       pct(gymRun) +
-      ' it is a run item, else a Pokemon item). No XP, the badge pays a level'
+      ' it is a run item, else a Pokemon item), and its Exp Candy table once per loop. No XP, the badge pays a level'
   )
 );
 out.push(row('Golden enemy', pct(K.golden) + ' for 3 extra coins'));
@@ -148,21 +164,13 @@ out.push('');
 out.push(
   'Chance columns are per wild kill (base ' +
     pct(wildGroundBase) +
-    ' ground roll times the item weight, plus the direct Oran and Sitrus drops) and per elite (its guaranteed ground roll times the weight, plus its guaranteed berry). Pinaps raise the wild roll.'
+    ' ground roll times the item weight, plus the direct Oran and Sitrus drops). Pinaps raise the wild roll. Elites drop no ground items.'
 );
 out.push('');
-out.push(row('Item', 'What it does', 'Weight', 'Per wild kill', 'Per elite'));
-out.push(row('---', '---', '---', '---', '---'));
+out.push(row('Item', 'What it does', 'Weight', 'Per wild kill'));
+out.push(row('---', '---', '---', '---'));
 for (const g of ground)
-  out.push(
-    row(
-      g.name,
-      g.desc,
-      pct(g.w / 100),
-      pct((wildGroundBase * g.w) / 100 + direct('wild', g.id)),
-      pct(g.w / 100 + direct('elite', g.id))
-    )
-  );
+  out.push(row(g.name, g.desc, pct(g.w / 100), pct((wildGroundBase * g.w) / 100 + direct('wild', g.id))));
 out.push('');
 out.push('## Pokemon items (' + nP + ')');
 out.push('');

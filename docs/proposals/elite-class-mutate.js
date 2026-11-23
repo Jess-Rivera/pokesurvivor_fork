@@ -25,7 +25,7 @@ const M = [
   ['an Elite can turn golden', ELITE, 'makeGolden() {}', 'makeGolden() { this.golden = true; }'],
   ['a hit does not engage', ELITE, 'G.Elites.engage(this);', ''],
   ['the XP burst is not plain', ELITE, 'G.Pickups.dropXp(this.x, this.y, this.xp, true);', 'G.Pickups.dropXp(this.x, this.y, this.xp);'],
-  ['no elite drop roll', ELITE, "G.Drops.roll('elite', this.x, this.y);", ''],
+  ['no elite drop roll', ELITE, "G.Candy.saveAndAnnounce(G.Drops.roll('elite', this.x, this.y, { loop: G.Gym.loop }));", ''],
   ['no TTK note', ELITE, 'G.Elites.noteDeath(this);', ''],
   ['no name tag', ELITE, 'const left = G.Elites.enrageIn(this),', 'return; const left = G.Elites.enrageIn(this),'],
   ['an elite branch comes back in the wild class', WILD, 'this.onDamaged();', 'this.onDamaged(); if (this.elite) this.pain = 0;'],

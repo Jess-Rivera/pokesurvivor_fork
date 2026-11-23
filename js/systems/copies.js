@@ -9,6 +9,7 @@
  *   v starting move override  p upgrades (id -> rank)       f favorite   l locked   o original trainer, if not this save   r form
  *   b box, counted from 0, left out for the first box
  *   j TMs learned for good (#149 149f): move ids, bought in the Main Menu Shop; in a run they join its Move Trainer pool
+ *   c Exp Candy XP (#139 8a, G.Candy), at most the species' level 100 total; its out-of-run level comes from it
  * Stat order everywhere: HP, Atk, Def, SpA, SpD, Spe (the game's stats array and pokeapi).
  */
 G.Copies = (() => {
@@ -158,7 +159,28 @@ G.Copies = (() => {
       isFavorite: !!c.f,
       isLocked: !!c.l,
       tmsLearned: Array.isArray(c.j) ? c.j.map(currentMoveId) : [],
+      candyXp: c.c || 0,
     };
+  }
+
+  /** The most candy XP a species holds: its level 100 total (0 for a dex with no curve). Without the curve data loaded
+   *  nothing is capped, so a save is never cut by a missing file. */
+  function candyXpCap(dex) {
+    if (!G.GrowthCurves) return Number.MAX_SAFE_INTEGER;
+    const curve = G.GrowthCurves.curveOf(dex);
+    return curve ? curve[curve.length - 1] : 0;
+  }
+
+  /** Adds `amount` candy XP to copy `id`, up to its species' level 100 total (G.Candy owns when candy may be given).
+   *  Returns the copy's new candy XP, or null when the copy is gone. The caller saves. */
+  function addCandyXp(save, id, amount) {
+    if (!isId(id)) return null;
+    const u = shortId(id),
+      c = (save.box || []).find((x) => x.u === u);
+    if (!c) return null;
+    c.c = Math.min(candyXpCap(c.d), (c.c || 0) + wholeUpTo(amount, Number.MAX_SAFE_INTEGER));
+    if (!c.c) delete c.c;
+    return c.c || 0;
   }
 
   /** A saved move id as it plays now: a retired move (G.Moves.RETIRED) reads as its replacement. */
@@ -597,6 +619,8 @@ G.Copies = (() => {
         c.j = [...new Set(learned)].filter((moveId) => !G.MoveDefs || G.MoveDefs[moveId]);
         if (!c.j.length) delete c.j;
       } else delete c.j;
+      if (c.c != null) c.c = wholeUpTo(c.c, candyXpCap(c.d)); // candy XP: whole, at most the level 100 total
+      if (!c.c) delete c.c;
       if (typeof c.o !== 'string' || !c.o) delete c.o;
       if (typeof c.r !== 'string' || !c.r) delete c.r;
       if (c.b != null) c.b = wholeUpTo(c.b, save.boxCount - 1);
@@ -648,6 +672,7 @@ G.Copies = (() => {
     RARITY_COLOR,
     BST_BANDS,
     learnTm,
+    addCandyXp,
     linkTeam,
     clean,
     IV_MAX,

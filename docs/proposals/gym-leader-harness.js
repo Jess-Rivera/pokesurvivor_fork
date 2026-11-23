@@ -104,7 +104,7 @@ const MOVES = [{ id: 'tackle' }, { id: 'water-pulse' }, { id: 'recover', hpBelow
 // Slice 6: the old fixed leader values are now authored restrictions (Misty's step A values), so these tests keep their meaning.
 const MISTY_A = { enrage: true, statusCut: 0.5, ccWindow: 5, autoShake: true, hitIframes: 0 };
 function gymOf(o = {}) {
-  return Object.assign({ level: LEVEL, loop: 1, leader: 'Misty', badge: 'Cascade Badge', species: 'Staryu', stance: 'far', power: 1, tempo: 1, cards: {}, moves: MOVES.map((m) => Object.assign({}, m)), engagedAt: null, playerEntity: true, hpMult: 26, restrictions: MISTY_A }, o);
+  return Object.assign({ level: LEVEL, loop: 1, leader: 'Misty', badge: 'Cascade Badge', species: 'Staryu', stance: 'far', power: 1, tempo: 1, cards: {}, moves: MOVES.map((m) => Object.assign({}, m)), engagedAt: null, playerEntity: true, hpMult: 26, restrictions: MISTY_A, candyTable: 'candyCommonXs' }, o);
 }
 const defOf = (dex, gym) => ({ dex, name: 'X', hp: HP, spd: 100, dmg: 20, xp: 0, behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260, gym });
 function leader(dex = STARYU, gym = gymOf()) {
@@ -515,13 +515,13 @@ function cycleSlots(e) {
   e.hp = 5;
   hit(e, spec({ type: 'normal' }));
   ok(e.dead === true && e.hp === 0, 'the hit faints it');
-  ok(drops.join() === 'gym', 'it rolls the gym drop once: ' + drops.join());
+  ok(drops.join() === 'gym,candyCommonXs', 'it rolls the gym drop and its candy table once each: ' + drops.join());
   ok(e.fade > 0, 'it starts the fade');
   G.EnemyMgr.update(DT, human);
   ok(human.kills === 1 && human.bosses === 1 && evKills.length === 1, 'the enemy list pays one kill, one boss and one EV bank');
   ok(!G.EnemyMgr.get(e.id) && !G.EnemyMgr.bossAlive(), 'it is gone from the list, so the arena sees the win');
   for (let i = 0; i < 90; i++) G.EnemyMgr.update(DT, human);
-  ok(human.kills === 1 && drops.length === 1, 'a corpse pays nothing more');
+  ok(human.kills === 1 && drops.join() === 'gym,candyCommonXs', 'a corpse pays nothing more (only the faint rolled its two tables)');
   ok(e.fade <= 0, 'the corpse fade ran out, so the list drops it');
   G.EnemyMgr.clear();
 }

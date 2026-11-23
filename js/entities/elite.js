@@ -41,11 +41,12 @@ G.Elite = class Elite extends G.WildEntity {
     G.Elites.engage(this);
   }
 
-  /** A burst of big XP orbs (plain: no x10 ticket / magnet), a guaranteed Berry, a chance at an item, a TTK readout. */
+  /** A burst of big XP orbs (plain: no x10 ticket / magnet), the elite table once per loop, a TTK readout. */
   dropLoot() {
     G.Camera.kick(0.6);
     G.Pickups.dropXp(this.x, this.y, this.xp, true);
-    G.Drops.roll('elite', this.x, this.y); // the guaranteed Berry, a ground roll, a chance at an item (data/drops.js)
+    // coins, an item, Exp Candy or a bundle, rarer candy above (data/drops.js, #139 8a)
+    G.Candy.saveAndAnnounce(G.Drops.roll('elite', this.x, this.y, { loop: G.Gym.loop }));
     G.Elites.noteDeath(this);
   }
 

@@ -200,8 +200,10 @@
     dropLoot() {
       /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin). It does drop its coins and one guaranteed
          item (picked up by the arena's pullAll), see data/drops.js. */
-      if (this.gym) G.Drops.roll('gym', this.x, this.y);
-      else G.Pickups.dropXp(this.x, this.y, this.xp);
+      if (this.gym) {
+        G.Drops.roll('gym', this.x, this.y);
+        G.Candy.saveAndAnnounce(G.Drops.roll(this.gym.candyTable, this.x, this.y, { loop: this.gym.loop })); // #139 8a
+      } else G.Pickups.dropXp(this.x, this.y, this.xp);
     }
 
     /** Draws over the HP bar (a subclass hook). */

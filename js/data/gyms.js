@@ -42,7 +42,12 @@ G.Gyms = (() => {
     'restrictions',
     'runItems',
     'ai',
+    'candy',
   ];
+  // #139 8a: `candy` names the Exp Candy table a gym rolls (a tiered table in G.Drops.TABLES); absent, the XS one.
+  const CANDY_TABLE_DEFAULT = 'candyCommonXs';
+  /** The Exp Candy table this gym's leader rolls on a win. */
+  const candyTableFor = (g) => g.candy || CANDY_TABLE_DEFAULT;
   // LEADER-AI "Authoring a leader" (slice 2, #31): `ai` is the AI player's settings on a switched gym, each a number from 0 or keyed by
   // loop; a setting not authored takes the baseline in code (G.LeaderAI.BASE). The keys built so far:
   const AI_KEYS = [
@@ -743,6 +748,7 @@ G.Gyms = (() => {
       badge: 'Earth Badge',
       arena: 'ground',
       boost: { stat: 'atk', pct: 0.1 },
+      candy: 'candyCommonS', // #139 8a: gym 8's Common candy is S (decision 2026-11-22-139-candy-target-and-drop-model)
       signatures: [
         // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
         // Slot 1: Rhyhorn -> Rhydon, the ace (shared with Brock slot 3).
@@ -938,6 +944,9 @@ G.Gyms = (() => {
     for (const k of unknownKeys(g, GYM_KEYS)) bad.push((g.leader || '?') + ': unknown field ' + k);
     if (g.boost && (!STATS.includes(g.boost.stat) || !(g.boost.pct > 0 && g.boost.pct <= 1)))
       bad.push('boost needs a stat (hp, atk, def, spa, spd, spe) and a pct in (0, 1]');
+    const dropTables = G.Drops && Array.isArray(G.Drops.TIER_NAMES) && G.Drops.TABLES; // only once drops.js is loaded
+    if (g.candy != null && dropTables && !(dropTables[g.candy] || []).some((e) => e.tiers))
+      bad.push((g.leader || '?') + ': candy must name a tiered table in G.Drops.TABLES');
     if (!g.signatures || !g.signatures.length || g.signatures.length > 6) bad.push('signatures must be 1 to 6');
     (g.signatures || []).forEach((s, si) => {
       const who = sigName(s);
@@ -1262,6 +1271,7 @@ G.Gyms = (() => {
     profileFor,
     runItemsFor,
     budgetWarn,
+    candyTableFor,
     LEADER_ITEM_BAN,
     formOf,
     reachOf,

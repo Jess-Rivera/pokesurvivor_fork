@@ -163,6 +163,7 @@ G.Gym = (() => {
       gym: {
         level: lvl,
         loop, // the loop this fight is in: it also caps the leader's self heals per fight (healsLeft)
+        candyTable: G.Gyms.candyTableFor(entry), // #139 8a: the Exp Candy table its faint rolls, loop times
         leader: g.leader,
         badge: g.badge,
         species: mon.name,

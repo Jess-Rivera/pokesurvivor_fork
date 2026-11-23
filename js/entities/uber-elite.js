@@ -20,7 +20,7 @@ G.UberElite = class UberElite extends G.Elite {
   dropLoot() {
     G.Camera.kick(0.8);
     G.Pickups.dropXp(this.x, this.y, this.xp, true);
-    G.Drops.roll('elite', this.x, this.y);
+    G.Candy.saveAndAnnounce(G.Drops.roll('elite', this.x, this.y, { loop: G.Gym.loop })); // #139 8a
     G.Rescue.onUberDown(this);
   }
 

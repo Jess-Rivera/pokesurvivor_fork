@@ -3,7 +3,8 @@
 // (pickup.js dropXp, enemy.js die(), events.js rescued, elites.js itemChance, items.js RUN_CHANCE, world.js prop loot), not read back from drops.js.
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
-const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });
+// candy-mutate.js points CANDY_DROPS at an altered drops.js (#139 8a)
+const load = p => vm.runInThisContext(fs.readFileSync((p === 'js/data/drops.js' && process.env.CANDY_DROPS) || R + '/' + p, 'utf8'), { filename: p });
 global.window = global;
 let s = 12345; const rnd = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
 global.G = { U: { pick: a => a[0] }, Pickups: { drop() {} }, Game: { player: { runItems: [] }, everyone: () => [{ xpNext: 1000 }], levelXp: () => 777 },
@@ -13,7 +14,7 @@ load('js/data/drops.js');
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 const N = 300000;
 // ground pickups are counted by value: ground:oran / ground:sitrus are the direct berries, ground:pool is a roll of the ground item pool
-const key = d => (d.pickup === 'ground' ? 'ground:' + d.value : d.pickup);
+const key = d => (d.pickup === 'ground' || d.pickup === 'candy' ? d.pickup + ':' + d.value : d.pickup);
 const sample = (src, opts = {}) => { const c = {}; for (let i = 0; i < N; i++) for (const d of G.Drops.roll(src, 0, 0, { rnd, place() {}, ...opts })) c[key(d)] = (c[key(d)] || 0) + 1; return c; };
 const rate = (c, k) => (c[k] || 0) / N;
 const near = (got, want, tol) => Math.abs(got - want) <= tol;
@@ -50,9 +51,58 @@ const coinsWorth = (out, v) => out.filter(d => d.pickup === 'coin' && d.value ==
 // no table can drop a ticket, and the x10 rate is ten pulls of the x1 rate (an x10 ticket was ten pulls)
 for (const src in G.Drops.TABLES) { const walk = es => es.forEach(e => { if (e.oneOf) walk(e.oneOf); else if (/ticket/.test(e.pickup)) bad(src + ' still drops ' + e.pickup); }); walk(G.Drops.TABLES[src]); }
 if (G.Drops.ticketCoins(0, 1) !== 10 * G.Drops.ticketCoins(1)) bad('an x10 ticket is worth ten x1 tickets');
-{ const c = sample('elite'); chk('elite berry always', rate(c, 'ground:oran') + rate(c, 'ground:sitrus'), 1, 1e-9); chk('elite berry is 50/50 Oran', rate(c, 'ground:oran'), 0.5, 0.006); chk('elite ground pool roll always', rate(c, 'ground:pool'), 1, 1e-9); chk('elite item 50%', rate(c, 'item'), 0.5, 0.006); }
+// #139 8a, the drop function (decision 2026-11-22-139-candy-target-and-drop-model). Expected values are hand-derived from the
+// decision: tiers rolled rarest first with Uncommon 1%, Rare 0.4%, Epic 0.1%, Jackpot 0.02%, stop at the first hit, Common
+// otherwise; an unnamed tier is skipped (its chance falls to Common); every tiered entry names Common; loop N rolls N times.
+{ const CHANCE = { uncommon: 0.01, rare: 0.004, epic: 0.001, jackpot: 0.0002 }, RAREST_FIRST = ['jackpot', 'epic', 'rare', 'uncommon'];
+  // the share of rolls landing on each tier of a table naming `named`, by hand: a named tier hits only if every rarer named one missed
+  const shares = (named) => { let missed = 1; const out = {}; for (const t of RAREST_FIRST) if (named.includes(t)) { out[t] = missed * CHANCE[t]; missed -= out[t]; } out.common = missed; return out; };
+  const tiered = Object.keys(G.Drops.TABLES).filter(src => G.Drops.TABLES[src].some(e => e.tiers));
+  if (G.Drops.validate().length) bad('drop tables invalid: ' + G.Drops.validate().join('; '));
+  for (const src of tiered) for (const e of G.Drops.TABLES[src]) if (e.tiers && !e.tiers.common) bad(src + ' has a tiered entry without common');
+  for (const want of ['elite', 'candyCommonXs', 'candyCommonS']) if (!tiered.includes(want)) bad(want + ' is not a tiered table');
+  // a table without common, an unknown tier and an empty list are refused
+  { const saved = G.Drops.TABLES.elite;
+    G.Drops.TABLES.elite = [{ tiers: { rare: [{ give: [] }] } }]; if (!G.Drops.validate().some(m => /common/.test(m))) bad('a table without common passes validate');
+    G.Drops.TABLES.elite = [{ tiers: { common: [{ give: [] }], legendary: [{ give: [] }] } }]; if (!G.Drops.validate().some(m => /unknown tier/.test(m))) bad('an unknown tier passes validate');
+    G.Drops.TABLES.elite = [{ tiers: { common: [] } }]; if (!G.Drops.validate().some(m => /empty/.test(m))) bad('an empty tier list passes validate');
+    G.Drops.TABLES.elite = saved; }
+  // exact tier picks with a fixed roll: rarest first, and a skipped tier is never returned
+  const fixed = v => () => v, all = { common: 1, uncommon: 1, rare: 1, epic: 1, jackpot: 1 };
+  if (G.Drops.pickTier(all, fixed(0)) !== 'jackpot') bad('the rarest tier is rolled first');
+  if (G.Drops.pickTier(all, fixed(0.005)) !== 'uncommon') bad('a 0.5% roll misses Jackpot, Epic and Rare and hits Uncommon');
+  if (G.Drops.pickTier({ common: 1, rare: 1, epic: 1, jackpot: 1 }, fixed(0.005)) !== 'common') bad('an unnamed Uncommon is skipped: its chance falls to Common');
+  if (G.Drops.pickTier({ common: 1, jackpot: 1 }, fixed(0.0005)) !== 'common') bad('an unnamed Epic is skipped');
+  // a gap between named tiers: Epic and Rare unnamed, so a 1.05% roll misses Uncommon (1%) and lands on Common; merged into Uncommon (the rejected rule) it would hit
+  if (G.Drops.pickTier({ common: 1, uncommon: 1, jackpot: 1 }, fixed(0.0105)) !== 'common') bad('an unnamed middle tier falls to Common, not to the next named tier');
+  if (G.Drops.pickTier(all, fixed(0.5)) !== 'common') bad('a high roll lands on Common');
+  // candy tables: one candy per roll, loop N rolls N times, Common is the base, and the candy grows toward the rarest tier
+  const ORDER = ['xs', 's', 'm', 'l', 'xl'];
+  for (const [src, base] of [['candyCommonXs', 'xs'], ['candyCommonS', 's']]) {
+    for (let loop = 1; loop <= 6; loop++) { const out = G.Drops.roll(src, 0, 0, { rnd, place() {}, loop }); if (out.length !== loop || out.some(d => d.pickup !== 'candy')) bad(src + ' loop ' + loop + ' gave ' + out.length + ' drops'); }
+    const t = G.Drops.TABLES[src][0].tiers, sizeOf = name => t[name] && t[name][0].give[0].value;
+    if (sizeOf('common') !== base) bad(src + ' Common is ' + sizeOf('common'));
+    let last = -1; for (const name of G.Drops.TIER_NAMES) if (t[name]) { const at = ORDER.indexOf(sizeOf(name)); if (!(at > last)) bad(src + ' ' + name + ' is not bigger than the tier below'); last = at; }
+    const named = Object.keys(t), want = shares(named), c = sample(src);
+    for (const name of named) chk(src + ' ' + name + ' share', rate(c, 'candy:' + sizeOf(name)), want[name], Math.max(0.0004, want[name] * 0.03));
+  }
+  // the elite table: Common is the weighted pick (coins 40, item 30, candy 30, coins and item 15, all three 5, of 120)
+  { const rare = shares(['uncommon', 'rare', 'epic', 'jackpot']), C = rare.common, M = 200000; let coin = 0, item = 0, xs = 0, three = 0, s = 0;
+    for (let i = 0; i < M; i++) { const k = G.Drops.roll('elite', 0, 0, { rnd, place() {} }).map(key);
+      const hc = k.includes('coin'), hi = k.includes('item'), hx = k.includes('candy:xs'); coin += hc; item += hi; xs += hx; three += hc && hi && hx; s += k.includes('candy:s'); }
+    chk('elite coins share', coin / M, (60 / 120) * C, 0.004); chk('elite item share', item / M, (50 / 120) * C, 0.004);
+    chk('elite XS candy share', xs / M, (35 / 120) * C, 0.004); chk('elite bundle of all three', three / M, (5 / 120) * C, 0.002);
+    chk('elite Uncommon S candy', s / M, rare.uncommon, 0.0008);
+    for (let i = 0; i < 2000; i++) { const n = G.Drops.roll('elite', 0, 0, { rnd, place() {} }).filter(d => d.pickup === 'coin'); if (n.length && (n.length < 4 || n.length > 7 || n.some(d => d.value !== 3))) { bad('an elite coin drop is 4 to 7 coins worth 3'); break; } }
+    const e = sample('elite'); if (e['ground:oran'] || e['ground:sitrus'] || e['ground:pool']) bad('elites no longer drop a berry or a ground item');
+    for (let loop = 1; loop <= 6; loop++) { const hits = G.Drops.roll('elite', 0, 0, { rnd: fixed(0.5), place() {}, loop }).filter(d => d.pickup === 'item').length; if (hits !== loop) bad('elite loop ' + loop + ' rolls ' + hits + ' times'); } }
+  // pickup 'candy' banks through G.Candy, never onto the ground
+  { const seen = [], ground = []; G.Candy = { bank: v => seen.push(v) }; G.Pickups.drop = k => ground.push(k);
+    G.Drops.roll('candyCommonXs', 0, 0, { rnd: fixed(0.5), loop: 2 }); if (seen.join() !== 'xs,xs' || ground.length) bad('candy is banked, not dropped: ' + seen + ' / ' + ground);
+    G.Pickups.drop = () => {}; delete G.Candy; }
+  console.log('drop function: rarest first, stop at the first hit, skipped tiers fall to Common, loop N rolls N times; candy and elite tables as ruled'); }
 { const c = sample('golden'); chk('golden coin 35%', rate(c, 'coin'), 0.35, 0.006); }
-console.log('boss 10 coins + item, gym 10 coins + one item, thief 20 coins, Gholdengo 6 + a jackpot coin, rescue 12 + a ticket-worth coin, elite berry + ground + 50% item, golden 35%');
+console.log('boss 10 coins + item, gym 10 coins + one item, thief 20 coins, Gholdengo 6 + a jackpot coin, rescue 12 + a ticket-worth coin, golden 35%');
 
 // world props, hand-derived from the old world.js (the 'heal' pickup there became Oran at the same rate, both heal 30%)
 { const g = sample('grass'); chk('grass oran', rate(g, 'ground:oran'), 0.05, 0.002); chk('grass coin', rate(g, 'coin'), 0.06, 0.002);
@@ -84,9 +134,9 @@ console.log('boss 10 coins + item, gym 10 coins + one item, thief 20 coins, Ghol
   G.Game.player.runItems = [];
   console.log('run item share: boss 5%, gym 10%, elite 0, never a held one'); }
 
-// positions: fixed offsets and spreads (boss item at -26,-10; elite berry at +24,0; coins within +/-40 x +/-30)
+// positions: fixed offsets and spreads (boss and elite item at -26,-10; coins within +/-40 x +/-30)
 { const it = G.Drops.roll('boss', 100, 200, { rnd, place() {} }).find(d => d.pickup === 'item'); if (it.x !== 74 || it.y !== 190) bad('boss item position');
-  const el = G.Drops.roll('elite', 100, 200, { rnd, place() {} }).find(d => d.pickup === 'ground' && d.value !== 'pool'); if (el.x !== 124 || el.y !== 200) bad('elite berry position');
+  const el = G.Drops.roll('elite', 100, 200, { rnd: () => 0.5, place() {} }).find(d => d.pickup === 'item'); if (!el || el.x !== 74 || el.y !== 190) bad('elite item position');
   for (const d of G.Drops.roll('boss', 100, 200, { rnd, place() {} })) if (d.pickup === 'coin' && (Math.abs(d.x - 100) > 40 || Math.abs(d.y - 200) > 30)) bad('coin spread');
   if (G.Drops.roll('nope', 0, 0).length) bad('unknown source drops nothing'); }
 // place() receives the same results roll() returns

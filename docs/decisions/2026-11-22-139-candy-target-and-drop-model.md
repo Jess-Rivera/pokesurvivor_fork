@@ -53,6 +53,8 @@ canonical: "docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md
   run are not an 8a input (the harness checks the floor against the gym and Elite Four tables alone). The tier
   chances stay tunable (G.Debug.candy and the harness); no per-source multiplier is built. The Give until input
   control is decided at Part F.
+- [Approved] (Jess, 2026-11-22, at the build) The elite table's "coins" are a small chest's pile (4 to 7 coins worth
+  3); its "item" is a Pokemon item (the held-item roll, never a run item).
 - [Open] "The last Elite Four beaten": the four gates open at once and the order is free (BOSS-REWORK section 4).
 
 Canonical: docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built.

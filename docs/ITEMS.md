@@ -14,9 +14,9 @@ Drop chances and sources are owned by js/data/drops.js (one table per source). R
 | Source | What it drops |
 | --- | --- |
 | Wild kill | Ground item 0.4% (plus the live Pinap bonus), then one shared roll for Oran Berry 0.2%, Sitrus Berry 0.1%, magnet 0.4%, bomb 0.1%, plus XP |
-| Elite | Guaranteed heal berry (Oran or Sitrus, 50/50), one guaranteed ground item roll, 50% chance of a Pokemon item, big XP burst |
+| Elite | One roll per loop: coins (4 to 7 worth 3) 49.2%, a Pokemon item 41%, Exp Candy 28.7% (some rolls give two or all three), else a rarer Exp Candy. Big XP burst |
 | Boss | 10 coins, one guaranteed item (5% it is a run item, else a Pokemon item), and the wild extras above |
-| Gym leader | 10 coins, one guaranteed item (10% it is a run item, else a Pokemon item). No XP, the badge pays a level |
+| Gym leader | 10 coins, one guaranteed item (10% it is a run item, else a Pokemon item), and its Exp Candy table once per loop. No XP, the badge pays a level |
 | Golden enemy | 35% for 3 extra coins |
 | Meowth (thief) | 20 coins |
 | Gholdengo (thief) | 6 coins and a jackpot coin worth 400 |
@@ -29,54 +29,54 @@ Drop chances and sources are owned by js/data/drops.js (one table per source). R
 
 ## Ground items (44)
 
-Chance columns are per wild kill (base 0.4% ground roll times the item weight, plus the direct Oran and Sitrus drops) and per elite (its guaranteed ground roll times the weight, plus its guaranteed berry). Pinaps raise the wild roll.
+Chance columns are per wild kill (base 0.4% ground roll times the item weight, plus the direct Oran and Sitrus drops). Pinaps raise the wild roll. Elites drop no ground items.
 
-| Item | What it does | Weight | Per wild kill | Per elite |
-| --- | --- | --- | --- | --- |
-| X Attack | Team Attack +1 for 30 s | 6% | 0.024% | 6% |
-| X Defense | Team Defense +1 for 30 s | 6% | 0.024% | 6% |
-| X Sp. Atk | Team Sp. Atk +1 for 30 s | 6% | 0.024% | 6% |
-| X Sp. Def | Team Sp. Def +1 for 30 s | 6% | 0.024% | 6% |
-| X Speed | Team Speed +1 for 30 s | 6% | 0.024% | 6% |
-| Oran Berry | Heals 30% of max HP | 9% | 0.236% | 59% |
-| Sitrus Berry | Heals 50% of max HP | 6.5% | 0.126% | 56.5% |
-| Occa Berry | Halves super-effective Fire hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Passho Berry | Halves super-effective Water hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Wacan Berry | Halves super-effective Electric hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Rindo Berry | Halves super-effective Grass hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Yache Berry | Halves super-effective Ice hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Chople Berry | Halves super-effective Fighting hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Kebia Berry | Halves super-effective Poison hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Shuca Berry | Halves super-effective Ground hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Coba Berry | Halves super-effective Flying hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Payapa Berry | Halves super-effective Psychic hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Tanga Berry | Halves super-effective Bug hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Charti Berry | Halves super-effective Rock hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Kasib Berry | Halves super-effective Ghost hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Haban Berry | Halves super-effective Dragon hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Colbur Berry | Halves super-effective Dark hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Babiri Berry | Halves super-effective Steel hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Roseli Berry | Halves super-effective Fairy hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Chilan Berry | Halves Normal-type hits for 10 s | 1.11% | 0.004% | 1.11% |
-| Liechi Berry | Team Attack +1 for 10 s | 2.5% | 0.01% | 2.5% |
-| Ganlon Berry | Team Defense +1 for 10 s | 2.5% | 0.01% | 2.5% |
-| Salac Berry | Team Speed +1 for 10 s | 2.5% | 0.01% | 2.5% |
-| Petaya Berry | Team Sp. Atk +1 for 10 s | 2.5% | 0.01% | 2.5% |
-| Apicot Berry | Team Sp. Def +1 for 10 s | 2.5% | 0.01% | 2.5% |
-| Starf Berry | A random team stat +2 for 10 s | 1.5% | 0.006% | 1.5% |
-| Lansat Berry | +20% critical hit chance for 10 s | 1% | 0.004% | 1% |
-| Kee Berry | +10% Defense for 10 s | 3% | 0.012% | 3% |
-| Maranga Berry | +10% Sp. Def for 10 s | 3% | 0.012% | 3% |
-| Pinap Berry | Ground drop chance +0.5 points for 20 s | 2.5% | 0.01% | 2.5% |
-| Silver Pinap Berry | Ground drop chance +1 point for 10 s | 1% | 0.004% | 1% |
-| Golden Pinap Berry | Ground drop chance +2 points for 5 s | 0.5% | 0.002% | 0.5% |
-| Cheri Berry | Stored in the berry bag: blocks the next Paralysis | 1.5% | 0.006% | 1.5% |
-| Chesto Berry | Stored in the berry bag: blocks the next Sleep | 1.5% | 0.006% | 1.5% |
-| Pecha Berry | Stored in the berry bag: blocks the next Poison | 1.5% | 0.006% | 1.5% |
-| Rawst Berry | Stored in the berry bag: blocks the next Burn | 1.5% | 0.006% | 1.5% |
-| Aspear Berry | Stored in the berry bag: blocks the next Freeze | 1.5% | 0.006% | 1.5% |
-| Persim Berry | Stored in the berry bag: blocks the next Confusion | 1.5% | 0.006% | 1.5% |
-| Lum Berry | Stored in the berry bag: blocks the next of any of those six statuses | 0.5% | 0.002% | 0.5% |
+| Item | What it does | Weight | Per wild kill |
+| --- | --- | --- | --- |
+| X Attack | Team Attack +1 for 30 s | 6% | 0.024% |
+| X Defense | Team Defense +1 for 30 s | 6% | 0.024% |
+| X Sp. Atk | Team Sp. Atk +1 for 30 s | 6% | 0.024% |
+| X Sp. Def | Team Sp. Def +1 for 30 s | 6% | 0.024% |
+| X Speed | Team Speed +1 for 30 s | 6% | 0.024% |
+| Oran Berry | Heals 30% of max HP | 9% | 0.236% |
+| Sitrus Berry | Heals 50% of max HP | 6.5% | 0.126% |
+| Occa Berry | Halves super-effective Fire hits for 10 s | 1.11% | 0.004% |
+| Passho Berry | Halves super-effective Water hits for 10 s | 1.11% | 0.004% |
+| Wacan Berry | Halves super-effective Electric hits for 10 s | 1.11% | 0.004% |
+| Rindo Berry | Halves super-effective Grass hits for 10 s | 1.11% | 0.004% |
+| Yache Berry | Halves super-effective Ice hits for 10 s | 1.11% | 0.004% |
+| Chople Berry | Halves super-effective Fighting hits for 10 s | 1.11% | 0.004% |
+| Kebia Berry | Halves super-effective Poison hits for 10 s | 1.11% | 0.004% |
+| Shuca Berry | Halves super-effective Ground hits for 10 s | 1.11% | 0.004% |
+| Coba Berry | Halves super-effective Flying hits for 10 s | 1.11% | 0.004% |
+| Payapa Berry | Halves super-effective Psychic hits for 10 s | 1.11% | 0.004% |
+| Tanga Berry | Halves super-effective Bug hits for 10 s | 1.11% | 0.004% |
+| Charti Berry | Halves super-effective Rock hits for 10 s | 1.11% | 0.004% |
+| Kasib Berry | Halves super-effective Ghost hits for 10 s | 1.11% | 0.004% |
+| Haban Berry | Halves super-effective Dragon hits for 10 s | 1.11% | 0.004% |
+| Colbur Berry | Halves super-effective Dark hits for 10 s | 1.11% | 0.004% |
+| Babiri Berry | Halves super-effective Steel hits for 10 s | 1.11% | 0.004% |
+| Roseli Berry | Halves super-effective Fairy hits for 10 s | 1.11% | 0.004% |
+| Chilan Berry | Halves Normal-type hits for 10 s | 1.11% | 0.004% |
+| Liechi Berry | Team Attack +1 for 10 s | 2.5% | 0.01% |
+| Ganlon Berry | Team Defense +1 for 10 s | 2.5% | 0.01% |
+| Salac Berry | Team Speed +1 for 10 s | 2.5% | 0.01% |
+| Petaya Berry | Team Sp. Atk +1 for 10 s | 2.5% | 0.01% |
+| Apicot Berry | Team Sp. Def +1 for 10 s | 2.5% | 0.01% |
+| Starf Berry | A random team stat +2 for 10 s | 1.5% | 0.006% |
+| Lansat Berry | +20% critical hit chance for 10 s | 1% | 0.004% |
+| Kee Berry | +10% Defense for 10 s | 3% | 0.012% |
+| Maranga Berry | +10% Sp. Def for 10 s | 3% | 0.012% |
+| Pinap Berry | Ground drop chance +0.5 points for 20 s | 2.5% | 0.01% |
+| Silver Pinap Berry | Ground drop chance +1 point for 10 s | 1% | 0.004% |
+| Golden Pinap Berry | Ground drop chance +2 points for 5 s | 0.5% | 0.002% |
+| Cheri Berry | Stored in the berry bag: blocks the next Paralysis | 1.5% | 0.006% |
+| Chesto Berry | Stored in the berry bag: blocks the next Sleep | 1.5% | 0.006% |
+| Pecha Berry | Stored in the berry bag: blocks the next Poison | 1.5% | 0.006% |
+| Rawst Berry | Stored in the berry bag: blocks the next Burn | 1.5% | 0.006% |
+| Aspear Berry | Stored in the berry bag: blocks the next Freeze | 1.5% | 0.006% |
+| Persim Berry | Stored in the berry bag: blocks the next Confusion | 1.5% | 0.006% |
+| Lum Berry | Stored in the berry bag: blocks the next of any of those six statuses | 0.5% | 0.002% |
 
 ## Pokemon items (45)
 
@@ -84,51 +84,51 @@ All Pokemon items are equally likely (1 in 45 per Pokemon-item roll). Chance col
 
 | Item | What it does | Per elite | Per boss | Per gym leader | Per small chest | Per big chest |
 | --- | --- | --- | --- | --- | --- | --- |
-| Leftovers | Recover 1.5% of your max HP per second. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Choice Band | +40% physical damage, but you cannot switch moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Quick Claw | -20% cooldown on all your moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Focus Sash | A hit that would KO you leaves you at 1 HP instead (once every 60 s). | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Shell Bell | Recover HP from the damage you deal. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Life Orb | +30% damage, but each attack costs you a little HP. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Choice Scarf | +35% speed. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Rocky Helmet | Foes that hit you in melee take damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Assault Vest | +20% damage reduction. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Muscle Band | +10% physical damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Wise Glasses | +10% special damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Scope Lens | +5% critical hit chance. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Razor Claw | +5% critical hit chance. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Expert Belt | +20% damage on super effective hits. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Big Root | +30% HP recovered from draining moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Black Sludge | Poison types recover 1.5% max HP per second; others lose a little. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Wide Lens | +15% area on all your moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Zoom Lens | -50% area but +20% damage on all your moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Silk Scarf | +20% Normal-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Charcoal | +20% Fire-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Mystic Water | +20% Water-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Magnet | +20% Electric-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Miracle Seed | +20% Grass-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Never-Melt Ice | +20% Ice-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Black Belt | +20% Fighting-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Poison Barb | +20% Poison-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Soft Sand | +20% Ground-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Sharp Beak | +20% Flying-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Twisted Spoon | +20% Psychic-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Silver Powder | +20% Bug-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Hard Stone | +20% Rock-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Spell Tag | +20% Ghost-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Dragon Fang | +20% Dragon-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Black Glasses | +20% Dark-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Metal Coat | +20% Steel-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Pixie Plate | +20% Fairy-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Choice Specs | +40% special damage, but you cannot switch moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Thick Club | +30% physical damage, but 10% longer cooldowns. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Light Ball | +30% special damage, but 10% longer cooldowns. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Lucky Punch | +15% critical hit chance. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Leek | +10% critical hit chance, and critical hits deal 2.25x damage instead of 1.5x. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Eviolite | 1.5x Defense and Sp. Def, only while this Pokemon can still evolve. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Metal Powder | +15% Defense and Sp. Def. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Quick Powder | +15% speed. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
-| Bright Powder | Dodge cooldown 15% shorter. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Leftovers | Recover 1.5% of your max HP per second. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Choice Band | +40% physical damage, but you cannot switch moves. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Quick Claw | -20% cooldown on all your moves. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Focus Sash | A hit that would KO you leaves you at 1 HP instead (once every 60 s). | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Shell Bell | Recover HP from the damage you deal. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Life Orb | +30% damage, but each attack costs you a little HP. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Choice Scarf | +35% speed. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Rocky Helmet | Foes that hit you in melee take damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Assault Vest | +20% damage reduction. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Muscle Band | +10% physical damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Wise Glasses | +10% special damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Scope Lens | +5% critical hit chance. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Razor Claw | +5% critical hit chance. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Expert Belt | +20% damage on super effective hits. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Big Root | +30% HP recovered from draining moves. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Black Sludge | Poison types recover 1.5% max HP per second; others lose a little. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Wide Lens | +15% area on all your moves. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Zoom Lens | -50% area but +20% damage on all your moves. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Silk Scarf | +20% Normal-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Charcoal | +20% Fire-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Mystic Water | +20% Water-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Magnet | +20% Electric-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Miracle Seed | +20% Grass-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Never-Melt Ice | +20% Ice-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Black Belt | +20% Fighting-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Poison Barb | +20% Poison-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Soft Sand | +20% Ground-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Sharp Beak | +20% Flying-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Twisted Spoon | +20% Psychic-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Silver Powder | +20% Bug-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Hard Stone | +20% Rock-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Spell Tag | +20% Ghost-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Dragon Fang | +20% Dragon-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Black Glasses | +20% Dark-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Metal Coat | +20% Steel-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Pixie Plate | +20% Fairy-type move damage. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Choice Specs | +40% special damage, but you cannot switch moves. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Thick Club | +30% physical damage, but 10% longer cooldowns. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Light Ball | +30% special damage, but 10% longer cooldowns. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Lucky Punch | +15% critical hit chance. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Leek | +10% critical hit chance, and critical hits deal 2.25x damage instead of 1.5x. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Eviolite | 1.5x Defense and Sp. Def, only while this Pokemon can still evolve. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Metal Powder | +15% Defense and Sp. Def. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Quick Powder | +15% speed. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
+| Bright Powder | Dodge cooldown 15% shorter. | 0.912% | 2.11% | 2% | 0.178% | 1.11% |
 
 ## Run items (25)
 

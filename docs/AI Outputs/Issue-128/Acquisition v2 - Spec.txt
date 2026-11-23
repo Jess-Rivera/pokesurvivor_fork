@@ -159,13 +159,23 @@ Data facts are from pokedex.js, enemy-classes.js, sprites-meta.js and the pokeap
     from the evolved form's base stats.
     sizes   XS 100 | S 800 | M 3,000 | L 10,000 | XL 30,000 XP
     cost    the mainline XP curve: the species' growth rate, to its evolution level.
-            Abra > Kadabra 2,535 | Bulbasaur > Venusaur 27,021 | Charmander > Charizard 40,007 |
-            median line 33,084 | Dratini > Dragonite 207,968 | Deino > Hydreigon 327,680
-    source  a rarity drop: gym leaders 100%, UberElites 50%, elites 15% (TUNE); gym size by gym order,
-            UberElite one size under the last gym beaten, elite XS; x loop number. Candy goes into a bag
-            and is given to a chosen copy in the Team menu; refused at OOR level 100.
-    pace    a median line evolves fully in 2 to 3 six-loop clears; level 100 is a long tail.
-            [Proposed] the size table (8a build plan).
+            Abra > Kadabra 2,535 | Bulbasaur > Venusaur 27,021 | Charmander > Charizard 40,007 (the median
+            3-stage fully level-based line; p25 33,084) | Dratini > Dragonite 207,968 | Deino > Hydreigon 327,680
+    target  one full run (6 loops of 8 gyms and 4 Elite Four) takes that median line to its last evolution
+            with every roll on Common: 44,100 XP. Expected with the tier chances: about 52,500.
+    source  THE DROP FUNCTION (G.Drops, every loot drop moves to it; candy first): a table's tiers rolled
+            rarest first (Uncommon 1%, Rare 0.4%, Epic 0.1%, Jackpot 0.02%, TUNE), stop at the first hit,
+            Common otherwise; an unnamed tier falls to Common; each tier a weighted list. Loop N rolls N times.
+            gyms 1 to 7    Common XS, Uncommon S, Rare M, Epic L, Jackpot XL; beside the gym's coins and item
+            gym 8          Common S, Rare M, Epic L, Jackpot XL (and the last Elite Four on loop 6, once built)
+            elites and     one mixed table, their whole drop: Common is coins (4 to 7 worth 3) 40, a Pokemon
+            UberElites     item 30, an XS candy 30, coins and item 15, all three 5; above it S, M, L, XL
+            Candy is banked in the save's bag as it drops (kept if the run is lost), one toast per kill.
+            Decision 2026-11-22-139-candy-target-and-drop-model. Built 2026-11-22 (#139 8a), except the
+            Elite Four source ([Approved], code differs: the Elite Four is not built, see TODO).
+    give    in the Team menu, one per press or "Give until [level]" (the largest that fits, then the smallest
+            that covers); refused only at OOR level 100. [Approved], code differs: the Team menu part (8a
+            Part F) is not built yet, see TODO.
     level   evolutions with no level (131) take no candy: their normal requirement only (D8).
   STARTING MOVES (after #97; takes #150 in)
     level-up moves at or under the OOR level (newest game), the earlier forms' moves, and egg moves.

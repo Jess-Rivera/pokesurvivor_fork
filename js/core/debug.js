@@ -46,6 +46,8 @@
  *   G.Debug.fighter()  the active fighter's six stats at its level and its movement px/s: plain (0 IV, 0 EV, no nature) next to this copy
  *   G.Debug.ivs(slot, v, nature)  set the copy in team slot `slot` (0 to 5) to six IVs of v (0 to 31) and, if given, a nature by
  *                      name ('jolly'). Saved; takes effect from the next run, which is flagged tampered.
+ *   G.Debug.candy(size, n)  #139 8a: add n Exp Candy of a size (xs, s, m, l, xl) to the bag. Saved. No size: log the bag
+ *                      and a full run's candy XP, every roll on Common and over 200 sampled runs, for tuning the tiers.
  *   G.Debug.on         true when ?dev is present.
  *   More commands, added onto G.Debug by their own files (F6, 2026-11-14): js/core/debug-run-screens.js (the HUD,
  *                      quiet pause, Run Info, Region Best, end-of-run EVs) and js/core/debug-leader.js (the leader AI).
@@ -1329,6 +1331,53 @@ G.Debug = (() => {
     return c;
   }
 
+  /** #139 8a: the Exp Candy XP one full run's gym and Elite Four tables give (6 loops, loop N rolls N times). The Elite
+   *  Four is not built: its members roll gym 1's table, the last one on loop 6 gym 8's (the decision). rnd: the roll. */
+  function fullRunCandyXp(rnd) {
+    const gymTables = G.Gyms.KANTO.map((g) => G.Gyms.candyTableFor(g)),
+      last = gymTables.length - 1;
+    let xp = 0;
+    for (let loop = 1; loop <= G.Gyms.LOOPS; loop++) {
+      const eliteFour = [0, 1, 2, 3].map((i) => (loop === G.Gyms.LOOPS && i === 3 ? gymTables[last] : gymTables[0]));
+      for (const table of gymTables.concat(eliteFour))
+        for (const drop of G.Drops.roll(table, 0, 0, { rnd, place() {}, loop })) xp += G.Candy.SIZES[drop.value] || 0;
+    }
+    return xp;
+  }
+
+  /** Add n Exp Candy of `size` (xs, s, m, l, xl) to the bag, saved; no size: log the bag, and a full run's candy XP
+   *  with every roll on Common and over `runs` sampled runs (min, average, max), for tuning. ?dev only. */
+  function candy(size = null, n = 1, runs = 200) {
+    if (!on || !G.DB.save) return false;
+    const s = G.DB.save;
+    if (size != null) {
+      if (!G.Candy.SIZES[size]) {
+        console.warn('[Debug] candy sizes: ' + G.Candy.SIZE_ORDER.join(', '));
+        return false;
+      }
+      for (let i = 0; i < Math.max(1, Math.floor(n) || 1); i++) G.Candy.bank(size, s);
+      G.DB.commit(true);
+    }
+    console.log('[Debug] candy bag', G.Candy.bagOf(s));
+    if (size != null) return G.Candy.bagOf(s);
+    const sampled = Array.from({ length: runs }, () => fullRunCandyXp(Math.random));
+    const average = Math.round(sampled.reduce((sum, xp) => sum + xp, 0) / runs);
+    console.log(
+      '[Debug] a full run of candy: every roll on Common ' +
+        fullRunCandyXp(() => 0.999) +
+        ' XP; ' +
+        runs +
+        ' sampled runs ' +
+        Math.min(...sampled) +
+        ' / ' +
+        average +
+        ' / ' +
+        Math.max(...sampled) +
+        ' (min / average / max)'
+    );
+    return G.Candy.bagOf(s);
+  }
+
   function copy(id) {
     if (!on || !G.DB.save) return false;
     const save = G.DB.save;
@@ -1472,6 +1521,7 @@ G.Debug = (() => {
     fillBoxes,
     fighter,
     ivs,
+    candy,
     newcombat,
     cards,
     movechecker,

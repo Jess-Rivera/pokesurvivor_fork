@@ -23,3 +23,4 @@ package-lock.json
 index.html
 *.md
 js/vendor/
+js/data/growth-curves.js

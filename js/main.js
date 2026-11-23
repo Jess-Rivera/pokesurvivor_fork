@@ -32,6 +32,8 @@
     'StageOne',
     'SpeciesTraits',
     'Copies',
+    'GrowthCurves',
+    'Candy',
     'TMs',
     'Items',
     'Drops',

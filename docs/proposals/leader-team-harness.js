@@ -141,7 +141,7 @@ const faint = (e) => e.hurt(e.hp + 1, null, true);
   faint(t.active);
   run(0.1);
   ok(a.phase === 'won', 'loop 1: her one faint wins at once, no beat');
-  ok(G.Gym.badges.length === 1 && drops.join() === 'gym', 'loop 1: one badge and one gym drop: ' + drops.join());
+  ok(G.Gym.badges.length === 1 && drops.join() === 'gym,candyCommonXs', 'loop 1: one badge, one gym drop and one candy roll: ' + drops.join());
   ok(human.kills === 1 && human.bosses === 1 && credits.join() === 'true', 'loop 1: one kill, one boss count');
   ok(says.includes('Gym Leader Misty Defeated!'), 'loop 1: the win line names the leader: ' + says[says.length - 1]);
 }
@@ -194,7 +194,7 @@ const faint = (e) => e.hurt(e.hp + 1, null, true);
   faint(s2);
   run(0.1);
   ok(a.phase === 'won', 'the wipe wins');
-  ok(G.Gym.badges.length === 1 && drops.join() === 'gym', 'one badge and one gym drop for the team: ' + drops.join());
+  ok(G.Gym.badges.length === 1 && drops.join() === 'gym,candyCommonXs', 'one badge, one gym drop and one candy roll for the team: ' + drops.join());
   ok(human.kills === 2 && human.bosses === 1 && credits.join() === 'false,true' && evKills.length === 2, 'two kills, one boss count, EVs per mon');
   ok(says.includes('Gym Leader Misty Defeated!') && !says.some((s) => s.includes(s1.name + '!') && !s.includes('sends out')), 'the win line names the leader, not a mon');
 }

@@ -157,6 +157,7 @@ async function fight(browser, n, leaderName, badge, isEntity) {
       badges: G.Gym.badges.length,
       ev: G.Game.evBank.reduce((a, v) => a + v, 0),
       level: pl.level,
+      candy: Object.values(G.Candy.bagOf(G.DB.save)).reduce((total, count) => total + count, 0),
     };
   });
   await page.evaluate(() => {
@@ -191,12 +192,14 @@ async function fight(browser, n, leaderName, badge, isEntity) {
     bosses: G.Game.player.bosses,
     ev: G.Game.evBank.reduce((a, v) => a + v, 0),
     pickups: G.Pickups.all ? G.Pickups.all().length : -1,
+    candy: Object.values(G.Candy.bagOf(G.DB.save)).reduce((total, count) => total + count, 0),
   }));
   ok(
     paid.kills === before.kills + 1 && paid.bosses === before.bosses + 1,
     tag + ': one kill and one boss on your record'
   );
   ok(paid.ev > before.ev, tag + ': the leader paid its EVs');
+  ok(paid.candy === before.candy + 1, tag + ': the win banks one Exp Candy (loop 1, one roll)');
 
   // back on the map, 5 s later
   await waitFor(() => !G.GymArena.inArena, null, 12000);

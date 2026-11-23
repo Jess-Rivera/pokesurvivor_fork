@@ -209,6 +209,7 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     G.FX.ring(this.x, this.y, this.r, this.r * 6, '#ffd95e', 0.6, 6);
     G.Camera.kick(0.9);
     G.Drops.roll('gym', this.x, this.y);
+    G.Candy.saveAndAnnounce(G.Drops.roll(this.gym.candyTable, this.x, this.y, { loop: this.gym.loop })); // #139 8a
     G.Audio.sfx('bossDown');
   }
 

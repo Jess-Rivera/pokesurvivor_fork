@@ -134,6 +134,7 @@ G.DB = (() => {
       teamLoadout: [], // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
       box: [], // every Pokemon owned, as compact copies (only G.Copies reads them)
       boxCount: 2, // boxes this player has
+      candy: {}, // #139 8a: the Exp Candy bag, size -> count (G.Candy); an absent size is 0
       belt: { size: 6, slots: Array(6).fill('poke'), unlocked: [] }, // #136, #137b: the ball belt, slot by slot (G.Catch)
       trainerId: G.Copies ? G.Copies.uuid() : null, // this save's original trainer id, never changes
     };
@@ -179,6 +180,7 @@ G.DB = (() => {
         for (const d of Object.keys(s[coll] || {})) if (!G.DEX_BY[d]) delete s[coll][d];
       }
     if (G.Copies) G.Copies.clean(s);
+    if (G.Candy) G.Candy.clean(s);
     // Shortcuts: 4 slots with a move that exists (or null), no repeats.
     if (s.pbind && typeof s.pbind === 'object') {
       for (const d of Object.keys(s.pbind)) {

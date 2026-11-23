@@ -216,7 +216,7 @@ const yours = (hp, dead = []) => [0, 1, 2].map((i) => ({ hp: dead.includes(i) ? 
   faint(s1);
   run(0.1);
   ok(a.phase === 'won', 'the second wipe wins');
-  ok(G.Gym.badges.length === 1 && drops.join() === 'gym', 'one badge, one gym drop: ' + drops.join());
+  ok(G.Gym.badges.length === 1 && drops.join() === 'gym,candyCommonXs', 'one badge, one gym drop and one candy roll: ' + drops.join());
   ok(human.kills === 4 && human.bosses === 1 && credits.join() === 'false,false,false,true', 'four kills (each revived mon pays again), one boss count');
 }
 

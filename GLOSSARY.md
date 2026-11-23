@@ -20,6 +20,32 @@ _Avoid_: candy level, meta level
 
 Rule: decision 2026-11-21-139-oor-level-candy-sources-friendship-model; Acquisition v2 spec section 6
 
+**Exp Candy**:
+An item that raises a copy's OOR level, in five canon sizes: XS 100, S 800, M 3,000, L 10,000, XL 30,000 XP. Gym leaders, elites and UberElites drop it.
+
+_Avoid_: candy XP as a size name, rare candy
+
+Rule: decision 2026-11-22-139-candy-target-and-drop-model
+
+**Candy bag**:
+The save's store of Exp Candy, a count per size. A candy is banked the moment it drops and kept even if the run is lost; you give it to a copy in the Team menu.
+
+Rule: decision 2026-11-22-139-candy-target-and-drop-model
+
+**Drop function**:
+The one flow every loot drop uses (G.Drops): a table's tiers are rolled rarest first, the roll stops at the first hit, and the tier's weighted list picks the result. Candy uses it first; the other drops move to it later.
+
+_Avoid_: drop ladder, upgrade roll
+
+Rule: decision 2026-11-22-139-candy-target-and-drop-model
+
+**Drop tier**:
+One rung of a drop table: Common, Uncommon, Rare, Epic, Jackpot. Every table has Common, which is what a roll lands on when no rarer tier hits; a tier a table does not name passes its chance to Common. Tier names are never candy sizes.
+
+_Avoid_: floor (for Common), upgrade
+
+Rule: decision 2026-11-22-139-candy-target-and-drop-model
+
 **Egg move unlock**:
 A copy may start a run with one of its species' egg moves once you have ever owned a member of a line that shares its egg group and learns that move by level-up (the mainline breeding father).
 
