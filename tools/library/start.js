@@ -16,6 +16,7 @@ const DRAW = {
   'primitives/chips': chipsPage,
   'primitives/tooltip': tooltipPage,
   'primitives/inputs': inputsPage,
+  'primitives/backgrounds': backgroundsPage,
   'run.hud.playerActive.bar': activeBarPage,
   'run.hud.playerActive.area': areaPage,
   'run.hud.teamSlot': teamSlotPage,
@@ -54,6 +55,7 @@ function show(id, tab) {
     markFonts();
     drawFontCanvas();
   }
+  if (item.id === 'primitives/backgrounds') mountBackgrounds();
   const primitive = PRIMITIVE_PAGES[item.id];
   const hasStories = $('main').querySelector('[data-story]');
   if (primitive && !item.later && hasStories) mountStories(primitive.stories(), primitive.pieces());

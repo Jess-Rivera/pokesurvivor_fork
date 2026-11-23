@@ -1,0 +1,111 @@
+/* tools/library/background-draft.css: the Backgrounds page's styles (the board, tools/library/index.html; #168) */
+.mosaic-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  max-width: 1600px;
+  overflow: hidden;
+}
+.mosaic-stage:fullscreen {
+  max-width: none;
+}
+.mosaic-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* the plain bars above and below, each with its teal line and the step on the right */
+.mosaic-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6%;
+  background: var(--color-teal-dark);
+}
+.mosaic-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-grey-ink);
+}
+.mosaic-bar.top {
+  top: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 71.5% 100%, 70.3% 80%, 0 80%);
+}
+.mosaic-bar.top::after {
+  top: -2px;
+  bottom: 2px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 71.5% 100%, 70.3% 80%, 0 80%);
+}
+.mosaic-bar.bottom {
+  bottom: 0;
+  clip-path: polygon(0 100%, 100% 100%, 100% 0, 71.5% 0, 70.3% 20%, 0 20%);
+}
+.mosaic-bar.bottom::after {
+  top: 2px;
+  bottom: -2px;
+  clip-path: polygon(0 100%, 100% 100%, 100% 0, 71.5% 0, 70.3% 20%, 0 20%);
+}
+.mosaic-menu {
+  position: absolute;
+  inset: 0;
+}
+.mosaic-stage.menu-hidden .mosaic-menu {
+  display: none;
+}
+.mosaic-box {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--color-grey-slate);
+  border-radius: 6px;
+  background: var(--color-grey-panel);
+  color: var(--color-teal-base);
+  font-size: 12px;
+}
+.mosaic-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.mosaic-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 24px;
+  max-width: 1600px;
+}
+.mosaic-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.mosaic-control > span {
+  flex: 0 0 150px;
+}
+.mosaic-control select,
+.mosaic-control input {
+  flex: 1;
+  min-width: 0;
+}
+.mosaic-control output {
+  flex: 0 0 44px;
+  text-align: right;
+}
+.mosaic-chip {
+  flex: 0 0 22px;
+  height: 22px;
+  border: 1px solid var(--lib-line);
+}
+.mosaic-tools button {
+  padding: 6px 12px;
+  border: 1px solid var(--lib-line);
+  border-radius: 4px;
+  background: var(--lib-panel);
+  color: var(--lib-text);
+  cursor: pointer;
+}
