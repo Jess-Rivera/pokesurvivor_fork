@@ -9,13 +9,14 @@ Run `node tools/catchup.js` (prints the briefing and the exact sync commands, wr
 node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. New Team menu and copy Upgrade tab from Jess's design (he brings sketches). Open the slice with goal, done and
-   end-goal test. It is the UI home for #97 and for #139 Part F.
+0. New Team menu and Upgrade popup: sketches reviewed, rulings in decision
+   2026-11-23-97-139-team-menu-and-upgrade-popup-rulings. Slice A is #167 (opening agreed), then
+   B #139 Part F, then C #97. Next: slice A prose plan. It is the UI home for #97 and for #139 Part F.
 1. #97 build (design doc "Numbers (draft)", docs/AI Outputs/Issue-97/; numbers drafted in #131, decision
    2026-11-23-97-upgrade-price-shape-bst-and-bands). The no-UI part (cut five upgrades, base stat % in G.Stats, crit,
    cooldown, regen from the profile) can go first. Split out: #164 (97b sidegrades), #165 (Mints, Capsules, Bottle
    Caps). The #150 picker follows, then needs a learnset rebake with levels and the egg-move unlock data.
-1b. #139 S8 8a Part F (Team menu: meter, Give, Give until) on the new Team menu. Parts A to E and G are built
+1b. #139 S8 8a Part F (Team menu: XP bar, Level Up, EXP Bag) on the new Team menu. Parts A to E and G are built
    (8ec7798b). Until then candy banks but cannot be given.
 1c. #166 run telemetry (ongoing data collection; feeds the #97 and #131 numbers). Slice opening first.
 2. #139 8b evolve, then grill friendship (docs/AI Outputs/Issue-139/139 - Friendship Minutes Deep Dive.md, [Open]),

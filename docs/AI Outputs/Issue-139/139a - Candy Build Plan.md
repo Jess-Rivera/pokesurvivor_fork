@@ -49,9 +49,9 @@ flowchart LR
 | Elite and UberElite drop | One mixed table; its Common is the weighted pick below. It replaces the old berry, ground item and 50% item chance. | [Approved] |
 | Candy tables | The tables in "Candy tables" below (Jess, 2026-11-22). | [Approved] |
 | The bag | Counted stacks per size. A drop is banked the moment it is earned and kept even if the run is lost. | [Approved] |
-| Giving | One candy per press, hold repeats. Refused only at OOR level 100. A copy whose next evolution has no level still levels, since the OOR level also sets its starting moves. | [Approved] |
-| Give until | The largest candy that fits without overshooting, repeated, then the smallest that covers the remainder. May overshoot the target level, stops at 100, reports the level reached if the bag runs out. Its input control is decided at Part F. | [Approved] |
-| Meter | The copy's card shows the OOR level, an XP bar to the next level and a tick at the next level-based evolution (none when there is none). | [Approved] |
+| Giving | Level Up or dragged candy (decision 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings). Refused only at OOR level 100. A copy whose next evolution has no level still levels, since the OOR level also sets its starting moves. | [Approved] |
+| Give until | The largest candy that fits without overshooting, repeated, then the smallest that covers the remainder. May overshoot the target level, stops at 100, reports the level reached if the bag runs out. The control is gone: Level Up uses this rule for +1 and +10 levels (decision 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings). | [Approved] |
+| Meter | The copy's card shows the OOR level and an XP bar to the next level. No evolution tick (decision 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings). | [Approved] |
 | Scope | Candy only. The gym's 10 coins and guaranteed item stay as they are. | [Approved] |
 
 Elite and UberElite Common tier (weights): the chances are the weight over the total of 120.
@@ -217,6 +217,8 @@ flowchart LR
   they roll N times. It replaces the old berry, ground item and 50% item chance (Jess, 2026-11-22).
 
 ## Part F: the Team menu (js/ui/menu-team-copies.js)
+- REPLACED by decision 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings: Level Up and dragged candy,
+  no Give button, no Give until control, no evolution tick. The lines below are history.
 - What changes: a copy's card shows its OOR level, an XP bar to the next level and a tick at the next level-based
   evolution (none when there isn't one). It gets a Give button (one per press, hold repeats), a size picker, and a
   Give until control. The bag's counts sit in the same panel.
