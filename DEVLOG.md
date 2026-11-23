@@ -270,3 +270,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
   and Pokemon item approved. Built Parts A to E and G: G.Drops tiered entries, G.Candy, growth-curves.js, save key c.
 - Tests: candy-harness (floor vs the pokeapi median), drops-harness cases, candy-mutate 13/13, smoke-gym banks candy.
 - Broke: nothing. Stopped at: Part F, three questions logged in the decision file and STATE.
+
+## 2026-11-23 (home, Claude Code): #97 upgrade numbers drafted in #131, telemetry issue
+- Drafted the #97 numbers with Jess: exponential prices per level (x1.6 base stat, x2 crit/cooldown/regen), every
+  per-copy price scaled by BST stars / 3, bands at OOR 1/10/20/40/80. Shape [Approved], numbers [Proposed] until real
+  PokeCoin income exists (no trace has reached gym 1). Decision 2026-11-23-97-upgrade-price-shape-bst-and-bands.
+- Opened #166 (PokeCoins in the run trace, a traces folder, an HTML telemetry dashboard), on the board in Triage.
+- Fixed two Mermaid labels in the #97 design doc (a % sign breaks the parser).
+- Broke: nothing. Stopped at: Jess designs the Team menu and Upgrade tab; next session builds them, then #97, then #139.

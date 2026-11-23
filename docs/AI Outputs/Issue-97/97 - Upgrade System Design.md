@@ -14,7 +14,7 @@ flowchart LR
   Coins --> Items["Shop items<br/>Mints, Ability Capsules, Bottle Caps"]
   Candy[OOR level] -->|raises the caps| Copy
   Candy -->|level 50 to use| Items
-  Copy -->|base stat %, crit, cooldown, regen, starting moves| Run
+  Copy -->|"base stat percent, crit, cooldown, regen, starting moves"| Run
   Char -->|trainer perks| Run
   Items -->|nature, ability slot, IVs on the copy| Run
 ```
@@ -121,7 +121,7 @@ is benched" and "Tactician: refreshes every buff on entering the field; this Pok
 
 ```mermaid
 flowchart TD
-  A[Cut the five upgrades, new save keys] --> B[Base stat % in G.Stats + the hex starting band, #95]
+  A[Cut the five upgrades, new save keys] --> B["Base stat percent in G.Stats + the hex starting band, #95"]
   B --> C[Crit, cooldown, regen read from the copy profile]
   C --> D[Starting moves purchases + #150 picker]
   A --> E[Character Upgrades list in the shop]

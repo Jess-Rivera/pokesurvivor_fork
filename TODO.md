@@ -9,13 +9,15 @@ Run `node tools/catchup.js` (prints the briefing and the exact sync commands, wr
 node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. #97 grilled and approved 2026-11-23 (decision 2026-11-23-97-upgrade-system-redesign, design in
-   docs/AI Outputs/Issue-97/). Next: its numbers in #131, then the #97 slice opening. Split out: #164 (97b sidegrades,
-   own grilling), #165 (Mints, Ability Capsules, Bottle Caps). The #150 picker follows, then needs a learnset rebake
-   with levels and the egg-move unlock data.
-1. #139 S8 8a Part F (Team menu: meter, Give, Give until), held for later (Jess 2026-11-23). Parts A to E and G are
-   built (8ec7798b). It needs Jess's three Part F answers (decision 2026-11-22-139-candy-target-and-drop-model, last
-   [Open]). Until then candy banks but cannot be given.
+0. New Team menu and copy Upgrade tab from Jess's design (he brings sketches). Open the slice with goal, done and
+   end-goal test. It is the UI home for #97 and for #139 Part F.
+1. #97 build (design doc "Numbers (draft)", docs/AI Outputs/Issue-97/; numbers drafted in #131, decision
+   2026-11-23-97-upgrade-price-shape-bst-and-bands). The no-UI part (cut five upgrades, base stat % in G.Stats, crit,
+   cooldown, regen from the profile) can go first. Split out: #164 (97b sidegrades), #165 (Mints, Capsules, Bottle
+   Caps). The #150 picker follows, then needs a learnset rebake with levels and the egg-move unlock data.
+1b. #139 S8 8a Part F (Team menu: meter, Give, Give until) on the new Team menu. Parts A to E and G are built
+   (8ec7798b). Until then candy banks but cannot be given.
+1c. #166 run telemetry (ongoing data collection; feeds the #97 and #131 numbers). Slice opening first.
 2. #139 8b evolve, then grill friendship (docs/AI Outputs/Issue-139/139 - Friendship Minutes Deep Dive.md, [Open]),
    then 8c. #161 fatigue (stub) rides with it.
 3. #146 keep-or-sell list; #145 small and ready (may ride this branch). Then #140 to #143 and #162.
