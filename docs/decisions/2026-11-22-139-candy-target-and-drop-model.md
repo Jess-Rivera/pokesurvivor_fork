@@ -19,7 +19,7 @@ canonical: "docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md
   with its own chance, stopping at the first hit; a hit picks an item from that tier (weighted or not). The bottom
   tier has no chance and is guaranteed. Loop N means N ladder rolls. One new G.Drops entry type, kept in the one place.
 - [Approved] Tier names, one set for every table, never candy sizes: Common, Uncommon, Rare, Epic, Jackpot.
-- [Proposed] Candy per tier is fixed for every source: Uncommon S, Rare M, Epic L, Jackpot XL. A source supplies only
+- [Approved] Candy per tier is fixed for every source: Uncommon S, Rare M, Epic L, Jackpot XL. A source supplies only
   its floor, and a tier at or below the floor is no upgrade. (A stepped-from-the-floor rule was rejected: gym 8's XL
   would be 0.12% against 0.02% elsewhere.) First-pass chances per roll: Uncommon 1%, Rare 0.4%, Epic 0.1%,
   Jackpot 0.02%, tunable.
@@ -41,8 +41,10 @@ canonical: "docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md
   the main menu shop, a new tab, as an expensive consumable used on a copy. Filed as #163.
 - [Open] Which materials each type maps to and what a type with no material drops (Rock, Fighting, Ghost); the shop
   price.
-- [Open] Whether the elite berry and ground item stay beside the ladder, and how many UberElites and elites a run holds.
-  The tier chances stay tunable (G.Debug.candy and the harness); no per-source multiplier is built.
+- [Approved] (Jess, 2026-11-22) The elite and UberElite floor table is the whole elite drop: it replaces the old
+  guaranteed berry, ground item and 50% item chance. Elite and UberElite counts per run are not an 8a input (the
+  harness checks the floor against the gym and Elite Four base alone). The tier chances stay tunable (G.Debug.candy
+  and the harness); no per-source multiplier is built.
 - [Open] "The last Elite Four beaten": the four gates open at once and the order is free (BOSS-REWORK section 4).
 
 Canonical: docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built.

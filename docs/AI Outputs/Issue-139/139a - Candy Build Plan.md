@@ -38,7 +38,7 @@ flowchart LR
 | Base (the floor) | Gym leaders and Elite Four, 100%, count = loop number (21 loop-shares, 252 drops a run). Gym 8 drops S every loop, the last Elite Four beaten drops S on loop 6 only, every other source XS: 44,100 XP, 10% over target. It is a hard floor: upgrades only add. | [Approved] |
 | Drop ladder | A drop table is N rarity tiers rolled rarest first, each with its own chance, stop at the first hit, bottom tier guaranteed. Loop N means N ladder rolls. One new entry type in G.Drops. | [Approved] |
 | Tier names | Common, Uncommon, Rare, Epic, Jackpot (rolled in that reverse order). Never candy sizes; every table uses them. | [Approved] |
-| Tier to candy | Fixed for every source: Uncommon S, Rare M, Epic L, Jackpot XL. A source supplies only its floor. A tier at or below the floor is no upgrade. | [Proposed] |
+| Tier to candy | Fixed for every source: Uncommon S, Rare M, Epic L, Jackpot XL. A source supplies only its floor. A tier at or below the floor is no upgrade. | [Approved] |
 | Tier chances | Per roll: Uncommon 1%, Rare 0.4%, Epic 0.1%, Jackpot 0.02%. Tunable, accepted for now. | [Approved] for now |
 | Elite and UberElite floor | A weighted pick of what the kill gives (table below). Upgrade tiers replace the floor with candy. | [Approved] |
 | The bag | Counted stacks per size. A drop is banked the moment it is earned and kept even if the run is lost. | [Approved] |
@@ -192,9 +192,8 @@ flowchart LR
   built in code, so that row waits in the spec as [Approved] with a "code differs, see TODO" note. The loop counter
   is dev-set today, so a real run is loop 1 until the loop slice; the harness and G.Debug.candy drive loops 1 to 6.
 - Elites still run the temporary cadence (first 2:00, then every 6:00). Not changed here.
-- Behavior change to confirm: elites and UberElites now always drop something (the floor table), and on loop N they
-  roll N times. Today they give a berry, a ground item and a 50% item chance. Whether the berry and ground item stay
-  beside the ladder is [Open] for Jess before this part is built.
+- Behavior change [Approved]: elites and UberElites now always drop something (the floor table), and on loop N they
+  roll N times. The floor table replaces the old berry, ground item and 50% item chance (Jess, 2026-11-22).
 
 ## Part F: the Team menu (js/ui/menu-team-copies.js)
 - What changes: a copy's card shows its OOR level, an XP bar to the next level and a tick at the next level-based
