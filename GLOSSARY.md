@@ -46,6 +46,25 @@ _Avoid_: floor (for Common), upgrade
 
 Rule: decision 2026-11-22-139-candy-target-and-drop-model
 
+**Copy upgrade**:
+A permanent upgrade bought with PokeCoins for one copy in its Upgrade tab: base stat %, Critical Hit, Reflexes, Synthesis, Starting moves. Lost if the copy is sold or released.
+
+_Avoid_: species upgrade, perk
+
+Rule: decision 2026-11-23-97-upgrade-system-redesign
+
+**Character Upgrade**:
+An account-wide upgrade bought in the Main Menu Shop's Character Upgrades tab (Magnet, Card Reroll, Veto, PokeCoin %, Silver %, the pockets).
+
+_Avoid_: Team Upgrade, meta perk
+
+Rule: decision 2026-11-23-97-upgrade-system-redesign
+
+**Sidegrade**:
+A copy perk that trades or bends a rule instead of adding raw power (Bench Nurse, Tactician). Designed in #164.
+
+Rule: decision 2026-11-23-97-upgrade-system-redesign
+
 **Egg move unlock**:
 A copy may start a run with one of its species' egg moves once you have ever owned a member of a line that shares its egg group and learns that move by level-up (the mainline breeding father).
 

@@ -5,8 +5,8 @@ Last updated: 2026-11-22 night, home (Claude Code). Branch: feature/138-146-lost
 No branch rules file.
 
 ## START HERE
-The ordered next-work list is TODO.md "Next" (first item: #139 8a Part F, the Team menu, after Jess answers its three
-questions). Run `node tools/catchup.js` for the live briefing.
+The ordered next-work list is TODO.md "Next" (first item: #97, grilled 2026-11-23; its numbers in #131, then the
+slice opening). #139 Part F is held for later. Run `node tools/catchup.js` for the live briefing.
 
 ## Landed 2026-11-22 (home)
 - tools/catchup.js; docs/AI Outputs sorted into Issue-N and topic folders.
@@ -25,6 +25,6 @@ questions). Run `node tools/catchup.js` for the live briefing.
 - #139 Part F: the Give until input; today's Team screen or wait for #126; the XP bar as a new library piece and its
   board look. Also: type-to-material map and shop price (#163), friendship calculation, fatigue numbers, "last Elite
   Four beaten" wording.
-- #97 (blocks #95, #150), #131, #49, #107, #86, #99, #93, #60. Tooltip pin and close icons; #156 close or keep.
+- #97 numbers (in #131); #164 sidegrades (own grilling); #165 open items. #131, #49, #107, #86, #99, #93, #60. Tooltip pin and close icons; #156 close or keep.
 
 Rules: CLAUDE.md.

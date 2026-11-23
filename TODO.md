@@ -9,12 +9,13 @@ Run `node tools/catchup.js` (prints the briefing and the exact sync commands, wr
 node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. #139 S8 8a Part F (Team menu: meter, Give, Give until). Parts A to E and G are built (8ec7798b). First Jess answers
-   the three Part F questions (decision 2026-11-22-139-candy-target-and-drop-model, last [Open]), then the plan for F,
-   then the slice closes (#139 comment, card to Needs Playtest). Feel-test now: a gym win toasts candy, elites drop
-   coins, item or candy, G.Debug.candy().
-1. Grill #97 (upgrade rework). The starting-move picker (#150 folded in) waits on it, then needs a learnset rebake
+0. #97 grilled and approved 2026-11-23 (decision 2026-11-23-97-upgrade-system-redesign, design in
+   docs/AI Outputs/Issue-97/). Next: its numbers in #131, then the #97 slice opening. Split out: #164 (97b sidegrades,
+   own grilling), #165 (Mints, Ability Capsules, Bottle Caps). The #150 picker follows, then needs a learnset rebake
    with levels and the egg-move unlock data.
+1. #139 S8 8a Part F (Team menu: meter, Give, Give until), held for later (Jess 2026-11-23). Parts A to E and G are
+   built (8ec7798b). It needs Jess's three Part F answers (decision 2026-11-22-139-candy-target-and-drop-model, last
+   [Open]). Until then candy banks but cannot be given.
 2. #139 8b evolve, then grill friendship (docs/AI Outputs/Issue-139/139 - Friendship Minutes Deep Dive.md, [Open]),
    then 8c. #161 fatigue (stub) rides with it.
 3. #146 keep-or-sell list; #145 small and ready (may ride this branch). Then #140 to #143 and #162.

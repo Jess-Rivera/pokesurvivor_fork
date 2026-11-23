@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-23, #97 upgrade redesign: per-copy upgrades in the Upgrade tab, account-wide ones in Character Upgrades; the four flat stat upgrades and Wisdom go (Jess)](docs/decisions/2026-11-23-97-upgrade-system-redesign.md)
 - [2026-11-22, #139 8a: candy target 40,007 XP, canon sizes, deterministic base drops and a per-source extra pool (Jess)](docs/decisions/2026-11-22-139-candy-target-and-drop-model.md)
 - [2026-11-21, #139 grilling: out-of-run level, candy as a rarity drop, starting moves and egg-move unlocks, friendship 0 to 255 (Jess)](docs/decisions/2026-11-21-139-oor-level-candy-sources-friendship-model.md)
 - [2026-11-21, #139 S8 splits into candy, evolve and in-run flags; candy drops by gym order x loop, given by hand (Jess)](docs/decisions/2026-11-21-139-candy-opening-rulings.md)
