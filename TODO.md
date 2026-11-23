@@ -9,9 +9,10 @@ Run `node tools/catchup.js` (prints the briefing and the exact sync commands, wr
 node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. #139 S8 8a: Jess OKs docs/AI Outputs/Issue-139/139a - Candy Build Plan.md (the fixed tier-to-size rule, whether the
-   elite berry and ground item stay beside the ladder, UberElite and elite counts), then build Parts A to G, tests
-   first. Rulings: decision 2026-11-22-139-candy-target-and-drop-model.
+0. #139 S8 8a Part F (Team menu: meter, Give, Give until). Parts A to E and G are built (8ec7798b). First Jess answers
+   the three Part F questions (decision 2026-11-22-139-candy-target-and-drop-model, last [Open]), then the plan for F,
+   then the slice closes (#139 comment, card to Needs Playtest). Feel-test now: a gym win toasts candy, elites drop
+   coins, item or candy, G.Debug.candy().
 1. Grill #97 (upgrade rework). The starting-move picker (#150 folded in) waits on it, then needs a learnset rebake
    with levels and the egg-move unlock data.
 2. #139 8b evolve, then grill friendship (docs/AI Outputs/Issue-139/139 - Friendship Minutes Deep Dive.md, [Open]),

@@ -56,5 +56,8 @@ canonical: "docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md
 - [Approved] (Jess, 2026-11-22, at the build) The elite table's "coins" are a small chest's pile (4 to 7 coins worth
   3); its "item" is a Pokemon item (the held-item roll, never a run item).
 - [Open] "The last Elite Four beaten": the four gates open at once and the order is free (BOSS-REWORK section 4).
+- [Open] Part F, the Team menu (asked 2026-11-22, delayed by Jess): the Give until input control; whether the meter
+  and Give go on today's Team screen or wait for the #126 rebuild; the XP bar as a new library bar piece and which
+  board look it follows (the run HUD's EXP bar draft?).
 
 Canonical: docs/AI Outputs/Issue-139/139 - Candy and Evolution Slice Opening.md, then spec section 6 once built.
