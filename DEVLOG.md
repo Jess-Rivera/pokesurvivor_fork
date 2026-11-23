@@ -278,3 +278,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
 - Opened #166 (PokeCoins in the run trace, a traces folder, an HTML telemetry dashboard), on the board in Triage.
 - Fixed two Mermaid labels in the #97 design doc (a % sign breaks the parser).
 - Broke: nothing. Stopped at: Jess designs the Team menu and Upgrade tab; next session builds them, then #97, then #139.
+
+## 2026-11-23 (home, Claude Code): Team menu and Upgrade popup ruled on, mosaic background tuned
+- Reviewed Jess's two sketches against the gap review; rulings in decision 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings.
+  Three slices with openings agreed: A #167 (new), B #139 Part F, C #97. The evolution tick and Give until control are gone.
+- Opened #168 and built its tuning page (tools/library, Backgrounds): teal mosaic, level-up starburst, water waves in the
+  light. Settings and rulings in decision 2026-11-23-168-mosaic-background-look-and-settings. Mounts with #167.
+- CLAUDE.md: a commit with no code skips check.js and format.
+- Broke: nothing. Stopped at: the slice A (#167) prose plan is next.

@@ -26,6 +26,6 @@ canonical: "this file and the two sketches until the slice builds the screen."
 - [Approved] Picked for sale: the selected look in color.red.dark with a dark shimmer.
 - [Approved] Three slices: A the screen (#167), B candy (#139 Part F), C the Upgrade popup (#97). Openings are on the issues.
 - [Approved] Space is reserved for Evolve only (beside Moves, a portrait corner for "ready"). Friendship, fatigue and
-  use-item wait for their slices. The background animation is its own slice.
+  use-item wait for their slices. The background animation is its own slice (#168).
 
 Canonical: this file and the two sketches until the slice builds the screen.

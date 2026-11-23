@@ -12,7 +12,8 @@ node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a
 0. New Team menu and Upgrade popup: sketches reviewed, rulings in decision
    2026-11-23-97-139-team-menu-and-upgrade-popup-rulings. Slice A is #167 (opening agreed), then
    B #139 Part F, then C #97. It is the UI home for both. Next: slice A prose plan.
-   #168 mosaic background: tuning page built (tools/library, Backgrounds); waits on the settings Jess copies from it.
+   #168 mosaic background: tuned, builds and mounts with #167, with two settings (starburst off, static
+   background). Decision 2026-11-23-168-mosaic-background-look-and-settings.
 1. #97 build (design doc "Numbers (draft)", docs/AI Outputs/Issue-97/; numbers drafted in #131, decision
    2026-11-23-97-upgrade-price-shape-bst-and-bands). The no-UI part (cut five upgrades, base stat % in G.Stats, crit,
    cooldown, regen from the profile) can go first. Split out: #164 (97b sidegrades), #165 (Mints, Capsules, Bottle
