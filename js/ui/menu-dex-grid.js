@@ -4,6 +4,7 @@
 G.MenuDexGrid = (() => {
   const $ = G.UI.$;
   const GEN_NAMES = G.MenuUI.GEN_NAMES;
+  const { moveQuery, learnsAny, namedBy, speciesMatches, speciesFound } = G.TeamList; // shared with the Team menu (#167)
   // Pokedex control state. region: 'all' | gen#; own: 'all'|'own'|'miss';
   // q: search; types/rarity/bst: multi-select (empty = all); sort + dir.
   // marks (3b-2 E3): 'fav' and 'lock' chips, Team screen box tabs only.
@@ -213,47 +214,19 @@ G.MenuDexGrid = (() => {
     else arr.splice(i, 1);
   }
 
-  /** Move search (Pokedex and Team): the Pokemon that can learn a move whose name matches `q` (a word of the name starts with it (name-start matches rank first), so 'pulse'
-   *  finds Dark Pulse). Learnable = G.Moves.poolFor. Returns null when nothing applies. */
-  function moveQuery(q) {
-    if (!q || q.length < 3) return null;
-    const strong = new Set(),
-      weak = new Set(); // strong: the move NAME starts with q (ranked first); weak: only a later word does ('bit' -> Bug Bite)
-    for (const m of G.Moves.ALL) {
-      if (G.Moves.RETIRED[m.id]) continue; // retired (slice 7b) moves are learnable by no one
-      const nm = m.name.toLowerCase();
-      if (nm.startsWith(q)) strong.add(m.id);
-      else if (nm.split(/[\s-]+/).some((w) => w.startsWith(q))) weak.add(m.id);
-    }
-    return strong.size || weak.size ? { strong, weak } : null;
-  }
-  const learnsAny = (p, ids) => G.Moves.poolFor(p).some((id) => ids.has(id));
-
   function filterSortDex(c) {
     const s = G.DB.save;
     const mq = moveQuery(c.q);
+    const filter = {
+      own: c.own,
+      regions: c.region === 'all' ? [] : [c.region],
+      types: c.types,
+      rarity: c.rarity,
+      bst: c.bst,
+    };
     const list = G.DEX.filter((p) => {
-      if (c.region !== 'all' && p.gen !== c.region) return false;
       const own = !!s.owned[p.dex];
-      if (c.own === 'own' && !own) return false;
-      if (c.own === 'miss' && own) return false;
-      if (c.types.length && !c.types.some((t) => p.types.includes(t))) return false;
-      if (c.rarity.length && !c.rarity.includes(p.rarity)) return false;
-      if (
-        c.bst.length &&
-        !c.bst.some((k) => {
-          const b = BST_BANDS.find((x) => x.k === k);
-          return p.bst >= b.lo && p.bst <= b.hi;
-        })
-      )
-        return false;
-      if (c.q) {
-        const num = String(p.dex).padStart(3, '0');
-        const byMove = !!mq && (learnsAny(p, mq.strong) || learnsAny(p, mq.weak)); // can learn a move that matches (shown for unowned too: the type filters already reveal types)
-        if (!(own && p.name.toLowerCase().includes(c.q)) && !num.includes(c.q) && String(p.dex) !== c.q && !byMove)
-          return false;
-      }
-      return true;
+      return speciesMatches(p, filter, own) && speciesFound(p, c.q, mq, own);
     });
     const key = c.sort;
     // Stat/BST sorts are power-revealing: sink UNOWNED to the bottom (owned-first),
@@ -262,10 +235,7 @@ G.MenuDexGrid = (() => {
     // Ranking of a move search: name/# hits and moves whose NAME starts with the query first, word-only matches (Bug Bite for 'bit') below.
     const tier = (p) => {
       if (!mq || learnsAny(p, mq.strong)) return 0;
-      const num = String(p.dex).padStart(3, '0');
-      return (s.owned[p.dex] && p.name.toLowerCase().includes(c.q)) || num.includes(c.q) || String(p.dex) === c.q
-        ? 0
-        : 1;
+      return namedBy(p, c.q, !!s.owned[p.dex]) ? 0 : 1;
     };
     list.sort((a, b) => {
       if (mq) {

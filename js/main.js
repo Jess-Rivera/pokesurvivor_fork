@@ -34,6 +34,8 @@
     'Copies',
     'GrowthCurves',
     'Candy',
+    'TeamDraft',
+    'TeamList',
     'TMs',
     'Items',
     'Drops',
