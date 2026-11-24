@@ -108,5 +108,22 @@ G.Lib.BarStories = (() => {
     ],
   };
 
-  return [life, timer];
+  const exp = {
+    name: 'bar.exp',
+    component: 'ExpBar',
+    stageClass: 'lib-stage-timer',
+    job: "A Pokemon's Exp Candy XP toward its next level: a 4 px line, two rows full and two empty.",
+    files: 'js/ui/lib/primitives/bar/bar.js, bar.css',
+    tokens: ['color.blue.base', 'color.blue.dark', 'color.grey.mid', 'color.grey.paper'],
+    size: '4 px tall, the screen sets its width',
+    places: ['team.detail.expBar'],
+    states: [0, 0.4, 1].map((fraction) => ({
+      id: 'at' + fraction * 100,
+      title: fraction * 100 + '% of the level',
+      props: { fraction, style: { width: '240px' } },
+    })),
+    props: [{ name: 'fraction', values: '0 to 1', does: 'How far it is to the next level' }],
+  };
+
+  return [life, timer, exp];
 })();

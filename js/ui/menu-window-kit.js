@@ -32,6 +32,14 @@ G.MenuWindowKit = (() => {
   const { GlitchButton } = buttons;
 
   const px = (value) => value + 'px';
+  // whether Shift and Ctrl (Cmd on a Mac) were down on the last press anywhere: a button's press does not say
+  const modifiers = { shift: false, ctrl: false };
+  for (const kind of ['pointerdown', 'keydown'])
+    addEventListener(
+      kind,
+      (event) => Object.assign(modifiers, { shift: event.shiftKey, ctrl: event.ctrlKey || event.metaKey }),
+      true
+    );
   // the windows' buttons write a price from 1,000 up short (G.U.compact): "Buy 9k", "Belt 2 10k", "Buy 7.5k"; the ask
   // before a buy, its note and the toasts keep the whole number (Jess 2026-11-18)
   const SHORT_PRICE_FROM = 1000;
@@ -499,6 +507,7 @@ G.MenuWindowKit = (() => {
     CURSOR_ROOM,
     SCROLL_COLOURS,
     SHORT_PRICE_FROM,
+    modifiers,
     px,
     createMenuCursor,
     CursorButton,

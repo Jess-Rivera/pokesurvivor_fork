@@ -7,6 +7,16 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-24',
+    title: ['Give Exp Candy', 'Give Exp Candy'],
+    new: [
+      [
+        "Exp Candy can be given in the Team menu. Level Up takes a Pokemon to its next level (Shift: 10 levels), and the EXP Bag's candy can be dragged onto any Pokemon you own (Shift: 10 at a time, Ctrl-click to gather a handful). An XP bar shows how far the next level is.",
+        "Exp Candy can be given in the Team menu. Level Up takes a Pokemon to its next level (Shift: 10 levels), and the EXP Bag's candy can be dragged onto any Pokemon you own (Shift: 10 at a time, Ctrl-click to gather a handful). An XP bar shows how far the next level is.",
+      ],
+    ],
+  },
+  {
     d: '2026-11-23',
     title: ['New Team menu', 'New Team menu'],
     new: [
@@ -25,8 +35,8 @@ G.CHANGELOG = [
     title: ['Exp Candy drops', 'Exp Candy drops'],
     new: [
       [
-        'Gym leaders, elites and UberElites now drop Exp Candy (XS, S, M, L and XL). It goes straight into your candy bag and stays there even if the run is lost. A message says what you got. Giving candy to a Pokemon comes in a later update.',
-        'Gym leaders, elites and UberElites now drop Exp Candy (XS, S, M, L and XL). It goes straight into your candy bag and stays there even if the run is lost. A message says what you got. Giving candy to a Pokemon comes in a later update.',
+        'Gym leaders, elites and UberElites now drop Exp Candy (XS, S, M, L and XL). It goes straight into your candy bag and stays there even if the run is lost. A message says what you got.',
+        'Gym leaders, elites and UberElites now drop Exp Candy (XS, S, M, L and XL). It goes straight into your candy bag and stays there even if the run is lost. A message says what you got.',
       ],
     ],
     chg: [

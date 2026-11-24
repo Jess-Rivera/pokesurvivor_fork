@@ -8,6 +8,7 @@
  *   saving  everything saves at once; Back (and Esc) leaves, Revert puts the roster back as it was on opening
  *   layout  the bars are a fixed size in real pixels; the team column is on the left, the detail panel on the right, and
  *           the grid takes the room between them. A window too small for that scales the panels down, never the bars
+ *   candy   Level Up (Shift: +10) and the EXP Bag's candy, put on a slot, a portrait or the detail panel (#139 Part F)
  *   mouse   click selects; double-click puts the Pokemon in the highlighted slot; drag onto a slot, the grid or a box tab;
  *           right-click frees a slot
  *   keys    arrows move; Enter or Space lifts and puts down a Pokemon or presses; 1 to 6 puts the selected Pokemon in
@@ -18,7 +19,7 @@ G.MenuTeam = (() => {
     windowKit = G.MenuWindowKit,
     stage = document.querySelector('#scr-roster .tm-stage'),
     mosaicHost = document.querySelector('#scr-roster .tm-mosaic'),
-    parts = [G.MenuTeamSlots, G.MenuTeamGrid, G.MenuTeamDetail];
+    parts = [G.MenuTeamSlots, G.MenuTeamGrid, G.MenuTeamDetail, G.MenuTeamExpBag];
   if (!overlay || !overlay.ready || !windowKit.ready || !stage || !parts.every((part) => part.ready)) {
     console.warn('[Team] the HUD kit or the UI library did not load: the Team menu cannot open');
     return { init() {}, open() {}, roster: () => [] };
@@ -29,6 +30,7 @@ G.MenuTeam = (() => {
   const { CursorBar, useRingTravel } = G.Lib.Cursor;
   const Draft = G.TeamDraft,
     List = G.TeamList,
+    ExpBag = G.MenuTeamExpBag,
     { coinText } = G.MenuTeamSell;
 
   // ---------- sizes and places (stage pixels) ----------
@@ -46,7 +48,8 @@ G.MenuTeam = (() => {
     GHOST = { size: 56 };
   const SLOT_ID = 'slot-',
     COPY_ID = 'copy-',
-    DEX_ID = 'dex-';
+    DEX_ID = 'dex-',
+    LEVEL_UP_ID = 'levelup-';
   const MARK_ID = /^(favorite|lock)-(\d)$/;
   const REFUSALS = {
     lead: 'Slot 1 is the lead and cannot be left empty',
@@ -54,6 +57,7 @@ G.MenuTeam = (() => {
     none: 'That Pokemon cannot go there',
   };
   const PICK_A_COPY = 'Pick a copy from a box';
+  const BURSTS = { gapMs: 150, allMs: 3000 }; // one starburst per level, closer together when there are many
 
   // ---------- the layout ----------
   const STEP_WIDTH = (BAR.deep - BAR.height) / Math.tan((BAR.slopeDegrees * Math.PI) / 180);
@@ -196,6 +200,7 @@ G.MenuTeam = (() => {
     saved();
   }
   function freeSlot(slot) {
+    if (bag.inHand()) return bag.release();
     const member = state.draft.team[slot];
     if (member) drop({ uid: member.uid, fromSlot: slot }, { kind: 'grid' });
     if (!state.draft.team[slot]) selectSlot(slot);
@@ -213,7 +218,7 @@ G.MenuTeam = (() => {
     drop(held, target);
   }
   function startDrag(event, held) {
-    if (!held.uid || state.held || state.renaming) return event.preventDefault();
+    if (!held.uid || state.held || bag.inHand() || state.renaming) return event.preventDefault();
     state.drag = held;
     event.dataTransfer.setData('text/plain', held.uid);
     event.dataTransfer.effectAllowed = 'move';
@@ -237,23 +242,72 @@ G.MenuTeam = (() => {
       if (held) drop(held, target);
     },
   });
+  const uidOfCell = (id) => (id.startsWith(COPY_ID) ? id.slice(COPY_ID.length) : null);
+
+  // ---------- candy (#139 Part F) ----------
+  const bag = ExpBag.create({
+    isLifting: () => !!state.held,
+    isRenaming: () => state.renaming,
+    sell: () => sell,
+    /** A copy was given candy: it is then the one selected. */
+    given(uid, levels) {
+      const species = G.DEX_BY[G.Copies.get(G.DB.save, uid).speciesID],
+        slot = Draft.slotOfUid(state.draft, uid);
+      if (slot >= 0) state.slot = slot;
+      select(species.dex, uid);
+      playBursts(levels, species.types[0]);
+      saved();
+    },
+    closed: () => cursor.moveTo('expbag'),
+    targetAt: candyTargetAt,
+    redraw,
+  });
+  /** The copy a candy let go at this point of the window would go to, { element, uid }, or null. */
+  function candyTargetAt(x, y) {
+    const under = document.elementFromPoint(x, y),
+      element = under && under.closest('.tm-slot, .tm-cell, .tm-detail');
+    if (!element) return null;
+    const { slot, cursorId } = element.dataset,
+      member = slot != null && state.draft.team[+slot];
+    let uid = state.selected.uid; // the detail panel's
+    if (slot != null) uid = member && member.uid;
+    else if (cursorId) uid = uidOfCell(cursorId);
+    return uid ? { element, uid } : null;
+  }
+  const burstTimers = new Set();
+  /** One starburst per level. */
+  function playBursts(levels, type) {
+    const gap = Math.min(BURSTS.gapMs, BURSTS.allMs / levels);
+    for (let level = 0; level < levels; level++) {
+      const timer = setTimeout(() => {
+        burstTimers.delete(timer);
+        if (mosaic) mosaic.burst(type);
+      }, level * gap);
+      burstTimers.add(timer);
+    }
+  }
+  function clickDetail() {
+    if (bag.inHand()) bag.give(state.selected.uid);
+  }
 
   // ---------- clicks ----------
   function clickSlot(slot) {
     if (state.held) return putDown({ kind: 'slot', slot });
     const member = state.draft.team[slot];
+    if (bag.inHand()) return bag.give(member && member.uid);
     if (sell.mode()) return sell.pressCopy(member && member.uid);
     selectSlot(slot);
     redraw();
   }
   function clickCell(id) {
     if (state.held) return putDown({ kind: 'grid' });
+    if (bag.inHand()) return bag.give(uidOfCell(id));
     if (sell.mode()) return sell.pressCopy(id.startsWith(COPY_ID) ? id.slice(COPY_ID.length) : null);
     selectCell(id);
     redraw();
   }
   function doubleClickCell(id) {
-    if (sell.mode()) return;
+    if (sell.mode() || bag.justGave()) return;
     if (id.startsWith(COPY_ID))
       drop({ uid: id.slice(COPY_ID.length), fromSlot: null }, { kind: 'slot', slot: state.slot });
     else G.UI.toast(PICK_A_COPY);
@@ -363,6 +417,7 @@ G.MenuTeam = (() => {
     saved();
   }
   function openMoves() {
+    bag.release();
     state.movesOpen = true;
     cursor.moveTo('moves-close');
     redraw();
@@ -373,6 +428,7 @@ G.MenuTeam = (() => {
     redraw();
   }
   function openUpgrades(dex) {
+    bag.release();
     G.MenuUpgrades.open(dex, () => {
       G.UI.hide('scr-upgrades');
       saved();
@@ -389,6 +445,11 @@ G.MenuTeam = (() => {
     },
     redraw,
   });
+
+  function pressSell() {
+    bag.close();
+    sell.pressButton();
+  }
 
   // ---------- leaving ----------
   const back = () => leave('back');
@@ -409,6 +470,7 @@ G.MenuTeam = (() => {
   function leave(sound) {
     hideTooltip();
     sell.end();
+    bag.close();
     stopMosaic();
     G.Audio.sfx(sound);
     G.MenuUI.open();
@@ -421,6 +483,8 @@ G.MenuTeam = (() => {
       state.held = null;
       return redraw();
     }
+    if (bag.inHand()) return bag.release();
+    if (bag.isOpen()) return bag.toggle();
     if (sell.mode()) return sell.end();
     back();
   }
@@ -429,13 +493,13 @@ G.MenuTeam = (() => {
   const slotIds = [0, 1, 2, 3, 4, 5].map((slot) => SLOT_ID + slot);
   function memberItems() {
     return state.draft.team.flatMap((member, slot) =>
-      member ? ['upgrade-' + slot, 'favorite-' + slot, 'lock-' + slot] : []
+      member ? ['upgrade-' + slot, LEVEL_UP_ID + slot, 'favorite-' + slot, 'lock-' + slot] : []
     );
   }
   function detailItems() {
     const { dex, uid } = state.selected;
     if (dex == null || (!uid && !G.DB.save.owned[dex])) return [];
-    return uid ? ['rename', 'detail-favorite', 'detail-lock', 'hex', 'moves'] : ['hex', 'moves'];
+    return uid ? ['rename', 'detail-favorite', 'detail-lock', 'levelup', 'hex', 'moves'] : ['hex', 'moves'];
   }
   function eligibleItems() {
     tick.value; // read again after a change
@@ -444,7 +508,10 @@ G.MenuTeam = (() => {
     if (state.openList) return [state.openList, ...G.MenuTeamGrid.ROWS_OF[state.openList](menu).map((row) => row.id)];
     const places = [...slotIds, ...shownNow().ids, ...G.MenuTeamGrid.tabs().map((tab) => tab.id)];
     if (state.held) return places;
-    return ['search', 'filter', 'sort', ...places, ...memberItems(), ...detailItems(), 'sell', 'revert', 'back'];
+    const rows = bag.isOpen() ? ExpBag.items() : [];
+    if (bag.inHand()) return [...places, ...rows];
+    const bottom = ['sell', 'expbag', 'revert', 'back'];
+    return ['search', 'filter', 'sort', ...places, ...rows, ...memberItems(), ...detailItems(), ...bottom];
   }
   /** Enter or Space on the item under the cursor. */
   function press(id) {
@@ -456,6 +523,8 @@ G.MenuTeam = (() => {
     if (id.startsWith(COPY_ID) || id.startsWith(DEX_ID)) return pressCell(id);
     const tab = G.MenuTeamGrid.tabs().find((entry) => entry.id === id);
     if (tab) return pressTab(tab);
+    if (ExpBag.sizeOf(id)) return bag.press(ExpBag.sizeOf(id));
+    if (id.startsWith(LEVEL_UP_ID)) return bag.levelUp(state.draft.team[+id.slice(LEVEL_UP_ID.length)].uid);
     const mark = MARK_ID.exec(id);
     if (mark) return toggleMark(state.draft.team[+mark[2]].uid, mark[1]);
     if (id.startsWith('upgrade-')) return openUpgrades(state.draft.team[+id.slice('upgrade-'.length)].dex);
@@ -469,10 +538,12 @@ G.MenuTeam = (() => {
     rename: startRename,
     'detail-favorite': () => toggleMark(state.selected.uid, 'favorite'),
     'detail-lock': () => toggleMark(state.selected.uid, 'lock'),
+    levelup: () => bag.levelUp(state.selected.uid),
     hex: toggleHex,
     moves: openMoves,
     'moves-close': closeMoves,
-    sell: () => sell.pressButton(),
+    sell: pressSell,
+    expbag: bag.toggle,
     revert,
     back,
   };
@@ -482,13 +553,13 @@ G.MenuTeam = (() => {
   }
   /** By keys a slot or a portrait is selected and lifted in one press. */
   function pressSlot(slot) {
-    const busy = state.held || sell.mode(),
+    const busy = state.held || bag.inHand() || sell.mode(),
       member = state.draft.team[slot];
     clickSlot(slot);
     if (!busy && member && member.uid) lift({ uid: member.uid, fromSlot: slot });
   }
   function pressCell(id) {
-    const busy = state.held || sell.mode();
+    const busy = state.held || bag.inHand() || sell.mode();
     clickCell(id);
     if (!busy && id.startsWith(COPY_ID)) lift({ uid: id.slice(COPY_ID.length), fromSlot: null });
   }
@@ -506,7 +577,7 @@ G.MenuTeam = (() => {
   function onNumberKey(event) {
     const digit = /^(?:Digit|Numpad)([1-6])$/.exec(event.code);
     if (!digit || !isOpen() || G.UI.isOpen('scr-ask') || event.target.closest('input, textarea, select')) return;
-    if (state.openList || state.movesOpen || sell.mode()) return;
+    if (state.openList || state.movesOpen || bag.inHand() || sell.mode()) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     const held = state.held || { uid: state.selected.uid, fromSlot: null },
@@ -523,7 +594,11 @@ G.MenuTeam = (() => {
     return bar.value.at === id ? html`<${CursorBar} phase=${bar.value.phase} height=${height} />` : null;
   }
   const hasBar = (id) =>
-    !!id && (id.startsWith(SLOT_ID) || MARK_ID.test(id) || ['rename', 'detail-favorite', 'detail-lock'].includes(id));
+    !!id &&
+    (id.startsWith(SLOT_ID) ||
+      !!ExpBag.sizeOf(id) ||
+      MARK_ID.test(id) ||
+      ['rename', 'detail-favorite', 'detail-lock'].includes(id));
   function BarTravel({ at }) {
     const travel = useRingTravel(hasBar(at) ? at : null);
     hooks.useLayoutEffect(() => {
@@ -538,6 +613,10 @@ G.MenuTeam = (() => {
     tick.value;
     return read();
   };
+  const watchedRefusal = (uid) => {
+    tick.value;
+    return bag.refusal(uid);
+  };
   const menu = {
     cursor,
     sell,
@@ -549,6 +628,7 @@ G.MenuTeam = (() => {
     tab: watched(() => state.tab),
     held: watched(() => state.held),
     selected: watched(() => state.selected),
+    bag: { ...bag, inHand: watched(bag.inHand), isOpen: watched(bag.isOpen), refusal: watchedRefusal },
     filter: watched(() => state.filter),
     openList: watched(() => state.openList),
     movesOpen: watched(() => state.movesOpen),
@@ -570,6 +650,7 @@ G.MenuTeam = (() => {
     startDrag,
     endDrag,
     dropHandlers,
+    clickDetail,
     toggleMark,
     toggleFilter,
     toggleGroup,
@@ -709,7 +790,7 @@ G.MenuTeam = (() => {
           width=${row.sellWidth}
           height=${ROW.height}
           fontSize=${ROW.sellFont}
-          onPress=${sell.pressButton}
+          onPress=${pressSell}
           style=${{ left: px(grid.left), top: px(row.top) }}
         />
         <${G.MenuTeamGrid.Tabs} menu=${menu} />
@@ -719,20 +800,25 @@ G.MenuTeam = (() => {
           width=${row.expBagWidth}
           height=${ROW.height}
           fontSize=${ROW.expBagFont}
-          disabled
+          held=${bag.isOpen()}
+          onPress=${bag.toggle}
           style=${{ left: px(row.expBagLeft), top: px(row.top) }}
         />
         <${G.MenuTeamDetail.Detail} menu=${menu} at=${byKeys} />
+        <${ExpBag.Popup} menu=${menu} />
         <${G.MenuTeamGrid.OpenList} menu=${menu} at=${byKeys} />
         <${G.MenuTeamDetail.MovesPopup} menu=${menu} at=${byKeys} />
       </div>
       <${Ghost} at=${at} />
+      <${ExpBag.Ghost} menu=${menu} at=${at} stage=${stage} />
       <${cursor.CursorTip} />`;
   }
 
   // ---------- the background (#168) ----------
   let mosaic = null;
   function stopMosaic() {
+    burstTimers.forEach(clearTimeout);
+    burstTimers.clear();
     if (mosaic) mosaic.stop();
     mosaic = null;
   }

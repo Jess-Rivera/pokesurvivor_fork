@@ -114,6 +114,7 @@
     'MenuTeamGrid',
     'MenuTeamDetail',
     'MenuTeamSell',
+    'MenuTeamExpBag',
     'MenuUpgrades',
     'RunUI',
     'ShopUI',

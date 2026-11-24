@@ -10,12 +10,12 @@ node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
 0. Slice B, #139 8a Part F (Team menu: XP bar, Level Up, EXP Bag) on the Team menu (#167 and #168, closed 2026-11-24).
-   Opening agreed; the prose plan is the first job. Level Up and EXP Bag are drawn disabled; the mosaic's burst(type)
-   waits for Level Up. Parts A to E and G are built (8ec7798b); until F, candy banks but cannot be given. Then slice C,
+   Built. Level Up and the EXP Bag are live; the mosaic's burst(type)
+   plays once per level. Parts A to E and G are built (8ec7798b); F is built 2026-11-24 and waits for Jess's feel test. Then slice C,
    the #97 popup. Rulings: decisions 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings and
    2026-11-24-167-team-menu-saves-at-once (it replaces Commit and Discard).
-   Not judged in the feel test: white Moves label on bright type colours, the picked-for-sale look. Not driven in a
-   browser: the two Settings rows, a full box's keyboard path to the tabs, drag within a scaled-down window.
+   Feel tests all judged good (Jess, 2026-11-24). Plan and differences: docs/AI Outputs/Issue-139/
+   139 - Part F Team Menu Candy Plan.md. Not driven in a browser: the two Settings rows, a full box's keyboard path to the tabs, drag within a scaled-down window.
 1. #97 build (design doc "Numbers (draft)", docs/AI Outputs/Issue-97/; numbers drafted in #131, decision
    2026-11-23-97-upgrade-price-shape-bst-and-bands). The no-UI part (cut five upgrades, base stat % in G.Stats, crit,
    cooldown, regen from the profile) can go first. Split out: #164 (97b sidegrades), #165 (Mints, Capsules, Bottle

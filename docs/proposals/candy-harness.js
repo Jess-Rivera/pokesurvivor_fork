@@ -125,6 +125,50 @@ const addCopy = (s, dex) => G.Copies.longId(G.Copies.add(s, { dex, from: 'debug'
   const one = fresh(), id4 = addCopy(one, 1); C.bank('xl', one); if (!C.giveUntil(one, id4, 2).given.xl) bad('give until takes the smallest that covers when nothing fits');
   console.log('give until: fits first, then the smallest that covers, stops at 100, reports the level when the bag runs out'); }
 
+// ---------- 4b. Part F: Level Up and candy given by the handful (the end-goal test) ----------
+{ const bagXp = s => C.SIZE_ORDER.reduce((sum, z) => sum + C.bagOf(s)[z] * CANON[z], 0);
+  const bagCount = s => C.SIZE_ORDER.reduce((sum, z) => sum + C.bagOf(s)[z], 0);
+  const spent = given => C.SIZE_ORDER.reduce((sum, z) => sum + (given[z] || 0), 0);
+  const cost = given => C.SIZE_ORDER.reduce((sum, z) => sum + (given[z] || 0) * CANON[z], 0);
+  const BAGS = [{ xs: 1 }, { xs: 400, s: 20 }, { xs: 3, s: 4, m: 5, l: 2, xl: 1 }, { xl: 1 }, { xl: 60 }, { s: 2 }];
+  const STARTS = [0, 900, 12000, 250000];
+  for (const dex of [1, 4, 25, 63, 129, 133, 149]) for (const bag of BAGS) for (const start of STARTS) for (const step of [1, 10]) {
+    const s = fresh(), id = addCopy(s, dex); s.candy = { ...bag };
+    if (start) G.Copies.addCandyXp(s, id, start);
+    const from = G.Copies.get(s, id).candyXp, level = C.levelFor(dex, from), cap = C.xpForLevel(dex, 100), had = bagXp(s), count = bagCount(s);
+    const r = C.levelUp(s, id, step), xp = G.Copies.get(s, id).candyXp, tag = dex + ' from ' + start + ' by ' + step + ' with ' + JSON.stringify(bag);
+    if (!r.ok) { if (level < 100 || bagXp(s) !== had || xp !== from) bad('Level Up refuses only at 100, spending nothing: ' + tag); continue; }
+    if (spent(r.given) !== count - bagCount(s) || cost(r.given) !== had - bagXp(s)) bad('candy spent equals candy removed: ' + tag);
+    if (xp !== Math.min(cap, from + cost(r.given))) bad('XP rises by the candy value, capped at 100: ' + tag);
+    const reached = C.levelFor(dex, xp);
+    if (reached < Math.min(100, level + step) && bagCount(s)) bad('Level Up reaches its level unless the bag empties: ' + tag);
+    if (r.level !== reached || r.gained !== reached - level || r.ranOut !== (reached < Math.min(100, level + step))) bad('Level Up reports what happened: ' + tag);
+  }
+  const none = fresh(), id = addCopy(none, 4);
+  if (C.levelUp(none, id, 1).error !== 'empty') bad('Level Up with an empty bag is refused');
+  if (C.levelUp(none, 'junk', 1).error !== 'none' || C.giveMany(none, 'junk', 'xs', 1).ok) bad('a missing copy is refused');
+  // a handful
+  const s = fresh(), one = addCopy(s, 4); s.candy = { xs: 7 };
+  const part = C.giveMany(s, one, 'xs', 3), held = G.Copies.get(s, one).candyXp;
+  if (!part.ok || part.given !== 3 || C.bagOf(s).xs !== 4 || held !== 3 * CANON.xs) bad('a handful gives its count');
+  if (part.level !== C.levelFor(4, held) || part.gained !== part.level - 1) bad('a handful reports its level');
+  if (C.giveMany(s, one, 'xs', 10).given !== 4 || C.bagOf(s).xs !== 0) bad('a handful stops when the bag is out');
+  if (C.giveMany(s, one, 'xs', 1).error !== 'empty') bad('a handful of nothing is refused');
+  s.candy = { xl: 99 }; const top = addCopy(s, 129), full = C.giveMany(s, top, 'xl', 99);
+  if (C.levelFor(129, G.Copies.get(s, top).candyXp) !== 100 || full.given + C.bagOf(s).xl !== 99 || !C.bagOf(s).xl) bad('a handful stops at 100, the rest stays in the bag');
+  if ((full.given - 1) * CANON.xl >= C.xpForLevel(129, 100)) bad('only the last candy may pass 100');
+  if (C.giveMany(s, top, 'xl', 1).error !== 'max') bad('a level 100 copy refuses a handful');
+  // the bar: empty on a level's own XP, rising to it, full at 100
+  for (const level of [1, 2, 36, 99]) { const a = C.xpForLevel(4, level), b = C.xpForLevel(4, level + 1), mid = C.levelProgress(4, (a + b) / 2);
+    if (C.levelProgress(4, a) !== 0 || !(mid > 0 && mid < 1) || !(C.levelProgress(4, b - 1) < 1)) bad('the XP bar fills from one level to the next (' + level + ')'); }
+  if (C.levelProgress(4, C.xpForLevel(4, 100)) !== 1) bad('the XP bar is full at 100');
+  // a species with no growth curve takes none
+  const odd = fresh(), oddId = addCopy(odd, 4), curveOf = G.GrowthCurves.curveOf; odd.candy = { xs: 5 };
+  G.GrowthCurves.curveOf = () => null;
+  if (C.levelUp(odd, oddId, 1).ok || C.giveMany(odd, oddId, 'xs', 5).ok || C.bagOf(odd).xs !== 5) bad('a species with no growth curve takes no candy');
+  G.GrowthCurves.curveOf = curveOf;
+  console.log('Part F: Level Up and a handful spend what they give, cap at 100 and report it; the XP bar'); }
+
 // ---------- 5. old saves, hand-edited saves, the round trip ----------
 if (T) {
   const old = T.newSave('Old'); delete old.candy; old.box = []; const oid = addCopy(old, 25);

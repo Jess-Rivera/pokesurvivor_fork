@@ -268,6 +268,49 @@
   line-height: 18px;
   color: var(--color-teal-base);
 }
+/* ---------- the EXP Bag ---------- */
+.tm-candies {
+  display: flex;
+  flex-direction: column;
+}
+.tm-candy {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tm-candy.is-empty {
+  opacity: 0.45;
+}
+.tm-candy-count {
+  width: 40px;
+  text-align: right;
+}
+.tm-candy-name {
+  flex: 1;
+}
+.tm-candy-well {
+  position: relative;
+  flex: none;
+}
+.tm-candy-well .well-contents {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tm-candy-ghost {
+  width: 48px;
+  height: 48px;
+  text-align: center;
+}
+.tm-candy-ghost > .tm-silver {
+  position: absolute;
+  left: 34px;
+  top: 22px;
+}
 .tm-ghost {
   pointer-events: none;
 }
@@ -306,6 +349,10 @@
   top: 61px;
   display: flex;
   gap: 4px;
+}
+.tm-exp {
+  left: 0;
+  pointer-events: none;
 }
 .tm-level {
   left: 18px;

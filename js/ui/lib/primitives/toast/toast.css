@@ -21,6 +21,7 @@
   line-height: 30px;
   color: var(--color-grey-white);
   text-align: center;
+  pointer-events: none; /* it lies over buttons, which still take the click */
   white-space: normal;
   animation: toast-pop 0.2s ease-out;
 }

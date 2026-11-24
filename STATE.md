@@ -5,17 +5,16 @@ Last updated: 2026-11-24, home (Claude Code). Branch: feature/138-146-lost-and-f
 No branch rules file.
 
 ## START HERE
-The Team menu (#167) and its mosaic (#168) are shipped and closed. Next, in a new session: slice B, #139 Part F (XP bar,
-Level Up, EXP Bag): opening agreed, prose plan not written. TODO.md "Next" has the order. Run `node tools/catchup.js`.
+Slice B, #139 Part F (Level Up, EXP Bag, XP bar) is built and waits for Jess's feel test. After it: slice C, the #97
+Upgrade popup. TODO.md "Next" has the order. Run `node tools/catchup.js`.
 
 ## Landed 2026-11-24 (home)
-- #167 feel-test fixes: roster saves at once, Back and Revert, layout follows the window (layoutFor in
-  js/ui/menu-team.js: fixed bars, scaled .tm-body), button.glitch held, empty wells in boxes (drawn only, autosort kept).
-  Rulings: decision 2026-11-24-167-team-menu-saves-at-once.
-- #168: the mosaic's starburst has no caller until slice B's Level Up.
+- #139 Part F: G.Candy levelUp, giveMany, levelProgress; js/ui/menu-team-exp-bag.js; bar.exp. Rulings: decision
+  2026-11-24-139-part-f-candy-in-the-team-menu. Plan and differences: docs/AI Outputs/Issue-139/.
+- #167 and #168 closed; decision 2026-11-24-167-team-menu-saves-at-once.
 
 ## Watch
-- Candy drops and is saved, but cannot be given until slice B. Changelog says "comes in a later update".
+- Feel-test: starbursts come 0.15 s apart, closer past 20 levels; the mosaic keeps 4 at once, so a big jump cuts older ones.
 - PokeCoin income per run is estimated from the payout formula only (about 3,500 a full run); #166 replaces it.
 - The loop counter is dev-set in gym.js and the Elite Four is not built: "N rolls on loop N" is harness-proven only.
 - Board fixes are in TODO.md item 6. Canvas HUD holdouts in js/ui/hud.js stay (Jess).

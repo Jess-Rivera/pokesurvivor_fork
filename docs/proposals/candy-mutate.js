@@ -28,6 +28,11 @@ const M = [
   ['give until opens with the largest held candy', CANDY, 'if (fits.length) return fits[fits.length - 1];', 'if (held.length) return held[held.length - 1];'],
   ['the bag defaults are gone', CANDY, 'for (const size of SIZE_ORDER) bag[size] = whole(stored[size]);', 'Object.assign(bag, stored);'],
   ['candy XP passes the level 100 total', COPIES, 'c.c = Math.min(candyXpCap(c.d), (c.c || 0) + wholeUpTo(amount, Number.MAX_SAFE_INTEGER));', 'c.c = (c.c || 0) + wholeUpTo(amount, Number.MAX_SAFE_INTEGER);'],
+  ['Level Up aims at the level it is on', CANDY, 'Math.min(maxLevel(), from + levels)', 'Math.min(maxLevel(), from)'],
+  ['Level Up takes an empty bag', CANDY, "    if (bagIsEmpty(save)) return { ok: false, error: 'empty' };\n", ''],
+  ['a handful gives one candy', CANDY, 'while (given < count) {', 'while (given < 1) {'],
+  ['the XP bar is never full', CANDY, 'if (level >= maxLevel()) return 1;', ''],
+  ['a species with no curve takes candy', CANDY, "    if (!G.GrowthCurves.curveOf(copy.speciesID)) return { ok: false, error: 'none' };\n", ''],
   ['a hand-edited candy XP is not clamped', COPIES, 'if (c.c != null) c.c = wholeUpTo(c.c, candyXpCap(c.d));', 'if (c.c != null) c.c = +c.c;'],
 ];
 

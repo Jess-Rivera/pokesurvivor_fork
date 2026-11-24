@@ -302,3 +302,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
 - Headless software rendering shows a see-through strip over the mosaic; not with a GPU or in a headed window.
 - Jess approved rounds 1 and 2. Empty wells show in boxes (drawn only; autosort kept, no saved spots). Next: slice B.
 - Closed #167 and #168. Stopped at: slice B (#139 Part F) prose plan, next session.
+
+## 2026-11-24 (home, Claude Code): candy in the Team menu (#139 Part F)
+- Jess ruled on eight open points (decision 2026-11-24-139-part-f-candy-in-the-team-menu). Rules first: candy-harness, 18 of 18
+  mutants caught. Then the XP bar, Level Up on slots and the detail panel, the EXP Bag popup, pointer-dragged candy, bursts.
+- Chromium starts no browser drag while Shift is down, so candy is dragged by pointer. Toasts no longer take clicks.
+- Driven headless on file:// at 1920x1080 and 1280x720 (drags scaled down too). smoke-ui: the same 15 old failures.
+- Stopped at: Jess's feel test of Part F; then slice C (#97 popup).

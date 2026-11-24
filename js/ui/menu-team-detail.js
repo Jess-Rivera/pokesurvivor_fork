@@ -1,14 +1,22 @@
 /* ============ menu-team-detail.js: the Team menu's detail panel and its Moves popup (G.MenuTeamDetail; #167) ============
  * The pause menu's two-tier panel for one Pokemon: name (a pencil renames), favorite and lock, level, types, the six stat
- * rows or the stat hex, nature, ability, size, starting move, Moves. Space is kept for Evolve beside Moves. Level Up is
- * disabled until #139 Part F. js/ui/menu-team.js owns the state and hands it in as `menu`.
+ * rows or the stat hex, nature, ability, size, starting move, Moves. Space is kept for Evolve beside Moves. Level Up, the
+ * XP bar, candy dropped on the panel (#139 Part F). js/ui/menu-team.js owns the state and hands it in as `menu`.
  */
 G.MenuTeamDetail = (() => {
   const overlay = G.HudOverlay,
     windowKit = G.MenuWindowKit,
     lib = G.Lib,
     slots = G.MenuTeamSlots;
-  if (!overlay || !overlay.ready || !windowKit.ready || !lib.StatRow || !lib.StatRow.ready || !slots.ready)
+  if (
+    !overlay ||
+    !overlay.ready ||
+    !windowKit.ready ||
+    !lib.StatRow ||
+    !lib.StatRow.ready ||
+    !lib.Bar.ready ||
+    !slots.ready
+  )
     return { ready: false };
   const { html, hooks, IconCanvas, ScrollBox, typeColours } = overlay.kit;
   const { px, CursorButton } = windowKit;
@@ -222,7 +230,17 @@ G.MenuTeamDetail = (() => {
 
   function Known({ menu, species, copy, at }) {
     const info = infoOf(copy, species.dex);
-    return html`<div class="tm-level">${copy ? 'Lv. ' + G.Candy.levelFor(species.dex, copy.candyXp) : ''}</div>
+    const barWidth = menu.layout().detail.width - BARS.topEnd - BARS.step;
+    return html`${
+        copy
+          ? html`<${lib.Bar.ExpBar}
+              className="tm-exp"
+              fraction=${G.Candy.levelProgress(species.dex, copy.candyXp)}
+              style=${{ top: px(BARS.band), width: px(barWidth) }}
+            />`
+          : null
+      }
+      <div class="tm-level">${copy ? 'Lv. ' + G.Candy.levelFor(species.dex, copy.candyXp) : ''}</div>
       ${
         copy
           ? html`<${CursorButton}
@@ -233,7 +251,9 @@ G.MenuTeamDetail = (() => {
               width=${LEVEL_UP.width}
               height=${LEVEL_UP.height}
               fontSize=${LEVEL_UP.fontSize}
-              disabled
+              area=${AREA}
+              refusal=${menu.bag.refusal(copy.pokemonUUID)}
+              onPress=${() => menu.bag.levelUp(copy.pokemonUUID)}
               style=${{ left: px(LEVEL_UP.left), top: px(LEVEL_UP.top) }}
             />`
           : null
@@ -287,7 +307,13 @@ G.MenuTeamDetail = (() => {
         area=${AREA}
         style=${{ left: px(left), top: px(20) }}
       />`;
-    return html`<div class="panel-clean tm-detail" style=${place} data-dex=${dex} data-uid=${uid || ''}>
+    return html`<div
+      class="panel-clean tm-detail"
+      style=${place}
+      data-dex=${dex}
+      data-uid=${uid || ''}
+      onClick=${menu.clickDetail}
+    >
       <svg class="tm-detail-bars" width=${panel.width} height=${panel.height}>
         <${TypeBar} id="tm-detail-top" contact=${topContact(panel)} outerY=${0} colours=${top} />
         <${TypeBar} id="tm-detail-bottom" contact=${bottomContact(panel)} outerY=${panel.height} colours=${bottom} />

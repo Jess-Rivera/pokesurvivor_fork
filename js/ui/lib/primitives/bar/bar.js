@@ -4,6 +4,7 @@
  *              track, a fill in the HP band's colours, and the cut-and-fall pieces a hit leaves. Drawn as LifeBarShape,
  *              LifeBarLabel, LifeBarFill and LifeBarPiece, or all at once as LifeBar
  *   bar.timer  TimerBar: a thin strip that drains as time runs out (the chips, the Shake Off prompt, the weather card)
+ *   bar.exp    ExpBar: the 4 px line of a Pokemon's Exp Candy XP, two rows full and two empty (#139 Part F)
  * Props only, never game state. The HUD kit's createLifeBar (js/ui/hud-kit-hp-bars.js) keeps the per-frame reading and
  * the falling pieces' list, and draws these pieces. Style: bar.css. Board: tools/library.html, Primitives, Bars
  * (bar.story.js). Plan: docs/AI Outputs/Issue-155/155c-3 - Bars Plan.md. Look and motion: docs/HUD-STYLE.md "Motion".
@@ -200,6 +201,14 @@ G.Lib.Bar = (() => {
     ></div>`;
   }
 
+  // ---------- bar.exp: the XP line (style: bar.css) ----------
+  /** fraction: 0 to 1, how far to the next level. style places it (left, top, width); className keeps the caller's. */
+  function ExpBar({ fraction, className, style }) {
+    return html`<div class=${'bar-exp' + (className ? ' ' + className : '')} style=${style}>
+      <div style=${{ width: fraction * 100 + '%' }}></div>
+    </div>`;
+  }
+
   return {
     ready: true,
     LIFE_BAR,
@@ -211,5 +220,6 @@ G.Lib.Bar = (() => {
     LifeBarPiece,
     LifeBar,
     TimerBar,
+    ExpBar,
   };
 })();

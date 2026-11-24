@@ -124,6 +124,9 @@ G.Tokens = (() => {
         ['belt.light', '#DBB26E', 'A bought ball belt (the Poke Balls pocket colours), highlight'],
         ['belt.base', '#C88820', 'A bought ball belt (the Poke Balls pocket colours)'],
         ['belt.dark', '#825815', 'A bought ball belt (the Poke Balls pocket colours), shade'],
+        ['keyItems.light', '#B788E6', 'The EXP Bag (the Key Items pocket colours), highlight'],
+        ['keyItems.base', '#9048D8', 'The EXP Bag (the Key Items pocket colours)'],
+        ['keyItems.dark', '#5E2F8C', 'The EXP Bag (the Key Items pocket colours), shade'],
       ],
     },
     {

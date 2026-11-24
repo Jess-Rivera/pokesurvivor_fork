@@ -11,9 +11,7 @@ G.MenuTeamSell = (() => {
   const PROMPT_MS = 60 * 60 * 1000; // the prompt stays until a Pokemon is picked or the mode ends
   const coinText = (coins) => Math.floor(coins).toLocaleString('en-US');
 
-  // whether Shift was down on the last press anywhere: the dialog's own answer does not say
-  let shiftDown = false;
-  for (const kind of ['pointerdown', 'keydown']) addEventListener(kind, (event) => (shiftDown = event.shiftKey), true);
+  const { modifiers } = G.MenuWindowKit;
 
   /**
    * The sell mode of one Team menu. draft() is its roster, shownUids() the copies the grid shows now, sold(uids) is
@@ -45,7 +43,7 @@ G.MenuTeamSell = (() => {
     function pressButton() {
       G.Audio.sfx('click');
       if (mode === 'bulk') return sellPicked();
-      if (shiftDown) return start(true);
+      if (modifiers.shift) return start(true);
       if (mode) return end();
       start(false);
     }
@@ -113,7 +111,7 @@ G.MenuTeamSell = (() => {
         note: uids.length + ' selected.' + (learned ? ' Learned TMs go with the Pokemon sold.' : ''),
       });
       if (!asked) return;
-      if (!shiftDown && !(await G.UI.ask('', { ...dialog, ok: 'Confirm' }))) return;
+      if (!modifiers.shift && !(await G.UI.ask('', { ...dialog, ok: 'Confirm' }))) return;
       const result = G.Copies.sellMany(save, uids, G.TeamDraft.uids(draft()));
       end();
       if (!result.sold) return refuse('Nothing was sold.');

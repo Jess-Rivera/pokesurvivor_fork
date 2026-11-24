@@ -70,6 +70,14 @@ G.Candy = (() => {
     return level;
   }
 
+  /** How far `xp` is from its level to the next: 0 at the level's own XP, 1 at level 100. */
+  function levelProgress(dex, xp) {
+    const level = levelFor(dex, xp);
+    if (level >= maxLevel()) return 1;
+    const start = xpForLevel(dex, level);
+    return start == null ? 0 : (xp - start) / (xpForLevel(dex, level + 1) - start);
+  }
+
   // ---------------- giving ----------------
 
   /** The copy (G.Copies.read shape), or null for a missing copy or a malformed id. */
@@ -84,13 +92,14 @@ G.Candy = (() => {
   /**
    * Gives one candy of `size` to copy `uid`. Refused only at OOR level 100 (a copy whose next evolution has no level
    * still levels). The caller saves.
-   * @returns { ok: true, xp, level } | { ok: false, error: 'size' | 'empty' | 'none' | 'max' }
+   * @returns { ok: true, xp, level } | { ok: false, error: 'size' | 'empty' | 'none' | 'max' } (none: no copy, or no growth curve)
    */
   function give(save, uid, size) {
     if (!SIZES[size]) return { ok: false, error: 'size' };
     if (!bagOf(save)[size]) return { ok: false, error: 'empty' };
     const copy = copyOf(save, uid);
     if (!copy) return { ok: false, error: 'none' };
+    if (!G.GrowthCurves.curveOf(copy.speciesID)) return { ok: false, error: 'none' };
     if (levelFor(copy.speciesID, copy.candyXp) >= maxLevel()) return { ok: false, error: 'max' };
     const xp = G.Copies.addCandyXp(save, uid, SIZES[size]);
     save.candy[size] = whole(save.candy[size]) - 1;
@@ -136,6 +145,44 @@ G.Candy = (() => {
     return { ok: true, level: levelFor(dex, xp), given, ranOut };
   }
 
+  const bagIsEmpty = (save) => !Object.values(bagOf(save)).some(Boolean);
+
+  /**
+   * Level Up: gives candy until `levels` more are reached, by giveUntil's rule. A bag that empties first is spent all the
+   * same. The caller saves.
+   * @returns { ok: true, level, gained, given: { size: count }, ranOut } | { ok: false, error: 'none' | 'max' | 'empty' }
+   */
+  function levelUp(save, uid, levels) {
+    const copy = copyOf(save, uid);
+    if (!copy || !G.GrowthCurves.curveOf(copy.speciesID)) return { ok: false, error: 'none' };
+    const from = levelFor(copy.speciesID, copy.candyXp);
+    if (from >= maxLevel()) return { ok: false, error: 'max' };
+    if (bagIsEmpty(save)) return { ok: false, error: 'empty' };
+    const result = giveUntil(save, uid, Math.min(maxLevel(), from + levels));
+    return { ...result, gained: result.level - from };
+  }
+
+  /**
+   * Gives up to `count` candies of one size, one at a time: it stops at level 100 or when the bag has no more. The
+   * caller saves.
+   * @returns { ok: true, level, gained, given } | { ok: false, error: give's }
+   */
+  function giveMany(save, uid, size, count) {
+    const before = copyOf(save, uid);
+    let given = 0,
+      last = give(save, uid, size);
+    if (!last.ok) return last;
+    let level = last.level;
+    given++;
+    while (given < count) {
+      last = give(save, uid, size);
+      if (!last.ok) break;
+      level = last.level;
+      given++;
+    }
+    return { ok: true, level, gained: level - levelFor(before.speciesID, before.candyXp), given };
+  }
+
   return {
     SIZES,
     SIZE_ORDER,
@@ -146,7 +193,11 @@ G.Candy = (() => {
     clean,
     xpForLevel,
     levelFor,
+    levelProgress,
+    bagIsEmpty,
     give,
     giveUntil,
+    levelUp,
+    giveMany,
   };
 })();

@@ -1,6 +1,6 @@
 /* ============ menu-team-slots.js: the Team menu's team column (G.MenuTeamSlots; #167) ============
  * The Team N header (drawn only: several teams are a later feature) and the six slots, each the run screen's pixel panel:
- * portrait, name, type chips, Upgrade, Level Up (disabled until #139 Part F), favorite and lock. js/ui/menu-team.js owns
+ * portrait, name, type chips, Upgrade, Level Up, favorite and lock. js/ui/menu-team.js owns
  * the state and hands it in as `menu`.
  */
 G.MenuTeamSlots = (() => {
@@ -54,7 +54,7 @@ G.MenuTeamSlots = (() => {
       levelUpLeft = SLOT.width - BUTTON.right - BUTTON.width,
       lockRight = MARK.right,
       favoriteRight = MARK.right + MARK.size + MARK.gap;
-    const smallButton = (id, label, left, disabled, onPress) =>
+    const smallButton = (id, label, left, refusal, onPress) =>
       html`<${CursorButton}
         cursor=${menu.cursor}
         id=${id}
@@ -63,7 +63,7 @@ G.MenuTeamSlots = (() => {
         width=${BUTTON.width}
         height=${BUTTON.height}
         fontSize=${BUTTON.fontSize}
-        disabled=${disabled}
+        refusal=${refusal}
         onPress=${onPress}
         style=${{ left: px(left), top: px(BUTTON.top) }}
       />`;
@@ -82,10 +82,12 @@ G.MenuTeamSlots = (() => {
         ${species.types.map((type) => html`<${lib.Chip.TypeChip} key=${type} type=${type} />`)}
       </div>
       <div class="tm-slot-buttons" onClick=${(event) => event.stopPropagation()}>
-        ${smallButton('upgrade-' + slot, 'Upgrade', levelUpLeft - BUTTON.gap - BUTTON.width, false, () =>
+        ${smallButton('upgrade-' + slot, 'Upgrade', levelUpLeft - BUTTON.gap - BUTTON.width, null, () =>
           menu.openUpgrades(member.dex)
         )}
-        ${smallButton('levelup-' + slot, 'Level Up', levelUpLeft, true)}
+        ${smallButton('levelup-' + slot, 'Level Up', levelUpLeft, menu.bag.refusal(member.uid), () =>
+          menu.bag.levelUp(member.uid)
+        )}
       </div>
       ${
         copy

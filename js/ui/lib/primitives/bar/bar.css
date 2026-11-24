@@ -56,3 +56,14 @@
 .bar-timer.is-drain-right {
   transform-origin: 100% 0;
 }
+
+/* ---------- bar.exp: 4 px, its upper and lower half in two colours, full and empty ---------- */
+.bar-exp {
+  position: absolute;
+  height: 4px;
+  background: linear-gradient(var(--color-grey-mid) 50%, var(--color-grey-paper) 50%);
+}
+.bar-exp > div {
+  height: 100%;
+  background: linear-gradient(var(--color-blue-base) 50%, var(--color-blue-dark) 50%);
+}
