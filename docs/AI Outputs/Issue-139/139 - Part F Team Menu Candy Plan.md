@@ -1,6 +1,6 @@
 # #139 Part F (slice B): candy in the Team menu
 
-Status: built 2026-11-24, waiting for Jess's feel test. Parts [Approved] come from decision
+Status: built and feel-tested 2026-11-24 (Jess: all good). Parts [Approved] come from decision
 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings and the sketch assets/excalidraw/team-menu.excalidraw.
 
 ## Opening (agreed 2026-11-23, on #139)

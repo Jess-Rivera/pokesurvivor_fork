@@ -5,8 +5,8 @@ Last updated: 2026-11-24, home (Claude Code). Branch: feature/138-146-lost-and-f
 No branch rules file.
 
 ## START HERE
-Slice B, #139 Part F (Level Up, EXP Bag, XP bar) is built and waits for Jess's feel test. After it: slice C, the #97
-Upgrade popup. TODO.md "Next" has the order. Run `node tools/catchup.js`.
+Slice B, #139 Part F (Level Up, EXP Bag, XP bar) is done and feel-tested (Jess, 2026-11-24). Next: slice C, the #97
+Upgrade popup, prose plan first. TODO.md "Next" has the order. Run `node tools/catchup.js`.
 
 ## Landed 2026-11-24 (home)
 - #139 Part F: G.Candy levelUp, giveMany, levelProgress; js/ui/menu-team-exp-bag.js; bar.exp. Rulings: decision
@@ -14,7 +14,8 @@ Upgrade popup. TODO.md "Next" has the order. Run `node tools/catchup.js`.
 - #167 and #168 closed; decision 2026-11-24-167-team-menu-saves-at-once.
 
 ## Watch
-- Feel-test: starbursts come 0.15 s apart, closer past 20 levels; the mosaic keeps 4 at once, so a big jump cuts older ones.
+- The EXP Bag popup covers the bottom right portraits: temporary, until drag windows (#158).
+- Candy dragging has no saved browser check (driven by a throwaway script).
 - PokeCoin income per run is estimated from the payout formula only (about 3,500 a full run); #166 replaces it.
 - The loop counter is dev-set in gym.js and the Elite Four is not built: "N rolls on loop N" is harness-proven only.
 - Board fixes are in TODO.md item 6. Canvas HUD holdouts in js/ui/hud.js stay (Jess).

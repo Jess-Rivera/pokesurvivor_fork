@@ -173,9 +173,10 @@ Data facts are from pokedex.js, enemy-classes.js, sprites-meta.js and the pokeap
             Candy is banked in the save's bag as it drops (kept if the run is lost), one toast per kill.
             Decision 2026-11-22-139-candy-target-and-drop-model. Built 2026-11-22 (#139 8a), except the
             Elite Four source ([Approved], code differs: the Elite Four is not built, see TODO).
-    give    in the Team menu, one per press or "Give until [level]" (the largest that fits, then the smallest
-            that covers); refused only at OOR level 100. [Approved], code differs: the Team menu part (8a
-            Part F) is not built yet, see TODO.
+    give    in the Team menu, to any copy you own: Level Up (next level; Shift: 10 levels; the largest candy
+            that fits, then the smallest that covers; spends all of a bag that runs out), or candy from the EXP
+            Bag put on a slot, portrait or the detail panel. Refused only at OOR level 100; XP past 100 is lost.
+            [Approved], built 2026-11-24 (#139 Part F). Decision 2026-11-24-139-part-f-candy-in-the-team-menu.
     level   evolutions with no level (131) take no candy: their normal requirement only (D8).
   STARTING MOVES (after #97; takes #150 in)
     level-up moves at or under the OOR level (newest game), the earlier forms' moves, and egg moves.

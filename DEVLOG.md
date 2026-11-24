@@ -308,4 +308,4 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
   mutants caught. Then the XP bar, Level Up on slots and the detail panel, the EXP Bag popup, pointer-dragged candy, bursts.
 - Chromium starts no browser drag while Shift is down, so candy is dragged by pointer. Toasts no longer take clicks.
 - Driven headless on file:// at 1920x1080 and 1280x720 (drags scaled down too). smoke-ui: the same 15 old failures.
-- Stopped at: Jess's feel test of Part F; then slice C (#97 popup).
+- Jess feel-tested it: all good; the popup's position waits for drag windows (#158). Stopped at: slice C (#97 popup).
