@@ -160,7 +160,8 @@ G.MenuWindowKit = (() => {
       const isSearch = (element) => 'cursorSearch' in element.dataset,
         inArea = (element) => element.dataset.cursorArea === fromArea;
       const best = !directionY
-        ? nearestIn((element) => !isSearch(element)) // sideways never lands on a search bar
+        ? (isSearch(fromElement) && nearestIn((element) => isSearch(element) && inArea(element))) || // the next one in its row
+          nearestIn((element) => !isSearch(element)) // else sideways never lands on a search bar
         : fromArea
           ? nearestIn((element) => inArea(element) && !isSearch(element)) || // the next row in the area, scrolled or not
             nearestIn(inArea) || // only from the top row: the area's search bar

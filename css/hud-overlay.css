@@ -754,6 +754,20 @@
   touch-action: none;
 }
 
+/* scroll.bar (#167; the board's Inputs page): a 4 px track under an 8 px square thumb, no rim */
+.hud-scroll-track.is-clean {
+  background: linear-gradient(90deg, transparent 2px, var(--color-grey-raised) 2px 6px, transparent 6px);
+}
+.hud-scroll-track.is-clean .hud-scroll-thumb {
+  left: 0;
+  box-sizing: border-box;
+  border: 0;
+  background: var(--color-teal-base);
+}
+.hud-scroll-track.is-clean .hud-scroll-thumb:active {
+  background: var(--color-teal-light);
+}
+
 /* each belt's number on its top-left rim corner: Michroma 16, white with a 1 px ink stroke (eight hard shadows, as the
    HUD's text; Jess 2026-11-20) */
 /* the ball belt (hud-kit-items.js BallBelt; the Shop and the catch screen, #128) */

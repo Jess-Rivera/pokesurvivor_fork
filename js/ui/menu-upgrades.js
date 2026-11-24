@@ -2,7 +2,6 @@
  * Split from menu.js (#154). Opened from the Main Menu or a Team screen slot's Upgrade button. */
 G.MenuUpgrades = (() => {
   const $ = G.UI.$;
-  const { ros, rosChrome } = G.MenuTeam;
 
   // ---------------- upgrades (B/W screen, display only) ----------------
   // The catalog from docs/Economy Balance Ideas.md. Not wired yet: every rank reads 0 and nothing can be
@@ -55,9 +54,10 @@ G.MenuUpgrades = (() => {
     upgBack = () => G.MenuUI.open(),
     upgCur = [0, 0]; // keyboard cursor: [column, box]
 
-  /** The Pokémon the tab cycles through: the Team screen's draft team, else the saved one. */
+  /** The Pokémon the tab cycles through: the Team menu's unsaved team, else the saved one. */
   function upgParty() {
-    const t = ros.team.some(Boolean) ? ros.team : G.DB.save.team || [];
+    const roster = G.MenuTeam.roster();
+    const t = roster.some(Boolean) ? roster : G.DB.save.team || [];
     return [...new Set(t.filter(Boolean).map((x) => x.dex))];
   }
 
@@ -67,7 +67,6 @@ G.MenuUpgrades = (() => {
    */
   function openUpgrades(dex, back = () => G.MenuUI.open()) {
     // A popup: the screen under it (the Team screen) stays drawn, dimmed. Back reopens that screen, which hides this one.
-    rosChrome();
     $('scr-upgrades').classList.remove('hidden');
     upgBack = back;
     $('upg-back').onclick = () => upgBack();

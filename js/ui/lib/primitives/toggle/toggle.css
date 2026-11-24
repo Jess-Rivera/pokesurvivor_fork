@@ -1,0 +1,135 @@
+/* toggle.css: the power toggle (G.Lib.Toggle; #167). Ported from tools/library/toggle-draft.css. */
+.toggle-power {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  outline: transparent;
+  background: none;
+  cursor: default;
+  font:
+    18px/1 'HudModule',
+    sans-serif;
+  letter-spacing: 3px;
+  color: var(--color-grey-white);
+}
+/* the mark's invisible box: always 22 px square and out of the layout's way, so the label never moves; the mark
+   draws centred on it and may grow past it (the overshoot) without pushing anything */
+.toggle-power-mark {
+  position: relative;
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+/* off: the power-off ring. On: the power-on bar, straight with square ends */
+.toggle-power-mark > span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--color-teal-dark);
+  border-radius: 50%;
+  background: transparent;
+}
+.toggle-power.on .toggle-power-mark > span {
+  width: 4px;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-teal-base);
+}
+/* the flips, played once by class on a click: CRT on, then CRT off */
+.toggle-power.flipping-on .toggle-power-mark > span {
+  animation: toggle-power-crt-on var(--toggle-on-time) forwards;
+}
+.toggle-power.flipping-off .toggle-power-mark > span {
+  animation: toggle-power-crt-off var(--toggle-off-time) forwards;
+}
+@keyframes toggle-power-crt-on {
+  0% {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--color-teal-dark);
+    border-radius: 50%;
+    background: transparent;
+    animation-timing-function: ease-in;
+  }
+  45% {
+    width: 6px;
+    height: 25px;
+    border: 2px solid var(--color-teal-base);
+    border-radius: 50%;
+    background: transparent;
+  }
+  55% {
+    width: 4px;
+    height: 25px;
+    border: 0 solid var(--color-teal-base);
+    border-radius: 0;
+    background: var(--color-teal-base);
+    opacity: 1;
+  }
+  70% {
+    height: 22px;
+    opacity: 0.3;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    width: 4px;
+    height: 22px;
+    border: 0 solid var(--color-teal-base);
+    border-radius: 0;
+    background: var(--color-teal-base);
+    opacity: 1;
+  }
+}
+@keyframes toggle-power-crt-off {
+  0% {
+    width: 4px;
+    height: 22px;
+    border: 0 solid var(--color-teal-base);
+    border-radius: 0;
+    background: var(--color-teal-base);
+    opacity: 1;
+  }
+  12% {
+    width: 6px;
+    height: 22px;
+    border: 2px solid var(--color-teal-base);
+    border-radius: 50%;
+    background: transparent;
+    animation-timing-function: ease-out;
+  }
+  55% {
+    width: 25px;
+    height: 22px;
+    border: 2px solid var(--color-teal-dark);
+    border-radius: 50%;
+    background: transparent;
+    opacity: 1;
+  }
+  70% {
+    width: 22px;
+    opacity: 0.3;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--color-teal-dark);
+    border-radius: 50%;
+    background: transparent;
+    opacity: 1;
+  }
+}
+.toggle-power.is-cursor,
+.toggle-power:hover {
+  color: var(--color-yellow-base);
+}

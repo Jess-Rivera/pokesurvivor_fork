@@ -1,0 +1,78 @@
+/* field.css: the text field and the dropdown (G.Lib.Field; #167). The boxes are panel.clean (panel.css). */
+.field-text,
+.field-dropdown {
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 0;
+  outline: none;
+  font-family: 'HudModule', sans-serif;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--color-grey-white);
+  caret-color: var(--color-grey-white);
+}
+.field-text::placeholder {
+  color: var(--color-grey-mid);
+  opacity: 1;
+}
+.panel-clean.field-text:focus,
+.panel-clean.field-text.is-cursor,
+.panel-clean.field-dropdown.is-cursor,
+.panel-clean.field-dropdown:hover {
+  border-color: var(--color-yellow-base);
+}
+.field-dropdown {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.field-dropdown svg {
+  flex: none;
+}
+.field-dropdown-label {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.field-row {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  gap: 10px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  font-family: 'HudModule', sans-serif;
+  font-size: 14px;
+  color: var(--color-grey-white);
+  cursor: pointer;
+  user-select: none;
+}
+.field-row.is-header {
+  color: var(--color-teal-base);
+}
+.field-row.is-indented {
+  padding-left: 18px;
+}
+.field-row.is-cursor,
+.field-row:hover {
+  border-color: var(--color-yellow-base);
+}
+.field-row-label {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.field-check {
+  flex: none;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--color-grey-slate);
+  background: var(--color-grey-panel);
+}
+.field-check.is-on {
+  border-color: var(--color-teal-base);
+  background: var(--color-teal-base);
+}

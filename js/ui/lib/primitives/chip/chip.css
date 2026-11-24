@@ -1,0 +1,35 @@
+/* chip.css: the type chip (G.Lib.Chip; #167). */
+.chip-type {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 60px;
+  height: 17px;
+}
+.chip-type svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.chip-type-text {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 100%;
+  font-family: 'Silver 10px', monospace;
+  font-size: 10px;
+  line-height: 15px;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--color-grey-white);
+  text-shadow:
+    1px 0 0 var(--color-grey-ink),
+    -1px 0 0 var(--color-grey-ink),
+    0 1px 0 var(--color-grey-ink),
+    0 -1px 0 var(--color-grey-ink),
+    1px 1px 0 var(--color-grey-ink),
+    -1px 1px 0 var(--color-grey-ink),
+    1px -1px 0 var(--color-grey-ink),
+    -1px -1px 0 var(--color-grey-ink);
+}

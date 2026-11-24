@@ -184,6 +184,25 @@ G.Tokens = (() => {
     ),
   });
 
+  // The six stats' ramps: the Sun and Moon level-up screen (the board's canon colours, tools/library/colours-canon.js).
+  const STAT_COLOURS = {
+    hp: ['#9EE865', '#69DC12', '#448F0C'],
+    attack: ['#F5DE69', '#EFCC18', '#9B8510'],
+    defense: ['#F09A65', '#E86412', '#97410C'],
+    specialAttack: ['#66D8F6', '#14C3F1', '#0D7F9D'],
+    specialDefense: ['#899EEA', '#4A6ADF', '#304591'],
+    speed: ['#E46CCA', '#D51DAD', '#8B1370'],
+  };
+  COLOUR_PALETTES.push({
+    id: 'stat',
+    title: 'Stat colours',
+    job: "The six stats: Light for a stat's IV bar, Base for its name, Dark for its EV bar",
+    source: 'the Sun and Moon level-up screen; tools/library/colours-canon.js STAT_CANON_SWATCHES',
+    colours: Object.entries(STAT_COLOURS).flatMap(([stat, tones]) =>
+      ['light', 'base', 'dark'].map((tone, index) => [stat + '.' + tone, tones[index], stat + ', ' + tone])
+    ),
+  });
+
   // ---------- fonts (HUD-STYLE "Fonts"): the face, its file, the sizes it is crisp at, and its job ----------
   // faceRules: the @font-face settings beyond the file, as the game's CSS declares them (the board declares each face
   // from here; smoke-ui-library checks the game's CSS loads the same file under the same family).

@@ -59,3 +59,56 @@
     opacity: 1;
   }
 }
+
+/* ---------- cursor.bar (#167): beside a square piece; cursor.js sets its width, gap and dot ---------- */
+.cursor-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--color-yellow-base);
+  pointer-events: none;
+}
+.cursor-bar.crt-off {
+  animation: cursor-bar-off var(--cursor-off) forwards;
+}
+@keyframes cursor-bar-off {
+  0% {
+    transform: scale(1, 1);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: scale(1.33, calc(var(--dot) * 2));
+    animation-timing-function: ease-in;
+  }
+  100% {
+    transform: scale(0.67, calc(var(--dot) * 0.67));
+  }
+}
+.cursor-bar.crt-on {
+  animation: cursor-bar-on var(--cursor-on) forwards;
+}
+@keyframes cursor-bar-on {
+  0% {
+    transform: scale(0.67, calc(var(--dot) * 0.67));
+    animation-timing-function: ease-out;
+  }
+  35% {
+    transform: scale(1.33, calc(var(--dot) * 2));
+    animation-timing-function: ease-out;
+  }
+  65% {
+    transform: scale(1, 1.12);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1, 1);
+    opacity: 0.3;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1, 1);
+    opacity: 1;
+  }
+}

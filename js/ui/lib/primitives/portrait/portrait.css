@@ -43,3 +43,51 @@
     var(--ring-track, var(--color-hud-trackLight)) var(--exp) 360deg
   );
 }
+
+/* ---------- the states (#167; the board's Portraits page) ---------- */
+.portrait-round.is-selected,
+.portrait-round.is-cursor {
+  border-color: var(--color-yellow-base);
+}
+.portrait-round.is-sale {
+  border-color: var(--color-red-dark);
+}
+/* a band sliding top left to bottom right, then a pause */
+.portrait-round.is-selected::before,
+.portrait-round.is-sale::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  z-index: 1;
+  background: linear-gradient(135deg, transparent 40%, var(--portrait-shimmer) 50%, transparent 60%);
+  animation: portrait-shimmer 1.5s linear infinite;
+  pointer-events: none;
+}
+.portrait-round.is-selected {
+  --portrait-shimmer: rgba(255, 255, 255, 0.55);
+}
+.portrait-round.is-sale {
+  --portrait-shimmer: rgba(16, 16, 16, 0.75);
+}
+@keyframes portrait-shimmer {
+  0% {
+    transform: translate(-60%, -60%);
+  }
+  50%,
+  100% {
+    transform: translate(60%, 60%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portrait-round.is-selected::before,
+  .portrait-round.is-sale::before {
+    animation: none;
+    opacity: 0;
+  }
+}
+.portrait-round.is-silhouette {
+  background: var(--color-grey-slate);
+}
+.portrait-round.is-silhouette canvas {
+  display: block;
+}

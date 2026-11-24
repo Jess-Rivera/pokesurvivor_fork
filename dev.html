@@ -101,6 +101,10 @@
     <link rel="stylesheet" href="js/ui/lib/primitives/cursor/cursor.css" />
     <link rel="stylesheet" href="js/ui/lib/primitives/well/well.css" />
     <link rel="stylesheet" href="js/ui/lib/primitives/toast/toast.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/field/field.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/toggle/toggle.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/chip/chip.css" />
+    <link rel="stylesheet" href="js/ui/lib/primitives/statrow/statrow.css" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/bw-menu.css" />
     <link rel="stylesheet" href="css/bw-team.css" />
@@ -111,6 +115,7 @@
     <link rel="stylesheet" href="css/bw-shop.css" />
     <link rel="stylesheet" href="css/hud-overlay.css" />
     <link rel="stylesheet" href="css/pause-menu.css" />
+    <link rel="stylesheet" href="css/team-menu.css" />
   </head>
   <body>
     <canvas id="game"></canvas>
@@ -613,45 +618,7 @@
 
     <!-- ====== Team (fullscreen team editor, opened from the main menu) ====== -->
     <section id="scr-roster" class="scr hidden">
-      <div class="ros">
-        <div class="ros-main">
-          <aside class="ros-team" id="ros-slots"></aside>
-          <div class="ros-center">
-            <div class="dex-controls">
-              <div class="row ctrl-row">
-                <input
-                  id="ros-search"
-                  class="field dex-search"
-                  type="text"
-                  placeholder="Search name, move or #"
-                  translate="no"
-                />
-                <select id="ros-region" class="field dex-sel" title="Region"></select>
-                <select id="ros-own" class="field dex-sel" title="Ownership"></select>
-                <select id="ros-sort" class="field dex-sel" title="Sort by"></select>
-                <button id="ros-dir" class="btn ghost small dex-dir" title="Sort direction">↓</button>
-                <button id="ros-clear" class="btn ghost small" title="Clear all filters">Clear</button>
-              </div>
-              <div class="ros-filters">
-                <div class="dex-chipset" id="ros-types"></div>
-                <div class="dex-chipset" id="ros-rarity"></div>
-                <div class="dex-chipset" id="ros-bst"></div>
-                <div class="dex-chipset" id="ros-marks"></div>
-              </div>
-              <div class="ros-tabs" id="ros-tabs"></div>
-            </div>
-            <div class="dex-count sub" id="ros-shown"></div>
-            <div class="grid ros-grid" id="ros-grid"></div>
-          </div>
-          <aside class="ros-detail" id="ros-detail"></aside>
-        </div>
-        <div class="ros-bar">
-          <button class="bw-btn" id="ros-back" data-back>Back<img src="assets/ui/team/back-x.png" alt="" /></button>
-          <button class="bw-btn" id="ros-commit" data-sfx="confirm" disabled>
-            Commit<img src="assets/ui/team/commit-arrow.png" alt="" />
-          </button>
-        </div>
-      </div>
+      <div class="tm-host"><div class="pm-stage tm-stage"></div></div>
     </section>
 
     <!-- ====== Mejoras ====== -->
@@ -840,6 +807,10 @@
     <script defer src="js/ui/lib/primitives/portrait/portrait.js"></script>
     <script defer src="js/ui/lib/primitives/cursor/cursor.js"></script>
     <script defer src="js/ui/lib/primitives/well/well.js"></script>
+    <script defer src="js/ui/lib/primitives/field/field.js"></script>
+    <script defer src="js/ui/lib/primitives/toggle/toggle.js"></script>
+    <script defer src="js/ui/lib/primitives/chip/chip.js"></script>
+    <script defer src="js/ui/lib/primitives/statrow/statrow.js"></script>
     <script defer src="js/core/stats.js"></script>
     <script defer src="js/core/simbus.js"></script>
     <script defer src="js/systems/log.js"></script>
@@ -983,8 +954,11 @@
     <script defer src="js/ui/menu.js"></script>
     <script defer src="js/ui/menu-dex-grid.js"></script>
     <script defer src="js/ui/menu-pokedex.js"></script>
+    <script defer src="js/ui/menu-team-slots.js"></script>
+    <script defer src="js/ui/menu-team-grid.js"></script>
+    <script defer src="js/ui/menu-team-detail.js"></script>
+    <script defer src="js/ui/menu-team-sell.js"></script>
     <script defer src="js/ui/menu-team.js"></script>
-    <script defer src="js/ui/menu-team-copies.js"></script>
     <script defer src="js/ui/menu-upgrades.js"></script>
     <script defer src="js/ui/shop-balls.js"></script>
     <script defer src="js/ui/shop-tms.js"></script>

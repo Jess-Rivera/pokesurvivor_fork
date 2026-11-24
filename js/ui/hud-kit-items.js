@@ -206,9 +206,10 @@ G.HudKitItems = (() => {
    * dragged (#91-2 DD1).
    * box: { left, top, width, height } in px, the scrolling area; trackRight: the bar's gap to the parent's right edge;
    * colours: { track, thumb, thumbRim }; resetOn: values that send it back to the top when one changes (fixed length);
+   * look: 'clean' draws scroll.bar (#167: a 4 px track under an 8 px square thumb, its colours from CSS, no colours prop);
    * onScroll: called on every scroll, before the thumb moves (the move list drops its hover tooltip there).
    */
-  function ScrollBox({ box, trackRight, colours, resetOn = [], onScroll, children }) {
+  function ScrollBox({ box, trackRight, colours, resetOn = [], onScroll, look = '', children }) {
     const scrollRef = preactHooks.useRef(null),
       thumbState = preactHooks.useRef({ top: 0, height: 0 }); // the thumb, in px
     const [, redraw] = preactHooks.useState(0);
@@ -261,8 +262,13 @@ G.HudKitItems = (() => {
         ${children}
       </div>
       <div
-        class="hud-scroll-track"
-        style=${{ right: trackRight + 'px', top: box.top + 'px', height: box.height + 'px', background: colours.track }}
+        class=${'hud-scroll-track' + (look ? ' is-' + look : '')}
+        style=${{
+          right: trackRight + 'px',
+          top: box.top + 'px',
+          height: box.height + 'px',
+          background: colours && colours.track,
+        }}
       >
         ${
           thumbNow.height
@@ -275,8 +281,8 @@ G.HudKitItems = (() => {
                 style=${{
                   top: thumbNow.top + 'px',
                   height: thumbNow.height + 'px',
-                  background: colours.thumb,
-                  borderColor: colours.thumbRim,
+                  background: colours && colours.thumb,
+                  borderColor: colours && colours.thumbRim,
                 }}
               ></div>`
             : null

@@ -2,6 +2,9 @@
  * The library's portrait:
  *   portrait.round  RoundPortrait: a face in a circle with a stroke in a rim colour, dimmed when fainted; with a ring
  *                   (the EXP ring) it sits inside a band that fills clockwise from the top
+ *                   states (#167): selected (yellow.base and a sliding shimmer), cursor (the same stroke, no
+ *                   shimmer), sale (picked for sale: red.dark and a dark shimmer), silhouette (a species not owned: the screen draws
+ *                   its shape as a child, since a portrait's own background is solid)
  * Props only, never game state: the screen passes the image's address (the kit's portraitSource knows which shinies
  * have no face of their own), its fallback, the size and the colours. Each screen keeps its own states on top (the
  * boss circles' active rim and flicker, the pause menu's shimmer, the TMs tab's chosen and hover rims).
@@ -19,13 +22,13 @@ G.Lib.Portrait = (() => {
   const FULL_TURN = 360; // degrees
 
   /** The face: the circle, its stroke and the picture (src null draws an empty circle). */
-  function Face({ size, stroke, rim, src, dex, onError, lazy, fainted, className, style, attrs, children }) {
+  function Face({ size, stroke, rim, src, dex, onError, lazy, fainted, state, className, style, attrs, children }) {
     const faceStyle = { ...style };
     if (size) faceStyle.width = faceStyle.height = size + 'px';
     if (stroke != null) faceStyle['--portrait-stroke'] = stroke + 'px';
     if (rim) faceStyle['--portrait-rim'] = rim;
     return html`<div
-      class=${'portrait-round' + (fainted ? ' is-fainted' : '') + (className ? ' ' + className : '')}
+      class=${['portrait-round', fainted && 'is-fainted', state && 'is-' + state, className].filter(Boolean).join(' ')}
       style=${faceStyle}
       ...${attrs || {}}
     >
@@ -36,7 +39,7 @@ G.Lib.Portrait = (() => {
 
   /**
    * portrait.round. size: px across (none: the screen's CSS sizes it); stroke: px; rim: the stroke's colour (the
-   * outline by default); src, dex, onError, lazy: the picture; fainted: dimmed. ring: { fraction (0 to 1), fill,
+   * outline by default); src, dex, onError, lazy: the picture; fainted: dimmed; state: one of the states above, or none. ring: { fraction (0 to 1), fill,
    * track } draws the band around the face (size is then the whole, ring included); ringClass and faceClass add the
    * ring's and the face's classes, className the outer one's. style places it; attrs adds attributes; children are
    * drawn on top (a selection cursor).

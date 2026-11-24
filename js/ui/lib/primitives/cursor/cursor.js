@@ -7,8 +7,10 @@
  *                (CRT off); the ring it reaches opens from the dot to the line, past full size, flickers once and
  *                settles (CRT on). useRingTravel runs that move for a screen. First on the Main Menu Shop's ball
  *                belts; the catch screen's wells and faces and the TMs box move onto it at #126.
- * cursor.bar (squares, cards and slots) is built with the first screen that draws it (#126); the B2 corners stay in
- * js/ui/hud-kit.js until then. Props only: the screen says where the cursor is. Style: cursor.css. Board:
+ *   cursor.bar   CursorBar (#167): button.glitch's bar beside a square piece (a card, a slot, a field's neighbour), in
+ *                yellow.base; useRingTravel gives it the same CRT as the ring. First in the Team menu; the B2 corners
+ *                stay in js/ui/hud-kit.js for the screens #126 has not reached.
+ * Props only: the screen says where the cursor is. Style: cursor.css. Board:
  * tools/library.html, Cursor (tools/library/cursor-draft.js, cursor-draft.css).
  */
 G.Lib = G.Lib || {};
@@ -34,6 +36,24 @@ G.Lib.Cursor = (() => {
       style=${{
         inset: -CURSOR_RING.reach + 'px',
         borderWidth: CURSOR_RING.width + 'px',
+        '--cursor-off': RING_CRT.offMs + 'ms',
+        '--cursor-on': RING_CRT.onMs + 'ms',
+      }}
+      aria-hidden="true"
+    ></span>`;
+  }
+
+  // cursor.bar: button.glitch's bar on its own, right of the item and its full height (the board's CURSOR)
+  const CURSOR_BAR = { width: buttons.GLITCH.barWidth, gap: 2 };
+  /** cursor.bar beside the piece it is drawn in (that host must be exactly the piece's size). phase as CursorRing's;
+   *  height: the piece's, in px, for the CRT's dot. */
+  function CursorBar({ phase, height }) {
+    return html`<span
+      class=${'cursor-bar' + (phase ? ' crt-' + phase : '')}
+      style=${{
+        left: 'calc(100% + ' + CURSOR_BAR.gap + 'px)',
+        width: CURSOR_BAR.width + 'px',
+        '--dot': (CURSOR_BAR.width / height).toFixed(3),
         '--cursor-off': RING_CRT.offMs + 'ms',
         '--cursor-on': RING_CRT.onMs + 'ms',
       }}
@@ -68,5 +88,5 @@ G.Lib.Cursor = (() => {
     return shown;
   }
 
-  return { ready: true, CURSOR_RING, RING_CRT, CursorRing, useRingTravel };
+  return { ready: true, CURSOR_RING, RING_CRT, CursorRing, CURSOR_BAR, CursorBar, useRingTravel };
 })();

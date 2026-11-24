@@ -1,0 +1,43 @@
+/* statrow.css: one stat's row (G.Lib.StatRow; #167). */
+.stat-row {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 46px;
+  padding: 0 14px;
+  font-family: 'HudModule', sans-serif;
+  font-size: 15px;
+  color: var(--color-grey-white);
+}
+.stat-row:nth-child(even) {
+  background: var(--color-grey-raised);
+}
+.stat-row-name {
+  width: 92px;
+}
+.stat-row-nature {
+  width: 22px;
+  line-height: 0;
+}
+.stat-row-base {
+  width: 58px;
+  text-align: right;
+}
+.stat-row-bars {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 12px 0 16px;
+}
+.stat-row-track {
+  height: 2px;
+  background: var(--color-grey-slate);
+}
+.stat-row-track > div {
+  height: 100%;
+}
+.stat-row-values {
+  width: 74px;
+  text-align: right;
+}

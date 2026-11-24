@@ -1,13 +1,12 @@
-/* ============ menu-dex-grid.js: the filter bar and Pokemon grid the Pokedex and the Team screen share ============
- * Split from menu.js (#154). A "view" object (element-id prefix, filter state, team, selection) says which screen
- * draws; the Team screen's view adds hooks for its box list and its slots. */
+/* ============ menu-dex-grid.js: the filter bar and Pokemon grid the Pokedex screen uses ============
+ * Split from menu.js (#154). A "view" object carries the element-id prefix, filter state, team and selection.
+ * The Team menu has its own grid (menu-team-grid.js, #167); both filter with G.TeamList. */
 G.MenuDexGrid = (() => {
   const $ = G.UI.$;
   const GEN_NAMES = G.MenuUI.GEN_NAMES;
   const { moveQuery, learnsAny, namedBy, speciesMatches, speciesFound } = G.TeamList; // shared with the Team menu (#167)
   // Pokedex control state. region: 'all' | gen#; own: 'all'|'own'|'miss';
   // q: search; types/rarity/bst: multi-select (empty = all); sort + dir.
-  // marks (3b-2 E3): 'fav' and 'lock' chips, Team screen box tabs only.
   const newCtrl = () => ({
     region: 'all',
     own: 'all',
@@ -15,7 +14,6 @@ G.MenuDexGrid = (() => {
     types: [],
     rarity: [],
     bst: [],
-    marks: [],
     sort: 'dex',
     dir: 1,
   });
@@ -53,7 +51,7 @@ G.MenuDexGrid = (() => {
   ];
   const STAT_IDX = { hp: 0, atk: 1, def: 2, spa: 3, spd: 4, spe: 5 };
 
-  /** Filter bar shared by the Pokédex and the Team screen. `v` is the view (element-id prefix + filter state). */
+  /** The Pokédex's filter bar. `v` is the view (element-id prefix + filter state). */
   function buildControls(v) {
     const s = G.DB.save,
       c = v.ctrl,
@@ -173,27 +171,6 @@ G.MenuDexGrid = (() => {
       bstBox.appendChild(b);
     }
 
-    // Favorites and Locked (3b-2 E3), after BST: only the Team screen has this chip set. Box tabs only; hidden on the Pokedex tab.
-    const markBox = el('marks');
-    if (markBox) {
-      if (!Array.isArray(c.marks)) c.marks = [];
-      markBox.innerHTML = '';
-      for (const [k, icon, label] of [
-        ['fav', 'heart', 'Favorites'],
-        ['lock', 'lock', 'Locked'],
-      ]) {
-        const b = document.createElement('button');
-        b.className = 'chip icon mark-chip' + (c.marks.includes(k) ? ' on' : '');
-        b.innerHTML = G.Icons.html(icon, 24);
-        b.title = label;
-        b.onclick = () => {
-          toggle(c.marks, k);
-          again();
-        };
-        markBox.appendChild(b);
-      }
-    }
-
     el('clear').onclick = () => {
       c.region = 'all';
       c.own = 'all';
@@ -201,7 +178,6 @@ G.MenuDexGrid = (() => {
       c.types = [];
       c.rarity = [];
       c.bst = [];
-      c.marks = [];
       c.sort = 'dex';
       c.dir = 1;
       again();
@@ -299,16 +275,10 @@ G.MenuDexGrid = (() => {
     const sel = v.sel();
     $(v.pre + 'grid')
       .querySelectorAll('.cell')
-      .forEach((x) =>
-        x.classList.toggle('on', x.dataset.uid ? x.dataset.uid === (v.selUid && v.selUid()) : +x.dataset.dex === sel)
-      );
+      .forEach((x) => x.classList.toggle('on', +x.dataset.dex === sel));
   }
 
   function renderGrid(v) {
-    if (v.boxTab && v.boxTab() != null) {
-      v.renderBox(v);
-      return;
-    }
     const s = G.DB.save;
     const grid = $(v.pre + 'grid');
     grid.innerHTML = '';
@@ -323,34 +293,11 @@ G.MenuDexGrid = (() => {
         v.pick(p.dex);
         markGrid(v);
       };
-      if (v.assign && own) {
-        // Team screen: double-click puts it in the highlighted slot, or drag it onto any slot.
-        cell.draggable = true;
-        cell.ondblclick = () => v.place(p.dex);
-        cell.ondragstart = (e) => {
-          v.setDrag(p.dex);
-          e.dataTransfer.setData('text/plain', String(p.dex));
-          e.dataTransfer.effectAllowed = 'move';
-        };
-        cell.ondragend = () => {
-          v.setDrag(null);
-        };
-      }
       grid.appendChild(cell);
     }
     if (!grid.children.length)
       grid.innerHTML = '<p class="sub" style="grid-column:1/-1">No Pokemon match these filters.</p>';
   }
 
-  /** Re-draw only the cells of these Pokémon (team badges and shiny sprites), without rebuilding the whole grid. */
-  function refreshCells(v, dexes) {
-    const grid = $(v.pre + 'grid');
-    for (const d of new Set(dexes)) {
-      if (d == null) continue;
-      const cell = grid.querySelector(`.cell[data-dex="${d}"]`);
-      if (cell) fillCell(cell, G.DEX_BY[d], v);
-    }
-  }
-
-  return { newCtrl, buildControls, filterSortDex, markGrid, renderGrid, refreshCells };
+  return { newCtrl, buildControls, renderGrid };
 })();

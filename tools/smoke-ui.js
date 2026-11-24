@@ -115,24 +115,32 @@ async function check(browser, query, tag) {
       bad = [];
     let n = 0,
       rowsMax = 0;
-    // Pokedex tab: every species once, so the union of pools still covers every move (the box tabs list copies).
-    [...document.querySelectorAll('#ros-tabs .ros-tab')].find((t) => t.textContent === 'Pokédex').click();
-    for (const cell of document.querySelectorAll('#ros-grid .cell')) {
-      if (!G.DB.save.owned[+cell.dataset.dex]) continue;
-      cell.click();
+    // Pokedex tab: every species once, its Moves popup open, so the union of pools still covers every move.
+    const settle = () => new Promise((r) => setTimeout(r, 0));
+    const click = (selector) => document.querySelector(selector).click();
+    click('[data-tab="dex"] button');
+    await settle();
+    const ids = G.DEX.filter((p) => G.DB.save.owned[p.dex]).map((p) => p.dex);
+    for (const dex of ids) {
+      click('[data-cursor-id="dex-' + dex + '"]');
+      await settle();
+      click('[data-action="moves"]');
+      await settle();
       n++;
-      const rows = [...document.querySelectorAll('.ros-mv')];
+      const rows = [...document.querySelectorAll('.tm-move')];
       rowsMax = Math.max(rowsMax, rows.length);
       for (const r of rows) {
-        const name = r.querySelector('span').textContent,
+        const name = r.querySelector('.tm-move-name').textContent,
           id = byName.get(name);
-        if (!id || !r.querySelector('canvas,img,i')) bad.push(cell.dataset.dex + ' "' + name + '"');
+        if (!id || !r.querySelector('canvas')) bad.push(dex + ' "' + name + '"');
         else seen.add(id);
       }
+      click('[data-action="moves-close"]');
+      await settle();
     }
     const dexOk = n > 0 && rowsMax > 0 && !bad.length;
-    // Upgrades opens from the Upgrade button on a Team screen slot (the main menu entry is gone, 2026-11-01)
-    document.querySelector('.ros-slot .rupg').click();
+    // Upgrades opens from the Upgrade button on a Team menu slot (the main menu entry is gone, 2026-11-01)
+    document.querySelector('[data-action="upgrade-0"]').click();
     const name0 = document.getElementById('upg-name').textContent;
     const key = (k) => document.body.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
     key('e');
