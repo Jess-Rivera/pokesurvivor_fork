@@ -19,7 +19,6 @@ bar, Level Up, EXP Bag), opening agreed, prose plan not written. TODO.md "Next" 
 - PokeCoin income per run is estimated from the payout formula only (about 3,500 a full run); #166 replaces it.
 - The loop counter is dev-set in gym.js and the Elite Four is not built: "N rolls on loop N" is harness-proven only.
 - Board fixes are in TODO.md item 6. Canvas HUD holdouts in js/ui/hud.js stay (Jess).
-
 - tools/smoke-ui.js has 15 failures that predate #167 (run shop, catch window height, Shop balls).
 
 ## Open owner decisions
