@@ -3,7 +3,7 @@ title: "#168 the Team menu's mosaic background: look, level-up starburst, water 
 date: 2026-11-23
 issues: [168, 167, 126]
 area: ui
-canonical: "this file and the values in tools/library/background-draft.js until #168 builds the library piece."
+canonical: "this file and the values in js/ui/lib/primitives/mosaic/mosaic.js (DEFAULTS)."
 ---
 # 2026-11-23: #168 the Team menu's mosaic background: look, level-up starburst, water waves, two settings (Jess)
 
@@ -18,4 +18,4 @@ canonical: "this file and the values in tools/library/background-draft.js until 
 - [Approved] The look holds after the level fix, with rings a second at 2. The build works out each burst's star shape
   once, to cut the cost of overlapping bursts (four cost about 21 ms a frame on the tuning page).
 
-Canonical: this file and the values in tools/library/background-draft.js until #168 builds the library piece.
+Canonical: this file and the values in js/ui/lib/primitives/mosaic/mosaic.js (DEFAULTS).

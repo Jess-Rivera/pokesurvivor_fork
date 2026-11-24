@@ -272,6 +272,20 @@ G.SettingsUI = (() => {
         'On',
         'Off'
       ) +
+      boolRow(
+        'teamBackgroundMoves',
+        'Team Menu Background',
+        'Animated moves the mosaic behind the Team menu. Static draws one still picture and runs faster.',
+        'Animated',
+        'Static'
+      ) +
+      boolRow(
+        'levelUpStarburst',
+        'Level Up Starburst',
+        'A level up in the Team menu sends a burst of light through its background. Needs the animated background.',
+        'On',
+        'Off'
+      ) +
       boolRow('fps', 'Show FPS', 'Frames per second, in the bottom corner during a run.', 'Yes', 'No') +
       boolRow(
         'showDpsPanel',

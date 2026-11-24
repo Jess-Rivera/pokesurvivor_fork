@@ -1,0 +1,11 @@
+/* mosaic.css: the mosaic background (G.Lib.Mosaic; #168). It fills the element it was started in. */
+.mosaic-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.mosaic-canvas[hidden] {
+  display: none;
+}

@@ -7,6 +7,20 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-23',
+    title: ['New Team menu', 'New Team menu'],
+    new: [
+      [
+        'A new Team menu: portraits in boxes, search, filters and many more sorts, a stat panel with IVs and EVs, and an animated background. Drag Pokemon, use 1 to 6, or lift and carry one with the keyboard. Leaving with Discard or Esc drops only your team changes.',
+        'A new Team menu: portraits in boxes, search, filters and many more sorts, a stat panel with IVs and EVs, and an animated background. Drag Pokemon, use 1 to 6, or lift and carry one with the keyboard. Leaving with Discard or Esc drops only your team changes.',
+      ],
+      [
+        'Two new settings: Team Menu Background (animated or static) and Level Up Starburst.',
+        'Two new settings: Team Menu Background (animated or static) and Level Up Starburst.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-22',
     title: ['Exp Candy drops', 'Exp Candy drops'],
     new: [

@@ -16,6 +16,7 @@ G.MenuTeam = (() => {
     windowKit = G.MenuWindowKit,
     stageHost = document.querySelector('#scr-roster .tm-host'),
     stage = document.querySelector('#scr-roster .tm-stage'),
+    mosaicHost = document.querySelector('#scr-roster .tm-mosaic'),
     parts = [G.MenuTeamSlots, G.MenuTeamGrid, G.MenuTeamDetail];
   if (!overlay || !overlay.ready || !windowKit.ready || !stage || !parts.every((part) => part.ready)) {
     console.warn('[Team] the HUD kit or the UI library did not load: the Team menu cannot open');
@@ -354,6 +355,7 @@ G.MenuTeam = (() => {
   function leave(sound) {
     hideTooltip();
     sell.end();
+    stopMosaic();
     G.Audio.sfx(sound);
     G.MenuUI.open();
   }
@@ -639,6 +641,21 @@ G.MenuTeam = (() => {
       <${cursor.CursorTip} />`;
   }
 
+  // ---------- the background (#168) ----------
+  let mosaic = null;
+  function stopMosaic() {
+    if (mosaic) mosaic.stop();
+    mosaic = null;
+  }
+  function startMosaic() {
+    stopMosaic();
+    mosaic = G.Lib.Mosaic.start(mosaicHost, {
+      still: !G.Settings.get('teamBackgroundMoves'),
+      starburst: G.Settings.get('levelUpStarburst'),
+      isWanted: () => G.UI.isOpen('scr-roster'),
+    });
+  }
+
   // ---------- opening ----------
   function open() {
     const save = G.DB.save;
@@ -649,6 +666,7 @@ G.MenuTeam = (() => {
     G.UI.chrome(false); // it has its own counters
     G.UI.show('scr-roster');
     fitStage();
+    startMosaic();
     selectSlot(0);
     cursor.moveTo(SLOT_ID + 0);
     saved();

@@ -12,6 +12,8 @@
  *   dpsPanelOpacity 0.2 .. 1                      that whole panel's opacity, box, text and graph together (default 0.6)
  *   cursorTooltipDelay 0.5 | 1 | 1.5 | 2          seconds the selection cursor rests on an item before its tooltip
  *                                                 shows (keys, later a controller; the mouse shows it at once). #149c
+ *   teamBackgroundMoves true/false                the Team menu's background is animated, or one still frame (#168)
+ *   levelUpStarburst true/false                   a level up plays a starburst in that background (#168)
  *   stick       0.8 | 1 | 1.25                    touch joystick size
  *   stickMode   'float' | 'fixed'                 joystick where you put your finger, or always in place
  *   pad         { bar, pause, stick } | null      where the buttons go on mobile (centered, in
@@ -32,6 +34,8 @@ G.Settings = (() => {
     showDpsPanel: true,
     dpsPanelOpacity: 0.6,
     cursorTooltipDelay: 1,
+    teamBackgroundMoves: true,
+    levelUpStarburst: true,
     stick: 1,
     stickMode: 'float',
     pad: null,

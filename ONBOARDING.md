@@ -150,8 +150,7 @@ in English. Do not add those new English strings to `lang-en.js`.
   change animations, drawn by every Pokemon from `G.STATUS_ANIMS` in `js/data/status-anims.js`), then `ui.js`, `hud.js`, `sheet.js` (the team sheet), `gym-present.js`, `login.js`,
   `menu.js` (`G.MenuUI`: the Main Menu and region select; the only menu surface other modules call) and the menu
   screens split from it in #154: `menu-dex-grid.js` (the filter bar and grid the Pokedex and Team screen share),
-  `menu-pokedex.js`, `menu-team.js` (team slots, detail, box tabs and list), `menu-team-copies.js` (nicknames,
-  selling one, bulk sell) and `menu-upgrades.js` (display only, #97 replaces it), `test.js` (personality test), and the per-screen UIs: `gacha-ui.js` (the Main Menu Shop, with its
+  `menu-pokedex.js`, `menu-team.js` (the Team menu: state, keys, frame), `menu-team-slots.js`, `menu-team-grid.js`, `menu-team-detail.js`, `menu-team-sell.js` (its pieces; rules in js/systems/team-draft.js and team-list.js, #167) and `menu-upgrades.js` (display only, #97 replaces it), `test.js` (personality test), and the per-screen UIs: `gacha-ui.js` (the Main Menu Shop, with its
   Pokeballs tab in `shop-balls.js` and the pieces it shares with the Inventory in `menu-window-kit.js`),
   `run-ui.js`, `social-ui.js`, `ranking-ui.js`, `settings-ui.js`, `goals-ui.js`,
   `layout-ui.js`, `mod-ui.js`, `news-ui.js`, `slots.js` (gacha slot machine),

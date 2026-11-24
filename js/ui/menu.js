@@ -30,17 +30,7 @@ G.MenuUI = (() => {
   function init() {
     // Preload the row art and fonts, so the first hover and the first open never draw half a menu.
     for (const n of ['row', 'row-sel', 'play', 'play-sel']) new Image().src = `assets/ui/menu/${n}.png`;
-    for (const n of [
-      'slot-blank',
-      'slot-rect',
-      'slot-rect-sel',
-      'slot-round',
-      'slot-round-sel',
-      'btn',
-      'btn-sel',
-      'arrow',
-    ])
-      new Image().src = `assets/ui/team/${n}.png`;
+    for (const n of ['btn', 'btn-sel', 'arrow']) new Image().src = `assets/ui/team/${n}.png`;
     for (const n of ['box', 'box-sel']) new Image().src = `assets/ui/upgrades/${n}.png`;
     if (document.fonts) {
       document.fonts.load('16px PokeBW').catch(() => {});

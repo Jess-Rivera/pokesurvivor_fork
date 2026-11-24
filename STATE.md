@@ -5,23 +5,22 @@ Last updated: 2026-11-23, home (Claude Code). Branch: feature/138-146-lost-and-f
 No branch rules file.
 
 ## START HERE
-Team menu and Upgrade popup sketches are ruled on (decision 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings).
-Three slices, openings agreed: A #167, B #139 Part F, C #97. Next: the slice A prose
-plan. #168 (mosaic background) is tuned and mounts with #167 (decision 2026-11-23-168-mosaic-background-look-and-settings).
-TODO.md "Next" has the order. Run `node tools/catchup.js`.
+The new Team menu (#167) and its mosaic (#168) are built and wait for Jess's feel test. Next: slice B, #139 Part F (XP
+bar, Level Up, EXP Bag), opening agreed, prose plan not written. TODO.md "Next" has the order. Run `node tools/catchup.js`.
 
 ## Landed 2026-11-23 (home)
-- Team menu sketches reviewed and ruled on; #167 and #168 opened; mosaic tuning page at tools/library, Backgrounds.
-- #97 grilled and approved (decision 2026-11-23-97-upgrade-system-redesign).
-- #97 numbers drafted in #131 (decision 2026-11-23-97-upgrade-price-shape-bst-and-bands): exponential prices, BST
-  star factor, bands at OOR 1/10/20/40/80. Numbers [Proposed]; design doc "Numbers (draft)" in docs/AI Outputs/Issue-97/.
-- #166 opened: run telemetry (PokeCoins in the trace, traces folder, HTML dashboard). On the board in Triage.
+- #167: G.TeamDraft and G.TeamList (rules), js/ui/menu-team*.js (screen), css/team-menu.css, new library pieces. Plan
+  and rulings: docs/AI Outputs/Issue-167/, decision 2026-11-23-167-slice-a-plan-rulings.
+- #168: js/ui/lib/primitives/mosaic, two settings. The starburst has no caller until slice B's Level Up.
+- #97 upgrades grilled and numbers drafted in #131 ([Proposed]); #166 opened (run telemetry).
 
 ## Watch
-- Candy drops and is saved, but cannot be given yet (no Team menu UI). Changelog says "comes in a later update".
+- Candy drops and is saved, but cannot be given until slice B. Changelog says "comes in a later update".
 - PokeCoin income per run is estimated from the payout formula only (about 3,500 a full run); #166 replaces it.
 - The loop counter is dev-set in gym.js and the Elite Four is not built: "N rolls on loop N" is harness-proven only.
 - Board fixes are in TODO.md item 6. Canvas HUD holdouts in js/ui/hud.js stay (Jess).
+
+- tools/smoke-ui.js has 15 failures that predate #167 (run shop, catch window height, Shop balls).
 
 ## Open owner decisions
 - #166 slice opening (goal, done, test). #164 sidegrades (own grilling); #165 open items. Type-to-material map and

@@ -286,3 +286,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
   light. Settings and rulings in decision 2026-11-23-168-mosaic-background-look-and-settings. Mounts with #167.
 - CLAUDE.md: a commit with no code skips check.js and format.
 - Broke: nothing. Stopped at: the slice A (#167) prose plan is next.
+
+## 2026-11-23 (home, Claude Code): the new Team menu (#167) and its mosaic (#168) built
+- Plan approved with six rulings (decision 2026-11-23-167-slice-a-plan-rulings). Rules first: G.TeamDraft and G.TeamList
+  with the end-goal test (team-menu-harness, 18 mutations caught), then the library pieces (portrait states, field,
+  toggle, chip.type, row.stat, cursor.bar, scroll.bar look, mosaic), the screen, and the old Team screen removed.
+- Mosaic is a library piece the tuning page runs too; two settings; mosaic-harness; 60 fps at 1440p headless with GPU.
+- Broke: nothing found. smoke-ui has 15 failures that were there before (same list on the commit before the screen).
+- Stopped at: Jess's feel test of #167 and #168; then slice B (#139 Part F).

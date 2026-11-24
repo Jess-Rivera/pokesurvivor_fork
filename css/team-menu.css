@@ -11,6 +11,7 @@
 #scr-roster.hidden {
   display: none;
 }
+.tm-mosaic,
 .tm-host {
   position: absolute;
   inset: 0;
