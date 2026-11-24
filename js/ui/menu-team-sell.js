@@ -1,7 +1,7 @@
 /* ============ menu-team-sell.js: selling in the Team menu (G.MenuTeamSell; #167) ============
  * Sell Pokemon, then a Pokemon, sells that one after a dialog. Shift with it (a click, Enter or Space) starts bulk sell:
  * Pokemon are picked, Sell Pokemon again asks for all of them, and a second dialog confirms (Shift on the first skips it).
- * Who may sell and for how much is G.TeamDraft's and G.Copies'. A sale saves at once; the unsaved roster stays as it is.
+ * Who may sell and for how much is G.TeamDraft's and G.Copies'. A sale saves at once.
  * Sketch note: assets/excalidraw/team-menu.excalidraw; decisions 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings and
  * 2026-11-23-167-slice-a-plan-rulings.
  */

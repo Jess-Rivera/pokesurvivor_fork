@@ -14,16 +14,32 @@ G.MenuTeamGrid = (() => {
   const { TextField, DropdownBox, DropdownRows } = lib.Field;
 
   // ---------- sizes and places (stage pixels) ----------
-  const ROW = { top: 96 },
-    SEARCH = { left: 404, width: 440 },
-    FILTER = { left: 856, width: 220, listWidth: 280 },
-    SORT = { left: 1088, width: 247, listWidth: 247 },
-    LIST = { top: 144, height: 560, pad: 4 },
-    BOX = { left: 404, top: 153, width: 931, height: 790 },
-    GRID = { columns: 8, cell: 88, gapX: 22, gapY: 38, padLeft: 28, padTop: 18, stroke: 3, scrollRight: 8 },
+  // their places come from the layout (menu.layout().grid and .row): the grid takes the room between the side panels
+  const FILTER = { width: 220, listWidth: 280 },
+    SORT = { width: 247, listWidth: 247 },
+    FINDER_GAP = 12,
+    LIST = { below: 48, height: 560, pad: 4 },
+    GRID = {
+      cell: 88,
+      gapXLeast: 14,
+      gapY: 38,
+      padLeft: 28,
+      padRight: 8,
+      padTop: 18,
+      stroke: 3,
+      scrollRight: 8,
+      scrollRoom: 24,
+    },
     MARK_SIZE = 18,
-    TABS = { left: 594, top: 954, width: 88, height: 44, gap: 6, fontSize: 10 };
+    TAB = { height: 44, fontSize: 10 };
   const AREA = 'grid'; // the cursor area: Up from the top row reaches the search, filter and sort boxes
+
+  /** The search, filter and sort boxes: the search takes what the other two leave. */
+  function finderPlaces({ left, width }) {
+    const sort = left + width - SORT.width,
+      filter = sort - FINDER_GAP - FILTER.width;
+    return { searchWidth: filter - FINDER_GAP - left, filter, sort };
+  }
 
   // ---------- the filter list ----------
   const titled = (text) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -124,14 +140,16 @@ G.MenuTeamGrid = (() => {
   function OpenList({ menu, at }) {
     const which = menu.openList();
     if (!which) return null;
-    const place = which === 'filter' ? FILTER : SORT,
+    const { grid } = menu.layout(),
+      place = which === 'filter' ? FILTER : SORT,
+      left = finderPlaces(grid)[which],
       rows = ROWS_OF[which](menu),
       byId = new Map(rows.map((row) => [row.id, row]));
     const inner = { width: place.listWidth - 2 - 2 * LIST.pad, height: LIST.height - 2 - 2 * LIST.pad };
     return html`<div class="tm-catcher" onClick=${menu.closeList}></div>
       <div
         class="panel-clean tm-list"
-        style=${{ left: px(place.left), top: px(LIST.top), width: px(place.listWidth), height: px(LIST.height) }}
+        style=${{ left: px(left), top: px(grid.finderTop + LIST.below), width: px(place.listWidth), height: px(LIST.height) }}
       >
         <${ScrollBox}
           box=${{ left: LIST.pad, top: LIST.pad, width: inner.width - 12, height: inner.height }}
@@ -152,10 +170,12 @@ G.MenuTeamGrid = (() => {
 
   // ---------- the search, filter and sort boxes ----------
   function Finder({ menu, at }) {
-    const used = menu.sortUsed(),
+    const { grid } = menu.layout(),
+      places = finderPlaces(grid),
+      used = menu.sortUsed(),
       sortName = used.sort.group ? used.sort.group + ' ' + used.sort.label : used.sort.label;
     const box = (which, place, label, count) =>
-      html`<div class="tm-stop" style=${{ left: px(place.left), top: px(ROW.top) }}>
+      html`<div class="tm-stop" style=${{ left: px(places[which]), top: px(grid.finderTop) }}>
         <${DropdownBox}
           label=${label}
           count=${count}
@@ -174,7 +194,7 @@ G.MenuTeamGrid = (() => {
       </div>`;
     return html`<div
         class="tm-stop"
-        style=${{ left: px(SEARCH.left), top: px(ROW.top) }}
+        style=${{ left: px(grid.left), top: px(grid.finderTop) }}
         data-cursor-id="search"
         data-cursor-area=${AREA}
         data-cursor-search
@@ -183,7 +203,7 @@ G.MenuTeamGrid = (() => {
           value=${menu.filter().query}
           onChange=${menu.search}
           placeholder="Search name, move or #"
-          width=${SEARCH.width}
+          width=${places.searchWidth}
           cursor=${at === 'search'}
         />
       </div>
@@ -196,7 +216,7 @@ G.MenuTeamGrid = (() => {
     const host = hooks.useRef(null),
       inside = GRID.cell - 2 * GRID.stroke;
     hooks.useEffect(() => {
-      host.current.replaceChildren(G.UI.spriteCanvas(dex, inside, inside, { scale: 2, silhouette: true }));
+      host.current.replaceChildren(G.UI.spriteCanvas(dex, inside, inside, { scale: 2, silhouette: true, still: true }));
     }, [dex]);
     return html`<div ref=${host}></div>`;
   }
@@ -252,7 +272,12 @@ G.MenuTeamGrid = (() => {
 
   function Grid({ menu, at }) {
     const entries = menu.entries(),
-      byKeys = menu.byKeys();
+      byKeys = menu.byKeys(),
+      box = menu.layout().grid,
+      scrollWidth = box.width - 2 - GRID.scrollRoom,
+      room = scrollWidth - GRID.padLeft - GRID.padRight,
+      columns = Math.floor((room + GRID.gapXLeast) / (GRID.cell + GRID.gapXLeast)),
+      gapX = (room - columns * GRID.cell) / (columns - 1); // what is left over goes between the columns
     const idUnder = (event) => {
       const cell = event.target.closest('[data-cursor-id]');
       return cell && cell.dataset.cursorId;
@@ -275,11 +300,11 @@ G.MenuTeamGrid = (() => {
     });
     return html`<div
       class="panel-clean tm-box"
-      style=${{ left: px(BOX.left), top: px(BOX.top), width: px(BOX.width), height: px(BOX.height) }}
+      style=${{ left: px(box.left), top: px(box.top), width: px(box.width), height: px(box.height) }}
       ...${menu.dropHandlers({ kind: 'grid' })}
     >
       <${ScrollBox}
-        box=${{ left: 0, top: 0, width: BOX.width - 2 - 24, height: BOX.height - 2 }}
+        box=${{ left: 0, top: 0, width: scrollWidth, height: box.height - 2 }}
         trackRight=${GRID.scrollRight}
         look="clean"
         resetOn=${[menu.listKey()]}
@@ -287,8 +312,8 @@ G.MenuTeamGrid = (() => {
         <div
           class="tm-grid"
           style=${{
-            gridTemplateColumns: `repeat(${GRID.columns}, ${px(GRID.cell)})`,
-            columnGap: px(GRID.gapX),
+            gridTemplateColumns: `repeat(${columns}, ${px(GRID.cell)})`,
+            columnGap: px(gapX),
             rowGap: px(GRID.gapY),
             padding: `${px(GRID.padTop)} 0 ${px(GRID.padTop)} ${px(GRID.padLeft)}`,
           }}
@@ -333,14 +358,15 @@ G.MenuTeamGrid = (() => {
     return list;
   }
   function Tabs({ menu }) {
+    const { row } = menu.layout();
     return tabs().map((tab, index) => {
       const shown = tab.kind === 'dex' ? menu.tab() === 'dex' : menu.tab() === tab.box;
       const drop = tab.kind === 'dex' ? {} : menu.dropHandlers({ kind: 'box', box: tab.box });
       return html`<div
         key=${tab.id}
-        class=${'tm-tab is-' + tab.kind + (shown ? ' is-shown' : '')}
+        class=${'tm-tab is-' + tab.kind}
         data-tab=${tab.kind === 'dex' ? 'dex' : tab.box}
-        style=${{ left: px(TABS.left + index * (TABS.width + TABS.gap)), top: px(TABS.top) }}
+        style=${{ left: px(row.tabsLeft + index * (row.tabWidth + row.tabGap)), top: px(row.top) }}
         ...${drop}
       >
         <${CursorButton}
@@ -349,9 +375,10 @@ G.MenuTeamGrid = (() => {
           label=${tab.label}
           look="glitch"
           intent=${tab.kind === 'buy' ? 'positive' : 'neutral'}
-          width=${TABS.width}
-          height=${TABS.height}
-          fontSize=${TABS.fontSize}
+          width=${row.tabWidth}
+          height=${TAB.height}
+          fontSize=${TAB.fontSize}
+          held=${shown}
           refusal=${menu.held() ? null : menu.tabRefusal(tab)}
           onPress=${() => menu.pressTab(tab)}
         />

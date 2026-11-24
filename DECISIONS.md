@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-24, #167 Team menu feel test, round 1: the roster saves at once, Back and Revert, layout that follows the window (Jess)](docs/decisions/2026-11-24-167-team-menu-saves-at-once.md)
 - [2026-11-23, #167 Team menu slice A: favorites sell singly, tabs only, lifted Pokemon, Pokedex tab, bulk sell key (Jess)](docs/decisions/2026-11-23-167-slice-a-plan-rulings.md)
 - [2026-11-23, #168 the Team menu's mosaic background: look, level-up starburst, water waves, two settings (Jess)](docs/decisions/2026-11-23-168-mosaic-background-look-and-settings.md)
 - [2026-11-23, #97 and #139 Team menu and Upgrade popup: Level Up and dragged candy, box tabs, saving, portrait states (Jess)](docs/decisions/2026-11-23-97-139-team-menu-and-upgrade-popup-rulings.md)

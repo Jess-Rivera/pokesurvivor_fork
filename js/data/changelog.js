@@ -11,8 +11,8 @@ G.CHANGELOG = [
     title: ['New Team menu', 'New Team menu'],
     new: [
       [
-        'A new Team menu: portraits in boxes, search, filters and many more sorts, a stat panel with IVs and EVs, and an animated background. Drag Pokemon, use 1 to 6, or lift and carry one with the keyboard. Leaving with Discard or Esc drops only your team changes.',
-        'A new Team menu: portraits in boxes, search, filters and many more sorts, a stat panel with IVs and EVs, and an animated background. Drag Pokemon, use 1 to 6, or lift and carry one with the keyboard. Leaving with Discard or Esc drops only your team changes.',
+        'A new Team menu: portraits in boxes, search, filters and many more sorts, a stat panel with IVs and EVs, and an animated background. Drag Pokemon, use 1 to 6, or lift and carry one with the keyboard. Team changes save at once; Back or Esc leaves, and Revert puts your team back as it was when you opened the menu.',
+        'A new Team menu: portraits in boxes, search, filters and many more sorts, a stat panel with IVs and EVs, and an animated background. Drag Pokemon, use 1 to 6, or lift and carry one with the keyboard. Team changes save at once; Back or Esc leaves, and Revert puts your team back as it was when you opened the menu.',
       ],
       [
         'Two new settings: Team Menu Background (animated or static) and Level Up Starburst.',

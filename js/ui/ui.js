@@ -381,7 +381,7 @@ G.UI = (() => {
   /**
    * Animates a Pokemon inside a <canvas>.
    * opts: { anim='Idle', dir=0, shiny, silhouette, lively (ataca de vez en
-   *         when), spin (keeps spinning), shadow=true,
+   *         when), spin (keeps spinning), still (first frame only), shadow=true,
    *         scale=2   FIXED pixel size (x2 as in the game): all the
    *                   Pokemon in a view come out with the same pixel, even though
    *                   los gigantes no quepan enteros
@@ -409,7 +409,7 @@ G.UI = (() => {
       if (s.cv.offsetParent === null) continue; // pantalla oculta
       // Out of view, or not reported yet: nothing drawn, so its sheets only load once the canvas scrolls near the view.
       if (io && seen.get(s.cv) !== true) continue;
-      s.a.update(dt);
+      if (!s.opts.still) s.a.update(dt);
 
       if (s.opts.lively) {
         s.t -= dt;

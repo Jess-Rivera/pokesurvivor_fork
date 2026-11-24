@@ -14,23 +14,14 @@ G.MenuTeamDetail = (() => {
   const { px, CursorButton } = windowKit;
   const { MarkToggle, NameText } = slots;
 
-  // ---------- sizes and places (panel pixels) ----------
-  const PANEL = { left: 1351, top: 72, width: 549, height: 933 },
-    BARS = {
-      name: 64,
-      level: 104,
-      boxLeft: 446,
-      stepLeft: 414,
-      bottom: 893,
-      tabTop: 861,
-      tabRight: 170,
-      stepRight: 196,
-    },
-    LEVEL_UP = { left: 104, top: 72, width: 104, height: 26, fontSize: 11 },
-    STATS = { top: 118, height: 334 },
+  // ---------- sizes and places (panel pixels; the panel's own come from the layout) ----------
+  // the two bars are the same size: a band, and a deeper end down a 45 degree step (top right, bottom left)
+  const BARS = { band: 48, deep: 68, step: 20, topEnd: 103, bottomEnd: 136, border: 4 },
+    LEVEL_UP = { left: 104, top: 56, width: 104, height: 26, fontSize: 11 },
+    STATS = { top: 102, height: 334 },
     HEX = { width: 515, height: 276, radius: 0.33 },
-    MOVES_BUTTON = { left: 16, top: 800, width: 174, height: 44, fontSize: 15 },
-    MOVES = { left: 640, top: 190, width: 640, height: 700, rowsTop: 70, pad: 16, close: { width: 150, height: 44 } };
+    MOVES_BUTTON = { left: 8, width: 120, height: 44, fontSize: 15 },
+    MOVES = { width: 640, height: 700, rowsTop: 70, pad: 16, close: { width: 150, height: 44 } };
   // the game's stat order (HP, Atk, Def, SpA, SpD, Spe) as the stat tokens' keys
   const STAT_KEYS = ['hp', 'attack', 'defense', 'specialAttack', 'specialDefense', 'speed'];
   const STAT_LABELS = ['HP', 'Attack', 'Defense', 'Sp. Atk', 'Sp. Def', 'Speed'];
@@ -39,22 +30,35 @@ G.MenuTeamDetail = (() => {
     EV_MOST = 252;
 
   const pointList = (points) => points.map(([x, y]) => x + ',' + y).join(' ');
-  const TOP_BAR = pointList([
-    [0, 0],
-    [PANEL.width, 0],
-    [PANEL.width, BARS.level],
-    [BARS.boxLeft, BARS.level],
-    [BARS.stepLeft, BARS.name],
-    [0, BARS.name],
-  ]);
-  const BOTTOM_BAR = pointList([
-    [0, BARS.tabTop],
-    [BARS.tabRight, BARS.tabTop],
-    [BARS.stepRight, BARS.bottom],
-    [PANEL.width, BARS.bottom],
-    [PANEL.width, PANEL.height],
-    [0, PANEL.height],
-  ]);
+  /** The side of each bar that meets the body, from one panel edge to the other. */
+  const topContact = ({ width }) => [
+    [width, BARS.deep],
+    [width - BARS.topEnd, BARS.deep],
+    [width - BARS.topEnd - BARS.step, BARS.band],
+    [0, BARS.band],
+  ];
+  const bottomContact = ({ width, height }) => [
+    [0, height - BARS.deep],
+    [BARS.bottomEnd, height - BARS.deep],
+    [BARS.bottomEnd + BARS.step, height - BARS.band],
+    [width, height - BARS.band],
+  ];
+  /** One bar (the board's pause.pokemonDetail.background): its type's base, a border in its dark on the contact side. */
+  function TypeBar({ id, contact, outerY, colours }) {
+    const [start] = contact,
+      end = contact[contact.length - 1],
+      shape = pointList([...contact, [end[0], outerY], [start[0], outerY]]);
+    return html`<clipPath id=${id}><polygon points=${shape} /></clipPath>
+      <polygon points=${shape} fill=${colours.base} />
+      <polyline
+        points=${pointList(contact)}
+        fill="none"
+        stroke=${colours.dark}
+        stroke-width=${BARS.border * 2}
+        clip-path=${`url(#${id})`}
+      />`;
+  }
+  const UNKNOWN = { base: 'var(--color-grey-slate)', dark: 'var(--color-grey-mid)' }; // a species not owned
 
   // ---------- the stats: rows or hex, the box itself still while its content plays the CRT ----------
   function StatRows({ species, copy }) {
@@ -254,13 +258,14 @@ G.MenuTeamDetail = (() => {
         fontSize=${MOVES_BUTTON.fontSize}
         onPress=${menu.openMoves}
         area=${AREA}
-        style=${{ left: px(MOVES_BUTTON.left), top: px(MOVES_BUTTON.top) }}
+        style=${{ left: px(MOVES_BUTTON.left), bottom: px((BARS.deep - MOVES_BUTTON.height) / 2) }}
       />`;
   }
 
   function Detail({ menu, at }) {
     const { dex, uid } = menu.selected();
-    const place = { left: px(PANEL.left), top: px(PANEL.top), width: px(PANEL.width), height: px(PANEL.height) };
+    const panel = menu.layout().detail,
+      place = { left: px(panel.left), top: px(panel.top), width: px(panel.width), height: px(panel.height) };
     if (dex == null)
       return html`<div class="panel-clean tm-detail" style=${place}>
         <div class="tm-empty">Slot ${menu.slot() + 1} is empty.</div>
@@ -269,8 +274,8 @@ G.MenuTeamDetail = (() => {
       copy = uid ? G.Copies.get(G.DB.save, uid) : null,
       owned = !!copy || !!G.DB.save.owned[dex],
       rims = species.types.map(typeColours),
-      top = owned ? rims[0].base : 'var(--color-grey-slate)',
-      bottom = owned ? (rims[1] || rims[0]).base : 'var(--color-grey-slate)';
+      top = owned ? rims[0] : UNKNOWN,
+      bottom = owned ? rims[1] || rims[0] : UNKNOWN;
     const mark = (which, on, left) =>
       html`<${MarkToggle}
         menu=${menu}
@@ -280,12 +285,12 @@ G.MenuTeamDetail = (() => {
         on=${on}
         size=${28}
         area=${AREA}
-        style=${{ left: px(left), top: px(38) }}
+        style=${{ left: px(left), top: px(20) }}
       />`;
     return html`<div class="panel-clean tm-detail" style=${place} data-dex=${dex} data-uid=${uid || ''}>
-      <svg class="tm-detail-bars" width=${PANEL.width} height=${PANEL.height}>
-        <polygon points=${TOP_BAR} fill=${top} />
-        <polygon points=${BOTTOM_BAR} fill=${bottom} />
+      <svg class="tm-detail-bars" width=${panel.width} height=${panel.height}>
+        <${TypeBar} id="tm-detail-top" contact=${topContact(panel)} outerY=${0} colours=${top} />
+        <${TypeBar} id="tm-detail-bottom" contact=${bottomContact(panel)} outerY=${panel.height} colours=${bottom} />
       </svg>
       <${Name} menu=${menu} copy=${copy} species=${species} owned=${owned} />
       ${copy ? [mark('favorite', copy.isFavorite, 464), mark('lock', copy.isLocked, 504)] : null}
@@ -304,14 +309,17 @@ G.MenuTeamDetail = (() => {
   const MOVE_ROW = 'move-';
   function MovesPopup({ menu, at }) {
     if (!menu.movesOpen()) return null;
-    const species = G.DEX_BY[menu.selected().dex],
+    const stage = menu.layout(),
+      left = (stage.width - MOVES.width) / 2,
+      top = (stage.height - MOVES.height) / 2,
+      species = G.DEX_BY[menu.selected().dex],
       start = G.startMoveOf(species.dex),
       width = MOVES.width - 2 * MOVES.pad,
       height = MOVES.height - MOVES.rowsTop - MOVES.close.height - 2 * MOVES.pad;
     return html`<div class="tm-dim" onClick=${menu.closeMoves}></div>
       <div
         class="panel-clean tm-moves"
-        style=${{ left: px(MOVES.left), top: px(MOVES.top), width: px(MOVES.width), height: px(MOVES.height) }}
+        style=${{ left: px(left), top: px(top), width: px(MOVES.width), height: px(MOVES.height) }}
       >
         <div class="tm-moves-title">${species.name} moves</div>
         <${ScrollBox}

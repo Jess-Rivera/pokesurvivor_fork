@@ -272,7 +272,7 @@ G.MenuWindowKit = (() => {
    *            box; focusRim: the rim's colours under the cursor (the kit's green by default)
    *   glitch   button.glitch, width x height px (its bar included), label fontSize px, in its intent (#128 S6). It
    *            shows the cursor by its own focus swipe, so no corners; the box carries data-cursor-shown while the
-   *            keys' cursor is on it, and a key press plays the button's press
+   *            keys' cursor is on it, and a key press plays the button's press; held: a toggle that is on
    */
   function CursorButton({
     cursor,
@@ -281,6 +281,7 @@ G.MenuWindowKit = (() => {
     label,
     artWidth,
     disabled = false,
+    held = false,
     refusal = null,
     onPress,
     className,
@@ -320,6 +321,7 @@ G.MenuWindowKit = (() => {
               height=${height}
               fontSize=${fontSize}
               focused=${focused}
+              held=${held}
               refused=${!!refusal}
               disabled=${disabled}
               pressCount=${cursor.keyPressCountOf(id)}

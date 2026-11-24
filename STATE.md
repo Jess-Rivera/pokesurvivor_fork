@@ -1,11 +1,11 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-23, home (Claude Code). Branch: feature/138-146-lost-and-full-box (covers #138 to #146).
+Last updated: 2026-11-24, home (Claude Code). Branch: feature/138-146-lost-and-full-box (covers #138 to #146).
 No branch rules file.
 
 ## START HERE
-The new Team menu (#167) and its mosaic (#168) are built and wait for Jess's feel test. Next: slice B, #139 Part F (XP
+The new Team menu (#167) and its mosaic (#168) are built; feel-test fixes approved. Open: empty wells in boxes (design questions asked). Next: slice B, #139 Part F (XP
 bar, Level Up, EXP Bag), opening agreed, prose plan not written. TODO.md "Next" has the order. Run `node tools/catchup.js`.
 
 ## Landed 2026-11-23 (home)

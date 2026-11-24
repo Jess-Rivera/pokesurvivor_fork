@@ -231,7 +231,8 @@ G.Lib.Button = (() => {
    * One button.glitch: at a fixed size (width in px, its bar included, and height), or with no width as wide and tall
    * as its label and the board's padding (the dialog's answers; class glitch-fit); fontSize the label's px. intent:
    * neutral, negative or positive. focused: under the cursor (the screen decides, by keys or the mouse). refused: a
-   * press only says why (the screen's sound and toast); disabled: it cannot be pressed at all. pressCount: the screen
+   * press only says why (the screen's sound and toast); disabled: it cannot be pressed at all. held: a toggle that is
+   * on (#167), it keeps the focus look and its bar turns yellow under the cursor. pressCount: the screen
    * bumps it each time a key presses this button, so it plays its press by keys too. secret: one of GLITCH_BURSTS, or
    * null. id goes on data-action. Never takes the page's keyboard focus (see keepPageFocus).
    */
@@ -243,6 +244,7 @@ G.Lib.Button = (() => {
     height,
     fontSize = GLITCH.fontSize,
     focused = false,
+    held = false,
     refused = false,
     disabled = false,
     pressCount = 0,
@@ -286,7 +288,14 @@ G.Lib.Button = (() => {
     preactHooks.useEffect(() => () => clearTimeout(timer.current), []);
     const fitted = width == null,
       size = fitted ? {} : { width: px(width - GLITCH.barWidth), height: px(height) };
-    const states = [fitted && 'glitch-fit', focused && 'focused', refused && 'refused', disabled && 'disabled', phase];
+    const states = [
+      fitted && 'glitch-fit',
+      focused && 'focused',
+      held && 'held',
+      refused && 'refused',
+      disabled && 'disabled',
+      phase,
+    ];
     const classes = ['glitch-button', 'glitch-' + intent, ...states].filter(Boolean).join(' ');
     return html`<button
       type="button"

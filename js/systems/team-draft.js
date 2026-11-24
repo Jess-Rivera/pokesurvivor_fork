@@ -1,9 +1,9 @@
-/* ============ team-draft.js, the Team menu's unsaved roster (G.TeamDraft; #167) ============
- * The Team menu edits a copy of save.team and writes it only on Commit; everything else it does (box moves, sales, locks,
- * names) saves at once through G.Copies. Every way a Pokemon moves (a drag, a lift by keyboard, a number key, a double
+/* ============ team-draft.js, the Team menu's roster rules (G.TeamDraft; #167) ============
+ * The Team menu edits a copy of save.team and writes it back after every change (commit). The roster as it was when the
+ * menu opened is kept apart, so Revert can put it back. Every way a Pokemon moves (a drag, a lift by keyboard, a number key, a double
  * click, a right click) is one drop() here, so the rules hold whatever the input: slot 1 is never empty, a copy is in one
  * slot only, no copy is lost. No page and no drawing: docs/proposals/team-menu-harness.js tests it.
- * Rules: decision 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings.
+ * Rules: decisions 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings and 2026-11-24-167-team-menu-saves-at-once.
  *
  * A draft is { team }: six slots, each { dex, shiny, uid } or null. A held Pokemon is { uid, fromSlot } (fromSlot null when
  * it came from a box). Functions that can refuse return { ok: true, ... } or { ok: false, error }.
@@ -16,13 +16,34 @@ G.TeamDraft = (() => {
   const refused = (error) => ({ ok: false, error });
 
   const open = (save) => ({ team: save.team.map(slotOf) });
-  const isDirty = (draft, save) => teamKey(draft.team) !== teamKey(save.team);
+  /** Whether two rosters differ (drafts, or the save's). */
+  const differs = (draft, other) => teamKey(draft.team) !== teamKey(other.team);
   /** The roster's copies (not the saved team's): no sale may take one. */
   const uids = (draft) => draft.team.filter((member) => member && member.uid).map((member) => member.uid);
   const slotOfUid = (draft, uid) => draft.team.findIndex((member) => member && member.uid === uid);
 
-  function discard(draft, save) {
-    draft.team = save.team.map(slotOf);
+  /** A slot as it was, its species and shiny read again from its copy (it may have evolved); null when that is gone. */
+  function restored(member, save) {
+    if (!member || !member.uid) return slotOf(member);
+    const copy = G.Copies.get(save, member.uid);
+    return copy ? { dex: copy.speciesID, shiny: copy.isShiny, uid: member.uid } : null;
+  }
+  /**
+   * Puts back the roster as it was opened. A copy you no longer own leaves its slot empty; since the lead's slot is never
+   * empty, the first copy still owned moves up into it. With none left the roster stays as it is. The caller commits.
+   * Returns { ok, missing }: missing lists the slots whose copy is gone.
+   */
+  function revert(draft, opened, save) {
+    const team = opened.team.map((member) => restored(member, save));
+    const missing = opened.team.flatMap((member, slot) => (member && !team[slot] ? [slot] : []));
+    if (!team[LEAD]) {
+      const next = team.findIndex(Boolean);
+      if (next < 0) return { ok: false, missing };
+      team[LEAD] = team[next];
+      team[next] = null;
+    }
+    draft.team = team;
+    return { ok: true, missing };
   }
 
   /** Writes the roster to the save; the lead is also the companion. The caller saves. */
@@ -80,5 +101,5 @@ G.TeamDraft = (() => {
   const bulkSellRefusal = (draft, save, copy) =>
     sellRefusal(draft, save, copy) || (copy.isFavorite ? 'Bulk sell skips favorites.' : null);
 
-  return { open, isDirty, uids, slotOfUid, discard, commit, place, free, drop, sellRefusal, bulkSellRefusal };
+  return { open, differs, uids, slotOfUid, revert, commit, place, free, drop, sellRefusal, bulkSellRefusal };
 })();

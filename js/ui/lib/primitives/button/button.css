@@ -129,14 +129,21 @@
   transition: clip-path var(--glitch-swipe) linear;
 }
 .glitch-button:not(.disabled):hover::after,
-.glitch-button.focused:not(.disabled)::after {
+.glitch-button.focused:not(.disabled)::after,
+.glitch-button.held::after {
   clip-path: inset(0);
 }
 /* under the focus layer the rest bar takes the focus bar's colour (Jess 2026-11-20): the layer's 6 px bar and the rest
    bar's shadow round to device pixels differently, so a 1 px sliver of the white rest bar showed */
 .glitch-button:not(.disabled):hover,
-.glitch-button.focused:not(.disabled) {
+.glitch-button.focused:not(.disabled),
+.glitch-button.held {
   box-shadow: 6px 0 0 var(--glitch-focus-bar);
+}
+/* held (a toggle that is on): the focus look stays, so the cursor shows as a yellow bar */
+.glitch-button.held:hover,
+.glitch-button.held.focused {
+  --glitch-focus-bar: var(--color-yellow-base);
 }
 /* press: a CRT switching off. A copy of the label sits exactly over the focus label (which hides while it plays): it
    collapses to a thin line while stretching a little wider, then shrinks to a dot that stays while held. Release is the

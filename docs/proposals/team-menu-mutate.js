@@ -7,7 +7,11 @@ const DRAFT = 'js/systems/team-draft.js',
   LIST = 'js/systems/team-list.js';
 const ENV = { [DRAFT]: 'TM_DRAFT', [LIST]: 'TM_LIST' };
 const M = [
-  ['discard keeps the edits', DRAFT, '    draft.team = save.team.map(slotOf);', '    void save;'],
+  ['revert keeps the edits', DRAFT, '    draft.team = team;\n', ''],
+  ['revert puts back a sold copy', DRAFT, 'isShiny, uid: member.uid } : null;', 'isShiny, uid: member.uid } : slotOf(member);'],
+  ['revert keeps the old species of an evolved copy', DRAFT, '{ dex: copy.speciesID, shiny: copy.isShiny, uid: member.uid }', 'slotOf(member)'],
+  ['revert leaves slot 1 empty', DRAFT, '      team[LEAD] = team[next];\n', ''],
+  ['revert with nothing left goes on', DRAFT, 'if (next < 0) return { ok: false, missing };', ''],
   ['the draft is the saved roster itself', DRAFT, '({ team: save.team.map(slotOf) })', '({ team: save.team })'],
   ['the lead may leave for an empty slot', DRAFT, "    if (from === LEAD && !displaced) return refused('lead');\n", ''],
   ['the lead may be freed', DRAFT, "    if (slot === LEAD) return refused('lead');\n", ''],

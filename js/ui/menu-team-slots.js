@@ -12,9 +12,9 @@ G.MenuTeamSlots = (() => {
   const { px, CursorButton } = windowKit;
 
   // ---------- sizes and places (stage pixels) ----------
-  const COLUMN = { left: 29, top: 106, width: 357, height: 837 },
-    HEADER = { left: 18, top: 24, width: 321, height: 60 },
-    SLOT = { left: 16, top: 106, width: 324, height: 100, pitch: 119 },
+  const COLUMN = { left: 29, width: 357 }, // its top and height come from the layout
+    HEADER = { left: 18, top: 14, width: 321, height: 60 },
+    SLOT = { left: 16, top: 88, width: 324, height: 100, pitch: 119, padBottom: 14 }, // a short window closes the pitch up
     FACE = { left: 16, top: 18, size: 64, stroke: 2 },
     BUTTON = { top: 12, width: 84, height: 24, gap: 6, right: 16, fontSize: 9 },
     MARK = { size: 20, gap: 8, right: 18, bottom: 14 };
@@ -109,14 +109,14 @@ G.MenuTeamSlots = (() => {
       }`;
   }
 
-  function Slot({ menu, slot }) {
+  function Slot({ menu, slot, pitch }) {
     const id = 'slot-' + slot,
       member = menu.draft().team[slot],
       species = member && G.DEX_BY[member.dex],
       rims = species ? species.types.map(typeColours) : [FAINTED_RIM];
     return html`<div
-      class=${'tm-slot' + (menu.slot() === slot ? ' is-target' : '')}
-      style=${{ left: px(SLOT.left), top: px(SLOT.top + slot * SLOT.pitch), width: px(SLOT.width), height: px(SLOT.height) }}
+      class=${'tm-slot' + (!member && menu.slot() === slot ? ' is-empty-target' : '')}
+      style=${{ left: px(SLOT.left), top: px(SLOT.top + slot * pitch), width: px(SLOT.width), height: px(SLOT.height) }}
       data-cursor-id=${id}
       data-cursor-area="slots"
       data-slot=${slot}
@@ -151,9 +151,13 @@ G.MenuTeamSlots = (() => {
   }
 
   function Column({ menu }) {
+    const { column } = menu.layout(),
+      { team } = menu.draft(),
+      room = column.height - SLOT.top - SLOT.height - SLOT.padBottom,
+      pitch = Math.min(SLOT.pitch, room / (team.length - 1));
     return html`<div
       class="panel-clean tm-column"
-      style=${{ left: px(COLUMN.left), top: px(COLUMN.top), width: px(COLUMN.width), height: px(COLUMN.height) }}
+      style=${{ left: px(COLUMN.left), top: px(column.top), width: px(COLUMN.width), height: px(column.height) }}
     >
       <div
         class="panel-clean tm-team-name"
@@ -161,7 +165,7 @@ G.MenuTeamSlots = (() => {
       >
         <span>‹</span><span>Team 1</span><span>›</span>
       </div>
-      ${menu.draft().team.map((member, slot) => html`<${Slot} key=${slot} menu=${menu} slot=${slot} />`)}
+      ${team.map((member, slot) => html`<${Slot} key=${slot} menu=${menu} slot=${slot} pitch=${pitch} />`)}
     </div>`;
   }
 

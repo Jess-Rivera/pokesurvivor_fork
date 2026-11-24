@@ -42,19 +42,44 @@ const rosterOk = (team, save, why) => {
   for (const t of team) if (t) { const c = Copies.get(save, t.uid); if (!c || c.speciesID !== t.dex) bad('a slot holds a copy the save does not, after ' + why); }
 };
 
-// 1. discard restores the saved roster; what saves at once survives it
-{ const save = freshSave(), saved = JSON.stringify(save.team), draft = Draft.open(save), all = Copies.all(save).map(c => c.pokemonUUID);
-  if (Draft.isDirty(draft, save)) bad('an untouched draft is dirty');
+// 1. revert restores the opened roster by copy; what else was saved survives it; a copy no longer owned leaves its slot empty
+{ const save = freshSave(), draft = Draft.open(save), opened = Draft.open(save), saved = JSON.stringify(save.team), all = Copies.all(save).map(c => c.pokemonUUID);
+  if (Draft.differs(draft, opened)) bad('an untouched roster differs from the opened one');
   Draft.drop(draft, save, { uid: all[8], fromSlot: null }, { kind: 'slot', slot: 4 });
   Draft.drop(draft, save, { uid: draft.team[1].uid, fromSlot: 1 }, { kind: 'grid' });
-  if (!Draft.isDirty(draft, save)) bad('an edited draft is clean');
-  if (JSON.stringify(save.team) !== saved) bad('editing the draft wrote the saved roster');
+  if (!Draft.differs(draft, opened)) bad('an edited roster does not differ');
+  Draft.commit(draft, save);
+  if (Draft.differs(draft, save) || JSON.stringify(opened.team) !== saved) bad('a saved edit did not save, or changed the opened roster');
   Copies.setLocked(save, all[9], true); Copies.setNickname(save, all[10], 'Nick'); Draft.drop(draft, save, { uid: all[11], fromSlot: null }, { kind: 'box', box: 1 });
   const price = Copies.sellPrice(save, all[12]); Copies.sell(save, all[12], Draft.uids(draft));
-  Draft.discard(draft, save);
-  if (JSON.stringify(draft.team) !== saved || Draft.isDirty(draft, save)) bad('discard did not restore the saved roster');
-  if (!Copies.get(save, all[9]).isLocked || Copies.get(save, all[10]).nickname !== 'Nick' || Copies.get(save, all[11]).box !== 1 || Copies.get(save, all[12]) || save.coins !== price) bad('a sale, lock, rename or box move was lost on discard');
-  console.log('1 discard restores the roster and keeps what saves at once'); }
+  const result = Draft.revert(draft, opened, save); Draft.commit(draft, save);
+  if (!result.ok || result.missing.length || JSON.stringify(save.team) !== saved) bad('revert did not restore the opened roster');
+  if (!Copies.get(save, all[9]).isLocked || Copies.get(save, all[10]).nickname !== 'Nick' || Copies.get(save, all[11]).box !== 1 || Copies.get(save, all[12]) || save.coins !== price) bad('a sale, lock, rename or box move was lost on revert');
+  console.log('1 revert restores the roster and keeps what else was saved'); }
+
+// 1b. revert goes by copy: an evolved copy comes back as it is now, a sold one leaves its slot empty, a sold lead moves one up
+{ const rebuilt = soldSlots => {
+    const save = freshSave(), draft = Draft.open(save), opened = Draft.open(save), spare = Copies.all(save)[8].pokemonUUID;
+    Draft.drop(draft, save, { uid: spare, fromSlot: null }, { kind: 'slot', slot: 0 });
+    for (const slot of [1, 2]) Draft.drop(draft, save, { uid: draft.team[slot].uid, fromSlot: slot }, { kind: 'grid' });
+    Draft.commit(draft, save);
+    for (const slot of soldSlots) if (!Copies.sell(save, opened.team[slot].uid, Draft.uids(draft)).ok) bad('a copy taken off the team did not sell');
+    const now = JSON.stringify(draft.team);
+    return { save, draft, opened, now, spare, result: Draft.revert(draft, opened, save) }; };
+  const one = rebuilt([2]);
+  if (one.result.missing.join() !== '2' || one.draft.team[2] || one.draft.team[0].uid !== one.opened.team[0].uid || one.draft.team[1].uid !== one.opened.team[1].uid) bad('a sold copy did not leave just its slot empty');
+  const lead = rebuilt([0]);
+  if (lead.result.missing.join() !== '0' || lead.draft.team[0].uid !== lead.opened.team[1].uid) bad('a sold lead did not bring the next one up');
+  rosterOk(lead.draft.team, lead.save, 'a revert with the lead sold');
+  const none = rebuilt([0, 1, 2]);
+  if (none.result.ok || JSON.stringify(none.draft.team) !== none.now) bad('a revert with nothing left changed the roster');
+  const save = freshSave(), draft = Draft.open(save), opened = Draft.open(save), uid = opened.team[1].uid;
+  Draft.drop(draft, save, { uid, fromSlot: 1 }, { kind: 'grid' }); Draft.commit(draft, save);
+  save.box.find(c => Copies.longId(c.u) === uid).d = 143;
+  Draft.revert(draft, opened, save); Draft.commit(draft, save);
+  if (save.team[1].uid !== uid || save.team[1].dex !== 143) bad('an evolved copy did not come back as it is now');
+  rosterOk(save.team, save, 'a revert after evolving');
+  console.log('1b revert goes by copy'); }
 
 // 2. no path empties slot 1, duplicates a copy or loses one: a long random walk over every key and drag path
 { const save = freshSave(), draft = Draft.open(save), before = uids(save), every = Copies.all(save).map(c => c.pokemonUUID);
@@ -68,7 +93,7 @@ const rosterOk = (team, save, why) => {
     if (uids(save) !== before) bad('a drop lost or duplicated a copy');
   }
   Draft.commit(draft, save); rosterOk(save.team, save, 'commit');
-  if (Draft.isDirty(draft, save) || save.partner !== save.team[0].dex) bad('commit did not save the roster and its lead');
+  if (Draft.differs(draft, save) || save.partner !== save.team[0].dex) bad('commit did not save the roster and its lead');
   console.log('2 no path empties slot 1, duplicates a copy or loses one'); }
 
 // 2b. a swap keeps both copies; freeing slot 1 is refused with its reason; an unknown copy is refused

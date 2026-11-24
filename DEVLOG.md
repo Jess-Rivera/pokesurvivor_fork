@@ -294,3 +294,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
 - Mosaic is a library piece the tuning page runs too; two settings; mosaic-harness; 60 fps at 1440p headless with GPU.
 - Broke: nothing found. smoke-ui has 15 failures that were there before (same list on the commit before the screen).
 - Stopped at: Jess's feel test of #167 and #168; then slice B (#139 Part F).
+
+## 2026-11-24 (home, Claude Code): Team menu feel test, round 1 (#167)
+- Roster saves at once, Back and Revert (by UUID), held Sell and tab buttons (button.glitch held), still silhouettes, the
+  detail panel's equal bars with Moves in the lower one, no teal box on a selected Pokemon.
+- Layout follows the window: fixed 30 px bars (round 2, was 48), side panels anchored, the grid fills; a small window scales the panels.
+- Headless software rendering shows a see-through strip over the mosaic; not with a GPU or in a headed window.
+- Jess approved rounds 1 and 2. Stopped at: empty wells and placed Pokemon in boxes, design questions open. Then slice B.

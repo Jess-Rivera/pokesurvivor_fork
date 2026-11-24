@@ -1,5 +1,6 @@
 /* ============ team-menu.css: the Team menu (#167; js/ui/menu-team*.js) ============
- * On the menu screens' 1920 x 1080 stage (pause-menu.css .pm-stage). Sizes and places come from the JS; the pieces are the
+ * The stage is the whole window in real pixels (the bars, the counters, Revert and Back); .tm-body holds the panels on
+ * top of it, scaled down in a small window. Sizes and places come from the JS; the pieces are the
  * UI library's (js/ui/lib/primitives). Colours are the Unified tokens only. */
 #scr-roster {
   display: block;
@@ -15,25 +16,37 @@
 .tm-host {
   position: absolute;
   inset: 0;
-  --pm-scale: 1;
 }
-.tm-stage {
+.pm-stage.tm-stage {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
   font-family: 'HudModule', sans-serif;
   font-synthesis: none;
   color: var(--color-grey-white);
   user-select: none;
 }
+.pm-stage.tm-body {
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  pointer-events: none; /* only the panels on it take the mouse */
+}
+.tm-body > * {
+  pointer-events: auto;
+}
 .tm-stage > *,
+.tm-body > *,
 .tm-column > *,
 .tm-slot,
 .tm-detail > * {
   position: absolute;
 }
-/* the bars above and below the teal lines run on past the stage */
 .tm-bars {
   left: 0;
   top: 0;
-  overflow: visible;
   pointer-events: none;
 }
 .tm-bars polygon {
@@ -45,13 +58,33 @@
   stroke-width: 2px;
 }
 .tm-counters {
-  top: 14px;
+  gap: 40px;
+  font-size: 18px;
+}
+/* what a bar holds: at its right end, shrunk when the window is narrow so it stays right of the slope */
+.tm-bar-contents {
   right: 24px;
   display: flex;
-  gap: 48px;
-  font-size: 18px;
-  line-height: 32px;
-  white-space: pre;
+  align-items: center;
+  white-space: nowrap;
+  transform-origin: 100% 50%;
+}
+.tm-bar-contents.is-top {
+  top: 0;
+}
+.tm-bar-contents.is-bottom {
+  bottom: 0;
+}
+.tm-bar-buttons {
+  gap: 16px;
+}
+.tm-bar-buttons > .shop-button {
+  position: relative;
+}
+/* the place's name is half the size of its count */
+.tm-place {
+  margin-right: 12px;
+  font-size: 9px;
 }
 /* Silver, the Pokemon tier: 20 px with a 2 px ink outline */
 .tm-silver {
@@ -98,7 +131,8 @@
 .tm-slot {
   cursor: pointer;
 }
-.tm-slot.is-target {
+/* an empty slot that is the target: it has no portrait to show it */
+.tm-slot.is-empty-target {
   outline: 2px solid var(--color-teal-base);
   outline-offset: 2px;
 }
@@ -184,9 +218,6 @@
   right: 0;
   bottom: -2px;
 }
-.tm-tab.is-shown .glitch-button {
-  color: var(--color-teal-base);
-}
 
 /* ---------- the open lists and popups ---------- */
 .tm-catcher,
@@ -250,7 +281,7 @@
 }
 .tm-detail-name {
   left: 18px;
-  top: 17px;
+  top: 8px;
   font-size: 30px;
   line-height: 30px;
 }
@@ -263,17 +294,17 @@
 }
 .tm-rename {
   left: 14px;
-  top: 12px;
+  top: 2px;
 }
 .tm-detail-types {
   right: 141px;
-  top: 77px;
+  top: 61px;
   display: flex;
   gap: 4px;
 }
 .tm-level {
   left: 18px;
-  top: 74px;
+  top: 58px;
   font-size: 16px;
   line-height: 22px;
 }
@@ -318,7 +349,7 @@
 .tm-infos {
   left: 16px;
   right: 16px;
-  top: 462px;
+  top: 446px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -347,6 +378,8 @@
   color: var(--color-teal-base);
 }
 .tm-start-move {
+  flex: none;
+  box-sizing: border-box;
   height: 190px;
   padding: 10px 12px;
   overflow: hidden;

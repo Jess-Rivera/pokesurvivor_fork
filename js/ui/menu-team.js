@@ -2,19 +2,20 @@
  * Build the team, manage the boxes, sell. Sketch: assets/excalidraw/team-menu.excalidraw; decisions
  * 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings and 2026-11-23-167-slice-a-plan-rulings win over it.
  * This file holds the screen's state, its keys and its mouse actions, and draws the frame (bars, counters, the bottom
- * buttons). The rules are G.TeamDraft's (the unsaved roster), G.TeamList's (filters, sorts) and G.Copies' (boxes, sales,
+ * buttons). The rules are G.TeamDraft's (the roster), G.TeamList's (filters, sorts) and G.Copies' (boxes, sales,
  * marks, names); the pieces are menu-team-slots.js, menu-team-grid.js, menu-team-detail.js and menu-team-sell.js, each
  * handed the `menu` object below.
- *   saving  everything saves at once except the roster, which waits for Commit
+ *   saving  everything saves at once; Back (and Esc) leaves, Revert puts the roster back as it was on opening
+ *   layout  the bars are a fixed size in real pixels; the team column is on the left, the detail panel on the right, and
+ *           the grid takes the room between them. A window too small for that scales the panels down, never the bars
  *   mouse   click selects; double-click puts the Pokemon in the highlighted slot; drag onto a slot, the grid or a box tab;
  *           right-click frees a slot
  *   keys    arrows move; Enter or Space lifts and puts down a Pokemon or presses; 1 to 6 puts the selected Pokemon in
- *           that slot; Shift+1 to 5 moves it to that box; Esc steps back one thing, then discards
+ *           that slot; Shift+1 to 5 moves it to that box; Esc steps back one thing, then out
  */
 G.MenuTeam = (() => {
   const overlay = G.HudOverlay,
     windowKit = G.MenuWindowKit,
-    stageHost = document.querySelector('#scr-roster .tm-host'),
     stage = document.querySelector('#scr-roster .tm-stage'),
     mosaicHost = document.querySelector('#scr-roster .tm-mosaic'),
     parts = [G.MenuTeamSlots, G.MenuTeamGrid, G.MenuTeamDetail];
@@ -22,18 +23,8 @@ G.MenuTeam = (() => {
     console.warn('[Team] the HUD kit or the UI library did not load: the Team menu cannot open');
     return { init() {}, open() {}, roster: () => [] };
   }
-  const {
-    html,
-    signal,
-    hooks,
-    preact,
-    fitToStage,
-    inputMode,
-    hideTooltip,
-    RoundPortrait,
-    portraitSource,
-    portraitFallback,
-  } = overlay.kit;
+  const { html, signal, hooks, preact, inputMode, hideTooltip, RoundPortrait, portraitSource, portraitFallback } =
+    overlay.kit;
   const { px, createMenuCursor, CursorButton } = windowKit;
   const { CursorBar, useRingTravel } = G.Lib.Cursor;
   const Draft = G.TeamDraft,
@@ -41,14 +32,17 @@ G.MenuTeam = (() => {
     { coinText } = G.MenuTeamSell;
 
   // ---------- sizes and places (stage pixels) ----------
-  const STAGE = { width: 1920, height: 1080 },
-    OVERRUN = 4000, // the bars run past the stage on a wider or taller window
-    BAR = { top: 52, topRight: 66, bottom: 1027, bottomRight: 1014, stepLeft: 1350, stepRight: 1374 },
-    BOTTOM_BUTTON = { width: 174, height: 44, fontSize: 15 },
-    SELL = { left: 404, top: 954, width: 174, fontSize: 12 },
-    EXP_BAG = { left: 1165, top: 954, width: 170 },
-    DISCARD = { left: 1516, top: 1025 },
-    COMMIT = { left: 1706, top: 1025 },
+  // the frame, in real pixels whatever the window: each bar, deeper on the right, down a slope
+  const BAR = { height: 30, deep: 44, slopeDegrees: 30 },
+    BAR_CONTENTS_RIGHT = 24, // as in css/team-menu.css .tm-bar-contents
+    FRAME_BUTTON = { width: 150, height: 34, fontSize: 14 },
+    // the panels, in panel pixels
+    COLUMN_LEAST = 762, // the six slots at their closest
+    DETAIL = { width: 549, right: 20, gap: 8, leastHeight: 856 },
+    BOX = { left: 404, gapRight: 16, finderGap: 24, finderHeight: 57, leastWidth: 810, fullWidth: 931 },
+    ROW = { height: 44, above: 11, below: 12, tabWidth: 88, sellFont: 12, expBagFont: 12 },
+    ROW_LEAST = { sell: 150, sellGap: 8, tabGap: 2, expBag: 104 }, // at the least grid width
+    ROW_FULL = { sell: 174, sellGap: 16, tabGap: 6, expBag: 170 }, // from the full grid width on
     GHOST = { size: 56 };
   const SLOT_ID = 'slot-',
     COPY_ID = 'copy-',
@@ -61,10 +55,62 @@ G.MenuTeam = (() => {
   };
   const PICK_A_COPY = 'Pick a copy from a box';
 
+  // ---------- the layout ----------
+  const STEP_WIDTH = (BAR.deep - BAR.height) / Math.tan((BAR.slopeDegrees * Math.PI) / 180);
+  /** Where everything sits in a window this size: the panels' scale, then their places in panel pixels. */
+  function layoutFor(windowWidth, windowHeight) {
+    const aroundRow = ROW.above + ROW.height + ROW.below,
+      leastWidth = BOX.left + BOX.leastWidth + BOX.gapRight + DETAIL.width + DETAIL.right;
+    const scale = Math.min(
+      1,
+      windowWidth / leastWidth,
+      (windowHeight - 2 * BAR.height) / (BOX.finderGap + COLUMN_LEAST + aroundRow),
+      (windowHeight - 2 * BAR.deep) / (DETAIL.leastHeight + 2 * DETAIL.gap)
+    );
+    const width = windowWidth / scale,
+      height = windowHeight / scale,
+      bar = BAR.height / scale,
+      detailTop = BAR.deep / scale + DETAIL.gap,
+      detailLeft = width - DETAIL.right - DETAIL.width,
+      finderTop = bar + BOX.finderGap,
+      rowTop = height - bar - ROW.below - ROW.height,
+      boxTop = finderTop + BOX.finderHeight,
+      boxBottom = rowTop - ROW.above,
+      boxWidth = detailLeft - BOX.gapRight - BOX.left;
+    const spread = Math.max(0, Math.min(1, (boxWidth - BOX.leastWidth) / (BOX.fullWidth - BOX.leastWidth))),
+      sized = (key) => ROW_LEAST[key] + (ROW_FULL[key] - ROW_LEAST[key]) * spread;
+    return {
+      windowWidth,
+      windowHeight,
+      scale,
+      width,
+      height,
+      column: { top: finderTop, height: boxBottom - finderTop },
+      grid: { left: BOX.left, top: boxTop, width: boxWidth, height: boxBottom - boxTop, finderTop },
+      row: {
+        top: rowTop,
+        sellWidth: sized('sell'),
+        tabsLeft: BOX.left + sized('sell') + sized('sellGap'),
+        tabWidth: ROW.tabWidth,
+        tabGap: sized('tabGap'),
+        expBagLeft: BOX.left + boxWidth - sized('expBag'),
+        expBagWidth: sized('expBag'),
+      },
+      slopeLeft: detailLeft * scale,
+      slopeRight: detailLeft * scale + STEP_WIDTH,
+      detail: { left: detailLeft, top: detailTop, width: DETAIL.width, height: height - 2 * detailTop },
+    };
+  }
+  const layout = signal(layoutFor(innerWidth, innerHeight));
+  function fitLayout() {
+    layout.value = layoutFor(innerWidth, innerHeight);
+  }
+
   // ---------- state ----------
   const tick = signal(0); // bumped on every change: the drawn pieces read the state again
   const state = {
     draft: { team: [null, null, null, null, null, null] },
+    opened: { team: [] }, // the roster when the menu opened: what Revert goes back to
     tab: 0, // 'dex', or a box counted from 0
     filter: List.newFilter(),
     sort: { key: 'dex', direction: 1 },
@@ -137,9 +183,17 @@ G.MenuTeam = (() => {
     G.Audio.sfx('select');
     if (target.kind === 'slot') selectSlot(target.slot);
     if (result.swapped) G.UI.toast('Swapped slots');
-    if (!result.moved) return redraw();
+    if (!result.moved) return saveRoster();
     G.DB.commit();
     G.UI.toast('Moved to Box ' + (target.box + 1));
+    saved();
+  }
+  /** The roster saves after every change to it. */
+  function saveRoster() {
+    if (Draft.differs(state.draft, G.DB.save)) {
+      Draft.commit(state.draft, G.DB.save);
+      G.DB.commit();
+    }
     saved();
   }
   function freeSlot(slot) {
@@ -338,19 +392,20 @@ G.MenuTeam = (() => {
   });
 
   // ---------- leaving ----------
-  function commit() {
-    if (Draft.isDirty(state.draft, G.DB.save)) {
-      Draft.commit(state.draft, G.DB.save);
-      G.DB.commit();
-      G.UI.toast('Team saved');
-    }
-    leave('confirm');
+  const back = () => leave('back');
+  /** What Revert did, for its toast. */
+  function revertText({ ok, missing }) {
+    if (!ok) return 'Nothing to revert to: you no longer own any of that team.';
+    if (!missing.length) return 'Team changes reverted.';
+    const gone = 'You no longer own the Pokemon from slot ' + missing.map((slot) => slot + 1).join(', ') + '.';
+    return gone + (missing[0] === 0 ? ' Another Pokemon moved up to lead.' : ' Left empty.');
   }
-  function discard() {
-    const changed = Draft.isDirty(state.draft, G.DB.save);
-    Draft.discard(state.draft, G.DB.save);
-    leave('back');
-    if (changed) G.UI.toast('Changes discarded.');
+  function revert() {
+    const changed = Draft.differs(state.draft, state.opened),
+      result = changed && Draft.revert(state.draft, state.opened, G.DB.save);
+    saveRoster();
+    back();
+    if (changed) G.UI.toast(revertText(result));
   }
   function leave(sound) {
     hideTooltip();
@@ -368,7 +423,7 @@ G.MenuTeam = (() => {
       return redraw();
     }
     if (sell.mode()) return sell.end();
-    discard();
+    back();
   }
 
   // ---------- the cursor ----------
@@ -390,7 +445,7 @@ G.MenuTeam = (() => {
     if (state.openList) return [state.openList, ...G.MenuTeamGrid.ROWS_OF[state.openList](menu).map((row) => row.id)];
     const places = [...slotIds, ...shownNow().ids, ...G.MenuTeamGrid.tabs().map((tab) => tab.id)];
     if (state.held) return places;
-    return ['search', 'filter', 'sort', ...places, ...memberItems(), ...detailItems(), 'sell', 'discard', 'commit'];
+    return ['search', 'filter', 'sort', ...places, ...memberItems(), ...detailItems(), 'sell', 'revert', 'back'];
   }
   /** Enter or Space on the item under the cursor. */
   function press(id) {
@@ -419,8 +474,8 @@ G.MenuTeam = (() => {
     moves: openMoves,
     'moves-close': closeMoves,
     sell: () => sell.pressButton(),
-    discard,
-    commit,
+    revert,
+    back,
   };
   function toggleHex() {
     state.showHex = !state.showHex;
@@ -489,6 +544,7 @@ G.MenuTeam = (() => {
     sell,
     Bar,
     byKeys: () => inputMode.value === 'keys',
+    layout: () => layout.value,
     draft: watched(() => state.draft),
     slot: watched(() => state.slot),
     tab: watched(() => state.tab),
@@ -532,40 +588,54 @@ G.MenuTeam = (() => {
 
   // ---------- drawing ----------
   const points = (list) => list.map(([x, y]) => x + ',' + y).join(' ');
-  const TOP_EDGE = [
-    [-OVERRUN, BAR.top],
-    [BAR.stepLeft, BAR.top],
-    [BAR.stepRight, BAR.topRight],
-    [STAGE.width + OVERRUN, BAR.topRight],
-  ];
-  const BOTTOM_EDGE = [
-    [-OVERRUN, BAR.bottom],
-    [BAR.stepLeft, BAR.bottom],
-    [BAR.stepRight, BAR.bottomRight],
-    [STAGE.width + OVERRUN, BAR.bottomRight],
-  ];
-  const beyond = (y) => [
-    [STAGE.width + OVERRUN, y],
-    [-OVERRUN, y],
-  ];
-  const FrameBars = () =>
-    html`<svg class="tm-bars" width=${STAGE.width} height=${STAGE.height}>
-      <polygon points=${points([...TOP_EDGE, ...beyond(-OVERRUN)])} />
-      <polygon points=${points([...BOTTOM_EDGE, ...beyond(STAGE.height + OVERRUN)])} />
-      <polyline points=${points(TOP_EDGE)} />
-      <polyline points=${points(BOTTOM_EDGE)} />
+  /** The bars; their step starts where the detail panel does. */
+  function FrameBars() {
+    const { windowWidth, windowHeight, slopeLeft, slopeRight } = layout.value;
+    const top = [
+      [0, BAR.height],
+      [slopeLeft, BAR.height],
+      [slopeRight, BAR.deep],
+      [windowWidth, BAR.deep],
+    ];
+    const bottom = top.map(([x, y]) => [x, windowHeight - y]);
+    const closed = (edge, y) => points([...edge, [windowWidth, y], [0, y]]);
+    return html`<svg class="tm-bars" width=${windowWidth} height=${windowHeight}>
+      <polygon points=${closed(top, 0)} />
+      <polygon points=${closed(bottom, windowHeight)} />
+      <polyline points=${points(top)} />
+      <polyline points=${points(bottom)} />
     </svg>`;
+  }
+
+  /** What a bar holds, at its right end: shrunk to the room right of the slope when it is wider than that. */
+  function BarContents({ side, className, children }) {
+    const ref = hooks.useRef(null),
+      { windowWidth, slopeRight } = layout.value;
+    hooks.useLayoutEffect(() => {
+      const room = windowWidth - BAR_CONTENTS_RIGHT - slopeRight,
+        fit = Math.min(1, room / ref.current.offsetWidth);
+      ref.current.style.transform = `scale(${fit})`;
+    });
+    return html`<div
+      ref=${ref}
+      class=${'tm-bar-contents is-' + side + ' ' + className}
+      style=${{ height: px(BAR.deep) }}
+    >
+      ${children}
+    </div>`;
+  }
 
   function Counters() {
     tick.value;
     const save = G.DB.save;
-    const place =
+    const [place, count] =
       state.tab === 'dex'
-        ? 'Pokedex ' + G.DEX.filter((species) => save.owned[species.dex]).length + ' / ' + G.DEX.length
-        : 'Box ' + (state.tab + 1) + '  ' + G.Copies.inBox(save, state.tab) + ' / ' + G.Copies.BOX_SIZE;
-    return html`<div class="tm-counters">
-      <span>${place}</span><span class="tm-coins"><span class="coin"></span> ${coinText(save.coins || 0)}</span>
-    </div>`;
+        ? ['Pokedex', G.DEX.filter((species) => save.owned[species.dex]).length + ' / ' + G.DEX.length]
+        : ['Box ' + (state.tab + 1), G.Copies.inBox(save, state.tab) + ' / ' + G.Copies.BOX_SIZE];
+    return html`<${BarContents} side="top" className="tm-counters">
+      <span><span class="tm-place">${place}</span>${count}</span>
+      <span class="tm-coins"><span class="coin"></span> ${coinText(save.coins || 0)}</span>
+    </${BarContents}>`;
   }
 
   /** The lifted Pokemon, on the item the cursor is on. */
@@ -575,10 +645,9 @@ G.MenuTeam = (() => {
       const element = ref.current && at && cursor.elementOf(at);
       if (!element) return;
       const place = element.getBoundingClientRect(),
-        frame = stage.getBoundingClientRect(),
-        scale = frame.width / STAGE.width;
-      ref.current.style.left = (place.right - frame.left) / scale - GHOST.size / 2 + 'px';
-      ref.current.style.top = (place.top - frame.top) / scale - GHOST.size / 2 + 'px';
+        frame = stage.getBoundingClientRect();
+      ref.current.style.left = place.right - frame.left - GHOST.size / 2 + 'px';
+      ref.current.style.top = place.top - frame.top - GHOST.size / 2 + 'px';
     });
     const held = menu.held();
     return html`<div ref=${ref} class=${'tm-ghost' + (held ? '' : ' is-hidden')}>
@@ -597,20 +666,17 @@ G.MenuTeam = (() => {
     </div>`;
   }
 
-  function BottomButton({ id, label, intent, place, disabled, onPress }) {
+  /** A bottom bar button, or one of the row under the grid. */
+  function FrameButton({ id, width, height, fontSize, ...rest }) {
     return html`<${CursorButton}
       cursor=${cursor}
       id=${id}
       action=${'team-' + id}
-      label=${label}
       look="glitch"
-      intent=${intent}
-      width=${place.width || BOTTOM_BUTTON.width}
-      height=${BOTTOM_BUTTON.height}
-      fontSize=${place.fontSize || BOTTOM_BUTTON.fontSize}
-      disabled=${disabled}
-      onPress=${onPress}
-      style=${{ left: px(place.left), top: px(place.top) }}
+      width=${width}
+      height=${height}
+      fontSize=${fontSize}
+      ...${rest}
     />`;
   }
 
@@ -623,20 +689,44 @@ G.MenuTeam = (() => {
     if (!G.DB.save || !G.UI.isOpen('scr-roster')) return null;
     const at = cursor.cursorOn(),
       byKeys = menu.byKeys() ? at : null;
+    const { scale, width, height, row, grid } = layout.value,
+      body = { width: px(width), height: px(height), transform: `scale(${scale})` };
     return html`<${FrameBars} />
       <${BarTravel} at=${byKeys} />
       <${Counters} />
-      <${G.MenuTeamSlots.Column} menu=${menu} />
-      <${G.MenuTeamGrid.Finder} menu=${menu} at=${byKeys} />
-      <${G.MenuTeamGrid.Grid} menu=${menu} at=${at} />
-      <${BottomButton} id="sell" label=${sellLabel()} intent="negative" place=${SELL} onPress=${sell.pressButton} />
-      <${G.MenuTeamGrid.Tabs} menu=${menu} />
-      <${BottomButton} id="expbag" label="EXP Bag" place=${EXP_BAG} disabled />
-      <${G.MenuTeamDetail.Detail} menu=${menu} at=${byKeys} />
-      <${BottomButton} id="discard" label="Discard" intent="negative" place=${DISCARD} onPress=${discard} />
-      <${BottomButton} id="commit" label="Commit" intent="positive" place=${COMMIT} onPress=${commit} />
-      <${G.MenuTeamGrid.OpenList} menu=${menu} at=${byKeys} />
-      <${G.MenuTeamDetail.MovesPopup} menu=${menu} at=${byKeys} />
+      <${BarContents} side="bottom" className="tm-bar-buttons">
+        <${FrameButton} id="revert" label="Revert" intent="negative" onPress=${revert} ...${FRAME_BUTTON} />
+        <${FrameButton} id="back" label="Back" intent="positive" onPress=${back} ...${FRAME_BUTTON} />
+      </${BarContents}>
+      <div class="pm-stage tm-body" style=${body}>
+        <${G.MenuTeamSlots.Column} menu=${menu} />
+        <${G.MenuTeamGrid.Finder} menu=${menu} at=${byKeys} />
+        <${G.MenuTeamGrid.Grid} menu=${menu} at=${at} />
+        <${FrameButton}
+          id="sell"
+          label=${sellLabel()}
+          intent="negative"
+          held=${!!sell.mode()}
+          width=${row.sellWidth}
+          height=${ROW.height}
+          fontSize=${ROW.sellFont}
+          onPress=${sell.pressButton}
+          style=${{ left: px(grid.left), top: px(row.top) }}
+        />
+        <${G.MenuTeamGrid.Tabs} menu=${menu} />
+        <${FrameButton}
+          id="expbag"
+          label="EXP Bag"
+          width=${row.expBagWidth}
+          height=${ROW.height}
+          fontSize=${ROW.expBagFont}
+          disabled
+          style=${{ left: px(row.expBagLeft), top: px(row.top) }}
+        />
+        <${G.MenuTeamDetail.Detail} menu=${menu} at=${byKeys} />
+        <${G.MenuTeamGrid.OpenList} menu=${menu} at=${byKeys} />
+        <${G.MenuTeamDetail.MovesPopup} menu=${menu} at=${byKeys} />
+      </div>
       <${Ghost} at=${at} />
       <${cursor.CursorTip} />`;
   }
@@ -661,11 +751,12 @@ G.MenuTeam = (() => {
     const save = G.DB.save;
     G.DB.normalizeTeam(save);
     state.draft = Draft.open(save);
+    state.opened = Draft.open(save);
     Object.assign(state, { held: null, drag: null, openList: null, movesOpen: false, renaming: false });
     if (state.tab !== 'dex' && state.tab >= G.Copies.boxCount(save)) state.tab = 0;
     G.UI.chrome(false); // it has its own counters
     G.UI.show('scr-roster');
-    fitStage();
+    fitLayout();
     startMosaic();
     selectSlot(0);
     cursor.moveTo(SLOT_ID + 0);
@@ -682,7 +773,7 @@ G.MenuTeam = (() => {
   }
 
   preact.render(html`<${TeamScreen} />`, stage);
-  const fitStage = fitToStage(stageHost);
+  addEventListener('resize', fitLayout);
 
   return { init, open, roster: () => state.draft.team };
 })();
