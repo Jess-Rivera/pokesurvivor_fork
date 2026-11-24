@@ -189,6 +189,11 @@
 .portrait-round.is-sale.is-cursor {
   border-color: var(--color-yellow-base);
 }
+/* an empty place in the box: the well, in the portraits' rim colour */
+.tm-grid > .tm-well {
+  --well-ring: var(--color-grey-slate);
+  position: relative;
+}
 .tm-cell-slot,
 .tm-cell-mark {
   position: absolute;

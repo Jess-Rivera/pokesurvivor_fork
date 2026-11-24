@@ -5,7 +5,7 @@ Last updated: 2026-11-24, home (Claude Code). Branch: feature/138-146-lost-and-f
 No branch rules file.
 
 ## START HERE
-The new Team menu (#167) and its mosaic (#168) are built; feel-test fixes approved. Open: empty wells in boxes (design questions asked). Next: slice B, #139 Part F (XP
+The new Team menu (#167) and its mosaic (#168) are built; feel-test fixes approved. Empty wells in boxes added last. Next: slice B, #139 Part F (XP
 bar, Level Up, EXP Bag), opening agreed, prose plan not written. TODO.md "Next" has the order. Run `node tools/catchup.js`.
 
 ## Landed 2026-11-23 (home)

@@ -10,7 +10,7 @@ node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
 0. #167 Team menu and #168 mosaic are built; feel-test round 1 fixes are in (decision
-   2026-11-24-167-team-menu-saves-at-once): approved by Jess; open: empty wells in boxes (save format, questions asked), then close both. Next: slice B #139 Part F (prose plan;
+   2026-11-24-167-team-menu-saves-at-once): approved by Jess; empty wells added last: a glance, then close both. Next: slice B #139 Part F (prose plan;
    Level Up and EXP Bag are drawn disabled, the mosaic's burst(type) waits for Level Up), then slice C #97 popup.
    Rulings: decisions 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings and 2026-11-23-167-slice-a-plan-rulings.
    Feel-test notes to judge: the picked-for-sale look, 9 px

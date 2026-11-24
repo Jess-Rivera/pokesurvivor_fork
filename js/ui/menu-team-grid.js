@@ -7,7 +7,8 @@ G.MenuTeamGrid = (() => {
   const overlay = G.HudOverlay,
     windowKit = G.MenuWindowKit,
     lib = G.Lib;
-  if (!overlay || !overlay.ready || !windowKit.ready || !lib.Field || !lib.Field.ready) return { ready: false };
+  if (!overlay || !overlay.ready || !windowKit.ready || !lib.Field || !lib.Field.ready || !lib.Well || !lib.Well.ready)
+    return { ready: false };
   const { html, hooks, preact, IconCanvas, RoundPortrait, portraitSource, portraitFallback, ScrollBox } = overlay.kit;
   const { showTooltip, hideTooltip } = overlay.kit;
   const { px, CursorButton, SHORT_PRICE_FROM } = windowKit;
@@ -252,6 +253,23 @@ G.MenuTeamGrid = (() => {
       </div>`;
     }
   }
+  /** A box's empty places, after its Pokemon. Only drawn: the sort decides where a Pokemon sits. */
+  class EmptyWells extends preact.Component {
+    shouldComponentUpdate(next) {
+      return next.count !== this.props.count;
+    }
+    render({ count }) {
+      return Array.from(
+        { length: count },
+        (_, index) => html`<${lib.Well.Well} key=${index} size=${GRID.cell} className="tm-well" />`
+      );
+    }
+  }
+  /** None on the Pokedex tab, nor while a search or filter is on: what it hides is not empty. */
+  function emptyWellCount(menu, shownCount) {
+    if (menu.tab() === 'dex' || menu.filter().query.trim() || filterCount(menu)) return 0;
+    return Math.max(0, G.Copies.BOX_SIZE - shownCount);
+  }
   const idOf = ({ copy, species }) => (copy ? 'copy-' + copy.pokemonUUID : 'dex-' + species.dex);
 
   function cellState(menu, { copy, species }) {
@@ -278,6 +296,7 @@ G.MenuTeamGrid = (() => {
       room = scrollWidth - GRID.padLeft - GRID.padRight,
       columns = Math.floor((room + GRID.gapXLeast) / (GRID.cell + GRID.gapXLeast)),
       gapX = (room - columns * GRID.cell) / (columns - 1); // what is left over goes between the columns
+    const wellCount = emptyWellCount(menu, entries.length);
     const idUnder = (event) => {
       const cell = event.target.closest('[data-cursor-id]');
       return cell && cell.dataset.cursorId;
@@ -333,8 +352,9 @@ G.MenuTeamGrid = (() => {
           onDragEnd=${menu.endDrag}
         >
           ${cells}
+          <${EmptyWells} key="wells" count=${wellCount} />
         </div>
-        ${entries.length ? null : html`<div class="tm-empty">${menu.emptyText()}</div>`}
+        ${entries.length || wellCount ? null : html`<div class="tm-empty">${menu.emptyText()}</div>`}
       </${ScrollBox}>
     </div>`;
   }

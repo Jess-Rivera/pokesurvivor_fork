@@ -131,7 +131,7 @@ G.MenuTeam = (() => {
   // ---------- what the grid shows ----------
   const listKey = () => JSON.stringify([state.tab, state.filter, state.sort]);
   let shownKey = null,
-    shown = { entries: [], ids: [], uids: new Set(), total: 0 };
+    shown = { entries: [], ids: [], uids: new Set() };
   /** The grid's entries, made once per change: the cursor asks for them on every drawn button. */
   function shownNow() {
     const key = saveVersion + listKey();
@@ -144,7 +144,6 @@ G.MenuTeam = (() => {
       entries,
       ids: entries.map(G.MenuTeamGrid.idOf),
       uids: new Set(entries.filter(({ copy }) => copy).map(({ copy }) => copy.pokemonUUID)),
-      total: all.length,
     };
     return shown;
   }
@@ -306,7 +305,7 @@ G.MenuTeam = (() => {
     redraw();
   }
   function emptyText() {
-    return shownNow().total ? 'No Pokemon match.' : 'This box is empty.';
+    return 'No Pokemon match.';
   }
 
   // ---------- tabs ----------

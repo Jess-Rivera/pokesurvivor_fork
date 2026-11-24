@@ -300,4 +300,4 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
   detail panel's equal bars with Moves in the lower one, no teal box on a selected Pokemon.
 - Layout follows the window: fixed 30 px bars (round 2, was 48), side panels anchored, the grid fills; a small window scales the panels.
 - Headless software rendering shows a see-through strip over the mosaic; not with a GPU or in a headed window.
-- Jess approved rounds 1 and 2. Stopped at: empty wells and placed Pokemon in boxes, design questions open. Then slice B.
+- Jess approved rounds 1 and 2. Empty wells show in boxes (drawn only; autosort kept, no saved spots). Next: slice B.

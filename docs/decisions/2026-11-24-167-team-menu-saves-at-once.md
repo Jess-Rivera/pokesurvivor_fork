@@ -18,5 +18,7 @@ canonical: "this file until a Team menu spec exists."
   stay right of it. The detail panel's steps are 45 degrees, the deep end about 1.4 times the band. Team column always left,
   detail panel always far right under the bump, the grid takes the room between. Sell, Pokedex and Box N stay held.
 - [Approved] Pokedex silhouettes are still. No teal box round a selected Pokemon; a selected empty slot keeps it.
+- [Approved] A box shows its empty wells after its Pokemon, drawn only. The sort decides the order; a Pokemon has no
+  saved spot in its box. The wells hide while a search or filter is on.
 
 Canonical: this file until a Team menu spec exists.
