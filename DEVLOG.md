@@ -301,3 +301,4 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
 - Layout follows the window: fixed 30 px bars (round 2, was 48), side panels anchored, the grid fills; a small window scales the panels.
 - Headless software rendering shows a see-through strip over the mosaic; not with a GPU or in a headed window.
 - Jess approved rounds 1 and 2. Empty wells show in boxes (drawn only; autosort kept, no saved spots). Next: slice B.
+- Closed #167 and #168. Stopped at: slice B (#139 Part F) prose plan, next session.

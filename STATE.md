@@ -5,14 +5,14 @@ Last updated: 2026-11-24, home (Claude Code). Branch: feature/138-146-lost-and-f
 No branch rules file.
 
 ## START HERE
-The new Team menu (#167) and its mosaic (#168) are built; feel-test fixes approved. Empty wells in boxes added last. Next: slice B, #139 Part F (XP
-bar, Level Up, EXP Bag), opening agreed, prose plan not written. TODO.md "Next" has the order. Run `node tools/catchup.js`.
+The Team menu (#167) and its mosaic (#168) are shipped and closed. Next, in a new session: slice B, #139 Part F (XP bar,
+Level Up, EXP Bag): opening agreed, prose plan not written. TODO.md "Next" has the order. Run `node tools/catchup.js`.
 
-## Landed 2026-11-23 (home)
-- #167: G.TeamDraft and G.TeamList (rules), js/ui/menu-team*.js (screen), css/team-menu.css, new library pieces. Plan
-  and rulings: docs/AI Outputs/Issue-167/, decision 2026-11-23-167-slice-a-plan-rulings.
-- #168: js/ui/lib/primitives/mosaic, two settings. The starburst has no caller until slice B's Level Up.
-- #97 upgrades grilled and numbers drafted in #131 ([Proposed]); #166 opened (run telemetry).
+## Landed 2026-11-24 (home)
+- #167 feel-test fixes: roster saves at once, Back and Revert, layout follows the window (layoutFor in
+  js/ui/menu-team.js: fixed bars, scaled .tm-body), button.glitch held, empty wells in boxes (drawn only, autosort kept).
+  Rulings: decision 2026-11-24-167-team-menu-saves-at-once.
+- #168: the mosaic's starburst has no caller until slice B's Level Up.
 
 ## Watch
 - Candy drops and is saved, but cannot be given until slice B. Changelog says "comes in a later update".

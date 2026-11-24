@@ -9,19 +9,17 @@ Run `node tools/catchup.js` (prints the briefing and the exact sync commands, wr
 node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. #167 Team menu and #168 mosaic are built; feel-test round 1 fixes are in (decision
-   2026-11-24-167-team-menu-saves-at-once): approved by Jess; empty wells added last: a glance, then close both. Next: slice B #139 Part F (prose plan;
-   Level Up and EXP Bag are drawn disabled, the mosaic's burst(type) waits for Level Up), then slice C #97 popup.
-   Rulings: decisions 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings and 2026-11-23-167-slice-a-plan-rulings.
-   Feel-test notes to judge: the picked-for-sale look, 9 px
-   slot buttons, faint off marks; unasked additions: portrait tooltip, Height and Weight rows, shiny star, Exp Candy
-   sell warning. Not driven in a browser: the two Settings rows, and a full box's keyboard path to the tabs.
+0. Slice B, #139 8a Part F (Team menu: XP bar, Level Up, EXP Bag) on the Team menu (#167 and #168, closed 2026-11-24).
+   Opening agreed; the prose plan is the first job. Level Up and EXP Bag are drawn disabled; the mosaic's burst(type)
+   waits for Level Up. Parts A to E and G are built (8ec7798b); until F, candy banks but cannot be given. Then slice C,
+   the #97 popup. Rulings: decisions 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings and
+   2026-11-24-167-team-menu-saves-at-once (it replaces Commit and Discard).
+   Not judged in the feel test: white Moves label on bright type colours, the picked-for-sale look. Not driven in a
+   browser: the two Settings rows, a full box's keyboard path to the tabs, drag within a scaled-down window.
 1. #97 build (design doc "Numbers (draft)", docs/AI Outputs/Issue-97/; numbers drafted in #131, decision
    2026-11-23-97-upgrade-price-shape-bst-and-bands). The no-UI part (cut five upgrades, base stat % in G.Stats, crit,
    cooldown, regen from the profile) can go first. Split out: #164 (97b sidegrades), #165 (Mints, Capsules, Bottle
    Caps). The #150 picker follows, then needs a learnset rebake with levels and the egg-move unlock data.
-1b. #139 S8 8a Part F (Team menu: XP bar, Level Up, EXP Bag) on the new Team menu. Parts A to E and G are built
-   (8ec7798b). Until then candy banks but cannot be given.
 1c. #166 run telemetry (ongoing data collection; feeds the #97 and #131 numbers). Slice opening first.
 2. #139 8b evolve, then grill friendship (docs/AI Outputs/Issue-139/139 - Friendship Minutes Deep Dive.md, [Open]),
    then 8c. #161 fatigue (stub) rides with it.
