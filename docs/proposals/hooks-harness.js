@@ -134,6 +134,20 @@ const newSession = () => 'session-' + ++sessionCounter;
   if (parsed && parsed.hookSpecificOutput.hookEventName !== 'UserPromptSubmit') bad('the catch-up context names its event');
 }
 
+// cutWithNote: short text is untouched; long text fits the limit, ends on a whole line and names the section it was cut in.
+{
+  const { cutWithNote } = require(hookPath('lib.js'));
+  const bodyLines = Array.from({ length: 40 }, (unused, index) => 'line ' + index);
+  const text = ['## 1. First', ...bodyLines, '## 2. Second', ...bodyLines, '## 3. Third', ...bodyLines].join('\n');
+  if (cutWithNote(text, text.length, 'full.md') !== text) bad('text within the limit is unchanged');
+  const limit = text.indexOf('## 3.') - 10;
+  const cut = cutWithNote(text, limit, 'full.md');
+  const [kept, note] = cut.split('\n\n[TRUNCATED');
+  if (cut.length > limit) bad('cut text and its note fit the limit');
+  if (!note || !note.includes('full.md') || !note.includes('## 2. Second')) bad('the note names the file and the section');
+  if (!text.startsWith(kept + '\n')) bad('the cut falls on a line break');
+}
+
 // decision-frontmatter-guard: a new decision file needs the five-field front matter, valid.
 {
   const decisionPath = path.join(root, 'docs', 'decisions', '2026-11-22-harness-sample.md');

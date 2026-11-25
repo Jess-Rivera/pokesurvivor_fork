@@ -37,6 +37,19 @@ const when = new Date(2026, 10, 22, 9, 5);
   if (!report.includes('## 1. Branch and tree') || !report.includes('Open owner decisions')) bad('local sections survive a missing gh');
   if (!report.includes('From TODO.md "Next"')) bad('TODO Next still prints without gh');
 }
+// Each title prints once in the whole report.
+{
+  const report = catchup.buildReport({ run: fakeRun, readFile, now: when });
+  for (const issue of fakeIssues) if (report.split('[' + issue.title + ']').length > 2) bad('title of #' + issue.number + ' prints more than once');
+}
+// The Board fixes item (and its wrapped lines) stays bare and does not use up a title; the items around it are titled.
+{
+  const titles = new Map([[1, 'One'], [2, 'Two'], [3, 'Three']]), titled = new Set();
+  const annotate = (text) => catchup.annotateIssueNumbers(text, titles, titled);
+  const lines = catchup.annotateNextLines(['5. See #1', '6. Board fixes: #2', '   and #3', '7. Then #3'], annotate);
+  if (!lines[0].includes('[One]') || !lines[3].includes('[Three]')) bad('items around Board fixes carry titles');
+  if (/\[/.test(lines[1] + lines[2])) bad('Board fixes carries no titles');
+}
 // A stale blocked label is found only when every named blocker is closed.
 {
   const open = new Set([5]);

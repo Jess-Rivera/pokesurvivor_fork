@@ -35,11 +35,24 @@ function findSection(sections, headingStart) {
   return key ? sections[key] : [];
 }
 
-// Adds the issue title after every "#N" when the title is known: "#138 [128 S8: Exp Candy drops]".
-function annotateIssueNumbers(text, titleByNumber) {
+// Adds the issue title after "#N" when the title is known: "#138 [128 S8: Exp Candy drops]". Only the first mention
+// gets it: a number in titledNumbers stays bare, and each number titled here is added to that set.
+function annotateIssueNumbers(text, titleByNumber, titledNumbers) {
   return text.replace(/#(\d+)\b/g, (match, digits) => {
-    const title = titleByNumber.get(Number(digits));
-    return title ? match + ' [' + title + ']' : match;
+    const number = Number(digits);
+    const title = titleByNumber.get(number);
+    if (!title || titledNumbers.has(number)) return match;
+    titledNumbers.add(number);
+    return match + ' [' + title + ']';
+  });
+}
+
+// Annotates the TODO.md Next lines, leaving the "Board fixes" item bare (a long list of numbers, up to the next item).
+function annotateNextLines(nextLines, annotate) {
+  let inBoardFixes = false;
+  return nextLines.map((line) => {
+    if (/^\d+[a-z]?\.\s/.test(line)) inBoardFixes = /^\d+[a-z]?\.\s+Board fixes/i.test(line);
+    return inBoardFixes ? line : annotate(line);
   });
 }
 
@@ -181,8 +194,10 @@ function buildReport({ run = defaultRunner, readFile = defaultReadFile, now = ne
     }
   }
   const openIssues = issues.ok ? issues.value.filter((issue) => issue.state === 'OPEN') : [];
-  const label = (issue) => '#' + issue.number + ' [' + issue.title + ']';
-  const annotate = (text) => annotateIssueNumbers(text, titleByNumber);
+  const titledNumbers = new Set();
+  const annotate = (text) => annotateIssueNumbers(text, titleByNumber, titledNumbers);
+  const label = (issue) =>
+    annotateIssueNumbers('#' + issue.number, new Map([[issue.number, issue.title]]), titledNumbers);
   const ghReason = !issues.ok ? issues.reason : !board.ok ? board.reason : '';
   const needScopeHint = !board.ok && /scope/i.test(board.reason) ? ' (run `gh auth refresh -s project`)' : '';
 
@@ -193,7 +208,7 @@ function buildReport({ run = defaultRunner, readFile = defaultReadFile, now = ne
   const nextLines = todo.ok ? findSection(todo.value, 'Next').filter((line) => line.trim()) : [];
   if (nextLines.length) {
     out.push('From TODO.md "Next" (in its order):', '');
-    out.push(...nextLines.map(annotate), '');
+    out.push(...annotateNextLines(nextLines, annotate), '');
   } else out.push(...unavailable('TODO.md Next section', todo.ok ? 'section not found' : todo.reason), '');
   if (issues.ok) {
     const todoNumbers = new Set(issueNumbersIn(nextLines.join('\n')));
@@ -327,7 +342,15 @@ function buildReport({ run = defaultRunner, readFile = defaultReadFile, now = ne
   return out.join('\n') + '\n';
 }
 
-module.exports = { parseSections, findSection, annotateIssueNumbers, issueNumbersIn, blockersAllClosed, buildReport };
+module.exports = {
+  parseSections,
+  findSection,
+  annotateIssueNumbers,
+  annotateNextLines,
+  issueNumbersIn,
+  blockersAllClosed,
+  buildReport,
+};
 
 if (require.main === module) {
   const report = buildReport();

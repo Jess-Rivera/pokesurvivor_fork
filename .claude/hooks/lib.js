@@ -71,6 +71,17 @@ function addContext(eventName, text) {
   process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: eventName, additionalContext: text } }));
 }
 
+// Text over the limit is cut at a line break and ends with a note naming the section to read on from in fullTextFile.
+function cutWithNote(text, limit, fullTextFile) {
+  if (text.length <= limit) return text;
+  const headingsIn = (part) => part.split('\n').filter((line) => line.startsWith('## '));
+  const noteFrom = (place) =>
+    '\n\n[TRUNCATED: read the rest in ' + fullTextFile + ', from "' + place + '" onward, before relaying this.]';
+  const longestNote = Math.max(...['the start', ...headingsIn(text)].map((place) => noteFrom(place).length));
+  const kept = text.slice(0, text.lastIndexOf('\n', limit - longestNote));
+  return kept + noteFrom(headingsIn(kept).pop() || 'the start');
+}
+
 function blockWith(message) {
   process.stderr.write(message + '\n');
   process.exit(2);
@@ -112,6 +123,7 @@ module.exports = {
   logEvent,
   firstTimeThisSession,
   addContext,
+  cutWithNote,
   blockWith,
   skillWasLoaded,
 };
