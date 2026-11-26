@@ -451,8 +451,12 @@ G.MenuTeam = (() => {
     cursor.moveTo('upgrade-' + slot);
     redraw();
   }
+  /** Buys a card's next level; when the card has no live button left, the cursor moves on to the next card or Close. */
   function buyUpgrade(cardKey) {
-    if (state.upgrade && G.MenuUpgrades.buy(state.upgrade.uid, cardKey)) saved();
+    if (!state.upgrade || !G.MenuUpgrades.buy(state.upgrade.uid, cardKey)) return;
+    const nextStop = G.MenuUpgrades.stopAfterBuy(G.Copies.get(G.DB.save, state.upgrade.uid), cardKey);
+    if (nextStop) cursor.moveTo(nextStop);
+    saved();
   }
 
   // ---------- selling ----------
@@ -537,7 +541,7 @@ G.MenuTeam = (() => {
   }
   /** Enter or Space on the item under the cursor. */
   function press(id) {
-    if (state.upgrade && G.MenuUpgrades.pressItem(state.upgrade.uid, id)) return saved();
+    if (state.upgrade) return pressInUpgrades(id);
     if (state.openList) {
       const row = G.MenuTeamGrid.ROWS_OF[state.openList](menu).find((entry) => entry.id === id);
       return row ? row.press() : closeList();
@@ -554,6 +558,13 @@ G.MenuTeam = (() => {
     const action = PRESSES[id];
     if (action) action();
   }
+  /** Enter or Space while the Upgrade popup is open: a card's buy button or Close. Anything else (the Team menu behind
+   *  the popup) does nothing. */
+  function pressInUpgrades(id) {
+    if (id === G.MenuUpgrades.CLOSE_ID) return closeUpgrades();
+    const cardKey = G.MenuUpgrades.cardKeyOf(id);
+    if (cardKey) buyUpgrade(cardKey);
+  }
   const PRESSES = {
     search: () => cursor.elementOf('search').querySelector('input').focus(),
     filter: () => toggleList('filter'),
@@ -565,7 +576,6 @@ G.MenuTeam = (() => {
     hex: toggleHex,
     moves: openMoves,
     'moves-close': closeMoves,
-    [G.MenuUpgrades.CLOSE_ID]: closeUpgrades,
     sell: pressSell,
     expbag: bag.toggle,
     revert,

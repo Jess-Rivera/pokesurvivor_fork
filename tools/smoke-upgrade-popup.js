@@ -219,6 +219,31 @@ async function main() {
     changed.length === 1,
     'Enter buys one level of the card under the cursor (' + changed.map(([id]) => id).join() + ')'
   );
+
+  // ---- keys: buying a card out keeps the cursor in the popup (review 2026-11-26: it fell to the slot behind) ----
+  const boughtOut = changed.length ? changed[0][0] : 'baseDef';
+  await page.evaluate(
+    ({ id, upgradeId }) => {
+      G.Copies.setUpgradeLevel(G.DB.save, id, upgradeId, G.Upgrades.BY[upgradeId].levels - 1);
+      G.DB.commit(true);
+    },
+    { id: uid, upgradeId: boughtOut }
+  );
+  await sleep(300);
+  await page.keyboard.press('Enter');
+  await sleep(400);
+  const beforeNext = await levels();
+  ok(
+    beforeNext[boughtOut] === (await page.evaluate((upgradeId) => G.Upgrades.BY[upgradeId].levels, boughtOut)),
+    'Enter buys the last level of ' + boughtOut
+  );
+  await page.keyboard.press('Enter');
+  await sleep(400);
+  const nextChanged = Object.entries(await levels()).filter(([id, level]) => level !== (beforeNext[id] || 0));
+  ok(
+    (await popupOpen()) && nextChanged.length === 1 && nextChanged[0][0] !== boughtOut,
+    'then the cursor moved on: the next Enter buys another card (' + nextChanged.map(([id]) => id).join() + ')'
+  );
   await page.keyboard.press('Escape');
   await sleep(300);
   ok(

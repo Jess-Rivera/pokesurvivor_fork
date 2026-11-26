@@ -100,15 +100,27 @@ G.MenuUpgrades = (() => {
     return { label: coinText(price), refusal: (G.DB.save.coins || 0) >= price ? null : REFUSALS.poor };
   }
 
+  const CARD_ORDER = [...LEFT_IDS, ...RIGHT_CARDS.map(([key]) => key)];
   /** The cursor stops for `copy`: every card button that is not disabled, then Close. */
   function items(copy) {
     if (!copy) return [CLOSE_ID];
-    const keys = [...LEFT_IDS, ...RIGHT_CARDS.map(([key]) => key)];
-    const live = keys.filter((key) => {
+    const live = CARD_ORDER.filter((key) => {
       const { button } = offerOf(copy, key);
       return button && !button.disabled;
     });
     return [...live.map((key) => BUY_ID + key), CLOSE_ID];
+  }
+  /** Where the cursor goes after card `cardKey` was bought for `copy`: null while the card still has a live button,
+   *  else the next live card in card order (wrapping), else Close. Keeps the keys' cursor inside the popup. */
+  function stopAfterBuy(copy, cardKey) {
+    const stops = items(copy),
+      start = CARD_ORDER.indexOf(cardKey);
+    if (stops.includes(BUY_ID + cardKey)) return null;
+    for (let step = 1; step < CARD_ORDER.length; step++) {
+      const stop = BUY_ID + CARD_ORDER[(start + step) % CARD_ORDER.length];
+      if (stops.includes(stop)) return stop;
+    }
+    return CLOSE_ID;
   }
 
   /** Buys the card's next level for copy `uid` (Enter, Space or a click). Saves on a buy; a refusal is told. */
@@ -121,13 +133,6 @@ G.MenuUpgrades = (() => {
     if (!result.ok) return refuse(result.error);
     G.Audio.sfx('confirm');
     G.DB.commit(true);
-    return true;
-  }
-  /** Enter or Space on cursor stop `id` of copy `uid`'s popup: a card's buy button. False for any other stop. */
-  function pressItem(uid, id) {
-    const cardKey = cardKeyOf(id);
-    if (!cardKey) return false;
-    buy(uid, cardKey);
     return true;
   }
   function refuse(why) {
@@ -341,5 +346,5 @@ G.MenuUpgrades = (() => {
       </div>`;
   }
 
-  return { ready: true, Popup, items, buy, pressItem, CLOSE_ID, REFUSALS };
+  return { ready: true, Popup, items, buy, cardKeyOf, stopAfterBuy, CLOSE_ID, REFUSALS };
 })();
