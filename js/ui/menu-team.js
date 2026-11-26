@@ -9,7 +9,8 @@
  *   layout  the bars are a fixed size in real pixels; the team column is on the left, the detail panel on the right, and
  *           the grid takes the room between them. A window too small for that scales the panels down, never the bars
  *   candy   Level Up (Shift: +10) and the EXP Bag's candy, put on a slot, a portrait or the detail panel (#139 Part F)
- *   upgrade a slot's Upgrade opens the Upgrade popup for that copy (#97, js/ui/menu-upgrades.js)
+ *   upgrade a slot's Upgrade opens the Upgrade popup for that copy (#97, js/ui/menu-upgrades.js); inside it, the arrows,
+ *           Q and E, and 1 to 6 switch to another caught team member
  *   mouse   click selects; double-click puts the Pokemon in the highlighted slot; drag onto a slot, the grid or a box tab;
  *           right-click frees a slot
  *   keys    arrows move; Enter or Space lifts and puts down a Pokemon or presses; 1 to 6 puts the selected Pokemon in
@@ -429,19 +430,37 @@ G.MenuTeam = (() => {
     cursor.moveTo('moves');
     redraw();
   }
+  /** The team slots that hold a caught copy, in slot order (the members the Upgrade popup can show). */
+  const upgradeSlots = () => state.draft.team.flatMap((member, slot) => (member && member.uid ? [slot] : []));
+  const canSwitchUpgrade = () => upgradeSlots().length > 1;
+  /** The Upgrade popup's stops for the copy it shows. */
+  const upgradeItems = () => G.MenuUpgrades.items(G.Copies.get(G.DB.save, state.upgrade.uid), canSwitchUpgrade());
+
   /** The Upgrade popup for the copy in team slot `slot` (only team members are upgraded; a slot with no copy refuses). */
   function openUpgrades(slot) {
-    const member = state.draft.team[slot];
-    if (!member || !member.uid) {
-      G.Audio.sfx('error');
-      return G.UI.toast(G.MenuUpgrades.REFUSALS.none);
-    }
+    if (!upgradeSlots().includes(slot)) return refuseUpgradeSlot();
     bag.close();
     sell.end();
-    state.upgrade = { uid: member.uid, slot };
+    showUpgradeSlot(slot);
+  }
+  function refuseUpgradeSlot() {
+    G.Audio.sfx('error');
+    G.UI.toast(G.MenuUpgrades.REFUSALS.none);
+  }
+  /** Points the popup at team slot `slot` (holding a copy); the cursor stays put unless the new copy lacks its stop. */
+  function showUpgradeSlot(slot) {
+    state.upgrade = { uid: state.draft.team[slot].uid, slot };
     G.Audio.sfx('click');
-    cursor.moveTo(G.MenuUpgrades.items(G.Copies.get(G.DB.save, member.uid))[0]);
+    const stops = upgradeItems();
+    if (!stops.includes(cursor.cursorOn())) cursor.moveTo(stops[0]);
     redraw();
+  }
+  /** The arrows and Q / E: the previous (-1) or next (+1) caught team member, wrapping. */
+  function stepUpgrade(step) {
+    if (!state.upgrade || !canSwitchUpgrade()) return;
+    const slots = upgradeSlots(),
+      at = slots.indexOf(state.upgrade.slot);
+    showUpgradeSlot(slots[(at + step + slots.length) % slots.length]);
   }
   function closeUpgrades() {
     if (!state.upgrade) return;
@@ -529,7 +548,7 @@ G.MenuTeam = (() => {
   function eligibleItems() {
     tick.value; // read again after a change
     if (!G.DB.save) return [];
-    if (state.upgrade) return G.MenuUpgrades.items(G.Copies.get(G.DB.save, state.upgrade.uid));
+    if (state.upgrade) return upgradeItems();
     if (state.movesOpen) return G.MenuTeamDetail.movesItems(G.DEX_BY[state.selected.dex]);
     if (state.openList) return [state.openList, ...G.MenuTeamGrid.ROWS_OF[state.openList](menu).map((row) => row.id)];
     const places = [...slotIds, ...shownNow().ids, ...G.MenuTeamGrid.tabs().map((tab) => tab.id)];
@@ -562,6 +581,8 @@ G.MenuTeam = (() => {
    *  the popup) does nothing. */
   function pressInUpgrades(id) {
     if (id === G.MenuUpgrades.CLOSE_ID) return closeUpgrades();
+    if (id === G.MenuUpgrades.PREVIOUS_ID) return stepUpgrade(-1);
+    if (id === G.MenuUpgrades.NEXT_ID) return stepUpgrade(1);
     const cardKey = G.MenuUpgrades.cardKeyOf(id);
     if (cardKey) buyUpgrade(cardKey);
   }
@@ -604,6 +625,7 @@ G.MenuTeam = (() => {
     home: SLOT_ID + 0,
     press,
     escape,
+    keys: { q: () => stepUpgrade(-1), e: () => stepUpgrade(1) }, // the Upgrade popup's arrows (as the Gacha tabs)
     tipFor: (id) => (id.startsWith(COPY_ID) || id.startsWith(DEX_ID) ? G.MenuTeamGrid.tipOf(menu, id) : null),
   });
 
@@ -611,6 +633,7 @@ G.MenuTeam = (() => {
   function onNumberKey(event) {
     const digit = /^(?:Digit|Numpad)([1-6])$/.exec(event.code);
     if (!digit || !isOpen() || G.UI.isOpen('scr-ask') || event.target.closest('input, textarea, select')) return;
+    if (state.upgrade && !event.shiftKey) return showUpgradeByKey(event, +digit[1] - 1);
     if (state.openList || state.movesOpen || state.upgrade || bag.inHand() || sell.mode()) return;
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -620,6 +643,15 @@ G.MenuTeam = (() => {
     if (!held.uid) return G.UI.toast(PICK_A_COPY);
     if (!event.shiftKey) return drop(held, { kind: 'slot', slot: index });
     if (index < G.Copies.BOX_MAX) drop(held, { kind: 'box', box: index });
+  }
+
+  /** 1 to 6 while the Upgrade popup is open: show that team slot's copy, as the slot numbers do in a run. */
+  function showUpgradeByKey(event, slot) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (slot === state.upgrade.slot) return;
+    if (upgradeSlots().includes(slot)) showUpgradeSlot(slot);
+    else refuseUpgradeSlot();
   }
 
   /** cursor.bar beside the item it is on, with its CRT; drawn by each piece that is not its own cursor. */
@@ -701,6 +733,8 @@ G.MenuTeam = (() => {
     openUpgrades,
     closeUpgrades,
     buyUpgrade,
+    canSwitchUpgrade,
+    stepUpgrade,
   };
 
   // ---------- drawing ----------

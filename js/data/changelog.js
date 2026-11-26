@@ -14,6 +14,10 @@ G.CHANGELOG = [
         "Each Pokemon you own can now be upgraded with PokeCoins: press Upgrade on a team slot. Raise any of its six base stats, its Critical Hit chance, its move cooldowns and its Regeneration (it heals on the field and on the bench), or buy a starting move choice. Hover a card to see what it gives. Prices follow the Pokemon's Base Stat Total, and more levels open as it levels up with candy. Upgrades stay with the Pokemon when it evolves.",
         "Each Pokemon you own can now be upgraded with PokeCoins: press Upgrade on a team slot. Raise any of its six base stats, its Critical Hit chance, its move cooldowns and its Regeneration (it heals on the field and on the bench), or buy a starting move choice. Hover a card to see what it gives. Prices follow the Pokemon's Base Stat Total, and more levels open as it levels up with candy. Upgrades stay with the Pokemon when it evolves.",
       ],
+      [
+        'In the upgrade window, the arrows beside the portrait (or Q and E, or the keys 1 to 6) switch to another Pokemon on your team.',
+        'In the upgrade window, the arrows beside the portrait (or Q and E, or the keys 1 to 6) switch to another Pokemon on your team.',
+      ],
     ],
     chg: [
       [

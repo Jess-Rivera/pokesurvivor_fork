@@ -65,3 +65,8 @@ circling-rim idea for selected portraits is #171.
 
 Missed: the sketch has two arrows beside the portrait (left and right) for moving between team members without
 closing the popup. The plan never listed them, so they were neither built nor named under "Not built".
+
+## Follow-up built 2026-11-26
+
+The portrait arrows are built (wrap, hidden with one caught member, Q and E labelled, 1 to 6 jump to a slot) and the
+card shine is removed: decision 2026-11-26-97-upgrade-popup-switch-arrows-and-no-shine. The smoke covers both.

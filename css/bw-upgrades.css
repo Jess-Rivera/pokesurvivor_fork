@@ -59,40 +59,6 @@
   opacity: 0.45;
 }
 
-/* a fully bought card: no button, and a white shine that circles its edge */
-.upg-card.is-maxed {
-  border: none; /* the ring below is the edge: overflow clips a border's own box */
-}
-.upg-card.is-maxed::before,
-.upg-card.is-maxed::after {
-  content: '';
-  position: absolute;
-  z-index: 0;
-}
-.upg-card.is-maxed::before {
-  left: 50%;
-  top: 50%;
-  width: 150%;
-  aspect-ratio: 1;
-  background: conic-gradient(var(--upg-edge) 0 80%, var(--color-grey-white) 90%, var(--upg-edge) 100%);
-  transform: translate(-50%, -50%);
-  animation: upg-shine 3s linear infinite;
-}
-.upg-card.is-maxed::after {
-  inset: 2px;
-  background: var(--color-grey-raised);
-}
-@keyframes upg-shine {
-  to {
-    transform: translate(-50%, -50%) rotate(1turn);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .upg-card.is-maxed::before {
-    animation: none;
-  }
-}
-
 /* ---------- the centre: portrait, name, summary ---------- */
 .upg-name {
   text-align: center;

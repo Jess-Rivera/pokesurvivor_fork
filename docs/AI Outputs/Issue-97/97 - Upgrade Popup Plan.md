@@ -60,7 +60,7 @@ smoke-ui.js's old Upgrades screen checks are removed.
 | | |
 |---|---|
 | Reuses | G.Candy level, G.Copies, G.Stats.profile, panel.clean, button.glitch intents and states, the Team menu cursor, the portrait |
-| New | Upgrade pips; the shine around a fully bought card (nothing in the library circles a panel edge) |
+| New | Upgrade pips; the switch arrows beside the portrait (added after review, decision 2026-11-26-97-upgrade-popup-switch-arrows-and-no-shine). The shine around a fully bought card was built, then dropped by Jess |
 | Not built | #150 picker (starting-move cards are bought but act later), #169 leader upgrades, #164 sidegrades (button shown disabled), #165 items, the Character Upgrades list, leader-authored upgrades |
 | Touched-code cleanups | The menu's dead "upgrades" route (no button opens it) |
 | Size | js/entities/player.js (1,365 lines) is already over 1,000 and grows slightly |

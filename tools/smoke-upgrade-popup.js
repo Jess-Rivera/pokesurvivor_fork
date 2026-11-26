@@ -2,7 +2,7 @@
 // C:\Users\boric\tools\playwright), as in tools/smoke-team.js. Usage from the repo root:
 //   node tools/smoke-upgrade-popup.js [folder for a screenshot]
 // Checks: a slot's Upgrade opens the popup for that copy (a slot with no copy refuses); eleven cards; the button states
-// (price, refused when you cannot afford it, disabled "Needs Lv N" above the band, none and a shine once bought); the
+// (price, refused when you cannot afford it, disabled "Needs Lv N" above the band, none once bought, no shine (dropped by Jess 2026-11-26)); the
 // hover preview equals the summary after the buy (the end-goal test); the starting move cards in order; Enter buys by
 // keys and Esc closes back to the Team menu; no console or page errors. Expected outcomes are relations from the design
 // and decisions 2026-11-26-97-upgrade-popup-open-questions and 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings.
@@ -180,7 +180,7 @@ async function main() {
   await page.click('[data-action="upgrade-buy-startingMoves:1"]');
   await sleep(400);
   const first = await card('startingMoves:1');
-  ok(first.maxed && first.button === null, 'Starting Move Choice bought: no button, the shine');
+  ok(first.maxed && first.button === null, 'Starting Move Choice bought: no button, no shine');
   ok((await card('startingMoves:2')).button === '2,000', 'then Second Starting Move offers its price');
 
   // ---- every card bought ----
@@ -194,8 +194,14 @@ async function main() {
   const all = await page.evaluate(() => ({
     maxed: document.querySelectorAll('.upg-card.is-maxed').length,
     buttons: document.querySelectorAll('.upg-card button').length,
+    shine: [...document.querySelectorAll('.upg-card.is-maxed')].some(
+      (box) => getComputedStyle(box, '::before').content !== 'none'
+    ),
   }));
-  ok(all.maxed === 11 && all.buttons === 0, 'everything bought: eleven shining cards and no buy button');
+  ok(
+    all.maxed === 11 && all.buttons === 0 && !all.shine,
+    'everything bought: eleven bought cards, no buy button and no shine'
+  );
   await page.evaluate((id) => {
     for (const upgrade of G.Upgrades.LIST) G.Copies.setUpgradeLevel(G.DB.save, id, upgrade.id, 0);
     G.Copies.setUpgradeLevel(G.DB.save, id, 'baseHp', 4);
@@ -250,6 +256,52 @@ async function main() {
     !(await popupOpen()) && (await page.evaluate(() => G.UI.isOpen('scr-roster'))),
     'Esc closes the popup back to the Team menu'
   );
+
+  // ---- switching members: arrows, Q and E, 1 to 6 (Jess 2026-11-26: wrap, hidden with one member) ----
+  const arrowsShown = () => page.evaluate(() => !!document.querySelector('[data-action="upgrade-next"]'));
+  const shownName = () => page.evaluate(() => document.querySelector('.upg-name').textContent.trim());
+  await page.click('[data-action="upgrade-0"]');
+  await sleep(300);
+  ok(!(await arrowsShown()), 'one caught team member: no arrows');
+  await page.keyboard.press('Escape');
+  const dittoUid = await page.evaluate(() => {
+    const s = G.DB.save,
+      ditto = G.Copies.longId(G.Copies.add(s, { dex: 132, from: 'debug' }).u);
+    s.team[1] = { dex: 132, shiny: false, uid: ditto };
+    G.DB.commit(true);
+    G.MenuTeam.open();
+    return ditto;
+  });
+  await sleep(300);
+  await page.click('[data-action="upgrade-0"]');
+  await sleep(300);
+  ok(await arrowsShown(), 'two caught team members: the arrows show');
+  await page.click('[data-action="upgrade-next"]');
+  await sleep(300);
+  ok((await shownName()) === 'Ditto', 'the next arrow shows the second member (' + (await shownName()) + ')');
+  await page.click('[data-action="upgrade-next"]');
+  await sleep(300);
+  ok((await shownName()) === 'Bulbasaur', 'the next arrow wraps to the first member');
+  await page.keyboard.press('q');
+  await sleep(300);
+  ok((await shownName()) === 'Ditto', 'Q wraps back to the last member');
+  await page.keyboard.press('e');
+  await sleep(300);
+  ok((await shownName()) === 'Bulbasaur', 'E shows the next member');
+  await page.keyboard.press('2');
+  await sleep(300);
+  ok((await shownName()) === 'Ditto', 'the 2 key shows team slot 2');
+  const dittoBefore = await page.evaluate((id) => G.Copies.get(G.DB.save, id).upgrades.baseHp || 0, dittoUid);
+  await page.click('[data-action="upgrade-buy-baseHp"]');
+  await sleep(400);
+  ok(
+    (await page.evaluate((id) => G.Copies.get(G.DB.save, id).upgrades.baseHp || 0, dittoUid)) === dittoBefore + 1,
+    'a buy after switching goes to the member shown'
+  );
+  await page.keyboard.press('3');
+  await sleep(300);
+  ok((await shownName()) === 'Ditto' && (await popupOpen()), 'an empty slot key refuses and keeps the popup');
+  await page.keyboard.press('Escape');
 
   ok(!errs.length, 'no console or page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
   if (notes.length) console.log('note  known file:// font noise (not a failure): ' + notes.length + ' line(s)');

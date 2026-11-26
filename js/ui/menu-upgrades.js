@@ -2,7 +2,9 @@
  * One team copy's per-copy upgrades: six base stat cards on the left, Critical Hit, Cooldown, Regeneration and the two
  * starting move cards on the right, the portrait and a summary between them. A card shows its pips and a buy button
  * (positive with the price; refused when you cannot afford it; disabled "Needs Lv N" above the OOR band). A fully bought
- * card has no button and a shine around its edge. Hovering a card's button shows, in green, what buying it gives.
+ * card has no button and keeps its normal edge (Jess dropped the sketch's shine, 2026-11-26). Hovering a card's button
+ * shows, in green, what buying it gives. With two or more caught team members, arrows beside the portrait (Q and E,
+ * wrapping) and the keys 1 to 6 switch the popup to another member (Jess, 2026-11-26).
  * Sketch: assets/excalidraw/poke-upgrade.excalidraw (its names win over the design's Reflexes; Regeneration++ is Jess's,
  * 2026-11-26). The rules are G.Upgrades'; js/ui/menu-team.js owns the open copy and hands its state in as `menu`.
  * Not built: Sidegrades (#164, the button is disabled), the starting move picks (#150: the levels are bought and saved).
@@ -21,6 +23,7 @@ G.MenuUpgrades = (() => {
     BUY = { width: 120, height: 32, fontSize: 12 },
     CENTRE = { left: 460, width: 320, portrait: 150 },
     SUMMARY = { top: 330, height: 330 },
+    ARROW = { width: 56, height: 32, gap: 12, fontSize: 12 }, // the team switch arrows beside the portrait
     FOOT = { height: 40, sidegradesWidth: 180, closeWidth: 150, fontSize: 14 };
   const LEFT_IDS = ['baseHp', 'baseAtk', 'baseDef', 'baseSpa', 'baseSpd', 'baseSpe'];
   // the right column: [card key, upgrade id, the starting move level the card buys (starting moves only)]
@@ -59,7 +62,9 @@ G.MenuUpgrades = (() => {
   };
 
   const BUY_ID = 'upgrade-buy-',
-    CLOSE_ID = 'upgrade-close';
+    CLOSE_ID = 'upgrade-close',
+    PREVIOUS_ID = 'upgrade-previous',
+    NEXT_ID = 'upgrade-next';
   const cardKeyOf = (cursorId) => (cursorId && cursorId.startsWith(BUY_ID) ? cursorId.slice(BUY_ID.length) : null);
   const upgradeIdOf = (cardKey) => cardKey.split(':')[0];
 
@@ -101,19 +106,21 @@ G.MenuUpgrades = (() => {
   }
 
   const CARD_ORDER = [...LEFT_IDS, ...RIGHT_CARDS.map(([key]) => key)];
-  /** The cursor stops for `copy`: every card button that is not disabled, then Close. */
-  function items(copy) {
-    if (!copy) return [CLOSE_ID];
+  /** The cursor stops for `copy`: every card button that is not disabled, the two arrows when `canSwitch` (two or more
+   *  caught team members), then Close. */
+  function items(copy, canSwitch) {
+    const arrows = canSwitch ? [PREVIOUS_ID, NEXT_ID] : [];
+    if (!copy) return [...arrows, CLOSE_ID];
     const live = CARD_ORDER.filter((key) => {
       const { button } = offerOf(copy, key);
       return button && !button.disabled;
     });
-    return [...live.map((key) => BUY_ID + key), CLOSE_ID];
+    return [...live.map((key) => BUY_ID + key), ...arrows, CLOSE_ID];
   }
   /** Where the cursor goes after card `cardKey` was bought for `copy`: null while the card still has a live button,
    *  else the next live card in card order (wrapping), else Close. Keeps the keys' cursor inside the popup. */
   function stopAfterBuy(copy, cardKey) {
-    const stops = items(copy),
+    const stops = items(copy, false),
       start = CARD_ORDER.indexOf(cardKey);
     if (stops.includes(BUY_ID + cardKey)) return null;
     for (let step = 1; step < CARD_ORDER.length; step++) {
@@ -245,6 +252,26 @@ G.MenuUpgrades = (() => {
     </div>`;
   }
 
+  /** The arrows either side of the portrait: the previous (Q) and next (E) caught team member, wrapping. */
+  function SwitchArrows({ menu }) {
+    const portraitLeft = CENTRE.left + (CENTRE.width - CENTRE.portrait) / 2,
+      top = CARD.top + (CENTRE.portrait - ARROW.height) / 2;
+    const arrow = (id, label, step, left) =>
+      html`<${CursorButton}
+        cursor=${menu.cursor}
+        id=${id}
+        label=${label}
+        look="glitch"
+        width=${ARROW.width}
+        height=${ARROW.height}
+        fontSize=${ARROW.fontSize}
+        onPress=${() => menu.stepUpgrade(step)}
+        style=${{ left: px(left), top: px(top) }}
+      />`;
+    return html`${arrow(PREVIOUS_ID, '‹ Q', -1, portraitLeft - ARROW.gap - ARROW.width)}
+    ${arrow(NEXT_ID, 'E ›', 1, portraitLeft + CENTRE.portrait + ARROW.gap)}`;
+  }
+
   /** The stronger attacking side of a species, for the starting move cards' edge. */
   const strongerSide = (species) => (species.stats[3] > species.stats[1] ? 'special' : 'physical');
 
@@ -312,6 +339,7 @@ G.MenuUpgrades = (() => {
             onError=${portraitFallback}
           />
         </div>
+        ${menu.canSwitchUpgrade() ? html`<${SwitchArrows} menu=${menu} />` : null}
         <div
           class="upg-name"
           translate="no"
@@ -346,5 +374,5 @@ G.MenuUpgrades = (() => {
       </div>`;
   }
 
-  return { ready: true, Popup, items, buy, cardKeyOf, stopAfterBuy, CLOSE_ID, REFUSALS };
+  return { ready: true, Popup, items, buy, cardKeyOf, stopAfterBuy, CLOSE_ID, PREVIOUS_ID, NEXT_ID, REFUSALS };
 })();
