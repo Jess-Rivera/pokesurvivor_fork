@@ -28,12 +28,13 @@ G.MenuTeamSlots = (() => {
   }
 
   /** A favorite or lock toggle: dim when off. */
-  function MarkToggle({ menu, id, uid, which, on, style, size = MARK.size, area }) {
+  function MarkToggle({ menu, id, uid, which, on, style, size = MARK.size, area, cursorRight }) {
     return html`<div
       class=${'tm-mark' + (on ? ' is-on' : '')}
       style=${{ ...style, width: px(size), height: px(size) }}
       data-cursor-id=${id}
       data-cursor-area=${area}
+      data-cursor-right=${cursorRight}
       data-mark=${which}
       onMouseEnter=${() => menu.cursor.hover(id)}
       onMouseLeave=${() => menu.cursor.hover(null)}
@@ -54,7 +55,7 @@ G.MenuTeamSlots = (() => {
       levelUpLeft = SLOT.width - BUTTON.right - BUTTON.width,
       lockRight = MARK.right,
       favoriteRight = MARK.right + MARK.size + MARK.gap;
-    const smallButton = (id, label, left, refusal, onPress) =>
+    const smallButton = (id, label, left, refusal, onPress, cursorRight) =>
       html`<${CursorButton}
         cursor=${menu.cursor}
         id=${id}
@@ -65,6 +66,7 @@ G.MenuTeamSlots = (() => {
         fontSize=${BUTTON.fontSize}
         refusal=${refusal}
         onPress=${onPress}
+        cursorRight=${cursorRight}
         style=${{ left: px(left), top: px(BUTTON.top) }}
       />`;
     return html`<${RoundPortrait}
@@ -85,8 +87,13 @@ G.MenuTeamSlots = (() => {
         ${smallButton('upgrade-' + slot, 'Upgrade', levelUpLeft - BUTTON.gap - BUTTON.width, null, () =>
           menu.openUpgrades(slot)
         )}
-        ${smallButton('levelup-' + slot, 'Level Up', levelUpLeft, menu.bag.refusal(member.uid), () =>
-          menu.bag.levelUp(member.uid)
+        ${smallButton(
+          'levelup-' + slot,
+          'Level Up',
+          levelUpLeft,
+          menu.bag.refusal(member.uid),
+          () => menu.bag.levelUp(member.uid),
+          'slot-' + slot // the right-most button of its row: Right goes to the slot (Jess 2026-11-26)
         )}
       </div>
       ${
@@ -105,6 +112,7 @@ G.MenuTeamSlots = (() => {
                 uid=${copy.pokemonUUID}
                 which="lock"
                 on=${copy.isLocked}
+                cursorRight=${'slot-' + slot}
                 style=${{ right: px(lockRight), bottom: px(MARK.bottom) }}
               />`
           : null
@@ -121,6 +129,8 @@ G.MenuTeamSlots = (() => {
       style=${{ left: px(SLOT.left), top: px(SLOT.top + slot * pitch), width: px(SLOT.width), height: px(SLOT.height) }}
       data-cursor-id=${id}
       data-cursor-area="slots"
+      data-cursor-anchor="right"
+      data-cursor-left=${member ? 'levelup-' + slot : undefined}
       data-slot=${slot}
       draggable=${!!(member && member.uid)}
       onMouseEnter=${() => menu.cursor.hover(id)}

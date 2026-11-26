@@ -232,7 +232,8 @@ G.Lib.Button = (() => {
    * as its label and the board's padding (the dialog's answers; class glitch-fit); fontSize the label's px. intent:
    * neutral, negative or positive. focused: under the cursor (the screen decides, by keys or the mouse). refused: a
    * press only says why (the screen's sound and toast); disabled: it cannot be pressed at all. held: a toggle that is
-   * on (#167), it keeps the focus look and its bar turns yellow under the cursor. pressCount: the screen
+   * on (#167), it keeps the focus look and its bar turns yellow under the cursor. mirrored: the shape flipped left to
+   * right (cut corner, bar and swipe), the label not (Jess 2026-11-26). pressCount: the screen
    * bumps it each time a key presses this button, so it plays its press by keys too. secret: one of GLITCH_BURSTS, or
    * null. id goes on data-action. Never takes the page's keyboard focus (see keepPageFocus).
    */
@@ -247,6 +248,7 @@ G.Lib.Button = (() => {
     held = false,
     refused = false,
     disabled = false,
+    mirrored = false,
     pressCount = 0,
     secret = null,
     onEnter,
@@ -294,6 +296,7 @@ G.Lib.Button = (() => {
       held && 'held',
       refused && 'refused',
       disabled && 'disabled',
+      mirrored && 'mirrored',
       phase,
     ];
     const classes = ['glitch-button', 'glitch-' + intent, ...states].filter(Boolean).join(' ');

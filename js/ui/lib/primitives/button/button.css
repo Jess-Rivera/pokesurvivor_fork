@@ -140,6 +140,33 @@
 .glitch-button.held {
   box-shadow: 6px 0 0 var(--glitch-focus-bar);
 }
+/* mirrored (class mirrored): the shape flipped left to right, the label not. The cut corner is bottom-right, the bar sits
+   outside the left side and the focus swipe runs from the left edge to the right. For a pair that points outward, like
+   the Upgrade popup's switch arrows (Jess 2026-11-26). */
+.glitch-button.mirrored {
+  margin-left: 6px; /* the bar now sits outside the left side, inside the same box */
+  background: linear-gradient(-45deg, transparent 5%, var(--glitch-body) 5%);
+  box-shadow: -6px 0 0 var(--glitch-bar);
+}
+.glitch-button.mirrored::after {
+  left: -6px;
+  right: 0;
+  padding: 0 0 0 6px;
+  background:
+    linear-gradient(var(--glitch-focus-bar), var(--glitch-focus-bar)) left / 6px 100% no-repeat,
+    linear-gradient(-45deg, transparent 5%, var(--glitch-focus-body) 5%) right / calc(100% - 6px) 100% no-repeat;
+  clip-path: inset(0 100% 0 0);
+}
+.glitch-button.mirrored:not(.disabled):hover::after,
+.glitch-button.mirrored.focused:not(.disabled)::after,
+.glitch-button.mirrored.held::after {
+  clip-path: inset(0);
+}
+.glitch-button.mirrored:not(.disabled):hover,
+.glitch-button.mirrored.focused:not(.disabled),
+.glitch-button.mirrored.held {
+  box-shadow: -6px 0 0 var(--glitch-focus-bar);
+}
 /* held (a toggle that is on): the focus look stays, so the cursor shows as a yellow bar */
 .glitch-button.held:hover,
 .glitch-button.held.focused {

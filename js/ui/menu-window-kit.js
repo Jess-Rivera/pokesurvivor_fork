@@ -138,10 +138,22 @@ G.MenuWindowKit = (() => {
       const from = cursorOn() || focus.value,
         fromElement = elementOf(from);
       if (!fromElement) return;
+      // An item marked data-cursor-anchor="right" is measured from its right edge, where its cursor bar shows (the Team
+      // menu's slots: their own buttons sit left of it, the grid right; Jess 2026-11-26). Others from their centre.
       const centre = (element) => {
-        const rect = element.getBoundingClientRect();
-        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, width: rect.width };
+        const rect = element.getBoundingClientRect(),
+          x = element.dataset.cursorAnchor === 'right' ? rect.right : rect.left + rect.width / 2;
+        return { x, y: rect.top + rect.height / 2, width: rect.width };
       };
+      // An item may name where Left or Right goes from it (data-cursor-left, data-cursor-right): a Team menu slot names
+      // its Level Up, and its right-most buttons name the slot (Jess 2026-11-26)
+      const namedTarget =
+        directionX < 0 ? fromElement.dataset.cursorLeft : directionX > 0 && fromElement.dataset.cursorRight;
+      if (namedTarget && eligibleItems().includes(namedTarget) && elementOf(namedTarget)) {
+        focus.value = namedTarget;
+        showInScrollBox(elementOf(namedTarget));
+        return G.Audio.sfx('hover');
+      }
       const start = centre(fromElement),
         fromArea = fromElement.dataset.cursorArea;
       const nearestIn = (allowed) => {
@@ -281,6 +293,7 @@ G.MenuWindowKit = (() => {
    *   glitch   button.glitch, width x height px (its bar included), label fontSize px, in its intent (#128 S6). It
    *            shows the cursor by its own focus swipe, so no corners; the box carries data-cursor-shown while the
    *            keys' cursor is on it, and a key press plays the button's press; held: a toggle that is on
+   * cursorRight: the cursor id Right goes to from this button (data-cursor-right; see stepFocus), else the nearest.
    */
   function CursorButton({
     cursor,
@@ -290,11 +303,13 @@ G.MenuWindowKit = (() => {
     artWidth,
     disabled = false,
     held = false,
+    mirrored = false, // button.glitch only: the shape flipped left to right, the label not
     refusal = null,
     onPress,
     className,
     style,
     area,
+    cursorRight,
     focusRim = FOCUS_RIM,
     look = 'rounded',
     intent,
@@ -309,6 +324,7 @@ G.MenuWindowKit = (() => {
       class=${'shop-button' + (refusal ? ' refused' : '') + (className ? ' ' + className : '')}
       data-cursor-id=${id}
       data-cursor-area=${area}
+      data-cursor-right=${cursorRight}
       data-refusal=${refusal || undefined}
       data-cursor-shown=${glitch && cursor.isShownOn(id) ? '' : undefined}
       style=${{
@@ -330,6 +346,7 @@ G.MenuWindowKit = (() => {
               fontSize=${fontSize}
               focused=${focused}
               held=${held}
+              mirrored=${mirrored}
               refused=${!!refusal}
               disabled=${disabled}
               pressCount=${cursor.keyPressCountOf(id)}

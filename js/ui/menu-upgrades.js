@@ -256,12 +256,14 @@ G.MenuUpgrades = (() => {
   function SwitchArrows({ menu }) {
     const portraitLeft = CENTRE.left + (CENTRE.width - CENTRE.portrait) / 2,
       top = CARD.top + (CENTRE.portrait - ARROW.height) / 2;
+    // E's button is mirrored so both point outward from the portrait (Jess 2026-11-26); the label reads normally
     const arrow = (id, label, step, left) =>
       html`<${CursorButton}
         cursor=${menu.cursor}
         id=${id}
         label=${label}
         look="glitch"
+        mirrored=${step > 0}
         width=${ARROW.width}
         height=${ARROW.height}
         fontSize=${ARROW.fontSize}

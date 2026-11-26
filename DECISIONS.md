@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-26, Team menu arrow keys follow the cursor bar: slot buttons, then the slot, then the grid (Jess)](docs/decisions/2026-11-26-team-menu-arrow-keys-follow-the-cursor-bar.md)
 - [2026-11-26, #97 Upgrade popup: switch arrows beside the portrait (wrap, Q and E, 1 to 6), no shine on a bought card (Jess)](docs/decisions/2026-11-26-97-upgrade-popup-switch-arrows-and-no-shine.md)
 - [2026-11-26, #97 slice C open questions: starting moves buyable early, 3-star floor, levels survive evolution, Regeneration++, old upgrades stop (Jess)](docs/decisions/2026-11-26-97-upgrade-popup-open-questions.md)
 - [2026-11-24, #139 Part F: candy in the Team menu, Level Up and the EXP Bag (Jess)](docs/decisions/2026-11-24-139-part-f-candy-in-the-team-menu.md)
