@@ -158,7 +158,14 @@ G.HudKitItems = (() => {
     const at = placeFor(anchor, place);
     if (!at) return hideTooltip();
     if (layerElement !== document.body.lastElementChild) document.body.appendChild(layerElement); // stay the body's last child
-    tooltipState.value = { anchor, name: content.name || '', lines, variant: content.variant || 'item', place };
+    tooltipState.value = {
+      anchor,
+      name: content.name || '',
+      nameIcon: content.nameIcon || '', // an optional pixel badge beside the name (a move's damage class, #145)
+      lines,
+      variant: content.variant || 'item',
+      place,
+    };
     tooltipPlace.value = at;
     if (!following) {
       following = true;
@@ -189,7 +196,13 @@ G.HudKitItems = (() => {
       class=${'hud-tip is-' + shown.variant}
       style=${{ left: at.x + 'px', top: at.y + 'px', transform: 'scale(' + at.scale + ') ' + at.shift }}
     >
-      ${shown.name ? html`<div class="hud-text hud-tip-name">${shown.name}</div>` : null}
+      ${
+        shown.name
+          ? html`<div class="hud-text hud-tip-name">
+              ${shown.name}${shown.nameIcon ? html`<img class="hud-tip-name-icon" src=${shown.nameIcon} alt="" />` : null}
+            </div>`
+          : null
+      }
       ${shown.lines.map((line, index) => html`<div key=${index} class="hud-text hud-tip-line">${line}</div>`)}
     </div>`;
   }

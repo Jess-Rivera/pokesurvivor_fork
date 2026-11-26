@@ -147,8 +147,11 @@ async function main() {
         }
       tip.style.pointerEvents = '';
       const name = tip.querySelector('.hud-tip-name');
+      const nameIcon = tip.querySelector('.hud-tip-name-icon');
       return {
         name: name ? name.textContent.trim() : '',
+        // #145: the icon beside the name (a move's damage class), its file and whether it loaded
+        nameIcon: nameIcon ? { src: nameIcon.getAttribute('src'), loaded: nameIcon.naturalWidth > 0 } : null,
         lines: [...tip.querySelectorAll('.hud-tip-line')].map((line) => line.textContent.trim()),
         covered,
         sampled,
@@ -1073,6 +1076,72 @@ async function main() {
   await sleep(100);
   if (scrolled) ok((await tipNow()) === null, 'scrolling the move list hides its tooltip');
   await page.mouse.move(5, 5);
+
+  // ---- #145: every move tooltip shows its damage class icon (assets/icons/category/<class>.png), on the pause menu's
+  // Pokemon screen and on the old Team sheet (the fallback pause screen and the results' Team summary) ----
+  const shownMoveIds = await page.evaluate(() =>
+    [...document.querySelectorAll('.pm-move')].map((row) => row.dataset.move)
+  );
+  const classMismatches = [];
+  for (const id of shownMoveIds) {
+    await page.evaluate(
+      (moveId) => document.querySelector('.pm-move[data-move="' + moveId + '"]').scrollIntoView({ block: 'nearest' }),
+      id
+    );
+    await page.hover('.pm-move[data-move="' + id + '"]');
+    await sleep(100);
+    const shown = await tipNow();
+    const want = await page.evaluate((moveId) => 'assets/icons/category/' + G.MoveInfo.cat(moveId) + '.png', id);
+    if (!shown || !shown.nameIcon || shown.nameIcon.src !== want || !shown.nameIcon.loaded)
+      classMismatches.push(id + ': ' + (shown && shown.nameIcon ? shown.nameIcon.src : 'no icon'));
+  }
+  await page.mouse.move(5, 5);
+  ok(
+    shownMoveIds.length > 0 && classMismatches.length === 0,
+    'every move tooltip shows its class icon, loaded (' +
+      (classMismatches.join(', ') || shownMoveIds.length + ' moves') +
+      ')'
+  );
+  const classCoverage = await page.evaluate(() => {
+    const member = G.Game.player;
+    // one move of each class from the move data: the shared builder gives each its own icon
+    const byClass = ['physical', 'special', 'status'].map((moveClass) => {
+      const id = Object.keys(G.MoveDefs).find((moveId) => G.MoveInfo.cat(moveId) === moveClass);
+      return { moveClass, icon: id ? G.Sheet.detailOf(member, { id }).categoryIcon : '' };
+    });
+    // the old Team sheet, drawn into a spare box: each move's hover panel carries the same icon
+    const spare = document.createElement('div');
+    spare.style.display = 'none';
+    document.body.appendChild(spare);
+    G.Sheet.render(spare, [member], { sel: 0 });
+    const shownOrder = (member.slots.length ? member.slots : member.moves.map((move) => [move])).flat(); // data-mi's order
+    const sheetIcons = [...spare.querySelectorAll('.sh-move')].map((row) => {
+      const icon = row.querySelector('.sh-detail .sh-cat-icon');
+      return { icon: icon ? icon.getAttribute('src') : '', move: shownOrder[+row.dataset.mi] };
+    });
+    spare.remove();
+    return {
+      byClass,
+      sheetRight: sheetIcons.filter(
+        (row) => row.move && row.icon === 'assets/icons/category/' + G.MoveInfo.cat(row.move.id) + '.png'
+      ).length,
+      sheetRows: sheetIcons.length,
+    };
+  });
+  ok(
+    classCoverage.byClass.every((each) => each.icon === 'assets/icons/category/' + each.moveClass + '.png'),
+    'Physical, Special and Status each get their own class icon (' +
+      classCoverage.byClass.map((each) => each.moveClass + ' ' + each.icon).join(', ') +
+      ')'
+  );
+  ok(
+    classCoverage.sheetRows > 0 && classCoverage.sheetRight === classCoverage.sheetRows,
+    'the old Team sheet shows the class icon on every move (' +
+      classCoverage.sheetRight +
+      ' / ' +
+      classCoverage.sheetRows +
+      ')'
+  );
 
   // ---- End Run asks inside the ball ----
   // where each button sits, relative to the ball's centre, and whether the ball's clip leaves any of it showing

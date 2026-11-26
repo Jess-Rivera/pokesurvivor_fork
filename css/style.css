@@ -2922,6 +2922,14 @@ a.btn {
   display: none;
   pointer-events: none;
 }
+/* the move's damage class badge, 28 x 14 art at 2x (#145) */
+.sh-detail .sh-cat-icon {
+  display: block;
+  width: 56px;
+  height: 28px;
+  margin-bottom: 4px;
+  image-rendering: pixelated;
+}
 .sh-detail .ds {
   font-size: 13px;
   color: var(--muted);

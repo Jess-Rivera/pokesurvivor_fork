@@ -4,6 +4,7 @@
  *   G.MoveInfo.def(id)       the resolved def, or null
  *   name(id), type(id)       display name and type
  *   cat(id)                  'physical' | 'special' | 'status'
+ *   catIcon(id)              the damage class badge, 28 x 14 (assets/icons/category/<class>.png), for move tooltips (#145)
  *   isBuff(id)               the 2-buff learn limit test: every effect lands on its own side (G.TeamCards.selfOnly, Jess 2026-10-31)
  *   badge(id)                the icon's move family badge (a key of icons.js KIND_GLYPH), or null. Presentation only: animation,
  *                            sound and icons; no gameplay code reads it.
@@ -27,6 +28,8 @@ G.MoveInfo = (() => {
     const d = def(id);
     return d ? d.category : 'physical';
   };
+  const CATEGORY_ICON_PATH = 'assets/icons/category/';
+  const catIcon = (id) => CATEGORY_ICON_PATH + cat(id) + '.png';
   const isBuff = (id) => {
     const d = def(id);
     return !!d && G.TeamCards.selfOnly(d);
@@ -204,5 +207,5 @@ G.MoveInfo = (() => {
     return head + (fx.length ? ': ' + fx.join(', ') : '') + '.';
   }
 
-  return { def, name, type, cat, isBuff, badge, desc, effects };
+  return { def, name, type, cat, catIcon, isBuff, badge, desc, effects };
 })();

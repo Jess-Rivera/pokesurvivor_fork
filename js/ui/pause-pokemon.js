@@ -406,7 +406,12 @@ G.PausePokemon = (() => {
     const moveTip = (move) =>
       tooltipHandlers(() => {
         const lines = G.Sheet.detailOf(member, move);
-        return { name: move.name, lines: [lines.raw, lines.ail, lines.hit, lines.cards], variant: 'detail' };
+        return {
+          name: move.name,
+          nameIcon: lines.categoryIcon,
+          lines: [lines.raw, lines.ail, lines.hit, lines.cards],
+          variant: 'detail',
+        };
       }, DETAIL_TIP);
     const rows = groups.map((group, groupIndex) => {
       const bonded = group.length > 1;

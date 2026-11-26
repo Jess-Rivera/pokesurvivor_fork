@@ -11,7 +11,7 @@ node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
 0. Feel-test #97 slice C as a whole (popup, buys, switch arrows, Team menu arrow keys; the #97 comments of
    2026-11-26), then close it. #171 (circling rim for selected portraits) is an idea, needs triage.
-1. #97 remainder: Character Upgrades (account-wide list: Magnet, Card Reroll, Veto, PokeCoin %, Silver %, pockets),
+1. #172 (#97 remainder): Character Upgrades (account-wide list: Magnet, Card Reroll, Veto, PokeCoin %, Silver %, pockets),
    then the #150 starting-move picker (needs a learnset rebake with levels and egg-move unlock data). Split out: #164
    (97b sidegrades), #165 (Mints, Capsules, Bottle Caps), #169 (leaders with upgrades, blocked on slice C).
 1c. #166 run telemetry (ongoing data collection; feeds the #97 and #131 numbers). Slice opening first.

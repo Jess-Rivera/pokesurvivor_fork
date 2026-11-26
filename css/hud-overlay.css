@@ -456,6 +456,14 @@
 .hud-tip-name {
   color: #ffd23f;
 }
+/* a pixel badge beside the name (a move's damage class, 28 x 14 art at 2x, #145) */
+.hud-tip-name-icon {
+  width: 56px;
+  height: 28px;
+  margin-left: 10px;
+  vertical-align: middle;
+  image-rendering: pixelated;
+}
 /* an item: name and its effect, the effect 300 px wide */
 .hud-tip.is-item {
   padding: 8px 12px;

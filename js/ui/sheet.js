@@ -109,9 +109,10 @@ G.Sheet = (() => {
     return changed.length ? 'Cards: ' + changed.map((change) => change.text).join(' · ') : '';
   }
 
-  /** Detail rows for the hover/tap panel: every stat, with base (with item) on the fields a held item changes. */
+  /** Detail rows for the hover/tap panel: every stat, with base (with item) on the fields a held item changes; and the
+   *  damage class badge shown beside the move's name (#145). */
   function detailOf(pl, m) {
-    if (!routed(m)) return { raw: '', ail: '', hit: '', cards: '' };
+    if (!routed(m)) return { raw: '', ail: '', hit: '', cards: '', categoryIcon: '' };
     const d = folded(pl, m),
       h = defHit(pl, d),
       am = pl ? (pl.atkMul || 1) * G.Stats.itemCatMul(pl, d.category) : 1,
@@ -123,6 +124,7 @@ G.Sheet = (() => {
       ail: defAil(d),
       hit: h == null ? '' : am !== 1 ? 'Hits for about ' + r1d(base) + ' (' + r1d(h) + ')' : 'Hits for about ' + r1d(h),
       cards: cardsLine(pl, m),
+      categoryIcon: G.MoveInfo.catIcon(m.id),
     };
   }
 
@@ -178,6 +180,7 @@ G.Sheet = (() => {
               // Collapsed card: icon, name + chips, one summary line. Full detail lives in the hover/tap panel.
               const panel =
                 `<div class="sh-detail" role="tooltip">` +
+                (det.categoryIcon ? `<img class="sh-cat-icon" src="${det.categoryIcon}" alt="">` : '') +
                 (det.raw ? `<div class="ds">${E(det.raw)}</div>` : '') +
                 (det.ail ? `<div class="ail">${E(det.ail)}</div>` : '') +
                 (det.hit ? `<div class="hit">${E(det.hit)}</div>` : '') +
