@@ -14,7 +14,6 @@ G.UI = (() => {
     'scr-starters',
     'scr-menu',
     'scr-dex',
-    'scr-upgrades',
     'scr-gacha',
     'scr-levelup',
     'scr-pause',

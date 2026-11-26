@@ -8,6 +8,7 @@
  * - Bands: the power upgrades' caps open with the copy's OOR level (G.Candy), `levelsPerBand` at each of BAND_LEVELS.
  *   Starting moves have no band.
  * - Starting moves are bought and saved now; the #150 picker makes them act.
+ * - Names: the popup sketch's (assets/excalidraw/poke-upgrade.excalidraw), Regeneration++ Jess's (2026-11-26).
  * The old account-wide upgrades (Magnet, Fortune, Card Reroll, Veto) and the per-species save.pupg levels are no longer
  * read; the four return in Character Upgrades.
  */
@@ -42,14 +43,14 @@ G.Upgrades = (() => {
   });
 
   const LIST = [
-    baseStat('baseHp', 'HP', 0),
-    baseStat('baseAtk', 'Attack', 1),
-    baseStat('baseDef', 'Defense', 2),
-    baseStat('baseSpa', 'Sp. Atk', 3),
-    baseStat('baseSpd', 'Sp. Def', 4),
-    baseStat('baseSpe', 'Speed', 5),
-    power('crit', 'Critical Hit', 0.02), // +2% crit chance
-    power('reflexes', 'Reflexes', 0.02), // -2% move cooldowns
+    baseStat('baseHp', 'HP++', 0),
+    baseStat('baseAtk', 'Atk++', 1),
+    baseStat('baseDef', 'Def++', 2),
+    baseStat('baseSpa', 'Sp.Atk++', 3),
+    baseStat('baseSpd', 'Sp.Def++', 4),
+    baseStat('baseSpe', 'Speed++', 5),
+    power('crit', 'Critical Hit++', 0.02), // +2% crit chance
+    power('reflexes', 'Cooldown++', 0.02), // -2% move cooldowns (the design's Reflexes)
     power('regeneration', 'Regeneration++', 0.001), // +0.1% max HP a second, on the field and on the bench
     { id: 'startingMoves', name: 'Starting Moves', kind: 'startingMoves', levels: 2, prices: [300, 2000] },
   ];

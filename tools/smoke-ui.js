@@ -102,7 +102,7 @@ async function check(browser, query, tag) {
       (off.length ? ' (' + off.map((x) => x.id).join(' ') + ')' : '')
   );
 
-  // ---- menus: the Team screen's detail for every owned Pokemon, then the Upgrades screen ----
+  // ---- menus: the Team screen's detail for every owned Pokemon ----
   const menu = await page.evaluate(async () => {
     // Headless Chrome cannot play sound, so "press to start" is still waiting: pass it before any key test.
     if (G.UI.isOpen && !document.getElementById('tap-start').classList.contains('hidden'))
@@ -139,26 +139,8 @@ async function check(browser, query, tag) {
       await settle();
     }
     const dexOk = n > 0 && rowsMax > 0 && !bad.length;
-    // Upgrades opens from the Upgrade button on a Team menu slot (the main menu entry is gone, 2026-11-01)
-    document.querySelector('[data-action="upgrade-0"]').click();
-    const name0 = document.getElementById('upg-name').textContent;
-    const key = (k) => document.body.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
-    key('e');
-    const name1 = document.getElementById('upg-name').textContent;
-    const party = G.DB.save.team.filter(Boolean).length;
-    const pts = document.getElementById('upg-points');
-    const upg = {
-      open: G.UI.isOpen('scr-upgrades'),
-      cols: document.querySelectorAll('#upg-cols .upg-col').length,
-      boxes: document.querySelectorAll('#upg-cols .upg-box').length,
-      pips: [...document.querySelectorAll('.upg-box .pips')].map((p) => p.children.length).join(''),
-      points: pts.textContent === '0 / 40',
-      popup: G.UI.isOpen('scr-roster'),
-      swap: party < 2 || (name0 !== name1 && !!name1),
-    };
-    key('Escape');
-    upg.back = G.UI.isOpen('scr-roster') && !G.UI.isOpen('scr-upgrades');
-    return { n, seen: [...seen], bad, dexOk, rows: rowsMax, upg };
+    // the Upgrade popup (#97) has its own smoke: tools/smoke-upgrade-popup.js
+    return { n, seen: [...seen], bad, dexOk, rows: rowsMax };
   });
   const RET = await page.evaluate(() => {
     // not in any level-up and egg pool: retired (slice 7b) and TM-only moves (the TM Mart sells those)
@@ -190,22 +172,6 @@ async function check(browser, query, tag) {
     tag + ': no retired or TM-only move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : '')
   );
   ok(menu.dexOk, tag + ': the Team screen lists its moves with names and icons (up to ' + menu.rows + ' rows)');
-  const u = menu.upg;
-  ok(
-    u.open && u.cols === 4 && u.boxes === 19 && u.pips === '555' + '55555555' + '3333' + '3335',
-    tag +
-      ': Upgrades shows 4 columns and 19 boxes with 5 or 3 rank dots (' +
-      u.cols +
-      ', ' +
-      u.boxes +
-      ', ' +
-      u.pips +
-      ')'
-  );
-  ok(u.points, tag + ': the Upgrades top bar shows "0 / 40"');
-  ok(u.popup, tag + ': Upgrades is a popup: the Team screen stays open under it');
-  ok(u.swap, tag + ': E moves Upgrades to the next party member');
-  ok(u.back, tag + ': Esc on Upgrades closes the popup back to the Team screen');
 
   // ---- a run: level-up cards and the pause sheet for every move ----
   await page.evaluate(() => G.Game.startRun());

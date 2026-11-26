@@ -47,7 +47,7 @@ _Avoid_: floor (for Common), upgrade
 Rule: decision 2026-11-22-139-candy-target-and-drop-model
 
 **Copy upgrade**:
-A permanent upgrade bought with PokeCoins for one copy in its Upgrade tab: base stat %, Critical Hit, Reflexes, Regeneration++ (was Synthesis), Starting moves. Lost if the copy is sold or released.
+A permanent upgrade bought with PokeCoins for one copy in the Team menu's Upgrade popup: a base stat % (HP++ to Speed++), Critical Hit++, Cooldown++ (the design's Reflexes), Regeneration++ (was Synthesis), Starting Move Choice and Second Starting Move. Lost if the copy is sold or released.
 
 _Avoid_: species upgrade, perk
 

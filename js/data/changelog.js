@@ -7,6 +7,22 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-26',
+    title: ['Pokemon upgrades', 'Pokemon upgrades'],
+    new: [
+      [
+        "Each Pokemon you own can now be upgraded with PokeCoins: press Upgrade on a team slot. Raise any of its six base stats, its Critical Hit chance, its move cooldowns and its Regeneration (it heals on the field and on the bench), or buy a starting move choice. Hover a card to see what it gives. Prices follow the Pokemon's Base Stat Total, and more levels open as it levels up with candy. Upgrades stay with the Pokemon when it evolves.",
+        "Each Pokemon you own can now be upgraded with PokeCoins: press Upgrade on a team slot. Raise any of its six base stats, its Critical Hit chance, its move cooldowns and its Regeneration (it heals on the field and on the bench), or buy a starting move choice. Hover a card to see what it gives. Prices follow the Pokemon's Base Stat Total, and more levels open as it levels up with candy. Upgrades stay with the Pokemon when it evolves.",
+      ],
+    ],
+    chg: [
+      [
+        'The old upgrades (Vitality, Strength, Stride, Carapace, Wisdom, Fortune, Magnet, Card Reroll, Veto) no longer apply. Magnet, Card Reroll, Veto and a PokeCoin bonus will return as Character Upgrades.',
+        'The old upgrades (Vitality, Strength, Stride, Carapace, Wisdom, Fortune, Magnet, Card Reroll, Veto) no longer apply. Magnet, Card Reroll, Veto and a PokeCoin bonus will return as Character Upgrades.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-24',
     title: ['Give Exp Candy', 'Give Exp Candy'],
     new: [

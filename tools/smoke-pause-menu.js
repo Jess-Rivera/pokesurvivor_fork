@@ -445,7 +445,10 @@ async function main() {
     'bars in the type colours (top ' + p.topColour + ', bottom ' + p.bottomColour + ')'
   );
   ok(p.layers.includes('start') && p.layers.includes('now'), 'stat hex: the level 1 shape and the white growth band');
-  ok(p.raisedBase && !p.layers.includes('run'), 'stat hex (#95, #97): a copy with every upgrade has no yellow band at run start');
+  ok(
+    p.raisedBase && !p.layers.includes('run'),
+    'stat hex (#95, #97): a copy with every upgrade has no yellow band at run start'
+  );
   ok(p.hexStats.join(',') === 'HP,Atk,Def,Spe,SpD,SpA', 'stat hex: six labels clockwise from HP');
   const hexMakeUp = () =>
     page.evaluate(() => {

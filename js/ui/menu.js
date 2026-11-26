@@ -31,7 +31,6 @@ G.MenuUI = (() => {
     // Preload the row art and fonts, so the first hover and the first open never draw half a menu.
     for (const n of ['row', 'row-sel', 'play', 'play-sel']) new Image().src = `assets/ui/menu/${n}.png`;
     for (const n of ['btn', 'btn-sel', 'arrow']) new Image().src = `assets/ui/team/${n}.png`;
-    for (const n of ['box', 'box-sel']) new Image().src = `assets/ui/upgrades/${n}.png`;
     if (document.fonts) {
       document.fonts.load('16px PokeBW').catch(() => {});
       document.fonts.load('16px Michroma').catch(() => {});
@@ -56,7 +55,6 @@ G.MenuUI = (() => {
     });
     // The screens' own listeners, in the order menu.js always registered them (a key one handles goes no further).
     G.MenuTeam.init();
-    G.MenuUpgrades.init();
     document.querySelectorAll('#scr-menu [data-go]').forEach((b) => {
       b.dataset.sfx = b.dataset.go === 'play' ? 'confirm' : 'click';
       b.onclick = () => {
@@ -67,7 +65,6 @@ G.MenuUI = (() => {
         } else if (go === 'team') G.MenuTeam.open();
         else if (go === 'inventory') G.InventoryUI.open();
         else if (go === 'dex') G.MenuPokedex.browse();
-        else if (go === 'upgrades') G.MenuUpgrades.open();
         else if (go === 'gacha') G.GachaUI.open();
         else if (go === 'goals') G.GoalsUI.open();
         else if (go === 'friends') G.FriendsUI.open();

@@ -37,7 +37,7 @@ flowchart LR
 |---|---|---|---|
 | Base stat (one per stat: HP, Atk, Def, SpA, SpD, Spe) | Raises the copy's species base stat by a %, inside the G.Stats formula | A %, so it carries through evolution (Bulbasaur +10%: base HP 45 becomes 49.5; as Ivysaur 60 becomes 66). The raised base keeps its fraction; only the final stat rounds, as today. Same cap and price curve for every stat. Shedinja's HP upgrade shows greyed out, "no effect" (acquisition F2b). | [Approved] |
 | Critical Hit | A base crit chance for this copy (today the base is 0) | Adds to the in-run Critical Hit card's chance; x1.5 as now. | [Approved] |
-| Reflexes | Cuts this copy's move cooldowns by a % | Move cooldowns only. Gates, the dodge and the swap lock are untouched. | [Approved] |
+| Reflexes (shown as Cooldown++, the popup sketch's name) | Cuts this copy's move cooldowns by a % | Move cooldowns only. Gates, the dodge and the swap lock are untouched. | [Approved] |
 | Regeneration++ (was Synthesis) | Regenerates a % of max HP per second (scales with HP) | Ticks on the field and on the bench (2026-11-26-97-upgrade-popup-open-questions). Stacks with a Bench Nurse style sidegrade. | [Approved] |
 | Starting moves (was Repertoire) | Buy 1: the copy may change its starting move. Buy 2: it starts with 2 moves | Per copy. The second move counts as a filled slot for move prices (2026-11-15-124-move-price-by-slots-filled). The pick list is #150. | [Approved] |
 | Caps and the OOR level | The caps of the four power upgrades (base stat, crit, cooldown, regen) rise with the copy's OOR level, in bands | Bands at OOR 1, 10, 20, 40 and 80, to start with (Jess 2026-11-23). See "Numbers (draft)". | [Approved] |

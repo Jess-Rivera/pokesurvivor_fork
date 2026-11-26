@@ -1,4 +1,4 @@
-# 97 - Upgrade Popup Plan (slice C, 2026-11-25) [Proposed]
+# 97 - Upgrade Popup Plan (slice C, 2026-11-25) [Approved], built 2026-11-26
 
 Goal, done and test: agreed on the issue, 2026-11-23. Rules: decisions 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings,
 2026-11-23-97-upgrade-system-redesign, 2026-11-23-97-upgrade-price-shape-bst-and-bands. Numbers: 97 - Upgrade System Design.
@@ -46,6 +46,14 @@ the profile) and in the Player's HP, Speed and dodge reads. The bench regen is i
 (js/entities/player.js), not js/game.js. The Player's old perks argument is unread but kept, since the deferred co-op
 code passes it. The leader planner's view of you stays species stats only (as for IVs). Checks: upgrades-harness
 section 7, player-entity-harness, smoke-pause-menu (no yellow band at run start for a maxed copy).
+
+C3 built 2026-11-26. js/ui/menu-upgrades.js is now G.MenuUpgrades, a Team menu piece like the Moves popup (state in
+js/ui/menu-team.js); the old screen's section in dev.html, its CSS, its ui.js and updater.js entries and the Main Menu
+route are gone (assets/ui/upgrades/ art is left unused). Card names follow the sketch (HP++ to Speed++, Critical Hit++,
+Cooldown++, Regeneration++). New: a "attack" palette in js/ui/lib/tokens/tokens.js (Physical and Special, from the
+board's canon colours) for the starting move cards' edge. The second starting move card shows "Locked" until the first
+is bought. Not built: Shedinja's greyed HP card (waits on #142, its fixed 1 HP). Checks: tools/smoke-upgrade-popup.js;
+smoke-ui.js's old Upgrades screen checks are removed.
 
 ## Reuses, new, not built
 

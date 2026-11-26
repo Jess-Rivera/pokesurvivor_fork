@@ -9,6 +9,7 @@
  *   layout  the bars are a fixed size in real pixels; the team column is on the left, the detail panel on the right, and
  *           the grid takes the room between them. A window too small for that scales the panels down, never the bars
  *   candy   Level Up (Shift: +10) and the EXP Bag's candy, put on a slot, a portrait or the detail panel (#139 Part F)
+ *   upgrade a slot's Upgrade opens the Upgrade popup for that copy (#97, js/ui/menu-upgrades.js)
  *   mouse   click selects; double-click puts the Pokemon in the highlighted slot; drag onto a slot, the grid or a box tab;
  *           right-click frees a slot
  *   keys    arrows move; Enter or Space lifts and puts down a Pokemon or presses; 1 to 6 puts the selected Pokemon in
@@ -19,7 +20,7 @@ G.MenuTeam = (() => {
     windowKit = G.MenuWindowKit,
     stage = document.querySelector('#scr-roster .tm-stage'),
     mosaicHost = document.querySelector('#scr-roster .tm-mosaic'),
-    parts = [G.MenuTeamSlots, G.MenuTeamGrid, G.MenuTeamDetail, G.MenuTeamExpBag];
+    parts = [G.MenuTeamSlots, G.MenuTeamGrid, G.MenuTeamDetail, G.MenuTeamExpBag, G.MenuUpgrades];
   if (!overlay || !overlay.ready || !windowKit.ready || !stage || !parts.every((part) => part.ready)) {
     console.warn('[Team] the HUD kit or the UI library did not load: the Team menu cannot open');
     return { init() {}, open() {}, roster: () => [] };
@@ -125,12 +126,13 @@ G.MenuTeam = (() => {
     openList: null, // 'filter' or 'sort'
     openGroups: new Set(),
     movesOpen: false,
+    upgrade: null, // the Upgrade popup's copy and the slot it opened from: { uid, slot }
     renaming: false,
     showHex: false,
   };
   let saveVersion = 0; // bumped when the save may have changed: the shown list is made again
   const redraw = () => tick.value++;
-  const isOpen = () => G.UI.isOpen('scr-roster') && !G.UI.isOpen('scr-upgrades');
+  const isOpen = () => G.UI.isOpen('scr-roster');
 
   // ---------- what the grid shows ----------
   const listKey = () => JSON.stringify([state.tab, state.filter, state.sort]);
@@ -427,12 +429,30 @@ G.MenuTeam = (() => {
     cursor.moveTo('moves');
     redraw();
   }
-  function openUpgrades(dex) {
-    bag.release();
-    G.MenuUpgrades.open(dex, () => {
-      G.UI.hide('scr-upgrades');
-      saved();
-    });
+  /** The Upgrade popup for the copy in team slot `slot` (only team members are upgraded; a slot with no copy refuses). */
+  function openUpgrades(slot) {
+    const member = state.draft.team[slot];
+    if (!member || !member.uid) {
+      G.Audio.sfx('error');
+      return G.UI.toast(G.MenuUpgrades.REFUSALS.none);
+    }
+    bag.close();
+    sell.end();
+    state.upgrade = { uid: member.uid, slot };
+    G.Audio.sfx('click');
+    cursor.moveTo(G.MenuUpgrades.items(G.Copies.get(G.DB.save, member.uid))[0]);
+    redraw();
+  }
+  function closeUpgrades() {
+    if (!state.upgrade) return;
+    const { slot } = state.upgrade;
+    state.upgrade = null;
+    hideTooltip();
+    cursor.moveTo('upgrade-' + slot);
+    redraw();
+  }
+  function buyUpgrade(cardKey) {
+    if (state.upgrade && G.MenuUpgrades.buy(state.upgrade.uid, cardKey)) saved();
   }
 
   // ---------- selling ----------
@@ -478,6 +498,7 @@ G.MenuTeam = (() => {
   /** Esc: back one thing, then out. */
   function escape() {
     if (state.openList) return closeList();
+    if (state.upgrade) return closeUpgrades();
     if (state.movesOpen) return closeMoves();
     if (state.held) {
       state.held = null;
@@ -504,6 +525,7 @@ G.MenuTeam = (() => {
   function eligibleItems() {
     tick.value; // read again after a change
     if (!G.DB.save) return [];
+    if (state.upgrade) return G.MenuUpgrades.items(G.Copies.get(G.DB.save, state.upgrade.uid));
     if (state.movesOpen) return G.MenuTeamDetail.movesItems(G.DEX_BY[state.selected.dex]);
     if (state.openList) return [state.openList, ...G.MenuTeamGrid.ROWS_OF[state.openList](menu).map((row) => row.id)];
     const places = [...slotIds, ...shownNow().ids, ...G.MenuTeamGrid.tabs().map((tab) => tab.id)];
@@ -515,6 +537,7 @@ G.MenuTeam = (() => {
   }
   /** Enter or Space on the item under the cursor. */
   function press(id) {
+    if (state.upgrade && G.MenuUpgrades.pressItem(state.upgrade.uid, id)) return saved();
     if (state.openList) {
       const row = G.MenuTeamGrid.ROWS_OF[state.openList](menu).find((entry) => entry.id === id);
       return row ? row.press() : closeList();
@@ -527,7 +550,7 @@ G.MenuTeam = (() => {
     if (id.startsWith(LEVEL_UP_ID)) return bag.levelUp(state.draft.team[+id.slice(LEVEL_UP_ID.length)].uid);
     const mark = MARK_ID.exec(id);
     if (mark) return toggleMark(state.draft.team[+mark[2]].uid, mark[1]);
-    if (id.startsWith('upgrade-')) return openUpgrades(state.draft.team[+id.slice('upgrade-'.length)].dex);
+    if (/^upgrade-\d$/.test(id)) return openUpgrades(+id.slice('upgrade-'.length));
     const action = PRESSES[id];
     if (action) action();
   }
@@ -542,6 +565,7 @@ G.MenuTeam = (() => {
     hex: toggleHex,
     moves: openMoves,
     'moves-close': closeMoves,
+    [G.MenuUpgrades.CLOSE_ID]: closeUpgrades,
     sell: pressSell,
     expbag: bag.toggle,
     revert,
@@ -577,7 +601,7 @@ G.MenuTeam = (() => {
   function onNumberKey(event) {
     const digit = /^(?:Digit|Numpad)([1-6])$/.exec(event.code);
     if (!digit || !isOpen() || G.UI.isOpen('scr-ask') || event.target.closest('input, textarea, select')) return;
-    if (state.openList || state.movesOpen || bag.inHand() || sell.mode()) return;
+    if (state.openList || state.movesOpen || state.upgrade || bag.inHand() || sell.mode()) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     const held = state.held || { uid: state.selected.uid, fromSlot: null },
@@ -632,6 +656,7 @@ G.MenuTeam = (() => {
     filter: watched(() => state.filter),
     openList: watched(() => state.openList),
     movesOpen: watched(() => state.movesOpen),
+    upgradeUid: watched(() => state.upgrade && state.upgrade.uid),
     renaming: watched(() => state.renaming),
     showHex: watched(() => state.showHex),
     isGroupOpen: (key) => state.openGroups.has(key),
@@ -664,6 +689,8 @@ G.MenuTeam = (() => {
     openMoves,
     closeMoves,
     openUpgrades,
+    closeUpgrades,
+    buyUpgrade,
   };
 
   // ---------- drawing ----------
@@ -808,6 +835,7 @@ G.MenuTeam = (() => {
         <${ExpBag.Popup} menu=${menu} />
         <${G.MenuTeamGrid.OpenList} menu=${menu} at=${byKeys} />
         <${G.MenuTeamDetail.MovesPopup} menu=${menu} at=${byKeys} />
+        <${G.MenuUpgrades.Popup} menu=${menu} />
       </div>
       <${Ghost} at=${at} />
       <${ExpBag.Ghost} menu=${menu} at=${at} stage=${stage} />
@@ -837,7 +865,7 @@ G.MenuTeam = (() => {
     G.DB.normalizeTeam(save);
     state.draft = Draft.open(save);
     state.opened = Draft.open(save);
-    Object.assign(state, { held: null, drag: null, openList: null, movesOpen: false, renaming: false });
+    Object.assign(state, { held: null, drag: null, openList: null, movesOpen: false, upgrade: null, renaming: false });
     if (state.tab !== 'dex' && state.tab >= G.Copies.boxCount(save)) state.tab = 0;
     G.UI.chrome(false); // it has its own counters
     G.UI.show('scr-roster');

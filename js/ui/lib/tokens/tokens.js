@@ -206,6 +206,22 @@ G.Tokens = (() => {
     ),
   });
 
+  // The two damaging move categories' ramps (the board's canon colours, tools/library/colours-canon.js): the Gym and
+  // Shop wayfinders and the Upgrade popup's starting move cards (#97).
+  const ATTACK_COLOURS = {
+    physical: ['#F29173', '#EB5628', '#99381A'],
+    special: ['#7D94CD', '#375AB2', '#243B74'],
+  };
+  COLOUR_PALETTES.push({
+    id: 'attack',
+    title: 'Move category colours',
+    job: 'Physical and Special: the wayfinders, the starting move cards',
+    source: 'tools/library/colours-canon.js, Physical and Special',
+    colours: Object.entries(ATTACK_COLOURS).flatMap(([category, tones]) =>
+      ['light', 'base', 'dark'].map((tone, index) => [category + '.' + tone, tones[index], category + ', ' + tone])
+    ),
+  });
+
   // ---------- fonts (HUD-STYLE "Fonts"): the face, its file, the sizes it is crisp at, and its job ----------
   // faceRules: the @font-face settings beyond the file, as the game's CSS declares them (the board declares each face
   // from here; smoke-ui-library checks the game's CSS loads the same file under the same family).

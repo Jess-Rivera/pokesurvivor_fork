@@ -46,8 +46,7 @@ G.Updater = (() => {
   /** Can it reload now without interrupting anything? */
   function safe() {
     if (!G.Game || G.Game.state !== 'ui') return false; // in a game or on the summary
-    if (['scr-gacha', 'scr-upgrades', 'scr-settings'].some((id) => document.getElementById(id) && G.UI.isOpen(id)))
-      return false;
+    if (['scr-gacha', 'scr-settings'].some((id) => document.getElementById(id) && G.UI.isOpen(id))) return false;
     const a = document.activeElement;
     if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false; // typing (password, nickname...)
     return true;

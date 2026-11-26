@@ -83,7 +83,7 @@ G.MenuTeamSlots = (() => {
       </div>
       <div class="tm-slot-buttons" onClick=${(event) => event.stopPropagation()}>
         ${smallButton('upgrade-' + slot, 'Upgrade', levelUpLeft - BUTTON.gap - BUTTON.width, null, () =>
-          menu.openUpgrades(member.dex)
+          menu.openUpgrades(slot)
         )}
         ${smallButton('levelup-' + slot, 'Level Up', levelUpLeft, menu.bag.refusal(member.uid), () =>
           menu.bag.levelUp(member.uid)
