@@ -324,3 +324,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
   and 1 to 6; E is a mirrored glitch button. Card shine dropped (it was in the sketch; I first said it was not). #171 filed.
 - Team menu arrow keys follow the cursor bar (slot buttons, slot, grid). Up from the box tabs left as is (Jess).
 - Stopped at: Jess's feel test of the whole slice, then close #97 slice C.
+
+## 2026-11-26 (Claude Code, home, afternoon), #97 and #145 closed, #172 filed, #146 opened
+- #97 slice C feel test passed; the only bug, "Needs Lv N" running past the buy button, now reads "Lv N". #97 closed;
+  the account-wide remainder is #172 (Character Upgrades).
+- #145 built test first: the damage class badge (Jess chose assets/icons/category over a text pill) beside the move name
+  in every move tooltip. Feel-tested, closed. Found: smoke-pause-menu's hex check fails with #97 upgrades (on #170).
+- Explained thin Gen 8 and 9 learnsets: the imported moves are all Gen 1 to 6, and the bake unions every game.
+- Stopped at: #146 slice opening written, four open decisions wait for Jess.
