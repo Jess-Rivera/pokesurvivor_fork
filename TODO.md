@@ -9,15 +9,10 @@ Run `node tools/catchup.js` (prints the briefing and the exact sync commands, wr
 node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. Slice C, the #97 Upgrade popup on the Team menu: opening on the issue, prose plan is the first job. Rulings: decisions
-   2026-11-23-97-139-team-menu-and-upgrade-popup-rulings and 2026-11-23-97-upgrade-system-redesign. Slice B (#139 Part F)
-   is feel-tested and done (2026-11-24); #139 stays open for 8b and 8c.
-   Known, waits on #158: the EXP Bag popup covers the bottom right portraits until it can be dragged.
-   Not driven in a browser: the two Settings rows, a full box's keyboard path to the tabs.
-1. #97 build (design doc "Numbers (draft)", docs/AI Outputs/Issue-97/; numbers drafted in #131, decision
-   2026-11-23-97-upgrade-price-shape-bst-and-bands). The no-UI part (cut five upgrades, base stat % in G.Stats, crit,
-   cooldown, regen from the profile) can go first. Split out: #164 (97b sidegrades), #165 (Mints, Capsules, Bottle
-   Caps). The #150 picker follows, then needs a learnset rebake with levels and the egg-move unlock data.
+0. Feel-test #97 slice C (Team menu, Upgrade on a slot; see the #97 comment of 2026-11-26), then close or fix.
+1. #97 remainder: Character Upgrades (account-wide list: Magnet, Card Reroll, Veto, PokeCoin %, Silver %, pockets),
+   then the #150 starting-move picker (needs a learnset rebake with levels and egg-move unlock data). Split out: #164
+   (97b sidegrades), #165 (Mints, Capsules, Bottle Caps), #169 (leaders with upgrades, blocked on slice C).
 1c. #166 run telemetry (ongoing data collection; feeds the #97 and #131 numbers). Slice opening first.
 2. #139 8b evolve, then grill friendship (docs/AI Outputs/Issue-139/139 - Friendship Minutes Deep Dive.md, [Open]),
    then 8c. #161 fatigue (stub) rides with it.
@@ -30,7 +25,8 @@ node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a
    #156 #159 #160; #29 in Blocked with no label. Triage: needs-triage on #74 #75 #93 #99 #100 #101 #102 #105 #107
    #156 #158.
 7. Owner decisions: the full list is in STATE.md "Open owner decisions" (catchup.js prints it with titles).
-8. Small issue ideas: "A Adamant Eevee" (An before a vowel nature, rescue and Lost toasts); region type maps,
+8. #170: smoke-pause-menu throws in its EV screen section (needs-triage).
+   Small issue ideas: "A Adamant Eevee" (An before a vowel nature, rescue and Lost toasts); region type maps,
    PARKED; Kanto T6 rolls no hordes; tools/make_seo_pages.py is missing;
    the 15 old tools/smoke-ui.js failures (run shops, catch window height, Shop balls) have no issue.
 9. Ask Jess: smoke-pause-menu "Cards Taken keeps its 400 px box" reads 401 since the closed #83; local branch

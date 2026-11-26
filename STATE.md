@@ -1,25 +1,27 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-24, home (Claude Code). Branch: feature/138-146-lost-and-full-box (covers #138 to #146).
+Last updated: 2026-11-26, home (Claude Code). Branch: feature/138-146-lost-and-full-box (covers #138 to #146).
 No branch rules file.
 
 ## START HERE
-Slice B, #139 Part F (Level Up, EXP Bag, XP bar) is done and feel-tested (Jess, 2026-11-24). Next: slice C, the #97
-Upgrade popup, prose plan first. TODO.md "Next" has the order. Run `node tools/catchup.js`.
+Slice C, the #97 Upgrade popup, is built (C1 to C3) and waits on Jess's feel test (#97 in Needs Playtest). After it:
+TODO.md "Next". Run `node tools/catchup.js`.
 
-## Landed 2026-11-24 (home)
-- #139 Part F: G.Candy levelUp, giveMany, levelProgress; js/ui/menu-team-exp-bag.js; bar.exp. Rulings: decision
-  2026-11-24-139-part-f-candy-in-the-team-menu. Plan and differences: docs/AI Outputs/Issue-139/.
-- #167 and #168 closed; decision 2026-11-24-167-team-menu-saves-at-once.
+## Landed 2026-11-26 (home)
+- Grilling of the popup plan: decision 2026-11-26-97-upgrade-popup-open-questions; #169 (leaders with upgrades) split out.
+- C1 per-copy upgrade catalog, prices and bands (js/data/upgrades.js); C2 raised base stats in G.Stats, crit, Cooldown,
+  Regeneration++ (field and bench); C3 the popup (js/ui/menu-upgrades.js). Plan and notes:
+  docs/AI Outputs/Issue-97/97 - Upgrade Popup Plan.md. Checks: upgrades-harness, tools/smoke-upgrade-popup.js.
+- The old upgrades and save.pupg are no longer read (Magnet, Fortune, Card Reroll, Veto return in Character Upgrades).
 
 ## Watch
-- The EXP Bag popup covers the bottom right portraits: temporary, until drag windows (#158).
-- Candy dragging has no saved browser check (driven by a throwaway script).
+- Starting moves are bought and saved but act only with #150. Shedinja's greyed HP card waits on #142.
+- tools/smoke-pause-menu.js throws in its EV screen section (predates slice C): #170.
+- The EXP Bag popup covers the bottom right portraits until #158.
 - PokeCoin income per run is estimated from the payout formula only (about 3,500 a full run); #166 replaces it.
-- The loop counter is dev-set in gym.js and the Elite Four is not built: "N rolls on loop N" is harness-proven only.
-- Board fixes are in TODO.md item 6. Canvas HUD holdouts in js/ui/hud.js stay (Jess).
 - tools/smoke-ui.js has 15 failures that predate #167 (run shop, catch window height, Shop balls).
+- assets/ui/upgrades/ art is unused since the old screen went.
 
 ## Open owner decisions
 - #166 slice opening (goal, done, test). #164 sidegrades (own grilling); #165 open items. Type-to-material map and

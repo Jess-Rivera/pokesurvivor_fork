@@ -309,3 +309,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
 - Chromium starts no browser drag while Shift is down, so candy is dragged by pointer. Toasts no longer take clicks.
 - Driven headless on file:// at 1920x1080 and 1280x720 (drags scaled down too). smoke-ui: the same 15 old failures.
 - Jess feel-tested it: all good; the popup's position waits for drag windows (#158). Stopped at: slice C (#97 popup).
+
+## 2026-11-26 (Claude Code, home), #97 slice C: Upgrade popup grilled and built
+- Grilled the plan's eight open questions (decision 2026-11-26-97-upgrade-popup-open-questions); #169 leaders split out.
+- C1 catalog, BST-star prices (3-star floor), OOR bands, per-upgrade save caps; old upgrades and save.pupg unread.
+- C2 raised bases in G.Stats (attackFactor, applyPlayerDefense, Player HP/Speed/dodge), crit, Cooldown, Regeneration++.
+- C3 the popup as a Team menu piece, sketch names, hover preview; old B/W screen removed; attack colour tokens added.
+- Found: smoke-pause-menu throws in the EV section before this slice too (#170). Stopped at: Jess's feel test of #97.
