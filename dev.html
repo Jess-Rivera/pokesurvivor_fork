@@ -110,6 +110,7 @@
     <link rel="stylesheet" href="css/bw-menu.css" />
     <link rel="stylesheet" href="css/bw-team.css" />
     <link rel="stylesheet" href="css/bw-inventory.css" />
+    <link rel="stylesheet" href="css/bw-keep-sell.css" />
     <link rel="stylesheet" href="css/bw-upgrades.css" />
     <link rel="stylesheet" href="css/bw-settings.css" />
     <link rel="stylesheet" href="css/bw-catch.css" />
@@ -617,6 +618,16 @@
       </div>
     </section>
 
+    <!-- ====== Keep or sell (#146; js/ui/keep-sell-ui.js, css/bw-keep-sell.css): the run's catches that did not fit the
+         Pokebox, one list over the Main Menu. Everything in it is drawn into #ks-window. ====== -->
+    <section id="scr-keepsell" class="scr dim hidden">
+      <div class="ks-host" translate="no">
+        <div class="pm-stage ks-stage">
+          <div id="ks-window" class="panel-clean"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ====== Team (fullscreen team editor, opened from the main menu) ====== -->
     <section id="scr-roster" class="scr hidden">
       <div class="tm-mosaic"></div>
@@ -948,6 +959,7 @@
     <script defer src="js/ui/run-ui.js"></script>
     <script defer src="js/ui/shop-ui.js"></script>
     <script defer src="js/ui/catch-ui.js"></script>
+    <script defer src="js/ui/keep-sell-ui.js"></script>
     <script defer src="js/ui/social-ui.js"></script>
     <script defer src="js/ui/ranking-ui.js"></script>
     <script defer src="js/ui/mod-ui.js"></script>

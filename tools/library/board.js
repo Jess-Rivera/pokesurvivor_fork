@@ -71,6 +71,8 @@ const NAV = [
           { id: 'main.shop.tms', title: 'main.shop.tms' },
           // the catch screen (Jess 2026-11-20)
           { id: 'catch.window', title: 'catch.window' },
+          // the keep-or-sell list when the Pokebox is full at a run's end (#146, Jess 2026-11-26)
+          { id: 'main.keepOrSell', title: 'main.keepOrSell' },
         ],
       },
       // no Pause group: the board ends at the primitives and the approved composites (decision

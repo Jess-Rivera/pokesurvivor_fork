@@ -119,6 +119,7 @@
     'RunUI',
     'ShopUI',
     'CatchUI',
+    'KeepSellUI',
     'SettingsUI',
     'Funding',
     'SupportUI',

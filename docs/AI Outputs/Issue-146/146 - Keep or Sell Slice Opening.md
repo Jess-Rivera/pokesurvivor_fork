@@ -1,4 +1,4 @@
-# 146 - Keep or Sell Slice Opening (child of #128, 2026-11-26, PROPOSED)
+# 146 - Keep or Sell Slice Opening (child of #128, 2026-11-26, AGREED 2026-11-26)
 
 Branch feature/138-146-lost-and-full-box. Rules: spec "docs/AI Outputs/Issue-128/Acquisition v2 - Spec.txt" section 3
 ("Catches are held until the run ends"), decision 2026-11-15-136-catch-on-contact-and-held-catch-rulings (C11 split this
@@ -40,7 +40,19 @@ A harness on the settle step, reading relations, not numbers:
 A headless smoke drives the list: fill the boxes, end a run with more catches than room, toggle Keep past the limit
 (refused), confirm, read the box and the coins.
 
-## Open decisions (Jess)
+## Answered 2026-11-26 (decision 2026-11-26-146-keep-or-sell-open-decisions)
+1. The list can also free places (into the Team menu to sell or release box copies, then back).
+2. Closing with the list unanswered sells every unplaced catch at once.
+3. The first catches that fit start as Keep.
+4. Sketched on the UI library board first.
+
+What this adds to Done and the test:
+- Done: the list has a "Make room" way into the Team menu; selling or releasing there raises the free places counter
+  when the list returns, and the Keep marks are kept. Reloading with the list open sells the unplaced catches.
+- Test: the settle harness also checks that freed places count (placed at most the free places after freeing), and
+  that a reload with the list unanswered leaves every held catch sold. The smoke adds a Make room round trip.
+
+## Open decisions (as asked)
 1. Making room: does the list only choose among the held catches, or can it also free places (a way into the Team
    menu to sell or release box copies, then back to the list)?
 2. Closing the game with the list unanswered: the list comes back on the next load (the held catches saved in a new

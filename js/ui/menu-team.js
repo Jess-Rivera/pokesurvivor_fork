@@ -6,6 +6,7 @@
  * marks, names); the pieces are menu-team-slots.js, menu-team-grid.js, menu-team-detail.js and menu-team-sell.js, each
  * handed the `menu` object below.
  *   saving  everything saves at once; Back (and Esc) leaves, Revert puts the roster back as it was on opening
+ *   leaving to the Main Menu, or to whoever opened it with onLeave (the keep-or-sell list's Make Room, #146)
  *   layout  the bars are a fixed size in real pixels; the team column is on the left, the detail panel on the right, and
  *           the grid takes the room between them. A window too small for that scales the panels down, never the bars
  *   candy   Level Up (Shift: +10) and the EXP Bag's candy, put on a slot, a portrait or the detail panel (#139 Part F)
@@ -516,7 +517,10 @@ G.MenuTeam = (() => {
     bag.close();
     stopMosaic();
     G.Audio.sfx(sound);
-    G.MenuUI.open();
+    const returnTo = onLeave;
+    onLeave = null;
+    if (returnTo) returnTo();
+    else G.MenuUI.open();
   }
   /** Esc: back one thing, then out. */
   function escape() {
@@ -904,7 +908,10 @@ G.MenuTeam = (() => {
   }
 
   // ---------- opening ----------
-  function open() {
+  let onLeave = null; // set by the keep-or-sell list's Make Room (#146): leaving goes back to it, not the Main Menu
+  /** options.onLeave: what Back, Esc and Revert lead to instead of the Main Menu (once). */
+  function open(options = {}) {
+    onLeave = options.onLeave || null;
     const save = G.DB.save;
     G.DB.normalizeTeam(save);
     state.draft = Draft.open(save);

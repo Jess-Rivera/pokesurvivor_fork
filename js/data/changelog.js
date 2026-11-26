@@ -21,6 +21,10 @@ G.CHANGELOG = [
     ],
     chg: [
       [
+        'When the Pokemon you caught in a run do not all fit in your Pokebox, you now choose which to keep and which to sell. Make Room takes you to the Team menu to sell Pokemon from your boxes, then back to the list. If you close the game without choosing, they are sold.',
+        'When the Pokemon you caught in a run do not all fit in your Pokebox, you now choose which to keep and which to sell. Make Room takes you to the Team menu to sell Pokemon from your boxes, then back to the list. If you close the game without choosing, they are sold.',
+      ],
+      [
         'The old upgrades (Vitality, Strength, Stride, Carapace, Wisdom, Fortune, Magnet, Card Reroll, Veto) no longer apply. Magnet, Card Reroll, Veto and a PokeCoin bonus will return as Character Upgrades.',
         'The old upgrades (Vitality, Strength, Stride, Carapace, Wisdom, Fortune, Magnet, Card Reroll, Veto) no longer apply. Magnet, Card Reroll, Veto and a PokeCoin bonus will return as Character Upgrades.',
       ],

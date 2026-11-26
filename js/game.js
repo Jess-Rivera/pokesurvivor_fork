@@ -613,18 +613,16 @@ G.Game = (() => {
       () => {
         pl = null;
         G.Flow.afterRun();
-        catchNotice(settled);
+        // #146: catches that did not all fit wait for the keep-or-sell list; otherwise the short notice
+        if (settled.pending.length) G.KeepSellUI.open();
+        else catchNotice(settled);
       }
     );
   }
 
-  /** #136: back at the menu, which catches joined the Pokebox and which a full box sold. */
+  /** #136: back at the menu, which catches joined the Pokebox (a full box holds them for the keep-or-sell list, #146). */
   function catchNotice(settled) {
-    const lines = [];
-    if (settled.placed.length) lines.push(settled.placed.join(', ') + ' joined your Pokebox!');
-    for (const sold of settled.sold)
-      lines.push('Your Pokebox is full: ' + sold.name + ' was sold for ' + sold.coins + ' PokeCoins.');
-    if (lines.length) G.UI.toast(lines.join(' '), 5000);
+    if (settled.placed.length) G.UI.toast(settled.placed.join(', ') + ' joined your Pokebox!', 5000);
   }
 
   /*
@@ -1560,6 +1558,7 @@ G.Flow = {
     G.MenuUI.init();
     G.GachaUI.init();
     G.InventoryUI.init();
+    G.KeepSellUI.init();
     G.SocialUI.init();
     G.RankingUI.init();
     G.ModUI.init();
@@ -1626,6 +1625,12 @@ G.Flow = {
         note: 'Your old save is kept in this browser as a backup.',
         noCancel: true,
       });
+    // #146: the game closed with the keep-or-sell list unanswered, so the catches it held are sold now
+    const unanswered = G.Catch.heldCatches(G.DB.save).length ? G.Catch.sellHeld(G.DB.save) : null;
+    if (unanswered) {
+      G.DB.commit();
+      G.UI.toast('Your keep-or-sell list was left open: ' + G.KeepSellUI.noticeOf(unanswered), 5000);
+    }
     if (!G.DB.save.partner) G.TestUI.start();
     else this.goMenu();
   },

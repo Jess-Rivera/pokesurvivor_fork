@@ -263,17 +263,17 @@ const natureId = (name) => G.SpeciesTraits.NATURES.findIndex((n) => n[0] === nam
   const kept = C.settle(true, save), copy = save.box[save.box.length - 1];
   if (save.box.length !== box0 + 1 || kept.placed.length !== 1 || C.held.length) bad('a kept run end places each held catch once');
   if (!copy || copy.d !== 147 || copy.m !== 'r' || copy.n !== nat) bad('the copy is the species, method rescue, the nature of the rescue: ' + JSON.stringify(copy));
-  // a full box sells the overflow at the copy's price
+  // a full box places nothing: the catch waits in the save for the keep-or-sell list (#146, keep-sell-harness.js)
   const full = { coins: 0, belt: { size: 6, poke: 6 }, boxCount: save.boxCount, owned: {}, shiny: {},
     box: Array.from({ length: 500 * save.boxCount }, (_, i) => (i >= 500 ? { u: 'x' + i, d: 1, b: Math.floor(i / 500) } : { u: 'x' + i, d: 1 })) };
   const realSave = G.DB.save; refill(full);
   // begin and throwBall read the loaded save's belt; settle writes the save it is given
   C.begin(result(147, nat, 1)); C.throwBall('poke', () => 0);
   const sold = C.settle(true, full);
-  if (full.box.length !== 500 * save.boxCount || sold.sold.length !== 1 || !(full.coins > 0)) bad('a full box sells the overflow for coins');
+  if (full.box.length !== 500 * save.boxCount || sold.pending.length !== 1 || full.coins !== 0 || full.heldCatches.length !== 1) bad('a full box holds the catch for the keep-or-sell list');
   if (realSave !== G.DB.save) bad('the test save stays loaded');
   refill();
-  console.log('6d held until the run ends: a quit loses them, a kept end places them with their nature, a full box sells'); }
+  console.log('6d held until the run ends: a quit loses them, a kept end places them with their nature, a full box holds them for the list'); }
 { // 6e the shown band (Jess, 2026-11-16): 2 x bandAccuracy wide, always holds the true chance, inside 0 to 100, off-centre by the
   // catch's own shift; one shift per catch, so the same shift keeps a higher chance's range at or above a lower one's
   const reach = CK.bandAccuracy, shifts = [-reach, -reach / 2, 0, reach / 2, reach];

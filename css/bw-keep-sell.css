@@ -1,0 +1,52 @@
+/* ============ bw-keep-sell.css: the keep-or-sell list (#146; js/ui/keep-sell-ui.js) ============
+ * Board page main.keepOrSell (tools/library/keep-sell-draft.js). A panel.clean window centred on the menu screens'
+ * 1920 x 1080 stage, over the dimmed Main Menu. Places of the drawn pieces come from keep-sell-ui.js.
+ */
+#scr-keepsell {
+  z-index: 61; /* over the Main Menu, under the shared ask dialog (62) */
+}
+.ks-host {
+  position: absolute;
+  inset: 0;
+  --pm-scale: 1;
+}
+#ks-window {
+  position: absolute;
+  left: 580px; /* (1920 - 760) / 2 */
+  top: 260px; /* (1080 - 560) / 2 */
+  width: 760px;
+  height: 560px;
+}
+.ks-pane {
+  position: absolute;
+  inset: 0;
+  font-synthesis: none;
+  user-select: none;
+}
+.ks-pane > *,
+.ks-text,
+.ks-toggle {
+  position: absolute;
+}
+.ks-text {
+  white-space: nowrap;
+}
+.ks-row {
+  cursor: pointer;
+}
+.ks-frame {
+  position: relative;
+}
+/* a Sell row: panel.shopCard's grey.raised body with the plain slate edge */
+.panel-clean.ks-frame-sell {
+  background: var(--color-grey-raised);
+}
+.ks-toggle {
+  top: 0;
+  display: flex;
+  align-items: center;
+}
+.ks-toggle .toggle-power {
+  font-size: 14px;
+  pointer-events: none; /* the row takes the click */
+}

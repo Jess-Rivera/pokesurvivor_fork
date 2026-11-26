@@ -24,9 +24,10 @@
  *            js/data/balls.js.
  *   held     every catch of a run is held, never placed mid-run. At the run end (settle): kept when the run ends with its EVs
  *            (a fall, a crash), all lost on a quit (End Run, signing out). Kept ones become copies (method rescue, the
- *            rescue's nature); a full box sells the overflow at the copy's price (G.DB.obtain). A recruited Lost
- *            Pokemon (#138, js/systems/events.js) is held the same way, through hold().
- * Checks: docs/proposals/rescue-harness.js (part 6).
+ *            rescue's nature). Without room for all, none is placed: they wait in save.heldCatches for the
+ *            keep-or-sell list (#146, resolve), and a game closed before answering sells them on the next load
+ *            (sellHeld). A recruited Lost Pokemon (#138, js/systems/events.js) is held the same way, through hold().
+ * Checks: docs/proposals/rescue-harness.js (part 6), docs/proposals/keep-sell-harness.js.
  */
 G.Catch = (() => {
   const K = {
@@ -393,20 +394,65 @@ G.Catch = (() => {
     session = null;
   }
 
-  /** The run ended. keep: the run ended with its EVs (a fall, a crash), so every held catch becomes a copy; otherwise (a quit)
-   *  all are lost. Returns { placed: [names], sold: [{ name, coins }] } for the main menu notice. */
+  /** The run ended. keep: the run ended with its EVs (a fall, a crash), so the held catches are kept; otherwise (a quit)
+   *  all are lost. With room for every one, each becomes a copy at once. Without, none is placed: they wait in
+   *  save.heldCatches for the keep-or-sell list (#146, js/ui/keep-sell-ui.js), saved by the run end's commit.
+   *  Returns { placed: [names], pending: [held catches] }. */
   function settle(keep, s = save()) {
-    const out = { placed: [], sold: [] };
+    const out = { placed: [], pending: [] };
     const list = held;
     held = [];
     session = null;
-    if (!keep || !s) return out;
+    if (!keep || !s || !list.length) return out;
+    if (list.length > G.Copies.freePlaces(s)) {
+      s.heldCatches = list.map((h) => ({ ...h }));
+      out.pending = s.heldCatches.slice();
+      return out;
+    }
     for (const h of list) {
-      const got = G.DB.obtain(h.dex, false, 'rescue', s, h.nature);
-      if (got.sold) out.sold.push({ name: h.name, coins: got.sold });
-      else out.placed.push(h.name);
+      G.DB.obtain(h.dex, false, 'rescue', s, h.nature);
+      out.placed.push(h.name);
     }
     return out;
+  }
+
+  /** The catches waiting for the keep-or-sell list (an old save has none). */
+  const heldCatches = (s = save()) => (s && Array.isArray(s.heldCatches) ? s.heldCatches : []);
+
+  /** Sells one waiting catch at its species' price. Returns the { name, coins } line for the notice. */
+  function sellHeldCatch(h, s) {
+    const coins = G.Copies.priceFor(h.dex, false);
+    s.coins = (Math.floor(+s.coins) || 0) + coins;
+    return { name: h.name, coins };
+  }
+
+  /**
+   * The keep-or-sell list's answer (#146). keeps[i]: keep save.heldCatches[i]. Refused, changing nothing, when the Keeps
+   * are more than the free places. Otherwise each Keep becomes a copy, every other catch is sold, and the list is cleared.
+   * @returns { ok: true, placed: [names], sold: [{ name, coins }], coins } | { ok: false, error: 'room' }
+   */
+  function resolve(keeps, s = save()) {
+    const list = heldCatches(s),
+      keptCount = list.filter((h, i) => keeps[i]).length;
+    if (keptCount > G.Copies.freePlaces(s)) return { ok: false, error: 'room' };
+    const out = { ok: true, placed: [], sold: [], coins: 0 };
+    list.forEach((h, i) => {
+      if (keeps[i]) {
+        G.DB.obtain(h.dex, false, 'rescue', s, h.nature);
+        out.placed.push(h.name);
+        return;
+      }
+      const line = sellHeldCatch(h, s);
+      out.sold.push(line);
+      out.coins += line.coins;
+    });
+    delete s.heldCatches;
+    return out;
+  }
+
+  /** The game closed with the list unanswered: on the next load every waiting catch is sold (#146). Same shape as resolve. */
+  function sellHeld(s = save()) {
+    return resolve([], s);
   }
 
   return {
@@ -442,6 +488,9 @@ G.Catch = (() => {
     hold,
     letGo,
     settle,
+    heldCatches,
+    resolve,
+    sellHeld,
     get held() {
       return held.slice();
     },

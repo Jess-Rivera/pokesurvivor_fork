@@ -33,6 +33,7 @@ const DRAW = {
   'main.shop.items': shopPage('main.shop.items'),
   'main.shop.tms': shopPage('main.shop.tms'),
   'catch.window': catchPage,
+  'main.keepOrSell': keepSellPage,
 };
 // the shared fills the pixel shapes paint with (G.Lib.Pixels.PixelPatterns), once for the whole board
 const patternHost = document.createElement('div');

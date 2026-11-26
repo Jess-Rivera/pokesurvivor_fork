@@ -31,6 +31,7 @@ G.UI = (() => {
     'scr-inventory',
     'scr-shop', // Move Shop step 4 (js/ui/shop-ui.js), so hideAll closes it too
     'scr-catch', // #136 (js/ui/catch-ui.js), so hideAll closes it too
+    'scr-keepsell', // #146 (js/ui/keep-sell-ui.js), so the Team menu (Make Room) covers it
   ];
 
   function show(id, keepMenu = false) {
