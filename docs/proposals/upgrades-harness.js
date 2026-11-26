@@ -5,7 +5,8 @@
 // read from the design ("97 - Upgrade System Design.md", "Numbers (draft)") and decisions
 // 2026-11-23-97-upgrade-price-shape-bst-and-bands and 2026-11-26-97-upgrade-popup-open-questions, never values copied
 // from the code. The 3-star price lists below are the design's own table.
-// Not covered here: stats and combat (C2), the popup and its hover preview (C3, browser).
+// C2 adds section 7 (G.Stats); the Player reads (crit, cooldown, regen on the field and bench) are in
+// player-entity-harness.js. Not covered here: the popup and its hover preview (C3, browser).
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const SRC = { 'js/data/upgrades.js': 'UPGRADES_UPGRADES', 'js/systems/copies.js': 'UPGRADES_COPIES' };
@@ -16,7 +17,7 @@ global.window = global; global.location = { search: '' };
 global.localStorage = { getItem: () => null, setItem() { }, removeItem() { } };
 global.G = new Proxy({}, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 let fail = 0; const bad = m => { fail++; if (fail < 40) console.log('FAIL', m); };
-for (const p of ['js/data/pokedex.js', 'js/data/species-traits.js', 'js/systems/copies.js', 'js/data/growth-curves.js',
+for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/species-traits.js', 'js/systems/copies.js', 'js/data/growth-curves.js',
   'js/systems/candy.js', 'js/data/upgrades.js'])
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); }
 let T = null;
@@ -143,6 +144,42 @@ const giveOor = (s, uid, oor) => G.Copies.addCandyXp(s, uid, G.Candy.xpForLevel(
   const hand = U.summary({ crit: 50, baseHp: 'x' });
   if (hand.critChance > full.critChance || hand.baseStatMul[0] !== 1) bad('a hand-edited level gave more than the maximum');
   console.log('summary: neutral at none, the design caps at max, one level touches one stat'); }
+
+// ---------- 7. G.Stats reads the copy's upgrades (C2) ----------
+{ const S = G.Stats, s = fresh(), plainId = addCopy(s, BULBASAUR), upId = addCopy(s, BULBASAUR);
+  const raw = id => s.box.find(c => c.u === G.Copies.shortId(id));
+  raw(upId).i = raw(plainId).i; raw(upId).n = raw(plainId).n; delete raw(upId).e; delete raw(plainId).e; // same IVs and nature
+  const plain = G.Copies.profileOf(s, plainId, BULBASAUR);
+  if (plain.baseMul.some(m => m !== 1) || plain.critChance || plain.cooldownMul !== 1 || plain.regenPerSecond) bad('a copy with no upgrades is not neutral in its profile');
+  const beforeUpgrades = { iv: plain.iv, nat: plain.nat, ev: plain.ev }; // the profile's shape before #97
+  for (const upgrade of U.LIST) G.Copies.setUpgradeLevel(s, upId, upgrade.id, upgrade.levels);
+  const raised = G.Copies.profileOf(s, upId, BULBASAUR), full = U.summary(G.Copies.get(s, upId).upgrades);
+  if (JSON.stringify(raised.baseMul) !== JSON.stringify(full.baseStatMul) || raised.critChance !== full.critChance || raised.cooldownMul !== full.cooldownMul || raised.regenPerSecond !== full.regenPerSecond)
+    bad('the profile does not carry the summary of the copy upgrades');
+  if (JSON.stringify(raised.iv) !== JSON.stringify(plain.iv) || JSON.stringify(raised.nat) !== JSON.stringify(plain.nat)) bad('upgrades changed the IVs or nature');
+  // a raised base never lowers a stat, for every species, stat and level; and it raises some stat at level 50
+  let lowered = 0, raisedSome = 0;
+  for (const mon of G.DEX) for (let k = 0; k < 6; k++) for (const level of [1, 10, 50, 100]) {
+    const from = mon.stats[k], to = S.raisedBase(from, raised, k);
+    const a = k ? S.statValue(from, level, 31, 252, 1.1) : S.hpForLevel(from, level, 31, 252);
+    const b = k ? S.statValue(to, level, 31, 252, 1.1) : S.hpForLevel(to, level, 31, 252);
+    if (b < a) lowered++;
+    if (level === 50 && b > a) raisedSome++;
+  }
+  if (lowered) bad(lowered + ' species, stat and level cases where a raised base lowered the stat');
+  if (!raisedSome) bad('a maxed base stat raised nothing at level 50');
+  if (S.raisedBase(80, null, 1) !== 80 || S.raisedBase(80, S.NEUTRAL_PROFILE, 1) !== 80) bad('no profile or the neutral one changed a base');
+  if (Math.abs(S.raisedBase(45, raised, 0) - 45 * 1.15) > 1e-9) bad('the raised base lost its fraction');
+  // the combat halves: more damage dealt, less taken; a status move takes no upgrade
+  const phys = { dmg: 60, cat: 'physical' }, spec = { dmg: 60, cat: 'special' }, status = { dmg: 60, cat: 'status' };
+  if (!(S.attackFactor(49, 65, 50, phys, 1, raised) > S.attackFactor(49, 65, 50, phys, 1, plain))) bad('a raised Atk did not raise the physical factor');
+  if (!(S.attackFactor(49, 65, 50, spec, 1, raised) > S.attackFactor(49, 65, 50, spec, 1, plain))) bad('a raised SpA did not raise the special factor');
+  if (S.attackFactor(49, 65, 50, status, 1, raised) !== S.attackFactor(49, 65, 50, status, 1, plain)) bad('a status move took the upgrade');
+  for (const cat of ['physical', 'special'])
+    if (!(S.applyPlayerDefense(5000, 49, 65, cat, 50, 1, raised) < S.applyPlayerDefense(5000, 49, 65, cat, 50, 1, plain))) bad('a raised ' + cat + ' defense did not cut the damage taken');
+  if (S.applyPlayerDefense(5000, 49, 65, 'physical', 50, 1, plain) !== S.applyPlayerDefense(5000, 49, 65, 'physical', 50, 1, beforeUpgrades)) bad('a copy with no upgrades takes other damage than before #97');
+  if (S.attackFactor(49, 65, 50, phys, 1, plain) !== S.attackFactor(49, 65, 50, phys, 1, beforeUpgrades)) bad('a copy with no upgrades deals other damage than before #97');
+  console.log('G.Stats: the profile carries the upgrades; a raised base never lowers a stat; neutral plays as before'); }
 
 console.log(fail ? 'upgrades harness: ' + fail + ' FAIL' : 'upgrades harness: all passed');
 process.exit(fail ? 1 : 0);

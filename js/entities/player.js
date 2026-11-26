@@ -12,11 +12,14 @@
 G.PlayerEntity = class PlayerEntity {
   /**
    * @param mon   entrada de G.DEX
-   * @param perks mejoras permanentes ya resueltas (ver data/upgrades.js)
+   * @param legacyPerks unread (#97: a copy's upgrades come in statProf); kept in place since every caller, the deferred
+   *   co-op code included, passes {} here
    * @param statProf the team copy's IVs, EVs and nature (G.Stats.profile, pokebox steps 4 and 5); none plays neutral
    */
-  constructor(mon, perks = {}, shiny = false, statProf = null) {
+  constructor(mon, legacyPerks = {}, shiny = false, statProf = null) {
     this.mon = mon;
+    // IVs, EVs, nature and upgrades from the copy (G.Stats.profile; pokebox steps 4 and 5, #97)
+    this.statProf = statProf || G.Stats.NEUTRAL_PROFILE;
     this.dex = mon.dex;
     this.shiny = shiny && G.Sprites.hasShiny(mon.dex);
     this.anim = new G.Sprites.Animator(mon.dex, 1, this.shiny);
@@ -25,13 +28,13 @@ G.PlayerEntity = class PlayerEntity {
     this.r = G.Sprites.bodyRadius(mon.dex);
     this.bodyH = G.Sprites.bodyHeight(mon.dex);
 
-    this.atkMul = perks.atkMul || 1;
+    this.atkMul = 1;
     this.physMul = 1; // held items that boost one damage category (G.Stats.itemCatMul)
     this.specMul = 1;
     this.defItemMul = 1; // held items that raise Def and Sp. Def (Eviolite, Metal Powder), read in hurt()
-    this.spdMul = perks.spdMul || 1;
-    this.cdMul = perks.cdMul || 1;
-    this.dmgReduce = perks.dmgReduce || 0;
+    this.spdMul = 1;
+    this.cdMul = this.statProf.cooldownMul || 1; // Reflexes (#97), move cooldowns only; cooldown items multiply on top
+    this.dmgReduce = 0;
     this.moveRadiusMul = 1; // Wide Lens / Zoom Lens: scales move radius + arc for this holder (F3b lens slice)
     this.typeBoost = null; // type-damage held items (Charcoal, Mystic Water, ...): +20% to moves of this type (F3b)
     // ---- F3c run-item flags (team-wide; set by equipRun on/off). Effects read in get spd / G.Combat / typeK. ----
@@ -41,34 +44,32 @@ G.PlayerEntity = class PlayerEntity {
     this.redo = false; // once-per-run full-team revive on final death
     this.pikaTear = false; // +1.1x damage & speed per fainted teammate
     this.stoneType = null; // Power Stone: this type's moves ignore resistance + immunity (typeK)
-    this.regenFlat = perks.regen || 0;
+    this.regenFlat = 0; // flat HP a second from held items; the copy's Regeneration++ is in the regen getter
 
-    // Mainline-scaled HP from the real base HP stat (stats[0]); grows with run level.
-    // perks.hp (flat HP upgrades) still adds on top. IVs, EVs and nature from the copy (statProf, pokebox steps 4 and 5).
-    this.perksHp = perks.hp || 0;
-    this.statProf = statProf || G.Stats.NEUTRAL_PROFILE;
+    // Mainline-scaled HP from the real base HP stat (stats[0]), raised by the copy's upgrade; grows with run level.
     // Stat cards (upgrade rework slice 2c): sum of increased percentages per stat, absent = 0.
     this.inc = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
     this.badge = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }; // run-long gym badge boosts (systems/gym.js), kept apart from the stat cards
     this.baseHpStat = mon.stats && mon.stats[0] != null ? mon.stats[0] : null;
-    const hp1 =
-      this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1, this.statIv(0), this.statEv(0)) : mon.hp;
-    this.maxHp = hp1 + this.perksHp;
+    this.maxHp =
+      this.baseHpStat != null
+        ? G.Stats.hpForLevel(G.Stats.raisedBase(this.baseHpStat, this.statProf, 0), 1, this.statIv(0), this.statEv(0))
+        : mon.hp;
     this.hp = this.maxHp;
     // Movement from the real base Speed stat (stats[5]) via the identity model;
     // fall back to the old pre-derived mon.spd if stats are somehow absent.
     this.baseSpd =
       mon.stats && mon.stats[5] != null
-        ? G.Stats.speedToPx(mon.stats[5], this.statIv(5), this.statNat(5), this.statEv(5))
+        ? G.Stats.speedToPx(this.raisedBaseStat(5), this.statIv(5), this.statNat(5), this.statEv(5))
         : mon.spd;
     // #123: Speed's identity shows in how fast spent dodge charges come back (1 at the median, and with no stats)
     this.speciesDodgeRate =
       mon.stats && mon.stats[5] != null
-        ? G.Stats.dodgeRechargeRate(mon.stats[5], this.statIv(5), this.statNat(5), this.statEv(5))
+        ? G.Stats.dodgeRechargeRate(this.raisedBaseStat(5), this.statIv(5), this.statNat(5), this.statEv(5))
         : 1;
     this.baseAtk = mon.atk;
     // Real base Atk/SpA (stats[1]/stats[3]) for the A/D damage model; scale with run level
-    // via G.Stats. Fallback 50 keeps a mon with no stats array working.
+    // via G.Stats, which raises them by statProf. Fallback 50 keeps a mon with no stats array working.
     this.baseAtkStat = mon.stats && mon.stats[1] != null ? mon.stats[1] : 50;
     this.baseSpAStat = mon.stats && mon.stats[3] != null ? mon.stats[3] : 50;
     this.myTypes = mon.types || [];
@@ -87,7 +88,7 @@ G.PlayerEntity = class PlayerEntity {
 
     this.level = 1;
     this.rerolls = 0; // veces que ha cambiado las cartas de nivel en esta run
-    this.critChance = perks.crit || 0; // critical hit chance (Upgrades)
+    this.critChance = this.statProf.critChance || 0; // the copy's Critical Hit upgrade (#97); crit items add on top
     this.critDmgMul = 1; // on top of the base crit multiplier (Leek)
     this.banned = new Set(); // movimientos vetados (Mejoras → Veto): no salen en las cartas
     this.bind = {}; // movimiento -> hueco fijo (0-3), elegido en Mejoras
@@ -178,10 +179,19 @@ G.PlayerEntity = class PlayerEntity {
       this.statProf
     ); // run items (Brass Knuckles, Pikachu's Tear, Snowball); statProf: this copy's IVs and nature
   }
-  /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
+  /** Max HP at `level`: mainline HP from the raised base, x (1 + HP Up percentages). */
   maxHpAt(level) {
-    const hp = G.Stats.hpForLevel(this.baseHpStat, level, this.statIv(0), this.statEv(0));
-    return Math.round(hp * (1 + this.incOf('hp'))) + this.perksHp;
+    const hp = G.Stats.hpForLevel(
+      G.Stats.raisedBase(this.baseHpStat, this.statProf, 0),
+      level,
+      this.statIv(0),
+      this.statEv(0)
+    );
+    return Math.round(hp * (1 + this.incOf('hp')));
+  }
+  /** Species base stat i (HP, Atk, Def, SpA, SpD, Spe) raised by this copy's upgrade (#97, G.Stats.raisedBase). */
+  raisedBaseStat(i) {
+    return G.Stats.raisedBase(this.mon.stats[i], this.statProf, i);
   }
   /** This copy's IV for stat i (HP, Atk, Def, SpA, SpD, Spe), 0 with no profile (pokebox step 4). */
   statIv(i) {
@@ -265,8 +275,13 @@ G.PlayerEntity = class PlayerEntity {
   get reduction() {
     return Math.min(0.8, this.dmgReduce);
   }
+  /** HP a second on the field: held items, Aqua Ring style stages and the copy's Regeneration++ (#97). */
   get regen() {
-    return this.regenFlat + G.Stages.teamSum(this.stgTeam, 'regen');
+    return this.regenFlat + G.Stages.teamSum(this.stgTeam, 'regen') + this.copyRegen;
+  }
+  /** The copy's Regeneration++ (#97) in HP a second: a fraction of max HP, on the field and on the bench. */
+  get copyRegen() {
+    return this.statProf && this.statProf.regenPerSecond ? this.maxHp * this.statProf.regenPerSecond : 0;
   }
 
   // ---------------- movimientos ----------------
@@ -756,8 +771,9 @@ G.PlayerEntity = class PlayerEntity {
         cat = atk.cat === 'special' ? 1 : 0;
         dStat =
           (cat === 1
-            ? G.Stats.spDef(spdB, this.level, this.statIv(4), this.statEv(4), this.statNat(4))
-            : G.Stats.defense(defB, this.level, this.statIv(2), this.statEv(2), this.statNat(2))) * defMul;
+            ? G.Stats.spDef(this.raisedBaseStat(4), this.level, this.statIv(4), this.statEv(4), this.statNat(4))
+            : G.Stats.defense(this.raisedBaseStat(2), this.level, this.statIv(2), this.statEv(2), this.statNat(2))) *
+          defMul;
       }
       amount = atk.neutral
         ? (amount / G.Stats.PROP_DEF + 2) * scale * mul // a status-category hit on a gym leader that authors wildStatusDivisor (#41): the neutral denominator
@@ -907,6 +923,7 @@ G.PlayerEntity = class PlayerEntity {
     // Slice 5b HP Regen card: benched members only (a reason to swap); no floating number on the bench (Jess, 2026-10-31)
     const rg = this.teamCards ? G.TeamCards.regen(this.teamCards) : 0;
     if (rg > 0 && !this.dead && this.hp < this.maxHp) this.restoreHp(rg * this.maxHp * dt);
+    if (this.copyRegen > 0 && !this.dead && this.hp < this.maxHp) this.restoreHp(this.copyRegen * dt); // #97, field and bench
     this.benched = false;
   }
 
@@ -1229,17 +1246,17 @@ G.PlayerEntity.prototype.controller = G.PlayerEntity.IDLE;
  * and chests when none is near), and the co-op follow. Set after the base constructor, which never reads them.
  */
 G.HumanPlayer = class HumanPlayer extends G.PlayerEntity {
-  constructor(mon, perks = {}, shiny = false, statProf = null) {
-    super(mon, perks, shiny, statProf);
-    this.magnet = 120 * (perks.magnetMul || 1); // pull radius for XP orbs, the permanent upgrade scales it
+  constructor(mon, legacyPerks = {}, shiny = false, statProf = null) {
+    super(mon, legacyPerks, shiny, statProf);
+    this.magnet = 120; // pull radius for XP orbs (the old Magnet upgrade returns in Character Upgrades, #97)
     this.itemMagnet = 78; // pull radius for every other pickup (coins, berries, items, magnet, bomb), fixed
-    this.xpMul = perks.xpMul || 1;
-    this.coinMul = perks.coinMul || 1;
+    this.xpMul = 1;
+    this.coinMul = 1;
     this.xp = 0;
     this.xpNext = HumanPlayer.xpFor(1);
     this.kills = 0;
     this.bosses = 0;
-    this.rerollBonus = perks.rerolls || 0; // rerolls bought in Upgrades (plus the free one)
+    this.rerollBonus = 0; // bought rerolls on top of the free one (the old Card Reroll upgrade returns in Character Upgrades)
     this.coins = 0; // coins picked up this run
   }
 

@@ -150,7 +150,7 @@ const HUMAN = ['magnet', 'itemMagnet', 'xpMul', 'coinMul', 'xp', 'xpNext', 'kill
   ok(!onBase.length, 'a bare Player entity has none of the human fields' + (onBase.length ? ' (has: ' + onBase.join(' ') + ')' : ''));
   const v = HUMAN.map((k) => h[k]).join();
   ok(v === '120,78,1,1,0,7,0,0,0,0', 'human defaults: magnets 120 and 78, x1 XP and coins, 7 XP to level 2, all counts 0 (' + v + ')');
-  ok(hp.magnet === 240 && hp.xpMul === 1.5 && hp.coinMul === 2 && hp.rerollBonus === 1, 'human perks: magnet x2, XP x1.5, coins x2, 1 bought reroll');
+  ok(HUMAN.map((k) => hp[k]).join() === v, 'old perks are no longer read (#97): a human built with them has the defaults');
   ok(e.level === 1 && h.level === 1 && e.rerolls === 0 && e.maxHp === h.maxHp && e.maxHp > 0, 'level, rerolls used and max HP stay on the base, equal on both');
   ok(e.bonds === 0 && h.bonds === 0, 'links start at 0 on both');
 }
@@ -325,6 +325,31 @@ ok(HP.prototype.controller === HP.KEYBOARD, 'the human defaults to the KEYBOARD 
   ok(count(fxText) === 3, 'move-effects.js: 3 isPlayer rules (' + count(fxText) + ')');
   ok(/if \(e\.isPlayer\) return hitPlayer\(inst, e, hop, rng\);/.test(strip(fxText)), 'move-effects.js: the third is the target routing in applyHit (slice 4a, H3)');
   ok(count(ps) === 1 && /this\.isPlayer = true;/.test(baseBody), 'player.js: isPlayer is set once, on the base');
+}
+
+// #97 slice C2: the copy's upgrades travel in statProf. Profiles are built by hand here (G.Upgrades.summary has its own
+// checks in upgrades-harness.js); the relations are the design's: a raised base never lowers a stat, Critical Hit adds
+// chance, Reflexes cuts move cooldowns, Regeneration++ heals a fraction of max HP a second on the field and the bench.
+{
+  const upgraded = { ...G.Stats.NEUTRAL_PROFILE, baseMul: [1.15, 1.15, 1.15, 1.15, 1.15, 1.15], critChance: 0.1, cooldownMul: 0.9, regenPerSecond: 0.005 };
+  const plain = new PE(MON),
+    raised = new PE(MON, {}, false, upgraded),
+    hit = { dmg: 60, cat: 'physical' },
+    special = { dmg: 60, cat: 'special' };
+  ok(raised.maxHp >= plain.maxHp && raised.maxHpAt(50) > plain.maxHpAt(50), '#97: a raised HP base never lowers max HP and raises it at level 50');
+  ok(raised.baseSpd >= plain.baseSpd && raised.speciesDodgeRate >= plain.speciesDodgeRate, '#97: a raised Speed base never lowers movement or dodge recharge');
+  raised.level = plain.level = 50;
+  ok(raised.moveFactor(hit) > plain.moveFactor(hit) && raised.moveFactor(special) > plain.moveFactor(special), '#97: raised Atk and SpA bases raise the attacker factor');
+  ok(plain.critChance === 0 && near(raised.critChance, 0.1), '#97: Critical Hit is the base crit chance of the copy');
+  ok(plain.cdMul === 1 && near(raised.cdMul, 0.9), '#97: Reflexes sets the move cooldown multiplier');
+  ok(plain.regen === 0 && near(raised.regen, raised.maxHp * 0.005), '#97: Regeneration++ on the field is a fraction of max HP a second');
+  raised.hp = raised.maxHp - 50;
+  plain.hp = plain.maxHp - 50;
+  const before = raised.hp;
+  raised.benchUpdate(1);
+  plain.benchUpdate(1);
+  ok(near(raised.hp - before, raised.maxHp * 0.005) && plain.hp === plain.maxHp - 50, '#97: Regeneration++ heals on the bench; no upgrade, no heal');
+  ok(new PE(MON, {}, false, G.Stats.NEUTRAL_PROFILE).maxHp === plain.maxHp, '#97: the neutral profile plays as no profile');
 }
 
 console.log(fail ? 'player-entity harness: ' + fail + ' of ' + n + ' checks FAILED' : 'player-entity harness: ' + n + '/' + n + ' checks passed');

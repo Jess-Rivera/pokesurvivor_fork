@@ -153,20 +153,23 @@ G.PausePokemon = (() => {
   // HP is drawn at its mainline size (Jess, 2026-11-11): the game doubles every HP (HP_SCALAR, COMBAT-RULES), which would
   // make HP tower over the other five; mainline matches the online calculators and the other stats' scale.
   const mainlineHp = (gameHp) => gameHp / (G.Stats.HP_SCALAR || 1);
-  /** The six stats ([HP, Atk, Def, SpA, SpD, Spe]) at `level` from base stats, IVs, EVs and nature (G.Stats), HP mainline. */
+  /** The six stats ([HP, Atk, Def, SpA, SpD, Spe]) at `level` from base stats raised by the copy's upgrades, IVs, EVs and
+   *  nature (G.Stats), HP mainline. The raised base is part of the starting band (#95, #97). */
   function statsAt(member, level) {
     const base = (member.mon && member.mon.stats) || [0, 0, 0, 0, 0, 0];
-    return base.map((baseStat, index) =>
-      index === 0
-        ? mainlineHp(G.Stats.hpForLevel(baseStat, level, member.statIv(0), member.statEv(0)))
-        : G.Stats.statValue(baseStat, level, member.statIv(index), member.statEv(index), member.statNat(index))
-    );
+    return base
+      .map((speciesBase, index) => G.Stats.raisedBase(speciesBase, member.statProf, index))
+      .map((baseStat, index) =>
+        index === 0
+          ? mainlineHp(G.Stats.hpForLevel(baseStat, level, member.statIv(0), member.statEv(0)))
+          : G.Stats.statValue(baseStat, level, member.statIv(index), member.statEv(index), member.statNat(index))
+      );
   }
   /** { start, now, withRun, bonus }: six numbers each (bonus a fraction, 0.1 = +10%). */
   function hexNumbers(member) {
     const start = statsAt(member, 1),
       now = statsAt(member, member.level),
-      maxHp = mainlineHp(Math.round(member.maxHp)); // the real max HP: HP Up cards and flat perks on top
+      maxHp = mainlineHp(Math.round(member.maxHp)); // the real max HP: HP Up cards on top
     const bonus = now.map((value, index) => {
       if (index === 0) return value > 0 ? Math.max(0, maxHp / value - 1) : 0;
       const key = HEX_AXES.find(([statIndex]) => statIndex === index)[2];

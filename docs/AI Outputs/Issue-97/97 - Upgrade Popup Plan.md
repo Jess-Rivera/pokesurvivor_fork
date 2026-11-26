@@ -41,6 +41,12 @@ with no old perks, and the random second starting move goes until #150) and js/c
 save.pupg cleaner go; the field stays in the save, unread). Prices: the design's listed 3-star price is rounded to 10
 first, then times stars / 3, rounded again.
 
+C2 built 2026-11-26. The raise happens in G.Stats (raisedBase, also inside attackFactor and applyPlayerDefense through
+the profile) and in the Player's HP, Speed and dodge reads. The bench regen is in PlayerEntity.benchUpdate
+(js/entities/player.js), not js/game.js. The Player's old perks argument is unread but kept, since the deferred co-op
+code passes it. The leader planner's view of you stays species stats only (as for IVs). Checks: upgrades-harness
+section 7, player-entity-harness, smoke-pause-menu (no yellow band at run start for a maxed copy).
+
 ## Reuses, new, not built
 
 | | |

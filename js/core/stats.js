@@ -14,6 +14,9 @@
  * IVs, EVs and the nature come from the copy of a Pokemon on the team (pokebox steps 4 and 5): G.Copies.profileOf builds a
  * profile(), G.Player carries it as statProf. Enemies pass none and play neutral (0 IV, 0 EV, no nature).
  * Nature: x1.1 raised, x0.9 lowered, on the final stat, rounded down in whole numbers like the games. HP never.
+ * The copy's upgrades (#97, G.Upgrades.summary) travel in the same profile: baseMul raises a species base stat inside the
+ * formula (raisedBase; the fraction is kept and only the final stat rounds), and critChance, cooldownMul and regenPerSecond
+ * are read by G.Player. Neutral by default, so enemies and leaders without authored upgrades do not move.
  */
 G.Stats = (() => {
   // ---- tunables (see BALANCE.md) ----
@@ -29,14 +32,19 @@ G.Stats = (() => {
 
   // ---- per-copy stat profile (pokebox step 4) ----
   // iv: six IVs, nat: six nature multipliers, ev: six EVs (pokebox step 5), all in stat order (HP, Atk, Def, SpA, SpD, Spe).
-  // HP's nature is always 1.
+  // HP's nature is always 1. baseMul, critChance, cooldownMul, regenPerSecond: the copy's upgrades (#97).
   const NEUTRAL_PROFILE = Object.freeze({
     iv: Object.freeze([0, 0, 0, 0, 0, 0]),
     nat: Object.freeze([1, 1, 1, 1, 1, 1]),
     ev: Object.freeze([0, 0, 0, 0, 0, 0]),
+    baseMul: Object.freeze([1, 1, 1, 1, 1, 1]),
+    critChance: 0,
+    cooldownMul: 1,
+    regenPerSecond: 0,
   });
   const clampInt = (v, max) => Math.min(max, Math.max(0, Math.floor(+v) || 0));
-  /** The profile of a read copy (G.Copies.read): its IVs, EVs and nature. No copy, or one without six IVs, is neutral. */
+  /** The profile of a read copy (G.Copies.read): its IVs, EVs, nature and upgrades. No copy, or one without six IVs, is
+   *  neutral. */
   function profile(copy) {
     if (!copy || !Array.isArray(copy.iv) || copy.iv.length !== 6) return NEUTRAL_PROFILE;
     const iv = copy.iv.map((v) => Math.min(31, Math.max(0, Math.floor(+v) || 0))),
@@ -48,7 +56,22 @@ G.Stats = (() => {
       nat[up] = 1.1;
       nat[down] = 0.9;
     }
-    return { iv, nat, ev };
+    const upgrades = (G.Upgrades && G.Upgrades.summary && G.Upgrades.summary(copy.upgrades)) || NEUTRAL_PROFILE;
+    return {
+      iv,
+      nat,
+      ev,
+      baseMul: upgrades.baseStatMul || NEUTRAL_PROFILE.baseMul,
+      critChance: upgrades.critChance,
+      cooldownMul: upgrades.cooldownMul,
+      regenPerSecond: upgrades.regenPerSecond,
+    };
+  }
+
+  /** Species base stat `base` (stat index `statIndex`) raised by the profile's base stat upgrade (#97). The fraction is
+   *  kept; only the final stat rounds. No profile, or one without upgrades, leaves it as it is. */
+  function raisedBase(base, prof, statIndex) {
+    return prof && prof.baseMul ? base * prof.baseMul[statIndex] : base;
   }
 
   // ---- mainline stat core ----
@@ -147,8 +170,8 @@ G.Stats = (() => {
       p = cat === 'status' || !prof ? NEUTRAL_PROFILE : prof;
     const aStat =
       cat === 'special'
-        ? spAtk(spaBase, level, p.iv[3], p.ev[3], p.nat[3])
-        : attack(atkBase, level, p.iv[1], p.ev[1], p.nat[1]);
+        ? spAtk(raisedBase(spaBase, p, 3), level, p.iv[3], p.ev[3], p.nat[3])
+        : attack(raisedBase(atkBase, p, 1), level, p.iv[1], p.ev[1], p.nat[1]);
     return ((((2 * level) / 5 + 2) * (move.dmg || 0) * aStat) / 50) * extraMul;
   }
 
@@ -232,12 +255,12 @@ G.Stats = (() => {
     scale = ENEMY_DMG_SCALAR
   ) {
     // defMul: Iron / Zinc stat cards. Applied to the final stat (not the base) so +5% is not lost to the level-1 floor.
-    // prof: the player copy's IVs, EVs and nature (profile()); none is neutral.
+    // prof: the player copy's IVs, EVs, nature and base stat upgrades (profile()); none is neutral.
     const p = prof || NEUTRAL_PROFILE;
     const stat =
       cat === 'special'
-        ? spDef(playerSpdBase, playerLevel, p.iv[4], p.ev[4], p.nat[4])
-        : defense(playerDefBase, playerLevel, p.iv[2], p.ev[2], p.nat[2]);
+        ? spDef(raisedBase(playerSpdBase, p, 4), playerLevel, p.iv[4], p.ev[4], p.nat[4])
+        : defense(raisedBase(playerDefBase, p, 2), playerLevel, p.iv[2], p.ev[2], p.nat[2]);
     return (factor / Math.max(1, stat * defMul) + 2) * stab * scale;
   }
 
@@ -269,6 +292,7 @@ G.Stats = (() => {
   return {
     NEUTRAL_PROFILE,
     profile,
+    raisedBase,
     HP_SCALAR,
     SPEED_MEDIAN,
     BASE_PX,

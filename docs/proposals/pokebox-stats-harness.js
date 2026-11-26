@@ -54,7 +54,7 @@ const mon = d => DEX_BY[d];
     ok(near(S.speedToPx(S.SPEED_MEDIAN), S.BASE_PX), 'neutral movement: the median species moves at BASE_PX');
     ok(px.every((v, i) => i === 0 || v >= px[i - 1]) && px.every((v) => v >= S.BASE_PX * S.MOVE_MIN - 1e-9 && v <= S.BASE_PX * S.MOVE_MAX + 1e-9), 'neutral movement: ordered by base Speed and inside the band'); }
   ok(S.profile(null) === S.NEUTRAL_PROFILE && S.profile({}) === S.NEUTRAL_PROFILE && S.profile({ iv: [1, 2] }) === S.NEUTRAL_PROFILE, 'no copy or a broken one: the neutral profile');
-  ok(same(S.NEUTRAL_PROFILE, { iv: [0, 0, 0, 0, 0, 0], nat: [1, 1, 1, 1, 1, 1], ev: [0, 0, 0, 0, 0, 0] }) && Object.isFrozen(S.NEUTRAL_PROFILE.iv), 'the neutral profile is 0 IV, x1, 0 EV (step 5), frozen');
+  ok(same(S.NEUTRAL_PROFILE, { iv: [0, 0, 0, 0, 0, 0], nat: [1, 1, 1, 1, 1, 1], ev: [0, 0, 0, 0, 0, 0], baseMul: [1, 1, 1, 1, 1, 1], critChance: 0, cooldownMul: 1, regenPerSecond: 0 }) && Object.isFrozen(S.NEUTRAL_PROFILE.iv) && Object.isFrozen(S.NEUTRAL_PROFILE.baseMul), 'the neutral profile is 0 IV, x1, 0 EV (step 5), no upgrades (#97), frozen');
 }
 
 // ===== 2. all 25 natures (mainline table by name, written out here) =====

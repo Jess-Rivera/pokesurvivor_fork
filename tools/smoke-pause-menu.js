@@ -87,6 +87,10 @@ async function main() {
     if (t && !t.classList.contains('hidden')) t.click(); // headless cannot play sound: pass "press to start" first
     const s = G.DB.save;
     s.team = [{ dex: 7, shiny: false }, { dex: 1, shiny: false }, null, { dex: 4, shiny: false }, null, null]; // a gap: empty frames
+    // #97 C2: the field Pokemon's copy holds every upgrade, so the hex's starting band must include the raised base
+    const upgraded = G.Copies.add(s, { dex: 7, from: 'debug' });
+    s.team[0].uid = G.Copies.longId(upgraded.u);
+    for (const upgrade of G.Upgrades.LIST) G.Copies.setUpgradeLevel(s, s.team[0].uid, upgrade.id, upgrade.levels);
     s.partner = 7;
     s.partnerShiny = false;
   });
@@ -416,6 +420,7 @@ async function main() {
         topColour: detail.querySelector('.pm-detail-top').getAttribute('fill'),
         bottomColour: detail.querySelector('.pm-detail-bottom').getAttribute('fill'),
         layers: ['start', 'now', 'run'].filter((layer) => detail.querySelector('.pm-hex-' + layer)),
+        raisedBase: member.statProf.baseMul.every((mul) => mul > 1),
         hexStats: [...detail.querySelectorAll('.pm-hex-label')].map((label) => label.dataset.stat),
         moveRows: detail.querySelectorAll('.pm-move').length,
         cards: cards.length,
@@ -440,6 +445,7 @@ async function main() {
     'bars in the type colours (top ' + p.topColour + ', bottom ' + p.bottomColour + ')'
   );
   ok(p.layers.includes('start') && p.layers.includes('now'), 'stat hex: the level 1 shape and the white growth band');
+  ok(p.raisedBase && !p.layers.includes('run'), 'stat hex (#95, #97): a copy with every upgrade has no yellow band at run start');
   ok(p.hexStats.join(',') === 'HP,Atk,Def,Spe,SpD,SpA', 'stat hex: six labels clockwise from HP');
   const hexMakeUp = () =>
     page.evaluate(() => {

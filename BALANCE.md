@@ -162,6 +162,14 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
 ## Upgrades
 (none tuned yet) 2026-10-18: the old in-run stat cards and move evolutions were removed; the new stat cards and mechanic cards (slice 2) get their first numbers then, from G.Log.pacing().
 
+## Per-copy upgrades (#97 slice C, built 2026-11-26; [Proposed], TUNE with #166 data)
+- Numbers: "97 - Upgrade System Design.md" "Numbers (draft)", in js/data/upgrades.js. Base stat +1.5% a level (10),
+  Critical Hit +2% (5), Reflexes -2% move cooldowns (5), Regeneration++ +0.1% max HP a second (5), Starting Moves (2).
+- Prices: base stats 50 growing x1.6, the other three 100 growing x2, Starting Moves 300 then 2,000; each listed
+  3-star price rounded to 10, then times BST stars / 3 (3 to 7), rounded to 10.
+- The old Magnet, Fortune, Card Reroll and Veto levels are not read (pickup radius 120 px flat, x1 coins, 0 bought
+  rerolls) until Character Upgrades.
+
 ## Dodge (fix/ui-upgrade, built 2026-11-02; TUNE)
 - 150 px over 0.5 s (300 px/s), 2 charges, 7 s cooldown each (Jess's band 5 to 10 s), 0.2 s gap, body circle 20% for the first 0.3 s. One place: Player.DODGE in js/entities/player.js. Ice glide holds 300 px/s.
 
@@ -224,7 +232,7 @@ Player max HP now comes from the real mainline HP formula, scaling with in-run l
 - Level-up behavior: Option A (leveling adds the max-HP gain to current HP too, a small heal each level).
 - KNOWN lean-state after this slice (intended, not a bug): early game is fragile (24 vs old flat 99),
   and flat heals/regen still feel strong early / weak late. Fixed by the deferred healing %-conversion.
-- perks.hp (flat HP upgrades) still adds on top of the formula.
+- The flat HP upgrade (perks.hp) is gone (#97, 2026-11-26); a copy's HP upgrade raises base HP inside the formula.
 
 ## Enemy HP (base-stats feature, slice 3: wild enemies) — slice applied 2026-10-17
 Wild-enemy HP now uses the SAME mainline formula + HP_SCALAR 2.0 as the player, from the enemy's
