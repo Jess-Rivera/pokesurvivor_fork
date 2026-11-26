@@ -246,21 +246,16 @@ G.Game = (() => {
 
   /** Build one team member (a Player) with its moves and binds applied. uid: the team slot's copy, whose IVs and
    *  nature set its stats (pokebox step 4); a missing copy plays neutral. Saved bans (save.pban) are no longer read: the Ban
-   *  upgrade is retired (Move Shop step 4c R5, Jess 2026-11-05); db.js still cleans the field, so old saves load as before. */
+   *  upgrade is retired (Move Shop step 4c R5, Jess 2026-11-05); db.js still cleans the field, so old saves load as before.
+   *  The old per-species upgrades (save.pupg) are no longer read either (#97): the copy's own upgrades take over. */
   function buildFighter(mon, shiny, uid) {
-    const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
     const save = G.DB.save;
-    const f = new G.Player(mon, perks, shiny, G.Copies.profileOf(save, uid, mon.dex));
+    const f = new G.Player(mon, {}, shiny, G.Copies.profileOf(save, uid, mon.dex));
     f.copyUid = uid || null; // pokebox step 5: whose copy this is, for the end-of-run EV allocation (pl.uid is co-op's)
     ((save.pbind && save.pbind[mon.dex]) || []).forEach((id, i) => {
       if (id) f.bind[id] = i;
     });
-    f.addMove(G.startMoveOf(mon.dex));
-    if (perks.startMoves >= 2) {
-      const pool = G.Moves.poolFor(mon).filter((id) => !f.hasMove(id) && !G.MoveInfo.isBuff(id));
-      if (pool.length) f.addMove(G.U.pick(pool));
-      f.setActive(0);
-    }
+    f.addMove(G.startMoveOf(mon.dex)); // a bought second starting move waits on the #150 picker
     return f;
   }
 

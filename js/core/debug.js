@@ -84,11 +84,8 @@ G.Debug = (() => {
     // Currency.
     save.coins = 9999999;
 
-    // Max every per-Pokemon upgrade, for every owned Pokemon.
-    for (const p of G.DEX) {
-      const u = G.DB.upgradesOf(p.dex);
-      for (const up of G.Upgrades.LIST) u[up.id] = up.max;
-    }
+    // Max every upgrade of every copy (bands ignored).
+    setEveryCopyUpgrade(save, true);
 
     // Flag the session so any run is kept out of the ranking.
     if (G.Game && G.Game.debugMaxed) G.Game.debugMaxed();
@@ -99,7 +96,14 @@ G.Debug = (() => {
     return true;
   }
 
-  /** Clears every per-Pokemon upgrade back to 0 (keeps unlocks/currency). The
+  /** Every upgrade of every copy at its maximum (`toMax`, bands ignored) or at 0. The caller saves. */
+  function setEveryCopyUpgrade(save, toMax) {
+    for (const ownedCopy of G.Copies.all(save))
+      for (const upgrade of G.Upgrades.LIST)
+        G.Copies.setUpgradeLevel(save, ownedCopy.pokemonUUID, upgrade.id, toMax ? upgrade.levels : 0);
+  }
+
+  /** Clears every copy's upgrades back to 0 (keeps unlocks/currency). The
    *  counterpart to maxAll's upgrade maxing: lets you see true base-stat values
    *  (e.g. raw HP) without the maxed perks piled on. ?dev only. */
   function clearUpgrades() {
@@ -112,13 +116,10 @@ G.Debug = (() => {
       console.warn('[Debug] no active save.');
       return false;
     }
-    for (const p of G.DEX) {
-      const u = G.DB.upgradesOf(p.dex);
-      for (const up of G.Upgrades.LIST) u[up.id] = 0;
-    }
+    setEveryCopyUpgrade(save, false);
     G.DB.commit(true);
     if (G.UI && G.UI.toast) G.UI.toast('Debug: upgrades cleared to 0', 2500);
-    console.log('[Debug] all per-Pokemon upgrades cleared to 0.');
+    console.log('[Debug] the upgrades of every copy cleared to 0.');
     return true;
   }
 
@@ -134,25 +135,13 @@ G.Debug = (() => {
       console.warn('[Debug] no active save.');
       return false;
     }
-    let anyUp = false;
-    for (const p of G.DEX) {
-      const u = G.DB.upgradesOf(p.dex);
-      for (const up of G.Upgrades.LIST)
-        if ((u[up.id] || 0) > 0) {
-          anyUp = true;
-          break;
-        }
-      if (anyUp) break;
-    }
-    if (anyUp) return clearUpgrades();
-    for (const p of G.DEX) {
-      const u = G.DB.upgradesOf(p.dex);
-      for (const up of G.Upgrades.LIST) u[up.id] = up.max;
-    }
+    const anyUpgraded = G.Copies.all(save).some((ownedCopy) => Object.keys(ownedCopy.upgrades).length > 0);
+    if (anyUpgraded) return clearUpgrades();
+    setEveryCopyUpgrade(save, true);
     if (G.Game && G.Game.debugMaxed) G.Game.debugMaxed();
     G.DB.commit(true);
     if (G.UI && G.UI.toast) G.UI.toast('Debug: upgrades maxed', 2500);
-    console.log('[Debug] all per-Pokemon upgrades maxed.');
+    console.log('[Debug] the upgrades of every copy maxed.');
     return true;
   }
 

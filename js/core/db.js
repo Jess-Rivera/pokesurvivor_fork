@@ -209,18 +209,7 @@ G.DB = (() => {
         ].slice(0, 3); // a retired move's veto is dropped
       }
     } else s.pban = {};
-    if (G.Upgrades)
-      for (const d of Object.keys(s.pupg || {})) {
-        const u = s.pupg[d];
-        if (!u || typeof u !== 'object') {
-          delete s.pupg[d];
-          continue;
-        }
-        for (const id of Object.keys(u)) {
-          if (!G.Upgrades.BY[id]) delete u[id];
-          else u[id] = Math.min(G.Upgrades.BY[id].max, n(u[id]));
-        }
-      }
+    // save.pupg (the old per-species upgrades) is kept as it is and no longer read (#97, Jess 2026-11-26).
     normalizeTeam(s);
   }
 
@@ -1070,13 +1059,6 @@ G.DB = (() => {
     return !!(save && save.shiny && save.shiny[dex]);
   }
 
-  /** Upgrades bought for a Pokemon: { id -> level }. */
-  function upgradesOf(dex) {
-    if (!save) return {};
-    save.pupg = save.pupg || {};
-    return save.pupg[dex] || (save.pupg[dex] = {});
-  }
-
   /** Grants the shiny version (and the normal one, if not owned). Returns true if new. */
   function grantShiny(dex, from) {
     grant(dex, from);
@@ -1131,7 +1113,6 @@ G.DB = (() => {
     onSave,
     merge,
     setName,
-    upgradesOf,
     normalizeTeam,
     /** True once if this load replaced a save from before the acquisition rework with a clean one. */
     takeResetNotice() {

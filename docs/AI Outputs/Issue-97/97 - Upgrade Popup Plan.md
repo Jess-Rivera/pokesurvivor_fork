@@ -36,6 +36,11 @@ flowchart LR
 | C3 | js/ui/menu-upgrades.js, dev.html, css/bw-upgrades.css | The display-only screen is replaced by the sketch's popup, for one copy. |
 | C3 | js/ui/menu-team.js, menu-team-slots.js | Upgrade opens by copy, not species; a slot with no copy refuses. |
 
+C1 built 2026-11-26 (harness docs/proposals/upgrades-harness.js). It also touched js/game.js (the team is built
+with no old perks, and the random second starting move goes until #150) and js/core/db.js (upgradesOf and the
+save.pupg cleaner go; the field stays in the save, unread). Prices: the design's listed 3-star price is rounded to 10
+first, then times stars / 3, rounded again.
+
 ## Reuses, new, not built
 
 | | |

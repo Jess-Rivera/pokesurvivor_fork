@@ -1,74 +1,131 @@
-/* ============ upgrades.js — mejoras permanentes entre runs ============
- * Bought with Poke-coins in the menu. `per` is what each level gives.
+/* ============ upgrades.js, the per-copy upgrades (#97, G.Upgrades) ============
+ * Bought with PokeCoins for one copy in the Team menu's Upgrade popup; the levels live on the copy (G.Copies, key p).
+ * Rules: docs/AI Outputs/Issue-97/97 - Upgrade System Design.md, decisions 2026-11-23-97-upgrade-price-shape-bst-and-bands
+ * and 2026-11-26-97-upgrade-popup-open-questions. The numbers are the design's "Numbers (draft)", [Proposed] until #166
+ * has run data.
+ * - Price: a level's 3-star price times the species' BST stars / 3, rounded to 10. Stars are BST / 100 in half-star
+ *   steps, held between 3 and 7 (below 3 pays the 3-star price). Levels survive evolution; the price follows the species.
+ * - Bands: the power upgrades' caps open with the copy's OOR level (G.Candy), `levelsPerBand` at each of BAND_LEVELS.
+ *   Starting moves have no band.
+ * - Starting moves are bought and saved now; the #150 picker makes them act.
+ * The old account-wide upgrades (Magnet, Fortune, Card Reroll, Veto) and the per-species save.pupg levels are no longer
+ * read; the four return in Character Upgrades.
  */
 G.Upgrades = (() => {
+  const BAND_LEVELS = [1, 10, 20, 40, 80];
+  const STARS_MIN = 3,
+    STARS_MAX = 7,
+    BST_PER_HALF_STAR = 50,
+    PRICE_STARS = 3, // the stars the listed prices are for
+    PRICE_ROUNDING = 10;
+
+  const baseStat = (id, name, statIndex) => ({
+    id,
+    name,
+    kind: 'baseStat',
+    statIndex, // HP, Atk, Def, SpA, SpD, Spe
+    perLevel: 0.015, // +1.5% of the species base stat
+    levels: 10,
+    levelsPerBand: 2,
+    firstPrice: 50,
+    priceGrowth: 1.6,
+  });
+  const power = (id, name, perLevel) => ({
+    id,
+    name,
+    kind: id,
+    perLevel,
+    levels: 5,
+    levelsPerBand: 1,
+    firstPrice: 100,
+    priceGrowth: 2,
+  });
+
   const LIST = [
-    { id: 'hp', icon: 'heart', name: 'Vitalidad', unit: '+8 vida', max: 10, base: 60, grow: 1.35 },
-    { id: 'atk', icon: 'fist', name: 'Fuerza', unit: '+4% daño', max: 10, base: 80, grow: 1.38 },
-    { id: 'spd', icon: 'boot', name: 'Zancada', unit: '+3% velocidad', max: 8, base: 70, grow: 1.4 },
-    { id: 'cd', icon: 'clock', name: 'Reflejos', unit: '-3% recarga', max: 8, base: 90, grow: 1.42 },
-    { id: 'def', icon: 'shield', name: 'Coraza', unit: '+2% defensa', max: 8, base: 80, grow: 1.4 },
-    { id: 'regen', icon: 'sprout', name: 'Síntesis', unit: '+0.2 vida/s', max: 5, base: 120, grow: 1.5 },
-    { id: 'magnet', icon: 'magnet', name: 'Imán', unit: '+20% XP pickup', max: 6, base: 50, grow: 1.4 },
-    { id: 'xp', icon: 'book', name: 'Sabiduría', unit: '+5% experiencia', max: 8, base: 100, grow: 1.42 },
-    { id: 'coins', icon: 'coin', name: 'Fortuna', unit: '+8% Pokémonedas', max: 8, base: 120, grow: 1.45 },
-    { id: 'moves', icon: 'cards', name: 'Repertorio', unit: 'Empiezas con 2 movimientos', max: 1, base: 1500, grow: 1 },
-    {
-      id: 'crit',
-      icon: 'star',
-      name: 'Golpe Crítico',
-      unit: '+3% de críticos (x1,5 de daño)',
-      max: 10,
-      base: 90,
-      grow: 1.4,
-    },
-    {
-      id: 'reroll',
-      icon: 'up',
-      name: 'Cambio de cartas',
-      unit: '+1 cambio de cartas de nivel por run',
-      max: 5,
-      base: 150,
-      grow: 1.6,
-    },
-    {
-      id: 'ban',
-      icon: 'ban',
-      name: 'Veto',
-      unit: 'Bloquea 1 movimiento: no te sale en las cartas',
-      max: 3,
-      base: 300,
-      grow: 1.9,
-    },
+    baseStat('baseHp', 'HP', 0),
+    baseStat('baseAtk', 'Attack', 1),
+    baseStat('baseDef', 'Defense', 2),
+    baseStat('baseSpa', 'Sp. Atk', 3),
+    baseStat('baseSpd', 'Sp. Def', 4),
+    baseStat('baseSpe', 'Speed', 5),
+    power('crit', 'Critical Hit', 0.02), // +2% crit chance
+    power('reflexes', 'Reflexes', 0.02), // -2% move cooldowns
+    power('regeneration', 'Regeneration++', 0.001), // +0.1% max HP a second, on the field and on the bench
+    { id: 'startingMoves', name: 'Starting Moves', kind: 'startingMoves', levels: 2, prices: [300, 2000] },
   ];
   const BY = {};
-  for (const u of LIST) BY[u.id] = u;
+  for (const upgrade of LIST) BY[upgrade.id] = upgrade;
 
-  function cost(id, lvl) {
-    const u = BY[id];
-    return Math.round((u.base * Math.pow(u.grow, lvl)) / 10) * 10;
+  /** A species' BST as stars: half-star steps, between 3 and 7. A dex with no data pays the 3-star price. */
+  function starsOf(dex) {
+    const species = G.DEX_BY && G.DEX_BY[dex];
+    if (!species) return STARS_MIN;
+    const stars = Math.round(species.bst / BST_PER_HALF_STAR) / 2;
+    return Math.max(STARS_MIN, Math.min(STARS_MAX, stars));
   }
 
-  /** Niveles comprados -> modificadores para G.Player. */
-  function perks(levels = {}) {
-    // Never above the maximum (a hand-edited save gives no more power).
-    const L = (id) => Math.max(0, Math.min(BY[id].max, Math.floor(+levels[id] || 0)));
+  const roundPrice = (price) => Math.round(price / PRICE_ROUNDING) * PRICE_ROUNDING;
+
+  /** The price of the level after `level` (0 = the first level) of upgrade `id` for species `dex`: the design's listed
+   *  3-star price (itself rounded to 10), times stars / 3, rounded to 10 again. */
+  function priceOf(id, level, dex) {
+    const upgrade = BY[id];
+    const listed = upgrade.prices
+      ? upgrade.prices[level]
+      : roundPrice(upgrade.firstPrice * upgrade.priceGrowth ** level);
+    return roundPrice((listed * starsOf(dex)) / PRICE_STARS);
+  }
+
+  /** How many levels of upgrade `id` a copy at OOR level `oorLevel` may hold. */
+  function capOf(id, oorLevel) {
+    const upgrade = BY[id];
+    if (!upgrade.levelsPerBand) return upgrade.levels;
+    const bandsOpen = BAND_LEVELS.filter((bandLevel) => oorLevel >= bandLevel).length;
+    return Math.min(upgrade.levels, bandsOpen * upgrade.levelsPerBand);
+  }
+
+  function readCopy(save, uid) {
+    try {
+      return typeof uid === 'string' ? G.Copies.get(save, uid) : null;
+    } catch (e) {
+      return null; // a malformed id is no copy
+    }
+  }
+
+  /**
+   * Buys the next level of upgrade `id` for copy `uid`. The caller saves.
+   * @returns { ok: true, level, price } | { ok: false, error: 'upgrade' | 'none' | 'max' | 'band' | 'poor' }
+   */
+  function buy(save, uid, id) {
+    if (!BY[id]) return { ok: false, error: 'upgrade' };
+    const copy = readCopy(save, uid);
+    if (!copy) return { ok: false, error: 'none' };
+    const level = copy.upgrades[id] || 0;
+    if (level >= BY[id].levels) return { ok: false, error: 'max' };
+    if (level >= capOf(id, G.Candy.levelFor(copy.speciesID, copy.candyXp))) return { ok: false, error: 'band' };
+    const price = priceOf(id, level, copy.speciesID);
+    if (!(save.coins >= price)) return { ok: false, error: 'poor' };
+    save.coins -= price;
+    G.Copies.setUpgradeLevel(save, uid, id, level + 1);
+    return { ok: true, level: level + 1, price };
+  }
+
+  /** What a copy's upgrade levels ({ id -> level }) add up to. Unknown ids and levels past the maximum give nothing.
+   *  baseStatMul: six multipliers on the species base stats; critChance: added chance; cooldownMul: on move cooldowns;
+   *  regenPerSecond: the fraction of max HP healed a second; startingMoves: the level bought (#150 reads it). */
+  function summary(levels = {}) {
+    const levelOf = (id) => Math.max(0, Math.min(BY[id].levels, Math.floor(+levels[id] || 0)));
+    const baseStatMul = [1, 1, 1, 1, 1, 1];
+    for (const upgrade of LIST)
+      if (upgrade.kind === 'baseStat') baseStatMul[upgrade.statIndex] = 1 + levelOf(upgrade.id) * upgrade.perLevel;
     return {
-      hp: L('hp') * 8,
-      atkMul: 1 + L('atk') * 0.04,
-      spdMul: 1 + L('spd') * 0.03,
-      cdMul: 1 - L('cd') * 0.03,
-      dmgReduce: L('def') * 0.02,
-      regen: L('regen') * 0.2,
-      magnetMul: 1 + L('magnet') * 0.2,
-      xpMul: 1 + L('xp') * 0.05,
-      coinMul: 1 + L('coins') * 0.08,
-      startMoves: 1 + L('moves'),
-      crit: L('crit') * 0.03,
-      rerolls: L('reroll'),
-      bans: L('ban'),
+      baseStatMul,
+      critChance: levelOf('crit') * BY.crit.perLevel,
+      cooldownMul: 1 - levelOf('reflexes') * BY.reflexes.perLevel,
+      regenPerSecond: levelOf('regeneration') * BY.regeneration.perLevel,
+      startingMoves: levelOf('startingMoves'),
     };
   }
 
-  return { LIST, BY, cost, perks };
+  return { LIST, BY, BAND_LEVELS, starsOf, priceOf, capOf, buy, summary };
 })();

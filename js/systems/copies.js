@@ -6,7 +6,7 @@
  * Compact keys; a value at its default is left out:
  *   u UUID in 22 characters   d dex   t obtained, seconds   m method letter   n nature, pokeapi id   i IVs, one character each
  *   g 0 male 1 female 2 none  x y height and weight scale   a ability slot    s shiny   e EVs   k nickname   h friendship
- *   v starting move override  p upgrades (id -> rank)       f favorite   l locked   o original trainer, if not this save   r form
+ *   v starting move override  p upgrades (id -> level, G.Upgrades)  f favorite   l locked   o original trainer, if not this save   r form
  *   b box, counted from 0, left out for the first box
  *   j TMs learned for good (#149 149f): move ids, bought in the Main Menu Shop; in a run they join its Move Trainer pool
  *   c Exp Candy XP (#139 8a, G.Candy), at most the species' level 100 total; its out-of-run level comes from it
@@ -19,7 +19,6 @@ G.Copies = (() => {
     SCALE_MAX = 255,
     NICK_MAX = 16, // pokebox 3b-2 E1 (was 12)
     FRIEND_MAX = 255,
-    RANK_MAX = 5,
     BOX_SIZE = 500,
     BOX_START = 2,
     BOX_MAX = 5;
@@ -200,6 +199,35 @@ G.Copies = (() => {
     if (learned.map(currentMoveId).includes(moveId)) return false;
     c.j = [...learned, moveId];
     return true;
+  }
+
+  /** Sets copy `id`'s level of upgrade `upgradeId` (G.Upgrades owns prices and caps; a level of 0 removes it). False when
+   *  the copy is gone. The caller saves. */
+  function setUpgradeLevel(save, id, upgradeId, level) {
+    if (!isId(id)) return false;
+    const u = shortId(id),
+      c = (save.box || []).find((x) => x.u === u);
+    if (!c) return false;
+    c.p = Object.assign({}, c.p, { [upgradeId]: level });
+    cleanUpgrades(c);
+    return true;
+  }
+
+  /** A copy's upgrade levels as the save may hold them: whole, each at most its upgrade's own maximum, unknown ids and
+   *  zeros dropped. Without the upgrade data loaded, levels are only made whole, so a save is never cut by a missing
+   *  file. */
+  function cleanUpgrades(c) {
+    if (!c.p || typeof c.p !== 'object') {
+      delete c.p;
+      return;
+    }
+    for (const id of Object.keys(c.p)) {
+      const upgrade = G.Upgrades && G.Upgrades.BY[id];
+      if (G.Upgrades && !upgrade) delete c.p[id];
+      else c.p[id] = wholeUpTo(c.p[id], upgrade ? upgrade.levels : Number.MAX_SAFE_INTEGER);
+      if (c.p[id] === 0) delete c.p[id];
+    }
+    if (!Object.keys(c.p).length) delete c.p;
   }
 
   const all = (save) => (save.box || []).map((c) => read(c, save));
@@ -608,8 +636,7 @@ G.Copies = (() => {
       else delete c.k;
       if (c.h != null) c.h = wholeUpTo(c.h, FRIEND_MAX);
       if (c.v != null && (typeof c.v !== 'string' || (G.MoveDefs && !G.MoveDefs[c.v]))) delete c.v;
-      if (c.p && typeof c.p === 'object') for (const id of Object.keys(c.p)) c.p[id] = wholeUpTo(c.p[id], RANK_MAX);
-      else delete c.p;
+      cleanUpgrades(c);
       for (const flag of ['f', 'l'])
         if (c[flag]) c[flag] = 1;
         else delete c[flag];
@@ -672,6 +699,7 @@ G.Copies = (() => {
     RARITY_COLOR,
     BST_BANDS,
     learnTm,
+    setUpgradeLevel,
     addCandyXp,
     linkTeam,
     clean,

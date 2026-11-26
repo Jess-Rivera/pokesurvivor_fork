@@ -149,7 +149,7 @@ const mon = d => DEX_BY[d];
   ok(C.setIvNature(s, PLAIN_ID, 40).iv[0] === 31 && C.setIvNature(s, PLAIN_ID, -3).iv[0] === 0 && s.box[1].n === 16, 'IVs clamp to 0 to 31; no nature given keeps the nature');
   ok(C.setIvNature(s, '99999999-9999-4999-8999-999999999999', 5) === null, 'a missing copy: null');
   ok(/const f = buildFighter\(G\.DEX_BY\[t\.dex\], [^;]*, t\.uid\);/.test(GAME_TEXT), 'game.js: the roster loop passes the slot uid to buildFighter');
-  ok(/function buildFighter\(mon, shiny, uid\)[\s\S]{0,300}new G\.Player\(mon, perks, shiny, G\.Copies\.profileOf\(save, uid, mon\.dex\)\)/.test(GAME_TEXT), 'game.js: buildFighter builds the Player with the copy profile');
+  ok(/function buildFighter\(mon, shiny, uid\)[\s\S]{0,300}new G\.Player\(mon, \{\}, shiny, G\.Copies\.profileOf\(save, uid, mon\.dex\)\)/.test(GAME_TEXT), 'game.js: buildFighter builds the Player with the copy profile');
 }
 
 console.log('pokebox stats harness: ' + (n - fail) + '/' + n + ' passed');

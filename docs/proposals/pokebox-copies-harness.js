@@ -90,7 +90,7 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
 // 6. clean: a hand-edited box
 { const good = JSON.parse(LINE);
   const s = { box: [JSON.parse(LINE), JSON.parse(LINE), { u: 'short', d: 143 }, null, { ...good, u: 'AAAAAAAAAAAAAAAAAAAAAA', d: 99999 },
-    { u: 'BBBBBBBBBBBBBBBBBBBBBB', d: 143, t: -5, m: '?', n: 99, i: 'x!', g: 7, x: 999, y: -1, a: 9, s: 'yes', e: [999, 999, 999, 999, 999, 999], k: 'A name that is much too long', h: 9999, p: { dmg: 77 }, f: 'x', l: 0 },
+    { u: 'BBBBBBBBBBBBBBBBBBBBBB', d: 143, t: -5, m: '?', n: 99, i: 'x!', g: 7, x: 999, y: -1, a: 9, s: 'yes', e: [999, 999, 999, 999, 999, 999], k: 'A name that is much too long', h: 9999, p: { dmg: 77.6 }, f: 'x', l: 0 },
     { u: 'CCCCCCCCCCCCCCCCCCCCCC', d: 81, t: 1, m: 'w', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 3 }] };
   C.clean(s);
   if (s.box.length !== 3) bad('repeat, short id, null and unknown species go: ' + s.box.length);
@@ -98,7 +98,7 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
   const c = C.read(s.box[1], {});
   if (c.dateObtained !== 0 || c.obtainedMethod !== 'other' || c.nature !== 'serious' || !same(c.iv, [0, 0, 0, 0, 0, 0]) || c.gender !== 'male' || c.heightScale !== 255 || c.weightScale !== 0 || c.abilitySlot !== 1 || !c.isShiny) bad('clamped fields ' + JSON.stringify(c));
   if (!same(c.ev, [252, 252, 6, 0, 0, 0])) bad('EVs capped at 252 and 510 total ' + c.ev);
-  if (c.nickname !== 'A name that is m' || c.friendship !== 255 || c.upgrades.dmg !== 5 || !c.isFavorite || c.isLocked) bad('nickname cut to 16 (3b-2 E1), friendship, rank, flags ' + JSON.stringify(c));
+  if (c.nickname !== 'A name that is m' || c.friendship !== 255 || c.upgrades.dmg !== 77 || !c.isFavorite || c.isLocked) bad('nickname cut to 16 (3b-2 E1), friendship, upgrade level made whole (no upgrade data here; caps: upgrades-harness), flags ' + JSON.stringify(c));
   const m = C.read(s.box[2], {}); if (m.gender !== 'none') bad('a genderless species stays genderless'); if (m.abilitySlot !== 3 && !T.SPECIES[81][1][2]) bad('slot');
   const x = { box: 'nope' }; C.clean(x); if (!same(x.box, [])) bad('a box that is not a list is emptied');
   console.log('6 clean: bad records go, values clamp, a valid copy is untouched'); }
