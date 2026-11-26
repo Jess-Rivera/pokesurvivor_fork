@@ -2,7 +2,7 @@
 // C:\Users\boric\tools\playwright), as in tools/smoke-team.js. Usage from the repo root:
 //   node tools/smoke-upgrade-popup.js [folder for a screenshot]
 // Checks: a slot's Upgrade opens the popup for that copy (a slot with no copy refuses); eleven cards; the button states
-// (price, refused when you cannot afford it, disabled "Needs Lv N" above the band, none once bought, no shine (dropped by Jess 2026-11-26)); the
+// (price, refused when you cannot afford it, disabled "Lv N" above the band, none once bought, no shine (dropped by Jess 2026-11-26)); the
 // hover preview equals the summary after the buy (the end-goal test); the starting move cards in order; Enter buys by
 // keys and Esc closes back to the Team menu; no console or page errors. Expected outcomes are relations from the design
 // and decisions 2026-11-26-97-upgrade-popup-open-questions and 2026-11-23-97-139-team-menu-and-upgrade-popup-rulings.
@@ -156,8 +156,8 @@ async function main() {
   await page.click('[data-action="upgrade-buy-baseHp"]');
   await sleep(400);
   hp = await card('baseHp');
-  ok(hp.disabled && hp.button === 'Needs Lv 10', 'HP++ above band 1: disabled "Needs Lv 10" (' + hp.button + ')');
-  ok((await card('crit')).button === 'Needs Lv 10', 'Critical Hit++ above band 1: "Needs Lv 10"');
+  ok(hp.disabled && hp.button === 'Lv 10', 'HP++ above band 1: disabled "Lv 10" (' + hp.button + ')');
+  ok((await card('crit')).button === 'Lv 10', 'Critical Hit++ above band 1: "Lv 10"');
 
   // ---- refused when you cannot afford it ----
   await page.evaluate(() => {

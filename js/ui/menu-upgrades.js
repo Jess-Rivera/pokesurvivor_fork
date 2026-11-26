@@ -1,7 +1,7 @@
 /* ============ menu-upgrades.js: the Team menu's Upgrade popup (G.MenuUpgrades; #97 slice C) ============
  * One team copy's per-copy upgrades: six base stat cards on the left, Critical Hit, Cooldown, Regeneration and the two
  * starting move cards on the right, the portrait and a summary between them. A card shows its pips and a buy button
- * (positive with the price; refused when you cannot afford it; disabled "Needs Lv N" above the OOR band). A fully bought
+ * (positive with the price; refused when you cannot afford it; disabled "Lv N" above the OOR band). A fully bought
  * card has no button and keeps its normal edge (Jess dropped the sketch's shine, 2026-11-26). Hovering a card's button
  * shows, in green, what buying it gives. With two or more caught team members, arrows beside the portrait (Q and E,
  * wrapping) and the keys 1 to 6 switch the popup to another member (Jess, 2026-11-26).
@@ -91,7 +91,7 @@ G.MenuUpgrades = (() => {
     );
     if (level >= upgrade.levels) return { pips, button: null, buyable: false };
     if (level >= cap)
-      return { pips, button: { label: 'Needs Lv ' + bandLevelFor(id, level), disabled: true }, buyable: false };
+      return { pips, button: { label: 'Lv ' + bandLevelFor(id, level), disabled: true }, buyable: false };
     return { pips, button: priceButton(id, level, copy), buyable: true };
   }
   function startingMoveOffer(copy, id, level, startingLevel) {
