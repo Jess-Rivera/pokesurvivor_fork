@@ -59,5 +59,9 @@ the popup is open, Enter on a stop outside it does nothing (pressInUpgrades in j
 a card out by keys and checks that the next Enter buys another card. Smoke and check.js pass; the repro's third Enter
 now buys Atk++ instead of lifting Bulbasaur.
 
-Open: the circling shine on a fully bought card was not in Jess's sketch or rulings (the plan added it as "New").
-Keep, plain lit rim, or drop: Jess to decide.
+Correction: the circling shine on a fully bought card IS in Jess's sketch (the card note: "The edge of the panel gets a
+white shine that circles the card"), since 2026-11-23. The first answer here said it was not; that was wrong. The
+circling-rim idea for selected portraits is #171.
+
+Missed: the sketch has two arrows beside the portrait (left and right) for moving between team members without
+closing the popup. The plan never listed them, so they were neither built nor named under "Not built".
