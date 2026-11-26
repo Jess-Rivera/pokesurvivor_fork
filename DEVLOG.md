@@ -316,3 +316,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
 - C2 raised bases in G.Stats (attackFactor, applyPlayerDefense, Player HP/Speed/dodge), crit, Cooldown, Regeneration++.
 - C3 the popup as a Team menu piece, sketch names, hover preview; old B/W screen removed; attack colour tokens added.
 - Found: smoke-pause-menu throws in the EV section before this slice too (#170). Stopped at: Jess's feel test of #97.
+
+## 2026-11-26 (Claude Code, home, later), #97 slice C review and follow-ups
+- Reviewed C1 to C3 (report: docs/AI Outputs/Issue-97/97 - Slice C Review.md). Rules, stats and saves match the plan.
+- Fixed: buying a card out by keys dropped the cursor onto the Team menu behind the popup (Enter lifted slot 1).
+- Built from the sketch (the plan had missed it): switch arrows by the portrait, wrapping, hidden with one member, Q / E
+  and 1 to 6; E is a mirrored glitch button. Card shine dropped (it was in the sketch; I first said it was not). #171 filed.
+- Team menu arrow keys follow the cursor bar (slot buttons, slot, grid). Up from the box tabs left as is (Jess).
+- Stopped at: Jess's feel test of the whole slice, then close #97 slice C.
