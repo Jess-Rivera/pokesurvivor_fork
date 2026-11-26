@@ -38,13 +38,13 @@ flowchart LR
 | Base stat (one per stat: HP, Atk, Def, SpA, SpD, Spe) | Raises the copy's species base stat by a %, inside the G.Stats formula | A %, so it carries through evolution (Bulbasaur +10%: base HP 45 becomes 49.5; as Ivysaur 60 becomes 66). The raised base keeps its fraction; only the final stat rounds, as today. Same cap and price curve for every stat. Shedinja's HP upgrade shows greyed out, "no effect" (acquisition F2b). | [Approved] |
 | Critical Hit | A base crit chance for this copy (today the base is 0) | Adds to the in-run Critical Hit card's chance; x1.5 as now. | [Approved] |
 | Reflexes | Cuts this copy's move cooldowns by a % | Move cooldowns only. Gates, the dodge and the swap lock are untouched. | [Approved] |
-| Synthesis | Regenerates a % of max HP per second (scales with HP) | Ticks on the bench, per the COMBAT-RULES bench rule. Stacks with a Bench Nurse style sidegrade. | [Approved] |
+| Regeneration++ (was Synthesis) | Regenerates a % of max HP per second (scales with HP) | Ticks on the field and on the bench (2026-11-26-97-upgrade-popup-open-questions). Stacks with a Bench Nurse style sidegrade. | [Approved] |
 | Starting moves (was Repertoire) | Buy 1: the copy may change its starting move. Buy 2: it starts with 2 moves | Per copy. The second move counts as a filled slot for move prices (2026-11-15-124-move-price-by-slots-filled). The pick list is #150. | [Approved] |
 | Caps and the OOR level | The caps of the four power upgrades (base stat, crit, cooldown, regen) rise with the copy's OOR level, in bands | Bands at OOR 1, 10, 20, 40 and 80, to start with (Jess 2026-11-23). See "Numbers (draft)". | [Approved] |
 | Price | Every per-copy upgrade, starting moves included, scales with the copy's BST star rating (3 to 7 stars, half-star steps; higher BST pays more) | BST stars, not rarity (Jess 2026-11-23, replacing the A13b rarity stars). Prices grow exponentially per level: the first level or two are cheap, then each costs more and more. | [Approved] |
 | A copy that leaves | Sold or released (#146), its upgrades are lost, no refund | | [Approved] |
 | Where they compute | The copy's upgrade levels travel in its profile with its IVs, EVs and nature (G.Copies.profileOf, G.Stats.profile); combat reads crit, cooldown and regen from there, so no entity works them out on its own | | [Approved] |
-| Leaders | A leader's slot may be authored with any per-copy upgrade, none by default (leader principle) | | [Approved] |
+| Leaders | A leader's slot may be authored with any per-copy upgrade, none by default (leader principle) | Not in slice C: #169. Leaders keep a neutral profile until then. | [Approved] |
 
 ### Account-wide upgrades (Character Upgrades)
 
@@ -64,7 +64,7 @@ real PokeCoin income once #166 (run telemetry) has collected traces.
 | Base stat (each of 6) | +1.5% species base | 10 | +15% |
 | Critical Hit | +2% crit chance | 5 | 10% |
 | Reflexes | -2% move cooldowns | 5 | -10% |
-| Synthesis | +0.1% max HP per second | 5 | 0.5% per second (a full heal on the bench in 200 s) |
+| Regeneration++ | +0.1% max HP per second | 5 | 0.5% per second (a full heal on the bench in 200 s) |
 | Starting moves | 1st buy: change the move. 2nd buy: start with 2 | 2 | |
 
 **Prices at 3 stars (BST 300).** A copy pays these times its stars / 3 (x1 at 3 stars, x2.33 at 7 stars), rounded
@@ -73,10 +73,10 @@ to 10.
 | Upgrade | Price per level | Growth | Total |
 |---|---|---|---|
 | Base stat | 50, 80, 130, 200, 330, 520, 840, 1,340, 2,150, 3,440 | x1.6 | 9,080 each, 54,480 for six |
-| Crit, Reflexes, Synthesis | 100, 200, 400, 800, 1,600 | x2 | 3,100 each, 9,300 for three |
+| Crit, Reflexes, Regeneration++ | 100, 200, 400, 800, 1,600 | x2 | 3,100 each, 9,300 for three |
 | Starting moves | 300, then 2,000 | | 2,300 |
 
-**Bands.** Each band opens 2 levels of every base stat and 1 level each of Crit, Reflexes and Synthesis. Cost at
+**Bands.** Each band opens 2 levels of every base stat and 1 level each of Crit, Reflexes and Regeneration++. Cost at
 3 stars, against an estimated 3,500 PokeCoins for a full run (an estimate from the end-of-run formula; no traced run
 has reached gym 1 yet):
 
