@@ -5,8 +5,8 @@ Last updated: 2026-11-27, home (Claude Code). Branch: feature/138-146-lost-and-f
 No branch rules file.
 
 ## START HERE
-#146 is closed. Next: #173 (compare a held catch with owned copies, needs triage and an opening), merging this branch
-to main (419 commits ahead; Jess runs it), then TODO.md "Next". Run `node tools/catchup.js`.
+#146 is closed. Open on this branch: #139 (8b evolve, 8c friendship), #140, #141, #142, #143 (#144 is deferred).
+Next: #173 (held catch vs owned copies, opening first), then #141, #140, #139 8b. Merge to main only after #143.
 
 ## Landed 2026-11-26 to 27 (home)
 - #146 closed (feel test passed 2026-11-27): overflow catches wait in save.heldCatches and the Main Menu opens the

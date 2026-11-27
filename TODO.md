@@ -10,7 +10,7 @@ node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
 0. #173 (follow-up to #146, closed 2026-11-27): compare a held catch with owned copies; triage, then the slice opening.
-   Merge this branch to main now that #146 is done (Jess runs it; 419 commits ahead).
+   Still open on this branch: #139 (8b, 8c), #140, #141, #142, #143; #144 is deferred. Merge to main after #143.
    #171 (circling rim for selected portraits) is an idea, needs triage.
 1. #172 (the remainder of closed #97): Character Upgrades (account-wide list: Magnet, Card Reroll, Veto, PokeCoin %, Silver %, pockets),
    then the #150 starting-move picker (needs a learnset rebake with levels and egg-move unlock data). Split out: #164

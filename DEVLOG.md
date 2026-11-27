@@ -339,4 +339,4 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
 - Built: overflow catches wait in save.heldCatches; the Main Menu list (fitting catches start as Keep, Keep refused past
   the free places), Make Room round trip through the Team menu, Confirm or Esc places and sells; unanswered sells on load.
 - Tests: keep-sell-harness, smoke-keep-sell. Feel test passed 2026-11-27; #146 closed. Follow-up filed: #173.
-- Stopped at: choose between #173, merging the branch to main, and #172.
+- Stopped at: #173 next; the branch stays open for #139 8b and 8c, #140, #141, #142, #143 before the merge to main.
