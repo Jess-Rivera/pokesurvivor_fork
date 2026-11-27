@@ -340,3 +340,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
   the free places), Make Room round trip through the Team menu, Confirm or Esc places and sells; unanswered sells on load.
 - Tests: keep-sell-harness, smoke-keep-sell. Feel test passed 2026-11-27; #146 closed. Follow-up filed: #173.
 - Stopped at: #173 next; the branch stays open for #139 8b and 8c, #140, #141, #142, #143 before the merge to main.
+
+## 2026-11-27 (Claude Code, home), #146 closed, #173 opened
+- #146 feel test passed; closed. Corrected the handoff: the branch stays open for #139 8b and 8c, #140 to #143.
+- #173 opening written; Jess ruled (decision 2026-11-27-173-held-catch-fully-rolled-and-owned-box): the whole copy rolls
+  when the catch window opens, both the catch screen and the keep-or-sell list show it, the list gains an owned box
+  (team copies included) the cursor can enter; the look is sketched first from Jess's mockup. Filed #174 (shiny catches).
+- Stopped at: Jess agrees #173's goal, done and test and drafts the mockup.

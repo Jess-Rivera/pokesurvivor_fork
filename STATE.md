@@ -1,12 +1,13 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-27, home (Claude Code). Branch: feature/138-146-lost-and-full-box (covers #138 to #146).
+Last updated: 2026-11-27 (end), home (Claude Code). Branch: feature/138-146-lost-and-full-box (covers #138 to #146).
 No branch rules file.
 
 ## START HERE
-#146 is closed. Open on this branch: #139 (8b evolve, 8c friendship), #140, #141, #142, #143 (#144 is deferred).
-Next: #173 (opening written, 5 decisions wait for Jess), then #141, #140, #139 8b. Merge to main only after #143.
+#173 (held catch compare): ask Jess to agree goal, done and test in docs/AI Outputs/Issue-173/173 - Held Catch
+Compare Slice Opening.md, then use his mockup (that folder) for the board sketch of both screens, then the plan.
+Still open on this branch: #139 (8b, 8c), #140, #141, #142, #143 (#144 deferred). Merge to main only after #143.
 
 ## Landed 2026-11-26 to 27 (home)
 - #146 closed (feel test passed 2026-11-27): overflow catches wait in save.heldCatches and the Main Menu opens the
@@ -25,7 +26,7 @@ Next: #173 (opening written, 5 decisions wait for Jess), then #141, #140, #139 8
 - Up from the Box 3 to 5 tabs reaches the detail panel's Moves, not the grid (Jess: fine for now, dropped).
 
 ## Open owner decisions
-- #173 five opening decisions. #166 slice opening (goal, done, test). #164 sidegrades (own grilling); #165 open items. Type-to-material map and
+- #173 goal, done and test (decisions answered); #174 shiny catches (new). #166 slice opening (goal, done, test). #164 sidegrades (own grilling); #165 open items. Type-to-material map and
   shop price (#163), friendship calculation, fatigue numbers, "last Elite Four beaten" wording.
 - #131 (Silver bonuses, shops 2 to 4 check), #49, #107, #86, #99, #93, #60. Tooltip pin and close icons; #156 close or keep.
 

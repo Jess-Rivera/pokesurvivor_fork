@@ -30,6 +30,7 @@ species they already own.
 ## Done when
 - A held catch carries its whole roll from the moment it is held (catch and Lost recruit alike); placing it keeps the
   same UUID, nature, ability, IVs, gender, height and weight.
+- The catch screen shows the wild Pokemon's rolls before you throw (look from the sketch).
 - The keep-or-sell list shows a small owned box for the selected row's species (every copy you own of it); it follows
   the selection, and shows an empty state when you own none.
 - Hovering (and, per decision 4, focusing) a copy in the box shows its stats, nature and ability.
@@ -46,7 +47,23 @@ Smoke (extends tools/smoke-keep-sell.js): fill the boxes with copies of one spec
 and another; the owned box lists exactly the owned copies of the selected row's species and changes when the
 selection moves; hovering a copy shows a tooltip naming its nature and ability.
 
-## Open decisions
+## Answered 2026-11-27 (decision 2026-11-27-173-held-catch-fully-rolled-and-owned-box)
+1. The roll is made when the catch window opens (the rescue keeps its nature); a flee or Let It Go discards it. A Lost
+   recruit rolls when held.
+2. and 3. (the catch's own rolls in its row, the tooltip contents): decided on the sketch.
+4. The selection cursor moves into the owned box, as on the catch screen.
+6. The roll exists before you throw so BOTH screens show it: the catch screen shows the wild Pokemon's rolls, and the
+   keep-or-sell list shows the held catch's. Jess mocks up both. The owned box includes team copies. Shiny: #174.
+5. Sketched on the UI library board first; Jess may draft an Excalidraw mockup before that.
+
+What this adds to the test: the harness checks that a rescue's rolled copy keeps the rescue's nature, and that the
+copy placed after a catch is the one rolled when the window opened. The smoke moves the cursor into the owned box by keys.
+
+## Next
+Jess agrees goal, done and test at the next session start, and drafts the mockup for both screens (save it in this
+folder). Then the board sketch (catch.window shows the rolls; main.keepOrSell gains the owned box), then the plan.
+
+## Open decisions (as asked)
 1. When is the roll made: when the ball catches it, or when the catch window opens (the catch screen could then show
    the wild Pokemon's own rolls before you throw; one that flees takes its roll with it)?
 2. The held catch's own rolls in the list: a tooltip on its row (same look as the owned copies'), or a stats line in
