@@ -332,3 +332,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
   in every move tooltip. Feel-tested, closed. Found: smoke-pause-menu's hex check fails with #97 upgrades (on #170).
 - Explained thin Gen 8 and 9 learnsets: the imported moves are all Gen 1 to 6, and the bake unions every game.
 - Stopped at: #146 slice opening written, four open decisions wait for Jess.
+
+## 2026-11-26 to 27 (Claude Code, home), #146 keep-or-sell list built and closed
+- Jess answered the four opening decisions (decision 2026-11-26-146-keep-or-sell-open-decisions); the look was sketched
+  on the library board first (main.keepOrSell) and approved with three fixes.
+- Built: overflow catches wait in save.heldCatches; the Main Menu list (fitting catches start as Keep, Keep refused past
+  the free places), Make Room round trip through the Team menu, Confirm or Esc places and sells; unanswered sells on load.
+- Tests: keep-sell-harness, smoke-keep-sell. Feel test passed 2026-11-27; #146 closed. Follow-up filed: #173.
+- Stopped at: choose between #173, merging the branch to main, and #172.

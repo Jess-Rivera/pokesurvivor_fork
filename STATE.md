@@ -1,19 +1,17 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-26 (afternoon), home (Claude Code). Branch: feature/138-146-lost-and-full-box (covers #138 to #146).
+Last updated: 2026-11-27, home (Claude Code). Branch: feature/138-146-lost-and-full-box (covers #138 to #146).
 No branch rules file.
 
 ## START HERE
-#146 keep-or-sell list: the slice opening waits for Jess (goal, done, test and four open decisions in
-docs/AI Outputs/Issue-146/146 - Keep or Sell Slice Opening.md). After it: TODO.md "Next". Run `node tools/catchup.js`.
+#146 is closed. Next: #173 (compare a held catch with owned copies, needs triage and an opening), merging this branch
+to main (419 commits ahead; Jess runs it), then TODO.md "Next". Run `node tools/catchup.js`.
 
-## Landed 2026-11-26 (home, afternoon)
-- #97 closed: slice C feel-tested; the locked buy button reads "Lv N" (fits the button). Remainder filed as #172
-  (Character Upgrades).
-- #145 closed: move tooltips show the damage class badge (assets/icons/category) beside the name, on the pause menu
-  Pokemon screen and the old Team sheet (G.MoveInfo.catIcon via G.Sheet.detailOf; shared tooltip nameIcon).
-  Test: tools/smoke-pause-menu.js #145 block.
+## Landed 2026-11-26 to 27 (home)
+- #146 closed (feel test passed 2026-11-27): overflow catches wait in save.heldCatches and the Main Menu opens the
+  keep-or-sell list (Make Room round trip, unanswered list sells on load). Tests: keep-sell-harness, smoke-keep-sell.
+- #97 closed (remainder is #172) and #145 closed (damage class badge in move tooltips), 2026-11-26.
 
 ## Watch
 - Starting moves are bought and saved but act only with #150. Shedinja's greyed HP card waits on #142.
@@ -27,7 +25,7 @@ docs/AI Outputs/Issue-146/146 - Keep or Sell Slice Opening.md). After it: TODO.m
 - Up from the Box 3 to 5 tabs reaches the detail panel's Moves, not the grid (Jess: fine for now, dropped).
 
 ## Open owner decisions
-- #146 opening and its four decisions. #166 slice opening (goal, done, test). #164 sidegrades (own grilling); #165 open items. Type-to-material map and
+- #173 slice opening. #166 slice opening (goal, done, test). #164 sidegrades (own grilling); #165 open items. Type-to-material map and
   shop price (#163), friendship calculation, fatigue numbers, "last Elite Four beaten" wording.
 - #131 (Silver bonuses, shops 2 to 4 check), #49, #107, #86, #99, #93, #60. Tooltip pin and close icons; #156 close or keep.
 

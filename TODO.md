@@ -9,17 +9,16 @@ Run `node tools/catchup.js` (prints the briefing and the exact sync commands, wr
 node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. #146 keep-or-sell list: agree the opening and answer its four decisions
-   (docs/AI Outputs/Issue-146/146 - Keep or Sell Slice Opening.md), then the prose plan and build.
+0. #173 (follow-up to #146, closed 2026-11-27): compare a held catch with owned copies; triage, then the slice opening.
+   Merge this branch to main now that #146 is done (Jess runs it; 419 commits ahead).
    #171 (circling rim for selected portraits) is an idea, needs triage.
-1. #172 (#97 remainder): Character Upgrades (account-wide list: Magnet, Card Reroll, Veto, PokeCoin %, Silver %, pockets),
+1. #172 (the remainder of closed #97): Character Upgrades (account-wide list: Magnet, Card Reroll, Veto, PokeCoin %, Silver %, pockets),
    then the #150 starting-move picker (needs a learnset rebake with levels and egg-move unlock data). Split out: #164
    (97b sidegrades), #165 (Mints, Capsules, Bottle Caps), #169 (leaders with upgrades, blocked on slice C).
 1c. #166 run telemetry (ongoing data collection; feeds the #97 and #131 numbers). Slice opening first.
 2. #139 8b evolve, then grill friendship (docs/AI Outputs/Issue-139/139 - Friendship Minutes Deep Dive.md, [Open]),
    then 8c. #161 fatigue (stub) rides with it.
 3. Then #141 and #140 (moves and items 8b needs), #139 8b, #142, #143, #162. #144 is deferred (cloud).
-   Consider merging this branch to main after #146 (415+ commits ahead).
 4. #163 evolution materials shop tab (new, with #162): needs the type-to-material map and the shop price.
 5. #126 UI unify (#61 first), then #127 Main Menu v3.0. #129 architecture review. #130 regions and map selection.
    Parked: #111, then #122.

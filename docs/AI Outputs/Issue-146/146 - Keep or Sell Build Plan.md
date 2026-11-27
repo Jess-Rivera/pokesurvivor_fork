@@ -1,4 +1,4 @@
-# 146 - Keep or Sell Build Plan (2026-11-26, APPROVED and BUILT 2026-11-26, feel test owed)
+# 146 - Keep or Sell Build Plan (2026-11-26, APPROVED and BUILT 2026-11-26, feel test passed 2026-11-27, #146 closed)
 
 Opening, goal, done and test: `146 - Keep or Sell Slice Opening.md` (agreed 2026-11-26). Rulings:
 decision 2026-11-26-146-keep-or-sell-open-decisions. Look: the board draft `main.keepOrSell`
