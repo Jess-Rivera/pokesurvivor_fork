@@ -127,3 +127,16 @@
     filter: brightness(1.8);
   }
 }
+
+/* ---------- #173: the Detail toggle and the side panels ---------- */
+.catch-detail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+}
+.catch-side {
+  position: absolute;
+  transform-origin: 0 0;
+}

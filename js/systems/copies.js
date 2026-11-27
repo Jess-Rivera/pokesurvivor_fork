@@ -387,14 +387,20 @@ G.Copies = (() => {
     return per.reduce((a, k) => a + Math.max(0, BOX_SIZE - k), 0);
   }
 
-  /** A new copy in the first box with room. Returns the compact record, or null when every box is full (nothing is saved). */
-  function add(save, o, rnd = Math.random) {
+  /** An already rolled compact copy (a held catch, #173) in the first box with room. Returns it, or null when every
+   *  box is full (nothing is saved). */
+  function place(save, c) {
     const b = freeBox(save);
     if (b < 0) return null;
-    const c = roll(o, rnd);
     if (b) c.b = b;
+    else delete c.b;
     save.box.push(c);
     return c;
+  }
+
+  /** A new copy in the first box with room. Returns the compact record, or null when every box is full (nothing is saved). */
+  function add(save, o, rnd = Math.random) {
+    return freeBox(save) < 0 ? null : place(save, roll(o, rnd));
   }
 
   /** Move a copy to another box. @returns 'ok' | 'full' | 'none' */
@@ -608,52 +614,61 @@ G.Copies = (() => {
     }
     const seen = new Set();
     save.boxCount = boxCount(save);
-    save.box = save.box.filter((c) => {
-      if (!c || typeof c.u !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(c.u) || seen.has(c.u)) return false;
-      const t = traitsOf(c.d);
-      if (!t || (G.DEX_BY && !G.DEX_BY[c.d])) return false;
-      seen.add(c.u);
-      c.t = wholeUpTo(c.t, Number.MAX_SAFE_INTEGER);
-      if (!METHOD_NAME[c.m]) c.m = METHODS.other;
-      c.n = Math.max(1, Math.min(25, wholeUpTo(c.n, 25)));
-      const iv = typeof c.i === 'string' ? [...c.i] : [];
-      c.i = [0, 1, 2, 3, 4, 5].map((k) => (IV_CHARS.includes(iv[k]) ? iv[k] : IV_CHARS[0])).join('');
-      const sexed = t[0] >= 0;
-      if (!sexed) c.g = 2;
-      else if (t[0] === 0 || t[0] === 8) c.g = t[0] === 8 ? 1 : 0;
-      else if (c.g !== 0 && c.g !== 1) c.g = 0;
-      c.x = wholeUpTo(c.x, SCALE_MAX);
-      c.y = wholeUpTo(c.y, SCALE_MAX);
-      if (![1, 2, 3].includes(c.a) || !t[1][c.a - 1]) c.a = 1;
-      if (c.s) c.s = 1;
-      else delete c.s;
-      if (c.e) {
-        c.e = cappedEvs(c.e);
-        if (!c.e.some((v) => v > 0)) delete c.e;
-      }
-      const nick = typeof c.k === 'string' ? cleanNickname(c.k) : ''; // a hand-edited or old save is cleaned like typed text
-      if (nick) c.k = nick;
-      else delete c.k;
-      if (c.h != null) c.h = wholeUpTo(c.h, FRIEND_MAX);
-      if (c.v != null && (typeof c.v !== 'string' || (G.MoveDefs && !G.MoveDefs[c.v]))) delete c.v;
-      cleanUpgrades(c);
-      for (const flag of ['f', 'l'])
-        if (c[flag]) c[flag] = 1;
-        else delete c[flag];
-      if (Array.isArray(c.j)) {
-        // TMs learned: a retired move becomes its replacement, an unknown one is dropped, each once
-        const learned = c.j.filter((moveId) => typeof moveId === 'string').map(currentMoveId);
-        c.j = [...new Set(learned)].filter((moveId) => !G.MoveDefs || G.MoveDefs[moveId]);
-        if (!c.j.length) delete c.j;
-      } else delete c.j;
-      if (c.c != null) c.c = wholeUpTo(c.c, candyXpCap(c.d)); // candy XP: whole, at most the level 100 total
-      if (!c.c) delete c.c;
-      if (typeof c.o !== 'string' || !c.o) delete c.o;
-      if (typeof c.r !== 'string' || !c.r) delete c.r;
-      if (c.b != null) c.b = wholeUpTo(c.b, save.boxCount - 1);
-      if (!c.b) delete c.b;
-      return true;
-    });
+    save.box = save.box.filter((c) => cleanRecord(c, save, seen));
+    // the keep-or-sell list's held copies (#173): cleaned the same way; one past cleaning is dropped and its catch
+    // is placed with a fresh roll, as an old save's is
+    if (!Array.isArray(save.heldCatches)) return;
+    for (const held of save.heldCatches)
+      if (held && held.copy && !(held.copy.d === held.dex && cleanRecord(held.copy, save, seen))) delete held.copy;
+  }
+
+  /** Cleans one compact record in place (see clean). False when it cannot be kept: a bad or repeated UUID, or no
+   *  such species. `seen` holds the UUIDs already kept. */
+  function cleanRecord(c, save, seen) {
+    if (!c || typeof c.u !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(c.u) || seen.has(c.u)) return false;
+    const t = traitsOf(c.d);
+    if (!t || (G.DEX_BY && !G.DEX_BY[c.d])) return false;
+    seen.add(c.u);
+    c.t = wholeUpTo(c.t, Number.MAX_SAFE_INTEGER);
+    if (!METHOD_NAME[c.m]) c.m = METHODS.other;
+    c.n = Math.max(1, Math.min(25, wholeUpTo(c.n, 25)));
+    const iv = typeof c.i === 'string' ? [...c.i] : [];
+    c.i = [0, 1, 2, 3, 4, 5].map((k) => (IV_CHARS.includes(iv[k]) ? iv[k] : IV_CHARS[0])).join('');
+    const sexed = t[0] >= 0;
+    if (!sexed) c.g = 2;
+    else if (t[0] === 0 || t[0] === 8) c.g = t[0] === 8 ? 1 : 0;
+    else if (c.g !== 0 && c.g !== 1) c.g = 0;
+    c.x = wholeUpTo(c.x, SCALE_MAX);
+    c.y = wholeUpTo(c.y, SCALE_MAX);
+    if (![1, 2, 3].includes(c.a) || !t[1][c.a - 1]) c.a = 1;
+    if (c.s) c.s = 1;
+    else delete c.s;
+    if (c.e) {
+      c.e = cappedEvs(c.e);
+      if (!c.e.some((v) => v > 0)) delete c.e;
+    }
+    const nick = typeof c.k === 'string' ? cleanNickname(c.k) : ''; // a hand-edited or old save is cleaned like typed text
+    if (nick) c.k = nick;
+    else delete c.k;
+    if (c.h != null) c.h = wholeUpTo(c.h, FRIEND_MAX);
+    if (c.v != null && (typeof c.v !== 'string' || (G.MoveDefs && !G.MoveDefs[c.v]))) delete c.v;
+    cleanUpgrades(c);
+    for (const flag of ['f', 'l'])
+      if (c[flag]) c[flag] = 1;
+      else delete c[flag];
+    if (Array.isArray(c.j)) {
+      // TMs learned: a retired move becomes its replacement, an unknown one is dropped, each once
+      const learned = c.j.filter((moveId) => typeof moveId === 'string').map(currentMoveId);
+      c.j = [...new Set(learned)].filter((moveId) => !G.MoveDefs || G.MoveDefs[moveId]);
+      if (!c.j.length) delete c.j;
+    } else delete c.j;
+    if (c.c != null) c.c = wholeUpTo(c.c, candyXpCap(c.d)); // candy XP: whole, at most the level 100 total
+    if (!c.c) delete c.c;
+    if (typeof c.o !== 'string' || !c.o) delete c.o;
+    if (typeof c.r !== 'string' || !c.r) delete c.r;
+    if (c.b != null) c.b = wholeUpTo(c.b, save.boxCount - 1);
+    if (!c.b) delete c.b;
+    return true;
   }
 
   return {
@@ -661,6 +676,7 @@ G.Copies = (() => {
     shortId,
     longId,
     roll,
+    place,
     read,
     all,
     get,

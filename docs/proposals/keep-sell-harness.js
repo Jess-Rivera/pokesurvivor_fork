@@ -165,5 +165,119 @@ const priceOf = (mon) => Copies.priceFor(mon.dex, false);
   console.log('7 an unanswered list sells every held catch on the next load; an old save is unchanged');
 }
 
+// ---------- #173: a held catch is a whole copy (docs/AI Outputs/Issue-173/173 - Held Catch Compare Slice Opening.md) ----------
+const COPY_FIELDS = ['u', 'd', 't', 'm', 'n', 'i', 'g', 'x', 'y', 'a'];
+/** Every field a box copy has, each in range, read through G.Copies.read (the game's own view of a copy). */
+function wholeCopyProblems(held) {
+  const copy = held.copy;
+  if (!copy) return ['no copy'];
+  const problems = COPY_FIELDS.filter((key) => copy[key] == null).map((key) => 'missing ' + key);
+  if (problems.length) return problems;
+  const full = Copies.read(copy, G.DB.save);
+  if (copy.d !== held.dex) problems.push('dex');
+  if (full.iv.length !== 6 || full.iv.some((iv) => !(iv >= 0 && iv <= 31))) problems.push('IVs');
+  if (!['male', 'female', 'none'].includes(full.gender)) problems.push('gender');
+  if (!(copy.x >= 0 && copy.x <= 255 && copy.y >= 0 && copy.y <= 255)) problems.push('scales');
+  if (!full.ability) problems.push('ability');
+  if (!full.natureName) problems.push('nature');
+  return problems;
+}
+const withoutBox = ({ b, ...rest }) => rest;
+const boxCopyOf = (save, u) => save.box.find((c) => c.u === u);
+
+{
+  // 8 a held catch (and a Lost recruit, which is held through the same hold) carries a whole copy, its nature kept
+  holdAll();
+  const list = C.held;
+  list.forEach((held, i) => {
+    const problems = wholeCopyProblems(held);
+    if (problems.length) bad('8 ' + held.name + ' is a whole copy: ' + problems.join(', '));
+    if (held.copy && held.copy.n !== CATCHES[i].nature) bad('8 ' + held.name + ' keeps the rescue nature');
+  });
+  C.settle(false, saveWithFree(10));
+  console.log('8 every held catch is a whole copy in range, with its rescue nature');
+}
+{
+  // 9 placed copies are the held ones, field for field; with room (settle) and from the list (resolve)
+  const roomy = saveWithFree(10);
+  holdAll();
+  const heldRoomy = C.held;
+  C.settle(true, roomy);
+  for (const held of heldRoomy) {
+    const placed = held.copy && boxCopyOf(roomy, held.copy.u);
+    if (!placed || !same(withoutBox(placed), withoutBox(held.copy))) bad('9 settle places ' + held.name + ' as held');
+  }
+  const full = saveWithFree(3);
+  holdAll();
+  C.settle(true, full);
+  const waiting = C.heldCatches(full).map((h) => ({ ...h })),
+    keeps = [true, false, true, false, true];
+  C.resolve(keeps, full);
+  waiting.forEach((held, i) => {
+    const placed = held.copy && boxCopyOf(full, held.copy.u);
+    if (keeps[i] && (!placed || !same(withoutBox(placed), withoutBox(held.copy)))) bad('9 Keep places ' + held.name + ' as held');
+    if (!keeps[i] && placed) bad('9 a sold ' + held.name + ' leaves no copy with its UUID');
+  });
+  console.log('9 Keep places the held copy unchanged (same UUID); Sell leaves no copy with it');
+}
+{
+  // 10 two held catches of one species roll apart
+  C.hold(CATCHES[0]);
+  C.hold(CATCHES[0]);
+  const [first, second] = C.held;
+  if (!first.copy || !second.copy || first.copy.u === second.copy.u) bad('10 two Dratini hold different UUIDs');
+  C.settle(false, saveWithFree(10));
+  console.log('10 two held catches of one species have different UUIDs');
+}
+{
+  // 11 an old save's held catch (no copy) still places, with a fresh roll, and still sells
+  const old = saveWithFree(3);
+  old.heldCatches = CATCHES.slice(0, 2).map((mon) => ({ ...mon }));
+  const boxBefore = old.box.length,
+    coinsBefore = old.coins;
+  const out = C.resolve([true, false], old);
+  const added = old.box.slice(boxBefore);
+  if (!out.ok || added.length !== 1 || added[0].d !== CATCHES[0].dex || added[0].n !== CATCHES[0].nature)
+    bad('11 an old held catch is placed with its nature');
+  if (added[0] && wholeCopyProblems({ dex: CATCHES[0].dex, copy: added[0] }).length) bad('11 its fresh roll is whole');
+  if (old.coins !== coinsBefore + priceOf(CATCHES[1])) bad('11 an old held catch still sells');
+  console.log('11 an old held catch without a copy places with a fresh roll and sells');
+}
+{
+  // 12 the catch window rolls the copy when it opens; a caught throw holds that same copy
+  const save = G.DB.save;
+  save.belt = { size: 6, slots: ['poke', 'poke', null, null, null, null], unlocked: [] };
+  const rescue = { dex: 133, name: 'Eevee', nature: 11, natureName: 'Timid', timeFraction: 0 };
+  const session = C.begin(rescue, () => 0.5);
+  if (!session || !session.copy) bad('12 the open catch has its copy');
+  else {
+    if (session.copy.n !== rescue.nature) bad('12 the window copy keeps the rescue nature');
+    const rolled = { ...session.copy };
+    const result = C.throwBall('poke', () => 0); // every roll passes
+    const held = C.held.find((h) => h.copy && h.copy.u === rolled.u);
+    if (result !== 'caught' || !held || !same(held.copy, rolled)) bad('12 the caught catch holds the copy rolled at open');
+  }
+  C.begin(rescue, () => 0.5);
+  C.letGo();
+  if (C.held.length !== 1) bad('12 a let go catch holds nothing');
+  C.settle(false, saveWithFree(10));
+  console.log('12 the copy rolled when the window opens is the one held after a catch');
+}
+{
+  // 13 the save load cleans a held copy like a box copy; a held copy too broken to clean is dropped, its catch kept
+  const save = saveWithFree(0);
+  holdAll(CATCHES.slice(0, 2));
+  C.settle(true, save); // no room: both wait in save.heldCatches
+  const [first, second] = C.heldCatches(save);
+  first.copy.i = '!!!!!!'; // not IV characters
+  first.copy.x = 9999;
+  second.copy.d = 99999; // no such species
+  Copies.clean(save);
+  const [cleanFirst, cleanSecond] = C.heldCatches(save);
+  if (!cleanFirst || !first.copy || wholeCopyProblems(cleanFirst).length) bad('13 a held copy out of range is cleaned in range');
+  if (!cleanSecond || cleanSecond.copy) bad('13 a held copy past cleaning is dropped, the catch kept');
+  console.log('13 the load cleans held copies; a broken one falls back to a fresh roll');
+}
+
 console.log(fail ? 'keep-sell harness: ' + fail + ' FAIL' : 'keep-sell harness: all passed');
 process.exit(fail ? 1 : 0);

@@ -2,6 +2,11 @@
  * The pause menu's two-tier panel for one Pokemon: name (a pencil renames), favorite and lock, level, types, the six stat
  * rows or the stat hex, nature, ability, size, starting move, Moves. Space is kept for Evolve beside Moves. Level Up, the
  * XP bar, candy dropped on the panel (#139 Part F). js/ui/menu-team.js owns the state and hands it in as `menu`.
+ * ShortPanel (#173): the same panel without rename, Level Up, starting move and Moves, for the catch screen and the
+ * keep-or-sell list. It takes the copy itself (a wild or held catch is not in the save), the screen's own Hex state and
+ * cursor, and (an owned copy only) toggleMark, which adds the level, the EXP bar and the favorite and lock marks.
+ *   cursor  { at: the id the keys' cursor is on, hover(id | null), area, Bar: ({ id, height }) => the cursor bar }
+ *   hex     { on, toggle, id }
  */
 G.MenuTeamDetail = (() => {
   const overlay = G.HudOverlay,
@@ -30,6 +35,9 @@ G.MenuTeamDetail = (() => {
     HEX = { width: 515, height: 276, radius: 0.33 },
     MOVES_BUTTON = { left: 8, width: 120, height: 44, fontSize: 15 },
     MOVES = { width: 640, height: 700, rowsTop: 70, pad: 16, close: { width: 150, height: 44 } };
+  // #173: the Team panel's width; its height ends below the size rows (infos top 446 + three 36 px rows and two 8 px gaps
+  // + 12) plus the deep bar
+  const SHORT_PANEL = { width: 549, height: 650 };
   // the game's stat order (HP, Atk, Def, SpA, SpD, Spe) as the stat tokens' keys
   const STAT_KEYS = ['hp', 'attack', 'defense', 'specialAttack', 'specialDefense', 'speed'];
   const STAT_LABELS = ['HP', 'Attack', 'Defense', 'Sp. Atk', 'Sp. Def', 'Speed'];
@@ -93,18 +101,18 @@ G.MenuTeamDetail = (() => {
     }, [species, copy && copy.pokemonUUID]);
     return html`<div ref=${host} class="tm-hex"></div>`;
   }
-  function Stats({ menu, species, copy, at }) {
+  function Stats({ species, copy, hex, cursor }) {
     const { pressMs, releaseMs } = lib.Button.GLITCH_TIMING;
-    const [view, setView] = hooks.useState({ hex: menu.showHex(), phase: '' });
+    const [view, setView] = hooks.useState({ hex: hex.on, phase: '' });
     hooks.useEffect(() => {
-      if (view.hex === menu.showHex()) return undefined;
+      if (view.hex === hex.on) return undefined;
       setView({ ...view, phase: 'off' });
       const timers = [
-        setTimeout(() => setView({ hex: menu.showHex(), phase: 'on' }), pressMs),
-        setTimeout(() => setView({ hex: menu.showHex(), phase: '' }), pressMs + releaseMs),
+        setTimeout(() => setView({ hex: hex.on, phase: 'on' }), pressMs),
+        setTimeout(() => setView({ hex: hex.on, phase: '' }), pressMs + releaseMs),
       ];
       return () => timers.forEach(clearTimeout);
-    }, [menu.showHex()]);
+    }, [hex.on]);
     return html`<div class="panel-clean tm-stats" style=${{ top: px(STATS.top), height: px(STATS.height) }}>
       <div
         class=${'tm-stats-view' + (view.phase ? ' crt-' + view.phase : '')}
@@ -119,18 +127,18 @@ G.MenuTeamDetail = (() => {
       <div class="tm-stats-foot">
         <span>${'No. ' + String(species.dex).padStart(3, '0')}</span>
         <span>${G.MenuUI.REGION_NAMES[species.gen - 1]}</span>
-        <span>${G.Copies.RARITY_NAME[species.rarity]}</span>
+        <span>${G.T(G.Copies.RARITY_NAME[species.rarity])}</span>
         <span>${'BST ' + species.bst}</span>
         <${lib.Toggle.PowerToggle}
-          on=${menu.showHex()}
+          on=${hex.on}
           label="Hex"
-          cursor=${at === 'hex'}
-          onPress=${menu.toggleHex}
+          cursor=${cursor.at === hex.id}
+          onPress=${hex.toggle}
           attrs=${{
-            'data-cursor-id': 'hex',
-            'data-cursor-area': AREA,
-            onMouseEnter: () => menu.cursor.hover('hex'),
-            onMouseLeave: () => menu.cursor.hover(null),
+            'data-cursor-id': hex.id,
+            'data-cursor-area': cursor.area,
+            onMouseEnter: () => cursor.hover(hex.id),
+            onMouseLeave: () => cursor.hover(null),
           }}
         />
       </div>
@@ -228,19 +236,50 @@ G.MenuTeamDetail = (() => {
     return [start, ...G.Moves.poolFor(species).filter((id) => id !== start)];
   };
 
-  function Known({ menu, species, copy, at }) {
+  /** The level and its EXP bar (an owned copy's out-of-run level, G.Candy). */
+  function LevelLine({ species, copy, width }) {
+    return html`<${lib.Bar.ExpBar}
+        className="tm-exp"
+        fraction=${G.Candy.levelProgress(species.dex, copy.candyXp)}
+        style=${{ top: px(BARS.band), width: px(width - BARS.topEnd - BARS.step) }}
+      />
+      <div class="tm-level">${'Lv. ' + G.Candy.levelFor(species.dex, copy.candyXp)}</div>`;
+  }
+
+  /** The types, the stats and the rows under them; infoExtras go last in the rows (the Team menu's starting move). */
+  function PanelContent({ species, copy, hex, cursor, infoExtras = null }) {
     const info = infoOf(copy, species.dex);
-    const barWidth = menu.layout().detail.width - BARS.topEnd - BARS.step;
-    return html`${
-        copy
-          ? html`<${lib.Bar.ExpBar}
-              className="tm-exp"
-              fraction=${G.Candy.levelProgress(species.dex, copy.candyXp)}
-              style=${{ top: px(BARS.band), width: px(barWidth) }}
-            />`
-          : null
-      }
-      <div class="tm-level">${copy ? 'Lv. ' + G.Candy.levelFor(species.dex, copy.candyXp) : ''}</div>
+    return html`<div class="tm-detail-types">
+        ${species.types.map((type) => html`<${lib.Chip.TypeChip} key=${type} type=${type} />`)}
+      </div>
+      <${Stats} key=${'stats'} species=${species} copy=${copy} hex=${hex} cursor=${cursor} />
+      <div class="tm-infos">
+        <${InfoRow} label="Nature" value=${info.nature} />
+        <${InfoRow} label="Ability" value=${info.ability} />
+        <div class="tm-info-pair">
+          <${InfoRow} label="Height" value=${info.height} />
+          <${InfoRow} label="Weight" value=${info.weight} />
+        </div>
+        ${infoExtras}
+      </div>`;
+  }
+
+  /** The two type bars behind a panel; the ids must differ between panels on one page. */
+  const PanelBars = ({ idPrefix, panel, top, bottom }) =>
+    html`<svg class="tm-detail-bars" width=${panel.width} height=${panel.height}>
+      <${TypeBar} id=${idPrefix + '-top'} contact=${topContact(panel)} outerY=${0} colours=${top} />
+      <${TypeBar} id=${idPrefix + '-bottom'} contact=${bottomContact(panel)} outerY=${panel.height} colours=${bottom} />
+    </svg>`;
+  /** A species' two bar colours: its first type above, its second (or first) below. */
+  function typeRims(species) {
+    const rims = species.types.map(typeColours);
+    return { top: rims[0], bottom: rims[1] || rims[0] };
+  }
+
+  function Known({ menu, species, copy, at }) {
+    const cursor = { at, hover: menu.cursor.hover, area: AREA },
+      hex = { on: menu.showHex(), toggle: menu.toggleHex, id: 'hex' };
+    return html`${copy ? html`<${LevelLine} species=${species} copy=${copy} width=${menu.layout().detail.width} />` : null}
       ${
         copy
           ? html`<${CursorButton}
@@ -258,16 +297,13 @@ G.MenuTeamDetail = (() => {
             />`
           : null
       }
-      <${Stats} key=${'stats'} menu=${menu} species=${species} copy=${copy} at=${at} />
-      <div class="tm-infos">
-        <${InfoRow} label="Nature" value=${info.nature} />
-        <${InfoRow} label="Ability" value=${info.ability} />
-        <div class="tm-info-pair">
-          <${InfoRow} label="Height" value=${info.height} />
-          <${InfoRow} label="Weight" value=${info.weight} />
-        </div>
-        <${StartingMove} dex=${species.dex} />
-      </div>
+      <${PanelContent}
+        species=${species}
+        copy=${copy}
+        hex=${hex}
+        cursor=${cursor}
+        infoExtras=${html`<${StartingMove} dex=${species.dex} />`}
+      />
       <${CursorButton}
         cursor=${menu.cursor}
         id="moves"
@@ -282,6 +318,46 @@ G.MenuTeamDetail = (() => {
       />`;
   }
 
+  // ---------- the short panel (#173): the catch screen and the keep-or-sell list ----------
+  /**
+   * One Pokemon's short panel at SHORT_PANEL's size. copy: a full copy (G.Copies.read), or null for the species alone
+   * (an old save's held catch). toggleMark(which): given only for a copy in the save, which then shows its level, EXP
+   * bar and marks. children: the screen's own pieces (Sell).
+   */
+  function ShortPanel({ species, copy, idPrefix, hex, cursor, toggleMark = null, children = null }) {
+    const rims = typeRims(species),
+      owned = !!(copy && toggleMark),
+      marksMenu = owned && { cursor, toggleMark: (uid, which) => toggleMark(which), Bar: cursor.Bar };
+    const mark = (which, on, left) =>
+      html`<${MarkToggle}
+        menu=${marksMenu}
+        id=${idPrefix + '-' + which}
+        uid=${copy.pokemonUUID}
+        which=${which}
+        on=${on}
+        size=${28}
+        area=${cursor.area}
+        style=${{ left: px(left), top: px(20) }}
+      />`;
+    return html`<div
+      class="panel-clean tm-detail tm-short"
+      style=${{ width: px(SHORT_PANEL.width), height: px(SHORT_PANEL.height) }}
+      data-dex=${species.dex}
+      data-uid=${copy ? copy.pokemonUUID : ''}
+    >
+      <${PanelBars} idPrefix=${idPrefix} panel=${SHORT_PANEL} top=${rims.top} bottom=${rims.bottom} />
+      <div class="tm-silver tm-detail-name"><${NameText} copy=${copy} species=${species} /></div>
+      ${
+        owned
+          ? html`${mark('favorite', copy.isFavorite, 464)} ${mark('lock', copy.isLocked, 504)}
+              <${LevelLine} species=${species} copy=${copy} width=${SHORT_PANEL.width} />`
+          : null
+      }
+      <${PanelContent} species=${species} copy=${copy} hex=${hex} cursor=${cursor} />
+      ${children}
+    </div>`;
+  }
+
   function Detail({ menu, at }) {
     const { dex, uid } = menu.selected();
     const panel = menu.layout().detail,
@@ -293,9 +369,7 @@ G.MenuTeamDetail = (() => {
     const species = G.DEX_BY[dex],
       copy = uid ? G.Copies.get(G.DB.save, uid) : null,
       owned = !!copy || !!G.DB.save.owned[dex],
-      rims = species.types.map(typeColours),
-      top = owned ? rims[0] : UNKNOWN,
-      bottom = owned ? rims[1] || rims[0] : UNKNOWN;
+      rims = owned ? typeRims(species) : { top: UNKNOWN, bottom: UNKNOWN };
     const mark = (which, on, left) =>
       html`<${MarkToggle}
         menu=${menu}
@@ -314,18 +388,12 @@ G.MenuTeamDetail = (() => {
       data-uid=${uid || ''}
       onClick=${menu.clickDetail}
     >
-      <svg class="tm-detail-bars" width=${panel.width} height=${panel.height}>
-        <${TypeBar} id="tm-detail-top" contact=${topContact(panel)} outerY=${0} colours=${top} />
-        <${TypeBar} id="tm-detail-bottom" contact=${bottomContact(panel)} outerY=${panel.height} colours=${bottom} />
-      </svg>
+      <${PanelBars} idPrefix="tm-detail" panel=${panel} top=${rims.top} bottom=${rims.bottom} />
       <${Name} menu=${menu} copy=${copy} species=${species} owned=${owned} />
       ${copy ? [mark('favorite', copy.isFavorite, 464), mark('lock', copy.isLocked, 504)] : null}
       ${
         owned
-          ? html`<div class="tm-detail-types">
-                ${species.types.map((type) => html`<${lib.Chip.TypeChip} key=${type} type=${type} />`)}
-              </div>
-              <${Known} menu=${menu} species=${species} copy=${copy} at=${at} />`
+          ? html`<${Known} menu=${menu} species=${species} copy=${copy} at=${at} />`
           : html`<div class="tm-empty">You have not caught this Pokemon yet.</div>`
       }
     </div>`;
@@ -388,5 +456,5 @@ G.MenuTeamDetail = (() => {
   /** The popup's cursor stops. */
   const movesItems = (species) => [...learnsetOf(species).map((id) => MOVE_ROW + id), 'moves-close'];
 
-  return { ready: true, Detail, MovesPopup, movesItems };
+  return { ready: true, Detail, MovesPopup, movesItems, ShortPanel, SHORT_PANEL };
 })();

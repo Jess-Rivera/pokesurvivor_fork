@@ -27,6 +27,19 @@ G.MenuTeamSlots = (() => {
     }${symbol ? html`<span class=${'tm-gender is-' + copy.gender}>${symbol}</span>` : null}`;
   }
 
+  /** Flips a copy's favorite or lock mark and saves at once (the Team menu, the catch screen, keep-or-sell; #173).
+   *  False when the save has no such copy. */
+  function toggleCopyMark(uid, which) {
+    const save = G.DB.save,
+      copy = uid && G.Copies.get(save, uid);
+    if (!copy) return false;
+    if (which === 'lock') G.Copies.setLocked(save, uid, !copy.isLocked);
+    else G.Copies.setFavorite(save, uid, !copy.isFavorite);
+    G.Audio.sfx('click');
+    G.DB.commit(true);
+    return true;
+  }
+
   /** A favorite or lock toggle: dim when off. */
   function MarkToggle({ menu, id, uid, which, on, style, size = MARK.size, area, cursorRight }) {
     return html`<div
@@ -181,5 +194,5 @@ G.MenuTeamSlots = (() => {
     </div>`;
   }
 
-  return { ready: true, Column, MarkToggle, NameText };
+  return { ready: true, Column, MarkToggle, NameText, toggleCopyMark };
 })();

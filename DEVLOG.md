@@ -347,3 +347,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
   when the catch window opens, both the catch screen and the keep-or-sell list show it, the list gains an owned box
   (team copies included) the cursor can enter; the look is sketched first from Jess's mockup. Filed #174 (shiny catches).
 - Stopped at: Jess agrees #173's goal, done and test and drafts the mockup.
+
+## 2026-11-27 (Claude Code, home), #173 built
+- Jess's two mockups ruled (decision 2026-11-27-173-mockup-short-detail-panels): short detail panels either side of the
+  catch window and the keep-or-sell list, hover previews and a click pins, Esc unpins first, owned Sell by Team rules.
+- Built: held catches carry the copy rolled at the catch window (G.Copies.place, obtain takes it, held copies cleaned
+  on load); the Team detail panel split into shared pieces; catch window 948 px; keep-or-sell 948 x 600 with owned box.
+- Tests: keep-sell-harness +6 sections, smoke-keep-sell #173 part, new smoke-catch-detail; all pass. Jess felt it once.
+- Stopped at: fuller feel test, then close #173.

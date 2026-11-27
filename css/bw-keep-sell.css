@@ -12,10 +12,10 @@
 }
 #ks-window {
   position: absolute;
-  left: 580px; /* (1920 - 760) / 2 */
-  top: 260px; /* (1080 - 560) / 2 */
-  width: 760px;
-  height: 560px;
+  left: 486px; /* (1920 - 948) / 2; #173: as wide as the catch window */
+  top: 240px; /* (1080 - 600) / 2 */
+  width: 948px;
+  height: 600px;
 }
 .ks-pane {
   position: absolute;
@@ -49,4 +49,28 @@
 .ks-toggle .toggle-power {
   font-size: 14px;
   pointer-events: none; /* the row takes the click */
+}
+
+/* ---------- #173: the scrolling list, the owned box, Detail and the side panels ---------- */
+.ks-list,
+.ks-owned-grid {
+  position: relative;
+}
+.ks-row,
+.ks-owned-cell {
+  position: absolute;
+}
+.ks-owned-cell {
+  cursor: pointer;
+}
+.ks-sides {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none; /* only the panels take the mouse */
+}
+.ks-side {
+  position: absolute;
+  transform-origin: 0 0;
+  pointer-events: auto;
 }

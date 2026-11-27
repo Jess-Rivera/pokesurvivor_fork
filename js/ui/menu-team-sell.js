@@ -13,6 +13,28 @@ G.MenuTeamSell = (() => {
 
   const { modifiers } = G.MenuWindowKit;
 
+  /** What a single sale warns about. */
+  function warnings(copy, name) {
+    const last = G.Copies.all(G.DB.save).filter((other) => other.speciesID === copy.speciesID).length === 1;
+    return [
+      copy.isFavorite && name + ' is a favorite.',
+      copy.evTotal && 'It has ' + copy.evTotal + ' EVs. They are lost.',
+      copy.candyXp && 'Its Exp Candy levels are lost.',
+      copy.tmsLearned.length && 'Its ' + copy.tmsLearned.length + ' learned TMs go with it.',
+      last && 'This is your last ' + G.DEX_BY[copy.speciesID].name + '. The Pokedex keeps it.',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+  /** The one-copy sale's dialog (the Team menu and the keep-or-sell list, #173): true when the player says Sell. */
+  const askToSell = (copy, name) =>
+    G.UI.ask(`Sell ${name} for ${coinText(G.Copies.sellPrice(G.DB.save, copy.pokemonUUID))}?`, {
+      title: 'Sell Pokemon',
+      ok: 'Sell',
+      intent: 'negative',
+      note: warnings(copy, name),
+    });
+
   /**
    * The sell mode of one Team menu. draft() is its roster, shownUids() the copies the grid shows now, sold(uids) is
    * called after a sale, redraw() after any other change.
@@ -60,20 +82,6 @@ G.MenuTeamSell = (() => {
       redraw();
     }
 
-    /** What a single sale warns about. */
-    function warnings(copy, name) {
-      const last = G.Copies.all(G.DB.save).filter((other) => other.speciesID === copy.speciesID).length === 1;
-      return [
-        copy.isFavorite && name + ' is a favorite.',
-        copy.evTotal && 'It has ' + copy.evTotal + ' EVs. They are lost.',
-        copy.candyXp && 'Its Exp Candy levels are lost.',
-        copy.tmsLearned.length && 'Its ' + copy.tmsLearned.length + ' learned TMs go with it.',
-        last && 'This is your last ' + G.DEX_BY[copy.speciesID].name + '. The Pokedex keeps it.',
-      ]
-        .filter(Boolean)
-        .join(' ');
-    }
-
     async function sellOne(copy) {
       const save = G.DB.save,
         uid = copy.pokemonUUID,
@@ -81,18 +89,11 @@ G.MenuTeamSell = (() => {
       if (why) return refuse(why);
       const name = copy.nickname || G.DEX_BY[copy.speciesID].name;
       end();
-      const yes = await G.UI.ask(`Sell ${name} for ${coinText(G.Copies.sellPrice(save, uid))}?`, {
-        title: 'Sell Pokemon',
-        ok: 'Sell',
-        intent: 'negative',
-        note: warnings(copy, name),
-      });
-      if (!yes) return;
+      if (!(await askToSell(copy, name))) return;
       const result = G.Copies.sell(save, uid, G.TeamDraft.uids(draft()));
       if (!result.ok) return refuse('Nothing was sold.');
       done([uid], `Sold ${name} for ${coinText(result.coins)} PokeCoins`);
     }
-
     /** The picked copies the grid still shows: a filter or a sale may have taken some away. */
     function pickedNow() {
       const shown = shownUids();
@@ -136,5 +137,5 @@ G.MenuTeamSell = (() => {
     };
   }
 
-  return { create, coinText };
+  return { create, coinText, askToSell };
 })();

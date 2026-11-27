@@ -1073,10 +1073,11 @@ G.DB = (() => {
    * With every box full there is no copy: it is sold on arrival and the coins go to this save (pokebox 3a-4, D3 and D4).
    * @param s  the save to write (default: the loaded one)
    * @param nature  the copy's nature as a pokeapi id (1 to 25), kept from a rescue (#136); absent: rolled
+   * @param rolled  an already rolled compact copy to place as it is (a held catch, #173); absent: one is rolled
    * @returns { isNew, uid, box, sold }  isNew: new to the Pokedex, or a first shiny. uid, box (from 0): the new copy, null if none.
    *   sold: the PokeCoins paid when it was sold on arrival (absent otherwise).
    */
-  function obtain(dex, shiny, from, s = save, nature = null) {
+  function obtain(dex, shiny, from, s = save, nature = null, rolled = null) {
     if (!s) return { isNew: false, uid: null, box: null };
     s.owned = s.owned || {};
     s.shiny = s.shiny || {};
@@ -1086,7 +1087,7 @@ G.DB = (() => {
     if (shiny && !s.shiny[dex]) s.shiny[dex] = { at: now, from };
     if (!G.Copies || !G.SpeciesTraits || !G.SpeciesTraits.SPECIES[dex]) return { isNew, uid: null, box: null };
     if (!Array.isArray(s.box)) s.box = [];
-    const c = G.Copies.add(s, { dex, shiny: !!shiny, from, at: now, nature });
+    const c = rolled ? G.Copies.place(s, rolled) : G.Copies.add(s, { dex, shiny: !!shiny, from, at: now, nature });
     if (!c) {
       const sold = G.Copies.priceFor(dex, !!shiny);
       s.coins = (Math.floor(+s.coins) || 0) + sold;

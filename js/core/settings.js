@@ -14,6 +14,8 @@
  *                                                 shows (keys, later a controller; the mouse shows it at once). #149c
  *   teamBackgroundMoves true/false                the Team menu's background is animated, or one still frame (#168)
  *   levelUpStarburst true/false                   a level up plays a starburst in that background (#168)
+ *   catchDetail, catchHex  true/false             the catch screen's Detail and Hex toggles, remembered (#173)
+ *   keepSellDetail, keepSellHex  true/false       the keep-or-sell list's Detail and Hex toggles, remembered (#173)
  *   stick       0.8 | 1 | 1.25                    touch joystick size
  *   stickMode   'float' | 'fixed'                 joystick where you put your finger, or always in place
  *   pad         { bar, pause, stick } | null      where the buttons go on mobile (centered, in
@@ -36,6 +38,10 @@ G.Settings = (() => {
     cursorTooltipDelay: 1,
     teamBackgroundMoves: true,
     levelUpStarburst: true,
+    catchDetail: false,
+    catchHex: false,
+    keepSellDetail: false,
+    keepSellHex: false,
     stick: 1,
     stickMode: 'float',
     pad: null,

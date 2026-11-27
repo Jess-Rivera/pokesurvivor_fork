@@ -9,8 +9,9 @@ Run `node tools/catchup.js` (prints the briefing and the exact sync commands, wr
 node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. #173 held catch compare: decisions answered (decision 2026-11-27-173); Jess agrees goal, done and test, drafts a
-   mockup of both screens (docs/AI Outputs/Issue-173/), then the board sketch, prose plan, build. #174 shiny catches is new.
+0. #173 held catch compare: BUILT 2026-11-27. Jess gives it a fuller feel test (catch screen side panels and pin,
+   keep-or-sell owned box, Sell, Detail and Hex remembered, the Team menu's detail panel), then close it. Rerun
+   tools/smoke-ui.js (15 old failures) and tools/smoke-pause-menu.js (#170) to confirm nothing new. #174 shiny catches.
    Still open on this branch: #139 (8b, 8c), #140, #141, #142, #143; #144 is deferred. Merge to main after #143.
    #171 (circling rim for selected portraits) is an idea, needs triage.
 1. #172 (the remainder of closed #97): Character Upgrades (account-wide list: Magnet, Card Reroll, Veto, PokeCoin %, Silver %, pockets),

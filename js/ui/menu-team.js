@@ -318,14 +318,7 @@ G.MenuTeam = (() => {
   }
   /** Saved at once, like a box move. */
   function toggleMark(uid, which) {
-    const save = G.DB.save,
-      copy = uid && G.Copies.get(save, uid);
-    if (!copy) return;
-    if (which === 'lock') G.Copies.setLocked(save, uid, !copy.isLocked);
-    else G.Copies.setFavorite(save, uid, !copy.isFavorite);
-    G.Audio.sfx('click');
-    G.DB.commit(true);
-    saved();
+    if (G.MenuTeamSlots.toggleCopyMark(uid, which)) saved();
   }
 
   // ---------- filter and sort ----------

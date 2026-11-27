@@ -322,6 +322,15 @@
 .tm-detail {
   overflow: hidden;
 }
+/* the short panel (#173) on the catch screen and the keep-or-sell list, outside the Team menu's stage */
+.tm-short {
+  position: absolute;
+  font-family: 'HudModule', sans-serif;
+  font-synthesis: none;
+  color: var(--color-grey-white);
+  user-select: none;
+  transform-origin: 0 0;
+}
 .tm-detail-bars {
   left: 0;
   top: 0;

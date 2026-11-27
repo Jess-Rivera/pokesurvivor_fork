@@ -24,7 +24,8 @@
  *            js/data/balls.js.
  *   held     every catch of a run is held, never placed mid-run. At the run end (settle): kept when the run ends with its EVs
  *            (a fall, a crash), all lost on a quit (End Run, signing out). Kept ones become copies (method rescue, the
- *            rescue's nature). Without room for all, none is placed: they wait in save.heldCatches for the
+ *            rescue's nature). #173: a held catch is a whole copy, rolled when its window opens and placed as it is.
+ *            Without room for all, none is placed: they wait in save.heldCatches for the
  *            keep-or-sell list (#146, resolve), and a game closed before answering sells them on the next load
  *            (sellHeld). A recruited Lost Pokemon (#138, js/systems/events.js) is held the same way, through hold().
  * Checks: docs/proposals/rescue-harness.js (part 6), docs/proposals/keep-sell-harness.js.
@@ -86,7 +87,7 @@ G.Catch = (() => {
     naughty: 'hard',
   };
 
-  let held = []; // { dex, name, nature, natureName } caught this run
+  let held = []; // { dex, name, nature, natureName, copy } caught this run (copy: the compact copy, #173)
   let session = null; // the open catch: { dex, name, nature, natureName, star, timeFraction, worldLevel, badges,
   //                     ownedSpecies, misses, allowed, bandShift }
   let lastThrow = null; // the last throw's roll: { critical, shakes, caught, math }
@@ -325,6 +326,7 @@ G.Catch = (() => {
       misses: 0,
       allowed: fleeAllowance(result.nature),
       bandShift: Math.round((rnd() * 2 - 1) * K.bandAccuracy), // where the true chance sits in the shown range
+      copy: rollCopy(result, rnd), // #173: the whole copy, shown before the throw and kept if caught
     };
     lastThrow = null;
     return session;
@@ -384,9 +386,14 @@ G.Catch = (() => {
     return 'miss';
   }
 
-  /** Holds one Pokemon for the run (a catch, or a recruited Lost Pokemon, #138); it is placed when the run settles. */
+  /** A catch's whole compact copy (#173): rolled once, keeping the rescue's nature. */
+  const rollCopy = (mon, rnd = Math.random) => G.Copies.roll({ dex: mon.dex, from: 'rescue', nature: mon.nature }, rnd);
+
+  /** Holds one Pokemon for the run (a catch, or a recruited Lost Pokemon, #138); it is placed when the run settles. A
+   *  catch brings the copy its window rolled; a Lost recruit has none, so it rolls now. */
   function hold(mon) {
-    held.push({ dex: mon.dex, name: mon.name, nature: mon.nature, natureName: mon.natureName });
+    const copy = mon.copy || rollCopy(mon);
+    held.push({ dex: mon.dex, name: mon.name, nature: mon.nature, natureName: mon.natureName, copy });
   }
 
   /** Letting it go (the screen's Let it go, after asking): it runs off, the belt keeps its balls. */
@@ -410,7 +417,7 @@ G.Catch = (() => {
       return out;
     }
     for (const h of list) {
-      G.DB.obtain(h.dex, false, 'rescue', s, h.nature);
+      G.DB.obtain(h.dex, false, 'rescue', s, h.nature, h.copy);
       out.placed.push(h.name);
     }
     return out;
@@ -438,7 +445,7 @@ G.Catch = (() => {
     const out = { ok: true, placed: [], sold: [], coins: 0 };
     list.forEach((h, i) => {
       if (keeps[i]) {
-        G.DB.obtain(h.dex, false, 'rescue', s, h.nature);
+        G.DB.obtain(h.dex, false, 'rescue', s, h.nature, h.copy); // an old save's catch has no copy: rolled now
         out.placed.push(h.name);
         return;
       }

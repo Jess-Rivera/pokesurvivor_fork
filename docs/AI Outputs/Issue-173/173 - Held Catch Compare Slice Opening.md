@@ -30,10 +30,16 @@ species they already own.
 ## Done when
 - A held catch carries its whole roll from the moment it is held (catch and Lost recruit alike); placing it keeps the
   same UUID, nature, ability, IVs, gender, height and weight.
-- The catch screen shows the wild Pokemon's rolls before you throw (look from the sketch).
-- The keep-or-sell list shows a small owned box for the selected row's species (every copy you own of it); it follows
-  the selection, and shows an empty state when you own none.
-- Hovering (and, per decision 4, focusing) a copy in the box shows its stats, nature and ability.
+- Both screens (mockups in this folder) have a Detail toggle (remembered) that opens a short detail panel on the left
+  for the wild or held catch: name, gender, types, the six stat rows (IV plus EV, the EV part empty) or the hex,
+  nature, ability, size. On keep-or-sell it follows the selected row.
+- The keep-or-sell list shows a small owned box for the selected row's species (every copy you own of it, team copies
+  included, scrolling past 16); it follows the selection, and shows an empty state when you own none.
+- Hovering a face in either owned box previews a short detail panel on the right (adds out-of-run level, EXP bar,
+  favorite and lock); a click, Enter or Space keeps it open. The catch screen's hover tooltip is gone.
+- On keep-or-sell, the owned panel's Sell asks first, follows the Team menu's lock and favorite rules, and frees a
+  slot (Keep N rises).
+- The Team menu's own detail panel looks and works as before.
 - An old save's held catches still place and sell; the #146 harness and smoke still pass; check.js clean; Jess feel-tests.
 
 ## End-goal test (written first)
@@ -45,7 +51,10 @@ Harness (extends docs/proposals/keep-sell-harness.js), relations only:
 - a Lost Pokemon recruit is held with a full roll, same as a catch.
 Smoke (extends tools/smoke-keep-sell.js): fill the boxes with copies of one species, end a run holding that species
 and another; the owned box lists exactly the owned copies of the selected row's species and changes when the
-selection moves; hovering a copy shows a tooltip naming its nature and ability.
+selection moves; Enter on a face opens the owned panel naming its nature and ability; Detail opens the held catch's
+panel and it follows the row; selling an unlocked owned copy removes it and raises Keep N, a locked one refuses.
+The Team menu smoke (tools/smoke-pause-menu.js) still passes its detail panel checks (known #170 failures aside).
+Mockup rulings: decision 2026-11-27-173-mockup-short-detail-panels.
 
 ## Answered 2026-11-27 (decision 2026-11-27-173-held-catch-fully-rolled-and-owned-box)
 1. The roll is made when the catch window opens (the rescue keeps its nature); a flee or Let It Go discards it. A Lost

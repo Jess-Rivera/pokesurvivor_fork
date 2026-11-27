@@ -5,22 +5,30 @@
  * -catch-let-it-go-ask-opens-on-keep-trying; board tools/library/catch-draft.js), from the UI library's pieces.
  * Plan: docs/AI Outputs/Issue-136/catch.window Plan.md. On the pause menu's 1920 x 1080 stage, scaled to fit, inside
  * #scr-catch.
- *   window   panel.clean, 980 x 424, centred.
+ *   window   panel.clean, 948 x 424, centred (#173: narrowed from 980 so the side panels fit).
  *   left     the Pokemon: panel.pixel in its types (a two-type rim dithered across the middle) on a plain grey.raised
  *            body; the flee ring (portrait.round's ring, the first type's dark over grey.paper, one step per miss);
  *            "{Nature} {Name}", the catch band (a range that holds the true chance, G.Catch.band) and the ball it is
- *            for, in Silver (font.silver, the Pokemon tier).
+ *            for, in Silver (font.silver, the Pokemon tier); the Detail toggle under them (#173).
  *   middle   three of the kit's ball belts (BallBelt, the Shop's): the belts the save has bought (G.Catch.beltsBought,
  *            #137) hold its balls slot for slot as the save lays them out (G.Catch.slots, arranged in the Shop,
  *            #137b); the rest are locked. The selected ball's well takes the belt's dark inside its light ring; the
  *            numbered belt shows its keys 1 to 6.
  *   right    Pokemon owned: panel.clean, every copy of this species in the Pokebox (best IV + EV total first) as 48 px
- *            faces, its tooltip on focus; then Throw (positive) and Let It Go (negative), button.glitch.
+ *            faces; then Throw (positive) and Let It Go (negative), button.glitch.
+ *   panels   #173 (decisions 2026-11-27-173-*; mockup docs/AI Outputs/Issue-173/upgraded-catch-popup.excalidraw): the
+ *            short detail panel (G.MenuTeamDetail.ShortPanel) at SIDE.scale either side of the window. Left, with Detail
+ *            on: the wild Pokemon's own copy (G.Catch's session.copy, rolled when the window opened). Right: the owned
+ *            face under the cursor (keys or mouse), else the pinned one; a click, Enter or Space pins a face (the same
+ *            face again unpins it), Esc unpins before it asks to let go. Its favorite and lock switch and save. Detail
+ *            and Hex are remembered on this device (G.Settings catchDetail, catchHex).
  *   result   a toast (G.UI.toast): caught is news, a miss, a flee and out of balls are bad news.
  *   input    one selection cursor over every control. Arrows (the move keys) move it, hover moves where it goes on
  *            from. With the keys it shows: cursor.ring on a well or a face, a button's own focus. With the mouse no
  *            ring shows (decision 2026-11-17-no-selection-cursor-with-the-mouse) and a button swipes on hover. Enter on
- *            a ball selects it, Enter on the selected ball throws it; Enter on Throw throws the selected ball. 1 to 6
+ *            a ball selects it, Enter on the selected ball throws it; Enter on Throw throws the selected ball. Left of
+ *            the first belt: Detail, then the wild panel's Hex; Right of the owned box (a face pinned): the owned
+ *            panel's favorite, lock and Hex. 1 to 6
  *            throw that slot of the numbered belt (the belt the cursor was last in; only it shows numbers). Click
  *            selects, double click throws. Esc or Let It Go asks once (G.UI.ask, negative: it opens on Keep trying).
  *            Nothing is taken while a ball is in the air.
@@ -29,28 +37,31 @@ G.CatchUI = (() => {
   const overlay = G.HudOverlay,
     screen = document.getElementById('scr-catch'), // absent on pages that load the game's scripts without its screens
     library = G.Lib || {};
-  const pieces = [library.Button, library.Cursor, library.Well];
+  const pieces = [library.Button, library.Cursor, library.Well, library.Toggle];
   const piecesReady = pieces.every((piece) => piece && piece.ready);
   if (!overlay || !overlay.ready || !screen || !piecesReady) return { ready: false };
   const { html, signal, hooks, preact, typeColours, Box, ScrollBox, inputMode } = overlay.kit;
-  const { fitToStage, showTooltip, hideTooltip, portraitSource, portraitFallback, BallSprite, RoundPortrait } =
-    overlay.kit;
+  const { fitToStage, portraitSource, portraitFallback, BallSprite, RoundPortrait } = overlay.kit;
   const { BALL_BELT, BallBelt, BeltBall } = overlay.kit;
   const { GlitchButton } = library.Button,
-    { CURSOR_RING, CursorRing, useRingTravel } = library.Cursor,
-    { Well } = library.Well;
+    { CURSOR_RING, CursorRing, CursorBar, useRingTravel } = library.Cursor,
+    { Well } = library.Well,
+    { PowerToggle } = library.Toggle;
+  // #173: the side panels; without the Team menu's pieces the screen still works, without them
+  const panelKit = G.MenuTeamDetail && G.MenuTeamDetail.ready && G.MenuTeamSlots.ready ? G.MenuTeamDetail : null;
 
   // ---------- sizes and places (stage pixels; the window is centred on the 1920 x 1080 stage; the board's) ----------
   const STAGE = { width: 1920, height: 1080 },
-    WINDOW = { width: 980, height: 424 }, // only as tall as a belt and its padding
+    WINDOW = { width: 948, height: 424 }, // only as tall as a belt and its padding
     PAD = 20,
-    MON = { left: PAD, top: PAD, width: 340, height: WINDOW.height - 2 * PAD }, // as tall as a belt (384)
+    MON = { left: PAD, top: PAD, width: 320, height: WINDOW.height - 2 * PAD }, // as tall as a belt; fits 'with a Great Ball'
     RING = { size: 160, top: 24, stroke: 4 }, // the flee ring: a 132 px face inside the ring's 2 px outline and band
-    TEXT = { nameTop: 204, bandTop: 254, ballTop: 308 }, // Silver 30, 40, 30; left and right in bw-catch.css
-    BELT = { firstLeft: 372, step: 96, count: 3, slots: BALL_BELT.slots }, // 84 px belts, 12 px apart
+    TEXT = { nameTop: 204, bandTop: 254, ballTop: 308, detailTop: 346 }, // Silver 30, 40, 30, then the Detail toggle
+    BELT = { firstLeft: 352, step: 96, count: 3, slots: BALL_BELT.slots }, // 84 px belts, 12 px apart
     // faces 20 px apart across and 16 down, so a face's cursor ring clears the next face's (decision 2026-11-20)
-    OWNED = { left: 676, top: PAD, width: 284, height: 244, inset: 16, columns: 4, face: 48, faceStroke: 2 },
-    BUTTON = { left: 678, width: 280, height: 54, tops: [280, 350] }; // Let It Go on the window's bottom padding
+    OWNED = { left: 644, top: PAD, width: 284, height: 244, inset: 16, columns: 4, face: 48, faceStroke: 2 },
+    BUTTON = { left: 646, width: 280, height: 54, tops: [280, 350] }, // Let It Go on the window's bottom padding
+    SIDE = { scale: 0.85, gap: 10 }; // the side panels: 85 percent, 10 px from the window (Jess: 85 to 90, 1080p only)
   BELT.top = PAD + (WINDOW.height - 2 * PAD - BALL_BELT.height) / 2; // 20
   Object.assign(OWNED, { columnGap: 20, rowGap: 16, visibleRows: 4, trackRight: 3 }); // rows the keys map belts onto
   OWNED.rowPitch = OWNED.face + OWNED.rowGap; // 64
@@ -79,20 +90,16 @@ G.CatchUI = (() => {
     BAD_NEWS = 'bad'; // G.UI.toast's tone for bad news (the red edge)
 
   const BALL_SPRITES = G.BALL_SPRITES;
-  const STAT_ORDER = [
-    ['HP', 0],
-    ['Atk', 1],
-    ['Def', 2],
-    ['Spe', 5],
-    ['SpA', 3],
-    ['SpD', 4],
-  ]; // the tooltip's two rows (mockup); the save's order is HP, Atk, Def, SpA, SpD, Spe
-  const GENDER_MARK = { male: '\u2642', female: '\u2640' };
 
   // ---------- state ----------
-  const shown = signal(null); // { session, owned, types } while open
+  const shown = signal(null); // { session, owned, types, wild (the wild Pokemon's full copy) } while open
   const selected = signal({ belt: 0, slot: 0 }); // the slot of the current ball
-  const focus = signal({ area: 'slot', belt: 0, slot: 0 }); // { area: 'slot', belt, slot } | 'owned', index | 'button', index
+  // { area: 'slot', belt, slot } | 'owned', index | 'button', index | 'detail' | 'wildHex' | 'ownedPanel', index
+  const focus = signal({ area: 'slot', belt: 0, slot: 0 });
+  const detailOn = signal(false), // the Detail toggle (G.Settings catchDetail)
+    hexOn = signal(false), // both side panels' Hex (G.Settings catchHex)
+    pinned = signal(null), // the pinned owned copy's UUID, or null
+    mouseOwned = signal(null); // the owned face under the mouse, or null
   const numberedBelt = signal(0); // the belt whose slots show 1 to 6 (the one the cursor was last in)
   const busy = signal(false);
   const flight = signal(null); // the ball in the air: { ball, frame, x, y }
@@ -183,7 +190,16 @@ G.CatchUI = (() => {
           const slot = nearestStocked(belt, at.slot);
           if (slot >= 0) return focusSlot(belt, slot);
         }
+        focus.value = { area: 'detail' }; // past the first belt: the Detail toggle
       }
+    } else if (at.area === 'detail') {
+      if (dx > 0) focusBelt(BELT.slots - 1);
+      else if (dx < 0 && wildShown()) focus.value = { area: 'wildHex' };
+    } else if (at.area === 'wildHex') {
+      if (dx > 0) focus.value = { area: 'detail' };
+    } else if (at.area === 'ownedPanel') {
+      if (dy) focus.value = { area: 'ownedPanel', index: Math.max(0, Math.min(PANEL_ITEMS.length - 1, at.index + dy)) };
+      else if (dx < 0) focusPinnedFace();
     } else if (at.area === 'owned') {
       const column = at.index % OWNED.columns,
         count = ownedCount();
@@ -192,6 +208,7 @@ G.CatchUI = (() => {
         else focusBelt(Math.round((visibleRow(at.index) * BELT.slots) / OWNED.visibleRows));
       } else if (dx > 0) {
         if (column < OWNED.columns - 1 && at.index + 1 < count) focus.value = { area: 'owned', index: at.index + 1 };
+        else if (pinnedIndex() >= 0) focus.value = { area: 'ownedPanel', index: 0 }; // into the pinned face's panel
       } else if (dy > 0) {
         focus.value =
           at.index + OWNED.columns < count
@@ -200,10 +217,60 @@ G.CatchUI = (() => {
       } else if (dy < 0 && at.index >= OWNED.columns) focus.value = { area: 'owned', index: at.index - OWNED.columns };
     } else {
       if (dx < 0) focusBelt(BELT.slots - 1);
+      else if (dx > 0 && pinnedIndex() >= 0) focus.value = { area: 'ownedPanel', index: 0 };
       else if (dy > 0 && at.index === 0) focus.value = { area: 'button', index: 1 };
       else if (dy < 0 && at.index === 1) focus.value = { area: 'button', index: 0 };
       else if (dy < 0 && ownedCount()) focus.value = { area: 'owned', index: ownedRowStart(OWNED.visibleRows - 1) };
     }
+  }
+
+  // ---------- the side panels (#173) ----------
+  const PANEL_ITEMS = ['favorite', 'lock', 'hex']; // the owned panel's controls, top to bottom
+  const wildShown = () => !!(panelKit && detailOn.value && shown.value);
+  const pinnedIndex = () =>
+    shown.value ? shown.value.owned.findIndex((copy) => copy.pokemonUUID === pinned.value) : -1;
+  function focusPinnedFace() {
+    const index = pinnedIndex();
+    if (index >= 0) focus.value = { area: 'owned', index };
+  }
+  /** The owned copy the right panel shows: the face under the cursor (keys or mouse), else the pinned one, else -1. */
+  function previewIndex() {
+    const at = focus.value;
+    if (inputMode.value === 'keys' && at.area === 'owned') return at.index;
+    if (inputMode.value !== 'keys' && mouseOwned.value != null) return mouseOwned.value;
+    return pinnedIndex();
+  }
+  /** A face pressed: pins it, or unpins it when it is the pinned one. */
+  function pinFace(index) {
+    const copy = shown.value && shown.value.owned[index];
+    if (!copy || busy.value || !panelKit) return;
+    pinned.value = pinned.value === copy.pokemonUUID ? null : copy.pokemonUUID;
+    G.Audio.sfx('select');
+  }
+  /** Esc with a face pinned: unpins it (the cursor back on the face if it was in the panel). */
+  function unpin() {
+    if (focus.value.area === 'ownedPanel') focusPinnedFace();
+    pinned.value = null;
+    G.Audio.sfx('back');
+  }
+  function toggleDetail() {
+    detailOn.value = !detailOn.value;
+    G.Settings.set('catchDetail', detailOn.value);
+    if (!detailOn.value && focus.value.area === 'wildHex') focus.value = { area: 'detail' };
+    G.Audio.sfx('click');
+  }
+  function toggleHex() {
+    hexOn.value = !hexOn.value;
+    G.Settings.set('catchHex', hexOn.value);
+    G.Audio.sfx('click');
+  }
+  /** Switches an owned copy's favorite or lock (saved at once) and redraws it. */
+  function markOwned(index, which) {
+    const view = shown.value,
+      uid = view && view.owned[index] && view.owned[index].pokemonUUID;
+    if (!uid || !G.MenuTeamSlots.toggleCopyMark(uid, which)) return;
+    const fresh = G.Copies.get(G.DB.save, uid);
+    shown.value = { ...view, owned: view.owned.map((copy, at) => (at === index ? fresh : copy)) };
   }
 
   // ---------- actions ----------
@@ -226,7 +293,6 @@ G.CatchUI = (() => {
       alive = () => token === throwToken && shown.value === view;
     selected.value = { belt, slot };
     busy.value = true;
-    hideTooltip();
     beltCount.value++;
     G.Audio.sfx('confirm');
     // out of the slot, in an arc onto the portrait, spinning
@@ -302,7 +368,6 @@ G.CatchUI = (() => {
     const view = shown.value;
     if (!view || busy.value) return;
     busy.value = true;
-    hideTooltip();
     const name = view.session.name;
     const sure = await G.UI.ask('Let ' + name + ' go? It runs off and your Poke Balls stay on your belt.', {
       title: 'Let it go?',
@@ -329,6 +394,13 @@ G.CatchUI = (() => {
     } else if (at.area === 'button') {
       if (at.index === 0) throwNow();
       else letGo();
+    } else if (at.area === 'owned') pinFace(at.index);
+    else if (at.area === 'detail') toggleDetail();
+    else if (at.area === 'wildHex') toggleHex();
+    else if (at.area === 'ownedPanel') {
+      const item = PANEL_ITEMS[at.index];
+      if (item === 'hex') toggleHex();
+      else markOwned(pinnedIndex(), item);
     }
   }
 
@@ -403,6 +475,19 @@ G.CatchUI = (() => {
       <div class="catch-silver catch-silver-30 catch-ball-name" style=${textAt(TEXT.ballTop)}>
         ${'with a ' + ball.name}
       </div>
+      ${
+        panelKit
+          ? html`<div class="catch-detail" style=${textAt(TEXT.detailTop)}>
+              <${PowerToggle}
+                on=${detailOn.value}
+                label="Detail"
+                cursor=${keysOn((at) => at.area === 'detail')}
+                onPress=${toggleDetail}
+                attrs=${{ 'data-cursor-id': 'detail', onMouseEnter: () => !busy.value && (focus.value = { area: 'detail' }) }}
+              />
+            </div>`
+          : null
+      }
     </${Box}>`;
   }
 
@@ -466,7 +551,12 @@ G.CatchUI = (() => {
           width: px(OWNED.face),
           height: px(OWNED.face),
         }}
-        onMouseEnter=${() => !busy.value && (focus.value = { area: 'owned', index })}
+        onMouseEnter=${() => {
+          mouseOwned.value = index;
+          if (!busy.value) focus.value = { area: 'owned', index };
+        }}
+        onMouseLeave=${() => mouseOwned.value === index && (mouseOwned.value = null)}
+        onClick=${() => pinFace(index)}
       >
         <${RoundPortrait}
           className="catch-owned-face"
@@ -493,7 +583,7 @@ G.CatchUI = (() => {
         }}
         trackRight=${OWNED.trackRight}
         colours=${SCROLL_COLOURS}
-        resetOn=${[view]}
+        resetOn=${[view.session]}
       >
         <div class="catch-owned-grid" style=${{ height: px(rows * OWNED.rowPitch - OWNED.rowGap + 2 * room) }}>
           ${cells}
@@ -531,15 +621,67 @@ G.CatchUI = (() => {
     ${button(1, 'let-go', 'Let It Go', 'negative', letGo)}`;
   }
 
-  /** The owned tooltip: name, gender and box, then IV + EV per stat. */
-  function ownedTooltip(copy) {
-    const name = copy.nickname || (G.DEX_BY[copy.speciesID] || {}).name || '?';
-    const value = (stat) => copy.iv[stat] + copy.ev[stat];
-    const row = (pairs) => pairs.map(([label, stat]) => label + ': ' + value(stat)).join('   ');
+  /** A side panel's cursor (G.MenuTeamDetail.ShortPanel's shape): ids is the panel's controls by focus. */
+  function panelCursor(area, idOf) {
+    const at = inputMode.value === 'keys' ? idOf(focus.value) : null;
     return {
-      name: name + ' ' + (GENDER_MARK[copy.gender] || '') + '  Box ' + (copy.box + 1),
-      lines: [row(STAT_ORDER.slice(0, 3)), row(STAT_ORDER.slice(3))],
+      at,
+      area,
+      hover: (id) => {
+        if (!id || busy.value) return;
+        focus.value =
+          id === 'catch-wild-hex'
+            ? { area: 'wildHex' }
+            : { area: 'ownedPanel', index: PANEL_ITEMS.indexOf(id.slice(OWNED_PREFIX.length + 1)) };
+      },
+      Bar: ({ id, height }) => (at === id ? html`<${CursorBar} phase=${null} height=${height} />` : null),
     };
+  }
+  const OWNED_PREFIX = 'catch-owned'; // its controls: catch-owned-favorite, -lock and -hex
+
+  function SidePanels({ view }) {
+    if (!panelKit) return null;
+    const { ShortPanel, SHORT_PANEL } = panelKit;
+    const width = SHORT_PANEL.width * SIDE.scale,
+      windowLeft = (STAGE.width - WINDOW.width) / 2;
+    const place = (left) => ({
+      left: px(left),
+      top: px((STAGE.height - SHORT_PANEL.height * SIDE.scale) / 2),
+      transform: 'scale(' + SIDE.scale + ')',
+    });
+    const hexOf = (id) => ({ on: hexOn.value, toggle: toggleHex, id });
+    const ownedIndex = previewIndex(),
+      owned = ownedIndex >= 0 ? view.owned[ownedIndex] : null;
+    return html`${
+      detailOn.value && view.wild
+        ? html`<div class="catch-side" style=${place(windowLeft - SIDE.gap - width)}>
+            <${ShortPanel}
+              species=${G.DEX_BY[view.session.dex]}
+              copy=${view.wild}
+              idPrefix="catch-wild"
+              hex=${hexOf('catch-wild-hex')}
+              cursor=${panelCursor('catch-wild', (at) => (at.area === 'wildHex' ? 'catch-wild-hex' : null))}
+            />
+          </div>`
+        : null
+    }
+    ${
+      owned
+        ? html`<div class="catch-side" style=${place(windowLeft + WINDOW.width + SIDE.gap)}>
+            <${ShortPanel}
+              key=${owned.pokemonUUID}
+              species=${G.DEX_BY[owned.speciesID]}
+              copy=${owned}
+              idPrefix=${OWNED_PREFIX}
+              hex=${hexOf(OWNED_PREFIX + '-hex')}
+              cursor=${panelCursor(OWNED_PREFIX, (at) =>
+                at.area === 'ownedPanel' ? OWNED_PREFIX + '-' + PANEL_ITEMS[at.index] : null
+              )}
+              toggleMark=${(which) => markOwned(ownedIndex, which)}
+            />
+          </div>`
+        : null
+    }`;
   }
 
   function Screen() {
@@ -547,19 +689,16 @@ G.CatchUI = (() => {
     const rootRef = hooks.useRef(null);
     const at = focus.value;
     const ring = useRingTravel(view ? ringTarget() : null);
-    // the owned tooltip follows the cursor (keys and hover alike), and the grid scrolls to keep the cursor in view
+    // the grid scrolls to keep the keys' cursor in view
     hooks.useLayoutEffect(() => {
-      if (!view || at.area !== 'owned' || busy.value) return hideTooltip();
+      if (!view || at.area !== 'owned' || busy.value) return;
       const cell = rootRef.current && rootRef.current.querySelector('[data-owned-index="' + at.index + '"]');
-      if (!cell) return hideTooltip();
-      const grid = cell.closest('.hud-scroll-box'); // keep the cursor's row in view, scrolling only the grid
-      if (grid) {
-        const top = cell.offsetTop - OWNED.room,
-          bottom = cell.offsetTop + OWNED.face + OWNED.room;
-        if (top < grid.scrollTop) grid.scrollTop = top;
-        else if (bottom > grid.scrollTop + grid.clientHeight) grid.scrollTop = bottom - grid.clientHeight;
-      }
-      showTooltip(cell, ownedTooltip(view.owned[at.index]), { side: 'rightOf', beside: '.catch-window' });
+      const grid = cell && cell.closest('.hud-scroll-box'); // scrolling only the grid
+      if (!grid) return;
+      const top = cell.offsetTop - OWNED.room,
+        bottom = cell.offsetTop + OWNED.face + OWNED.room;
+      if (top < grid.scrollTop) grid.scrollTop = top;
+      else if (bottom > grid.scrollTop + grid.clientHeight) grid.scrollTop = bottom - grid.clientHeight;
     }, [view, at, busy.value]);
     if (!view) return null;
     const fl = flight.value,
@@ -590,6 +729,7 @@ G.CatchUI = (() => {
             : null
         }
       </div>
+      <${SidePanels} view=${view} />
     </div>`;
   }
 
@@ -614,7 +754,12 @@ G.CatchUI = (() => {
     face.value = 'shown';
     shownMisses.value = session.misses;
     beltCount.value++;
-    shown.value = { session, owned, types: (mon && mon.types) || ['normal'] };
+    const wild = save && session.copy ? G.Copies.read(session.copy, save) : null;
+    shown.value = { session, owned, types: (mon && mon.types) || ['normal'], wild };
+    detailOn.value = !!G.Settings.get('catchDetail');
+    hexOn.value = !!G.Settings.get('catchHex');
+    pinned.value = null;
+    mouseOwned.value = null;
     const best = Math.max(0, G.Catch.bestSlot()), // the best ball starts selected (spec, R6)
       first = { belt: Math.floor(best / BELT.slots), slot: best % BELT.slots };
     selected.value = first;
@@ -627,7 +772,6 @@ G.CatchUI = (() => {
     const callback = onClose;
     onClose = null;
     throwToken++;
-    hideTooltip();
     shown.value = null;
     flight.value = null;
     busy.value = false;
@@ -638,7 +782,7 @@ G.CatchUI = (() => {
   /** Each frame while the screen is open (G.Game routes the keys here). */
   function keys() {
     if (!shown.value || busy.value) return; // a ball in the air, or the Let it go dialog (it takes its own Enter and Esc)
-    if (G.Input.tap('escape')) return letGo();
+    if (G.Input.tap('escape')) return pinned.value ? unpin() : letGo(); // a pinned face first
     if (G.Input.tap('enter') || G.Input.tap('numpadenter')) return press();
     const dx = (G.Input.action('move_right') ? 1 : 0) - (G.Input.action('move_left') ? 1 : 0),
       dy = (G.Input.action('move_down') ? 1 : 0) - (G.Input.action('move_up') ? 1 : 0);
