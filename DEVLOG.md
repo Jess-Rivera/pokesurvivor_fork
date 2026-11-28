@@ -362,3 +362,13 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
   the check now looks for the right side panel, back to the 15 old failures. smoke-pause-menu: the known #170 only.
 - Drift: TODO and STATE no longer cite closed #97 or #173.
 - Stopped at: branch work (#141 and #140, then #139 8b), and the #174 slice opening.
+
+## 2026-11-27 (Claude Code, home, evening), #141 opened and built up to the rulings
+- Slice opened (goal, done, test on the issue); mouse aim split to #175. Plan: docs/AI Outputs/Issue-141/.
+- Built (tools only, no game code): Move Review page and helper server, tools/move_import.js with Kanto's patterns shared
+  (byte-identical Kanto output), batch file 141, smoke-move-review.js (passes). 5 moves in the catalog, held from learnsets;
+  Mimic, Taunt, Dragon Cheer wait for rulings. Six scenario rows; four harness counts updated. check.js green.
+- Found: kanto_batch1.js --apply is stale and reverts retuned rings; reverted by hand, script now warns.
+- Round R answered (6 MOVE-INTENT entries, one decision; a batch joins the learnsets when fully signed off, built in the
+  server). Part D plan written. Launcher tools/Move Review.cmd added (tested: server up, page and API answer).
+- Stopped at: Jess's walk through the page, Part D approval and its four open numbers (next session, clean context).

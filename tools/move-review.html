@@ -1,0 +1,723 @@
+<!doctype html>
+<!-- Move Review (#141, dev tool, never ships). Open it through its helper server: node tools/move-review-server.js, then the
+     address it prints. One move at a time: the mainline facts, its MOVE-INTENT ruling, the batch's proposal, the resolved numbers
+     and its scenarios, beside the real game in a sandbox arena (dev.html driving G.Debug.movechecker or newcombat). Save writes the
+     edits into the batch file and the server re-runs the import and the export; the arena reloads with them. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Move Review</title>
+    <style>
+      :root {
+        --bg: #15171c;
+        --panel: #1e2128;
+        --line: #2e323b;
+        --text: #e4e6eb;
+        --dim: #8b919c;
+        --hi: #ffd23f;
+        --up: #5fcb6a;
+        --down: #ff7a6b;
+        --acc: #6ea4ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          13px/1.45 system-ui,
+          sans-serif;
+      }
+      header {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        padding: 8px 16px;
+        border-bottom: 1px solid var(--line);
+        min-height: 44px;
+      }
+      header h1 {
+        font-size: 16px;
+        margin: 0;
+      }
+      header .dim {
+        color: var(--dim);
+      }
+      main {
+        display: grid;
+        grid-template-columns: 230px minmax(420px, 1fr) 760px;
+        height: calc(100vh - 45px);
+      }
+      main > section {
+        overflow: auto;
+        padding: 12px;
+        border-right: 1px solid var(--line);
+      }
+      main > section:last-child {
+        border-right: 0;
+      }
+      h2 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--dim);
+        margin: 16px 0 6px;
+      }
+      h2:first-child {
+        margin-top: 0;
+      }
+      .move-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 5px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .move-row:hover {
+        background: var(--panel);
+      }
+      .move-row.sel {
+        background: #2b3242;
+      }
+      .state {
+        font-size: 11px;
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .state.signed-off,
+      .pill.pass {
+        color: var(--up);
+      }
+      .state.needs-ruling,
+      .state.waits {
+        color: var(--hi);
+      }
+      .pill.fail {
+        color: var(--down);
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+      }
+      .title {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+      .title b {
+        font-size: 18px;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 6px 14px;
+      }
+      .kv span {
+        display: block;
+        color: var(--dim);
+        font-size: 11px;
+      }
+      .prose {
+        white-space: pre-wrap;
+      }
+      .dim {
+        color: var(--dim);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td {
+        padding: 3px 6px;
+        border-top: 1px solid var(--line);
+        vertical-align: top;
+      }
+      #fields {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 6px 12px;
+      }
+      #fields label,
+      .edit label {
+        display: flex;
+        flex-direction: column;
+        font-size: 11px;
+        color: var(--dim);
+        gap: 2px;
+      }
+      input,
+      select,
+      textarea,
+      button {
+        background: #262a33;
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 4px 6px;
+        font: inherit;
+      }
+      input.changed {
+        border-color: var(--hi);
+      }
+      textarea {
+        width: 100%;
+        min-height: 48px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button.primary {
+        background: #2f4f86;
+        border-color: var(--acc);
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: end;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      #save-status.bad {
+        color: var(--down);
+      }
+      #arena {
+        width: 736px;
+        height: 460px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: #000;
+        display: block;
+      }
+      #arena-status {
+        font-weight: 600;
+      }
+      #readout td:first-child {
+        color: var(--dim);
+        width: 90px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Move Review</h1>
+      <select id="batch"></select>
+      <span class="dim" id="batch-info"></span>
+      <span class="dim" style="margin-left: auto">Keys: up and down pick the move</span>
+    </header>
+    <main>
+      <section>
+        <h2>Moves</h2>
+        <div id="moves"></div>
+      </section>
+      <section id="card"><p class="dim">Loading...</p></section>
+      <section>
+        <h2>Arena</h2>
+        <div class="row" style="margin: 0 0 8px">
+          <label class="dim"
+            >Dummies
+            <select id="layout">
+              <option value="one">One pinned dummy</option>
+              <option value="rings">Rings of slow dummies</option>
+            </select>
+          </label>
+          <label class="dim"
+            >Distance
+            <input
+              id="distance"
+              type="number"
+              placeholder="auto"
+              min="10"
+              max="600"
+              step="10"
+              style="width: 100px"
+              title="Blank: just inside the move's reach"
+          /></label>
+          <button id="replay">Replay</button>
+          <button id="reset-damage">Reset damage</button>
+          <span id="arena-status" class="dim">idle</span>
+        </div>
+        <iframe id="arena" title="Arena"></iframe>
+        <h2>Readout</h2>
+        <table id="readout" data-damage="0"></table>
+      </section>
+    </main>
+    <script>
+      'use strict';
+      const BOOT_TIMEOUT_MS = 60000;
+      const FAR_DISTANCE = 150; // px: the dummy's distance for a move that travels or lands at range
+      const REACH_SHARE = 0.7; // of a static swing's radius: the dummy stands well inside it
+      const BAND_SHARE = 0.5; // of a static band's length
+      const READOUT_EVERY_MS = 250;
+      const SHAPE_KEYS = ['space', 'delivery', 'payload']; // the top-level fields the shape inputs edit
+      const params = new URLSearchParams(location.search);
+      const $ = (selector) => document.querySelector(selector);
+      const escapeHtml = (text) =>
+        String(text == null ? '' : text).replace(
+          /[&<>"]/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]
+        );
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      let state = null; // the server's review state of the batch
+      let selectedId = null;
+      let arenaErrors = [];
+      let arenaLoaded = false; // the frame holds a live run (only a Save reloads it)
+      let bootToken = 0; // a newer arena request cancels an older one
+
+      // ---------- server ----------
+      async function api(url, body) {
+        const response = await fetch(
+          url,
+          body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}
+        );
+        const data = await response.json();
+        if (!response.ok) throw new Error((data.problems || ['request failed']).join('\n'));
+        return data;
+      }
+      const batchName = () => $('#batch').value;
+      async function loadState() {
+        state = await api('/api/state?batch=' + encodeURIComponent(batchName()));
+        $('#batch-info').textContent =
+          state.moves.length +
+          ' moves' +
+          (state.batch.issue ? ', issue #' + state.batch.issue : '') +
+          (state.batch.inPools === false ? ', held out of learnsets until signed off' : '');
+        renderList();
+      }
+
+      // ---------- list ----------
+      const moveOf = (id) => state.moves.find((move) => move.id === id);
+      function reviewLabel(move) {
+        if (!move.plan.pattern) return ['waits', 'waits for ruling'];
+        if (move.intent) return ['intent', 'MOVE-INTENT entry'];
+        if (move.signedOff) return ['signed-off', 'signed off'];
+        return [move.plan.status || 'proposed', (move.plan.status || 'proposed').replace('-', ' ')];
+      }
+      function renderList() {
+        $('#moves').innerHTML = state.moves
+          .map((move) => {
+            const [cls, text] = reviewLabel(move);
+            return `<div class="move-row${move.id === selectedId ? ' sel' : ''}" data-id="${move.id}"><span>${escapeHtml(move.name)}</span><span class="state ${cls}">${text}</span></div>`;
+          })
+          .join('');
+      }
+      $('#moves').addEventListener('click', (event) => {
+        const row = event.target.closest('.move-row');
+        if (row) select(row.dataset.id);
+      });
+      document.addEventListener('keydown', (event) => {
+        if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || !state) return;
+        const at = state.moves.findIndex((move) => move.id === selectedId);
+        if (event.key === 'ArrowDown') select(state.moves[Math.min(state.moves.length - 1, at + 1)].id);
+        if (event.key === 'ArrowUp') select(state.moves[Math.max(0, at - 1)].id);
+      });
+
+      function select(id) {
+        selectedId = id;
+        renderList();
+        renderCard();
+        loadArenaMove();
+      }
+
+      // ---------- card ----------
+      /** Every number or text leaf of the shape fields, as [dotted path, value]. */
+      function leaves(value, prefix, out = []) {
+        if (Array.isArray(value)) value.forEach((item, index) => leaves(item, prefix + '.' + index, out));
+        else if (value && typeof value === 'object')
+          for (const [key, item] of Object.entries(value)) leaves(item, prefix + '.' + key, out);
+        else if (typeof value === 'number' || typeof value === 'string') out.push([prefix, value]);
+        return out;
+      }
+      const readPath = (object, dotted) =>
+        dotted.split('.').reduce((value, key) => (value == null ? value : value[key]), object);
+      const optionsText = (options) =>
+        Object.entries(options || {})
+          .map(([key, value]) => key + ': ' + value)
+          .join(', ');
+      function parseOptions(text) {
+        const options = {};
+        for (const part of text
+          .split(',')
+          .map((piece) => piece.trim())
+          .filter(Boolean)) {
+          const [key, raw] = part.split(':').map((piece) => piece.trim());
+          options[key] = raw !== '' && !isNaN(+raw) ? +raw : raw;
+        }
+        return options;
+      }
+
+      function renderCard() {
+        const move = moveOf(selectedId);
+        const plan = move.plan;
+        const resolved = move.resolved;
+        const [cls, label] = reviewLabel(move);
+        const fields = move.built
+          ? SHAPE_KEYS.flatMap((key) => leaves(move.built[key], key))
+              .filter(([dotted]) => !/\.t$|\.id$|\.side$|\.scope$/.test(dotted))
+              .map(([dotted, value]) => {
+                const number = typeof value === 'number';
+                return `<label title="${dotted}">${dotted.replace(/\./g, ' · ')}<input data-path="${dotted}" ${number ? 'data-number type="number" step="any"' : ''} value="${escapeHtml(value)}" data-was="${escapeHtml(value)}" /></label>`;
+              })
+              .join('')
+          : '<span class="dim">No shape yet: pick a pattern and Save once its ruling is in.</span>';
+        const patternOptions = ['<option value="">none (waits for its ruling)</option>']
+          .concat(
+            Object.entries(state.patterns).map(
+              ([key, text]) =>
+                `<option value="${key}"${key === plan.pattern ? ' selected' : ''}>${key}: ${escapeHtml(text)}</option>`
+            )
+          )
+          .join('');
+        const scenarios = move.scenarios.length
+          ? '<table>' +
+            move.scenarios
+              .map(
+                (sc) =>
+                  `<tr><td class="pill ${sc.result}">${sc.result}</td><td>${sc.id}</td><td class="dim">${escapeHtml(sc.note)}</td></tr>`
+              )
+              .join('') +
+            '</table>'
+          : '<span class="dim">No scenarios yet.</span>';
+        $('#card').innerHTML = `
+          <div class="card"><div class="title"><b>${escapeHtml(move.name)}</b><span>${move.type} · ${move.category}</span><span class="state ${cls}">${label}</span></div></div>
+          <h2>Mainline facts</h2>
+          <div class="card"><div class="kv">
+            <div><span>Power</span>${move.power ?? '-'}</div><div><span>PP</span>${move.pp ?? '-'}</div>
+            <div><span>Accuracy</span>${move.accuracy ?? '-'}</div><div><span>Priority</span>${move.priority}</div>
+            <div><span>Target</span>${escapeHtml(move.target)}</div></div>
+            <p class="prose">${escapeHtml(move.effect || 'No effect text.')}</p>
+            ${move.factsWhy ? `<p class="dim">Facts filled in: ${escapeHtml(move.factsWhy)}</p>` : ''}</div>
+          <h2>Ruling</h2>
+          <div class="card prose">${move.intent ? escapeHtml(move.intent) : '<span class="dim">No MOVE-INTENT entry: reviewed with the batch (sign off below).</span>'}
+${plan.note ? '\n' + escapeHtml(plan.note) : ''}</div>
+          <h2>Our proposal</h2>
+          <div class="card">${
+            move.words
+              ? `<b>${plan.pattern}</b> <span class="dim">${escapeHtml(state.patterns[plan.pattern])}</span>
+                 <table><tr><td>Rule</td><td>${escapeHtml(move.words.rule || '-')}</td></tr><tr><td>Shape</td><td>${escapeHtml(move.words.shape)}</td></tr>
+                 <tr><td>Delivery</td><td>${escapeHtml(move.words.delivery)}</td></tr><tr><td>Payload</td><td>${escapeHtml(move.words.payload)}</td></tr></table>
+                 ${plan.json ? `<p class="dim">Hand edits on top: ${Object.keys(plan.json).join(', ')}</p>` : ''}`
+              : '<span class="dim">Not in the catalog until its ruling.</span>'
+          }</div>
+          <h2>Resolved numbers</h2>
+          <div class="card">${
+            resolved
+              ? `<div class="kv"><div><span>Cooldown</span>${resolved.cd ?? '-'} s</div><div><span>Base power</span>${resolved.basePower ?? '-'}</div>
+                 <div><span>Kind</span>${move.built ? move.built.kind : '-'}</div><div><span>Hit policy</span>${resolved.hitPolicy ?? '-'}</div></div>
+                 ${move.override ? `<p class="dim">Override: ${escapeHtml(move.override.why)}</p>` : ''}`
+              : '<span class="dim">No resolved def.</span>'
+          }</div>
+          <h2>Scenarios</h2>
+          <div class="card">${scenarios}</div>
+          <h2>Edit</h2>
+          <div class="card edit">
+            <label>Pattern<select id="pattern">${patternOptions}</select></label>
+            <div class="row"><label style="flex: 1">Pattern options (key: value, comma between)<input id="options" value="${escapeHtml(optionsText(plan.options))}" /></label></div>
+            <h2>Shape numbers</h2>
+            <div id="fields">${fields}</div>
+            <div class="row">
+              <label>Cooldown (s, blank for the formula)<input id="cd" type="number" step="any" value="${plan.cd ?? ''}" style="width: 110px" /></label>
+              <label style="flex: 1">Cooldown reason<input id="cd-why" value="${escapeHtml(plan.cdWhy || '')}" /></label>
+            </div>
+            <label style="margin-top: 8px">Note<textarea id="note">${escapeHtml(plan.note || '')}</textarea></label>
+            <div class="row">
+              <button id="save" class="primary">Save</button>
+              <button id="clear-edits" title="Drop the hand edits on top of the pattern">Clear shape edits</button>
+              <span id="save-status" class="dim"></span>
+            </div>
+          </div>
+          <h2>Review</h2>
+          <div class="card row" style="margin-top: 0">
+            <button id="sign-off">Sign off</button><button id="needs-ruling">Needs ruling</button><button id="to-proposed">Back to proposed</button>
+            <span class="dim">Sign off adds it to batchReviewed (the batch review rule in CLAUDE.md).</span>
+          </div>`;
+        $('#fields').addEventListener('input', (event) =>
+          event.target.classList.toggle('changed', event.target.value !== event.target.dataset.was)
+        );
+        $('#save').onclick = () => saveEdits(move);
+        $('#clear-edits').onclick = () =>
+          send('/api/save', { batch: batchName(), id: move.id, edit: { json: null } }, true);
+        $('#sign-off').onclick = () =>
+          send('/api/status', { batch: batchName(), id: move.id, status: 'signed-off' }, false);
+        $('#needs-ruling').onclick = () =>
+          send('/api/status', { batch: batchName(), id: move.id, status: 'needs-ruling' }, false);
+        $('#to-proposed').onclick = () =>
+          send('/api/status', { batch: batchName(), id: move.id, status: 'proposed' }, false);
+      }
+
+      /** The edit the card's inputs describe, against the move's plan and built entry. */
+      function collectEdit(move) {
+        const plan = move.plan;
+        const edit = {};
+        const pattern = $('#pattern').value || null;
+        if (pattern !== (plan.pattern || null)) edit.pattern = pattern;
+        const options = parseOptions($('#options').value);
+        if (JSON.stringify(options) !== JSON.stringify(plan.options || {}))
+          edit.options = Object.keys(options).length ? options : null;
+        const cd = $('#cd').value === '' ? null : +$('#cd').value;
+        if (cd !== (plan.cd ?? null)) edit.cd = cd;
+        const cdWhy = $('#cd-why').value.trim() || null;
+        if (cdWhy !== (plan.cdWhy || null)) edit.cdWhy = cdWhy;
+        const note = $('#note').value.trim() || null;
+        if (note !== (plan.note || null)) edit.note = note;
+        if (edit.pattern !== undefined) {
+          edit.json = null; // hand edits made for the old pattern would not fit the new one
+          return edit;
+        }
+        const changed = [...document.querySelectorAll('#fields input')].filter(
+          (input) => input.value !== input.dataset.was
+        );
+        if (!changed.length) return edit;
+        const json = { ...(plan.json || {}) };
+        for (const input of changed) {
+          const [top, ...rest] = input.dataset.path.split('.');
+          json[top] = json[top] || structuredClone(move.built[top]);
+          const last = rest.pop();
+          const holder = rest.reduce((value, key) => value[key], json[top]);
+          holder[last] = input.dataset.number !== undefined ? +input.value : input.value;
+        }
+        edit.json = json;
+        return edit;
+      }
+
+      async function saveEdits(move) {
+        const edit = collectEdit(move);
+        if (!Object.keys(edit).length) return status('nothing changed');
+        await send('/api/save', { batch: batchName(), id: move.id, edit }, true);
+      }
+
+      function status(text, bad) {
+        const element = $('#save-status');
+        if (!element) return;
+        element.textContent = text;
+        element.classList.toggle('bad', !!bad);
+      }
+
+      async function send(url, body, reloadsArena) {
+        status('saving...');
+        try {
+          await api(url, body);
+        } catch (error) {
+          return status('not saved: ' + error.message, true);
+        }
+        const id = selectedId;
+        await loadState();
+        selectedId = id;
+        renderList();
+        renderCard();
+        status('saved');
+        if (reloadsArena) {
+          arenaLoaded = false; // the scripts changed: a fresh frame loads them
+          loadArenaMove();
+        }
+      }
+
+      // ---------- arena ----------
+      const arena = () => $('#arena').contentWindow;
+      const arenaStatus = (text) => ($('#arena-status').textContent = text);
+      async function waitInArena(check, label, token) {
+        const start = Date.now();
+        while (Date.now() - start < BOOT_TIMEOUT_MS) {
+          if (token !== bootToken) return false;
+          try {
+            if (check(arena())) return true;
+          } catch (error) {
+            // the frame is between documents
+          }
+          await sleep(150);
+        }
+        throw new Error('timed out waiting for ' + label);
+      }
+
+      /** A fresh frame with a guest run in progress (as the smokes boot one). */
+      async function bootArena(token) {
+        arenaErrors = [];
+        arenaStatus('booting');
+        const frame = $('#arena');
+        const loaded = new Promise((resolve) => frame.addEventListener('load', resolve, { once: true }));
+        frame.src = '/dev.html?dev&review=' + Date.now();
+        await loaded; // the new document, not the one it replaces
+        if (token !== bootToken) return false;
+        await waitInArena(
+          (win) => win.G && win.G.Game && win.G.DB && win.G.Debug && win.document.readyState === 'complete',
+          'the game scripts',
+          token
+        );
+        if (token !== bootToken) return false;
+        arena().addEventListener('error', (event) => arenaErrors.push(event.message));
+        await arena().eval(`(async () => {
+          await G.DB.ready();
+          if (!G.DB.save) G.DB.playAsGuest();
+          G.Debug.maxAll();
+          const save = G.DB.save;
+          if (!(save.team || []).some((slot) => slot && G.DEX_BY[slot.dex])) {
+            save.team = [{ dex: 7, shiny: false }, { dex: 4, shiny: false }, null, null, null, null];
+            save.partner = save.partner || 7;
+          }
+          G.Game.startRun();
+        })()`);
+        await waitInArena((win) => win.G.Game.player && win.G.Game.state === 'playing', 'the run', token);
+        arenaLoaded = true;
+        return true;
+      }
+
+      /** Where the pinned dummy stands when Distance is blank: inside a static shape at the caster (a swing, a beam; a multi-hit's
+       *  repeat for one that emits), else at range. */
+      function autoDistance(def) {
+        const emit = (def.payload || []).find((fx) => fx.t === 'emit');
+        const shape = def.space ? def : emit ? emit.move : def;
+        const space = shape.space || {},
+          delivery = shape.delivery || {};
+        if (delivery.motion !== 'static' || delivery.anchor !== 'caster') return FAR_DISTANCE;
+        if (space.shape === 'linear') return Math.round(space.linLength * BAND_SHARE);
+        return space.radRadius ? Math.round(space.radRadius * REACH_SHARE) : FAR_DISTANCE;
+      }
+
+      /** Counts what each dummy takes: hits from the move code apart from status ticks and anything else (poison takes a share of
+       *  max HP, and a dummy's HP is huge, so one total would hide the hits). */
+      function tallyDamage(G) {
+        for (const enemy of G.EnemyMgr.all()) {
+          if (enemy.review) continue;
+          const hurt = enemy.hurt;
+          enemy.review = { hits: 0, hitDamage: 0, otherDamage: 0 };
+          enemy.hurt = function (amount, ...rest) {
+            if (/move-effects\.js/.test(new Error().stack)) {
+              this.review.hits++;
+              this.review.hitDamage += amount;
+            } else this.review.otherDamage += amount;
+            return hurt.call(this, amount, ...rest);
+          };
+        }
+      }
+
+      async function loadArenaMove() {
+        const move = moveOf(selectedId);
+        const token = ++bootToken;
+        if (!move.resolved) return arenaStatus('waits for its ruling: no arena');
+        try {
+          if (!arenaLoaded && !(await bootArena(token))) return;
+          if (token !== bootToken) return;
+          const G = arena().G;
+          G.EnemyMgr.clear();
+          const distance = +$('#distance').value || autoDistance(G.MoveDefs[move.id]);
+          const rings = $('#layout').value === 'rings';
+          const loaded = rings ? G.Debug.newcombat(move.id) : G.Debug.movechecker(move.id, distance);
+          $('#distance').placeholder = rings ? 'rings' : 'auto ' + distance;
+          tallyDamage(G);
+          arenaStatus(loaded ? 'ready' : 'error: the sandbox refused the move (see the console)');
+        } catch (error) {
+          arenaStatus('error: ' + error.message);
+        }
+      }
+
+      function renderReadout() {
+        const table = $('#readout');
+        let G = null;
+        try {
+          G = arenaLoaded && arena().G;
+        } catch (error) {
+          G = null;
+        }
+        if (!G || !G.Game.player) {
+          table.innerHTML = '<tr><td>arena</td><td class="dim">not running</td></tr>';
+          table.dataset.damage = 0;
+          return;
+        }
+        const dummies = G.EnemyMgr.all().filter((enemy) => !enemy.dead && enemy.review);
+        const sum = (key) => dummies.reduce((total, enemy) => total + enemy.review[key], 0);
+        const damage = sum('hitDamage');
+        const short = (amount) => (amount >= 1e6 ? (amount / 1e6).toFixed(1) + 'M' : String(Math.round(amount)));
+        const player = G.Game.player;
+        const marks = (entity) =>
+          G.Status.list(entity)
+            .map((s) => s.k + (s.t != null ? ' ' + s.t.toFixed(1) + ' s' : ''))
+            .concat(G.Stages.list(entity).map((s) => s.stat + ' ' + (s.stage > 0 ? '+' : '') + s.stage))
+            .join(', ');
+        const rows = [
+          [
+            'hits',
+            sum('hits') +
+              ' for ' +
+              Math.round(damage) +
+              ' damage on ' +
+              dummies.length +
+              ' dumm' +
+              (dummies.length === 1 ? 'y' : 'ies'),
+          ],
+          ['status', short(sum('otherDamage')) + ' from ticks and the rest (a share of the huge dummy HP)'],
+          ['you', Math.round(player.hp) + ' / ' + Math.round(player.maxHp) + ' HP ' + (marks(player) || '')],
+        ];
+        dummies.slice(0, 6).forEach((enemy, index) => {
+          rows.push([
+            'dummy ' + (index + 1),
+            enemy.review.hits + ' hits, ' + Math.round(enemy.review.hitDamage) + ' damage ' + (marks(enemy) || ''),
+          ]);
+        });
+        if (G.Game.state !== 'playing') rows.push(['run', 'ended or paused: press Replay']);
+        if (arenaErrors.length) rows.push(['errors', escapeHtml(arenaErrors.slice(-3).join(' | '))]);
+        table.innerHTML = rows.map(([key, value]) => `<tr><td>${key}</td><td>${value}</td></tr>`).join('');
+        table.dataset.damage = Math.round(damage);
+        table.dataset.errors = arenaErrors.join(' | ');
+      }
+      setInterval(renderReadout, READOUT_EVERY_MS);
+
+      $('#replay').onclick = () => {
+        let playing = false;
+        try {
+          playing = arena().G.Game.state === 'playing';
+        } catch (error) {
+          playing = false;
+        }
+        if (!playing) arenaLoaded = false;
+        loadArenaMove();
+      };
+      $('#layout').onchange = loadArenaMove;
+      $('#distance').onchange = loadArenaMove;
+      $('#reset-damage').onclick = () => {
+        for (const enemy of arena().G.EnemyMgr.all()) {
+          enemy.hp = enemy.maxHp;
+          if (enemy.review) enemy.review = { hits: 0, hitDamage: 0, otherDamage: 0 };
+        }
+      };
+      $('#batch').onchange = async () => {
+        await loadState();
+        select(state.moves[0].id);
+      };
+
+      window.MoveReview = {
+        arena,
+        get state() {
+          return state;
+        },
+      };
+
+      (async () => {
+        try {
+          const batches = await api('/api/batches');
+          $('#batch').innerHTML = batches
+            .map((batch) => `<option value="${batch.file}">${escapeHtml(batch.label)} (${batch.count})</option>`)
+            .join('');
+          const wanted = batches.find(
+            (batch) => batch.file === params.get('batch') || batch.file === params.get('batch') + '.json'
+          );
+          if (wanted) $('#batch').value = wanted.file;
+          await loadState();
+          select(state.moves[0].id);
+        } catch (error) {
+          $('#card').innerHTML =
+            '<p class="dim">Could not reach the helper server: start it with node tools/move-review-server.js and open the address it prints. (' +
+            escapeHtml(error.message) +
+            ')</p>';
+        }
+      })();
+    </script>
+  </body>
+</html>

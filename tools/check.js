@@ -128,6 +128,7 @@ info('decision front matter: ' + decisionFiles.length + ' file(s) checked');
 let mbad = 0;
 for (const [name, args, show] of [
   ['export_moves.js', ['--check'], /current/],
+  ['move_import.js', ['--check'], /current/],
   ['validate_moves.js', [], /^moves:/],
   ['validate_moves.js', ['--resolved'], /^resolved moves:/],
   ['move_parity.js', [], /^parity:/],

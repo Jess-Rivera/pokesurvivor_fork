@@ -37,6 +37,10 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] A rooted commitment holds the teleport too, the same as Quick Attack: it waits and casts as the root ends. (Jess, 2026-10-29) Built (4c-2 review).
 - Ledger: none (entry added 2026-10-29 by the 4c-2 build)
 
+### barb-barrage
+- [Approved] Double power on a poisoned or badly poisoned foe, as Hex doubles on any status: its statusBonus, limited to poison. (Jess, 2026-11-27, #141 round R)
+- [Proposed] A poison shot with a 50% poison chance (the batch pattern). Code differs, see TODO: statusBonus has no status filter yet (#141 part D).
+
 ### baton-pass
 - [Open] Waits on the open stage-manipulation decision (STATE.md). When ruled, it also clears the swap lock like u-turn. (Jess, 2026-11-01, Kanto import rulings set 2)
 
@@ -89,6 +93,10 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 ### double-team
 - [Approved] Raises the user's evasion stage +1. Evasion is a new stage tracker: incoming hits get a miss chance from the mainline accuracy/evasion table (stage n of evasion: hit chance 3/(3+n)); a miss deals nothing and applies no rider. (Jess, 2026-11-01, Kanto import rulings set 1)
 - Needs a COMBAT-RULES change: evasion and accuracy stages join the tracker model (see "Stat stages").
+
+### dragon-cheer
+- [Approved] A team-wide crit raise: +1 crit stage, +2 on Dragon types, for whoever is out (team scope, like the team stat raises). (Jess, 2026-11-27, #141 round R)
+- [Open] How a crit stage turns into crit chance and how long it lasts: COMBAT-RULES dropped move crit stages (2026-10-20) and focus-energy brought a crit tracker back (2026-11-01, not built). The two share that tracker.
 
 ### dragon-dance
 - [Approved] No per-move exception: COMBAT-RULES "Stat stages" applies, one tracker each on Attack and Speed, +1 per climb; as a pure buff move it has no cooldown of its own and casts when its Gate opens (SS1, SS8). The 2026-10-28 CP3 exception to 2026-10-28-a-self-buffs-duration-is-never-shorter-than-its-cooldown (raises shorter than the cooldown, maxStacks floor 1) is retired with Q13 and maxStacks. (Jess, 2026-10-30)
@@ -193,6 +201,10 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] After firing, the user's moves are locked for a recharge window (a lockout beyond today's cast commitment). (Jess, 2026-11-01, Kanto import rulings set 4)
 - [Proposed] Recharge about 1.5 s.
 
+### hyper-drill
+- [Approved] Its hits go through shields (Substitute and the like) and ignore damage reduction. Mainline's "goes through Protect" is that here. (Jess, 2026-11-27, #141 round R)
+- [Proposed] A heavy swing (the batch pattern). Code differs, see TODO: no shield-breaking hit exists yet (#141 part D).
+
 ### ice-beam
 - [Approved] No per-move cap on its foe Speed -1: it climbs -1 per Gate on each enemy it keeps hitting (COMBAT-RULES "Stat stages", SS2 and SS4). Supersedes the 2026-10-28 CP3 cap of 1. (Jess, 2026-10-30)
 - Ledger: B4-I28
@@ -233,6 +245,10 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 ### metal-claw
 - [Approved] No per-move rule: its Attack raise follows COMBAT-RULES "Stat stages" (one roll per cast on its first enemy hit, SS2). Its maxStacks 1 was removed in slice 5a (2026-10-31). (Jess, 2026-10-30)
 - Ledger: B4-I14
+
+### mimic
+- [Approved] Becomes the last move a leader hit you with; against wild foes, a move of the target's type. (Jess, 2026-11-27, #141 round R)
+- [Open] How long the copy lasts, which move of the type it picks, and its own shape and cooldown before it copies.
 
 ### minimize
 - [Approved] As double-team, evasion +2 (mainline). (Jess, 2026-11-01, Kanto import rulings set 1)
@@ -318,6 +334,10 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] Stays one boulder (S11). The telegraph is drawn as a low-opacity ring (a warning, not a zone effect). (slice-4c.md decisions, Jess 2026-10-27) Built in slice 4c-3: 0.4 s wait, then live 0.2 s.
 - Ledger: B4-I19
 
+### rollout
+- [Approved] Ramping casts: each cast in a row doubles its power (x1, x2, x4, x8, x16); it resets after the 5th cast, or when a cast hits nothing. (Jess, 2026-11-27, #141 round R)
+- [Proposed] A plain swing until its shape is reviewed in the Move Review page. Code differs, see TODO: no ramping power exists yet (#141 part D).
+
 ### safeguard
 - [Approved] Team-side field: a timed team buff that blocks new ailments. (Jess, 2026-11-01, Kanto import rulings set 4)
 
@@ -380,6 +400,10 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] Tackle reach stays as built, judged by feel, any fix is data. (slice-3d.md decision D3; closes the review 9.2 note that its 48 px circle no longer includes the player's body)
 - [Approved] Radius 54 (was 48): with a 10 px enemy body it reaches 64 px. The feel fix the line above allows. (Jess, 2026-10-31, slice 6 movechecker pass) Scenarios: tackle-reach, tackle-arc.
 - Ledger: B4-I23
+
+### taunt
+- [Approved] Foes it hits rush you and cannot use their ranged or status attacks while taunted; a taunted leader cannot use status moves. (Jess, 2026-11-27, #141 round R)
+- [Open] How long the taunt lasts, its shape (a status shot was the batch placeholder) and its cooldown.
 
 ### thrash
 - [Approved] As outrage. (Jess, 2026-11-01, Kanto import rulings set 4)

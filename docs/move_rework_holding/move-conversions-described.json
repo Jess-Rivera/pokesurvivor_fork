@@ -8397,6 +8397,258 @@
         }
       ],
       "reviewStatus": "proposed"
+    },
+    "double-hit": {
+      "id": "double-hit",
+      "name": "Double Hit",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "#141 evolution moves proposal. Multi-hit, quick repeats (like String Shot) (2 repeats of: Tackle swing). Shape: 2 quick melee swings, 0.11 s apart. Delivery: Each repeat as its pattern. Payload: Damage, knockback 40.",
+      "type": "normal",
+      "category": "physical",
+      "power": 35,
+      "pp": 10,
+      "accuracy": 90,
+      "priority": 0,
+      "flavor_text": "The user slams the target with a tail or the like. The target is hit twice in a row.",
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.42000000000000004
+          }
+        ]
+      },
+      "payload": [
+        {
+          "t": "emit",
+          "every": 0.11,
+          "count": 2,
+          "trigger": "cast",
+          "move": {
+            "kind": "melee",
+            "space": {
+              "shape": "radial",
+              "radArc": 1.7,
+              "radRadius": 54,
+              "count": 1
+            },
+            "delivery": {
+              "anchor": "caster",
+              "targeting": "nearest",
+              "motion": "static",
+              "endOn": [
+                {
+                  "time": 0.15
+                }
+              ]
+            },
+            "hitPolicy": "oncePerInstance",
+            "payload": [
+              {
+                "t": "damage"
+              },
+              {
+                "t": "knockback",
+                "distance": 40
+              }
+            ]
+          }
+        }
+      ],
+      "reviewStatus": "proposed"
+    },
+    "twin-beam": {
+      "id": "twin-beam",
+      "name": "Twin Beam",
+      "kind": "beam",
+      "balanceClass": "ranged",
+      "feel": "#141 evolution moves proposal. Multi-hit, quick repeats (like String Shot) (2 repeats of: undefined). Shape: 2 quick beams, 0.11 s apart. Delivery: Each repeat as its pattern. Payload: Damage.",
+      "type": "psychic",
+      "category": "special",
+      "power": 40,
+      "pp": 10,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The user shoots mystical beams from its eyes to inflict damage. The target is hit twice in a row.",
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.42000000000000004
+          }
+        ]
+      },
+      "payload": [
+        {
+          "t": "emit",
+          "every": 0.11,
+          "count": 2,
+          "trigger": "cast",
+          "move": {
+            "kind": "beam",
+            "space": {
+              "shape": "linear",
+              "linLength": 290,
+              "linWidth": 20,
+              "pierce": "UNLIMITED"
+            },
+            "delivery": {
+              "anchor": "caster",
+              "targeting": "nearest",
+              "motion": "static",
+              "endOn": [
+                {
+                  "time": 0.5
+                }
+              ]
+            },
+            "hitPolicy": "oncePerInstance",
+            "payload": [
+              {
+                "t": "damage"
+              }
+            ]
+          }
+        }
+      ],
+      "reviewStatus": "proposed"
+    },
+    "hyper-drill": {
+      "id": "hyper-drill",
+      "name": "Hyper Drill",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "#141 evolution moves proposal. Melee swing (like Tackle / Body Slam) (heavy swing). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 140.",
+      "type": "normal",
+      "category": "physical",
+      "power": 100,
+      "pp": 5,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The user spins the pointed part of its body at high speed to pierce the target. This attack can hit a target using a move such as Protect or Detect.",
+      "space": {
+        "shape": "radial",
+        "radArc": 2,
+        "radRadius": 60,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "knockback",
+          "distance": 140
+        }
+      ],
+      "reviewStatus": "proposed"
+    },
+    "barb-barrage": {
+      "id": "barb-barrage",
+      "name": "Barb Barrage",
+      "kind": "projectile",
+      "balanceClass": "ranged",
+      "feel": "#141 evolution moves proposal. Single shot (like Sludge / Shadow Ball) (poison shot: medium (Sludge)). Shape: One shot, radius 7 px. Delivery: Travels 310 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, poison 50%.",
+      "type": "poison",
+      "category": "physical",
+      "power": 60,
+      "pp": 10,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The user launches countless toxic barbs to inflict damage. This may also poison the target. This move’s power is doubled if the target is already poisoned.",
+      "space": {
+        "shape": "radial",
+        "radRadius": 7,
+        "count": 1,
+        "pierce": 0
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "travels",
+        "moveSpeed": 310,
+        "endOn": [
+          {
+            "time": 1.5
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "ailment",
+          "id": "poison",
+          "chance": 50,
+          "side": "foe"
+        }
+      ],
+      "reviewStatus": "proposed"
+    },
+    "rollout": {
+      "id": "rollout",
+      "name": "Rollout",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "#141 evolution moves proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
+      "type": "rock",
+      "category": "physical",
+      "power": 30,
+      "pp": 20,
+      "accuracy": 90,
+      "priority": 0,
+      "flavor_text": "The user continually rolls into the target over five turns. This attack becomes more powerful each time it hits.",
+      "space": {
+        "shape": "radial",
+        "radArc": 1.7,
+        "radRadius": 54,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "knockback",
+          "distance": 90
+        }
+      ],
+      "reviewStatus": "proposed"
     }
   },
   "forgottenSkips": {

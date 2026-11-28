@@ -5,9 +5,12 @@ Last updated: 2026-11-27 (evening), home (Claude Code). Branch: feature/138-146-
 No branch rules file.
 
 ## START HERE
-Held catch compare passed its feel test and is closed (2026-11-27). Still open on this branch: #139 (8b, 8c), #140,
-#141, #142, #143 (#144 deferred); order in TODO.md item 3. Merge to main only after #143. #174 (shiny catches) needs
-its slice opening.
+#141 in progress: the Move Review page is built (double-click tools/Move Review.cmd) and 5 of the 8 moves are imported,
+held from learnsets. Round R rulings are recorded (MOVE-INTENT, decision 2026-11-27-141-round-r-...). Next session: Jess
+walks the page with the assistant, approves the Part D plan (docs/AI Outputs/Issue-141/141 - Part D mechanics - Plan.md)
+and answers its four open numbers.
+Still open on this branch: #139 (8b, 8c), #140, #142, #143 (#144 deferred). Merge to main only after #143. #175 manual
+aim and #174 shiny catches need slice openings.
 
 ## Landed 2026-11-27 (home)
 - Held catch compare built and closed: a held catch is a whole copy rolled when the catch window opens; short detail

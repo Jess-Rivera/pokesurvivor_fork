@@ -33,8 +33,10 @@ function build() {
   const dexes = box.G.DEX.map((p) => p.dex).sort((a, b) => a - b),
     known = new Set(dexes);
   const src = JSON.parse(fs.readFileSync(path.join(root, 'docs/move_rework_holding/move-conversions-described.json')));
+  const held = require('./move_import.js').heldIds(); // an import batch under review stays out of every learnset (#141)
   const moves = Object.values(src.moves)
       .map((m) => m.id)
+      .filter((id) => !held.has(id))
       .sort(),
     index = new Map(moves.map((id, i) => [id, i]));
   const nameOf = {};

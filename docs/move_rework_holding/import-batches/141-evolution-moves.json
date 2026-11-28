@@ -1,0 +1,82 @@
+{
+  "about": "#141: the 8 moves move-gated evolutions need. Built by tools/move_import.js, reviewed in tools/move-review.html. Patterns: tools/move-import-patterns.js. Edits come from the review page; facts fill what pokeapi leaves out of Gen 9 rows.",
+  "label": "#141 evolution moves",
+  "issue": 141,
+  "inPools": false,
+  "moves": {
+    "double-hit": {
+      "pattern": "multi",
+      "options": {
+        "n": 2,
+        "on": "melee"
+      },
+      "status": "proposed",
+      "note": "Two quick swings, as Double Kick (Kanto batch 1: multi-hit moves are quick repeats at full power)."
+    },
+    "twin-beam": {
+      "pattern": "multi",
+      "options": {
+        "n": 2,
+        "on": "beam"
+      },
+      "facts": {
+        "effect": "Hits twice in one turn.",
+        "why": "pokeapi has no effect data for this Gen 9 move"
+      },
+      "status": "proposed",
+      "note": "Two quick beams, the beam pattern repeated as Double Kick repeats its swing."
+    },
+    "hyper-drill": {
+      "pattern": "melee",
+      "options": {
+        "heavy": 1
+      },
+      "facts": {
+        "effect": "Hits the target even if it is protecting itself (Protect, Detect).",
+        "why": "pokeapi has no effect data for this Gen 9 move"
+      },
+      "status": "proposed",
+      "note": "Ruled 2026-11-27 (MOVE-INTENT). Heavy swing for now; its hits go through shields once #141 part D builds that."
+    },
+    "barb-barrage": {
+      "pattern": "shot",
+      "facts": {
+        "meta": {
+          "category": "damage+ailment",
+          "ailment": "poison",
+          "ailment_chance": 50
+        },
+        "effect": "Has a 50% chance to poison the target. Power doubles if the target is already poisoned.",
+        "why": "pokeapi has no effect data for this Gen 9 move; values from Scarlet and Violet"
+      },
+      "status": "proposed",
+      "note": "Ruled 2026-11-27 (MOVE-INTENT). Poison shot, 50% poison; the double power on a poisoned foe comes with #141 part D."
+    },
+    "rollout": {
+      "pattern": "melee",
+      "status": "proposed",
+      "note": "Ruled 2026-11-27 (MOVE-INTENT). Placeholder plain swing; the ramping power (x1 to x16) comes with #141 part D."
+    },
+    "mimic": {
+      "pattern": null,
+      "status": "needs-ruling",
+      "note": "Ruled 2026-11-27 (MOVE-INTENT). No pattern until #141 part D builds the copy."
+    },
+    "taunt": {
+      "pattern": null,
+      "status": "needs-ruling",
+      "note": "Ruled 2026-11-27 (MOVE-INTENT). No pattern until #141 part D builds the taunt status."
+    },
+    "dragon-cheer": {
+      "pattern": null,
+      "facts": {
+        "power": null,
+        "accuracy": null,
+        "effect": "Raises allies' critical-hit ratio by one stage, two stages if they are Dragon type.",
+        "why": "pokeapi files it with power 0 and accuracy 0 and no effect data; values from Scarlet and Violet"
+      },
+      "status": "needs-ruling",
+      "note": "Ruled 2026-11-27 (MOVE-INTENT). No pattern until #141 part D builds the team crit raise."
+    }
+  }
+}

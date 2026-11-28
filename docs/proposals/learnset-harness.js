@@ -38,7 +38,9 @@ const attack = id => G.MoveDefs[id].power != null;
   ok(!short.length, 'every species has at least 4 moves: ' + short.slice(0, 6));
   const reach = new Set();
   for (const p of G.DEX) { M.poolFor(p).forEach(id => reach.add(id)); M.tmList().forEach(id => { if (M.canUseTm(p, id)) reach.add(id); }); }
-  const live = Object.keys(G.MoveDefs).filter(id => !M.RETIRED[id]);
+  // a move import batch under review ("inPools": false, #141) is out of every learnset on purpose until it is signed off
+  const held = require(__dirname + '/../../tools/move_import.js').heldIds();
+  const live = Object.keys(G.MoveDefs).filter(id => !M.RETIRED[id] && !held.has(id));
   const miss = live.filter(id => !reach.has(id));
   ok(!miss.length, 'every live move has a learner: ' + miss);
   ok(!reach.has('hail') && !reach.has('bubble'), 'a retired move has no learner');
