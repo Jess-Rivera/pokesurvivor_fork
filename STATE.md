@@ -1,14 +1,17 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-27 (evening), home (Claude Code). Branch: feature/138-146-lost-and-full-box (covers #138 to #146).
+Last updated: 2026-11-28, home (Claude Code). Branch: feature/138-146-lost-and-full-box (covers #138 to #146).
 No branch rules file.
 
 ## START HERE
-#141 in progress: the Move Review page is built (double-click tools/Move Review.cmd) and 5 of the 8 moves are imported,
-held from learnsets. Round R rulings are recorded (MOVE-INTENT, decision 2026-11-27-141-round-r-...). Next session: Jess
-walks the page with the assistant, approves the Part D plan (docs/AI Outputs/Issue-141/141 - Part D mechanics - Plan.md)
-and answers its four open numbers.
+#141 in progress. Move Review page fixed and extended (2026-11-28): shape fields follow the move grammar (dropdowns,
+ranges), typed edits and pattern switches preview live in the arena, Copy batch as JSON, option list per pattern.
+Jess walked and signed off Double Hit, Twin Beam, Hyper Drill, Barb Barrage, Rollout and Mimic. Next session first:
+Jess confirms or redoes Rollout (saved as the skill pattern, which makes it Fly) and Mimic (self pattern with power 1,
+lands no damage); then the two count harnesses (move-intent, ui-readers expect 183 and 5 imports) follow his answer.
+Taunt and Dragon Cheer wait for Part D. Then the Part D plan (docs/AI Outputs/Issue-141/) and its open numbers.
+Hand-edited batch JSON: Jess saves it as a temp file in tools/ and names it; the assistant applies it via the import.
 Still open on this branch: #139 (8b, 8c), #140, #142, #143 (#144 deferred). Merge to main only after #143. #175 manual
 aim and #174 shiny catches need slice openings.
 
@@ -16,10 +19,9 @@ aim and #174 shiny catches need slice openings.
 - Held catch compare built and closed: a held catch is a whole copy rolled when the catch window opens; short detail
   panels (G.MenuTeamDetail.ShortPanel) on the catch screen and the keep-or-sell list, which gains an owned box and Sell.
   Plan: docs/AI Outputs/Issue-173/. Rulings: decision 2026-11-27-173-mockup-short-detail-panels.
-- tools/smoke-ui.js: its catch cursor check now looks for the side panel (the hover tooltip it expected is gone).
-  Back to its 15 old failures.
 
 ## Watch
+- check.js: 2 harness counts fail since the Mimic save (see START HERE). smoke-move-review: Mimic lands no damage.
 - Starting moves are bought and saved but act only with #150. Shedinja's greyed HP card waits on #142.
 - Gen 8 and 9 learnsets look thin: the 178 imported moves are all Gen 1 to 6 (89 from Gen 1).
 - tools/smoke-pause-menu.js throws in its EV screen section, and its stat hex check fails when the starter has

@@ -7,6 +7,11 @@
 //   dummy; a move waiting for its ruling shows no arena;
 //   a shape number changed and saved on the page is the number the arena's resolved def holds after its reload;
 //   Sign off puts the move in batchReviewed and Back to proposed takes it out;
+//   a move with a pattern offers no "none" pattern, and the server refuses a save that clears it;
+//   a field the grammar gives fixed values is a dropdown of exactly those values;
+//   a number typed outside its grammar range is marked and Save refuses it (the batch file stays as it was);
+//   a number typed and not saved is the number the arena's def holds (live preview), and the batch file stays as it was;
+//   Copy batch as JSON puts the batch file's own content on the clipboard;
 //   the repo's own move files are byte-for-byte what they were before the run.
 const path = require('path'),
   fs = require('fs'),
@@ -95,7 +100,9 @@ async function main() {
   const browser = await chromium.launch();
   try {
     await waitFor(() => serverLog.includes('http://'), 10000, 'the server');
-    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+    const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: `http://127.0.0.1:${PORT}` });
+    const page = await context.newPage();
     const errors = [];
     page.on('pageerror', (error) => errors.push('pageerror: ' + error.message));
     await page.goto(`http://127.0.0.1:${PORT}/tools/move-review.html?batch=${BATCH}`, { waitUntil: 'load' });
@@ -145,11 +152,118 @@ async function main() {
       if (damaging) ok(readout.damage > 0, id + ': its damage lands on the dummy (' + readout.damage + ')');
     }
 
-    // 3. Save a shape number and see it in the arena
     const target = ids.find((id) => batch.moves[id].pattern);
+    const batchPath = path.join(copy, 'docs/move_rework_holding/import-batches', BATCH + '.json');
+    const batchText = () => fs.readFileSync(batchPath, 'utf8');
+    const arenaValue = (moveId, dotted) =>
+      page.evaluate(
+        ([id, at]) => at.split('.').reduce((value, key) => value[key], window.MoveReview.arena().G.MoveDefs[id]),
+        [moveId, dotted]
+      );
     await page.click(`#moves .move-row[data-id="${target}"]`);
     await waitFor(async () => (await page.textContent('#arena-status')).trim() === 'ready', 60000, 'arena before save');
-    const field = page.locator('#fields input[data-number]').first();
+
+    // 3a. the pattern cannot be wiped
+    const patternValues = await page.$$eval('#pattern option', (options) => options.map((option) => option.value));
+    ok(!patternValues.includes(''), target + ': its pattern dropdown offers no "none"');
+    const beforeWipe = batchText();
+    const wipe = await page.evaluate(
+      async ([batchName, id]) =>
+        (
+          await fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ batch: batchName, id, edit: { pattern: null } }),
+          })
+        ).status,
+      [BATCH + '.json', target]
+    );
+    ok(wipe === 400 && batchText() === beforeWipe, 'the server refuses to clear a pattern (' + wipe + ')');
+
+    // 3b. dropdowns hold the grammar's values
+    global.G = {};
+    require(path.join(copy, 'js/data/move-attributes.js'));
+    const shapeSelect = page.locator('#fields select[data-path$=".shape"]').first();
+    const shapeChoices = (await shapeSelect.count())
+      ? await shapeSelect.locator('option').evaluateAll((options) => options.map((option) => option.value))
+      : [];
+    ok(
+      JSON.stringify(shapeChoices) === JSON.stringify(G.MoveAttrs.MOVE.f.space.f.shape.v),
+      'the shape field is a dropdown of the grammar values (' + shapeChoices.join(', ') + ')'
+    );
+
+    // 3c. a number past its range is refused
+    const arcField = page.locator('#fields input[data-path$="radArc"]').first();
+    if (await arcField.count()) {
+      const beforeRange = batchText();
+      await arcField.fill(String(G.MoveAttrs.MOVE.f.space.f.radArc.max + 1));
+      const marked = await arcField.evaluate((input) => input.classList.contains('invalid'));
+      await page.click('#save');
+      await sleep(500);
+      ok(marked, 'radArc past its max is marked invalid');
+      ok(
+        /not saved/.test(await page.textContent('#save-status')) && batchText() === beforeRange,
+        'Save refuses it and the batch file stays as it was'
+      );
+      await arcField.fill(await arcField.getAttribute('data-was'));
+    } else ok(false, target + ' has no radArc field to range-check');
+
+    // 3d. live preview: typed, not saved, already in the arena
+    const previewField = page.locator('#fields input[data-number]:not([max])').first();
+    const previewPath = await previewField.getAttribute('data-path');
+    const previewValue = +(await previewField.inputValue()) + 3;
+    const beforePreview = batchText();
+    await previewField.fill(String(previewValue));
+    await waitFor(async () => (await arenaValue(target, previewPath)) === previewValue, 10000, 'the preview');
+    ok(
+      (await arenaValue(target, previewPath)) === previewValue && batchText() === beforePreview,
+      `preview: ${previewPath} is ${previewValue} in the arena before any Save, batch file untouched`
+    );
+    await previewField.fill(await previewField.getAttribute('data-was'));
+
+    // 3d2. a new pattern shows its own numbers and plays in the arena before any Save
+    const savedPattern = batch.moves[target].pattern;
+    const otherPattern = savedPattern === 'melee' ? 'shot' : 'melee';
+    const pathsShown = () => page.$$eval('#fields [data-path]', (fields) => fields.map((field) => field.dataset.path));
+    const pathsBefore = await pathsShown();
+    const beforeSwitch = batchText();
+    await page.selectOption('#pattern', otherPattern);
+    await waitFor(async () => /preview/.test(await page.textContent('#save-status')), 20000, 'the pattern preview');
+    const pathsAfter = await pathsShown();
+    ok(
+      JSON.stringify(pathsAfter) !== JSON.stringify(pathsBefore) &&
+        /not saved/.test(await page.textContent('#proposal')),
+      `pattern ${savedPattern} to ${otherPattern}: the shape fields and the proposal follow it, marked not saved`
+    );
+    const arenaHasTopShape = () => page.evaluate((id) => !!window.MoveReview.arena().G.MoveDefs[id].space, target);
+    ok(
+      (await arenaHasTopShape()) === pathsAfter.some((dotted) => dotted.startsWith('space.')) &&
+        batchText() === beforeSwitch,
+      'the arena plays the new pattern and the batch file stays as it was'
+    );
+    await page.selectOption('#pattern', savedPattern);
+    await waitFor(
+      async () => JSON.stringify(await pathsShown()) === JSON.stringify(pathsBefore),
+      20000,
+      'the saved pattern back'
+    );
+    ok(
+      JSON.stringify(await pathsShown()) === JSON.stringify(pathsBefore),
+      'picking the saved pattern again shows its fields'
+    );
+
+    // 3e. Copy batch as JSON
+    await page.click('#copy-json');
+    await waitFor(async () => /copied/.test(await page.textContent('#copy-status')), 5000, 'the copy');
+    const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+    const sameLines = (text) => text.replace(/\r\n/g, '\n'); // the Windows clipboard may turn line ends into CRLF
+    ok(
+      sameLines(clipboard) === sameLines(batchText()),
+      'Copy batch as JSON puts the batch file on the clipboard (' + clipboard.length + ' characters)'
+    );
+
+    // 3. Save a shape number and see it in the arena
+    const field = page.locator('#fields input[data-number]:not([max])').first();
     const fieldPath = await field.getAttribute('data-path');
     const wanted = +(await field.inputValue()) + 7;
     await field.fill(String(wanted));

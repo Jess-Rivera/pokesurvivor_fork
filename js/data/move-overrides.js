@@ -48,6 +48,7 @@
     moonlight: { cd: 12, why: 'Kanto batch 1: heals 50% max HP, proposed 12 (as Substitute)' },
     roar: { cd: 5, why: 'Lore-set import 2026-11-02: push-only ring, TUNE 5 so it does not crowd out the attacks' },
     // @@IMPORT 141-evolution-moves BEGIN (written by tools/move_import.js from its batch file; edit the batch, not these rows)
+    mimic: { cd: 3.7, why: 'move import' },
     // @@IMPORT 141-evolution-moves END
   };
 })();

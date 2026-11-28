@@ -2,7 +2,10 @@
 <!-- Move Review (#141, dev tool, never ships). Open it through its helper server: node tools/move-review-server.js, then the
      address it prints. One move at a time: the mainline facts, its MOVE-INTENT ruling, the batch's proposal, the resolved numbers
      and its scenarios, beside the real game in a sandbox arena (dev.html driving G.Debug.movechecker or newcombat). Save writes the
-     edits into the batch file and the server re-runs the import and the export; the arena reloads with them. -->
+     edits into the batch file and the server re-runs the import and the export; the arena reloads with them.
+     Shape fields follow the move grammar (js/data/move-attributes.js): a field with fixed values is a dropdown, a number is held
+     to its range. Typing a field previews it in the arena at once (nothing written until Save). Copy batch as JSON puts the
+     batch file on the clipboard. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -164,8 +167,13 @@
         padding: 4px 6px;
         font: inherit;
       }
-      input.changed {
+      input.changed,
+      select.changed {
         border-color: var(--hi);
+      }
+      input.invalid {
+        border-color: var(--down);
+        color: var(--down);
       }
       textarea {
         width: 100%;
@@ -210,6 +218,10 @@
       <h1>Move Review</h1>
       <select id="batch"></select>
       <span class="dim" id="batch-info"></span>
+      <button id="copy-json" title="The batch file (patterns, options, hand edits, cooldowns, notes) to the clipboard">
+        Copy batch as JSON
+      </button>
+      <span class="dim" id="copy-status"></span>
       <span class="dim" style="margin-left: auto">Keys: up and down pick the move</span>
     </header>
     <main>
@@ -250,8 +262,14 @@
       </section>
     </main>
     <script>
+      window.G = window.G || {}; // move-attributes.js registers the move grammar on G (the page's own, not the arena's)
+    </script>
+    <script src="/js/data/move-attributes.js"></script>
+    <script>
       'use strict';
       const BOOT_TIMEOUT_MS = 60000;
+      const PREVIEW_DELAY_MS = 300; // after the last keystroke, the arena tries the edited move
+      const MOVE_GRAMMAR = window.G.MoveAttrs;
       const FAR_DISTANCE = 150; // px: the dummy's distance for a move that travels or lands at range
       const REACH_SHARE = 0.7; // of a static swing's radius: the dummy stands well inside it
       const BAND_SHARE = 0.5; // of a static band's length
@@ -321,6 +339,7 @@
       });
 
       function select(id) {
+        dropPreviews();
         selectedId = id;
         renderList();
         renderCard();
@@ -354,21 +373,130 @@
         return options;
       }
 
+      // ---------- the move grammar (js/data/move-attributes.js) behind each shape field ----------
+      const specObject = (spec) => (typeof spec === 'string' ? { t: spec } : spec);
+      /** Whether a grammar spec can describe `value` (picks the branch of an anyOf). */
+      function specFits(spec, value) {
+        if (Array.isArray(value)) return spec.t === 'list';
+        if (value && typeof value === 'object') return ['obj', 'union', 'ref', 'oneKey'].includes(spec.t);
+        if (typeof value === 'number') return ['num', 'int'].includes(spec.t);
+        return spec.t === 'str' || (spec.t === 'enum' && spec.v.includes(value));
+      }
+      /** A ref, union or anyOf spec resolved against the value it describes, down to a concrete spec. */
+      function concreteSpec(spec, value) {
+        spec = spec && specObject(spec);
+        if (!spec) return null;
+        if (spec.t === 'ref') return concreteSpec(MOVE_GRAMMAR.NAMED[spec.n], value);
+        if (spec.t === 'union') return value ? concreteSpec(spec.of[value[spec.key]], value) : null;
+        if (spec.t === 'anyOf')
+          return concreteSpec(
+            spec.of.map(specObject).find((s) => specFits(s, value)),
+            value
+          );
+        return spec;
+      }
+      /** The grammar spec of the field at a dotted path of the built entry (null when the grammar has none). */
+      function specAt(built, dotted) {
+        let spec = MOVE_GRAMMAR.MOVE,
+          value = built;
+        for (const key of dotted.split('.')) {
+          spec = concreteSpec(spec, value);
+          if (!spec) return null;
+          spec = spec.t === 'list' ? spec.of : (spec.f || {})[key];
+          value = value == null ? value : value[key];
+        }
+        return concreteSpec(spec, value);
+      }
+      /** Why a typed number breaks its grammar range, or '' when it fits. */
+      function numberProblem(spec, text) {
+        const value = +text;
+        if (text.trim() === '' || !Number.isFinite(value)) return 'needs a number';
+        if (spec.t === 'int' && !Number.isInteger(value)) return 'needs a whole number';
+        if (spec.gt != null && !(value > spec.gt)) return 'must be above ' + spec.gt;
+        if (spec.min != null && value < spec.min) return 'must be at least ' + spec.min;
+        if (spec.max != null && value > spec.max) return 'must be at most ' + spec.max;
+        return '';
+      }
+      /** One shape field: a dropdown of the grammar's values, a number box held to its range, or a text box. */
+      function fieldInput(built, dotted, value) {
+        const spec = specAt(built, dotted);
+        const common = `data-path="${dotted}" data-was="${escapeHtml(value)}"`;
+        if (spec && spec.t === 'enum') {
+          const choices = spec.v.map(
+            (choice) =>
+              `<option value="${escapeHtml(choice)}"${choice === value ? ' selected' : ''}>${escapeHtml(choice)}</option>`
+          );
+          return `<select ${common}>${choices.join('')}</select>`;
+        }
+        if (spec && ['num', 'int'].includes(spec.t) && typeof value === 'number') {
+          const low = spec.min ?? spec.gt;
+          const bounds = (low != null ? ` min="${low}"` : '') + (spec.max != null ? ` max="${spec.max}"` : '');
+          const step = spec.t === 'int' ? '1' : 'any';
+          return `<input ${common} data-number type="number" step="${step}"${bounds} value="${value}" />`;
+        }
+        return `<input ${common} value="${escapeHtml(value)}" />`;
+      }
+      /** The changed shape fields as [{ dotted, value }], and the range problems of any of them. */
+      function changedFields(move) {
+        const changes = [],
+          problems = [];
+        for (const field of document.querySelectorAll('#fields [data-path]')) {
+          if (field.value === field.dataset.was) continue;
+          const dotted = field.dataset.path;
+          const spec = specAt(cardBuilt, dotted);
+          const problem = field.dataset.number !== undefined && spec ? numberProblem(spec, field.value) : '';
+          if (problem) problems.push(dotted + ' ' + problem);
+          else changes.push({ dotted, value: field.dataset.number !== undefined ? +field.value : field.value });
+        }
+        return { changes, problems };
+      }
+      /** Writes `value` at a dotted path inside `object` (every step on the way already exists). */
+      function writePath(object, dotted, value) {
+        const keys = dotted.split('.');
+        const last = keys.pop();
+        keys.reduce((holder, key) => holder[key], object)[last] = value;
+      }
+
+      /** The shape fields of a built entry (the saved one, or one built for a pattern not saved yet). */
+      function fieldsHtml(built) {
+        if (!built) return '<span class="dim">No shape yet: pick a pattern and Save once its ruling is in.</span>';
+        return SHAPE_KEYS.flatMap((key) => leaves(built[key], key))
+          .filter(([dotted]) => !/\.t$|\.id$|\.side$|\.scope$/.test(dotted))
+          .map(
+            ([dotted, value]) =>
+              `<label title="${dotted}">${dotted.replace(/\./g, ' · ')}${fieldInput(built, dotted, value)}</label>`
+          )
+          .join('');
+      }
+      /** The options a pattern reads, and the ones every pattern reads (tools/move-import-patterns.js). */
+      function optionsHint(pattern) {
+        const own = (pattern && state.patternOptions[pattern]) || [];
+        const lines = (list) => list.map((line) => '<br>' + escapeHtml(line)).join('');
+        return (
+          (own.length ? '<b>' + escapeHtml(pattern) + ' options</b>' + lines(own) + '<br>' : '') +
+          '<b>Any pattern</b>' +
+          lines(state.commonOptions) +
+          '<br>Write them as key: value, comma between (for example heavy: 1, push: 100).'
+        );
+      }
+      /** The proposal card: the pattern, its words and the hand edits on top. */
+      function proposalHtml(pattern, words, json, unsaved) {
+        if (!words) return '<span class="dim">Not in the catalog until its ruling.</span>';
+        return `<b>${pattern}</b> <span class="dim">${escapeHtml(state.patterns[pattern])}</span>
+          ${unsaved ? '<span class="state proposed">not saved</span>' : ''}
+          <table><tr><td>Rule</td><td>${escapeHtml(words.rule || '-')}</td></tr><tr><td>Shape</td><td>${escapeHtml(words.shape)}</td></tr>
+          <tr><td>Delivery</td><td>${escapeHtml(words.delivery)}</td></tr><tr><td>Payload</td><td>${escapeHtml(words.payload)}</td></tr></table>
+          ${json ? `<p class="dim">Hand edits on top: ${Object.keys(json).join(', ')}</p>` : ''}`;
+      }
+
       function renderCard() {
         const move = moveOf(selectedId);
         const plan = move.plan;
         const resolved = move.resolved;
         const [cls, label] = reviewLabel(move);
-        const fields = move.built
-          ? SHAPE_KEYS.flatMap((key) => leaves(move.built[key], key))
-              .filter(([dotted]) => !/\.t$|\.id$|\.side$|\.scope$/.test(dotted))
-              .map(([dotted, value]) => {
-                const number = typeof value === 'number';
-                return `<label title="${dotted}">${dotted.replace(/\./g, ' · ')}<input data-path="${dotted}" ${number ? 'data-number type="number" step="any"' : ''} value="${escapeHtml(value)}" data-was="${escapeHtml(value)}" /></label>`;
-              })
-              .join('')
-          : '<span class="dim">No shape yet: pick a pattern and Save once its ruling is in.</span>';
-        const patternOptions = ['<option value="">none (waits for its ruling)</option>']
+        cardBuilt = move.built;
+        // A move with a pattern never goes back to waiting: a stray arrow key on this dropdown once wiped Hyper Drill's
+        const patternOptions = (plan.pattern ? [] : ['<option value="">none (waits for its ruling)</option>'])
           .concat(
             Object.entries(state.patterns).map(
               ([key, text]) =>
@@ -399,14 +527,7 @@
           <div class="card prose">${move.intent ? escapeHtml(move.intent) : '<span class="dim">No MOVE-INTENT entry: reviewed with the batch (sign off below).</span>'}
 ${plan.note ? '\n' + escapeHtml(plan.note) : ''}</div>
           <h2>Our proposal</h2>
-          <div class="card">${
-            move.words
-              ? `<b>${plan.pattern}</b> <span class="dim">${escapeHtml(state.patterns[plan.pattern])}</span>
-                 <table><tr><td>Rule</td><td>${escapeHtml(move.words.rule || '-')}</td></tr><tr><td>Shape</td><td>${escapeHtml(move.words.shape)}</td></tr>
-                 <tr><td>Delivery</td><td>${escapeHtml(move.words.delivery)}</td></tr><tr><td>Payload</td><td>${escapeHtml(move.words.payload)}</td></tr></table>
-                 ${plan.json ? `<p class="dim">Hand edits on top: ${Object.keys(plan.json).join(', ')}</p>` : ''}`
-              : '<span class="dim">Not in the catalog until its ruling.</span>'
-          }</div>
+          <div class="card" id="proposal">${proposalHtml(plan.pattern, move.words, plan.json, false)}</div>
           <h2>Resolved numbers</h2>
           <div class="card">${
             resolved
@@ -421,8 +542,9 @@ ${plan.note ? '\n' + escapeHtml(plan.note) : ''}</div>
           <div class="card edit">
             <label>Pattern<select id="pattern">${patternOptions}</select></label>
             <div class="row"><label style="flex: 1">Pattern options (key: value, comma between)<input id="options" value="${escapeHtml(optionsText(plan.options))}" /></label></div>
+            <p class="dim" id="options-hint">${optionsHint(plan.pattern)}</p>
             <h2>Shape numbers</h2>
-            <div id="fields">${fields}</div>
+            <div id="fields">${fieldsHtml(move.built)}</div>
             <div class="row">
               <label>Cooldown (s, blank for the formula)<input id="cd" type="number" step="any" value="${plan.cd ?? ''}" style="width: 110px" /></label>
               <label style="flex: 1">Cooldown reason<input id="cd-why" value="${escapeHtml(plan.cdWhy || '')}" /></label>
@@ -439,9 +561,17 @@ ${plan.note ? '\n' + escapeHtml(plan.note) : ''}</div>
             <button id="sign-off">Sign off</button><button id="needs-ruling">Needs ruling</button><button id="to-proposed">Back to proposed</button>
             <span class="dim">Sign off adds it to batchReviewed (the batch review rule in CLAUDE.md).</span>
           </div>`;
-        $('#fields').addEventListener('input', (event) =>
-          event.target.classList.toggle('changed', event.target.value !== event.target.dataset.was)
-        );
+        $('#pattern').dataset.was = plan.pattern || '';
+        $('#pattern').addEventListener('change', (event) => {
+          markChanged(event);
+          rebuildForPattern(move);
+        });
+        $('#options').addEventListener('change', () => rebuildForPattern(move));
+        $('#fields').addEventListener('input', (event) => {
+          markChanged(event);
+          markInvalid(move, event.target);
+          schedulePreview(move);
+        });
         $('#save').onclick = () => saveEdits(move);
         $('#clear-edits').onclick = () =>
           send('/api/save', { batch: batchName(), id: move.id, edit: { json: null } }, true);
@@ -468,27 +598,119 @@ ${plan.note ? '\n' + escapeHtml(plan.note) : ''}</div>
         if (cdWhy !== (plan.cdWhy || null)) edit.cdWhy = cdWhy;
         const note = $('#note').value.trim() || null;
         if (note !== (plan.note || null)) edit.note = note;
-        if (edit.pattern !== undefined) {
-          edit.json = null; // hand edits made for the old pattern would not fit the new one
-          return edit;
-        }
-        const changed = [...document.querySelectorAll('#fields input')].filter(
-          (input) => input.value !== input.dataset.was
-        );
-        if (!changed.length) return edit;
-        const json = { ...(plan.json || {}) };
-        for (const input of changed) {
-          const [top, ...rest] = input.dataset.path.split('.');
-          json[top] = json[top] || structuredClone(move.built[top]);
-          const last = rest.pop();
-          const holder = rest.reduce((value, key) => value[key], json[top]);
-          holder[last] = input.dataset.number !== undefined ? +input.value : input.value;
+        const { changes } = changedFields(move);
+        // hand edits made for the old pattern would not fit the new one; fields typed on the new pattern's numbers do
+        if (edit.pattern !== undefined) edit.json = null;
+        if (!changes.length) return edit;
+        const json = edit.pattern !== undefined ? {} : { ...(plan.json || {}) };
+        for (const { dotted, value } of changes) {
+          const top = dotted.split('.')[0];
+          json[top] = json[top] || structuredClone(cardBuilt[top]);
+          writePath(json, dotted, value);
         }
         edit.json = json;
         return edit;
       }
 
+      const markChanged = (event) =>
+        event.target.classList.toggle('changed', event.target.value !== event.target.dataset.was);
+      function markInvalid(move, field) {
+        const spec = field.dataset.number !== undefined && specAt(cardBuilt, field.dataset.path);
+        const problem = spec ? numberProblem(spec, field.value) : '';
+        field.classList.toggle('invalid', !!problem);
+        field.title = problem;
+        if (problem) status(field.dataset.path + ' ' + problem, true);
+      }
+
+      // ---------- live preview: the arena tries the typed shape before any Save ----------
+      let previewTimer = null;
+      let cardBuilt = null; // the built entry the card's shape fields show: the saved one, or one built for a new pattern
+      const AUTHORING_FIELDS = ['kind', 'feel', 'reviewStatus', 'note']; // in the catalog, never in the game data (export_moves)
+      /** A built catalog entry as the game data holds it: authoring fields dropped, "Infinity" back to the number. */
+      function gameEntryOf(built) {
+        const entry = JSON.parse(JSON.stringify(built), (key, value) => (value === 'Infinity' ? Infinity : value));
+        for (const key of AUTHORING_FIELDS) delete entry[key];
+        return entry;
+      }
+      /** The pattern dropdown or the options changed: the server builds the move that way (in memory, nothing written), the
+       *  card shows its numbers and words, and the arena previews it. */
+      async function rebuildForPattern(move) {
+        const pattern = $('#pattern').value;
+        $('#options-hint').innerHTML = optionsHint(pattern);
+        if (!pattern) {
+          cardBuilt = null;
+          $('#fields').innerHTML = fieldsHtml(null);
+          return status('waits for its ruling: no shape');
+        }
+        const options = parseOptions($('#options').value);
+        status('building ' + pattern + '...');
+        let preview;
+        try {
+          preview = await api('/api/build', { batch: batchName(), id: move.id, pattern, options });
+        } catch (error) {
+          return status('could not build ' + pattern + ': ' + error.message, true);
+        }
+        if (selectedId !== move.id) return; // the card moved on while the server built
+        const unsaved = pattern !== (move.plan.pattern || '') || $('#options').value !== optionsText(move.plan.options);
+        cardBuilt = unsaved ? preview.built : move.built; // back to the saved pattern: the saved entry and its arena def
+        const json = pattern === move.plan.pattern ? move.plan.json : null;
+        $('#proposal').innerHTML = proposalHtml(pattern, preview.words, json, unsaved);
+        $('#fields').innerHTML = fieldsHtml(cardBuilt);
+        if (preview.problems.length) return status('cannot save yet: ' + preview.problems.join('; '), true);
+        previewEdits(move);
+      }
+      let savedDefsBeforePreview = {}; // move id -> the arena's saved def, while a preview stands in for it
+      /** Puts every previewed move back to its saved def (leaving a move drops its unsaved preview). */
+      function dropPreviews() {
+        clearTimeout(previewTimer);
+        const ids = Object.keys(savedDefsBeforePreview);
+        if (!ids.length) return;
+        try {
+          const G = arena().G;
+          const restored = { ...G.MoveDefs };
+          for (const id of ids)
+            if (savedDefsBeforePreview[id]) restored[id] = savedDefsBeforePreview[id];
+            else delete restored[id]; // a waiting move previewed with a pattern has no saved def
+          G.MoveDefs = Object.freeze(restored);
+        } catch (error) {
+          // the frame is gone or reloading: its fresh scripts hold the saved defs anyway
+        }
+        savedDefsBeforePreview = {};
+      }
+      function schedulePreview(move) {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(() => previewEdits(move), PREVIEW_DELAY_MS);
+      }
+      /** Rebuilds the move inside the arena from its saved raw entry with the typed fields on top, through the arena's own
+       *  resolver, then replays it. Nothing is written; Save does that. Out-of-range fields keep the last good preview. */
+      function previewEdits(move) {
+        const { changes, problems } = changedFields(move);
+        if (problems.length) return status('not previewed: ' + problems.join('; '), true);
+        let G = null;
+        try {
+          G = arenaLoaded && arena().G;
+        } catch (error) {
+          G = null;
+        }
+        const savedShape = cardBuilt === move.built && G && G.MoveData[move.id];
+        if (!G || !(savedShape || cardBuilt)) return status('no arena to preview in (Save to try it)');
+        if (!(move.id in savedDefsBeforePreview)) savedDefsBeforePreview[move.id] = G.MoveDefs[move.id];
+        const raw = savedShape ? structuredClone(G.MoveData[move.id]) : gameEntryOf(cardBuilt);
+        for (const { dotted, value } of changes) writePath(raw, dotted, value);
+        try {
+          const defs = G.MoveResolver.resolve({ ...G.MoveData, [move.id]: raw }, G.MoveOverrides, G.MoveHandlers);
+          G.MoveDefs = Object.freeze({ ...G.MoveDefs, [move.id]: defs[move.id] });
+        } catch (error) {
+          return status('not previewed: ' + error.message, true);
+        }
+        status(changes.length || !savedShape ? 'preview in the arena (not saved)' : 'back to the saved move');
+        loadArenaMove();
+      }
+
       async function saveEdits(move) {
+        clearTimeout(previewTimer); // a pending preview would overwrite the Save's own message
+        const { problems } = changedFields(move);
+        if (problems.length) return status('not saved: ' + problems.join('; '), true);
         const edit = collectEdit(move);
         if (!Object.keys(edit).length) return status('nothing changed');
         await send('/api/save', { batch: batchName(), id: move.id, edit }, true);
@@ -508,6 +730,7 @@ ${plan.note ? '\n' + escapeHtml(plan.note) : ''}</div>
         } catch (error) {
           return status('not saved: ' + error.message, true);
         }
+        dropPreviews(); // the card redraws from the saved move, so the arena shows the saved move too
         const id = selectedId;
         await loadState();
         selectedId = id;
@@ -537,9 +760,19 @@ ${plan.note ? '\n' + escapeHtml(plan.note) : ''}</div>
         throw new Error('timed out waiting for ' + label);
       }
 
+      /** The review needs only the move being tried: every HTML HUD panel (team roster, character panel, map, DPS, run
+       *  items, boss bar) is hidden but the active move slot. Visibility, not display, so the HUD's shared SVG fill
+       *  patterns still draw the slot. */
+      function showOnlyTheActiveMoveSlot(arenaDocument) {
+        const style = arenaDocument.createElement('style');
+        style.textContent = '.hud-overlay { visibility: hidden; } .hud-slot.is-active { visibility: visible; }';
+        arenaDocument.head.appendChild(style);
+      }
+
       /** A fresh frame with a guest run in progress (as the smokes boot one). */
       async function bootArena(token) {
         arenaErrors = [];
+        savedDefsBeforePreview = {}; // a fresh frame loads the saved defs
         arenaStatus('booting');
         const frame = $('#arena');
         const loaded = new Promise((resolve) => frame.addEventListener('load', resolve, { once: true }));
@@ -565,6 +798,7 @@ ${plan.note ? '\n' + escapeHtml(plan.note) : ''}</div>
           G.Game.startRun();
         })()`);
         await waitInArena((win) => win.G.Game.player && win.G.Game.state === 'playing', 'the run', token);
+        showOnlyTheActiveMoveSlot(arena().document);
         arenaLoaded = true;
         return true;
       }
@@ -601,7 +835,8 @@ ${plan.note ? '\n' + escapeHtml(plan.note) : ''}</div>
       async function loadArenaMove() {
         const move = moveOf(selectedId);
         const token = ++bootToken;
-        if (!move.resolved) return arenaStatus('waits for its ruling: no arena');
+        if (!move.resolved && !Object.hasOwn(savedDefsBeforePreview, move.id))
+          return arenaStatus('waits for its ruling: no arena');
         try {
           if (!arenaLoaded && !(await bootArena(token))) return;
           if (token !== bootToken) return;
@@ -685,6 +920,18 @@ ${plan.note ? '\n' + escapeHtml(plan.note) : ''}</div>
         for (const enemy of arena().G.EnemyMgr.all()) {
           enemy.hp = enemy.maxHp;
           if (enemy.review) enemy.review = { hits: 0, hitDamage: 0, otherDamage: 0 };
+        }
+      };
+      /** The batch file as it is on disk (what Jess controls: patterns, options, hand edits, cooldowns, notes). */
+      $('#copy-json').onclick = async () => {
+        const shown = $('#copy-status');
+        try {
+          const response = await fetch('/docs/move_rework_holding/import-batches/' + encodeURIComponent(batchName()));
+          if (!response.ok) throw new Error('could not read the batch file');
+          await navigator.clipboard.writeText(await response.text());
+          shown.textContent = 'copied ' + batchName();
+        } catch (error) {
+          shown.textContent = 'not copied: ' + error.message;
         }
       };
       $('#batch').onchange = async () => {

@@ -27,6 +27,32 @@ const PATTERNS = {
   mark: 'Delayed hit on a spot (new)',
 };
 
+// Every option each pattern reads, as "example (what it does)" (the Move Review page lists them under the options box),
+// then the ones every pattern reads. A pattern not listed reads only the common ones.
+const PATTERN_OPTIONS = {
+  melee: ['heavy: 1 (a bigger swing, 2 rad and 60 px instead of 1.7 and 54, knockback 140 instead of 90)'],
+  shot: ['home: 1 (steers to the nearest foe, so it never misses)'],
+  statusShot: ['home: 1 (steers to the nearest foe, so it never misses)'],
+  strike: ['r: 30 (circle radius in px on the nearest foe; 30 when left out)'],
+  falls: ['r: 70 (circle radius in px where it lands; 70 when left out)'],
+  ring: ['r: 200 (largest radius in px the ring grows to; 200 when left out)'],
+  mark: [
+    'r: 60 (circle radius in px on the marked spot; 60 when left out)',
+    'delay: 2 (seconds before it lands; 2 when left out)',
+  ],
+  multi: [
+    'n: 2 (needed: how many repeats, 2 or more, 0.11 s apart)',
+    'on: melee (needed: the pattern of each repeat: melee, shot, beam, strike, falls, ring, burst, mark, ...)',
+    "plus the options of the repeat's pattern (for example heavy: 1 with on: melee)",
+  ],
+};
+const COMMON_OPTIONS = [
+  'power: 80 (replaces the mainline power; a power on a move with no damage adds a hit)',
+  'acc: 90 (replaces the mainline accuracy, 1 to 100)',
+  'push: 100 (adds knockback in px)',
+  'ko: 30 (one-hit KO chance in % on wild foes, as Fissure)',
+];
+
 const STAT = { 2: 'atk', 3: 'def', 4: 'spAtk', 5: 'spDef', 6: 'spd' }; // 7 accuracy, 8 evasion: none in this batch
 const STAT_WORD = { atk: 'Attack', def: 'Defense', spAtk: 'Sp. Atk', spDef: 'Sp. Def', spd: 'Speed' };
 
@@ -357,6 +383,8 @@ function entry(api, id, p, o, label) {
     pay = own.concat([{ t: 'emit', every: 0.25, count: 3, trigger: 'cast', move: im }]);
     shown = pay.slice(0, own.length).concat(hit);
   } else if (p === 'multi') {
+    if (!BUILD[o.on] || !(Number.isInteger(o.n) && o.n >= 2))
+      throw new Error('multi needs the options n (2 or more repeats) and on (' + Object.keys(BUILD).join(', ') + ')');
     const inner = BUILD[o.on](o, c);
     const ipay = pay.slice();
     if (o.on === 'melee') ipay.push({ t: 'knockback', distance: 40 });
@@ -443,4 +471,4 @@ function loadApi() {
   return byId;
 }
 
-module.exports = { PATTERNS, entry, applyToSource, loadApi, SRC };
+module.exports = { PATTERNS, PATTERN_OPTIONS, COMMON_OPTIONS, entry, applyToSource, loadApi, SRC };

@@ -6,6 +6,7 @@
 //   GET  /api/state?batch=<name>        per move: facts, MOVE-INTENT entry, batch plan, built entry, resolved def, scenarios
 //   POST /api/save    {batch, id, edit} the page's edits into the batch file, then the import, the export and the validator
 //   POST /api/status  {batch, id, status}  proposed, needs-ruling or signed-off (signed-off also writes batchReviewed)
+//   POST /api/build   {batch, id, pattern, options}  the move built with that pattern, in memory only (writes nothing)
 // Writes reach only the batch file and what tools/move_import.js and tools/export_moves.js write (and the learnsets, through
 // tools/export_learnsets.js, when a whole batch is signed off or one of its moves goes back). A save that leaves the
 // move invalid is undone (every written file goes back to what it was) and the problems are returned.
@@ -16,7 +17,7 @@ const http = require('http'),
   cp = require('child_process');
 const root = path.resolve(__dirname, '..');
 const importer = require('./move_import.js');
-const { PATTERNS } = require('./move-import-patterns.js');
+const { PATTERNS, PATTERN_OPTIONS, COMMON_OPTIONS } = require('./move-import-patterns.js');
 const DEFAULT_PORT = 8790;
 const SCENARIOS = path.join(root, 'docs/move_rework_holding/move-intent-scenarios.json');
 const INTENT = path.join(root, 'docs/MOVE-INTENT.md');
@@ -48,6 +49,8 @@ const TYPES = {
   '.webmanifest': 'application/manifest+json',
 };
 
+// Infinity (unlimited pierce, open-ended ranges) would print as null in JSON
+const finite = (key, value) => (value === Infinity ? 'Infinity' : value === -Infinity ? '-Infinity' : value);
 const runNode = (args) => cp.spawnSync(process.execPath, args, { cwd: root, encoding: 'utf8', maxBuffer: 64e6 });
 const batchFile = (name) => importer.listBatches().find((file) => file === name || file === name + '.json');
 
@@ -96,7 +99,13 @@ function reviewState(name) {
       signedOff: scenarioFile.batchReviewed.includes(row.id),
     };
   });
-  return { batch: { file, label: batch.label, issue: batch.issue, inPools: batch.inPools }, patterns: PATTERNS, moves };
+  return {
+    batch: { file, label: batch.label, issue: batch.issue, inPools: batch.inPools },
+    patterns: PATTERNS,
+    patternOptions: PATTERN_OPTIONS,
+    commonOptions: COMMON_OPTIONS,
+    moves,
+  };
 }
 
 // ---------- writes ----------
@@ -141,10 +150,18 @@ function setReviewed(id, signed) {
   fs.writeFileSync(SCENARIOS, text);
 }
 
-/** Problems the resolved-move validator reports for one move ([] when it is valid). */
+// A pattern keeps only the effects the game has; a move whose every effect is still unbuilt (Taunt's taunt status) gets none
+const NO_EFFECTS =
+  'this pattern gives the move no effects: its mainline effect is not in the game yet (a #141 part D status or rule). ' +
+  'Leave it waiting for its ruling, or give it a placeholder effect in the options (push: knockback px, or power)';
+
+/** Problems the resolved-move validator reports for one move ([] when it is valid), an empty payload in plain words. */
 function validatorProblems(id) {
   const out = runNode([path.join(__dirname, 'validate_moves.js'), '--resolved']).stdout || '';
-  return out.split('\n').filter((line) => line.startsWith('INVALID ' + id + ' '));
+  return out
+    .split('\n')
+    .filter((line) => line.startsWith('INVALID ' + id + ' '))
+    .map((line) => (/payload: needs at least 1/.test(line) ? id + ': ' + NO_EFFECTS : line));
 }
 
 function save({ batch: name, id, edit }) {
@@ -153,6 +170,8 @@ function save({ batch: name, id, edit }) {
   const batch = importer.readBatch(file);
   if (!batch.moves[id]) return { status: 400, body: { problems: ['no move ' + id + ' in ' + file] } };
   const problems = editProblems(edit || {});
+  if (edit && edit.pattern === null && batch.moves[id].pattern)
+    problems.push('a move with a pattern cannot go back to waiting for its ruling (pick another pattern instead)');
   if (problems.length) return { status: 400, body: { problems } };
   const saved = snapshot([importer.batchPathOf(file), SOURCE, GENERATED, OVERRIDES, SCENARIOS]);
   const plan = batch.moves[id];
@@ -178,6 +197,25 @@ function save({ batch: name, id, edit }) {
   }
   if (plan.status !== 'signed-off') setReviewed(id, false);
   return { status: 200, body: { saved: true, status: plan.status } };
+}
+
+/** The move built with another pattern or other options, for the page to show before a Save. Nothing is written. Hand edits
+ *  stay on top only while the pattern stays the same (a Save of a new pattern drops them too). */
+function buildPreview({ batch: name, id, pattern, options }) {
+  const file = batchFile(name || '');
+  if (!file) return { status: 400, body: { problems: ['no batch ' + name] } };
+  const batch = importer.readBatch(file);
+  const plan = batch.moves[id];
+  if (!plan) return { status: 400, body: { problems: ['no move ' + id] } };
+  if (!PATTERNS[pattern]) return { status: 400, body: { problems: ['unknown pattern ' + pattern] } };
+  if (options != null && (typeof options !== 'object' || Array.isArray(options)))
+    return { status: 400, body: { problems: ['options must be an object'] } };
+  const trial = { ...plan, pattern, options: options || {} };
+  if (pattern !== plan.pattern) delete trial.json;
+  batch.moves[id] = trial;
+  const row = importer.buildBatch(batch).rows.find((built) => built.id === id);
+  const problems = row.built && !row.built.payload.length ? [id + ': ' + NO_EFFECTS] : [];
+  return { status: 200, body: { built: row.built, words: row.words, problems } };
 }
 
 function setStatus({ batch: name, id, status }) {
@@ -206,7 +244,7 @@ function setStatus({ batch: name, id, status }) {
 // ---------- http ----------
 function send(res, status, body, type = 'application/json; charset=utf-8') {
   res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' });
-  res.end(type.startsWith('application/json') ? JSON.stringify(body) : body);
+  res.end(type.startsWith('application/json') ? JSON.stringify(body, finite) : body);
 }
 
 function readBody(req) {
@@ -266,6 +304,10 @@ async function handle(req, res) {
       const result = save(await readBody(req));
       return send(res, result.status, result.body);
     }
+    if (req.method === 'POST' && url.pathname === '/api/build') {
+      const result = buildPreview(await readBody(req));
+      return send(res, result.status, result.body);
+    }
     if (req.method === 'POST' && url.pathname === '/api/status') {
       const result = setStatus(await readBody(req));
       return send(res, result.status, result.body);
@@ -278,8 +320,6 @@ async function handle(req, res) {
 
 const args = process.argv.slice(2);
 if (args[0] === '--state') {
-  // Infinity (unlimited pierce, open-ended ranges) would print as null in JSON
-  const finite = (key, value) => (value === Infinity ? 'Infinity' : value === -Infinity ? '-Infinity' : value);
   process.stdout.write(JSON.stringify(reviewState(args[1]), finite));
 } else {
   const portAt = args.indexOf('--port');

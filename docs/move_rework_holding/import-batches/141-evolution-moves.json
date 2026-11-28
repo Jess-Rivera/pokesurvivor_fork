@@ -10,7 +10,7 @@
         "n": 2,
         "on": "melee"
       },
-      "status": "proposed",
+      "status": "signed-off",
       "note": "Two quick swings, as Double Kick (Kanto batch 1: multi-hit moves are quick repeats at full power)."
     },
     "twin-beam": {
@@ -23,20 +23,46 @@
         "effect": "Hits twice in one turn.",
         "why": "pokeapi has no effect data for this Gen 9 move"
       },
-      "status": "proposed",
+      "status": "signed-off",
       "note": "Two quick beams, the beam pattern repeated as Double Kick repeats its swing."
     },
     "hyper-drill": {
-      "pattern": "melee",
+      "pattern": "shot",
       "options": {
-        "heavy": 1
+        "heavy": 1,
+        "push": 100
       },
       "facts": {
         "effect": "Hits the target even if it is protecting itself (Protect, Detect).",
         "why": "pokeapi has no effect data for this Gen 9 move"
       },
-      "status": "proposed",
-      "note": "Ruled 2026-11-27 (MOVE-INTENT). Heavy swing for now; its hits go through shields once #141 part D builds that."
+      "status": "signed-off",
+      "note": "Ruled 2026-11-27 (MOVE-INTENT). Heavy swing for now; its hits go through shields once #141 part D builds that.\n\nCan't get more Count.",
+      "json": {
+        "space": {
+          "shape": "radial",
+          "radRadius": 5,
+          "count": 1,
+          "pierce": 0
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "travels",
+          "moveSpeed": 540,
+          "endOn": [
+            {
+              "time": 1.5
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ]
+        }
+      }
     },
     "barb-barrage": {
       "pattern": "shot",
@@ -49,18 +75,22 @@
         "effect": "Has a 50% chance to poison the target. Power doubles if the target is already poisoned.",
         "why": "pokeapi has no effect data for this Gen 9 move; values from Scarlet and Violet"
       },
-      "status": "proposed",
+      "status": "signed-off",
       "note": "Ruled 2026-11-27 (MOVE-INTENT). Poison shot, 50% poison; the double power on a poisoned foe comes with #141 part D."
     },
     "rollout": {
-      "pattern": "melee",
-      "status": "proposed",
-      "note": "Ruled 2026-11-27 (MOVE-INTENT). Placeholder plain swing; the ramping power (x1 to x16) comes with #141 part D."
+      "pattern": "skill",
+      "status": "signed-off",
+      "note": "Ruled 2026-11-27 (MOVE-INTENT). Placeholder plain swing; the ramping power (x1 to x16) comes with #141 part D.\n\nImported as move similar to Quick Attack or Aerial Ace. Rollout will be used as a movement skill that does damage along its path."
     },
     "mimic": {
-      "pattern": null,
-      "status": "needs-ruling",
-      "note": "Ruled 2026-11-27 (MOVE-INTENT). No pattern until #141 part D builds the copy."
+      "pattern": "self",
+      "status": "signed-off",
+      "note": "Ruled 2026-11-27 (MOVE-INTENT). No pattern until #141 part D builds the copy.\nDoes not work against wild enemies. Only copies the last move a leader hit you with and remains that copy until a new Leader move hits you. Cooldown number selected as placeholder. its cooldown will need to be calculated based on its PP. pattern option selected so move could be saved. need corrected based on my ruling.",
+      "options": {
+        "power": 1
+      },
+      "cd": 3.7
     },
     "taunt": {
       "pattern": null,

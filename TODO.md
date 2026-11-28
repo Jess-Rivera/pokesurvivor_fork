@@ -9,9 +9,10 @@ Run `node tools/catchup.js` (prints the briefing and the exact sync commands, wr
 node or gh: Jess runs it and points Quick at catchup-latest.md. Before leaving a machine: commit and push.
 
 ## Next (branch feature/138-146-lost-and-full-box covers #138 to #146; Jess 2026-11-21)
-0. #141 in progress (next session starts here): walk the Move Review page together (double-click tools/Move Review.cmd),
-   sign off what passes, approve the Part D plan and answer its open numbers (crit per stage, Taunt and Mimic durations,
-   Mimic's wild pick, three status cooldowns). Then Part D, D1 to D6, test first.
+0. #141 in progress (next session starts here): Jess confirms or redoes Rollout (skill pattern = Fly) and Mimic (self,
+   power 1, no damage lands); then fix the two count harnesses to match. Taunt and Dragon Cheer wait for Part D. Approve
+   the Part D plan and answer its open numbers (crit per stage, Taunt and Mimic durations, Mimic's wild pick, three
+   status cooldowns). Then Part D, D1 to D6, test first.
    Branch work after it: #140, #139 8b and 8c, #142, #143 (order in item 3); #144 is deferred. Merge to main after #143.
    #174 shiny catches and #175 manual aim need slice openings.
    #171 (circling rim for selected portraits) is an idea, needs triage.

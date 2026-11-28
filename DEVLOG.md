@@ -372,3 +372,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
 - Round R answered (6 MOVE-INTENT entries, one decision; a batch joins the learnsets when fully signed off, built in the
   server). Part D plan written. Launcher tools/Move Review.cmd added (tested: server up, page and API answer).
 - Stopped at: Jess's walk through the page, Part D approval and its four open numbers (next session, clean context).
+
+## 2026-11-28 (Claude Code, home), #141 Move Review page fixes
+- Hyper Drill's save had wiped its pattern (dropdown slipped to "none"), dropping it from the catalog; restored. A move with
+  a pattern no longer offers "none" and the server refuses clearing one.
+- Built (tools only): grammar-driven dropdowns and number ranges, live arena preview of typed fields, pattern and options
+  switches rebuilt in memory (POST /api/build) and previewed, Copy batch as JSON, every option per pattern listed, plain
+  messages for multi without n/on and for patterns that give no effects (Taunt). smoke-move-review grew to cover them.
+- Jess signed off 6 moves. Found: Rollout saved as skill (that is Fly), Mimic as self with power 1 (no damage lands);
+  move-intent and ui-readers harness counts fail on Mimic's addition. Stopped at: Jess's answer on those two.
