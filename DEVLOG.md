@@ -355,3 +355,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-22
   on load); the Team detail panel split into shared pieces; catch window 948 px; keep-or-sell 948 x 600 with owned box.
 - Tests: keep-sell-harness +6 sections, smoke-keep-sell #173 part, new smoke-catch-detail; all pass. Jess felt it once.
 - Stopped at: fuller feel test, then close #173.
+
+## 2026-11-27 (Claude Code, home), #173 closed
+- Jess's fuller feel test of the held catch compare passed; #173 closed with a comment.
+- Smokes rerun: smoke-ui had one new failure, a stale check expecting the hover tooltip #173 replaced with side panels;
+  the check now looks for the right side panel, back to the 15 old failures. smoke-pause-menu: the known #170 only.
+- Drift: TODO and STATE no longer cite closed #97 or #173.
+- Stopped at: branch work (#141 and #140, then #139 8b), and the #174 slice opening.

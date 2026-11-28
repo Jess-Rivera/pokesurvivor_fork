@@ -12,7 +12,7 @@
 //   onboarding: a new guest picks a region (9 cards of 3) and starts with its three starters, Grass leading; a save with a partner skips it.
 //   catch (#136, redesign 136b): touching a won rescue opens the catch screen: the portrait, a band 2 x bandAccuracy wide that
 //          holds the true chance, belt 1 full and numbered, belts 2 and 3 locked, every owned copy of the species. The arrow
-//          keys move the selection cursor (belt, owned grid with its tooltip, Throw, Let It Go); Esc asks; Enter on Throw
+//          keys move the selection cursor (belt, owned grid with its side panel, Throw, Let It Go); Esc asks; Enter on Throw
 //          throws, leaving that slot empty and filling the flee ring by misses / allowed; a click selects without replacing
 //          the slot (what a real double click needs) and a double click throws; the run plays on with the catch held; a quit
 //          places nothing; a number key throws from belt 1, and a team fall places the catch in the Pokebox.
@@ -609,7 +609,7 @@ async function catchFlow(browser, query, tag) {
         faceImage = root.querySelector('.catch-face img');
       const ring = root.querySelector('.catch-ring'),
         ringDeg = ring ? parseFloat(ring.style.getPropertyValue('--exp')) : NaN;
-      const tip = document.querySelector('.hud-tip-layer .hud-tip'), // the page's one tooltip layer
+      const sidePanels = [...root.querySelectorAll('.catch-side')], // the owned copy's short panel (#173)
         frame = root.querySelector('.catch-window'); // absent while the screen is closed
       let cursor = 'none';
       if (host && host.dataset.slot != null) cursor = 'slot ' + host.dataset.belt + '.' + host.dataset.slot;
@@ -633,7 +633,9 @@ async function catchFlow(browser, query, tag) {
         corners: root.querySelectorAll('.hud-cursor').length,
         rings: root.querySelectorAll('.cursor-ring').length,
         ringOnCursor: !!host && !!host.querySelector('.cursor-ring'),
-        tipRightOfWindow: !!tip && !!frame && tip.getBoundingClientRect().left >= frame.getBoundingClientRect().right,
+        panelRightOfWindow:
+          !!frame &&
+          sidePanels.some((panel) => panel.getBoundingClientRect().left >= frame.getBoundingClientRect().right),
         misses: session ? session.misses : null,
         allowed: session ? session.allowed : null,
         ringShare: ringDeg / 360,
@@ -721,21 +723,21 @@ async function catchFlow(browser, query, tag) {
       JSON.stringify(look) +
       ')'
   );
-  // the cursor: down the belt, right into the owned grid (tooltip right of the window), down to Throw and Let It Go
+  // the cursor: down the belt, right into the owned grid (side panel right of the window), down to Throw and Let It Go
   const path = [],
     cursorLooks = [];
   for (const code of ['ArrowDown', 'ArrowRight', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowUp']) {
     await key(code);
     await page.waitForTimeout(150); // past cursor.ring's CRT
     const now = await screen();
-    path.push(now.cursor + (now.cursor.startsWith('owned') ? (now.tipRightOfWindow ? ' tip' : ' no tip') : ''));
+    path.push(now.cursor + (now.cursor.startsWith('owned') ? (now.panelRightOfWindow ? ' panel' : ' no panel') : ''));
     const round = now.cursor.startsWith('slot') || now.cursor.startsWith('owned');
     cursorLooks.push(!now.corners && (round ? now.ringOnCursor && now.rings === 1 : now.rings === 0));
   }
   ok(
-    path.join(', ') === 'slot 0.1, owned 0 tip, owned 4 tip, throw, let go, throw',
+    path.join(', ') === 'slot 0.1, owned 0 panel, owned 4 panel, throw, let go, throw',
     tag +
-      ': the arrow keys walk the cursor belt, owned grid (with its tooltip), Throw, Let It Go (' +
+      ': the arrow keys walk the cursor belt, owned grid (with its side panel), Throw, Let It Go (' +
       path.join(', ') +
       ')'
   );
